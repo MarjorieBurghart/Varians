@@ -51,7 +51,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "validation_panel", "xpath_panel"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "completion_ui", "validation_panel", "xpath_panel"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -78,6 +78,7 @@ from app_context import (
     last_open_project_path, remember_open_project, forget_open_project,
 )
 from document_session import DocumentSession, LbIndex
+from completion_ui import CompletionDialog, CompletionMixin
 from validation_panel import ValidationPanelMixin
 from xpath_panel import XPathPanelMixin
 from schema_resolution import resolve_schema, detect_xml_models
@@ -3406,96 +3407,6 @@ class FormattedEditionWidget(QWidget):
 
 
 
-class CompletionDialog(QDialog):
-    """Petit sélecteur filtrable pour Ctrl+Espace.
-
-    Le dialogue est volontairement générique : le calcul du contexte et les
-    modifications XML restent dans MainWindow, ce qui facilite les tests du
-    moteur RELAX NG sans Qt.
-    """
-
-    def __init__(self, title, label, items, prefix="", parent=None, allow_custom=False):
-        super().__init__(parent)
-        # Chaque entrée peut être une simple chaîne (compatibilité historique)
-        # ou un couple (valeur, provenance) où provenance vaut rng/custom/both.
-        # La provenance n'est qu'une information d'interface : elle ne change
-        # jamais la validité du document.
-        self._all_items = []
-        for item in items:
-            if isinstance(item, (tuple, list)) and len(item) >= 2:
-                value, source = str(item[0]), str(item[1])
-                source_key = {
-                    "rng": "completion.source.rng",
-                    "custom": "completion.source.custom",
-                    "both": "completion.source.both",
-                }.get(source)
-                display = (f"{value}    [{_t(source_key)}]" if source_key else value)
-            else:
-                value = str(item)
-                display = value
-            self._all_items.append((value, display))
-        self._selected = None
-        self._allow_custom = bool(allow_custom)
-        self.setWindowTitle(title)
-        self.resize(360, 330)
-        root = QVBoxLayout(self)
-        root.setContentsMargins(8, 8, 8, 8)
-        root.setSpacing(6)
-        self.label = QLabel(label)
-        self.label.setWordWrap(True)
-        root.addWidget(self.label)
-        self.filter_box = QLineEdit()
-        self.filter_box.setPlaceholderText(_t("completion.filter.placeholder"))
-        root.addWidget(self.filter_box)
-        self.list_widget = QListWidget()
-        root.addWidget(self.list_widget, 1)
-        self.filter_box.textChanged.connect(self._refilter)
-        self.filter_box.returnPressed.connect(self._accept_current)
-        self.list_widget.itemActivated.connect(lambda _item: self._accept_current())
-        self.list_widget.itemDoubleClicked.connect(lambda _item: self._accept_current())
-        self.filter_box.setText(prefix or "")
-        self._refilter(prefix or "")
-        self.filter_box.setFocus()
-        self.filter_box.setCursorPosition(len(prefix or ""))
-
-    @property
-    def selected_value(self):
-        return self._selected
-
-    def _refilter(self, text):
-        needle = (text or "").casefold()
-        starts = [x for x in self._all_items if x[0].casefold().startswith(needle)]
-        contains = [x for x in self._all_items
-                    if needle in x[0].casefold() and x not in starts]
-        values = starts + contains
-        self.list_widget.clear()
-        for value, display in values:
-            item = QListWidgetItem(display)
-            item.setData(Qt.ItemDataRole.UserRole, value)
-            self.list_widget.addItem(item)
-        if self.list_widget.count():
-            self.list_widget.setCurrentRow(0)
-
-    def _accept_current(self):
-        typed = self.filter_box.text().strip()
-        raw_values = {value for value, _display in self._all_items}
-        if self._allow_custom and typed and typed not in raw_values:
-            # En mode Ctrl+E, le champ reste réellement éditable : une saisie
-            # manuelle ne doit pas être remplacée par le premier résultat dont
-            # elle n'est qu'un préfixe.
-            self._selected = typed
-            self.accept()
-            return
-        item = self.list_widget.currentItem()
-        if item is not None:
-            self._selected = item.data(Qt.ItemDataRole.UserRole) or item.text()
-            self.accept()
-            return
-        if self._allow_custom and typed:
-            self._selected = typed
-            self.accept()
-
-
 class CtrlEConfigDialog(QDialog):
     """Petit éditeur interne pour custom-elements.xml.
 
@@ -3986,7 +3897,7 @@ def _document_attribute(path):
     )
 
 
-class MainWindow(ValidationPanelMixin, XPathPanelMixin, QMainWindow):
+class MainWindow(CompletionMixin, ValidationPanelMixin, XPathPanelMixin, QMainWindow):
     # --- État du document ouvert (voir document_session.DocumentSession) ---
     current_path = _document_attribute("path")
     modified = _document_attribute("modified")
@@ -4427,70 +4338,6 @@ class MainWindow(ValidationPanelMixin, XPathPanelMixin, QMainWindow):
             sizes[index] = bottom
         self.left_splitter.setSizes(sizes)
 
-    def _resolve_completion_schema(self, xml_text=None):
-        """Résout le RNG actif en réutilisant la résolution tant que le prologue
-        ``xml-model`` n'a pas changé.
-
-        Cela évite notamment de reconsulter un RNG distant/cache réseau à chaque
-        Ctrl+Espace lorsque l'utilisateur ne modifie que le corps de la TEI.
-        """
-        text = self.editor.toPlainText() if xml_text is None else xml_text
-        key = self._schema_resolution_cache_key(text)
-        if self._completion_resolution_key == key and self._completion_resolution is not None:
-            resolution = self._completion_resolution
-            if resolution.schema_path is None or Path(resolution.schema_path).is_file():
-                return resolution
-        resolution = resolve_schema(
-            mode=self.project.schema_mode,
-            xml_text=text,
-            xml_path=self.current_path or self.project.edition,
-            project_schema=self.project.schema,
-            force_refresh=False,
-        )
-        self._completion_resolution_key = key
-        self._completion_resolution = resolution
-        return resolution
-
-    def _completion_model_for_schema(self, schema_path):
-        path = Path(schema_path).expanduser().resolve()
-        stat = path.stat()
-        key = (str(path), int(stat.st_mtime_ns), int(stat.st_size))
-        if self._completion_model is None or self._completion_model_key != key:
-            self.statusBar().showMessage(_t("completion.status.loading"), 2000)
-            self._completion_model = load_completion_model(path)
-            self._completion_model_key = key
-        return self._completion_model
-
-    def _custom_completion_config(self):
-        """Relit la configuration projet de saisie personnalisée.
-
-        Le fichier est petit et volontairement relu à chaque invocation pour
-        que l'éditeur interne de custom-elements.xml prenne effet immédiatement.
-        Une erreur est signalée à l'utilisateur, puis la complétion RNG reste
-        utilisable sans cette couche de commodité.
-        """
-        try:
-            return load_custom_completion(self.project.custom_elements)
-        except Exception as exc:
-            detail = (_t("ctrl_e.config.root_error", file=self.project.custom_elements.name)
-                      if str(exc) == "ROOT_NOT_CUSTOM_ELEMENTS"
-                      else _t("ctrl_e.config.read_error",
-                              file=self.project.custom_elements.name, error=exc))
-            self.statusBar().showMessage(detail, 6500)
-            return None
-
-    def _custom_witness_ids(self):
-        return tuple(w.id for w in getattr(self.project, "witnesses", ()) if getattr(w, "id", ""))
-
-    @staticmethod
-    def _filter_existing_attributes(values, existing_attributes):
-        existing = set(existing_attributes or ())
-        existing_local = {x.split(":", 1)[-1] for x in existing}
-        return tuple(
-            x for x in values
-            if x not in existing and x.split(":", 1)[-1] not in existing_local
-        )
-
     def format_xml_source(self):
         """Indente les seules zones XML/TEI dont la mise en forme est sûre.
 
@@ -4560,238 +4407,6 @@ class MainWindow(ValidationPanelMixin, XPathPanelMixin, QMainWindow):
         self.statusBar().showMessage(
             _t("format_xml.done", count=result.formatted_elements), 3500
         )
-
-    def rng_element_suggestions(self, editor, position=None):
-        """Suggestions de Ctrl+E, enrichies par custom-elements.xml.
-
-        Le résultat conserve la provenance de chaque entrée (RNG / Projet /
-        les deux). Les suggestions projet sont une aide de saisie uniquement :
-        elles ne rendent jamais un élément valide si le RNG l'interdit.
-        """
-        source_text = self.editor.toPlainText()
-        text = source_text if editor is self.editor else editor.toPlainText()
-        cursor = editor.textCursor()
-        pos = cursor.position() if position is None else int(position)
-        cache = (
-            self._source_completion_context_cache
-            if editor is self.editor
-            else self._fragment_completion_context_cache
-        )
-        try:
-            context = cache.analyze(text, pos)
-        except Exception:
-            return ()
-        if context.kind != "element":
-            return ()
-
-        custom = self._custom_completion_config()
-        custom_items = custom.element_names() if custom is not None else ()
-        rng_items = ()
-        try:
-            resolution = self._resolve_completion_schema(source_text)
-            if (self.project.schema_mode != "none" and not resolution.error
-                    and resolution.schema_path is not None):
-                model = self._completion_model_for_schema(resolution.schema_path)
-                rng_items = model.child_elements_at(
-                    context.parent_element,
-                    context.preceding_siblings,
-                    context.following_siblings,
-                )
-        except Exception:
-            # Ctrl+E reste disponible pendant une correction ou une panne du RNG.
-            rng_items = ()
-        return tuple(merge_suggestion_sources(rng_items, custom_items, "append"))
-
-    def _auto_attribute_choices(self, editor):
-        """A02: filtrage RNG strict sans dialogue ni auto-ajout de valeurs libres."""
-        text = editor.toPlainText()
-        cursor = editor.textCursor()
-        cache = (self._source_completion_context_cache if editor is self.editor
-                 else self._fragment_completion_context_cache)
-        context = cache.analyze(text, cursor.position())
-        if context.kind != "attribute" or not context.prefix:
-            return (), context
-        model = None
-        resolution = self._resolve_completion_schema(self.editor.toPlainText())
-        if self.project.schema_mode != "none" and not resolution.error and resolution.schema_path:
-            model = self._completion_model_for_schema(resolution.schema_path)
-        # La complétion automatique est strictement limitée aux noms démontrés
-        # par le RELAX NG. Les suggestions libres du projet restent accessibles
-        # par Ctrl+Espace et ne sont pas présentées comme autorisées par le RNG.
-        rng_names = model.allowed_attributes(context.current_element) if model else ()
-        names = self._filter_existing_attributes(rng_names, context.existing_attributes)
-        prefix = context.prefix.casefold()
-        return tuple(dict.fromkeys(n for n in names if n.casefold().startswith(prefix))), context
-
-    def show_rng_completion(self, editor):
-        """Ctrl+Espace : fermeture XML prioritaire, sinon RNG / aides projet."""
-        if editor.show_closing_tag_completion(force=True):
-            return
-        source_text = self.editor.toPlainText()
-        model = None
-        resolution = self._resolve_completion_schema(source_text)
-        if self.project.schema_mode != "none":
-            if resolution.error:
-                QMessageBox.warning(
-                    self, _t("completion.error.title"),
-                    _t("completion.schema_error", error=resolution.error)
-                )
-            elif resolution.schema_path is not None:
-                try:
-                    model = self._completion_model_for_schema(resolution.schema_path)
-                except Exception as exc:
-                    QMessageBox.warning(
-                        self, _t("completion.error.title"),
-                        _t("completion.analysis_error", error=exc)
-                    )
-
-        custom = self._custom_completion_config()
-        text = source_text if editor is self.editor else editor.toPlainText()
-        cursor = editor.textCursor()
-        position = cursor.position()
-        cache = (
-            self._source_completion_context_cache
-            if editor is self.editor
-            else self._fragment_completion_context_cache
-        )
-        context = cache.analyze(text, position)
-        has_project_suggestions = False
-
-        if context.kind == "element":
-            rng_values = (model.child_elements_at(
-                context.parent_element,
-                context.preceding_siblings,
-                context.following_siblings,
-            ) if model is not None else ())
-            custom_values = custom.element_names() if custom is not None else ()
-            items = merge_suggestion_sources(rng_values, custom_values, "append")
-            has_project_suggestions = bool(custom_values)
-            title = _t("completion.elements.title")
-            parent = context.parent_element or _t("completion.document_root")
-            label = _t("completion.elements.label", parent=parent)
-
-        elif context.kind == "attribute":
-            rng_values = (model.allowed_attributes(context.current_element)
-                          if model is not None else ())
-            custom_values = (custom.attribute_names(context.current_element)
-                             if custom is not None else ())
-            rng_values = self._filter_existing_attributes(rng_values, context.existing_attributes)
-            custom_values = self._filter_existing_attributes(custom_values, context.existing_attributes)
-            items = merge_suggestion_sources(rng_values, custom_values, "append")
-            has_project_suggestions = bool(custom_values)
-            title = _t("completion.attributes.title")
-            label = _t("completion.attributes.label", element=context.current_element or "?")
-
-        elif context.kind == "attribute_value":
-            rng_values = (model.allowed_attribute_values(
-                context.current_element, context.current_attribute
-            ) if model is not None else ())
-            custom_values, custom_mode = (
-                custom.attribute_values(
-                    context.current_element,
-                    context.current_attribute,
-                    self._custom_witness_ids(),
-                ) if custom is not None else ((), "append")
-            )
-            items = merge_suggestion_sources(rng_values, custom_values, custom_mode)
-            # Les listes de pointeurs TEI (valeurs commençant par #) peuvent
-            # contenir plusieurs tokens séparés par des espaces. Adapte alors
-            # le contexte au token courant et retire les pointeurs déjà saisis.
-            context, remaining_pointer_values = adapt_pointer_list_value_context(
-                context, text, position, [value for value, _source in items]
-            )
-            if remaining_pointer_values != tuple(value for value, _source in items):
-                remaining_set = set(remaining_pointer_values)
-                items = [item for item in items if item[0] in remaining_set]
-            has_project_suggestions = bool(custom_values)
-            title = _t("completion.values.title")
-            label = _t(
-                "completion.values.label",
-                attribute=context.current_attribute or "?",
-                element=context.current_element or "?",
-            )
-            if custom_values and custom_mode == "replace":
-                label += "\n" + _t("completion.custom.replace_notice")
-        else:
-            self.statusBar().showMessage(_t("completion.unavailable_here"), 4000)
-            return
-
-        if has_project_suggestions and not (
-            context.kind == "attribute_value" and custom_values and custom_mode == "replace"
-        ):
-            label += "\n" + _t("completion.custom.notice")
-
-        # Filtrage par le fragment déjà saisi. Les tuples conservent la source.
-        prefix = (context.prefix or "").casefold()
-        if prefix:
-            filtered = [item for item in items if item[0].casefold().startswith(prefix)]
-            if filtered:
-                items = filtered
-        # Dédupliquer sans perdre l'ordre RNG d'abord, Projet ensuite.
-        dedup = []
-        seen = set()
-        for value, source in items:
-            if value in seen:
-                continue
-            seen.add(value)
-            dedup.append((value, source))
-        items = dedup
-        if not items:
-            if model is None and custom is None:
-                self.statusBar().showMessage(_t("completion.no_schema"), 4500)
-            else:
-                self.statusBar().showMessage(_t("completion.no_suggestions"), 4500)
-            return
-
-        dlg = CompletionDialog(title, label, items, context.prefix, self)
-        try:
-            point = editor.viewport().mapToGlobal(editor.cursorRect().bottomLeft())
-            dlg.move(point)
-        except Exception:
-            pass
-        if dlg.exec() != QDialog.DialogCode.Accepted or not dlg.selected_value:
-            return
-        self._apply_rng_completion(editor, context, dlg.selected_value)
-
-    def _apply_rng_completion(self, editor, context, value):
-        """Insère la suggestion sans remplacer une sélection éditoriale existante."""
-        doc = editor.document()
-        cursor = QTextCursor(doc)
-        start = max(0, int(context.replace_start))
-        end = max(start, int(context.replace_end))
-        cursor.setPosition(start)
-        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
-
-        if context.kind == "element":
-            if context.typed_lt:
-                replacement = f"{value}></{value}>"
-                inner_pos = start + len(value) + 1
-            else:
-                replacement = f"<{value}></{value}>"
-                inner_pos = start + len(value) + 2
-            cursor.insertText(replacement)
-            out = QTextCursor(doc)
-            out.setPosition(inner_pos)
-            editor.setTextCursor(out)
-        elif context.kind == "attribute_value":
-            replacement, final_pos = format_pointer_list_insertion(
-                editor.toPlainText(), start, end, value
-            )
-            cursor.insertText(replacement)
-            out = QTextCursor(doc)
-            out.setPosition(final_pos)
-            editor.setTextCursor(out)
-        else:
-            before = editor.toPlainText()[max(0, start - 1):start]
-            lead = "" if (before.isspace() or before in {"<", ""}) else " "
-            replacement = f'{lead}{value}=""'
-            cursor.insertText(replacement)
-            quote_pos = start + len(lead) + len(value) + 2
-            out = QTextCursor(doc)
-            out.setPosition(quote_pos)
-            editor.setTextCursor(out)
-        editor.ensureCursorVisible()
-        editor.setFocus()
 
     def _view_settings_key(self, suffix):
         try:
