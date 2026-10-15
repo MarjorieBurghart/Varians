@@ -1,0 +1,50 @@
+# Index des documents historiques contenus dans le ZIP original
+
+Ces documents sont consultables en extrayant `BASE_SOURCE/*.zip`. Plusieurs ont des intitulés anciens et des recommandations obsolètes. La source V0.8.5.26.2 puis les addenda récents font autorité.
+
+- `ALIGNMENT_FORMAT.md` — Format d'alignement — version 1
+- `ALTO_IMPORT.md` — Import ALTO — V0.7.5
+- `CODE_MAP.md` — Varians — carte rapide du code (V0.8.5.0)
+- `CONSOLIDATION.md` — Document historique
+- `CUSTOM_ELEMENTS.md` — `custom-elements.xml` — aide à la saisie du projet
+- `DEVELOPER_HANDOFF.md` — Varians V0.8.5.20 — Navigation en image double, ergonomie et sécurité TEI
+- `DISPLAY_NAVIGATION.md` — Varians V0.8.3 — Affichage et navigation de travail
+- `DOUBLE_PAGE_PARTS.md` — Navigation en image double — V0.8.5.20
+- `FACSIMILE_PAGES.md` — Pages TEI et fac-similé — V0.8.2
+- `FOLIO_NAVIGATION.md` — Navigation par parties de manuscrit — Varians V0.8.5.20
+- `I18N_FORMAT.md` — Internationalisation — format des catalogues XML
+- `IIIF_CANVAS_SELECTION.md` — Varians 0.8.5.4 — Pages éditoriales et associations IIIF ↔ ALTO/PAGE
+- `IIIF_SYNC_RESOLUTION.md` — Varians 0.8.5.5 — Résolution des pages synchronisées vers les Canvas IIIF
+- `IMAGE_SOURCES.md` — Sources d’images flexibles — V0.7.0
+- `MIXED_NAVIGATION.md` — Varians V0.8.5.11 — Navigation mixte par témoin
+- `PAGE_IIIF_LOCAL.md` — Varians 0.8.5 — PAGE XML et copies de travail IIIF
+- `PASSATION_V0_8_5_24.md` — Varians — Passation de développement V0.8.5.24
+- `PASSATION_V0_8_5_25.md` — Passation Varians V0.8.5.25 — 14 octobre 2026
+- `PASSATION_V0_8_5_25_1.md` — Passation technique — Varians V0.8.5.25.1
+- `PASSATION_V0_8_5_25_2.md` — Varians V0.8.5.25.2 — note de passation
+- `PASSATION_V0_8_5_25_3.md` — VARIANS V0.8.5.25.3 — Note de passation complète du correctif
+- `PASSATION_V0_8_5_26.md` — VARIANS — PASSATION V0.8.5.26 (VERSION INTERMÉDIAIRE)
+- `PASSATION_V0_8_5_26_1.md` — VARIANS — PASSATION V0.8.5.26.1 (ERGONOMIE DE LA RECHERCHE ET ORDRE DES TÉMOINS)
+- `PASSATION_V0_8_5_26_2.md` — VARIANS V0.8.5.26.2 — PASSATION DU CORRECTIF RELAX NG
+- `PROJECT_AUDIT_PLAN.md` — Varians — Proposition d'audit scientifique des projets
+- `PROJECT_MANAGEMENT.md` — Gestion des projets — V0.4
+- `RELAXNG_VALIDATION.md` — Validation RELAX NG — V0.5.1
+- `RNG_COMPLETION.md` — Complétion contextuelle RELAX NG — V0.5.7
+- `ROADMAP_EN_REDEFINITION.md` — Varians — feuille de route en redéfinition
+- `ROADMAP_REVISED_2026_10.md` — ARCHIVE HISTORIQUE — FEUILLE DE ROUTE ABANDONNÉE LE 14 OCTOBRE 2026
+- `SYNCHRONIZATION.md` — Synchronisation facultative — V0.7.6
+- `TEI_FORMATTER.md` — Formateur TEI sûr — V0.8.1
+- `TEI_PIVOT_SCAFFOLD.md` — Varians 0.8.5.8 — Préparation de la transcription TEI depuis le témoin pivot
+- `WEB_EXPORT_CUSTOMIZATION_DESIGN.md` — Varians — Proposition pour le viewer web et les exports XSLT/CSS
+- `WEB_VIEWER_FULLTEXT_SEARCH.md` — Viewer web — moteur de recherche plein texte A03
+- `WEB_VIEWER_GEOMETRY.md` — Varians V0.8.5.24 — Contrat de géométrie du viewer web
+- `WEB_VIEWER_IIIF.md` — Varians 0.8.5.25 — IIIF haute résolution dans le viewer web
+- `WEB_VIEWER_LINE_SYNC_FIX.md` — Varians 0.8.5.25.1 — Correctif de résolution des lignes TEI dans le viewer web
+- `WEB_VIEWER_PIVOT_LB_PARITY.md` — VARIANS — V0.8.5.25.3 — Parité des jalons `<lb/>` entre éditeur et viewer web
+- `WEB_VIEWER_TEXT_CLICK_FIX.md` — Varians V0.8.5.25.2 — clic texte ↔ images manuscrites du viewer web
+- `WITNESS_DIAGNOSTICS.md` — VARIANS V0.8.5.17 — DIAGNOSTIC DES TÉMOINS ET ACTUALISATION
+- `WORKSPACE_LAYOUT.md` — Varians V0.8.5.21 — Dispositions des témoins et fenêtres détachées
+- `XML_EDITING.md` — Édition XML assistée — V0.8.0
+- `XML_FOLDING.md` — Varians 0.8.5.22 — Repliage structurel XML
+- `XML_TAG_HIGHLIGHT.md` — Varians V0.8.5.23 — Surbrillance bidirectionnelle des paires XML
+- `XSLT_POLICY.md` — XSLT de l’application ou XSLT personnalisée — V0.4.2
