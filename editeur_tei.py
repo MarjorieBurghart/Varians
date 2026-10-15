@@ -72,6 +72,7 @@ from project_dialogs import NewProjectDialog, ProjectSettingsDialog, run_pivot_s
 from i18n import I18nManager
 from relaxng_validation import validate_relaxng, lxml_available, relaxng_schema_token
 from save_io import atomic_write_text_with_backup
+from document_session import DocumentSession
 from schema_resolution import resolve_schema, detect_xml_models
 from rng_completion import (
     load_completion_model, analyze_xml_context, XmlContextCache,
@@ -3986,9 +3987,56 @@ class WitnessDiagnosticDialog(QDialog):
             QTimer.singleShot(0, main.show_witness_diagnostics)
 
 
+def _document_attribute(path):
+    """Ancien attribut de MainWindow redirigé vers ``self.document``.
+
+    ``path`` est le chemin pointé de l'attribut dans ``DocumentSession``
+    (p. ex. ``"lb.spans"``). Ces propriétés assurent la compatibilité pendant
+    la restructuration : le code existant continue d'utiliser les anciens noms.
+    """
+    *parents, leaf = path.split(".")
+
+    def _owner(self):
+        obj = self.document
+        for name in parents:
+            obj = getattr(obj, name)
+        return obj
+
+    return property(
+        lambda self: getattr(_owner(self), leaf),
+        lambda self, value: setattr(_owner(self), leaf, value),
+        doc=f"Compatibilité : self.document.{path}",
+    )
+
+
 class MainWindow(QMainWindow):
+    # --- État du document ouvert (voir document_session.DocumentSession) ---
+    current_path = _document_attribute("path")
+    modified = _document_attribute("modified")
+    _last_processed_edit_revision = _document_attribute("last_processed_edit_revision")
+    _loading_editor_document = _document_attribute("loading")
+    _lb_spans = _document_attribute("lb.spans")
+    _lb_cache_dirty = _document_attribute("lb.dirty")
+    _document_health = _document_attribute("health")
+    _last_xml_health_revision = _document_attribute("last_xml_health_revision")
+    _last_xml_health_well_formed = _document_attribute("last_xml_health_well_formed")
+    _last_rng_result = _document_attribute("last_rng_result")
+    _last_rng_revision = _document_attribute("last_rng_revision")
+    _last_rng_schema_token = _document_attribute("last_rng_schema_token")
+    _last_schema_resolution = _document_attribute("last_schema_resolution")
+    _completion_model = _document_attribute("completion_model")
+    _completion_model_key = _document_attribute("completion_model_key")
+    _completion_resolution = _document_attribute("completion_resolution")
+    _completion_resolution_key = _document_attribute("completion_resolution_key")
+    _source_completion_context_cache = _document_attribute("completion_context_cache")
+    _last_synced_ordinal = _document_attribute("last_synced_ordinal")
+    _last_synced_surface = _document_attribute("last_synced_surface")
+
     def __init__(self, project_path=None):
         super().__init__()
+        # Document ouvert : doit exister avant toute affectation des attributs
+        # de compatibilité ci-dessus.
+        self.document = DocumentSession()
         self.project = load_project(project_path or DEMO_PROJECT)
         remember_recent_project(self.project.path)
         global I18N
@@ -4126,6 +4174,7 @@ class MainWindow(QMainWindow):
         self._last_synced_surface = None
 
         self.editor = CodeEditor(); self.highlighter = XMLHighlighter(self.editor.document())
+        self.document.text_document = self.editor.document()
         self.formatted_view = FormattedEditionWidget(self)
         self.editor.attribute_completion_provider = self._auto_attribute_choices
         self.formatted_view.fragment_editor.attribute_completion_provider = self._auto_attribute_choices
