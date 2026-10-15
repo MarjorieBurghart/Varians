@@ -72,7 +72,7 @@ from project_dialogs import NewProjectDialog, ProjectSettingsDialog, run_pivot_s
 from i18n import I18nManager
 from relaxng_validation import validate_relaxng, lxml_available, relaxng_schema_token
 from save_io import atomic_write_text_with_backup
-from document_session import DocumentSession
+from document_session import DocumentSession, LbIndex
 from schema_resolution import resolve_schema, detect_xml_models
 from rng_completion import (
     load_completion_model, analyze_xml_context, XmlContextCache,
@@ -6478,55 +6478,21 @@ class MainWindow(QMainWindow):
     def _source_contents_changed(self, position, chars_removed, chars_added):
         """Invalide seulement ce que l'édition rend réellement obsolète."""
         self._source_completion_context_cache.invalidate_from(position)
-        if not hasattr(self, "_lb_spans") or self._lb_cache_dirty:
+        lb = self.document.lb
+        if lb.dirty:
             return
-        position = max(0, int(position))
-        chars_removed = max(0, int(chars_removed))
-        chars_added = max(0, int(chars_added))
-        old_end = position + chars_removed
-
-        spans = self._lb_spans
-        # Une modification à l'intérieur d'un <lb> existant exige un nouveau
-        # balayage : son statut de repère peut avoir changé.
-        overlap = False
-        idx = bisect.bisect_right(spans, (position, 10**18)) - 1
-        if idx >= 0:
-            start, end = spans[idx]
-            overlap = start < position < end
-        if chars_removed and not overlap:
-            idx = bisect.bisect_left(spans, (position, -1))
-            overlap = idx < len(spans) and spans[idx][0] < old_end
-
         inserted = ""
         if chars_added:
+            start = max(0, int(position))
             cursor = QTextCursor(self.editor.document())
-            cursor.setPosition(position)
-            cursor.setPosition(position + chars_added, QTextCursor.MoveMode.KeepAnchor)
+            cursor.setPosition(start)
+            cursor.setPosition(start + max(0, int(chars_added)), QTextCursor.MoveMode.KeepAnchor)
             inserted = cursor.selectedText()
-        # La création d'une nouvelle balise commence nécessairement par '<'.
-        # '>' est également structurel (fermeture d'une balise en cours).
-        structural_insert = "<" in inserted or ">" in inserted
-
-        if overlap or structural_insert:
-            self._lb_cache_dirty = True
-            return
-
-        # Cas ultra-fréquent : saisie/suppression dans le texte courant. Les
-        # <lb> eux-mêmes ne changent pas ; seuls ceux situés après l'édition se
-        # décalent. Cela évite un finditer sur tout le document à chaque frappe.
-        delta = chars_added - chars_removed
-        if not delta or not spans:
-            return
-        cut = bisect.bisect_left(spans, (old_end, -1))
-        if cut < len(spans):
-            self._lb_spans = spans[:cut] + [
-                (start + delta, end + delta) for start, end in spans[cut:]
-            ]
+        lb.apply_edit(position, chars_removed, chars_added, inserted)
 
     def _set_lb_spans(self, spans):
-        self._lb_spans = list(spans or [])
-        self._lb_cache_dirty = False
-        n = len(self._lb_spans)
+        self.document.lb.set(spans)
+        n = len(self.document.lb.spans)
         if self.expected_base_lines is None:
             self.structure_status.setText(_t("status.structure.free", base=self.base_id, count=n))
             self.structure_status.setStyleSheet("color:#746b61")
@@ -6538,19 +6504,16 @@ class MainWindow(QMainWindow):
     def _rebuild_lb_cache(self, text=None):
         if text is None:
             text = self.editor.toPlainText()
-        self._set_lb_spans((m.start(), m.end()) for m in self.lb_base_re.finditer(text))
+        self._set_lb_spans(LbIndex.scan(text, self.lb_base_re))
 
     def lb_spans(self):
-        if self._lb_cache_dirty: self._rebuild_lb_cache()
-        return self._lb_spans
+        if self.document.lb.dirty:
+            self._rebuild_lb_cache()
+        return self.document.lb.spans
 
     def ordinal_at_position(self, position):
-        spans = self.lb_spans()
-        if not spans:
-            return None
-        starts = [x[0] for x in spans]
-        i = bisect.bisect_right(starts, int(position)) - 1
-        return max(0, min(len(spans) - 1, i))
+        self.lb_spans()
+        return self.document.lb.ordinal_at(position)
 
     def ordinal_at_cursor(self):
         return self.ordinal_at_position(self.editor.textCursor().position())
