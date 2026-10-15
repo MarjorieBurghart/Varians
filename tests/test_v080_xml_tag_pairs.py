@@ -86,7 +86,9 @@ def test_static_editor_integration_v080():
     root = Path(__file__).resolve().parents[1]
     source = application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in source
-    assert 'opening_pair_at_context' in source
+    # opening_pair_at_context était importé sans être utilisé (import retiré en
+    # V0.8.6.0) ; l'éditeur s'appuie sur pair_at_context.
+    assert 'pair_at_context(' in source
     assert 'exact_selected_opening_pair' in source
     assert 'closing_rename_mirror' in source
     assert 'def _remove_pair_after_opening_deletion' in source

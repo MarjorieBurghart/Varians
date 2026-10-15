@@ -22,6 +22,7 @@ APPLICATION_MODULES = (
     "editeur_tei.py",
     "app_context.py",
     "document_session.py",
+    "formatted_view.py",
     "manuscript_panel.py",
     "code_editor.py",
     "witness_sync.py",
