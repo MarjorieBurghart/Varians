@@ -9,7 +9,8 @@ de ``editeur_tei.py`` : ils doivent passer avant et après chaque étape.
 Garanties apportées par les fixtures ci-dessous :
 
 * les réglages QSettings et le cache des schémas sont écrits dans un
-  dossier temporaire, jamais dans le profil de l'utilisateur ;
+  dossier temporaire, jamais dans le profil de l'utilisateur (ni dans le
+  registre Windows) ;
 * tout accès réseau échoue immédiatement ;
 * toute boîte de dialogue modale doit avoir été prévue par le test
   (fixture ``dialogs``) ; une boîte inattendue fait échouer le test au
@@ -33,7 +34,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 PySide6 = pytest.importorskip("PySide6")
-from PySide6.QtCore import QSettings, QThreadPool  # noqa: E402
+from PySide6.QtCore import QThreadPool  # noqa: E402
 from PySide6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
 
 
@@ -138,8 +139,11 @@ def isolated_environment(tmp_path, monkeypatch):
     """Réglages, cache et réseau isolés pour chaque test."""
     settings_dir = tmp_path / "_settings"
     settings_dir.mkdir()
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(settings_dir))
+    # Tous les réglages de Varians passent par app_context._settings() : ils
+    # sont redirigés vers un fichier INI temporaire, jamais vers le registre
+    # Windows ni ~/.config.
+    import app_context
+    monkeypatch.setattr(app_context, "SETTINGS_FILE_OVERRIDE", settings_dir / "varians.ini")
     home = tmp_path / "_home"
     home.mkdir()
     for var in ("HOME", "USERPROFILE", "LOCALAPPDATA", "APPDATA"):
@@ -158,16 +162,16 @@ def isolated_environment(tmp_path, monkeypatch):
     # Images distantes (IIIF/Gallica) : échec immédiat et explicite, sans les
     # nouvelles tentatives temporisées du chargeur réel. Les images locales
     # (file://) continuent d'être lues normalement.
-    import editeur_tei
-    original = editeur_tei.FetchWorker._cached_or_download
+    import image_fetch
+    original = image_fetch.FetchWorker._cached_or_download
 
     def _local_only(self, url):
         if str(url).lower().startswith("file://"):
             return original(self, url)
         raise OSError("Accès réseau interdit pendant les tests")
 
-    monkeypatch.setattr(editeur_tei.FetchWorker, "_cached_or_download", _local_only)
-    monkeypatch.setattr(editeur_tei.FetchWorker, "_gallica_lock", None, raising=False)
+    monkeypatch.setattr(image_fetch.FetchWorker, "_cached_or_download", _local_only)
+    monkeypatch.setattr(image_fetch.FetchWorker, "_gallica_lock", None, raising=False)
     yield
 
 

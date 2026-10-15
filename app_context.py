@@ -44,7 +44,15 @@ SETTINGS_APPLICATION = "GenericTEIManuscriptEditor"
 MAX_RECENT_PROJECTS = 10
 
 
+# Fichier de réglages imposé (fichier INI). ``None`` : emplacement standard du
+# système (registre sous Windows, ~/.config sous Linux, etc.). Utilisé par les
+# tests pour ne jamais toucher aux réglages réels de l'utilisateur.
+SETTINGS_FILE_OVERRIDE = None
+
+
 def _settings():
+    if SETTINGS_FILE_OVERRIDE is not None:
+        return QSettings(str(SETTINGS_FILE_OVERRIDE), QSettings.Format.IniFormat)
     # Identifiants stables et indépendants de la langue affichée.
     return QSettings(SETTINGS_ORGANIZATION, SETTINGS_APPLICATION)
 
