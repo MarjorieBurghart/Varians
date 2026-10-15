@@ -617,7 +617,8 @@ class CodeEditor(QPlainTextEdit):
                 old_text, position, chars_removed
             )
             mirror = closing_rename_mirror_for_change(
-                old_text, new_text, position, chars_removed, chars_added
+                old_text, new_text, position, chars_removed, chars_added,
+                pair=pair_before,
             )
             if mirror is not None:
                 edit = QTextCursor(self.document())

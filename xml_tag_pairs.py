@@ -17,6 +17,11 @@ import re
 from typing import Iterable
 
 _QNAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.:-]*")
+# Reste d'une balise d'élément après « < » : jusqu'au premier « > » situé hors
+# d'une valeur entre guillemets simples ou doubles.
+_ELEMENT_TAG_REST_RE = re.compile(r"""[^>"']*(?:(?:"[^"]*"|'[^']*')[^>"']*)*>""")
+_SPECIAL_MARKUP_STARTS = ("<!--", "<![CDATA[", "<?", "<!")
+_NOT_COMPUTED = object()
 
 
 @dataclass(frozen=True)
@@ -77,11 +82,16 @@ def _find_markup_end(text: str, start: int) -> int:
     if text.startswith("<?", start):
         stop = text.find("?>", start + 2)
         return n if stop < 0 else stop + 2
+    if not text.startswith("<!", start):
+        # Balise d'élément : expression régulière (même règle que la boucle
+        # ci-dessous, sans parcours caractère par caractère en Python).
+        m = _ELEMENT_TAG_REST_RE.match(text, start + 1)
+        return m.end() if m else n
 
     quote = None
     bracket_depth = 0
     i = start + 1
-    declaration = text.startswith("<!", start)
+    declaration = True
     while i < n:
         ch = text[i]
         if quote:
@@ -159,15 +169,29 @@ def _inside_special_markup(text: str, position: int) -> bool:
 
 
 def _parse_element_tag_at(text: str, start: int) -> XmlTagToken | None:
-    """Parse une seule balise d'élément commençant exactement à ``start``."""
+    """Parse une seule balise d'élément commençant exactement à ``start``.
+
+    Vérifie aussi, en recherchant en arrière, que ``start`` n'est pas dans un
+    commentaire, une section CDATA ou une PI : à réserver aux recherches
+    ponctuelles (coût proportionnel à la longueur du préfixe).
+    """
     n = len(text)
     if start < 0 or start >= n or text[start] != "<":
         return None
-    if text.startswith(("<!--", "<![CDATA[", "<?", "<!"), start):
+    if text.startswith(_SPECIAL_MARKUP_STARTS, start):
         return None
     if _inside_special_markup(text, start):
         return None
-    end = _find_markup_end(text, start)
+    return _element_token(text, start, _find_markup_end(text, start))
+
+
+def _element_token(text: str, start: int, end: int) -> XmlTagToken | None:
+    """Jeton de la balise d'élément ``text[start:end]``, si elle est complète.
+
+    ``start`` désigne un ``<`` d'élément (pas de commentaire, CDATA, PI ni
+    déclaration) et ``end`` la valeur de ``_find_markup_end(text, start)``.
+    """
+    n = len(text)
     if end <= start or end > n or text[end - 1:end] != ">":
         return None
     p = start + 1
@@ -199,6 +223,10 @@ def matching_closing_tag(xml_text: str, opening: XmlTagToken) -> XmlTagToken | N
     Une pile complète de QNames garantit le bon résultat pour les éléments
     imbriqués de même nom. Un mismatch rencontré pendant l'édition rend la paire
     indéterminée plutôt que de provoquer une association spéculative.
+
+    ``opening`` est hors commentaire/CDATA/PI (vérifié par l'appelant via
+    ``_parse_element_tag_at``) et le parcours saute en bloc chacune de ces zones :
+    aucune balise rencontrée ne peut s'y trouver, d'où un coût linéaire.
     """
     text = str(xml_text or "")
     stack = [opening.name]
@@ -209,8 +237,10 @@ def matching_closing_tag(xml_text: str, opening: XmlTagToken) -> XmlTagToken | N
         if start < 0:
             return None
         end = _find_markup_end(text, start)
-        token = _parse_element_tag_at(text, start)
         i = max(end, start + 1)
+        if text.startswith(_SPECIAL_MARKUP_STARTS, start):
+            continue
+        token = _element_token(text, start, end)
         if token is None or token.kind == "self":
             continue
         if token.kind == "open":
@@ -426,8 +456,14 @@ def closing_rename_mirror_for_change(
     position: int,
     chars_removed: int,
     chars_added: int,
+    pair: XmlTagPair | None | object = _NOT_COMPUTED,
 ) -> RenameMirror | None:
-    """Version efficace fondée sur le signal QTextDocument.contentsChange."""
+    """Version efficace fondée sur le signal QTextDocument.contentsChange.
+
+    ``pair`` : résultat déjà calculé (éventuellement ``None``) de
+    ``opening_pair_for_name_change(old_text, position, chars_removed)``, pour
+    éviter un second parcours du document.
+    """
     old = str(old_text or "")
     new = str(new_text or "")
     old_start = max(0, min(len(old), int(position)))
@@ -435,7 +471,8 @@ def closing_rename_mirror_for_change(
     new_start = max(0, min(len(new), int(position)))
     new_end = max(new_start, min(len(new), new_start + max(0, int(chars_added))))
 
-    pair = opening_pair_for_name_change(old, old_start, old_end - old_start)
+    if pair is _NOT_COMPUTED:
+        pair = opening_pair_for_name_change(old, old_start, old_end - old_start)
     if pair is None:
         return None
     opening = pair.opening

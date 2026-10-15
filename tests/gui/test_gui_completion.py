@@ -38,14 +38,7 @@ def test_element_completion_proposes_schema_element_and_inserts_it(open_window, 
 
 def test_attribute_completion_lists_required_attribute(open_window, example_project, dialogs):
     window = open_window(example_project)
-    # Près de la fin du document : la recherche de la balise fermante, lancée
-    # à chaque frappe dans une balise ouvrante, y est courte (voir
-    # docs/DEVELOPPEMENT.md, lenteur connue de xml_tag_pairs).
-    text = window.editor.toPlainText()
-    cursor = window.editor.textCursor()
-    cursor.setPosition(text.rindex("</body>"))
-    window.editor.setTextCursor(cursor)
-    window.editor.insertPlainText('<varianstest ')
+    _place_cursor_after(window, "<body>", "<varianstest ")
     proposed = []
 
     def cancel(dialog):

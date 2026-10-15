@@ -93,18 +93,14 @@ La version affichée par l'application est `APP_VERSION` dans
 
 ## Défauts connus (hérités de V0.8.5.26.2, correction prévue)
 
-1. **Lenteur à la frappe d'une balise ouvrante dans un long document.**
-   Pendant la saisie d'une balise ouvrante non encore fermée, la recherche
-   de la balise fermante correspondante (`xml_tag_pairs.matching_closing_tag`,
-   pour le renommage simultané des paires) parcourt la suite du document et,
-   pour chaque balise rencontrée, recherche en arrière jusqu'au début du
-   texte d'éventuels commentaires ou sections CDATA. Coût quadratique : sur
-   le projet exemple (≈ 530 000 caractères), plusieurs dizaines de secondes
-   par frappe sur une machine lente.
-2. **Index des `<lb/>` momentanément périmé** lorsqu'on modifie l'intérieur
+1. **Index des `<lb/>` momentanément périmé** lorsqu'on modifie l'intérieur
    d'une balise sans saisir `<` ni `>` (ex. `edRef="#T"` → `"#T1"`), jusqu'au
    contrôle XML automatique suivant (voir `tests/test_document_session.py`).
-3. **Erreur dans la console** (`Signal source has been deleted`) si une
+2. **Erreur dans la console** (`Signal source has been deleted`) si une
    fenêtre est fermée pendant un téléchargement d'image.
-4. **Erreur dans la console** si une fenêtre est fermée moins de 120 ms
+3. **Erreur dans la console** si une fenêtre est fermée moins de 120 ms
    après l'ouverture d'un document (validation différée de `open_path`).
+
+Corrigé depuis : la lenteur à la frappe d'une balise ouvrante dans un long
+document (recherche de la balise fermante de coût quadratique dans
+`xml_tag_pairs`) — voir `tests/test_xml_tag_pairs_performance.py`.
