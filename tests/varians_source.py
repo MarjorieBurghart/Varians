@@ -25,6 +25,7 @@ APPLICATION_MODULES = (
     "project_actions.py",
     "main_menus.py",
     "help_dialogs.py",
+    "image_fetch.py",
     "witness_workspace.py",
     "document_io.py",
     "completion_ui.py",
