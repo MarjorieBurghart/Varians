@@ -55,7 +55,7 @@ trouve dans `docs/passation_V0.8.5.26.2/` : ses invariants scientifiques
 restent la référence.
 
 La version affichée par l'application est `APP_VERSION` dans
-`editeur_tei.py`.
+`app_context.py`.
 
 ## Défauts connus (hérités de V0.8.5.26.2, correction prévue)
 

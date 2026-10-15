@@ -22,6 +22,8 @@ APPLICATION_MODULES = (
     "editeur_tei.py",
     "app_context.py",
     "document_session.py",
+    "main_menus.py",
+    "help_dialogs.py",
     "witness_workspace.py",
     "document_io.py",
     "completion_ui.py",

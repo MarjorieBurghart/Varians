@@ -15,6 +15,7 @@ from pathlib import Path
 from PySide6.QtCore import QSettings
 
 HERE = Path(__file__).resolve().parent
+APP_VERSION = "0.8.5.26.2"
 
 # --- Traductions --------------------------------------------------------------
 
