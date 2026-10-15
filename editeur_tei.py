@@ -113,7 +113,7 @@ try:
         QTextFormat, QTextDocument, QPixmap, QPen, QBrush, QImageReader, QPolygonF,
     )
     from PySide6.QtWidgets import (
-        QApplication, QMainWindow, QPlainTextEdit, QWidget, QSplitter,
+        QApplication, QMainWindow, QPlainTextEdit, QPlainTextDocumentLayout, QWidget, QSplitter,
         QToolBar, QFileDialog, QMessageBox, QLabel, QLineEdit, QSizePolicy,
         QTextEdit, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox,
         QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsRectItem, QGraphicsPolygonItem,
@@ -554,6 +554,41 @@ class CodeEditor(QPlainTextEdit):
             self.show_closing_tag_completion()
         elif popup.isVisible():
             popup.hide()
+
+    def set_text_document(self, document):
+        """Affiche ``document`` (texte et historique annuler/refaire).
+
+        Chaque document ouvert possède son propre QTextDocument. Les
+        connexions propres au document (repliage, renommage des paires de
+        balises) sont déplacées vers le nouveau document, et les réglages
+        d'affichage de l'éditeur (police, tabulations) lui sont appliqués.
+        L'état visuel lié à l'ancien document (repliage, résultat de
+        recherche) est réinitialisé.
+        """
+        old = self.document()
+        if document is old:
+            return
+        for slot in (self._folding_document_changed, self._pair_document_contents_changed):
+            try:
+                old.contentsChange.disconnect(slot)
+            except (RuntimeError, TypeError):
+                pass
+        if not isinstance(document.documentLayout(), QPlainTextDocumentLayout):
+            document.setDocumentLayout(QPlainTextDocumentLayout(document))
+        document.setDefaultFont(self.font())
+        tab_stop = self.tabStopDistance()
+        self.setDocument(document)
+        self.setTabStopDistance(tab_stop)
+        document.contentsChange.connect(self._folding_document_changed)
+        document.contentsChange.connect(self._pair_document_contents_changed)
+        self._fold_regions_cache = None
+        self._folded_opening_lines = set()
+        self._search_match = None
+        self._search_last = None
+        self._pending_pair_rename = None
+        self._pair_previous_text = self.toPlainText()
+        self.updateLineNumberAreaWidth(0)
+        self.highlightCurrentLine()
 
     def set_visual_wrap(self, enabled: bool):
         """Active/désactive le retour à la ligne visuel sans toucher au XML.
@@ -4173,8 +4208,11 @@ class MainWindow(QMainWindow):
         self.expected_base_lines = self._base_sync_line_count if self.base_alignment_available else None
         self._last_synced_surface = None
 
-        self.editor = CodeEditor(); self.highlighter = XMLHighlighter(self.editor.document())
-        self.document.text_document = self.editor.document()
+        self.editor = CodeEditor()
+        # Le QTextDocument appartient au document ouvert, non à l'éditeur.
+        self.document.text_document = QTextDocument(self)
+        self.editor.set_text_document(self.document.text_document)
+        self.highlighter = XMLHighlighter(self.editor.document())
         self.formatted_view = FormattedEditionWidget(self)
         self.editor.attribute_completion_provider = self._auto_attribute_choices
         self.formatted_view.fragment_editor.attribute_completion_provider = self._auto_attribute_choices
