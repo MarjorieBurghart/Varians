@@ -10,6 +10,7 @@ import pytest
 from witness_resource_refresh import (assemble_resources, diagnostic_rows,
                                       changed_witnesses, read_alignment_json,
                                       sync_fingerprint)
+from varians_source import application_source, application_ast, node_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -160,7 +161,7 @@ def test_seven_locales_have_independent_diagnostic_strings():
 
 
 def test_mainwindow_menu_preview_and_in_place_reload_are_wired_without_replacing_xml():
-    text=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
+    text=application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in text
     assert 'self.action_diagnose_witnesses' in text
     assert 'self.action_refresh_synchronizations' in text
@@ -181,8 +182,8 @@ def _real_refresh_method(monkeypatch):
     import ast
     import textwrap
     import witness_resource_refresh as refresh_mod
-    source=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
-    cls=next(n for n in ast.parse(source).body
+    source=application_source()
+    cls=next(n for n in application_ast().body
              if isinstance(n,ast.ClassDef) and n.name=='MainWindow')
     func=next(n for n in cls.body
               if isinstance(n,ast.FunctionDef) and n.name=='refresh_witness_synchronizations')
@@ -212,7 +213,7 @@ def _real_refresh_method(monkeypatch):
            'QApplication':Application,'QMessageBox':Messages,
            'Qt':SimpleNamespace(CursorShape=SimpleNamespace(WaitCursor=1)),
            '_t':lambda key,**kwargs:key.format(**kwargs) if kwargs else key}
-    exec(textwrap.dedent(ast.get_source_segment(source,func)),globs)
+    exec(textwrap.dedent(node_source(func)),globs)
     return globs[func.name],Messages,Application
 
 

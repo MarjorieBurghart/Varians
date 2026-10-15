@@ -3,9 +3,10 @@ import ast
 import re
 import html as html_lib
 from pathlib import Path
+from varians_source import application_ast
 
 SOURCE = Path(__file__).resolve().parents[1] / 'editeur_tei.py'
-root = ast.parse(SOURCE.read_text(encoding='utf-8'))
+root = application_ast()
 names = {'_selection_xml_to_visible_text', '_xml_selection_pattern'}
 funcs = [n for n in root.body if isinstance(n, ast.FunctionDef) and n.name in names]
 ns = {'re': re, 'html_lib': html_lib}

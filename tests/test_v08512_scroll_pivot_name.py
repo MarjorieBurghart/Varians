@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 
 from tei_facsimile import facsimile_ref_at_position
 from witness_layout import minimum_witness_stack_height
+from varians_source import application_source, application_ast, node_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,11 +22,11 @@ def test_four_panels_have_scroll_extent_instead_of_compressed_heights():
 
 
 def _real_method(name):
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
-    cls = next(n for n in ast.parse(source).body if isinstance(n,ast.ClassDef) and n.name=='MainWindow')
+    source = application_source()
+    cls = next(n for n in application_ast().body if isinstance(n,ast.ClassDef) and n.name=='MainWindow')
     f = next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name==name)
     ns = {}
-    exec(textwrap.dedent(ast.get_source_segment(source,f)), ns)
+    exec(textwrap.dedent(node_source(f)), ns)
     return ns[name]
 
 
@@ -49,7 +50,7 @@ def test_real_scroll_extent_reacts_to_visibility_and_maximize_without_qt():
 
 
 def test_editor_uses_real_vertical_scroll_area_around_existing_splitter():
-    code=(ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    code=application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in code
     for fragment in (
         'self.witness_scroll = QScrollArea(self)',

@@ -11,6 +11,7 @@ from image_sources import page_label as image_page_label
 from project_management import ProjectDraft, WitnessDraft, LocalImageDraft, write_project_xml
 from project_config import load_project
 from web_viewer.generator import build_dataset
+from varians_source import application_source, application_ast, node_source
 
 ROOT = Path(__file__).resolve().parents[1]
 TEI = 'http://www.tei-c.org/ns/1.0'
@@ -57,13 +58,13 @@ def test_pb_n_ambiguous_or_unknown_or_mismatched_facs_never_guessed():
 
 def _editor_method(name):
     """Extract a real MainWindow method for Qt-free behavioral tests."""
-    src = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
-    module = ast.parse(src)
+    src = application_source()
+    module = application_ast()
     cls = next(x for x in module.body if isinstance(x, ast.ClassDef) and x.name == 'MainWindow')
     fn = next(x for x in cls.body if isinstance(x, ast.FunctionDef) and x.name == name)
     ns = {'facsimile_ref_at_position': facsimile_ref_at_position, 'image_page_label': image_page_label,
           '_t': lambda *args, **kwargs: ''}
-    exec(textwrap.dedent(ast.get_source_segment(src, fn)), ns)
+    exec(textwrap.dedent(node_source(fn)), ns)
     return ns[name]
 
 
@@ -188,7 +189,7 @@ def test_three_witness_project_exposes_witness_local_line_sync_mode():
 
 
 def test_navigation_entrypoints_and_browser_lines_update_independent_pages():
-    editor=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
+    editor=application_source()
     browser=(ROOT/'web_viewer'/'generator.py').read_text(encoding='utf-8')
     assert 'if panel.sync_enabled:\n                panel.set_primary' in editor
     assert 'self._sync_page_panels_to_cursor(force=True)' in editor

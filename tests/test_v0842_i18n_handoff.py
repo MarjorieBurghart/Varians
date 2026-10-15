@@ -1,6 +1,7 @@
 from pathlib import Path
 import string
 import xml.etree.ElementTree as ET
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 LANGUAGES = {
@@ -31,7 +32,7 @@ def _fields(text: str):
 
 
 def test_current_version_and_toolbar_filename_label_removed():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in source
     assert "self.file_label" not in source
     assert "tb.addWidget(self.file_label)" not in source
@@ -60,7 +61,7 @@ def test_language_specific_help_exists_and_is_current():
 
 
 def test_help_dialog_uses_active_language_with_fallback():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'path = HERE / "help" / f"{language}.html"' in source
     assert 'fallback = I18N.fallback' in source
     # No FR/EN-only gate may remain.

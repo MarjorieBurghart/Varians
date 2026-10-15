@@ -3,6 +3,7 @@ import tempfile
 
 from project_management import WitnessDraft, prepare_alignment_files_for_project, write_project_xml, ProjectDraft
 from project_config import load_project
+from varians_source import application_source
 
 
 def _draft(root: Path, witnesses):
@@ -80,7 +81,7 @@ def test_project_roundtrip_without_sync_then_with_sync():
 
 
 def test_v076_editor_applies_alignment_before_independent_alto_and_images():
-    source=Path('editeur_tei.py').read_text(encoding='utf-8')
+    source=application_source()
     assert 'load_json(w.alignment)' in source
     section=source[source.index('self.alignment_caches = {}'):source.index('self.witness_display_items = {}')]
     assert section.index('load_json(w.alignment)') < section.index('apply_witness_alto_policy') < section.index('apply_witness_image_policy')

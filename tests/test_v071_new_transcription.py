@@ -8,6 +8,7 @@ from project_management import (
     create_new_transcription_project,
     minimal_tei_text,
 )
+from varians_source import application_source
 from schema_resolution import detect_xml_models
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -101,7 +102,7 @@ def test_new_transcription_auto_schema_is_immediately_rng_aware():
 
 def test_ui_source_contains_both_creation_modes_and_switches_creator():
     dialogs = (ROOT / "project_dialogs.py").read_text(encoding="utf-8")
-    editor = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    editor = application_source()
     assert 'project.new.mode.existing' in dialogs
     assert 'project.new.mode.blank' in dialogs
     assert 'self.edition.setEnabled(mode == "existing")' in dialogs

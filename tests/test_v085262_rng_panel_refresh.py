@@ -8,13 +8,14 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 from types import SimpleNamespace
+from varians_source import application_source, application_ast
 
 ROOT = Path(__file__).resolve().parents[1]
-CODE = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+CODE = application_source()
 
 
 def _method(name):
-    tree = ast.parse(CODE)
+    tree = application_ast()
     cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'MainWindow')
     method = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == name)
     # No PySide6 import, no source edits: execute precisely the production body.

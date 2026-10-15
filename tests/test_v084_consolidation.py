@@ -10,6 +10,7 @@ from resource_state import (
     effective_base_line_sync,
     effective_secondary_line_sync,
 )
+from varians_source import application_source
 from web_viewer.generator import build_dataset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -168,7 +169,7 @@ def test_full_base_and_secondary_alignment_remain_line_mode():
 
 
 def test_editor_uses_raw_sync_counts_before_alto_overlay():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert "self._base_sync_line_count = primary_sync_line_count(cache)" in source
     assert "self._secondary_sync_link_counts[w.id] = secondary_sync_link_count(cache)" in source
     assert "(self._base_sync_line_count or 0) > 0" in source

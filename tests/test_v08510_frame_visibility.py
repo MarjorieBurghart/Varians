@@ -5,6 +5,7 @@ from image_sources import (
     matched_line_center, valid_matched_indices, visible_line_frame_indices,
     display_window_indices, effective_line_bbox,
 )
+from varians_source import application_source, application_ast
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,8 +46,8 @@ def test_line_at_start_of_second_column_retains_visible_frame():
 
 
 def test_secondary_center_and_drawing_are_wired_into_real_editor():
-    src = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
-    ast.parse(src)
+    src = application_source()
+    application_ast()
     assert 'center = matched_line_center(matches, self.center_index, len(self.items))' in src
     assert 'visible_line_frame_indices(' in src
     assert 'QGraphicsPolygonItem(vertices)' in src
@@ -55,7 +56,7 @@ def test_secondary_center_and_drawing_are_wired_into_real_editor():
 
 
 def test_existing_page_and_polygon_importers_are_preserved():
-    editor = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    editor = application_source()
     importer = (ROOT / 'alto_import.py').read_text(encoding='utf-8')
     assert 'points = scaled_polygon(line_item, self.project_root)' in editor
     assert "row['polygon'] = polygon" in importer

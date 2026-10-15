@@ -9,16 +9,17 @@ import textwrap
 import xml.etree.ElementTree as ET
 
 from witness_layout import normalized_witness_order, ordered_visible_witnesses
+from varians_source import application_source, application_ast, node_source
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+SOURCE = application_source()
 
 
 def method(classname, name, more_globals=None):
-    cls = next(n for n in ast.parse(SOURCE).body if isinstance(n, ast.ClassDef) and n.name == classname)
+    cls = next(n for n in application_ast().body if isinstance(n, ast.ClassDef) and n.name == classname)
     fn = next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == name)
     globs = {'json': json, **(more_globals or {})}
-    exec(textwrap.dedent(ast.get_source_segment(SOURCE, fn)), globs)
+    exec(textwrap.dedent(node_source(fn)), globs)
     return globs[name]
 
 

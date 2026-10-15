@@ -12,17 +12,18 @@ import xml.etree.ElementTree as ET
 
 from workspace_layout import (normalize_workspace_mode, workspace_slots,
                               normalized_detached_witnesses)
+from varians_source import application_source, application_ast, node_source
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = (ROOT/'editeur_tei.py').read_text(encoding='utf-8')
+SRC = application_source()
 
 
 def method(cls, name, globs=None):
-    tree=ast.parse(SRC)
+    tree=application_ast()
     klass=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name==cls)
     fn=next(n for n in klass.body if isinstance(n,ast.FunctionDef) and n.name==name)
     env={'json':json, **(globs or {})}
-    exec(textwrap.dedent(ast.get_source_segment(SRC, fn)),env)
+    exec(textwrap.dedent(node_source(fn)),env)
     return env[name]
 
 

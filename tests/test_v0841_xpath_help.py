@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 
 import pytest
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -46,7 +47,7 @@ def test_xpath_match_range_handles_self_closing_elements():
 
 
 def test_editor_goto_xpath_uses_selection_anchor_and_current_version():
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'int(match.end_position)' in source
     assert 'QTextCursor.MoveMode.KeepAnchor' in source
     assert 'APP_VERSION = "0.8.5.26.2"' in source

@@ -4,6 +4,7 @@ import textwrap
 from custom_completion import load_custom_completion
 from rng_completion import load_completion_model
 from tei_formatter import format_tei_xml
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -111,7 +112,7 @@ def test_custom_unknown_formatting_is_rejected(tmp_path):
 
 
 def test_static_v081_integration():
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in source
     assert 'from tei_formatter import format_tei_xml' in source
     assert 'self.action_format_xml' in source

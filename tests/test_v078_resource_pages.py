@@ -7,6 +7,7 @@ from image_sources import (
     apply_witness_image_policy, image_only_items, display_window_indices,
     page_image_source,
 )
+from varians_source import application_source
 from alto_import import build_alto_cache, overlay_alto
 
 ALTO_TMPL = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -92,7 +93,7 @@ def test_alto_is_not_line_synchronization():
 
 def test_editor_uses_explicit_sync_not_alto_for_expected_line_count():
     root=Path(__file__).resolve().parents[1]
-    source=(root/'editeur_tei.py').read_text(encoding='utf-8')
+    source=application_source()
     assert 'self._base_sync_line_count = None' in source
     assert 'self.base_alignment_available = bool(' in source
     assert '(self._base_sync_line_count or 0) > 0' in source

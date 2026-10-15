@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 
 from tei_facsimile import upsert_pb_at_position, facsimile_ref_at_position
 from web_viewer.legacy_v11_core import extract_reading_document
+from varians_source import application_source
 
 TEI = "http://www.tei-c.org/ns/1.0"
 
@@ -77,7 +78,7 @@ def test_web_viewer_contains_page_mode_click_sync_and_contextual_labels():
 
 def test_editor_passes_witness_to_page_marker_and_syncs_per_witness():
     root = Path(__file__).resolve().parents[1]
-    editor = (root / 'editeur_tei.py').read_text(encoding='utf-8')
+    editor = application_source()
     assert 'witness_id=witness_id' in editor
     assert 'surface_ids=panel._surface_indices.keys()' in editor
     assert 'for witness_id, panel in self.panels.items()' in editor

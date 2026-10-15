@@ -7,6 +7,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 import pytest
+from varians_source import application_source, application_ast
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
@@ -128,7 +129,7 @@ def test_generated_pb_targets_zone_and_preserves_witness():
 
 
 def test_real_mark_handler_checks_target_before_adding_pb():
-    src=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
+    src=application_source()
     assert 'target.label != label' in src
     assert "folio.mark.stale_target" in src
     # Verify the validation code occurs before synchronizing the facsimile.
@@ -137,7 +138,7 @@ def test_real_mark_handler_checks_target_before_adding_pb():
 
 
 def test_no_additional_toolbar_row_and_thumbnail_preview_full_page():
-    src=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
+    src=application_source()
     constructor=src[src.index('class ManuscriptPanel('):src.index('    def retranslate_ui(',src.index('class ManuscriptPanel('))]
     assert 'bar.addWidget(self.split_folio_btn)' in constructor
     assert 'root.addLayout(folio_bar)' not in constructor
@@ -153,8 +154,8 @@ def test_no_additional_toolbar_row_and_thumbnail_preview_full_page():
 
 
 def test_preview_iiif_uses_reduced_full_canvas_not_current_line_crop():
-    source=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
-    tree=ast.parse(source)
+    source=application_source()
+    tree=application_ast()
     fun=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='_iiif_split_preview_request')
     namespace={'page_image_source':page_image_source,'generic_image_request':lambda *a,**k:None}
     exec(compile(ast.fix_missing_locations(ast.Module(body=[fun],type_ignores=[])),'<test>','exec'),namespace)

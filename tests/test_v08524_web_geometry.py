@@ -12,6 +12,7 @@ import pytest
 
 from image_sources import display_window_indices, effective_line_bbox, page_image_dimensions
 from web_viewer.generator import make_html, package_local_images
+from varians_source import application_ast
 
 ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / 'web_viewer' / 'geometry.js'
@@ -38,7 +39,7 @@ def desktop_geometry():
     Extraction avoids importing PySide6 in CI; Python code and calculations
     are still the production functions, not a rewritten test oracle.
     """
-    src = ast.parse((ROOT / 'editeur_tei.py').read_text(encoding='utf-8'))
+    src = application_ast()
     functions = [node for node in src.body if isinstance(node, ast.FunctionDef)
                  and node.name in ('scaled_bbox', 'crop_for_items')]
     assert len(functions) == 2

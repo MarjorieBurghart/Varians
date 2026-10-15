@@ -3,6 +3,7 @@ from pathlib import Path
 import ast
 
 from xml_tag_pairs import closing_tag_suggestion, complete_closing_tag
+from varians_source import application_source, application_ast
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -91,8 +92,8 @@ def test_position_inside_existing_doc_does_not_look_ahead():
 
 
 def test_editor_wires_popup_enter_escape_and_ctrl_space_without_qt():
-    source = (ROOT / 'editeur_tei.py').read_text('utf8')
-    main = ast.parse(source)
+    source = application_source()
+    main = application_ast()
     cls = next(n for n in main.body if isinstance(n, ast.ClassDef) and n.name == 'CodeEditor')
     methods = {m.name for m in cls.body if isinstance(m, ast.FunctionDef)}
     assert {'keyPressEvent','show_closing_tag_completion','_accept_closing_completion'} <= methods

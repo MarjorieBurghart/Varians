@@ -4,6 +4,7 @@ from pathlib import Path
 from xml_tag_pairs import (
     closing_pair_at_context, pair_at_context, opening_pair_at_context,
 )
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -79,7 +80,7 @@ def test_opening_legacy_behavior_unchanged():
 
 
 def test_editor_highlights_both_tokens_and_is_pure_visual():
-    text = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    text = application_source()
     fragment = text.split('    def highlightCurrentLine(self):', 1)[1].split('    def setSearchMatch(', 1)[0]
     assert 'pair_at_context(' in fragment
     assert 'for token in (pair.opening, pair.closing):' in fragment

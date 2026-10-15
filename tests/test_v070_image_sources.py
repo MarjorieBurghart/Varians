@@ -6,6 +6,7 @@ from image_sources import (
     page_image_source, page_image_dimensions, page_image_request,
     normalized_image_block, full_page_target,
 )
+from varians_source import application_source
 from project_config import load_project
 from project_management import create_portable_project, WitnessDraft
 
@@ -104,7 +105,7 @@ def test_new_portable_project_can_be_created_without_alignment_file():
 
 
 def test_v070_source_code_uses_generic_image_model_and_optional_base_alignment():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in source
     assert 'from image_sources import' in source
     assert 'self.base_alignment_available' in source

@@ -6,9 +6,10 @@ from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
 from xml_folding import foldable_xml_regions, region_at_header, region_for_cursor, visible_line_numbers
+from varians_source import application_source, application_ast, node_source
 
 ROOT=Path(__file__).resolve().parents[1]
-SRC=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
+SRC=application_source()
 
 
 def sample():
@@ -66,11 +67,11 @@ def test_namespaced_nested_similar_tags_and_bad_nesting():
 
 
 def method(name, env=None):
-    tree=ast.parse(SRC)
+    tree=application_ast()
     cls=next(node for node in tree.body if isinstance(node,ast.ClassDef) and node.name=='CodeEditor')
     fn=next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name==name)
     ns=dict(env or {})
-    exec(textwrap.dedent(ast.get_source_segment(SRC,fn)),ns)
+    exec(textwrap.dedent(node_source(fn)),ns)
     return ns[name]
 
 

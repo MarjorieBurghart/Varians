@@ -6,9 +6,10 @@ ne sélectionne jamais de texte éditable ni ne force le focus sur l'éditeur.
 """
 import ast
 from pathlib import Path
+from varians_source import application_ast
 
 SOURCE = Path(__file__).resolve().parents[1] / 'editeur_tei.py'
-root = ast.parse(SOURCE.read_text(encoding='utf-8'))
+root = application_ast()
 func = next(n for n in root.body if isinstance(n, ast.FunctionDef) and n.name == 'find_in_plain_editor')
 
 class MockCursor:

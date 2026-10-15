@@ -1,11 +1,12 @@
 from pathlib import Path
 import hashlib
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_v060_version_and_custom_completion_integration_are_present():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'APP_VERSION = "' in source
     assert "load_custom_completion" in source
     assert "merge_suggestion_sources" in source

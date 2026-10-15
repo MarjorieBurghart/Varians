@@ -10,6 +10,7 @@ from tei_facsimile import (
     FacsimilePage, default_surface_id, facsimile_ref_at_position,
     project_facsimile_pages, sync_facsimile_text, upsert_pb_at_position, position_inside_xml_markup,
 )
+from varians_source import application_source
 from web_viewer.legacy_v11_core import extract_reading_document
 
 TEI = 'http://www.tei-c.org/ns/1.0'
@@ -223,7 +224,7 @@ def test_web_reading_document_keeps_pb_facs():
 
 def test_static_editor_and_web_viewer_have_page_mode_hooks():
     root=Path(__file__).resolve().parents[1]
-    editor=(root/'editeur_tei.py').read_text(encoding='utf-8')
+    editor=application_source()
     web=(root/'web_viewer'/'generator.py').read_text(encoding='utf-8')
     dialogs=(root/'project_dialogs.py').read_text(encoding='utf-8')
     assert 'markPageRequested = Signal(str, str, str)' in editor
@@ -250,7 +251,7 @@ def test_existing_prefixed_facsimile_is_reused_not_duplicated():
 
 def test_mark_page_ui_blocks_inside_markup_before_facsimile_sync():
     root=Path(__file__).resolve().parents[1]
-    editor=(root/'editeur_tei.py').read_text(encoding='utf-8')
+    editor=application_source()
     start=editor.index('def _mark_page_in_tei')
     chunk=editor[start:start+2600]
     assert 'position_inside_xml_markup(old, original_pos)' in chunk

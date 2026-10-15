@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from selection_sync import containing_span_index, occurrence_index_for_position, choose_occurrence
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,7 +20,7 @@ def test_containing_paragraph_span():
 
 
 def test_editor_has_vertical_witness_splitter_and_project_local_visibility():
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in source
     assert 'self.witness_splitter = QSplitter(Qt.Orientation.Vertical)' in source
     assert 'visibleWitnesses' in source
@@ -30,7 +31,7 @@ def test_editor_has_vertical_witness_splitter_and_project_local_visibility():
 
 
 def test_toolbar_and_display_menu_are_reorganized():
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'self._build_display_menu()' in source
     assert 'self.display_menu_button.setText(_t("menu.display"))' in source
     assert 'menu.addAction(self.action_reload_images)' in source
@@ -45,7 +46,7 @@ def test_toolbar_and_display_menu_are_reorganized():
 
 
 def test_selection_transfer_has_paragraph_occurrence_descriptor():
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'def selection_descriptor(self, text, selection_start):' in source
     assert 'def select_visible_text_in_paragraph(self, text, descriptor):' in source
     assert 'def _source_selection_descriptor(self, text, selection_start):' in source

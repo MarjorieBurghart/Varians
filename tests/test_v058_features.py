@@ -1,11 +1,12 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_v058_version_wrap_and_xpath_ui_are_present():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'APP_VERSION = "' in source
     assert 'set_visual_wrap' in source
     assert 'sourceVisualWrap' in source

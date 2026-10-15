@@ -8,9 +8,10 @@ import ast
 from pathlib import Path
 import re
 from types import SimpleNamespace
+from varians_source import application_ast
 
 SOURCE = Path(__file__).resolve().parents[1] / 'editeur_tei.py'
-code = ast.parse(SOURCE.read_text(encoding='utf-8'))
+code = application_ast()
 func = next(n for n in code.body if isinstance(n, ast.FunctionDef) and n.name == 'find_in_rich_editor')
 
 class MockRegex:

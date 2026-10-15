@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from image_sources import (image_scene_reference_crop, page_image_dimensions,
                            page_image_request)
 from resource_state import secondary_sync_link_count
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -80,7 +81,7 @@ def test_seven_locales_include_line_sync_diagnostics():
 
 
 def test_ui_scales_full_page_frames_and_explains_fallback():
-    ui = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    ui = application_source()
     assert 'image_scene_reference_crop(' in ui
     assert "_t('manuscript.sync.no_base_keys')" in ui
     assert 'APP_VERSION = "0.8.5.26.2"' in ui

@@ -4,6 +4,7 @@ from xml_tag_pairs import (
     scan_xml_tags, tag_pairs, opening_pair_at_context,
     exact_selected_opening_pair, closing_rename_mirror, apply_rename_mirror,
 )
+from varians_source import application_source
 
 
 def test_nested_same_name_pairs_are_exact():
@@ -83,7 +84,7 @@ def test_invalid_or_self_closing_new_opening_is_not_mirrored():
 
 def test_static_editor_integration_v080():
     root = Path(__file__).resolve().parents[1]
-    source = (root / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in source
     assert 'opening_pair_at_context' in source
     assert 'exact_selected_opening_pair' in source

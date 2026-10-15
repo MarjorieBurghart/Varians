@@ -3,6 +3,7 @@ from pathlib import Path
 import re
 from web_viewer.generator import build_dataset, generate, make_html
 from project_config import load_project
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / 'project.xml'
@@ -87,7 +88,7 @@ def test_generator_writes_selected_only_and_keeps_cli_behavior(tmp_path):
 
 
 def test_gui_passes_current_qsettings_snapshot_without_changing_project_xml():
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'display_ids = [wid for wid in self._witness_display_order if wid in visible]' in source
     assert 'display_witness_ids=display_ids' in source
     assert 'self._view_settings_key("visibleWitnesses")' in source

@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from project_management import WitnessDraft, create_new_transcription_project
 from project_config import load_project
 from web_viewer.generator import build_dataset, make_html
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 TEI = "{http://www.tei-c.org/ns/1.0}"
@@ -50,7 +51,7 @@ def test_web_viewer_marks_image_less_project_and_hides_side_column():
 
 
 def test_ui_uses_global_pale_selection_and_hides_manuscript_column_without_images():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert '#d9ecff' in source
     assert '#eef7ff' in source
     assert 'QAbstractItemView::item:selected' in source
@@ -61,7 +62,7 @@ def test_ui_uses_global_pale_selection_and_hides_manuscript_column_without_image
 
 
 def test_opening_document_explicitly_resets_rng_diagnostics():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'def _reset_validation_state(self):' in source
     open_section = source[source.index('    def open_path(self,path):'):source.index('    def _confirm_save_warning', source.index('    def open_path(self,path):'))]
     assert 'self._reset_validation_state()' in open_section
@@ -69,5 +70,5 @@ def test_opening_document_explicitly_resets_rng_diagnostics():
 
 
 def test_version_is_077():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'APP_VERSION = "0.8.5.26.2"' in source

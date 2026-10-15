@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 import pytest
+from varians_source import application_source
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -26,7 +27,7 @@ def test_attribute_context_and_rng_names(tmp_path):
 
 
 def test_schema_refresh_is_debounced_and_has_document_revision_guard():
-    s=(ROOT/'editeur_tei.py').read_text(encoding='utf8')
+    s=application_source()
     assert 'self.rng_refresh_timer.setInterval(1250)' in s
     assert 'self.rng_refresh_timer.timeout.connect(self._auto_refresh_rng)' in s
     assert "self._rng_watch_enabled and hasattr(self, 'rng_refresh_timer')" in s

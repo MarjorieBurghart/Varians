@@ -1,5 +1,6 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,7 +16,7 @@ def test_welcome_branding_assets_and_help_are_shipped():
     assert (ROOT / "resources" / "cnrs.png").is_file()
     assert (ROOT / "help" / "fr.html").is_file()
     assert (ROOT / "help" / "en.html").is_file()
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'APP_VERSION = "' in source
     assert "class WelcomeWindow" in source
     assert "win.showMaximized()" in source

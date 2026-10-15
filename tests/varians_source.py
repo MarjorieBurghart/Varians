@@ -10,6 +10,7 @@ fichier.
 from __future__ import annotations
 
 import ast
+import copy
 from functools import lru_cache
 from pathlib import Path
 
@@ -21,6 +22,7 @@ APPLICATION_MODULES = (
     "editeur_tei.py",
     "app_context.py",
     "document_session.py",
+    "xpath_panel.py",
 )
 
 
@@ -76,4 +78,46 @@ def main_window_method_node(method_name: str):
 
 def method_source(class_name: str, method_name: str) -> str:
     path, node = class_method_node(class_name, method_name)
+    return ast.get_source_segment(path.read_text(encoding="utf-8"), node)
+
+
+@lru_cache(maxsize=None)
+def application_ast() -> ast.Module:
+    """Arbre syntaxique de l'interface, tous modules réunis.
+
+    Les méthodes des mixins sont replacées dans le corps de ``MainWindow``,
+    comme lorsqu'elles étaient toutes définies dans ``editeur_tei.py`` ; les
+    classes ``*Mixin`` elles-mêmes sont omises. L'arbre est partagé entre les
+    tests : ne pas le modifier.
+    """
+    body = []
+    main_window = None
+    mixin_methods = []
+    for path, tree in _trees():
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef) and node.name.endswith("Mixin"):
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef):
+                        item = copy.deepcopy(item)
+                        _tag(item, path)
+                        mixin_methods.append(item)
+                continue
+            node = copy.deepcopy(node)
+            _tag(node, path)
+            if isinstance(node, ast.ClassDef) and node.name == "MainWindow":
+                main_window = node
+            body.append(node)
+    if main_window is not None:
+        main_window.body.extend(mixin_methods)
+    return ast.Module(body=body, type_ignores=[])
+
+
+def _tag(node, path):
+    for sub in ast.walk(node):
+        sub._varians_path = path
+
+
+def node_source(node) -> str:
+    """Texte source exact d'un nœud de ``application_ast()``, lu dans son fichier."""
+    path = getattr(node, "_varians_path", ROOT / "editeur_tei.py")
     return ast.get_source_segment(path.read_text(encoding="utf-8"), node)

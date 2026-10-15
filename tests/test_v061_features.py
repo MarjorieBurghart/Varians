@@ -5,6 +5,7 @@ from rng_completion import (
     adapt_pointer_list_value_context,
     format_pointer_list_insertion,
 )
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -52,7 +53,7 @@ def test_pointer_list_completion_also_excludes_pointer_on_right():
 
 
 def test_xpath_results_use_light_selection_and_hover_colours():
-    source = (ROOT / 'editeur_tei.py').read_text(encoding='utf-8')
+    source = application_source()
     assert 'QAbstractItemView::item:selected' in source
     assert 'background-color: #d9ecff' in source
     assert 'QAbstractItemView::item:hover' in source

@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
 import pytest
+from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -117,7 +118,7 @@ def test_7_translations_have_all_folio_keys():
         assert all(values[x] for x in keys)
 
 def test_editor_hooks_present_and_distinguish_page_line():
-    s=(ROOT/'editeur_tei.py').read_text(encoding='utf-8')
+    s=application_source()
     for name in ('set_folios','set_folio','_split_double_folio','folio_at_position','_refresh_folio_navigation','folio_focus_rect','panel.sync_enabled'):
         assert name in s
     assert 'APP_VERSION = "0.8.5.26.2"' in s

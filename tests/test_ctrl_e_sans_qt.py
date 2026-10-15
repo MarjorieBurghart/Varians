@@ -10,9 +10,10 @@ import html as html_lib
 from pathlib import Path
 import re
 from types import SimpleNamespace
+from varians_source import application_ast
 
 CODE = Path(__file__).resolve().parents[1] / "editeur_tei.py"
-code_ast = ast.parse(CODE.read_text(encoding="utf-8"))
+code_ast = application_ast()
 widget_ast = next(n for n in code_ast.body if isinstance(n, ast.ClassDef) and n.name == "FormattedEditionWidget")
 method_ast = next(n for n in widget_ast.body if isinstance(n, ast.FunctionDef) and n.name == "wrap_selection_with_element")
 

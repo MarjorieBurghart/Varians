@@ -12,14 +12,15 @@ import sys
 import xml.etree.ElementTree as ET
 
 import pytest
+from varians_source import application_source, application_ast
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from folio_navigation import split_surface_into_folios, inspect_surface_part_split, configure_surface_parts
 from image_sources import page_image_dimensions
 
-SRC = (ROOT/'editeur_tei.py').read_text(encoding='utf-8')
-ROOT_AST = ast.parse(SRC)
+SRC = application_source()
+ROOT_AST = application_ast()
 
 
 def ui_method(cls, name, namespace):
