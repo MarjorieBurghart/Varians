@@ -45,6 +45,40 @@ livraison.
 Windows à chaque envoi et pull request. Les résultats sont visibles dans
 l'onglet *Actions* du dépôt.
 
+## Organisation du code de l'interface
+
+`editeur_tei.py` lance l'application (`main()`), définit la fenêtre
+d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
+*mixins*, un par responsabilité, dont elle hérite :
+
+| Module | Rôle |
+|---|---|
+| `document_io.py` | ouvrir, enregistrer, fermer le document XML |
+| `validation_panel.py` | panneau et validation RELAX NG, résolution du schéma |
+| `completion_ui.py` | complétion Ctrl+Espace guidée par le schéma |
+| `xpath_panel.py` | recherche XPath |
+| `witness_workspace.py` | disposition des panneaux de témoins |
+| `witness_sync.py` | synchronisation XML ↔ témoins, folios, ressources |
+| `main_menus.py` | barre d'outils, menus, projets récents, langue |
+| `project_actions.py` | export web, ouverture/création/réglages de projet |
+
+Composants autonomes utilisés par la fenêtre :
+
+| Module | Rôle |
+|---|---|
+| `document_session.py` | état d'un document ouvert (`DocumentSession`, `LbIndex`) |
+| `code_editor.py` | éditeur de la source XML (`CodeEditor`) |
+| `formatted_view.py` | aperçu XSLT/CSS et édition par fragments |
+| `manuscript_panel.py` | panneau d'un témoin manuscrit |
+| `image_fetch.py` | téléchargement des images, cache disque |
+| `help_dialogs.py` | aide, dictionnaire latin, « À propos » |
+| `app_context.py` | traductions actives, réglages, projets récents, version |
+
+Les modules de l'interface n'importent jamais `editeur_tei` (il peut être
+exécuté comme script) : les services communs passent par `app_context`.
+Tout nouveau module local importé par `editeur_tei.py` doit figurer dans
+`_LOCAL_MODULE_NAMES` (un test le vérifie).
+
 ## Historique et versions
 
 Depuis V0.8.6.0, l'historique est porté par Git. Les rapports de test et
