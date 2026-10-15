@@ -1,0 +1,46 @@
+VARIANS V0.8.5.25 — RAPPORT DE VALIDATION
+Date : 14 octobre 2026
+Base de reprise : Varians V0.8.5.24 complète (230 fichiers ; CRC initial OK)
+
+PYTHON / TESTS
+  Commande : python -m pytest -q --disable-warnings
+  Résultat : 444 passed, 2 skipped ; 0 failed (Linux, CPython 3.13).
+  Base V0.8.5.24 : 435 passed, 2 skipped dans le même environnement.
+  9 nouveaux tests IIIF et i18n web : exécutés avec Node.js ; API 1/2/3,
+  recadrage, résolution selon affichage, maxWidth/maxHeight/maxArea,
+  local/aperçu, compatibilité manifeste, HTML autonome.
+  Deux tests ignorés car PySide6 indisponible dans cet environnement.
+  Compilation : python -m compileall -q . — OK.
+
+JS / EXPORT WEB
+  Code du HTML généré : node --check — OK.
+  Génération du projet démo project.xml : OK ; 3 témoins, 3790 lignes.
+  Tests JavaScript par Node.js : OK.
+
+CHROMIUM HEADLESS / PLAYWRIGHT — IMAGES SYNTHÉTIQUES UNIQUEMENT
+  tests/manual_v08525_iiif_chromium.py : OK.
+  Requête région refusée 429, seconde 403 ; récupération d'image entière,
+  découpage CSS conforme, SVG PAGE dans le repère source.
+  Requête sur autre page avec 404 puis 500 ; repli vers miniature.
+  Changement de page : image actuelle conservée, ancienne vue annulée.
+  Simulation réseau entièrement indisponible : message lisible.
+  Aucune exception JavaScript. Aucun vrai serveur IIIF contacté.
+  tests/manual_v08524_chromium.py : OK ; deux parties d'une double image,
+  polygone concave, aperçu 490×338, Canvas 3924×2704, OCR 1962×1352.
+
+DONNÉES / DOCUMENTATION
+  7 catalogues i18n : 622 clés uniques chacun (ancien : 621).
+  7 aides HTML : section IIIF V0.8.5.25 ajoutée et localisée.
+  Fichiers TEI/JSON/ALTO du projet de démonstration non altérés par export.
+  Chaque image distante IIIF est signalée dans l'export : pas de promesse
+  d'accès hors ligne, de copie d'image, ni de droits d'accès.
+
+NON TESTÉ (NE PAS CONFONDRE AVEC DES SUCCÈS)
+  Aucune GUI PySide6 native Windows/macOS/Linux ; aucun comparatif visuel
+  réel entre Qt et navigateur sur les manuscrits de l'utilisateur.
+  Pas de serveur IIIF institutionnel réel, authentification, CORS réel,
+  limitation de débit réelle, licences ou indisponibilité distante réelle.
+  Il s'agit d'une QA synthétique reproductible, pas d'une garantie de service.
+
+ARCHIVE
+  Voir RELEASE_MANIFEST_SHA256.txt et SHA256 extérieur ; CRC ZIP vérifié.

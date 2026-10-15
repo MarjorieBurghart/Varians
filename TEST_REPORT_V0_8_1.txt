@@ -1,0 +1,51 @@
+VARIANS V0.8.1 — INDENTATION TEI SÛRE
+======================================
+
+Date de contrôle : 2026-10-09
+
+NOUVEAUTÉS
+----------
+- Nouveau module indépendant de Qt : tei_formatter.py.
+- Nouveau bouton « Indenter » dans la barre d'outils de la vue XML source.
+- Le formateur ne réécrit que des blancs structurels entre enfants d'un élément
+  dont le caractère structurel est établi par le RNG ou explicitement par le
+  projet.
+- Le modèle de complétion RNG expose désormais si un élément autorise du texte
+  direct (text, mixed, data, value, list et références associées).
+- Les éléments à contenu mixte constaté restent inchangés ; cette protection se
+  propage aux descendants afin d'éviter de reformater un appareil inline dans
+  une phrase.
+- Protection absolue de xml:space="preserve".
+- Protection absolue d'un <lb/> enfant direct : aucun retour à la ligne ou
+  espace nouveau n'est introduit avant ou après <lb/>, quel que soit @break.
+- custom-elements.xml accepte désormais formatting="inline", "block" et
+  "preserve". formatting="block" ne contourne jamais les protections absolues.
+- En l'absence d'information suffisante (RNG indisponible/élément inconnu et
+  aucune règle projet), le formateur s'abstient.
+- Un XML mal formé n'est jamais réécrit.
+- Les seuls blancs retenus sont modifiés, en un unique bloc Undo ; le moteur de
+  paires de balises est suspendu pendant l'opération.
+
+TESTS CIBLÉS
+------------
+- Indentation d'une hiérarchie structurelle et préservation simultanée d'un
+  <p> à contenu mixte avec <hi> inline.
+- Préservation stricte de uer<lb/>bum sans @break.
+- Protection RNG d'un élément mixte même lorsqu'il ne contient momentanément
+  que des éléments enfants.
+- Héritage de xml:space="preserve" sur tout le sous-arbre.
+- Règles projet block / inline / preserve et priorité des protections absolues.
+- Refus d'ajouter des blancs autour d'un enfant explicitement inline.
+- Refus total de réécrire un XML non bien formé.
+- Détection RNG du texte direct à travers mixed/ref.
+- Rejet explicite d'une valeur formatting inconnue dans custom-elements.xml.
+
+NON-RÉGRESSION
+--------------
+- Suite pytest complète : 143 tests réussis.
+- Compilation Python : 50 fichiers Python compilés sans erreur.
+- Cohérence des catalogues FR/EN : 436 clés dans chaque catalogue ; ensembles
+  de clés identiques et variables d'interpolation identiques.
+- Viewer historique : génération réussie, 3 témoins / 3790 lignes de base.
+- PySide6 n'est pas installé dans l'environnement de construction : le rendu du
+  nouveau bouton et le comportement Undo doivent être confirmés sous Windows.

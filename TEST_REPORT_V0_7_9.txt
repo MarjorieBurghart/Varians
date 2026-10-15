@@ -1,0 +1,61 @@
+VARIANS V0.7.9 — FAC-SIMILÉ TEI / MODE PAGE
+=============================================
+
+Date de contrôle : 2026-10-08
+
+RÉSULTATS AUTOMATIQUES
+----------------------
+- pytest -q : 115 tests réussis.
+- Compilation Python : 46 fichiers .py compilés sans erreur.
+- i18n : 430 clés FR / 430 clés EN ; ensembles de clés identiques ; variables
+  d'interpolation identiques.
+- JavaScript du viewer généré : validation syntaxique `node --check` réussie.
+- Viewer historique : 3 témoins / 3790 lignes de base, génération réussie.
+
+NOUVEAUX CONTRÔLES V0.7.9
+-------------------------
+- insertion automatique exacte de <pb n="…" facs="#…"/> ;
+- enrichissement d'un <pb> existant sans perte de ses autres attributs ;
+- détermination de la page courante depuis le dernier <pb facs> précédent ;
+- création de <facsimile> avant <text> ;
+- ajout incrémental de surfaces sans suppression d'une surface orpheline ;
+- préservation d'un <zone>, d'un <graphic> et d'un @n édités manuellement ;
+- changement de foliotage : mise à jour seulement des @n encore identiques à
+  l'ancienne valeur générée ; les valeurs personnalisées restent intactes ;
+- XML mal formé : aucune modification automatique ;
+- facsimile existant avec préfixe de namespace : réutilisé, jamais dupliqué ;
+- 3 images + 3 ALTO sans synchronisation : 3 pages en mode page, ALTO conservé
+  comme géométrie, aucune fenêtre de quelques lignes ;
+- persistance de l'identifiant stable `surface` dans project.xml ;
+- URL <graphic> relative à l'édition pour les images locales ;
+- extraction web de pb/@facs ;
+- hooks interface : colonne Surface TEI, bouton Marquer la page, suivi au curseur.
+
+SMOKE TEST FONCTIONNEL
+----------------------
+Un projet neuf synthétique a été créé avec :
+- témoin A1 ;
+- une image locale copiée dans le projet ;
+- aucun ALTO ;
+- aucune synchronisation.
+
+Résultats :
+- <facsimile>/<surface xml:id="A1-p0001" n="f. 1r"> créé ;
+- <graphic> pointe vers ../images/A1/... ;
+- <pb n="f. 1r" facs="#A1-p0001"/> exploité par le viewer ;
+- dataset web : line_sync=false, 1 page ;
+- image locale copiée dans web_output/images/A1/ ;
+- viewer généré sans page manquante.
+
+GARDE-FOUS
+----------
+Le moteur ne resérialise pas le document TEI entier. Il applique des modifications
+textuelles ciblées et refuse de modifier un XML non bien formé. Il ne supprime
+jamais de surface, ne remplace jamais un graphic existant et ne reconstruit jamais
+un facsimile existant. Une fusion sur disque produit edition.xml.bak.
+
+LIMITATION DU CONTRÔLE DANS L'ENVIRONNEMENT DE BUILD
+----------------------------------------------------
+PySide6 n'est pas installé dans l'environnement de construction. Les dialogues
+Qt et le rendu graphique final du bouton/colonnes doivent donc encore être testés
+visuellement sous Windows, comme pour les versions précédentes.

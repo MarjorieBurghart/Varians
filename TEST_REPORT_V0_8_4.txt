@@ -1,0 +1,44 @@
+VARIANS V0.8.4 — CONSOLIDATION
+==============================
+
+Objectifs
+---------
+1. Vérifier le continuum TEI seule → images → ALTO → synchronisation.
+2. Garantir la même décision « page/ligne » dans le desktop et le viewer web.
+3. Ne jamais confondre un ALTO indépendant avec une synchronisation TEI.
+4. Replier proprement un JSON d'alignement vide/provisoire vers le mode page.
+5. Conserver la compatibilité des projets et JSON historiques.
+
+Correction principale
+---------------------
+La V0.8.3 utilisait encore, à quelques endroits, la simple existence d'un fichier
+JSON pour décider que la synchronisation ligne-à-ligne était disponible.
+Conséquences possibles :
+- JSON de base vide + ALTO indépendant : faux mode ligne ;
+- images locales masquées dans le viewer web ;
+- témoin secondaire avec JSON sans base_keys annoncé synchronisé côté web alors
+  que le desktop restait en mode page.
+
+V0.8.4 introduit `resource_state.py` et juge la synchronisation sur le JSON brut,
+avant superposition ALTO :
+- base : au moins une ligne de référence réellement adressable ;
+- secondaire : au moins une ligne possédant base_keys/keys816.
+
+Tests dédiés V0.8.4
+-------------------
+- comptage des lignes de base et liens secondaires effectifs ;
+- JSON de base vide + image locale + ALTO : page conservée, mode page ;
+- base synchronisée + secondaire sans base_keys : secondaire en mode page ;
+- base + secondaire réellement synchronisés : mode ligne conservé ;
+- vérification statique que le desktop calcule l'état sur le JSON brut avant
+  superposition ALTO.
+
+Contrôles automatiques
+----------------------
+- pytest -q : 161 tests réussis.
+- compilation : 55 fichiers Python compilés sans erreur.
+- i18n : 446 clés FR / 446 clés EN ; ensembles identiques.
+- projet historique : 3 témoins / 3790 lignes de base / synchronisation active.
+- JavaScript du viewer historique validé avec `node --check`.
+- Les tests historiques ont été conservés et adaptés uniquement lorsque la
+  nouvelle définition plus stricte de la synchronisation le nécessitait.

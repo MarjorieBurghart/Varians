@@ -1,0 +1,29 @@
+VARIANS 0.8.5.7 — Rapport de validation
+=========================================
+Base : archive complète Varians V0.8.5.6_TEI_Pivot_Initialisation_Complete.zip.
+Problème signalé : options pb/lb absentes dans la capture de la fenêtre
+« Nouveau projet TEI/manuscrits » ; les cases étaient codées en V0.8.5.6
+mais placées à la suite du grand tableau de témoins. La capture elle-même
+ne permet pas d'exclure l'exécution d'une distribution plus ancienne.
+
+Correction :
+- nouveau projet : encadré du pivot immédiatement sous « Point de départ » ;
+- paramètres de projet : encadré avant le tableau des témoins ;
+- QScrollArea dans les deux fenêtres, validation hors du défilement ;
+- titre des fenêtres identifiant explicitement Varians 0.8.5.7 ;
+- logique existante de génération, confirmation, sauvegarde et protection
+  des données éditoriales conservée sans modification ;
+- aides mises à jour dans les sept langues ; catalogues XML conservés.
+
+Validation : 245 tests automatisés réussis (241 de V0.8.5.6 + 4 de
+vérification statique de présence/position des commandes).
+Compilation statique Python et analyse syntaxique des catalogues : OK.
+Archive ZIP testée (CRC) : OK.
+
+LIMITES : PySide6 absent dans l'environnement d'exécution ; impossible de
+vérifier visuellement la nouvelle fenêtre ou les dimensions de police sous
+Windows. Test manuel recommandé, notamment avec mise à l'échelle Windows.
+Lancer explicitement le fichier editeur_tei.py contenu dans cette archive,
+fermer toute ancienne instance Varians, redémarrer Spyder si nécessaire ;
+la fenêtre « Nouveau projet » doit afficher « Varians 0.8.5.7 » dans son
+titre. Si la version n'y figure pas, c'est une autre copie du code qui tourne.

@@ -1,0 +1,45 @@
+VARIANS V0.5.9 — RAPPORT DE TEST
+================================
+
+NOUVEAUTÉS
+----------
+- Réouverture automatique du dernier projet resté ouvert à la fermeture.
+- Fichier > Fermer le projet (Ctrl+W) : retour à l'accueil sans quitter Varians.
+- Écran d'accueil compact centré, identité Varians, responsable, version et logos.
+- Aide > À propos… réaffiche la carte d'identité de Varians.
+- Ctrl+E propose d'abord les éléments permis par le RNG à la position exacte.
+  Le champ reste éditable et le comportement historique reste disponible en
+  l'absence de schéma/contexte exploitable.
+
+TESTS AUTOMATISÉS
+-----------------
+- pytest : 36 tests réussis.
+- compilation syntaxique : 26 fichiers Python réussis.
+- project.xml / project-template.xml / custom-elements.xml : XML valide.
+- i18n FR / EN : 360 clés chacun, ensembles identiques.
+- variables {…} FR / EN : identiques pour toutes les clés.
+- génération viewer web : OK.
+  * témoins : 3
+  * lignes de base : 3790
+  * pages IIIF manquantes au moment de la génération : 0
+
+NON-RÉGRESSION
+--------------
+- Ctrl+E historique avec/sans sélection, attributs configurés et balises vides : OK.
+- Ctrl+Espace positionnel, attributs et valeurs finies : OK.
+- correctif <lb edRef="#T1"|/> : conservé.
+- recherche XML / XSLT / XPath : OK.
+- wrap visuel source XML : présent.
+- sauvegarde atomique + cache RNG : tests OK.
+- gestion de projet, i18n et génération du viewer : OK.
+
+LIMITES DE L'ENVIRONNEMENT
+--------------------------
+PySide6 n'est pas installé dans l'environnement de construction. Le rendu
+visuel exact de la carte d'accueil/À propos, la présence effective de Cormorant
+Garamond sur le poste et les interactions natives des menus Qt doivent donc être
+confirmés sous Windows.
+
+Cormorant Garamond n'est pas embarquée : Varians demande la famille système
+"Cormorant Garamond", style SemiBold, et Qt choisit une police de repli si elle
+n'est pas installée.

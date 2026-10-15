@@ -1,0 +1,37 @@
+VARIANS V0.8.5.12 — RAPPORT DE VÉRIFICATION
+
+BASE : V0.8.5.11 complète (synchronisation ligne/page mixte et recadrages).
+
+FONCTIONS
+1. Colonne de panneaux de manuscrits défilable verticalement via QScrollArea
+   contenant le QSplitter existant. Quatre panneaux visibles conservent une
+   hauteur minimale totale de 1181 px (4 × 290 + 3 × 7). Les panneaux cachés
+   ne sont pas comptés. Maximiser un manuscrit ramène temporairement la borne
+   minimale à 290 px, restaurer la remet à la taille de la collection.
+   Poignées, boutons individuels et tailles project-scoped préservés.
+2. Repli @n pour les pb sans @facs : identité de folio LOCALISÉE PAR TÉMOIN.
+   La combinaison @edRef + @n peut être la même en @n pour des témoins
+   distincts. Si plusieurs images d'un même témoin ont un libellé identique,
+   Varians s'abstient de choisir sans @facs. Le moteur de V0.8.5.11 réalise
+   déjà cette restriction ; tests et documentation V0.8.5.12 la verrouillent.
+3. Libellé utilisateur « manuscrit pivot » dans les paramètres et aides,
+   plutôt que « témoin/manuscrit de base ». Infobulle philologique précisant
+   que ce rôle n'implique pas le choix du texte de base de l'édition.
+   Traductions de fr/en/de/ja/cs/it/ru et leurs aides mises à jour.
+   Les champs techniques project.base_witness, role=base, base_keys restent
+   volontairement inchangés pour préserver les fichiers existants.
+
+CONTRÔLES
+- python -m pytest -q : 279 tests réussis, dont 7 nouveaux dédiés V0.8.5.12.
+- python -m compileall : réussi.
+- JavaScript browser généré du web viewer : node --check réussi.
+- 7 catalogues i18n XML parsés sans duplicata ; placeholders conservés.
+- 7 aides HTML analysées ; index et textes d'aide mis à jour.
+- Intégrité CRC du ZIP complet et composants attendus : vérifiés.
+
+LIMITES
+- PySide6 non installé dans l'environnement : aucune validation interactive
+  réelle Qt n'a été effectuée. Le comportement graphique du défilement devra
+  être vérifié sur une machine munie de PySide6 avec au moins 4 témoins.
+- Sans @facs, une page n'est trouvée via @n que si le libellé correspond
+  exactement et sans ambiguïté à une surface du témoin défini par @edRef.

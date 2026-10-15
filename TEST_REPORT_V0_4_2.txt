@@ -1,0 +1,30 @@
+ÉDITEUR TEI GÉNÉRIQUE — TESTS V0.4.2 XSLT
+========================================
+
+Tests de fichiers et de traitement effectués le 7 octobre 2026 :
+
+[OK] Projet V0.4.1 sans xsltMode : reste en mode « file », sans migration implicite.
+[OK] Projet exemple V0.4.2 : « builtin » pointe vers la XSLT de l'installation.
+[OK] Nouveau projet « builtin » : pas de copie de tei-to-html.xsl ;
+     CSS et custom-elements.xml copiés dans rendering/.
+[OK] Nouveau projet « file » : XSLT par défaut copiée dans rendering/.
+[OK] Sérialisation « builtin » : xsltMode="builtin" ; attribut xslt absent.
+[OK] Sérialisation « file » : xsltMode="file" et chemin de la XSLT.
+[OK] Changement « builtin » → « file » : copie locale créée si absente.
+[OK] Aucune XSLT personnalisée existante écrasée ou supprimée.
+[OK] Changement « file » → « builtin » : copie locale préservée.
+[OK] Traductions personnalisées anciennes prioritaires sur celles de l'application ;
+     nouvelles clés disponibles automatiquement.
+[OK] 251 clés FR/EN, identiques et sans doublon.
+[OK] XSLT complète compilée et appliquée à la TEI exemple ; « operosa » est joint.
+[OK] Générateur de viewer web : 3 témoins, 3 790 lignes, sortie HTML produite.
+[OK] Analyse syntaxique de tous les fichiers Python.
+
+Limite de vérification : PySide6 n'est pas disponible dans l'environnement de
+construction ; les dialogues Qt n'ont pas pu être pilotés graphiquement ici.
+
+Pour essayer avec un projet créé par la V0.4.1 :
+Fichier > Paramètres du projet… > Source de la XSLT >
+« XSLT par défaut de l’éditeur » > Enregistrer.
+
+Le fichier XSLT déjà copié dans l'ancien dossier de projet reste intact.

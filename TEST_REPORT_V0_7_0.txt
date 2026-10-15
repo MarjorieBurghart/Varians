@@ -1,0 +1,54 @@
+VARIANS V0.7.0 — SOURCES D’IMAGES FLEXIBLES / TÉMOINS SANS RESSOURCES
+=====================================================================
+
+OBJECTIF
+--------
+Première couche de la nouvelle feuille de route « images locales / IIIF /
+transcription sans image » sans casser les projets V0.6.x.
+
+NOUVEAUTÉS VALIDÉES
+-------------------
+- Nouveau module image_sources.py indépendant de Qt.
+- Source de page générique : none / iiif / file.
+- Ancien bloc JSON "iiif" toujours accepté et normalisé en mémoire.
+- Nouveau bloc JSON "image" accepté avec type="iiif", type="file" ou
+  type="none".
+- Chemins d’images locales relatifs résolus par rapport à la racine du projet.
+- Le moteur de bureau peut lire une image locale déclarée manuellement et la
+  recadrer localement quand les dimensions de référence sont disponibles.
+- Les fonctions de bbox ne dépendent plus directement d’un bloc IIIF.
+- L’attribut alignment d’un <witness> devient facultatif.
+- Un projet avec témoin de base sans alignement peut être créé, sérialisé et
+  relu.
+- Aucun faux avertissement sur le nombre attendu de <lb> quand le témoin de
+  base n’a pas de synchronisation.
+- Les dialogues de témoins acceptent un fichier de synchronisation vide.
+- Le viewer web ne plante pas sur un projet sans alignement et transporte le
+  bloc image générique dans son dataset.
+
+COMPATIBILITÉ
+-------------
+- Projet de démonstration historique inchangé : il conserve ses blocs "iiif".
+- Génération du viewer : OK, 3 témoins / 3790 lignes de base.
+- Anciens project.xml avec alignment continuent à fonctionner.
+- Très anciens project.xml sans @alignment utilisent encore
+  alignments/<sigle>.json si ce fichier conventionnel existe.
+
+TESTS
+-----
+- pytest : 61 tests réussis.
+- compilation Python : OK.
+- fr.xml / en.xml : 370 clés chacun, ensembles identiques.
+- project.xml / project-template.xml : XML bien formés.
+- viewer web du projet de démonstration : OK, 3 témoins / 3790 lignes.
+- viewer web d’un projet synthétique sans alignement : OK, 1 témoin / 0 ligne
+  synchronisée, sans exception.
+
+LIMITES VOLONTAIRES DE V0.7.0
+-----------------------------
+- Pas encore d’assistant graphique pour importer/copier des images locales.
+- Pas encore d’import de Manifest IIIF.
+- Pas encore de création « nouvelle transcription » sans TEI préexistante :
+  c’est l’étape suivante (V0.7.1).
+- Le paquetage/copie des images locales dans web_output sera traité lors de
+  l’étape d’import des images locales.

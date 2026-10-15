@@ -1,0 +1,38 @@
+VARIANS 0.8.5.22 — RAPPORT DE VALIDATION
+Date : 2026-10-13
+Base : archive complète V0.8.5.21
+
+OBJECTIF
+Repliage structurel non destructif dans l'éditeur XML source.
+
+RÉSULTATS
+- pytest : 419 tests réussis, aucune erreur ni échec (dont 8 nouveaux tests V0.8.5.22).
+- Compilation : python -m compileall -q . sans erreur.
+- 7 catalogues de traduction : fr, en, de, ja, cs, it, ru ; 621 entrées par langue.
+- 7 aides HTML actualisées et complétées (section xml-fold-v08522).
+- Code source : nouveau module autonome xml_folding.py, extensions de CodeEditor
+  et menu Affichage > Repliage XML.
+- Régressions : opérations XML préexistantes, contrôle de version, configurations
+  de témoins, double page, dispositions et synchronisation (tests historiques).
+- Conservation des données : aucun placeholder ajouté au XML ; texte et offsets
+  inchangés ; l'état de pliage n'entre pas dans les fichiers utilisateur.
+
+LIMITE
+PySide6 non disponible dans l'environnement de validation. Les interactions
+natives sous Windows (clic dans la marge, recalcul de la mise en page avec
+QTextBlock.setVisible, application des raccourcis) restent à vérifier sur un
+poste Windows. Des doubles de QTextBlock/QTextDocument couvrent la logique
+Qt et les plages sans se substituer à un test graphique réel.
+
+UTILISATION
+Affichage > Repliage XML :
+- Replier/déplier l'élément courant (Ctrl+Alt+F) ;
+- Replier les éléments structurels ;
+- Tout déplier (Ctrl+Alt+Maj+F) ;
+- Cliquer sur les chevrons de la marge.
+
+LIMITES CHOISIES
+Seules les balises correspondant à un élément XML sur plusieurs lignes,
+avec des lignes d'ouverture et fermeture dédiées, sont éligibles. Les
+incohérences lexicales et les structures sur une ligne ne sont pas devinées.
+Toute édition ou navigation ciblant un bloc caché réaffiche le contenu.

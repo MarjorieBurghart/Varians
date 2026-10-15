@@ -1,0 +1,56 @@
+ÉDITEUR TEI GÉNÉRIQUE — RAPPORT DE TEST V0.5.5
+================================================
+
+OBJECTIF
+--------
+Réduire les micro-blocages perceptibles pendant la frappe et Ctrl+Espace sans
+supprimer le contrôle automatique de bonne formation XML.
+
+OPTIMISATIONS
+-------------
+1. Complétion RNG
+   - cache lexical incrémental XmlContextCache
+   - checkpoints sûrs après balises complètes
+   - invalidation à partir de la position réellement modifiée
+   - conservation de la logique positionnelle V0.5.4
+
+2. Résolution du schéma
+   - cache basé sur mode/projet/xml-model
+   - réutilisation de la résolution issue de la validation
+   - le rafraîchissement explicite continue à remplacer le cache
+
+3. Bonne formation XML automatique
+   - délai de frappe : 650 ms
+   - ET.fromstring exécuté dans un QRunnable séparé
+   - résultats obsolètes ignorés grâce à la révision QTextDocument
+   - validation synchrone conservée pour sauvegarde et opérations explicites
+
+4. Repères <lb>
+   - reconstruction sur le même instantané que le parse XML automatique
+   - décalage incrémental des spans lors d'une édition textuelle ordinaire
+   - balayage complet conservé pour les modifications structurelles
+
+TESTS AUTOMATIQUES
+------------------
+- pytest : 18 tests réussis
+- tests historiques de complétion/position : OK
+- comparaison scanner cache / scanner sans état : OK
+- invalidation locale après modification : OK
+- compilation syntaxique Python : OK
+- project.xml / project-template.xml / i18n XML : OK
+- génération viewer web : OK
+
+MESURES INDICATIVES SUR edition.xml (~528 000 caractères)
+---------------------------------------------------------
+Scanner sans cache près de 95 % du document : ~49 ms
+Scanner cache amorcé au même endroit : ~1,1 ms en moyenne
+Après une modification locale vers 90 % : ~4,4 ms
+
+Ces mesures sont propres à l'environnement de construction et ne constituent
+pas une garantie de temps absolu sous Windows/Qt.
+
+LIMITATION D'ENVIRONNEMENT
+--------------------------
+PySide6 n'est pas installé dans l'environnement de construction. Le worker Qt
+et la sensation de fluidité doivent donc être confirmés visuellement sous
+Windows, même si le code compile et que toute la logique non-Qt est testée.

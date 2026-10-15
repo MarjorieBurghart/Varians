@@ -1,0 +1,53 @@
+VARIANS V0.8.5.25.1 — RAPPORT DE VÉRIFICATION
+Date : 2026-10-14
+Origine : archive complète Varians V0.8.5.25 (237 membres ZIP), CRC initial valide.
+
+1. Vérification Python
+    Commande : python -m pytest -q --disable-warnings --maxfail=1
+    Résultat observé : 452 passed, 2 skipped in 10.94s
+    Commande : python -m compileall -q .
+    Résultat : réussi (modules Python syntaxiquement valides).
+    Tests Qt / PySide6 réels : non effectués (environnement sans GUI Qt dédiée).
+
+2. Contrôles spécifiques de V0.8.5.25.1
+    - Résolution de pb/@n (folio) vers page JSON via @facs (surface/zone) : OK.
+    - Zones gauche/droite d'une même surface : clés physiques distinctes : OK.
+    - Témoin secondaire doté de base_keys résolubles : mode lignes : OK.
+    - Témoin secondaire sans base_keys : maintien du mode pages : OK.
+    - @facs introuvable ou ambigu : aucune liaison inventée : OK.
+    - Compatibilité ancien pb/@n = ID technique JSON : OK.
+    - Association explicite d'une URL <graphic> identique : OK.
+    - Conflit entre @facs et ID technique explicite : échec prudent : OK.
+
+3. Chromium réel (Playwright, images de synthèse, sans service IIIF distant)
+    Commande : python tests/manual_v085251_line_sync_chromium.py
+    Résultat : PASS — deux témoins, recadrages [176,276,448,158] et
+       [196,456,398,148], clic dans texte => statuts des deux lignes actualisés.
+    Commande : python tests/manual_v08524_chromium.py
+    Résultat : PASS — zones doubles gauche/droite et polygone PAGE exact.
+    Commande : python tests/manual_v08525_iiif_chromium.py
+    Résultat : PASS — requêtes régionales, erreurs 429/403/404/500,
+       repli complet recadré, hors ligne, changement de Canvas, aucune erreur JS.
+
+4. Projet de démonstration T1/T2/P
+    Commande : python web_viewer/generator.py project.xml
+    Résultat : HTML généré avec 3790 lignes pivot ; T1/T2/P en mode lignes.
+    Contrôle complémentaire : 3790 lignes pivot JSON brutes et publiées ;
+       T2 : 3789 clés du pivot correspondantes ; P : 3788.
+
+5. Ressources multilingues
+    XML i18n FR/EN/DE/JA/CS/IT/RU : sept fichiers analysés par ElementTree.
+    Aides HTML : sept fichiers mis à jour et contrôlés structurellement.
+
+6. Limitations
+    Aucun test graphique natif Windows/PySide6, macOS ou Linux GUI.
+    Aucun manuscrit réel Mu/F/L ni données d'alignement privées de l'utilisateur.
+    Aucun test sur serveur IIIF institutionnel avec authentification/droits.
+    Les deux tests « skipped » sont les mêmes cas dépendant de Qt qu'auparavant.
+    La cause corrigée est reproduite sur corpus synthétique ; la confirmation
+    sur le projet réel de l'utilisateur dépend de son prochain essai.
+
+7. Livraison
+    Archive ZIP complète ; sources précédentes conservées, documentation,
+    7 catalogues, 7 aides, tests et projet pédagogique ; CRC ZIP et SHA-256
+    vérifiés après création ; aucune copie non autorisée d'image externe.

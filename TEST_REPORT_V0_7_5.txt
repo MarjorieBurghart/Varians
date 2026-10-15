@@ -1,0 +1,41 @@
+VARIANS V0.7.5 — RAPPORT DE TEST — IMPORT ALTO INDÉPENDANT
+===========================================================
+
+NOUVELLE FONCTION
+-----------------
+- Fichiers ALTO indépendants des images et de la synchronisation.
+- Import par témoin avec copie dans alto/<sigle>/ ou référence externe.
+- Parsing Page / TextLine / String / SP, dimensions et bbox HPOS/VPOS/WIDTH/HEIGHT.
+- Repli sur Polygon/POINTS lorsqu'une bbox rectangulaire n'est pas fournie.
+- Cache dérivé sous .varians/alto/, invalidé par taille/mtime des XML sources.
+- Association aux images locales par sourceImageInformation/fileName, puis par ordre.
+- Fusion avec un JSON d'alignement existant en préservant id de page,
+  base_keys, score, order et autres métadonnées de synchronisation.
+
+TESTS SPÉCIFIQUES V0.7.5
+------------------------
+- parsing ALTO standard : OK
+- texte de ligne avec String + SP : OK
+- bbox et dimensions de page : OK
+- ALTO sans alignement -> pages/lignes : OK
+- round-trip project.xml <alto type="files"> : OK
+- copie portable des ALTO : OK
+- référence externe aux ALTO : OK
+- fusion ALTO / synchronisation et conservation base_keys : OK
+- association images/ALTO par nom avant l'ordre : OK
+- isolation des nouveaux modules sous Spyder : OK
+
+NON-RÉGRESSION
+--------------
+- suite complète : 86 tests réussis
+- projet historique IIIF : 3 témoins / 3790 lignes : OK
+- projet from scratch + ALTO, sans image ni synchronisation : OK
+- viewer web : génération OK
+- catalogues FR/EN : mêmes clés et mêmes variables : OK
+- compilation Python de tous les modules : OK
+
+LIMITATION DE L'ENVIRONNEMENT
+-----------------------------
+PySide6 n'est pas installé dans l'environnement de construction. Le rendu
+visuel du nouveau groupe ALTO dans la fiche de témoin doit donc être confirmé
+sous Windows/Qt. La logique métier est couverte par les tests hors Qt.

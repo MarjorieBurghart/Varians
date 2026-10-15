@@ -1,0 +1,34 @@
+VARIANS V0.8.5.20 — RAPPORT DE CONTRÔLE
+=========================================
+
+Tests Python : 400 passed in 8.29s
+Compilation Python : sans erreur.
+Vérification des traductions : sept langues, 606 clés uniques par catalogue ;
+les noms de variables des messages sont cohérents.
+Aides : sept fichiers HTML actualisés.
+Données réelles du témoin L : sur une image source 3924 x 2704 px,
+avec la séparation à x=1973, 35 lignes côté gauche et 34 côté droit,
+aucune association ambiguë sur les 69 lignes du premier scan.
+
+Fonctionnalités contrôlées :
+- bouton Double page sur la rangée de commandes existante ;
+- widget de vignette complète avec barre rouge déplaçable et % synchronisé ;
+- conservation du pixel source exact dans les zones TEI ;
+- copie locale décodée en réduction ou requête IIIF miniature asynchrone ;
+- réception de la réponse réseau dans le fil GUI par QObject Qt ;
+- labels neutres « partie gauche / partie droite » et i18n sept langues ;
+- inférence prudente de la partie depuis bbox ou polygone, proportion x ;
+- demande manuelle si chevauchement, page entière ou données insuffisantes ;
+- <pb/> avec @facs pointant vers la zone et @edRef vers le témoin ;
+- refus des cibles TEI obsolètes ;
+- réouverture et réajustement de deux zones créées par Varians ;
+- préservation des xml:id et <pb> ; refus de modifier un autre zonage ;
+- protection en cas de XML mal formé et annulation sans mutation.
+
+Limite de validation : PySide6 n'est pas installé dans cet environnement.
+La fenêtre native, les interactions de souris et l'affichage réel sous Windows
+restent donc à confirmer manuellement. Les callbacks ont été testés par
+extraction AST avec des substituts de widgets, et non par un moteur graphique Qt.
+
+Compatibilité : ni project.xml, ni JSON base_keys, ni ALTO/PAGE, ni les images
+ne sont convertis ni modifiés par cette mise à jour.

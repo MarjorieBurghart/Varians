@@ -1,0 +1,32 @@
+VARIANS V0.7.9.2 — HOTFIX MARQUAGE DE PAGE CONSERVATEUR
+=======================================================
+
+Date de contrôle : 2026-10-09
+
+CORRECTION
+----------
+- « Marquer la page » ne modifie plus jamais une balise XML existante.
+- Curseur strictement à l’intérieur d’un <pb/> : aucune modification, aucune
+  insertion ; le document reste octet-pour-octet identique dans le moteur pur.
+- Même règle pour toute autre balise ouvrante/fermante et, par sécurité, pour
+  commentaire, CDATA et instruction de traitement.
+- Curseur immédiatement avant « < » ou immédiatement après le délimiteur de
+  fermeture : insertion autorisée.
+- Le contrôle est effectué dans l’interface AVANT sync_facsimile_text : une
+  commande refusée ne peut donc même pas créer/compléter <facsimile>.
+- Message utilisateur : « Placez le curseur dans le texte ou entre deux balises. »
+
+TESTS AJOUTÉS / MODIFIÉS
+------------------------
+1. curseur strictement dans <pb/> : bloqué, aucun remplacement ;
+2. curseur dans une autre balise ouvrante : bloqué ;
+3. curseur dans une balise fermante : bloqué ;
+4. curseur adjacent à une autre balise : insertion valide ;
+5. contrôle statique de l’ordre UI : garde-fou avant fusion <facsimile>.
+
+NON-RÉGRESSION
+--------------
+- Suite pytest complète : 121 tests réussis.
+- Compilation Python : 46 fichiers Python compilés sans erreur.
+- Cohérence des catalogues FR/EN : 431 clés dans chaque catalogue ; ensembles de clés identiques ; variables d’interpolation identiques.
+- Viewer historique : génération réussie, 3 témoins / 3790 lignes de base.

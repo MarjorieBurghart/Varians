@@ -1,0 +1,20 @@
+ÉDITEUR TEI GÉNÉRIQUE — V0.4.3 : MENU COMPACT / RECHERCHE SÉCURISÉE
+==================================================================
+
+[OK] Syntaxe : compilation de tous les modules Python.
+[OK] Test hors Qt de find_in_plain_editor : 3 occurrences successives,
+     retour circulaire à la 1re, puis deux recherches arrière.
+[OK] Le curseur de l'éditeur ne contient aucune sélection de résultat.
+[OK] find_in_plain_editor n'envoie plus le focus sur l'éditeur XML.
+[OK] Une recherche sans résultat retire l'ancien surlignage.
+[OK] Le menu Fichier est un QMenu attaché à un QToolButton de la toolbar,
+     sans appel à menuBar().addMenu().
+[OK] Entrée dans le QLineEdit lance Suivant, et le focus revient à ce champ.
+[OK] Recherche de fragment protégée par la même fonction.
+[OK] Chargement du projet d'exemple : XSLT intégrée résolue.
+[OK] Génération web conservée : 3 témoins et 3790 lignes de base.
+[OK] Catalogues FR/EN : 251 entrées chacun.
+
+[À TESTER SUR WINDOWS] Interactions réelles des boutons Qt, raccourcis de menu,
+     affichage du surlignage jaune et comportement du clavier (PySide6 absent
+     dans l'environnement de construction).

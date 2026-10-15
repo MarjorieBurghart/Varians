@@ -1,0 +1,44 @@
+V0.5.0 — RELAX NG / première couche TEI-aware
+================================================
+
+Vérifications automatiques réalisées :
+
+1. Compilation syntaxique
+   - editeur_tei.py
+   - project_config.py
+   - project_management.py
+   - project_dialogs.py
+   - i18n.py
+   - relaxng_validation.py
+   - web_viewer/*.py
+   - tests/*.py
+
+2. Validation RELAX NG hors Qt (lxml 6.1.1)
+   - document valide : accepté
+   - document non conforme : erreurs structurées produites
+   - XML mal formé : erreur de parsing localisée
+   - schéma modulaire avec include relatif : résolu correctement
+
+3. Contrat project.xml
+   - sérialisation <schema type="relaxng" file="..."/>
+   - relecture du chemin de schéma
+   - création d'un nouveau projet avec copie vers schema/edition.rng
+   - ancien project.xml sans <schema> toujours lisible
+
+4. Internationalisation
+   - fr.xml : 288 clés
+   - en.xml : 288 clés
+   - ensembles de clés identiques
+
+5. Non-régression
+   - recherche XML sécurisée
+   - Ctrl+E
+   - isolation Spyder
+   - recherche XSLT avec WORD JOINER
+   - sélection synchronisée XML <-> XSLT
+   - génération viewer web : 3 témoins, 3790 lignes de base
+
+Limitation de l'environnement de test :
+PySide6 n'est pas installé dans le conteneur de construction. Le rendu graphique
+du panneau RELAX NG, son redimensionnement et le double-clic ligne/colonne ont
+été vérifiés statiquement mais devront être confirmés sous Qt/Windows.

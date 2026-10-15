@@ -1,0 +1,32 @@
+VARIANS V0.8.5.11 — RAPPORT DE VÉRIFICATION
+
+BASE
+Version 0.8.5.10, complète ; préservation des corrections de cadres polygonaux
+et de découpage aux changements de colonne.
+
+CORRECTION
+- Synchronisation mixte par témoin en même temps : Mu et F ligne, C page.
+- pb/@edRef/@facs indépendant par témoin, dernière page précédente avant le curseur.
+- pb/@n sans facs : repli strict seulement si libellé exact et unique parmi les
+  pages image du même témoin, jamais selon la position des images.
+- Le panneau image seul suit son pb même lorsque le numéro de ligne du pivot
+  ne change pas ; le panneau ligne ne reçoit pas les changements de page C.
+- Navigation depuis les panneaux et depuis la vue mise en forme également mise à jour.
+- Viewer web : sélection de ligne met à jour les pages des témoins non alignés ;
+  repli des pb sans facs par libellé exact et non ambigu.
+- Aucune mutation de project.xml, TEI, JSON, base_keys, ALTO, PAGE, IIIF.
+
+TESTS
+- python -m pytest -q : 272 tests passés (265 historiques + 7 nouveaux).
+- tests/test_v08511_mixed_page_line.py : 7 tests ; inclut exécution sans Qt
+  des vraies méthodes de MainWindow, trois témoins et un véritable projet XML.
+- compileall Python : réussi.
+- node --check de la ressource JavaScript générée : réussi.
+- XML des catalogues i18n et sept aides HTML vérifiés.
+- Intégrité CRC de l'archive complète vérifiée.
+
+LIMITES
+- Pas de PySide6 dans l'environnement : rendu graphique Windows à confirmer.
+- Sans @facs et sans libellé de page unique, aucune association n'est inventée.
+- Les changements dans le viewer web concernent la navigation, pas la structure
+  des données synchronisées ni les modes de tracé des cadres.

@@ -1,0 +1,19 @@
+Varians 0.8.5.0 — PAGE XML et copies IIIF locales
+Date : 2026-10-10
+
+VÉRIFICATIONS EFFECTUÉES
+- Python : compilation récursive du code sans erreur.
+- Tests automatisés : 178 tests réussis (pytest, environnement Linux).
+- JavaScript du viewer : syntaxe contrôlée avec Node.js 22 (--check).
+- PAGE XML : polygones, baselines, textes Unicode, retombée sur mots, mélange ALTO/PAGE, conservation des identifiants de synchronisation.
+- IIIF : cache de manifest, copies incrémentales, reprise après échec, copie hybride, conservation des URL originales, attributs XML localCopy / webLocalCopy, export local vs distant, empaquetage web.
+- Internationalisation : mêmes clés et mêmes paramètres de substitution dans fr/en/de/ja/cs/it/ru.
+- Ancien projet d'exemple : build_dataset du viewer effectué sans erreur.
+
+LIMITES DE CETTE VALIDATION
+- PySide6 n'est pas installé dans l'environnement d'exécution des tests ; les widgets Qt n'ont donc pas été ouverts de manière interactive. Imports et chemins Qt contrôlés statiquement et par compilation.
+- Les téléchargements IIIF ont été simulés lors des tests (pas de connexion à un serveur distant réel). Il faut tester un service IIIF concret, sa disponibilité et ses éventuelles restrictions.
+- Les exemples PAGE/ALTO utilisés ici sont synthétiques. Un couple réel décrivant une même image est recommandé pour tester les coordonnées de manuscrits complexes.
+- Les traductions ont été ajoutées dans toutes les langues et vérifiées structurellement ; une relecture éditoriale par des locuteurs natifs reste conseillée avant distribution à grande échelle.
+
+RÉFÉRENCE TECHNIQUE : PAGE_IIIF_LOCAL.md

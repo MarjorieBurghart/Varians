@@ -1,0 +1,20 @@
+VARIANS V0.7.9.1 — HOTFIX FRONTIÈRES <pb>
+
+CORRECTION
+- La commande « Marquer la page » ne considère plus les positions immédiatement
+  avant « < » ou immédiatement après « > » comme étant à l’intérieur d’un <pb>.
+- Cas corrigé : <pb n="1r" facs="#A1-p0001"/>| + marquage du témoin B1
+  insère désormais un second <pb> sans altérer celui de A1.
+- Le comportement d’édition du <pb> courant est conservé lorsque le curseur est
+  réellement à l’intérieur de la balise.
+
+TESTS AJOUTÉS
+1. curseur immédiatement après un <pb/> : insertion ;
+2. curseur immédiatement avant un <pb/> : insertion ;
+3. curseur strictement à l’intérieur du <pb/> : mise à jour.
+
+NON-RÉGRESSION
+- Suite pytest complète : 118 tests réussis.
+- Compilation Python : 46 fichiers Python compilés.
+- Cohérence des catalogues FR/EN : 430 clés dans chaque catalogue.
+- Génération du viewer historique : 3 témoins / 3790 lignes de base.

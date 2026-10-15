@@ -1,0 +1,50 @@
+VARIANS V0.7.3 — IMAGES LOCALES
+===============================
+
+NOUVELLES FONCTIONS
+-------------------
+- Source « Images locales » dans la fiche d’un témoin.
+- Sélection multiple JPG/JPEG/PNG/TIFF/BMP/WebP.
+- Ordre des pages modifiable.
+- Libellés de pages modifiables.
+- Choix entre copie dans le projet et références externes.
+- Copie portable sous images/<sigle>/ avec préfixes numériques.
+- Sérialisation explicite des pages dans project.xml.
+- Feuilletage d’images locales sans ALTO ni synchronisation.
+- Superposition des images locales à un cache d’alignement existant sans
+  modifier lignes ALTO ni base_keys.
+- Auto-orientation EXIF lors du décodage local via QImageReader.
+
+COMPATIBILITÉ
+-------------
+- <images type="none"/> V0.7.2 : conservé.
+- absence de <images> / mode auto historique : conservé.
+- ancien bloc iiif dans les JSON d’alignement : conservé.
+- ancien <images type="files" path="..."/> expérimental : encore lu ; le dossier
+  est parcouru dans l’ordre alphabétique.
+
+TESTS
+-----
+- Suite pytest : 76 tests réussis.
+- Nouveaux tests V0.7.3 :
+  * round-trip project.xml avec images locales : OK
+  * copie dans images/<sigle>/ : OK
+  * référence externe : OK
+  * pages locales sans alignement : OK
+  * remplacement de la couche image d’un alignement : OK
+- Compilation syntaxique : 37 fichiers Python OK.
+- XML de configuration / i18n : parsables.
+- Catalogues FR/EN : 391 clés identiques et variables cohérentes.
+- Projet exemple historique : 3 témoins / 3790 lignes / viewer généré.
+- Projet synthétique from scratch + 2 images copiées + aucun ALTO : chargé,
+  2 pages locales détectées, viewer généré sans exception.
+
+LIMITES / ÉTAPES SUIVANTES
+--------------------------
+- PySide6 n’est pas installé dans l’environnement de construction : le dialogue
+  graphique et l’affichage réel sous Windows doivent être confirmés dans Varians.
+- Le viewer web ne copie pas encore les images locales dans web_output/ et ne les
+  affiche donc pas comme ressources autonomes. Cette adaptation reste prévue.
+- L’association dédiée de fichiers ALTO à des images locales reste une étape
+  ultérieure de la feuille de route.
+- L’import de Manifest IIIF sera traité dans la V0.7.4.

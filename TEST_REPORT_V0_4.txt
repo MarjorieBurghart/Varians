@@ -1,0 +1,18 @@
+V0.4 — RAPPORT DE TEST AUTOMATISÉ
+=================================
+
+- 8 sources Python : compilation syntaxique OK.
+- i18n/fr.xml : 245 clés.
+- i18n/en.xml : 245 clés.
+- ensembles de clés FR/EN identiques : OK.
+- variables {…} FR/EN identiques pour chaque clé : OK.
+- création d'un nouveau projet autonome depuis une TEI + 3 alignements : OK.
+- relecture du project.xml généré par project_config.py : OK.
+- témoin de base et 3 témoins : OK.
+- chemins internes du project.xml créé relatifs au dossier du projet : OK.
+- génération du viewer web depuis ce nouveau projet : OK.
+- viewer de test : 3 témoins, 3790 lignes de base.
+
+Limitation : PySide6 n'est pas installé dans l'environnement de construction ;
+les dialogues Qt (Nouveau projet, Paramètres du projet, menu des récents) n'ont
+pas pu être manipulés graphiquement ici.

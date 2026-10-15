@@ -1,0 +1,28 @@
+ÉDITEUR TEI GÉNÉRIQUE — V0.4.4 : CTRL+E, IMBRICATION ET INSERTION
+=================================================================
+
+[OK] Compilation syntaxique de tous les modules Python.
+[OK] Ctrl+E avec sélection : remplace la sélection par <tag>sélection</tag>.
+[OK] Le nouveau bloc complet reste sélectionné, balises incluses.
+[OK] Deux Ctrl+E successifs sans resélection : <rdg><app>verbum</app></rdg>.
+[OK] Avec attributs configurés, la sélection du bloc complet reste prioritaire.
+[OK] Sans sélection : <note></note>, curseur entre les balises.
+[OK] Sans sélection, attribut sans defaultValue : curseur entre les guillemets.
+[OK] Sans sélection, attribut avec defaultValue : curseur dans le contenu.
+[OK] Saisie "lb/" sans sélection : insertion <lb/> et curseur après la balise.
+[OK] Balise autofermante avec sélection refusée sans modifier le texte.
+[OK] Annulation du dialogue et nom invalide : texte inchangé.
+[OK] Texte XML multiligne et caractères Unicode hors BMP : positions UTF-16.
+[OK] Source XML et éditeur de fragment : même méthode Ctrl+E partagée.
+[OK] Tests de recherche sécurisée V0.4.3 conservés.
+[OK] Catalogues i18n fr/en : 254 clés communes, variables identiques.
+[OK] Projet TEI : 3 témoins, génération web conservée : 3790 lignes de base.
+[OK] AST inchangé en dehors de la méthode Ctrl+E ; projets/données/rendu inchangés.
+
+Tests de référence :
+  python tests/test_ctrl_e_sans_qt.py
+  python tests/test_recherche_sans_qt.py
+
+[À TESTER DANS SPYDER/WINDOWS] Interaction réelle QPlainTextEdit, visibilité de
+la sélection quand la boîte de dialogue est refermée, et Ctrl+E enchaînés.
+PySide6 est absent de l'environnement de construction.

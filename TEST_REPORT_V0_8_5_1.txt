@@ -1,0 +1,38 @@
+VARIANS 0.8.5.1 — RAPPORT DE VALIDATION
+Date : 2026-10-10
+
+Correctif : liaison de lignes ALTO/PAGE par identifiant UUID stable PERO OCR.
+État : contrôle automatisé sans test interactif GUI.
+
+Source de test réelle : paire ALTO v2 / PAGE XML 2019-07-15 et JPEG
+fournie dans cette conversation ; fichiers sources non redistribués.
+
+Faits vérifiés sur les données réelles :
+- JPEG 644 x 892 pixels ; dimensions identiques dans les XML.
+- 39 lignes ALTO et 39 lignes PAGE, même ordre de départ.
+- 39/39 transcriptions OCR identiques (4 U+FFFD dans les deux sources).
+- 39/39 boîtes englobantes identiques pixel à pixel.
+- 39/39 suffixes UUID identiques (line_ contre id_).
+- 39 polygones PAGE (21 à 24 sommets), 39 baselines.
+- Polygones valides et entièrement inclus dans les dimensions de l'image.
+- Importation des deux formats par parse_layout_file() : OK.
+- Remplacement ALTO par PAGE : données de synchronisation conservées.
+- Permutation de deux lignes PAGE simulée : synchronisations réattribuées
+  par UUID (et non par position) : OK.
+
+Tests spécifiques livrés :
+- Migration de lignes PERO réordonnées ; métadonnées et numéros conservés.
+- Ligne nouvelle (UUID différent) : n'hérite pas de base_keys erronés.
+- UUID insensibles à la casse.
+
+Commande : python -m pytest -q
+Résultat : 181 passed (sur cet environnement)
+Compilation : python -m compileall -q . : OK
+
+Non vérifié ici : rendu GUI PySide6 interactif et fidélité du rendu
+polygones SVG sur un navigateur particulier, serveurs IIIF réels.
+Les données d'OCR n'ont pas été validées philologiquement.
+
+Note : la présence des deux XML pour la même page n'implique pas qu'ils
+soient tous deux à importer simultanément dans un même témoin, sous peine
+de doubler la page. Choisir l'un des formats pour cette image.

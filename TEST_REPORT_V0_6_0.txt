@@ -1,0 +1,50 @@
+VARIANS V0.6.0 — CUSTOM-ELEMENTS / AIDE DE SAISIE
+==================================================
+
+OBJECTIF
+--------
+Étape 4 de la feuille de route : enrichir Ctrl+E et Ctrl+Espace avec
+custom-elements.xml sans confondre aide éditoriale et validité RELAX NG.
+
+NOUVEAUTÉS
+----------
+- Les suggestions affichent leur provenance : RNG / Projet / RNG + Projet.
+- Ctrl+E fusionne les éléments autorisés par le RNG et les éléments de
+  commodité définis dans custom-elements.xml ; le champ reste éditable.
+- Ctrl+Espace fusionne de la même manière les suggestions d'éléments et
+  d'attributs.
+- Pour les valeurs d'attributs, custom-elements.xml accepte :
+    * <value>...</value> ;
+    * <values source="witnesses" prefix="#"/> ;
+    * valuesMode="append" (défaut) ;
+    * valuesMode="replace" (remplacement des propositions de l'interface
+      seulement ; aucune modification de la validité RNG).
+- La configuration livrée définit rdg/@wit à partir des témoins du projet.
+  Projet exemple vérifié : #T1, #T2, #P.
+- Le logo Varians est le PNG fourni par l'utilisateur, sans reconstruction.
+
+RÉTROCOMPATIBILITÉ
+------------------
+- Le format historique <attribute name="..."/> reste accepté.
+- defaultValue conserve son comportement historique dans Ctrl+E.
+- Le correctif Ctrl+Espace avant '/>' de V0.5.8 est conservé.
+- Les complétions positionnelles RNG et les valeurs RNG finies restent actives.
+
+TESTS
+-----
+- pytest : 44 tests réussis.
+- parser custom-elements.xml : rétrocompatibilité, valeurs explicites,
+  mode replace, témoins dynamiques, QName préfixés : OK.
+- fusion des provenances RNG / Projet / RNG + Projet : OK.
+- projet exemple : rdg/@wit -> #T1, #T2, #P en mode replace : OK.
+- compilation Python : 29 fichiers : OK.
+- i18n : 366 clés FR / 366 clés EN, ensembles et variables identiques : OK.
+- project.xml / project-template.xml / custom-elements.xml : parsables : OK.
+- génération viewer web : OK, 3 témoins / 3790 lignes de base.
+- identité du logo : SHA-256 identique au PNG fourni : OK.
+
+LIMITATION DE L'ENVIRONNEMENT
+-----------------------------
+PySide6 n'est pas disponible dans l'environnement de construction. Le rendu
+visuel des étiquettes de provenance dans les popups doit donc être confirmé
+sous Windows/Qt, comme pour les précédentes évolutions d'interface.

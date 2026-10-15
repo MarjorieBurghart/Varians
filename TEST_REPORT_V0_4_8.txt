@@ -1,0 +1,16 @@
+V0.4.8 — Recherche XSLT et affichage break=no
+
+Corrections :
+- recherche dans la vue XSLT : résultat surligné via ExtraSelection, sans sélection active ;
+- focus conservé dans le champ de recherche ; Entrée lance l'occurrence suivante ;
+- recherche tolérante aux WORD JOINER U+2060 ;
+- marqueur technique de ligne rendu à largeur visuelle nulle (font-size/line-height 0, marges/padding 0) afin de ne pas créer de faux blanc dans un mot avec <lb break="no"/>.
+
+Tests hors Qt :
+- Ctrl+E : OK
+- recherche source/fragment : OK
+- isolement Spyder : OK
+- recherche XSLT avec U+2060 : OK
+- transformation réelle « consilio et sim<lb break=no/>plex » : aucune espace dans le HTML intermédiaire : OK
+
+Reste à confirmer visuellement sous Qt/Windows.

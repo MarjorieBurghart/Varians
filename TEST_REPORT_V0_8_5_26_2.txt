@@ -1,0 +1,17 @@
+VARIANS V0.8.5.26.2 — RAPPORT DE VALIDATION — 15 OCTOBRE 2026
+
+Base : distribution complète V0.8.5.26.1, 265 fichiers, archive d'origine contrôlée CRC sans erreur.
+Objet : correctif ciblé de l'invalidation et du rafraîchissement du panneau d'erreurs RELAX NG.
+
+TESTS PYTHON : 479 passed, 2 skipped, 0 failed ; python -m pytest -q --disable-warnings --maxfail=1.
+SYNTAXE PYTHON : python -m compileall -q . — réussi.
+RÉGRESSIONS : test_v085262_rng_panel_refresh.py : six contrôles nouveaux, dont panneau masqué/correction, réouverture, double notification QTextDocument et éditeur, activation après premier F8, abandon d'une résolution de schéma périmée, succession invalidité/validité sur cache lxml.
+I18N : 7 catalogues conservés, 629 entrées distinctes chacun. Message de résultats périmés actualisé. Sept aides actualisées.
+VIEWER WEB : aucun fichier source web_viewer/ modifié ; fonctionnalités plein texte, ordre et visibilité héritées intactes.
+PROJETS ET SCIENCE : project.xml, TEI, JSON, IIIF/ALTO et autres données de démonstration de la distribution précédente inchangés.
+
+LIMITES : installation PySide6 indisponible dans cet environnement (pas de connectivité au dépôt pip). Les tests des vraies méthodes de gestion du panneau utilisent des substituts Qt et ne constituent PAS des tests graphiques natifs sous Windows. Aucun essai sur le projet scientifique de l'utilisateur n'a été réalisé.
+
+ESSAI WINDOWS PRÉCONISÉ : ouvrir validation par F8, corriger une erreur, tester correction panneau visible puis masqué puis retour après XPath ; tester F8, annuler/refaire et plusieurs erreurs successives. Aucune erreur périmée ne devrait réapparaître. Si une erreur persiste, distinguer la validation du document courant d'une erreur ancienne par son message exact et son emplacement.
+
+FEUILLE DE ROUTE : suspendue / à redéfinir, aucun chantier nouveau considéré comme approuvé.

@@ -1,0 +1,31 @@
+VARIANS V0.8.5.14 — STANDALONE OCR / IIIF IMAGES — TEST REPORT
+================================================================
+
+Baseline: complete Varians V0.8.5.13, no feature removed.
+
+REPRODUCED FAILURE
+A witness L had IIIF canvases and downloaded local working images, but no
+synchronization JSON. After adding independent ALTO files, the old overlay
+could replace each image with type=none if OCR names did not identify canvases.
+The images stopped displaying even though the manifest and local files existed.
+
+CORRECTION
+- IIIF selection remains the canonical image list for varians-layout-cache.
+- OCR enriches only a provably matched Canvas; no positional fallback.
+- Original Canvas-derived page IDs/surface IDs remain stable.
+- Exact local working-copy filenames can resolve OCR geometry via the index.
+- OCR with duplicate source page IDs does not crash the resolver.
+- Unassociated OCR pages are retained in a diagnostic cache, with a translated
+  tooltip in the desktop panel; no phantom image pages.
+- JSON synchronization, base_keys and TEI are unchanged.
+- The desktop app and web viewer use the common corrected image layer.
+
+VERIFICATION
+- python -m pytest -q: 302 passed, incl. 13 new regression cases.
+- python -m compileall and JavaScript generated syntax checked.
+- Seven XML translation catalogs parsed and seven HTML help files checked.
+- Full archive inventory compared against V0.8.5.13, ZIP CRC verified.
+
+LIMITATIONS
+PySide6 not installed in this test runtime; actual Windows GUI behavior and
+user-specific L manifest, downloaded copies and ALTO remain to be checked.

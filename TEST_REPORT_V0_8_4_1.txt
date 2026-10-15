@@ -1,0 +1,25 @@
+VARIANS V0.8.4.1 — XPATH + AIDE UTILISATEUR
+===========================================
+
+Objectifs
+---------
+1. Un clic dans le panneau XPath doit sélectionner l'élément XML complet et
+   non seulement positionner le curseur sur sa première ligne.
+2. L'aide intégrée F1 doit refléter l'état réel de Varians 0.8.4.1 et décrire
+   les principaux workflows développés depuis la V0.6.
+
+Correctif XPath
+---------------
+- XPathMatch expose désormais `end_position` en plus de `position`.
+- Les bornes exactes sont calculées lexicalement avec `xml_tag_pairs.py` afin
+  de conserver exactement le texte source original.
+- Les éléments autofermants utilisent la fin de leur propre balise.
+- Les éléments ordinaires utilisent la fin de leur fermeture appariée.
+- `goto_xpath_result()` crée une sélection QTextCursor avec KeepAnchor.
+
+Aide
+----
+- Réécriture complète de help/fr.html et help/en.html.
+- Projet from scratch, listWit, XML/XSLT, RNG, XPath, paires XML, Indenter,
+  images locales/IIIF, facsimile/pb, ALTO, synchronisation, choix des témoins,
+  viewer web, sauvegarde et raccourcis sont maintenant documentés.

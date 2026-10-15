@@ -1,0 +1,40 @@
+VARIANS V0.8.4.2 — RAPPORT DE VÉRIFICATION
+==========================================
+
+Objet de la version
+-------------------
+- suppression du libellé redondant « edition.xml » dans la barre d'outils ;
+- documentation de transmission destinée à un développeur humain ;
+- ajout de cinq langues d'interface : allemand, japonais, tchèque, italien,
+  russe, en plus du français et de l'anglais ;
+- aide utilisateur F1 disponible dans les sept langues.
+
+Vérifications automatiques
+--------------------------
+- pytest : 171 tests réussis ;
+- compilation : 57 fichiers Python compilés sans erreur ;
+- catalogues i18n : 7 catalogues, 446 clés chacun, même ensemble de clés et
+  mêmes placeholders str.format ;
+- langues détectées par I18nManager : cs, de, en, fr, it, ja, ru ;
+- fichiers d'aide : cs/de/en/fr/it/ja/ru présents et marqués V0.8.4.2 ;
+- génération du viewer de démonstration : 3 témoins / 3790 lignes de base,
+  aucune ressource manquante ;
+- JavaScript du viewer exporté : syntaxe validée avec node --check ;
+- barre d'outils : aucune référence résiduelle à self.file_label.
+
+Documentation développeur
+--------------------------
+- DEVELOPER_HANDOFF.md : principes, invariants, contrats de données,
+  architecture des modules, cycle des ressources, desktop/viewer, édition XML,
+  i18n, préférences, validation, performances, sauvegardes, tests, dette
+  technique et checklist de reprise ;
+- CODE_MAP.md : carte compacte fonctionnalités -> modules -> tests ;
+- I18N_FORMAT.md : catalogue des langues et règles de maintenance.
+
+Note de validation graphique
+-----------------------------
+PySide6 n'est pas installé dans l'environnement de construction. Les tests
+statiques et fonctionnels non-Qt passent, mais l'aspect final des traductions
+(longueur des libellés, césures et dimensions des dialogues) doit être contrôlé
+sur la machine Windows cible. Les catalogues et leurs variables ont toutefois
+été vérifiés automatiquement.

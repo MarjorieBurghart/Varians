@@ -1,0 +1,42 @@
+VARIANS V0.8.2 — SYNCHRONISATION DE PAGE TEI / VIEWER
+======================================================
+
+Objectifs
+---------
+1. « Marquer la page » génère désormais un <pb> complet avec @n, @edRef et @facs.
+2. En mode page, la page courante est calculée indépendamment pour chaque témoin.
+3. Le viewer web conserve les <pb> des témoins secondaires comme ancres invisibles
+   et synchronise les panneaux de pages lorsqu'on clique sur le texte de l'édition.
+4. Les boutons globaux indiquent « page » en mode page et « ligne » en mode ligne.
+5. Compatibilité maintenue avec les anciens <pb facs> sans @edRef lorsqu'une surface
+   permet d'identifier le témoin sans ambiguïté.
+
+Contrôles automatiques
+----------------------
+- pytest -q : 150 tests réussis.
+- compileall : 51 fichiers Python compilés sans erreur.
+- i18n : 438 clés FR / 438 clés EN, ensembles et variables identiques.
+- Projet historique : viewer généré avec 3 témoins / 3790 lignes de base.
+- JavaScript du viewer généré : validation `node --check` réussie.
+- Projet synthétique sans synchronisation de lignes, 2 témoins × 2 images locales :
+  * 4 <pb> conservés dans le document de lecture ;
+  * @edRef A1/B1 et @facs correctement exportés ;
+  * repères B1 marqués comme ancres secondaires ;
+  * 4 images copiées dans web_output/images/ ;
+  * aucune page manquante.
+
+Tests V0.8.2 dédiés
+-------------------
+- insertion : <pb n="1v" edRef="#A1" facs="#A1-p0002"/> ;
+- suivi indépendant A1/B1 au même point du texte ;
+- compatibilité des anciens <pb facs> sans @edRef ;
+- conservation facultative des repères de page étrangers par le lecteur TEI ;
+- présence des hooks JS de synchronisation par position textuelle ;
+- libellés « page » FR/EN ;
+- branchement de @edRef depuis l'identifiant de témoin du projet.
+
+Limite de l'environnement de construction
+------------------------------------------
+PySide6 n'est pas disponible dans l'environnement de construction. Les tests Qt
+visuels (placement exact des panneaux et comportement interactif natif sous Windows)
+restent donc à confirmer sur la machine utilisateur, comme pour les versions précédentes.

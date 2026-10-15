@@ -1,0 +1,42 @@
+VARIANS V0.8.5.21 — RAPPORT DE VALIDATION
+==========================================
+
+Tests Python : 411 passed in 12.01s
+Compilation Python : sans erreur.
+Traductions : sept langues, 617 clés par langue, sans doublon ;
+variables des messages strictement identiques entre les langues.
+Aides : sept pages HTML contenant la nouvelle documentation.
+
+Fonctions développées :
+- Affichage > Disposition des témoins : verticale, horizontale, grille deux colonnes ;
+- nombre impair de témoins et plus de quatre témoins admis ;
+- panneaux des manuscrits réutilisés (pas de reconstruction de l'OCR ou des images) ;
+- barres d'outils compactes en modes horizontal et grille ;
+- boutons ↗ pour détacher, ↙ ou fermeture pour rattacher ;
+- fenêtres top-level indépendantes pour moniteurs supplémentaires ;
+- option « Toujours au premier plan » distincte par fenêtre ;
+- position/taille des fenêtres et état de détachement par projet ;
+- ordre, affichage, dimensions des panneaux par témoin sauvegardés ;
+- rapport XML/manuscrits redimensionnable avec 20 % XML possible ;
+- suppression de l'ancien minimum de 560 px des manuscrits ;
+- barre de défilement horizontal disponible au besoin ;
+- modes, visibilité et tailles enregistrés uniquement par QSettings.
+
+Vérifications de régression :
+- actualisation des JSON et synchronisation par lignes sans modification ;
+- détachement et rattachement du même panneau (zoom/cadres/page préservés) ;
+- modes grille/horizontal/vertical avec ordre arbitraire et témoin caché ;
+- taille des cellules mémorisée par identifiant du témoin ;
+- réouverture filtrant les anciens IDs de témoins ;
+- état Always on Top par témoin ;
+- choix du pourcentage de largeur de l'éditeur XML ;
+- aides, i18n et intégrité du ZIP.
+
+VALIDATION INTERACTIVE À EFFECTUER : PySide6 n'est pas installé dans cet
+ environnement. Les tests des contrôleurs utilisent leurs vraies méthodes
+ extraites par AST et des substituts Qt ; les fenêtres natives et le comportement
+ multi-écrans Windows ne peuvent pas être reproduits ici. Tester la réouverture
+ des fenêtres détachées, le mode Toujours au premier plan et le changement de
+ langue en situation réelle.
+
+Aucun changement du format project.xml, TEI, JSON, ALTO, PAGE ou des images.

@@ -1,0 +1,54 @@
+ÉDITEUR TEI GÉNÉRIQUE — RAPPORT DE TEST V0.5.4
+================================================
+
+OBJECTIF
+--------
+Rendre la complétion Ctrl+Espace sensible à la position exacte dans les
+séquences RELAX NG, tout en conservant les comportements V0.5.3.
+
+NOUVEAU MOTEUR POSITIONNEL
+--------------------------
+- group / séquence : OK
+- choice : OK
+- optional : OK
+- zeroOrMore : OK
+- oneOrMore : OK
+- interleave : OK
+- ref vers éléments : OK
+- calcul après frères déjà présents : OK
+- prise en compte des frères situés à droite du curseur : OK
+- aucune proposition lorsqu'une séquence complète ne permet plus d'insertion : OK
+- repli sur la liste large si le préfixe XML existant est déjà incompatible : OK
+
+CONTEXTE XML
+------------
+- collecte des enfants directs précédant le curseur : OK
+- collecte des enfants directs suivant le curseur : OK
+- texte entre enfants ignoré pour l'ordre des balises : OK
+- correctif V0.5.3 <rdg|> / <rdg |> / <rdg wi|> / <rdg>| : conservé
+
+NON-RÉGRESSION
+--------------
+- attributs RNG et exclusion des attributs déjà présents : OK
+- complétion avec include local : OK
+- Ctrl+E source / fragment : OK
+- recherche XML : OK
+- recherche XSLT avec WORD JOINER : OK
+- synchronisation de sélection XML <-> XSLT : OK
+- isolation Spyder : OK
+- validation RELAX NG / xml-model : OK
+
+RÉSULTATS
+---------
+- pytest : 16 tests réussis
+- compilation Python : réussie
+- génération viewer web : réussie
+- viewer : 3 témoins, 3790 lignes de base
+
+LIMITES
+-------
+- PySide6 n'est pas installé dans l'environnement de construction : le dialogue
+  graphique Ctrl+Espace doit toujours être confirmé visuellement sous Windows/Qt.
+- anyName / nsName ne sont pas énumérés.
+- la complétion des valeurs d'attributs reste l'étape suivante.
+- F8 / validation RELAX NG reste l'autorité pour la validité du document.

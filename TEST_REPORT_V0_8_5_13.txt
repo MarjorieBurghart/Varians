@@ -1,0 +1,31 @@
+VARIANS V0.8.5.13 — XML END-TAG AUTOCOMPLETION — TEST REPORT
+==============================================================
+Baseline: complete V0.8.5.12 archive (all previous features preserved).
+
+USER SCENARIO
+  <div><p><lb n="7" edRef="#Mu"/></p></|
+  Offers: div>
+  On Enter/Tab: <div><p><lb n="7" edRef="#Mu"/></p></div>
+  Both the main source editor and the paragraph fragment editor share CodeEditor.
+
+NEW FEATURES
+- Lightweight non-modal QCompleter popup after typing </.
+- Accept with Enter or Tab; dismiss with Escape; Ctrl+Space can reopen it.
+- Partial closing QNames and namespace prefixes supported.
+- Avoid duplicate closing > when it is already typed.
+- Actual nesting, not RNG schema guesses; lexical parser tolerates incomplete XML.
+- Ignores comments, CDATA, PI, declarations, self-closing elements,
+  and refuses ambiguous/crossed markup.
+- Preserves the existing paired-tag rename, deletion and highlighting mechanisms.
+
+VERIFICATION
+- python -m pytest -q: 289 passing tests (including 10 new scenarios).
+- python -m compileall: no syntax errors.
+- Seven locale XML files well formed and without duplicate keys.
+- Seven language help files parse and include the new feature.
+- ZIP member checks and CRC verified after packaging.
+
+LIMITATION
+PySide6 is not installed in the test runtime, so the interactive pop-up
+must still be checked in a real Windows Qt session. Automated tests include
+headless lexical behaviour and static wiring checks, not a real GUI integration.

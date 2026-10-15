@@ -1,0 +1,44 @@
+VARIANS V0.8.0 — ÉDITION XML ASSISTÉE PAR PAIRES
+=================================================
+
+Date de contrôle : 2026-10-09
+
+NOUVEAUTÉS
+----------
+- Nouveau moteur lexical indépendant de Qt : xml_tag_pairs.py.
+- Appariement structurel des balises ouvrantes/fermantes, y compris avec des
+  éléments imbriqués de même nom.
+- Commentaires, CDATA, instructions de traitement et déclarations ignorés.
+- Surbrillance de la fermeture lorsque le curseur/la sélection est dans
+  l'ouverture correspondante, avec le bleu pâle #d9ecff de Varians.
+- Suppression couplée : supprimer exactement une balise ouvrante supprime sa
+  fermeture associée sans toucher au contenu intérieur.
+- Le mécanisme repose sur QTextDocument.contentsChange et couvre clavier,
+  Couper et suppression par menu contextuel.
+- Renommage du QName ouvrant répercuté sur le QName fermant, avec une seule
+  intention Undo.
+- Conservation transitoire de la paire lorsque le QName ouvrant est entièrement
+  effacé puis retapé.
+- Les balises autofermantes ne sont jamais traitées comme des paires.
+- Aucune association spéculative n'est créée en cas de structure croisée.
+
+PERFORMANCE
+-----------
+- La recherche de paire au curseur est locale : repérage de l'ouverture courante
+  puis parcours vers sa fermeture seulement.
+- Les modifications utilisent les offsets de QTextDocument.contentsChange ;
+  aucun diff global du document n'est calculé pour chaque frappe ordinaire.
+- Contrôle synthétique sur un document d'environ 20 000 paragraphes : les
+  recherches locales restent de l'ordre de la milliseconde par opération dans
+  l'environnement de test.
+
+NON-RÉGRESSION
+--------------
+- Suite pytest complète : 133 tests réussis.
+- Compilation Python : 48 fichiers Python compilés sans erreur.
+- Cohérence des catalogues FR/EN : 431 clés dans chaque catalogue ; ensembles
+  de clés identiques et variables d'interpolation identiques.
+- Viewer historique : génération réussie, 3 témoins / 3790 lignes de base.
+- PySide6 n'est pas installé dans l'environnement de construction : le rendu
+  graphique réel (surbrillance dans QPlainTextEdit) doit être validé sous
+  Windows, comme pour les versions précédentes.

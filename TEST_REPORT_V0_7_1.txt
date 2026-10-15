@@ -1,0 +1,39 @@
+VARIANS V0.7.1 — RAPPORT DE TEST
+=================================
+
+NOUVELLE FONCTION
+-----------------
+Création d’un projet « Nouvelle transcription » sans fichier TEI préexistant.
+
+COMPORTEMENT
+------------
+- Fichier > Nouveau projet… propose :
+  * Partir d’une édition TEI existante ;
+  * Commencer une nouvelle transcription.
+- En mode nouvelle transcription, le champ de TEI source est désactivé.
+- Varians crée automatiquement xml/edition.xml.
+- Le TEI généré contient un teiHeader minimal : titleStmt, publicationStmt,
+  sourceDesc, puis text/body/p prêt à être édité.
+- Le titre du projet et le témoin de base sont repris dans le squelette.
+- Aucune image, aucun ALTO et aucune synchronisation ne sont requis.
+- En mode schéma automatique, une instruction xml-model vers TEI All est ajoutée.
+- En mode schéma projet, le RNG du projet reste l’autorité.
+- En mode sans schéma, aucune instruction xml-model n’est ajoutée.
+
+TESTS AUTOMATISÉS
+-----------------
+- Suite pytest : 66 tests réussis.
+- Compilation Python : 35 fichiers OK.
+- i18n : 374 clés FR / 374 clés EN, ensembles et variables identiques.
+- Projet de démonstration : viewer généré, 3 témoins / 3790 lignes de base.
+- Projet synthétique créé from scratch : chargement OK.
+- Projet synthétique : 1 témoin, aucun alignement, aucune image, viewer généré.
+- Projet synthétique : 0 ligne de base, aucune erreur.
+- Arborescence : project.xml + xml/edition.xml, pas d’edition.xml à la racine.
+
+LIMITATION DE L’ENVIRONNEMENT
+-----------------------------
+PySide6 n’est pas disponible dans l’environnement de construction. Le rendu
+visuel du nouveau choix dans le dialogue « Nouveau projet… » doit donc être
+confirmé sous Windows/Qt. La logique du dialogue est couverte statiquement et
+la création de projet est testée hors Qt.

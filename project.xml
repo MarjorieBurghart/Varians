@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<teiManuscriptProject version="1">
+  <title>Édition des sermons — projet exemple T1 / T2 / P</title>
+  <edition file="xml/edition.xml" />
+  <schema type="relaxng" source="xml-model" />
+  <interface language="fr" translationsDir="i18n" fallbackLanguage="en" />
+  <rendering css="rendering/tei.css" customElements="rendering/custom-elements.xml" xsltMode="builtin" />
+  <webViewer outputDir="web_output" filename="viewer.html" />
+  <witnesses base="T1">
+    <witness id="T1" role="base" label="T1 · Troyes 816" alignment="alignments/T1.json" />
+    <witness id="T2" label="T2 · Troyes 1760" alignment="alignments/T2.json" />
+    <witness id="P" label="P · Paris, BnF, Latin 15940" alignment="alignments/P.json" />
+  </witnesses>
+</teiManuscriptProject>

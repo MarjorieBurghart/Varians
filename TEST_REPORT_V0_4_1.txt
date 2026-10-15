@@ -1,0 +1,29 @@
+V0.4.1 — correctif <lb break="no"/>
+=====================================
+
+Cause identifiée
+-----------------
+La XSLT de l'aperçu utilisait un xsl:choose pour traiter les espaces autour de
+<lb break="no"/>. Lorsqu'un même nœud texte était à la fois précédé ET suivi
+par un <lb break="no"/> (cas fréquent avec plusieurs témoins), seule une des
+deux extrémités était nettoyée.
+
+Cas réel vérifié
+----------------
+Prima est otiosa, secunda ope\n<lb edRef="#T1" break="no"/>rosa.
+Dans le document complet, ce nœud texte est aussi précédé d'un lb T2 break=no.
+Après correction, la sortie XSLT est bien : ope<marqueur-invisible>rosa.
+
+Tests
+-----
+- cas break=no uniquement avant : OK
+- cas break=no uniquement après : OK
+- cas break=no des deux côtés : OK
+- lb normal : espace conservé : OK
+- transformation du document complet : OK
+- 3790 marqueurs du témoin de base : OK
+- compilation Python : OK
+- génération du viewer web : OK
+- viewer web : concaténation des segments (hors U+2060 technique) contient bien « operosa » : OK
+
+Le générateur web n'avait pas ce défaut et n'a pas nécessité de correction.

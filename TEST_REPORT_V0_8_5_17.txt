@@ -1,0 +1,43 @@
+VARIANS V0.8.5.17 — RAPPORT DE TESTS ET DISTRIBUTION
+
+Base utilisée : V0.8.5.16 (archive complète).
+Objectifs : diagnostic des témoins et actualisation des synchronisations sans
+fermer ni remplacer l'éditeur XML.
+
+VALIDATION AUTOMATISÉE
+- 338 tests Python réussis, commande : python -m pytest -q
+- Vérification de compilation : python -m compileall -q .
+- Catalogues de traduction XML : français, anglais, allemand, japonais,
+  tchèque, italien et russe ; 583 clés distinctes chacun.
+- Sept fichiers d'aide HTML analysés et documentés pour la V0.8.5.17.
+- Intégrité du ZIP vérifiée via zipfile.testzip(), contenu comparé à la V0.8.5.16.
+
+TESTS DU MODULE witness_resource_refresh.py
+- Lignes réellement synchronisées vs lignes physiques ALTO/PAGE.
+- JSON secondaire associé au mauvais manuscrit pivot.
+- base_keys et keys816 valables, partiellement inconnus ou tous inconnus.
+- Détection de changements de correspondances à nombre de lignes constant.
+- JSON mal formé ou schéma incorrect : aucune application partielle.
+- Témoin à images seules sans fichier de synchronisation : cas normal.
+- Image locale absente : signalement sans modifier le projet.
+- Disponibilité du pivot : pas de fausse activation du mode ligne.
+- Réactualisation du contrôleur avec panneaux simulés : objet éditeur conservé,
+  panneaux réutilisés, zoom/cadres conservés, cas d'erreur non destructeur.
+- Préservation d'un panneau maximisé pendant le rechargement.
+
+LIMITES DES ESSAIS
+- PySide6 n'est pas disponible dans l'environnement de validation. L'aspect
+  graphique réel de la fenêtre, des dialogues et de ses raccourcis reste à
+  confirmer sur Windows, macOS et Linux avec PySide6.
+- Les serveurs IIIF externes n'ont pas été sollicités durant ce contrôle.
+- Les essais garantissent la cohérence du code et des simulations, pas le
+  comportement de chaque projet réel ou de chaque serveur distant.
+
+PRÉSERVATION
+- Aucune modification automatique de project.xml ni du fichier TEI.
+- Aucune réécriture des JSON d'alignement ou des ALTO/PAGE d'origine.
+- Les caches locaux de performance peuvent être actualisés si nécessaire.
+- Le rechargement réutilise les panneaux et conserve le document XML Qt.
+
+Documentation : WITNESS_DIAGNOSTICS.md, SYNCHRONIZATION.md,
+DEVELOPER_HANDOFF.md, aides des sept langues.

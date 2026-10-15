@@ -1,0 +1,55 @@
+VARIANS V0.8.3 — AFFICHAGE ET NAVIGATION DE TRAVAIL
+===================================================
+
+Objectifs
+---------
+1. Rendre la hauteur de chaque panneau de témoin redimensionnable.
+2. Permettre de choisir de 0 à n témoins affichés dans la zone images.
+3. Mémoriser localement, par projet, la sélection des témoins et leurs hauteurs.
+4. Ajouter le menu « Affichage » et y déplacer « Recharger les images » et « Langue ».
+5. Réorganiser la barre d'outils : bloc XML groupé, recherche source alignée à droite.
+6. Corriger le transfert d'une sélection répétée entre XML Source et XSLT/CSS.
+
+Implémentation
+--------------
+- La colonne des témoins utilise désormais un QSplitter vertical.
+- « Affichage > Choisir les témoins affichés… » ouvre une liste à cases à cocher
+  construite à partir des témoins du project.xml. Les témoins sans image sont
+  indiqués mais désactivés pour éviter un panneau vide.
+- La liste vide est valide : la colonne images entière est alors masquée.
+- Les préférences d'affichage sont stockées dans QSettings sous une clé dérivée
+  du chemin du project.xml ; aucune donnée d'interface n'est ajoutée au projet.
+- Les hauteurs sont mémorisées par sigle de témoin.
+- Double-clic sur l'en-tête d'un témoin : maximisation temporaire ; second
+  double-clic : restauration des proportions précédentes.
+- « Recharger les images » a été retiré de la barre d'outils et placé dans
+  « Affichage ». Le sous-menu « Langue » se trouve en dernière position.
+- La sélection XML/XSLT est maintenant décrite par le paragraphe TEI, le rang de
+  l'occurrence dans ce paragraphe et un offset relatif de repli. Cela évite de
+  sélectionner systématiquement la première occurrence d'un mot répété tel que
+  « qui ». L'ancien repérage ligne/proximité reste disponible comme repli.
+
+Contrôles automatiques
+----------------------
+- pytest -q : 156 tests réussis.
+- compilation : 53 fichiers Python compilés sans erreur.
+- i18n : 446 clés FR / 446 clés EN ; ensembles et variables identiques.
+- Projet historique : viewer généré avec 3 témoins / 3790 lignes de base.
+- Archive finale contrôlée avec unzip -t.
+
+Tests V0.8.3 dédiés
+-------------------
+- choix exact de la 2e/3e occurrence d'une chaîne répétée ;
+- repérage du paragraphe contenant la sélection ;
+- présence du QSplitter vertical et de la persistance visibleWitnesses/witnessHeights ;
+- présence du menu Affichage et absence de la combo Langue dans la barre ;
+- regroupement Valider RNG / Indenter / XPath ;
+- synchronisation par descripteur paragraphe + occurrence dans les deux sens ;
+- parité des nouvelles clés i18n FR/EN.
+
+Limite de l'environnement de construction
+------------------------------------------
+PySide6 n'est pas disponible dans l'environnement de construction. Les tests Qt
+visuels (drag des séparateurs, double-clic de maximisation, placement exact de la
+barre d'outils et boîte de sélection des témoins) restent donc à confirmer sous
+Windows par l'utilisateur.

@@ -1,0 +1,28 @@
+VARIANS V0.8.5.9 — RAPPORT DE TESTS
+
+CORRECTION
+- Fenêtre d'affichage autour de la ligne synchronisée : ne traverse plus
+  une limite de page ni un changement de colonne détectable dans les bbox.
+- Respect des informations de synchronisation, des fichiers JSON et de la TEI.
+
+TESTS EFFECTUES
+- python -m pytest -q --disable-warnings --maxfail=1
+  257 passed (250 tests de base + 7 nouveaux tests).
+- Cas synthétiques : 16r ligne 28 après dernière ligne de la colonne
+  précédente, fin de colonne, début de folio suivant, décalage horizontal,
+  voisinage de même colonne, mode page, invariance des données, IIIF.
+- Vérifications syntaxiques Python et HTML, cohérence des sept aides.
+- Vérification de l'intégrité de l'archive ZIP.
+
+LIMITATIONS
+- Aucun fichier de synchronisation JSON réel du témoin F n'a été fourni.
+  La capture ne permet pas de contrôler la bbox exacte de la ligne 28.
+- PySide6 n'est pas présent dans cet environnement : impossible de faire
+  un essai graphique complet sous Windows.
+- Aucun serveur IIIF réel n'a été sollicité pour ces tests.
+
+REMARQUE
+Sur la capture de l'utilisateur, l'édition contient encore des <lb n="..."/>
+et la barre d'état signale 183 lignes sur 211 attendues : cela peut indiquer
+une transcription initialisée avec un ancien générateur. Cette observation
+est distincte du correctif de recadrage des images F.

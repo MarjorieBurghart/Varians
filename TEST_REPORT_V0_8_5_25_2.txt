@@ -1,0 +1,18 @@
+VARIANS V0.8.5.25.2 — RAPPORT DE TESTS
+Date : 2026-10-14. Base : V0.8.5.25.1 (archive intégrale)
+
+PYTHON / PYTEST
+Commande : PYTHONPATH=. pytest -q --disable-warnings --maxfail=1
+Résultat : 455 passed, 2 skipped in 11.41s ; 0 échec.
+Deux tests ignorés hors environnement PySide6 complet.
+
+CHROMIUM / PLAYWRIGHT (ressources synthétiques, non réelles)
+PASS : tests/manual_v085252_text_click_chromium.py : texte, note, référence, témoin pivot/secondaire, marquage de ligne et avertissement sur clé absente.
+PASS : tests/manual_v085251_line_sync_chromium.py : navigation par ligne, double-page @facs et liens réels base_keys.
+PASS : tests/manual_v08524_chromium.py : géométrie des deux zones et vrai polygone PAGE.
+PASS : tests/manual_v08525_iiif_chromium.py : erreurs 429/403/404/500, repli régional, hors-ligne et changement d'image.
+
+SYNTAXE ET VALIDATIONS : Python compileall et node --check sur le JavaScript exporté : OK.
+7 catalogues XML analysables, 7 aides présentes.
+
+LIMITES : aucun essai sous Windows natif/PySide6, aucune URL IIIF distante réelle, et pas d'essai du projet particulier Mu–F–L. Le bug précis déclaré par l'utilisateur peut nécessiter une analyse supplémentaire de sa TEI et des alignements s'il persiste.

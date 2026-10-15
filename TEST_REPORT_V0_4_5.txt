@@ -1,0 +1,28 @@
+ÉDITEUR TEI GÉNÉRIQUE — V0.4.5 : CTRL+E, SÉLECTION DU CONTENU
+===============================================================
+
+[OK] Deux Ctrl+E successifs sans nouvelle sélection :
+     [uerbum] -> <app>[uerbum]</app> -> <app><rdg>[uerbum]</rdg></app>.
+     Les [crochets] indiquent la sélection active (pas du XML).
+[OK] Les balises ouvrante/fermante ne sont jamais incluses dans la sélection.
+[OK] Le sens de la sélection (gauche→droite ou droite→gauche) reste inchangé.
+[OK] Avec attribut configuré vide, seul le texte initial est sélectionné.
+[OK] Sélections multilignes et caractères hors BMP : positions Qt UTF-16.
+[OK] Sans sélection : <note>|</note>, <lb/>, attributs configurés et
+     positionnement du curseur inchangés.
+[OK] Saisie invalide, autofermeture avec sélection et annulation : aucune
+     modification du document.
+[OK] Recherche sécurisée V0.4.3 : tests conservés.
+[OK] Syntaxe de tous les modules Python (compileall).
+[OK] XML édition/projet/XSLT bien formés.
+[OK] Catalogues FR et EN : mêmes 254 clés et variables.
+[OK] AST du code de l'éditeur inchangé hors méthode Ctrl+E.
+
+Tests exécutés :
+  python tests/test_ctrl_e_sans_qt.py
+  python tests/test_recherche_sans_qt.py
+  python -m compileall -q .
+
+À VÉRIFIER SOUS WINDOWS/SPYDER : comportement graphique réel de la sélection
+Qt lors de l'enchaînement des deux Ctrl+E, PySide6 non installé dans
+l'environnement de construction.

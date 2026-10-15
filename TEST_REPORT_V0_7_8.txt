@@ -1,0 +1,14 @@
+VARIANS V0.7.8 — PAGES / IMAGES LOCALES / ALTO
+===============================================
+
+Corrections principales
+-----------------------
+- ALTO indépendant != synchronisation TEI.
+- Le nombre attendu de <lb> provient uniquement du JSON de synchronisation.
+- Une image locale sans ALTO est affichée page par page, pas dans une fenêtre ±1.
+- Le statut indique la position page n/N.
+- 4 images + 4 ALTO : 4 pages conservées.
+- synchronisation + ALTO + images : union des pages et base_keys préservés.
+
+La liaison TEI <-> page sans ALTO via <facsimile>/<pb facs> reste volontairement
+prévue pour la V0.7.9.

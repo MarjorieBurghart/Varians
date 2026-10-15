@@ -1,0 +1,20 @@
+VARIANS V0.6.4 — WRAP VISUEL DANS L’ÉDITEUR DE FRAGMENT
+========================================================
+
+NOUVEAUTÉ
+----------
+La fenêtre d’édition de fragment TEI dispose de la même option de retour
+automatique à la ligne visuel que la vue XML source.
+
+COMPORTEMENT
+-------------
+- la case agit uniquement sur l’affichage du QPlainTextEdit ;
+- aucun saut de ligne n’est inséré dans le XML ;
+- les lignes logiques et offsets restent inchangés ;
+- le choix est mémorisé dans QSettings sous fragmentVisualWrap ;
+- si aucun choix propre au fragment n’existe encore, la préférence XML source
+  sert de valeur initiale.
+
+NON-RÉGRESSION
+---------------
+Voir la suite pytest du paquet.

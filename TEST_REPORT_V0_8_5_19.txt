@@ -1,0 +1,27 @@
+VARIANS V0.8.5.19 — RAPPORT DE VALIDATION
+========================================
+
+Base : archive complète de la V0.8.5.18, sans retour de version.
+Anomalie confirmée par lecture du code :
+- `split_folio_btn` désactivé dès que `sync_enabled` est vrai ;
+- `_request_split_folio()` et `_split_double_folio()` abandonnaient
+  silencieusement l'opération pour un témoin synchronisé ;
+- autres clics sans effet en l'absence de `tei_surface_id`.
+
+Correctifs :
+- Bouton actif dès qu'une page est disponible, quel que soit le mode.
+- Signal émis même si la référence de surface est absente ; avertissement.
+- Contrôles préalables de présence de la surface TEI, de validité du XML,
+  de l'absence de zones précédentes et des dimensions de l'image.
+- Après création en mode lignes, le centre synchronisé n'est pas déplacé.
+- Message spécifique au mode synchronisé dans les sept langues.
+
+Test complet : python -m pytest -q -> 377 passed.
+Nouveaux tests : tests/test_v08519_split_dialog.py (14 tests),
+avec exécution des vraies méthodes de classe extraites par AST, contre des
+stubs de dialogue/bouton, puisque PySide6 n'est pas installé ici.
+Contrôles additionnels : compileall Python ; 7 catalogues i18n XML ; 7
+fichiers d'aide HTML ; intégrité ZIP.
+
+Limite : ouverture visuelle réelle sous PySide6/Windows NON TESTÉE.
+Aucun fichier utilisateur, JSON, image ou XML projet n'a été modifié.

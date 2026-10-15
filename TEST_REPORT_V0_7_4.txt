@@ -1,0 +1,19 @@
+VARIANS V0.7.4 — IMPORT DE MANIFEST IIIF
+=========================================
+
+NOUVELLE FONCTION
+-----------------
+- Import IIIF Presentation API 2 et 3.
+- Extraction de l’ordre, des labels, dimensions, images et services Image API.
+- Cache local des métadonnées dans iiif/<sigle>.manifest.json.
+- Superposition sur un alignement existant sans modifier ALTO/base_keys.
+- Pages autonomes lorsqu’aucun alignement n’existe.
+
+TESTS
+-----
+- Parsing Manifest v2 : OK
+- Parsing Manifest v3 / language map / ImageService3 : OK
+- Cache local et invalidation si URL source différente : OK
+- Overlay préservant les lignes/base_keys : OK
+- Round-trip project.xml <images type="iiif"> : OK
+- Suite complète pytest : 80 tests OK.

@@ -1,0 +1,27 @@
+VARIANS V0.8.5.25.3 — RAPPORT DE VALIDATION
+14 octobre 2026
+Base de reprise : archive complète V0.8.5.25.2
+
+Vérification réalisée :
+  PYTHONPATH=. python -m pytest -q --disable-warnings --maxfail=1
+  460 passed, 2 skipped, 0 failed, 13.97 s
+  python -m compileall -q . : OK
+  Régénération de web_output/viewer.html depuis project.xml : OK
+  Correspondances pivot T1 demo : 3790 lb / 3790 lignes JSON, 0 clé de texte orpheline
+
+Chromium / Playwright (scripts tests/manual_*) :
+  manual_v08524_chromium.py : PASS (recadrages, polygones, parties)
+  manual_v08525_iiif_chromium.py : PASS (erreurs 429/403/404/500 et replis)
+  manual_v085251_line_sync_chromium.py : PASS (2 témoins)
+  manual_v085252_text_click_chromium.py : PASS (texte, note, ref, échec diagnostiqué)
+  manual_v085253_lb_ordinal_chromium.py : PASS (2 témoins, 3 lignes, pages multiples, lb global)
+
+Nouveaux tests :
+  - Clés JSON non consécutives et multi-pages, pb étrangers et facs introuvables
+  - <lb> sans <pb>, des lb internes aux notes, excès de jalons
+  - Aucune reconstruction conjecturale des base_keys
+
+Limites :
+  - PySide6 absent : pas d'exécution graphique native Windows/macOS/Linux.
+  - Les manuscrits et alignements personnels Mu–F–L ne sont pas ici : pas de validation sur données réelles.
+  - Les tests Playwright utilisent des images et des services simulés ; vérifier les services IIIF distants sur le poste de l'utilisateur.

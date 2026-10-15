@@ -1,0 +1,34 @@
+VARIANS 0.8.5.5 — rapport de vérification
+=======================================
+Base unique : archive complète V0.8.5.4 fournie dans la conversation.
+
+EXÉCUTÉ DANS L'ENVIRONNEMENT DE LIVRAISON
+- pytest : 225 tests réussis, 0 échec (anciens tests + nouvelle suite de résolution).
+- Compilation Python : succès (compileall).
+- Extraction du JavaScript du viewer et `node --check` : succès.
+- 7 catalogues XML i18n : analyse syntaxique réussie ; aucune clé dupliquée.
+- 7 fichiers d'aide HTML : analysés et nouvelle section accessible par ancre.
+- Sérialisation et relecture de `project.xml` avec `pageLink` : réussite.
+- Scénarios v2/v3 : service IIIF, Canvas exact, image variable, folio ambigu,
+  rechargement, plusieurs témoins, copie locale/IIIF, conflit, 469 Canvas/5 pages,
+  protection des lignes/base_keys, export web, périmètre TEI, association ALTO/PAGE.
+- Vérification d'intégrité du ZIP : voir l'archive livrée.
+
+NON EXÉCUTÉ / À EFFECTUER SUR UN POSTE DE TRAVAIL
+- Vérification visuelle interactive sous PySide6 : bibliothèque non installée ici.
+- Essai effectif contre le serveur IIIF du manuscrit F (Fribourg) et fichiers JSON
+  du projet Mu/F : les ressources exactes n'ont pas été jointes à cette demande.
+- Contrôle des politiques CORS, HTTPS et disponibilité hors ligne d'un serveur
+  tiers ; les serveurs peuvent être temporairement indisponibles.
+- Validation humaine spécialisée des textes traduits (7 langues).
+
+SÉCURITÉ DES DONNÉES
+- Aucun JSON de synchronisation n'est réécrit par la résolution d'image.
+- Aucun `base_keys` n'est modifié par la recherche d'un Canvas.
+- Les anciennes surfaces TEI ne sont pas supprimées automatiquement.
+- Sauvegarder le projet utilisateur avant adoption de cette version.
+
+Fichiers principaux : iiif_resolution.py, iiif_manifest.py, image_sources.py,
+alto_import.py, iiif_local.py, project_config.py, project_management.py,
+project_dialogs.py, tei_facsimile.py, editeur_tei.py, web_viewer/generator.py.
+Voir IIIF_SYNC_RESOLUTION.md et DEVELOPER_HANDOFF.md.

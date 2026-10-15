@@ -1,0 +1,47 @@
+VARIANS V0.8.5.16 — AFFICHAGE : VISIBILITÉ ET ORDRE DES TÉMOINS
+================================================================
+
+Base intégrale : Varians V0.8.5.15 — IIIF Full Resolution Sync Diagnostics.
+
+Modification fonctionnelle
+--------------------------
+Affichage > Choisir les témoins affichés… présente toujours les cases à
+cocher des témoins et propose désormais deux boutons « Monter » et « Descendre ».
+Les lignes de la liste fixent l'ordre vertical des panneaux images. Les témoins
+masqués conservent leur place dans cet ordre. L'interface restaure automatiquement
+l'ordre à la réouverture du même projet ; les témoins nouveaux sont ajoutés à
+la fin, les témoins retirés sont ignorés, les doublons locaux supprimés.
+
+Les préférences restent locales, dans QSettings :
+- projectView/<hash>/visibleWitnesses  : témoins visibles ;
+- projectView/<hash>/witnessOrder      : ordre d'affichage ;
+- projectView/<hash>/witnessHeights    : hauteur par identifiant de témoin.
+
+Seul le QSplitter d'affichage est réordonné ; chaque ManuscriptPanel garde
+son identité, ses signaux, ses images, son zoom et ses cadres. La gestion de
+maximisation et du scroll fonctionne selon l'ordre courant. Les dimensions
+des témoins masqués ne sont plus oubliées lors des redimensionnements des
+panneaux visibles.
+
+Invariants de préservation
+-------------------------
+- Aucun changement du project.xml, de son ordre de témoins ni du pivot.
+- Aucune modification des JSON de synchronisation, de leurs base_keys,
+  des fichiers ALTO/PAGE, des images, des facsimile/surface TEI.
+- Aucun changement de l'ordre du viewer web généré.
+- L'interface multilingue et les sept aides sont actualisées.
+- Compatible avec les anciennes préférences visibleWitnesses / witnessHeights.
+
+Validation
+----------
+python -m compileall -q .                        : OK
+python -m pytest -q --disable-warnings          : 322 réussis
+Tests ciblés : tests/test_v08516_witness_order.py (12 tests nouveaux)
+Tous les catalogues i18n/fr,en,de,ja,cs,it,ru.xml : XML valides,
+549 clés chacun, aucune clé dupliquée. Aides HTML dans les sept langues.
+
+Limite d'environnement : PySide6 n'est pas installé dans cet environnement ;
+les interactions graphiques réelles du dialogue et le réordonnancement visuel
+QSplitter restent à confirmer sur un poste Windows/macOS/Linux avec PySide6.
+Les méthodes du contrôleur ont néanmoins été testées avec des doubles de Qt,
+ainsi que la conservation des états des panneaux et des dimensions.

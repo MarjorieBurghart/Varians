@@ -1,0 +1,35 @@
+VARIANS V0.8.5.24 — RAPPORT DE VALIDATION
+Date : 14 octobre 2026
+Base source : archive complète V0.8.5.23 fournie dans la passation
+
+PYTHON
+  Commande : python -m pytest -q --disable-warnings
+  Résultat : 435 passed, 2 skipped (aucun échec)
+  La base originale V0.8.5.23 testée localement : 426 passed, 2 skipped.
+  Les 2 tests ignorés le restent en l'absence de PySide6 dans cet environnement.
+  Compilation : python -m compileall -q . => OK.
+
+JAVASCRIPT / NAVIGATEUR
+  web_viewer/geometry.js exécuté avec Node.js : OK.
+  Script inline extrait de web_output/viewer.html, node --check : OK.
+  Navigateur Chromium headless/Playwright, fixture image 490x338, Canvas
+  3924x2704, OCR 1962x1352, zones gauche et droite, 6 sommets concaves : OK.
+  Références de crop : droite 1962,0,1962,2704 ; gauche 0,0,1962,2704.
+  Script sans exception JavaScript en contexte localStorage inaccessible : OK.
+  Navigation file:// refusée par l'environnement administré ; HTML testé
+  via injection en mémoire (data URL pour l'image), pas depuis file://.
+
+DONNÉES / DOCUMENTATION
+  Génération web de project.xml : OK (3 témoins, 3790 lignes de base).
+  7 catalogues XML i18n : 621 chaînes dans chaque langue.
+  7 aides HTML : présence de section V0.8.5.24, parse HTML valide.
+  Archive ZIP et SHA : voir RELEASE_MANIFEST_SHA256.txt et vérification CRC.
+
+PÉRIMÈTRE NON TESTÉ
+  PySide6 natif sous Windows/macOS/Linux ; rendu comparé à un bureau actif.
+  IIIF distant réel, CORS, 403/429, indisponibilité, info.json, perf réseau.
+  Interopérabilité sur l'intégralité du corpus Mu/F/L réel de l'utilisateur.
+  Aucun de ces essais n'est implicitement considéré comme réussi.
+
+VOIR
+  PASSATION_V0_8_5_24.md et WEB_VIEWER_GEOMETRY.md.

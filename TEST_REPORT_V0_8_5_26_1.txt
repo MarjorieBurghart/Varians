@@ -1,0 +1,16 @@
+VARIANS V0.8.5.26.1 — RAPPORT DE VALIDATION — 14 OCTOBRE 2026
+
+Base : distribution complète V0.8.5.26, 261 fichiers, ZIP d’origine CRC sans erreur.
+Modifications : recherche médiévale sans contrôle maître ; export des témoins visibles dans leur ordre de l’éditeur ; pivot technique éventuellement masqué et sans image publiée.
+
+SUITE PYTHON : 473 passed, 2 skipped, 0 failed ; commande : PYTHONPATH=. python -m pytest -q --disable-warnings.
+SYNTAXE PYTHON : python -m compileall -q . réussie.
+SYNTAXE JS : node --check sur le script intégré au viewer HTML généré : réussie.
+CHROMIUM : tests/manual_v085261_presentation_chromium.py réussi ; deux témoins F/A dans l’ordre sélectionné, pivot Mu masqué, sélection de clé pivot au clic, suppression de la case globale, recherche exacte vs mode u/v par la seule case correspondante, aucune erreur JS.
+EXPORT DE DÉMONSTRATION : 3790/3790 jalons <lb/> appariés aux lignes physiques, 0 clé textuelle orpheline, 3 témoins (export CLI = tous), fichiers d’exemple.
+SCÉNARIOS UNITAIRES AJOUTÉS : 8 tests : export CLI, filtres et ordre, pivot caché, sélection vide, déduplication/IDs invalides, balises HTML, export réel et branchement de la GUI (ce dernier test est statique).
+INTERNATIONALISATION : 7 catalogues de 629 chaînes chacun, 7 aides HTML actualisées sans modifications des clés historiques.
+INTÉGRITÉ ZIP : contrôle CRC, inventaire et SHA-256 calculés après packaging ; voir fichier SHA256.
+
+LIMITES : PySide6 n’est pas installé ici. Aucun test natif GUI sur Windows, macOS ou Linux. Les essais Chromium ont porté sur des données synthétiques, non sur les manuscrits réels Mu/F/A/N/L. Les images locales d’exports précédents peuvent rester dans web_output/images même si le nouveau HTML ne les référence plus ; aucun effacement automatique n’est effectué.
+ANCIENNE ROADMAP : suspendue, non réactivée.

@@ -1,0 +1,28 @@
+V0.4.9 — sélection synchronisée entre XML source et vue XSLT
+==============================================================
+
+Contrôles effectués dans l'environnement de construction :
+
+1. Compilation Python
+   - editeur_tei.py : OK
+
+2. Transfert textuel XML -> XSLT
+   - texte simple : OK
+   - balise inline retirée de la projection : OK
+   - lb break="no" : sim + lb + plex -> simplex : OK
+   - lb normal : insertion d'un espace visible : OK
+
+3. Transfert XSLT -> XML
+   - texte simple : motif source retrouvé : OK
+   - « simplex » retrouve une plage source contenant <lb break="no"/> : OK
+   - espace visible retrouve un lb normal : OK
+
+4. Non-régressions hors Qt
+   - Ctrl+E : OK
+   - recherche XML sécurisée : OK
+   - recherche XSLT avec WORD JOINER : OK
+   - isolation des modules Spyder : OK
+
+Limite : PySide6 n'est pas disponible dans l'environnement de construction ;
+le rendu visuel exact de la sélection lors d'un changement d'onglet reste donc
+à confirmer sous Qt/Windows.

@@ -1,0 +1,26 @@
+VARIANS V0.6.1 — LISTES DE POINTEURS / LISIBILITÉ XPATH
+=======================================================
+
+NOUVEAUTÉS
+----------
+- Résultats XPath : sélection bleu pâle (#d9ecff), survol bleu très pâle (#eef7ff).
+- Ctrl+Espace : gestion des valeurs d'attribut composées de plusieurs pointeurs #id.
+- Les pointeurs déjà présents à gauche ou à droite du curseur sont exclus.
+- Un pointeur complet juste avant le curseur est conservé ; la nouvelle valeur est ajoutée avec un espace.
+- Un token partiel est remplacé seul, sans toucher aux autres pointeurs.
+
+TESTS SPÉCIFIQUES
+-----------------
+- #T2| avec #T1/#T2/#P -> #T1 et #P : OK
+- insertion après #T2 -> séparateur automatique : OK
+- #T2 #T| -> remplacement du seul token #T : OK
+- pointeur déjà présent à droite -> non reproposé : OK
+- styles XPath pâles présents : OK
+
+NON-RÉGRESSION FINALE
+---------------------
+- pytest : 48 tests réussis.
+- compilation Python : 30 fichiers OK.
+- project.xml / project-template.xml / custom-elements.xml / i18n : XML OK.
+- catalogues FR / EN : 366 clés chacun, sans doublon.
+- génération viewer web : OK, 3 témoins / 3790 lignes de base.

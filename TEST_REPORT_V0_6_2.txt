@@ -1,0 +1,22 @@
+VARIANS V0.6.2 — CORRECTIF ÉTAT SANS PROJET
+============================================
+
+CORRECTION
+----------
+- Le message affiché après fermeture de l’écran d’accueil n’est plus porté par
+  un QLabel isolé dont la hauteur pouvait être sous-évaluée sous Windows/Qt.
+- Le message est placé dans un QFrame central avec largeur 720–820 px, hauteur
+  minimale 96 px, marges internes et QLabel wrappé de hauteur minimale 58 px.
+- Les textes FR/EN comportent un saut de ligne explicite entre l’état et
+  l’instruction d’ouverture/création d’un projet.
+
+NON-RÉGRESSION
+--------------
+- pytest : 48 tests réussis.
+- compilation Python : OK.
+- i18n FR/EN : 366 clés chacun.
+- génération viewer : OK, 3 témoins / 3790 lignes de base.
+
+LIMITATION
+----------
+Le rendu graphique exact reste à confirmer sous Windows/PySide6.

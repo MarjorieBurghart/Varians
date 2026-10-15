@@ -1,0 +1,11 @@
+VARIANS V0.7.7 — STABILISATION
+================================
+
+Fonctions couvertes :
+- palette de sélection claire commune (XPath / RNG / vues Qt) ;
+- masquage de la colonne manuscrits quand aucune image n'existe ;
+- viewer web sans colonne image pour les projets sans images ;
+- génération TEI from scratch avec sourceDesc/listWit/witness @xml:id ;
+- remise à zéro des diagnostics RNG à chaque ouverture de document.
+
+Voir la suite de tests pour les contrôles de non-régression.

@@ -1,0 +1,66 @@
+VARIANS 0.8.5.3 — RAPPORT DE VÉRIFICATION
+Date : 10 octobre 2026
+
+1. Portée
+-----------
+- Choix explicite des canvases utilisés dans l'édition, distinct du manifest IIIF.
+- Correspondance manuelle de chaque image sélectionnée avec un XML ALTO ou PAGE
+  local, même en cas de divergence totale des noms de fichiers.
+- Téléchargement limité à la sélection, avec intersection facultative du
+  périmètre « pages avec ALTO/PAGE ».
+- Surface TEI créée UNIQUEMENT pour les images retenues ; xml:id déterministe
+  utilisant l'index d'origine dans le manifest.
+- Propositions facultatives de suppression de vieilles surfaces générées
+  automatiquement, après vérification des références et des annotations ;
+  aucune suppression sans confirmation ni sauvegarde datée.
+- Ordre naturel des fichiers locaux et OCR, avec contrôle de tri dans l'UI.
+- Même sélection appliquée à l'éditeur et au viewer web.
+- I18n et aide dans fr/en/de/ja/cs/it/ru.
+
+2. Tests
+---------
+Commande : python -m pytest -q --disable-warnings --maxfail=1
+Résultat : 197 réussis, 0 échec.
+
+10 nouveaux tests spécifiques (tests/test_v0853_iiif_editorial_selection.py)
+par rapport aux 187 tests de la V0.8.5.2 :
+- Tri 1r, 1v, 2r, 2v, 10r, 10v.
+- Génération ciblée des surfaces TEI.
+- Association explicite malgré des noms et un ordre divergents.
+- Refus de l'association par position ou par lien OCR inexistant.
+- Téléchargement mock IIIF : uniquement les canvases sélectionnés.
+- Sérialisation project.xml et rebasing des OCR copiés dans le projet.
+- Préservation des surfaces TEI annotées ou référencées lors du nettoyage.
+- Suppression du repli positionnel dangereux pour les liens d'alignement.
+- Générateur de viewer web : mêmes pages retenues, autonomie du choix local.
+- Manifeste synthétique de 500 images dont 6 seulement retenues :
+  sélection de 6/500, exclusion de 494, xml:id basés sur positions originales.
+
+3. Vérification sur les sources PERO OCR fournies par l'utilisateur
+-------------------------------------------------------------------
+- Assisi541-test-1r.xml (ALTO) : 39 lignes.
+- Assisi541-test-1r-PAGE.xml (PAGE) : 39 lignes, 39 polygones.
+- Dans les deux cas, association effective à un canvas au nom différent ;
+  39 lignes conservées après superposition à la page choisie.
+- La photographie et les OCR fournis par l'utilisateur ne sont PAS dans
+  cette archive de distribution.
+
+4. Vérifications techniques
+---------------------------
+- Compilation syntaxique des fichiers Python : OK.
+- Intégrité ZIP : vérifiée après l'assemblage.
+- XML de traduction chargé pour les 7 langues ; 22 clés nouvelles/actualisées
+  du sélecteur et du nettoyage présentes dans chaque langue.
+- L'aide HTML décrit les nouvelles fonctions dans les 7 langues.
+
+5. Limites de la validation
+---------------------------
+- Le présent environnement n'a pas PySide6 installé : aucune validation
+  interactive des nouvelles boîtes de dialogue Qt (affichage et ergonomie).
+- Les services IIIF réels n'ont pas été contactés dans les tests automatisés.
+- Les traductions techniques sont fournies ; une relecture par des locuteurs
+  natifs reste recommandée.
+- La suppression d'anciennes surfaces protège les références présentes DANS
+  le TEI concerné, mais ne peut détecter les liens de documents externes.
+- Une association manuelle repose pour l'instant sur un XML OCR par image ;
+  les fichiers OCR multipages ne sont pas associables manuellement par sous-page.

@@ -1,0 +1,26 @@
+VARIANS V0.6.3 — SOUS-DOSSIER XML
+==================================
+
+CHANGEMENT D’ARCHITECTURE
+-------------------------
+- Les nouveaux projets créent `xml/edition.xml`.
+- `project.xml` sérialise `<edition file="xml/edition.xml"/>`.
+- Le projet de démonstration utilise la nouvelle arborescence.
+- Le modèle project-template.xml est rangé sous resources/templates/.
+
+COMPATIBILITÉ
+-------------
+- Les anciens projets avec `<edition file="edition.xml"/>` restent lisibles.
+- Un ancien `<edition/>` sans @file préfère l’ancien edition.xml s’il existe,
+  puis xml/edition.xml.
+- Aucune migration automatique ni déplacement n’est imposé aux anciens projets.
+
+TESTS
+-----
+- 51 tests pytest : OK.
+- Création d’un projet : xml/edition.xml présent, edition.xml racine absent : OK.
+- Relecture du project.xml généré : OK.
+- Compatibilité projet historique : OK.
+- Compilation Python : OK.
+- project.xml / template / custom-elements.xml / i18n : XML OK.
+- Génération viewer : OK — 3 témoins, 3790 lignes de base.

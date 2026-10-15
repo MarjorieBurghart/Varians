@@ -1,0 +1,47 @@
+ÉDITEUR TEI GÉNÉRIQUE V0.5.2 — RAPPORT DE TEST
+================================================
+
+NOUVELLE FONCTION
+-----------------
+Complétion contextuelle RELAX NG par Ctrl+Espace dans la source XML et
+l'éditeur de fragment.
+
+TESTS DU MOTEUR rng_completion.py
+---------------------------------
+- start / élément racine : OK
+- éléments enfants via ref / choice / zeroOrMore : OK
+- attributs via le RNG : OK
+- include relatif : OK
+- contexte dans le contenu d'un élément : OK
+- élément partiellement saisi (<r...) : OK
+- attribut partiellement saisi : OK
+- exclusion des attributs déjà présents : OK (logique interface)
+- absence de complétion dans une valeur d'attribut : OK
+- contexte lexical utilisable avec document incomplet après le curseur : OK
+
+NON-RÉGRESSION
+--------------
+- Ctrl+E source / fragment, sélection intérieure et insertion vide : OK
+- recherche XML sécurisée : OK
+- recherche XSLT avec WORD JOINER : OK
+- sélection synchronisée XML <-> XSLT : OK
+- isolation des modules sous Spyder : OK
+- validation RELAX NG / xml-model : OK
+- compilation Python de tous les modules : OK
+- project.xml / project-template.xml / i18n XML : OK
+- catalogues FR / EN : 324 clés identiques
+- génération viewer web : OK
+  * témoins : 3
+  * lignes de base : 3790
+
+LIMITES CONNUES
+---------------
+- PySide6 n'est pas installé dans l'environnement de construction : le popup
+  graphique de Ctrl+Espace doit être confirmé sous Windows/Qt.
+- La V0.5.2 propose l'union des éléments explicitement possibles dans le parent
+  XML. Elle ne calcule pas encore toutes les contraintes de position dans une
+  séquence/cardinalité RELAX NG.
+- anyName / nsName ne donnent pas de liste finie et ne sont pas proposés.
+- Les valeurs d'attribut ne sont pas encore complétées.
+
+La validation RELAX NG F8 reste l'autorité pour la validité du document.

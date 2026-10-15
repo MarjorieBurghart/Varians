@@ -1,0 +1,38 @@
+VARIANS 0.8.5.8 — RAPPORT DE VALIDATION
+=======================================
+Source de depart : Varians_V0.8.5.7_Pivot_Options_Visible_Complete.zip
+Date de validation : 2026-10-11
+
+DEFAUT CORRIGE
+- Le JSON Mu.json fourni décrit cinq pages et 28, 66, 66, 51, 0
+  lignes effectivement mentionnées. La page 2v comporte les numéros 41..68.
+- En 0.8.5.7, les lignes JSON devaient être numérotées de 1 à N sans trou ;
+  2v était donc rejeté (0 <lb/>).
+- En 0.8.5.8, les 28 entrées attestées de 2v génèrent 28 <lb/>, et les
+  autres pages 66, 66, 51 et 0 si leurs images/surfaces sont sélectionnées.
+- Aucun @n sur les <lb/> générés ; @edRef est maintenu, pas de @facs.
+- Les pages sélectionnées dont lines=[] reçoivent <pb/> seulement.
+- Les pages JSON sans image/surface sélectionnée sont signalées, et non créées.
+- Les numéros dupliqués ou invalides interdisent les <lb/> spéculatifs.
+
+TESTS EFFECTUES
+python -m pytest -q tests --disable-warnings --maxfail=1
+250 passed
+
+- Nouveaux tests : 5 dans tests/test_v0858_partial_sync_scaffold.py
+- Test réel Mu.json lorsque disponible : réussi ; le fichier ORIGINAL Mu.json
+  n'est ni inclus dans cette distribution ni nécessaire à son fonctionnement.
+- Syntaxe Python : 72 fichiers parsés (AST), sans erreur.
+- Syntaxe JavaScript web_viewer : node --check, sans erreur.
+- Sept catalogues XML i18n parsés avec succès (fr/en/de/ja/cs/it/ru).
+- Aides HTML mises à jour dans les sept langues.
+
+TESTS NON EFFECTUES
+- Lancement et vérification visuelle des dialogues sous PySide6/Windows.
+- Essai sur les fichiers images et l'arborescence locale réels du projet Mu ;
+  le JSON seul ne prouve pas qu'une image/surface 4v a été sélectionnée.
+
+IMPORTANT
+Le générateur de Varians est réservé à un corps TEI encore vide. Une TEI
+ayant déjà reçu des <pb/>/<lb/> n'est pas modifiée par une seconde exécution.
+Utiliser une nouvelle copie du projet pour refaire la génération.

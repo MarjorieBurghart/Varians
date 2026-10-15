@@ -1,0 +1,34 @@
+VARIANS V0.7.6 — RAPPORT DE TEST — SYNCHRONISATION FACULTATIVE
+==============================================================
+
+NOUVELLE FONCTION
+-----------------
+La synchronisation JSON d'un témoin est une ressource facultative pouvant être
+ajoutée, remplacée ou retirée après la création du projet.
+
+COMPORTEMENT
+------------
+- témoin sans synchronisation : accepté ;
+- ajout ultérieur d'un JSON : accepté ;
+- copie portable vers alignments/<sigle>.json : OK ;
+- conservation d'une référence externe : OK ;
+- remplacement d'un JSON interne : sauvegarde .bak ;
+- retrait de la synchronisation : l'attribut alignment disparaît du project.xml ;
+- images et ALTO indépendants : conservés ;
+- ordre de fusion au chargement : synchronisation -> ALTO séparé -> images.
+
+TESTS
+-----
+- pytest : 92 tests réussis ;
+- compilation Python : 42 fichiers OK ;
+- fr.xml / en.xml : 418 clés identiques et variables compatibles ;
+- project.xml / catalogues XML : parsables ;
+- génération viewer historique : OK ;
+  * témoins : 3
+  * lignes de base : 3790
+
+LIMITATION D'ENVIRONNEMENT
+--------------------------
+PySide6 n'est pas installé dans l'environnement de construction. Le rendu
+visuel de la nouvelle case « Copier la synchronisation dans le projet » doit
+être confirmé sous Windows/Qt.

@@ -1,0 +1,87 @@
+ÉDITEUR GÉNÉRIQUE V0.5.1 — RAPPORT DE TEST
+============================================
+
+Vérifications effectuées hors interface Qt :
+
+1. Compilation Python
+   - editeur_tei.py
+   - project_config.py
+   - project_management.py
+   - project_dialogs.py
+   - relaxng_validation.py
+   - schema_resolution.py
+   - i18n.py
+   - web_viewer/generator.py
+   => OK
+
+2. Tests de non-régression existants
+   - Ctrl+E avec/sans sélection
+   - recherche XML/fragment
+   - recherche XSLT traversant U+2060 WORD JOINER
+   - synchronisation de sélection XML <-> XSLT
+   - isolation des modules dans Spyder
+   => OK
+
+3. RELAX NG
+   - document valide
+   - document bien formé mais invalide
+   - document mal formé
+   - include RNG relatif
+   => OK
+
+4. xml-model
+   - détection RELAX NG
+   - détection Schematron
+   - détection possible même si le corps XML est mal formé
+   - href RNG relatif résolu par rapport à la TEI
+   => OK
+
+5. Cache RNG distant
+   - téléchargement via serveur HTTP local de test
+   - récupération récursive d'un include distant
+   - compilation/validation depuis le cache local
+   - deuxième résolution servie depuis le cache
+   - rafraîchissement forcé
+   => OK
+
+6. Modes de projet
+   - source="xml-model" -> schema_mode auto
+   - source="project" + file -> schema_mode file
+   - source="none" -> schema_mode none
+   - création d'un nouveau projet en chacun des trois modes
+   - aucun RNG copié dans le projet en modes auto/none
+   - RNG copié dans schema/edition.rng en mode file
+   => OK
+
+7. Internationalisation
+   - fr.xml et en.xml : 310 clés chacun
+   - mêmes clés
+   - mêmes variables {…} pour chaque traduction
+   => OK
+
+8. Projet exemple / viewer web
+   - project.xml parsable
+   - edition.xml : xml-model RNG + xml-model Schematron détectés
+   - génération du viewer web
+   - 3 témoins / 3790 lignes de base
+   => OK
+
+9. Politique de sauvegarde (contrôle statique + compilation)
+   - _write_to() ne bloque plus sur validate_text(False)
+   - avertissement spécifique XML mal formé avec « Enregistrer quand même »
+   - avertissement distinct pour XML bien formé mais invalide RNG
+   - l'éditeur de fragment conserve son garde-fou strict
+   => OK au niveau code
+
+10. Signal visuel (contrôle statique + compilation)
+   - état malformed : onglets rouge pâle
+   - état rng_invalid : onglets orange pâle
+   - état normal : style Qt normal
+   - priorité rouge lorsque le XML n'est pas bien formé
+   => OK au niveau code
+
+LIMITATION
+----------
+PySide6 n'est pas disponible dans l'environnement de construction. Les couleurs
+d'onglets, dialogues de sauvegarde et nouveaux choix de schéma doivent donc être
+confirmés visuellement dans l'application Qt sous Windows.

@@ -1,0 +1,36 @@
+VARIANS V0.8.5.10 — RAPPORT DE VALIDATION
+
+BASE DE DÉVELOPPEMENT
+- Sources exactes de V0.8.5.9 (archive complète), sans retour à une version plus ancienne.
+
+CORRECTIONS
+- Le témoin secondaire est centré sur un indice réellement lié par le JSON,
+  et non sur le milieu arithmétique de plusieurs indices non contigus.
+- Cadre orange pour les lignes synchronisées ; cadre bleu pour une ligne
+  visitée manuellement mais non reliée à la ligne pivot en cours.
+- Bouton Cadres indépendant par témoin ; état activé rendu clairement visible.
+- Signalement explicite de la géométrie manquante.
+- Prise en charge confirmée des contours polygonaux PAGE dans la visionneuse
+  intégrée : QGraphicsPolygonItem ; repli rectangle pour les lignes classiques.
+- Géométrie de cadrage déduite du polygone si un JSON ne contient pas de bbox.
+- Viewer web : marquages rectangulaires pour l'instant (non modifié).
+- JSON, base_keys, ressources IIIF locales, TEI et synchronisations inchangés.
+
+TESTS
+- python -m pytest -q : 265 passed.
+- Tests spécifiques : choix d'une ligne réellement liée parmi des matches
+  non contigus, passage de colonne 16r, navigation indépendante, index invalides,
+  bbox déduite des polygones PAGE et refus des géométries insuffisantes.
+- Fichiers PERO fournis : 39/39 contours polygonaux pour PAGE, 39/39 bbox
+  ALTO, coordonnées lues avec succès.
+- Syntaxe Python : compileall réussi.
+- JavaScript : node --check du script du viewer HTML réussi.
+- Catalogues de traductions : sept XML parsés ; clés présentes, sans doublons.
+- Sept aides HTML : nouvelle section de fonctionnement présente.
+
+LIMITES
+- Le JSON exact du témoin Fribourg (F), folio 16r, ligne 28, n'a pas été fourni.
+  La cause propre à ce dossier doit donc être confirmée par essai réel.
+- PySide6 n'est pas installé dans cet environnement : pas de vérification
+  du rendu interactif avec le thème et le DPI de Windows.
+- Pas de requête IIIF réelle nécessaire aux tests ni effectuée.

@@ -1,0 +1,348 @@
+# -*- coding: utf-8 -*-
+"""Navigation philologique non destructive d'une image à plusieurs folios.
+
+Une surface TEI correspond à UNE image (canvas IIIF ou fichier local), mais
+peut décrire plusieurs zones de folio. Les identifiants de zones restent les
+cibles stables de pb/@facs, avec @edRef pour lever les homonymies entre témoins.
+Aucune relation de ligne ALTO/JSON n'est inférée ici.
+"""
+from __future__ import annotations
+from dataclasses import dataclass
+import html
+import re
+import xml.etree.ElementTree as ET
+
+from tei_facsimile import _attr, _pointer_tokens, _PB_RE, valid_xml_id, _set_or_add_attr
+from image_sources import effective_line_bbox, page_image_dimensions
+
+
+@dataclass(frozen=True)
+class Folio:
+    ref: str               # xml:id de surface ou de zone
+    surface: str           # xml:id de l'image physique
+    label: str             # foliotation éditoriale, non unique globalement
+    region: tuple[float, float, float, float] | None = None
+
+
+def _local(tag):
+    return str(tag).split('}')[-1].split(':')[-1]
+
+
+def folios_for_witness(xml_text: str, witness_id: str, surface_ids,
+                       default_labels=None) -> list[Folio]:
+    """Parcours dans l'ordre physique des surfaces configurées pour CE témoin.
+
+    Le document peut être temporairement invalide pendant la saisie : dans ce
+    cas on conserve le navigateur de base plutôt que de donner une fausse zone.
+    """
+    ids = [str(s) for s in surface_ids if s]
+    labels = default_labels or {}
+    surfaces = {}
+    try:
+        root = ET.fromstring(xml_text)
+        for surface in root.iter():
+            if _local(surface.tag) != 'surface':
+                continue
+            sid = surface.get('{http://www.w3.org/XML/1998/namespace}id')
+            if sid in ids and sid not in surfaces:
+                surfaces[sid] = surface
+    except ET.ParseError:
+        pass
+    out = []
+    for sid in ids:
+        surface = surfaces.get(sid)
+        label = (surface.get('n') if surface is not None else None) or labels.get(sid) or sid
+        zones = []
+        if surface is not None:
+            # Only direct zones describe a folio here: nested layout zones are
+            # not mistaken for pages. The coordinates are in source pixels.
+            for zone in surface:
+                if _local(zone.tag) != 'zone':
+                    continue
+                zid = zone.get('{http://www.w3.org/XML/1998/namespace}id')
+                name = zone.get('n')
+                if not zid or not name:
+                    continue
+                try:
+                    x1, y1, x2, y2 = (float(zone.attrib[k]) for k in ('ulx','uly','lrx','lry'))
+                    if not (0 <= x1 < x2 and 0 <= y1 < y2):
+                        continue
+                except (ValueError, KeyError, OverflowError):
+                    continue
+                zones.append(Folio(zid, sid, name, (x1, y1, x2-x1, y2-y1)))
+        if zones:
+            # A physical image has two logical folios; it remains available
+            # separately as a full-page preview, not an extra physical image.
+            out.append(Folio(sid, sid, label))
+            out.extend(zones)
+        else:
+            out.append(Folio(sid, sid, label))
+    return out
+
+
+def folio_at_position(xml_text: str, position: int, witness_id: str,
+                      folios: list[Folio]) -> Folio | None:
+    """Résout le dernier pb correspondant dans la TEI, sans index global @n.
+
+    Si pb/@facs désigne la surface entière et pb/@n un de ses folios,
+    choisir sa zone. Les balises placées dans les commentaires/CDATA et les
+    pb de l'en-tête facsimilé ne doivent pas provoquer de navigation.
+    """
+    wid = str(witness_id).lstrip('#')
+    id_map = {f.ref: f for f in folios}
+    by_name = {}
+    for f in folios:
+        by_name.setdefault(f.label.strip().casefold(), []).append(f)
+    text = str(xml_text or '')
+    position = max(0, min(int(position), len(text)))
+    current = None
+    # Position des commentaires / CDATA / instructions XML, pour ne pas
+    # interpréter un exemple textuel comme un vrai pb.
+    ignored = [(m.start(), m.end()) for rx in (
+        re.compile(r'<!--.*?(?:-->|$)', re.S),
+        re.compile(r'<!\[CDATA\[.*?(?:\]\]>|$)', re.S),
+        re.compile(r'<\?.*?(?:\?>|$)', re.S),
+    ) for m in rx.finditer(text)]
+    for m in _PB_RE.finditer(text):
+        if m.end() > position:
+            break
+        if any(a <= m.start() < b for a, b in ignored):
+            continue
+        tag = m.group()
+        refs = _pointer_tokens(_attr(tag,'facs'))
+        edrefs = _pointer_tokens(_attr(tag,'edRef'))
+        if edrefs and wid not in edrefs:
+            continue
+        label = (_attr(tag,'n') or '').strip().casefold()
+        if not edrefs and not any(ref in id_map for ref in refs):
+            continue
+        direct = next((id_map[r] for r in refs if r in id_map), None)
+        if direct:
+            # If @facs identifies the physical surface, @n may identify one
+            # of its subdivisions, but ONLY within this very surface.
+            if direct.region is None and label:
+                children = [f for f in by_name.get(label, []) if f.surface == direct.surface and f.region]
+                if len(children) == 1:
+                    direct = children[0]
+            current = direct
+        elif edrefs and not refs and label:
+            matches = by_name.get(label, [])
+            if len(matches) == 1:
+                current = matches[0]
+    return current
+
+
+def split_surface_into_folios(xml_text: str, surface_id: str, left: str, right: str,
+                              width: int, height: int, split_percent: int = 50, *, split_pixel: int | None = None):
+    """Ajoute exactement deux zones de folio dans une surface existante.
+
+    N'écrit aucun autre élément TEI, ne réécrit pas le XML via ElementTree,
+    ne remplace jamais des zones existantes et refuse les collisions de xml:id.
+    """
+    if (split_pixel is None and not (1 <= int(split_percent) <= 99)) or width <= 0 or height <= 0:
+        raise ValueError('Dimensions ou position de séparation invalides.')
+    if not left.strip() or not right.strip() or left.strip() == right.strip():
+        raise ValueError('Les parties gauche et droite doivent avoir des libellés différents et non vides.')
+    if not valid_xml_id(surface_id):
+        raise ValueError('Identifiant de surface invalide.')
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise ValueError(f'XML non bien formé : {exc}') from exc
+    sid_key = '{http://www.w3.org/XML/1998/namespace}id'
+    surfaces = [e for e in root.iter() if _local(e.tag)=='surface' and e.get(sid_key)==surface_id]
+    if len(surfaces) != 1:
+        raise ValueError('La surface doit exister une seule fois dans le fac-similé TEI.')
+    if any(_local(e.tag)=='zone' for e in surfaces[0].iter() if e is not surfaces[0]):
+        raise ValueError('Cette surface contient déjà des zones : aucune modification automatique.')
+    left_id, right_id = f'{surface_id}-left', f'{surface_id}-right'
+    ids = [e.get(sid_key) for e in root.iter() if e.get(sid_key)]
+    if any(ids.count(v)>1 for v in (surface_id,)) or left_id in ids or right_id in ids:
+        raise ValueError('Conflit xml:id : la création automatique est annulée.')
+    # Restrict to the actual opening surface tag, then find its matching
+    # closing tag; fail closed for nested surface constructs.
+    rx = re.compile(r'<(?P<prefix>[A-Za-z_][\w.-]*:)?surface\b[^>]*>', re.I|re.S)
+    matches = [m for m in rx.finditer(xml_text) if _attr(m.group(), 'xml:id') == surface_id]
+    if len(matches) != 1:
+        raise ValueError('Ouverture de surface non identifiable dans le texte source.')
+    m = matches[0]
+    if m.group().rstrip().endswith('/>'):
+        raise ValueError('Une surface autofermante ne peut pas recevoir ces zones.')
+    prefix = m.group('prefix') or ''
+    close_rx = re.compile(rf'</{re.escape(prefix)}surface\s*>', re.I)
+    end = close_rx.search(xml_text, m.end())
+    if end is None or rx.search(xml_text, m.end(), end.start()):
+        raise ValueError('Surface imbriquée ou fermeture introuvable : modification annulée.')
+    split_x = int(split_pixel) if split_pixel is not None else round(width * int(split_percent) / 100)
+    if split_x <= 0 or split_x >= width:
+        raise ValueError('Séparation hors de l’image.')
+    line_start = xml_text.rfind('\n', 0, end.start()) + 1
+    indent = re.match(r'[ \t]*', xml_text[line_start:end.start()]).group(0)
+    child = indent + '  '
+    z1 = f'{child}<{prefix}zone xml:id="{left_id}" n="{html.escape(left.strip(),quote=True)}" ulx="0" uly="0" lrx="{split_x}" lry="{height}"/>'
+    z2 = f'{child}<{prefix}zone xml:id="{right_id}" n="{html.escape(right.strip(),quote=True)}" ulx="{split_x}" uly="0" lrx="{width}" lry="{height}"/>'
+    block = z1 + '\n' + z2 + '\n'
+    # Insert at start of closing tag's line (not after its indentation).
+    if xml_text[line_start:end.start()].strip() == '':
+        updated = xml_text[:line_start] + block + xml_text[line_start:]
+    else:
+        updated = xml_text[:end.start()] + '\n' + block + indent + xml_text[end.start():]
+    ET.fromstring(updated)
+    return updated, (left_id, right_id)
+
+
+def scene_rect_for_folio(region, image_reference_crop, pix_width, pix_height, y_offset=0):
+    """Source-pixel zone -> displayed Qt scene, even for small IIIF derivatives.
+
+    The reference crop and region share a source coordinate system; do not
+    apply the displayed-pixel resolution twice or enlarge the scene footprint.
+    """
+    x,y,w,h = map(float, region)
+    rc=image_reference_crop
+    sx=float(pix_width)/max(1.0,float(rc['w']))
+    sy=float(pix_height)/max(1.0,float(rc['h']))
+    return ((x-float(rc['x']))*sx, float(y_offset)+(y-float(rc['y']))*sy,
+            w*sx,h*sy)
+
+
+def markable_part_for_line(item, folios, project_root=None):
+    """Determine the unique double-page part containing a physical OCR line.
+
+    Only the current physical line is examined, not adjacent displayed lines.
+    Geometry and TEI zone regions both use full-image pixel coordinates.
+    No identification is inferred from folio numbers, page order or OCR text.
+    Return None for nonexistent/ambiguous geometry (including a split-crossing
+    line or an item representing an entire page).
+    """
+    if not item or not isinstance(item, dict):
+        return None
+    page, line = item.get('p') or {}, item.get('l') or {}
+    if line.get('_page_mode') or line.get('_image_only'):
+        return None
+    sid = str(page.get('tei_surface_id') or '')
+    parts = [f for f in folios if f.surface == sid and f.region is not None]
+    if len(parts) != 2 or not effective_line_bbox(line):
+        return None
+    rect = effective_line_bbox(line)
+    try:
+        aw = float(page.get('alto_width') or 0)
+        iw, ih = page_image_dimensions(page, project_root)
+        if aw <= 0 or iw <= 0 or ih <= 0:
+            return None
+        x = float(rect['hpos']) * iw / aw
+        width = float(rect['width']) * iw / aw
+        if width <= 0:
+            return None
+    except (ValueError, TypeError, OverflowError):
+        return None
+    scores = []
+    for part in parts:
+        zx, _, zw, _ = part.region
+        overlap = max(0.0, min(x + width, zx + zw) - max(x, zx))
+        scores.append(overlap / width)
+    best = max(range(len(parts)), key=lambda i: scores[i])
+    if scores[best] < .85 or scores[1-best] > .15:
+        return None
+    return parts[best]
+
+
+def inspect_surface_part_split(xml_text: str, surface_id: str, width: int, height: int):
+    """Return the editable existing left/right split, or None when none exists.
+
+    Only our two self-closing zones are editable in place. Existing complex TEI
+    facsimile zoning is intentionally not guessed at or overwritten.
+    """
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise ValueError(f'XML non bien formé : {exc}') from exc
+    sid_key = '{http://www.w3.org/XML/1998/namespace}id'
+    surfaces = [e for e in root.iter() if _local(e.tag) == 'surface' and e.get(sid_key) == surface_id]
+    if len(surfaces) != 1:
+        raise ValueError('Surface absente ou non unique.')
+    zones = [e for e in surfaces[0].iter() if e is not surfaces[0] and _local(e.tag) == 'zone']
+    if not zones:
+        return None
+    direct = [e for e in surfaces[0] if _local(e.tag) == 'zone']
+    if len(zones) != 2 or len(direct) != 2:
+        raise ValueError('Cette surface possède d’autres zones non modifiables automatiquement.')
+    lookup = {e.get(sid_key): e for e in direct}
+    lid, rid = surface_id + '-left', surface_id + '-right'
+    if set(lookup) != {lid, rid}:
+        raise ValueError('Ces zones n’ont pas les identifiants automatiques attendus.')
+    left, right = lookup[lid], lookup[rid]
+    try:
+        x0 = float(left.get('ulx')); lx = float(left.get('lrx'))
+        rx = float(right.get('ulx')); x1 = float(right.get('lrx'))
+        top1 = float(left.get('uly')); top2 = float(right.get('uly'))
+        bottom1 = float(left.get('lry')); bottom2 = float(right.get('lry'))
+    except (ValueError, TypeError, OverflowError):
+        raise ValueError('Les limites géométriques des deux zones sont invalides.')
+    if (abs(x0) > 0.5 or abs(lx-rx) > 0.5 or abs(x1-width) > 0.5 or
+        abs(top1) > 0.5 or abs(top2) > 0.5 or
+        abs(bottom1-height) > 0.5 or abs(bottom2-height) > 0.5 or
+        not (0 < lx < width) or not left.get('n') or not right.get('n')):
+        raise ValueError('Les deux zones ne forment pas une séparation verticale simple.')
+    return {'left':left.get('n'), 'right':right.get('n'),
+            'split_pixel': round(lx), 'left_id':lid, 'right_id':rid}
+
+
+def configure_surface_parts(xml_text: str, surface_id: str, left: str, right: str,
+                            width: int, height: int, *, split_pixel: int):
+    """Create a split or non-destructively adjust its two existing TEI zones.
+
+    Changing a label referenced by an existing pb could invalidate @n: refuse
+    that case rather than silently rewriting or invalidating critical TEI.
+    """
+    info = inspect_surface_part_split(xml_text, surface_id, width, height)
+    if info is None:
+        return split_surface_into_folios(
+            xml_text, surface_id, left, right, width, height,
+            split_pixel=split_pixel)
+    if not left.strip() or not right.strip() or left.strip() == right.strip():
+        raise ValueError('Les deux parties doivent avoir des libellés distincts et non vides.')
+    if not (0 < int(split_pixel) < width):
+        raise ValueError('Séparation en dehors de l’image.')
+    # Check existing pb references; a label change is not safe without a
+    # coordinated editorial decision about those references.
+    if left.strip() != info['left'] or right.strip() != info['right']:
+        for m in _PB_RE.finditer(xml_text):
+            refs = _pointer_tokens(_attr(m.group(), 'facs'))
+            if (info['left_id'] in refs and left.strip() != info['left'] or
+                info['right_id'] in refs and right.strip() != info['right']):
+                raise ValueError('Ce libellé est utilisé par un <pb/> existant. '
+                                 'Modifiez le libellé et le <pb/> manuellement.')
+    rx_surface = re.compile(r'<(?P<prefix>[A-Za-z_][\w.-]*:)?surface\b[^>]*>', re.I|re.S)
+    starts = [m for m in rx_surface.finditer(xml_text)
+              if _attr(m.group(), 'xml:id') == surface_id]
+    if len(starts) != 1:
+        raise ValueError('Balise de surface non identifiable dans la source.')
+    opening = starts[0]
+    prefix = opening.group('prefix') or ''
+    closing = re.search(rf'</{re.escape(prefix)}surface\s*>', xml_text[opening.end():], re.I)
+    if closing is None:
+        raise ValueError('Fermeture de surface introuvable.')
+    end = opening.end() + closing.start()
+    inner = xml_text[opening.end():end]
+    rx_zone = re.compile(r'<(?:[A-Za-z_][\w.-]*:)?zone\b[^>]*?/>', re.I|re.S)
+    replacements = {}
+    for match in rx_zone.finditer(inner):
+        zid = _attr(match.group(), 'xml:id')
+        if zid in (info['left_id'], info['right_id']):
+            if zid in replacements:
+                raise ValueError('Identifiant de zone répété dans la source.')
+            if zid == info['left_id']:
+                vals = dict(n=left.strip(),ulx='0',uly='0',lrx=str(int(split_pixel)),lry=str(height))
+            else:
+                vals = dict(n=right.strip(),ulx=str(int(split_pixel)),uly='0',lrx=str(width),lry=str(height))
+            tag = match.group()
+            for name,value in vals.items():
+                tag = _set_or_add_attr(tag,name,value)
+            replacements[zid] = (match.start(),match.end(),tag)
+    if set(replacements) != {info['left_id'],info['right_id']}:
+        raise ValueError('Balises de zone non identifiables ; modification annulée.')
+    for i,j,tag in sorted(replacements.values(), reverse=True):
+        inner = inner[:i]+tag+inner[j:]
+    updated = xml_text[:opening.end()] + inner + xml_text[end:]
+    ET.fromstring(updated)
+    return updated, (info['left_id'],info['right_id'])

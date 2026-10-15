@@ -1,0 +1,122 @@
+# `custom-elements.xml` — aide à la saisie du projet
+
+Depuis Varians 0.6.0, `custom-elements.xml` enrichit **Ctrl+E** et **Ctrl+Espace** sans jamais modifier les règles de validité du schéma RELAX NG.
+
+## Principe
+
+Varians distingue explicitement les deux sources dans les listes :
+
+- **RNG** : proposition autorisée par le schéma ;
+- **Projet** : convention ou raccourci défini dans `custom-elements.xml` ;
+- **RNG + Projet** : proposition présente dans les deux sources.
+
+Une suggestion « Projet » n'est donc pas une affirmation de validité. Inversement, une valeur absente d'une liste projet peut rester parfaitement valide au regard du RNG.
+
+## Éléments et attributs de Ctrl+E
+
+Le format historique reste valide :
+
+```xml
+<customElements>
+  <element name="rdg">
+    <attribute name="wit"/>
+  </element>
+</customElements>
+```
+
+`Ctrl+E` peut proposer `rdg` comme commodité du projet et, une fois l'élément choisi, insère `wit=""` en plaçant le curseur entre les guillemets.
+
+Une valeur par défaut reste possible :
+
+```xml
+<attribute name="rend" defaultValue="italic"/>
+```
+
+## Valeurs d'attribut suggérées
+
+Des valeurs explicites peuvent être données avec `<value>` :
+
+```xml
+<element name="hi">
+  <attribute name="rend" valuesMode="replace">
+    <value>italic</value>
+    <value>bold</value>
+  </attribute>
+</element>
+```
+
+Dans `rend="|"`, `Ctrl+Espace` propose alors `italic` et `bold`.
+
+### `valuesMode="append"`
+
+C'est le comportement par défaut. Les valeurs projet sont ajoutées aux valeurs finies éventuellement connues du RNG.
+
+### `valuesMode="replace"`
+
+La liste projet **remplace uniquement les propositions affichées** par Varians. Elle ne modifie pas le RNG et ne transforme donc pas cette liste en règle de validation.
+
+C'est utile lorsqu'un schéma autorise un domaine très large mais que l'édition suit une convention plus étroite.
+
+## Témoins du projet
+
+Pour les pointeurs comme `rdg/@wit`, les identifiants de témoins peuvent être produits dynamiquement :
+
+```xml
+<element name="rdg">
+  <attribute name="wit" valuesMode="replace">
+    <values source="witnesses" prefix="#"/>
+  </attribute>
+</element>
+```
+
+Avec des témoins `T1`, `T2` et `P` déclarés dans `project.xml`, `Ctrl+Espace` dans :
+
+```xml
+<rdg wit="|">
+```
+
+propose :
+
+```text
+#T1
+#T2
+#P
+```
+
+Si les sigles des témoins changent dans un autre projet, la liste change automatiquement.
+
+## Valeurs TEI recommandées mais non imposées
+
+Le même mécanisme peut servir à fournir des valeurs de travail pour un attribut ouvert par le RNG. Par exemple :
+
+```xml
+<element name="lb">
+  <attribute name="break" valuesMode="replace">
+    <value>yes</value>
+    <value>no</value>
+    <value>maybe</value>
+  </attribute>
+</element>
+```
+
+Varians les affichera alors comme suggestions **Projet**, et non comme valeurs « autorisées par le RNG ».
+
+
+## Mise en forme TEI (V0.8.1)
+
+`custom-elements.xml` peut aussi préciser le comportement du bouton **Indenter** :
+
+```xml
+<element name="hi" formatting="inline"/>
+<element name="teiHeader" formatting="block"/>
+<element name="formula" formatting="preserve"/>
+```
+
+- `inline` protège une zone destinée au flux textuel ;
+- `block` indique une structure que Varians peut indenter si aucun contenu
+  textuel réel, `xml:space="preserve"` ou `<lb/>` direct ne l'interdit ;
+- `preserve` interdit toute modification de blancs dans le sous-arbre.
+
+Ces indications concernent uniquement la présentation du XML source. Elles ne
+changent jamais la validité RELAX NG. La protection de `<lb/>` est absolue :
+aucune règle `block` ne peut autoriser l'ajout de blancs autour de cet élément.

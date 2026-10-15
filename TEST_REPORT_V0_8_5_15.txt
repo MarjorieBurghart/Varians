@@ -1,0 +1,15 @@
+VARIANS V0.8.5.15 — IIIF FULL IMAGE / PREVIEW COORDINATES / SYNC DIAGNOSTICS
+============================================================================
+
+Automated tests: 310 passed (including 8 new regression tests).
+Coverage: full-resolution IIIF preference, fallback to preview URL, IIIF v2/v3,
+full-page pixel-to-Canvas transformations, cropped-image invariance,
+missing base_keys, seven localized diagnostics, static UI integration.
+Whole Python package compilation, seven i18n catalogues and help files validated.
+
+Limits: PySide6 unavailable in this environment; no interactive Windows GUI
+verification. The user's L.json, actual local working-copy bitmap and project
+manifest cache were not supplied, so L's missing links and image dimensions
+could not be individually verified.
+
+No change to JSON, TEI, OCR source data or saved project schema.

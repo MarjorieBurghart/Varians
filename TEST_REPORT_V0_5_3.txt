@@ -1,0 +1,20 @@
+ÉDITEUR TEI GÉNÉRIQUE — RAPPORT DE TEST V0.5.3
+
+Correctif : détection du contexte Ctrl+Espace dans une balise ouvrante.
+
+Cas vérifiés :
+- <rdg|>  -> contexte attribut, élément courant rdg, parent app
+- <rdg |> -> contexte attribut
+- <rdg wi|> -> contexte attribut, préfixe wi
+- <rdg>|  -> contexte contenu de rdg
+- attributs déjà présents et valeurs d’attribut : comportement V0.5.2 conservé
+- complétion des éléments enfants : comportement V0.5.2 conservé
+- schémas avec include : modèle de complétion conservé
+
+Résultats :
+- pytest : 10 tests réussis
+- compilation Python : réussie
+- génération viewer web : réussie
+- viewer : 3 témoins, 3790 lignes de base
+
+Limite inchangée : la complétion V0.5.x travaille au niveau du parent XML et ne résout pas encore toutes les contraintes positionnelles complexes de RELAX NG.

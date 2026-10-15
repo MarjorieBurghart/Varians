@@ -1,0 +1,35 @@
+VARIANS V0.7.2 — TÉMOIN SANS IMAGE EXPLICITE
+==============================================
+
+NOUVEAUTÉS
+----------
+- La fiche d'un témoin comporte maintenant une « Source des images ».
+- Nouveau choix explicite : « Aucune image pour le moment ».
+- Ce choix est sérialisé sous <images type="none"/> dans project.xml.
+- L'absence de <images> reste interprétée comme « auto » pour la compatibilité
+  avec les projets historiques et leurs images stockées dans les JSON
+  d'alignement.
+- Le tableau des témoins affiche maintenant l'état de la source d'image.
+- Si un témoin est explicitement en mode none mais possède un ancien cache IIIF,
+  Varians masque l'image tout en conservant ALTO, lignes et base_keys.
+- Les types files et iiif sont réservés dans le modèle de projet pour les
+  importeurs à venir.
+
+VALIDATIONS
+-----------
+- round-trip project.xml -> ProjectConfig pour type=none : OK
+- projet historique sans <images> -> type=auto : OK
+- nouveau projet sans image ni alignement : OK
+- suppression logique d'un ancien IIIF sous politique none : OK
+- ALTO / base_keys conservés sous politique none : OK
+- interface témoin / colonne source d'image : contrôle statique OK
+- pytest : 71 tests réussis
+- compilation Python : 36 fichiers OK
+- catalogues i18n : 377 clés FR / 377 EN, ensembles identiques
+- viewer du projet de démonstration : 3 témoins / 3790 lignes de base
+- projet synthétique from scratch, 1 témoin, aucune image/synchronisation : OK
+
+LIMITATION
+----------
+La V0.7.2 ne réalise pas encore l'import/copie de fichiers image locaux ni
+l'import d'un Manifest IIIF. Ces fonctions appartiennent aux étapes suivantes.

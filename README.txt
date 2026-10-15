@@ -1,0 +1,1124 @@
+VARIANS V0.8.5.26.2 — CORRECTIF DU RAFRAÎCHISSEMENT RELAX NG
+
+• Après une modification XML, les diagnostics attachés à une révision antérieure sont invalidés sans délai.
+• Après la première ouverture du panneau de validation, le contrôle automatique différé se poursuit même si le panneau est masqué ou si XPath est ouvert.
+• À la réouverture du panneau, Varians revalide si la révision courante n’a pas encore été contrôlée.
+• Le signal QTextDocument.contentsChanged couvre également les modifications directes via QTextCursor et l’historique annuler/refaire.
+• Les résultats tardifs d’un contrôle portant sur une ancienne révision ne sont jamais affichés comme diagnostics courants.
+• La validation F8 demeure disponible ; aucune modification du schéma, du texte TEI, des images, des JSON ou du viewer web.
+
+Ceci est un correctif ciblé fondé sur la distribution complète V0.8.5.26.1. Les sept langues et les aides sont conservées. Voir PASSATION_V0_8_5_26_2.md et TEST_REPORT_V0_8_5_26_2.txt.
+
+--- HISTORIQUE DU README PRÉCÉDENT ---
+VARIANS V0.8.5.26.1 — CORRECTIFS ERGONOMIQUES DU VIEWER WEB
+
+• Recherche plein texte : « Graphies médiévales » est un simple libellé ; les trois cases u/v, i/j et c/t déclenchent directement les équivalences. Sans case : recherche exacte (hors casse).
+• Export depuis l'éditeur : reprend exactement la liste des manuscrits visibles et leur ordre d'affichage au moment de l'export.
+• Le pivot technique reste disponible pour la synchronisation même si son panneau est masqué, sans publication de ses images.
+• La génération autonome depuis la ligne de commande garde le comportement historique : tous les témoins.
+
+Les fonctions A01/A02/A03 de la V0.8.5.26 sont conservées. L'ancienne roadmap reste suspendue.
+
+IMPORTANT : régénérer le fichier web_output/viewer.html après mise à jour. Pour distribuer un export filtré sans anciennes images, le copier avec ses seules ressources nécessaires dans un répertoire propre.
+Voir PASSATION_V0_8_5_26_1.md et TEST_REPORT_V0_8_5_26_1.txt.
+
+--- HISTORIQUE DU README PRÉCÉDENT ---
+VARIANS V0.8.5.26 — VERSION INTERMÉDIAIRE DE RÉFÉRENCE
+
+Nouveautés : A01 validation RELAX NG actualisée, A02 complétion automatique des noms d’attributs, A03 recherche plein texte avec équivalences médiévales dans le viewer web.
+
+Base : V0.8.5.25.3. La synchronisation `<lb/>` vers les manuscrits secondaires n’a pas été remplacée. L’ancienne roadmap est suspendue et sera redéfinie.
+
+Démarrage : python editeur_tei.py  |  Dépendances : pip install -r requirements.txt
+Tests : python -m pytest -q
+Export web : python -m web_viewer.generator project.xml
+Voir PASSATION_V0_8_5_26.md et ROADMAP_EN_REDEFINITION.md.
+
+--- HISTORIQUE DU README PRÉCÉDENT ---
+CORRECTIF V0.8.5.25.3 — 14 octobre 2026
+Le viewer exporté synchronise le clic sur le texte, les marqueurs de notes/variantes et les références éditoriales avec les lignes vérifiables des manuscrits.
+La ligne sélectionnée est marquée en bleu et centrée dans la fenêtre du témoin.
+Toute portion non ancrée ou clé de ligne introuvable produit un diagnostic, jamais une correspondance inventée.
+IMPORTANT : regénérer le HTML depuis cette version ; un ancien viewer.html ne se met pas à jour automatiquement.
+
+V0.8.5.25.3 : résolution des <lb edRef="#pivot"/> du viewer web sur le même ordre global de lignes physiques JSON que l’éditeur ; les <pb/> de folio ne réinitialisent plus les clés. Les témoins secondaires suivent uniquement leurs base_keys existants. Voir WEB_VIEWER_PIVOT_LB_PARITY.md.
+
+Consulter PASSATION_V0_8_5_25_2.md et WEB_VIEWER_TEXT_CLICK_FIX.md.
+
+VARIANS 0.8.5.25.1 — CORRECTIF NAVIGATION PAR LIGNES DU VIEWER WEB
+===================================================================
+Le numéro de folio dans <pb n="…"> ne correspond pas nécessairement à l'ID
+physique des pages dans le JSON de synchronisation. Le viewer rapproche
+désormais les pages par leurs liens explicites @facs vers <surface>/<zone>,
+puis, uniquement lorsque le lien est certain, par ID technique exact ou
+libellé exact unique d'un témoin identifié. Aucun rapprochement par rang,
+position de Canvas ou ressemblance de texte n'est créé.
+Le pivot et les témoins secondaires possédant des base_keys réels sont alors
+affichés en recadrage de lignes plutôt qu'en mode pages. Les témoins non
+synchronisés restent en mode pages. Voir WEB_VIEWER_LINE_SYNC_FIX.md,
+PASSATION_V0_8_5_25_1.md et TEST_REPORT_V0_8_5_25_1.txt.
+
+VARIANS 0.8.5.25 — IIIF HAUTE RÉSOLUTION DU VIEWER WEB
+==========================================================
+Nouveau module web_viewer/iiif.js : IIIF Image API v1/v2/v3, tailles selon
+zoom et résolution, régions, limites annoncées dans manifest/info.json,
+replis (région réduite, image entière recadrée localement, vignette).
+Chargements obsolètes annulés lors des changements de page ou de témoin.
+Images externes signalées explicitement : une archive HTML autonome ne
+rend PAS un service IIIF accessible hors ligne ou sans autorisation.
+Tests JS/Chromium complémentaires ; sept aides mises à jour.
+Voir WEB_VIEWER_IIIF.md et TEST_REPORT_V0_8_5_25.txt.
+
+VARIANS 0.8.5.24 — PARITÉ GÉOMÉTRIQUE DU VIEWER WEB
+=====================================================
+Marge de recadrage de 24 px, contexte des lignes limité aux colonnes et pages
+physiques, polygones PAGE concaves avec tous leurs sommets et leurs bornes.
+Zones TEI des doubles pages exprimées dans les pixels de l'image source,
+sans multiplication abusive par l'échelle OCR. Repli sur l'image complète
+pour les lignes sans géométrie ; aucune synchronisation fondée sur des liens
+base_keys orphelins. Images locales manquantes consignées à l'export.
+Accès localStorage facultatif, même en contexte de navigation restreint.
+
+Voir WEB_VIEWER_GEOMETRY.md et TEST_REPORT_V0_8_5_24.txt.
+
+VARIANS 0.8.5.23 — SURLIGNAGE BIDIRECTIONNEL DES BALISES XML
+==============================================================
+Le curseur dans une balise ouvrante OU fermante souligne les deux membres
+correspondants en bleu pâle ; un jumelage ambigu n'est jamais inventé.
+Imbrication, espaces de noms, autofermantes et XML mal formé : tests dédiés.
+Aucune modification du XML, du renommage, du repliage ou des fichiers projet.
+Voir XML_TAG_HIGHLIGHT.md et ROADMAP_REVISED_2026_10.md.
+
+VARIANS 0.8.5.22 — REPLIAGE STRUCTUREL XML
+===========================================
+Nouveau : Affichage > Repliage XML, chevrons dans la marge, Ctrl+Alt+F
+(élément courant) et Ctrl+Alt+Maj+F (tout déplier). Le XML source est
+préservé intégralement. Guide technique : XML_FOLDING.md.
+
+VARIANS 0.8.5.20 — DOUBLE PAGE COMPACTE, VIGNETTE ET MARQUAGE CIBLÉ
+======================================================================
+
+La commande « Double page… » partage désormais la barre d'outils du témoin.
+La rangée supplémentaire « Folios » est retirée (les flèches continuent de
+naviguer entre les parties logiques en mode page).
+
+La fenêtre montre la VIGNETTE DE L'IMAGE ENTIÈRE, indépendamment du cadrage
+synchronisé de l'éditeur. On peut déplacer la ligne rouge à la souris ; le
+pourcentage reste éditable, et la position exacte est enregistrée en PIXELS
+source dans les coordonnées TEI. Les images locales sont décodées à petite
+résolution, les images IIIF sont récupérées en vignette asynchrone.
+
+La terminologie est neutre : « Partie gauche » / « Partie droite » ; leurs
+libellés peuvent identifier des folios, des pages ou d'autres unités.
+
+« Marquer la page » emploie la zone de la partie actuellement affichée :
+- en mode lignes synchronisées, d'après les coordonnées de la ligne courante ;
+- en mode page, d'après la partie choisie ;
+- si la ligne franchit la séparation, manque de géométrie ou est ambiguë,
+  une fenêtre demande de sélectionner explicitement la partie.
+Le <pb/> vise la zone choisie (facs="#…-left/right"), et pas la surface entière.
+
+Les deux zones produites par Varians peuvent être réajustées à l'aide de la
+même fenêtre, sans supprimer ni renommer les identifiants ni les <pb/> déjà
+présents. Les autres zonages TEI restent protégés contre les remplacements.
+
+Voir DOUBLE_PAGE_PARTS.md, FOLIO_NAVIGATION.md et TEST_REPORT_V0_8_5_20.txt.
+
+VARIANS 0.8.5.19 — CORRECTION DU BOUTON « DOUBLE PAGE… »
+========================================================
+
+La commande fonctionne en mode page comme en mode lignes synchronisées.
+Les dimensions et les surfaces sont contrôlées avant toute modification.
+
+VARIANS 0.8.5.18 — Navigation par folios et images à double page
+
+Affichage > État des témoins… : rapport des sources d’images, lignes et liens pivot.
+Affichage > Actualiser les synchronisations… (Ctrl+Shift+R) : relire sans fermer l’éditeur.
+Les modifications TEI et les fichiers JSON/ALTO/images sont préservés.
+Documentation : WITNESS_DIAGNOSTICS.md et TEST_REPORT_V0_8_5_17.txt.
+
+VARIANS 0.8.5.16 — Visibilité ET ordre des témoins affichés
+===========================================================
+
+Affichage > Choisir les témoins affichés… : cocher les témoins et les déplacer
+avec Monter / Descendre. L'ordre des panneaux d'images est mémorisé localement
+par projet, comme leur visibilité et leur hauteur. Le manuscrit pivot, les
+identifiants de témoin, les JSON, les surfaces TEI et project.xml ne changent
+pas. Les témoins masqués conservent leur position ; les nouveaux sont ajoutés
+en fin de liste. Les sept traductions et aides sont actualisées.
+
+Voir DISPLAY_NAVIGATION.md et TEST_REPORT_V0_8_5_16.txt.
+
+VARIANS 0.8.5.15 — Images IIIF et diagnostic de synchronisation par lignes
+==========================================================================
+
+Correctif du visualiseur pour les manuscrits IIIF avec images de dimensions
+variables et JSON de synchronisation nouvellement associés.
+
+- Un aperçu IIIF ou une copie locale plus petite que le Canvas ne doit plus
+  placer les contours ALTO/PAGE hors de l'image et perturber le zoom à 100 %.
+- En mode page, les cadres sont recalculés dans les dimensions du bitmap
+  réellement affiché, sans modifier les coordonnées source.
+- Quand un service IIIF Image API est présent, la pleine résolution est
+  demandée en priorité ; l'URL d'image du Manifest reste un repli.
+- Un JSON de témoin dépourvu de base_keys ne déclenche toujours pas une
+  fausse synchronisation. L'interface indique désormais explicitement la
+  raison du maintien de la navigation par pages. Un JSON dont les clés ne
+  correspondent à aucune ligne pivot est également signalé.
+- Aucun fichier source, JSON, ALTO/PAGE, TEI ou cache projet n'est réécrit.
+- Le cas particulier L ne peut être confirmé sans examiner alignments/L.json.
+- Tests : tests/test_v08515_iiif_preview_scale_and_sync_diagnostics.py.
+
+VARIANS 0.8.5.14 — Images IIIF préservées lors de l’ajout d’ALTO/PAGE
+=====================================================================
+
+Correctif non destructif de la régression d’affichage des témoins IIIF
+sans JSON de synchronisation après import d’un ALTO/PAGE indépendant.
+
+- Les images du manifeste IIIF (et leurs copies locales) restent les pages
+  canoniques du témoin, que les fichiers OCR soient associés ou non.
+- Les fichiers OCR enrichissent seulement les canvases identifiés avec certitude :
+  lien manuel, identité IIIF, folio unique, nom exact d’une copie locale
+  téléchargée et indexée. Jamais d’association par ordre de fichiers.
+- Les ALTO/PAGE impossibles à associer sont conservés dans le cache dérivé,
+  sans image fictive ; leur nombre apparaît dans l’infobulle du témoin.
+- Les identifiants de page, de surface TEI, le JSON de synchronisation et
+  les données des autres témoins restent inchangés.
+- Le moteur commun protège également le viewer web.
+- Documentation technique : IIIF_SYNC_RESOLUTION.md, IMAGE_SOURCES.md,
+  DEVELOPER_HANDOFF.md et tests/test_v08514_iiif_alto_independence.py.
+
+VARIANS 0.8.5.13 — Complétion des balises fermantes XML
+======================================================
+
+- Dans le XML source et les fragments, taper </ propose immédiatement la
+  fermeture de l'élément ouvert le plus proche ; Entrée/Tab accepte, Échap
+  ignore et Ctrl+Espace permet de rappeler la suggestion.
+- Un QName partiellement saisi (</di) est complété sans ajouter de > en double.
+- La suggestion respecte l'imbrication, les balises autofermantes, les espaces
+  de noms et les zones non XML (commentaires, CDATA). Pas de devinette en cas
+  de balisage momentanément ambigu. Les fonctions RNG existantes restent.
+- Nouvelle documentation dans XML_EDITING.md, 7 aides linguistiques mises à
+  jour et nouveaux tests ciblés.
+
+VARIANS 0.8.5.8 — Correctif des lignes JSON partielles et <lb/> sans @n
+=========================================================================
+
+Reprise complète et non régressive de Varians 0.8.5.7.
+
+- Un JSON Varians-Synchro décrivant un extrait de folio (par ex. lignes 41–68)
+  génère autant de <lb/> que de lignes effectivement répertoriées (28), sans
+  supposer que la première ligne commence à 1 ni compléter les lignes absentes.
+- Un intervalle non continu fait l'objet d'un avertissement ; numéros dupliqués
+  ou invalides : aucun <lb/> spéculatif.
+- Les nouveaux <lb/> ne portent plus @n ; ils conservent edRef, sans @facs.
+- Une page sélectionnée avec JSON `lines: []` conserve son <pb/>. Une page
+  du JSON dépourvue d'image/surface sélectionnée est signalée dans l'aperçu.
+- Le JSON, ses identifiants et les données TEI existantes ne sont pas altérés.
+- Aides en français, anglais, allemand, japonais, tchèque, italien et russe
+  mises à jour ; voir TEI_PIVOT_SCAFFOLD.md.
+
+IMPORTANT : la génération ne peut être relancée sur une TEI déjà préparée.
+Utilisez un projet neuf ou une copie dont le corps TEI est encore vide.
+
+VARIANS 0.8.5.7 — correction de visibilité de la préparation TEI pivot
+
+Correctif de l'interface de création : les options pb/lb sont désormais dans
+une section dédiée juste sous « Point de départ », avant les ressources.
+Les fenêtres Nouveau projet et Paramètres du projet disposent d'un défilement
+vertical et de boutons de validation toujours visibles, y compris sur de
+petits écrans. Le titre précise la version lancée (« Varians 0.8.5.7 »),
+ce qui facilite la détection d'une ancienne exécution encore active dans
+Spyder ou d'un raccourci vers une ancienne distribution.
+
+Pour activer la préparation : Fichier > Nouveau projet > Commencer une
+nouvelle transcription > section « Préparation de la transcription du
+témoin pivot » > cocher pb (et conserver lb coché). La génération reste
+volontaire et demande une confirmation après création du projet.
+
+VARIANS 0.8.5.6 — préparation facultative de la TEI à partir du témoin pivot
+
+Depuis un projet nouvellement créé ou les paramètres du projet, un témoin pivot
+muni de surfaces et de fichiers ALTO/PAGE et/ou de synchronisation JSON peut
+amorcer une transcription vide : <pb/> reliés aux surfaces par @facs et au
+témoin par @edRef ; <lb/> facultatifs, décomptés par page, sans liens aux zones.
+La génération est précédée d'un aperçu et d'une confirmation explicite ; une
+sauvegarde datée protège le document. Les TEI déjà remplies sont intouchables.
+Le moteur ne modifie pas les JSON, les base_keys ni les autres témoins.
+Voir TEI_PIVOT_SCAFFOLD.md et TEST_REPORT_V0_8_5_6.txt.
+
+VARIANS 0.8.5.5 — association fiable des pages synchronisées et des Canvas IIIF
+
+Correctif développé à partir de la V0.8.5.4 complète (aucun retour à une version antérieure).
+Nouveau module iiif_resolution.py : correspondance par Canvas, service IIIF Image,
+URL d'image normalisée, identification OCR explicite ou folio unique.
+Aucun lien par indice de manifeste ; le JSON Varians-Synchro et les base_keys
+sont préservés. Association manuelle page JSON -> Canvas dans le sélecteur,
+source locale / IIIF affichée et état du rapprochement.
+Les nouveaux témoins IIIF privilégient une sélection explicite. L'export web
+et l'éditeur partagent le même moteur. Voir IIIF_SYNC_RESOLUTION.md.
+
+VARIANS 0.8.5.4 — association automatique prudente des images IIIF et des ALTO/PAGE
+
+Dans la sélection des images IIIF, Varians propose désormais automatiquement
+les associations ALTO/PAGE dont les noms d'image correspondent exactement
+(extension et casse ignorées). Il exploite également le nom de l'image source
+inscrit dans les fichiers OCR, pour gérer les XML renommés. Les correspondances
+ambiguës restent à attribuer manuellement. Les liens enregistrés ont priorité.
+Un bouton « Associer automatiquement (noms exacts) » permet de compléter les
+associations des sélections déjà existantes. Aucun appariement par position.
+
+La sélection des images et le gestionnaire IIIF de la V0.8.5.3 restent inchangés.
+Voir IIIF_CANVAS_SELECTION.md et le rapport TEST_REPORT_V0_8_5_4.txt.
+
+VARIANS 0.8.5.3 — sélection des canvases IIIF, liaisons OCR, tri naturel
+
+NOUVEAU : lorsqu'un manuscrit IIIF comporte des centaines d'images, on peut
+retenir seulement les folios utilisés pour l'édition, dans Paramètres du projet
+→ Témoins → Modifier → « Choisir les images et associer les OCR… ».
+L'identité du canvas (URI IIIF si disponible) est enregistrée dans project.xml.
+Chaque image retenue peut être associée MANUELLEMENT à un fichier ALTO/PAGE,
+même si les noms de fichiers ou l'ordre diffèrent totalement.
+
+Les images exclues ne sont plus téléchargées en mode « sélection » et ne
+provoquent plus la création de nouvelles surfaces TEI. Les surfaces existantes
+ne sont jamais supprimées silencieusement : lors d'un changement de sélection,
+Varians peut proposer de supprimer UNIQUEMENT les surfaces qui correspondent
+exactement à sa génération initiale et qui ne sont ni annotées ni référencées.
+La confirmation est facultative et une copie datée de la TEI est créée avant
+suppression. En cas de doute, choisir « Non ».
+
+Les nouvelles listes d'images locales et de fichiers ALTO/PAGE sont triées par
+ordre numérique naturel (1r, 1v, 2r, …, 10r), et un bouton permet de réappliquer
+ce tri aux listes existantes tout en conservant les ajustements manuels possibles.
+
+Cette version conserve la prise en charge mixte ALTO/PAGE, l'export web et le
+choix entre copies locales et IIIF distant. Voir IIIF_CANVAS_SELECTION.md,
+PAGE_IIIF_LOCAL.md et TEST_REPORT_V0_8_5_3.txt.
+
+VARIANS 0.8.5.2 — gestionnaire IIIF et téléchargement sélectif ALTO/PAGE
+
+NOUVEAUTÉS : chaque témoin IIIF peut demander toutes les images du manifeste ou
+uniquement celles associées de manière non ambiguë à un ALTO/PAGE fourni.
+Le gestionnaire (Fichier → Gestionnaire de téléchargements IIIF…) affiche les
+pages sélectionnées, téléchargées, manquantes et exclues ; téléchargement sur
+thread distinct, pause/reprise/arrêt entre images, journal d'erreurs, reprise
+sans re-télécharger les images terminées, et choix « tous les témoins ».
+Le mode historique « toutes les pages » reste le défaut pour les projets
+existants. Après enregistrement, le téléchargement ne bloque plus l'éditeur.
+Les copies partielles restent exploitables en mode hybride ; les pages exclues
+peuvent encore nécessiter le réseau. Paramètre d'export web inchangé.
+Aide intégrée et textes d'interface mis à jour dans les sept langues.
+Voir PAGE_IIIF_LOCAL.md § 6 et TEST_REPORT_V0_8_5_2.txt.
+
+VARIANS 0.8.5.1 — correctif d'identité des lignes PERO OCR (ALTO / PAGE)
+
+Cette version conserve toutes les évolutions de la 0.8.5.0 (PAGE XML,
+polygones, copie locale des images IIIF, export web et les sept langues).
+Correction ciblée : une migration ALTO → PAGE retrouve la même ligne
+PERO OCR par son UUID commun même si le préfixe ou l'ordre change.
+Les synchronisations éditoriales ne sont plus déplacées vers une ligne
+présentant un autre UUID. Voir PAGE_IIIF_LOCAL.md et
+TEST_REPORT_V0_8_5_1.txt.
+
+VARIANS 0.8.5.1 — PAGE XML / ALTO / copie de travail IIIF locale
+
+VARIANS — ÉDITEUR XML TEI POUR L'ECDOTIQUE — V0.8.4.2
+=====================================================
+
+
+
+NOUVEAUTÉ V0.8.4.2 — TRANSMISSION DÉVELOPPEUR ET INTERNATIONALISATION
+-----------------------------------------------------------------------
+- Le libellé de fichier « edition.xml » a été retiré de la barre d'outils :
+  le nom du fichier reste disponible dans le titre de la fenêtre, où il est utile.
+- Nouvelle documentation de maintenance : DEVELOPER_HANDOFF.md présente la
+  philosophie, les invariants, l'architecture, les contrats de données, les
+  risques de compatibilité et la procédure de modification ; CODE_MAP.md fournit
+  une carte rapide modules/fonctions/tests.
+- Cinq nouvelles traductions complètes de l'interface rejoignent le français et
+  l'anglais : allemand, japonais, tchèque, italien et russe.
+- L'aide F1 est elle aussi disponible dans les sept langues livrées.
+- Les catalogues sont contrôlés pour l'identité des clés et des variables de
+  formatage, afin d'éviter les erreurs au runtime.
+- Voir DEVELOPER_HANDOFF.md, CODE_MAP.md, I18N_FORMAT.md et
+  TEST_REPORT_V0_8_4_2.txt.
+
+
+NOUVEAUTÉ V0.8.4.1 — XPATH ET AIDE DÉVELOPPÉE
+-------------------------------------------------
+- Un clic sur un résultat XPath sélectionne maintenant l'élément XML complet,
+  depuis la balise ouvrante jusqu'à la fin de la balise fermante.
+- Les éléments imbriqués de même nom utilisent le moteur structurel de paires
+  XML ; les éléments autofermants sont sélectionnés intégralement.
+- L'aide intégrée F1 a été entièrement développée et mise à jour en français
+  et en anglais : projets, édition, RNG, XPath, indentation sûre, images,
+  fac-similé, ALTO, synchronisation, affichage des témoins et viewer web.
+- Voir TEST_REPORT_V0_8_4_1.txt.
+
+
+NOUVEAUTÉ V0.8.4 — CONSOLIDATION DES MODES DE PROJET
+------------------------------------------------------
+- La présence d'un JSON d'alignement ne suffit plus à activer le mode ligne :
+  le témoin de base doit contenir de vraies lignes de référence et un témoin
+  secondaire de vrais `base_keys` (ou `keys816` en lecture historique).
+- L'état de synchronisation est évalué sur le JSON brut, avant superposition
+  d'un ALTO indépendant. Un ALTO ne peut donc jamais transformer un JSON vide
+  en fausse synchronisation.
+- Desktop et viewer web utilisent désormais les mêmes critères : un secondaire
+  sans `base_keys` reste en mode page des deux côtés.
+- Un JSON de base vide/provisoire + images/ALTO retombe proprement en mode page
+  et ne masque plus les images du viewer web.
+- Nouvelle matrice de non-régression couvrant TEI seule, images, ALTO et sync.
+- Voir CONSOLIDATION.md et TEST_REPORT_V0_8_4.txt.
+
+
+NOUVEAUTÉ V0.8.3 — AFFICHAGE ET NAVIGATION DE TRAVAIL
+---------------------------------------------------------
+- Nouveau menu « Affichage » entre « Fichier » et « Aide ».
+- « Recharger les images » quitte la barre d'outils et rejoint ce menu.
+- « Choisir les témoins affichés… » permet de cocher de 0 à n témoins parmi
+  ceux du projet. Ce choix est mémorisé localement par projet et ne modifie pas
+  project.xml.
+- Les panneaux des témoins sont maintenant placés dans un splitter vertical :
+  leur hauteur est redimensionnable et mémorisée. Un double-clic sur l'en-tête
+  d'un témoin le maximise temporairement ; un second double-clic restaure les
+  proportions précédentes.
+- Si aucun témoin n'est affiché, toute la colonne images disparaît.
+- Le menu « Langue » est désormais placé en bas du menu « Affichage ».
+- La barre d'outils regroupe « Valider RNG », « Indenter » et « XPath » ; la
+  recherche source est repoussée à droite.
+- La synchronisation de sélection XML ↔ XSLT/CSS ne choisit plus la première
+  occurrence globale d'une chaîne répétée. Varians transporte le paragraphe et
+  le rang de l'occurrence à l'intérieur de ce paragraphe, avec repli
+  positionnel si la transformation XSLT diffère légèrement.
+- Voir DISPLAY_NAVIGATION.md et TEST_REPORT_V0_8_3.txt.
+
+
+NOUVEAUTÉ V0.8.1 — INDENTATION TEI SÛRE
+-----------------------------------------
+- Nouveau bouton « Indenter » dans la barre d'outils.
+- Le formateur ne modifie que les blancs structurels dont la réécriture est
+  jugée sûre ; les contenus mixtes restent intacts.
+- Protection absolue de xml:space="preserve" et des contextes contenant un
+  <lb/> direct : aucun blanc nouveau n'est introduit autour de <lb/>.
+- Le modèle RELAX NG indique si un élément peut contenir du texte ; en cas
+  d'ambiguïté Varians s'abstient.
+- custom-elements.xml accepte formatting="inline", "block" ou "preserve".
+- XML mal formé : aucune réécriture. Tous les changements d'indentation sont
+  groupés dans une seule opération Undo.
+- Voir TEI_FORMATTER.md et TEST_REPORT_V0_8_1.txt.
+
+
+NOUVEAUTÉ V0.8.0 — ÉDITION XML ASSISTÉE PAR PAIRES
+----------------------------------------------------
+- Nouveau moteur lexical `xml_tag_pairs.py`, indépendant de Qt, qui apparie
+  correctement les balises XML y compris lorsque des éléments de même nom sont
+  imbriqués. Commentaires, CDATA, instructions de traitement et déclarations
+  ne sont jamais interprétés comme des éléments.
+- Quand le curseur ou la sélection se trouve dans une balise ouvrante appariée,
+  la balise fermante correspondante est surlignée avec le bleu pâle commun de
+  Varians.
+- Si une balise ouvrante complète est supprimée, sa fermeture correspondante
+  est supprimée dans la même opération Undo, sans toucher au contenu intérieur.
+  Le comportement couvre clavier, Couper et suppression par le menu contextuel.
+- Si le QName d'une balise ouvrante est renommé, le QName de la fermeture
+  associée est renommé automatiquement. Les attributs ne sont jamais modifiés.
+- Les balises autofermantes ne sont pas concernées par l'appariement.
+- Les automatismes sont déclenchés par `QTextDocument.contentsChange`, ce qui
+  évite de rescanner/différencier tout le document à chaque frappe ordinaire.
+- Voir XML_EDITING.md et TEST_REPORT_V0_8_0.txt.
+
+HOTFIX V0.7.9.2 — MARQUAGE DE PAGE CONSERVATEUR
+-------------------------------------------------
+- « Marquer la page » est désormais une commande d’insertion uniquement.
+- Si le curseur est à l’intérieur de n’importe quelle balise XML, y compris
+  <pb/>, aucune insertion et aucune modification n’est effectuée.
+- Le message « Placez le curseur dans le texte ou entre deux balises. » est
+  affiché dans la barre d’état.
+- Les positions immédiatement avant « < » et immédiatement après « > » restent
+  des points d’insertion valides.
+- Le garde-fou est vérifié avant toute synchronisation de <facsimile> : une
+  commande refusée ne modifie donc absolument pas la TEI.
+- Contrôles détaillés : TEST_REPORT_V0_7_9_2.txt.
+
+HOTFIX V0.7.9.1 — FRONTIÈRES DU CURSEUR
+- Ce hotfix historique a corrigé les positions immédiatement avant/après <pb/>.
+- Depuis V0.7.9.2, le curseur à l’intérieur d’un <pb/> est lui aussi refusé : aucun balisage existant n’est modifié par « Marquer la page ».
+
+NOUVEAUTÉ V0.7.9.1 — FAC-SIMILÉ TEI ET MODE PAGE
+------------------------------------------------
+- Les images du projet reçoivent un identifiant de surface TEI stable et un
+  libellé « Folio / page ».
+- Varians complète `<facsimile>` de façon incrémentale et non destructive ;
+  aucune surface/zone existante n'est reconstruite ou supprimée automatiquement.
+- Le bouton « Marquer la page » insère `<pb n="…" facs="#…"/>` uniquement hors de toute balise.
+- Sans JSON de synchronisation, y compris lorsqu'un ALTO est présent, Varians
+  affiche désormais la page entière. L'ALTO reste une géométrie facultative.
+- Le dernier `<pb facs>` précédant le curseur détermine la page affichée.
+- Le viewer web suit la même logique et embarque les images locales nécessaires.
+- Voir FACSIMILE_PAGES.md pour les garde-fous et le modèle détaillé.
+- Contrôles détaillés : TEST_REPORT_V0_7_9_1.txt.
+
+
+NOUVEAUTÉ V0.7.8 — PAGES / IMAGES LOCALES / ALTO
+---------------------------------------------------
+- Une ressource ALTO indépendante n'est plus confondue avec une synchronisation
+  TEI : elle ne fixe plus un nombre attendu de <lb> et n'active pas à elle seule
+  la navigation synchronisée du témoin de base.
+- Le nombre de lignes attendu vient exclusivement du JSON de synchronisation
+  explicite et est calculé avant toute superposition d'un ALTO indépendant.
+- Les photographies locales sans ALTO sont désormais feuilletées une page à la
+  fois ; l'ancien contexte ±1, conçu pour trois lignes ALTO, n'empile plus deux
+  ou trois pages photographiques dans le même panneau.
+- Le statut du panneau indique clairement la position courante (page n/N).
+- Les fusions ressources ont été testées avec 4 images + 4 ALTO, ainsi qu'avec
+  synchronisation + ALTO + images : toutes les pages sont conservées et les
+  base_keys existants restent intacts.
+
+NOUVEAUTÉ V0.7.7 — STABILISATION INTERFACE / PROJETS
+----------------------------------------------------
+- La couleur de sélection/survol claire du panneau XPath est désormais la
+  palette commune des listes et tableaux de Varians, notamment RELAX NG.
+- Lorsqu'aucune source d'image n'existe dans le projet, la colonne manuscrits
+  est entièrement masquée ; le viewer web devient lui aussi textuel pleine largeur.
+- Les éditions créées from scratch structurent maintenant les témoins dans
+  sourceDesc/listWit/witness avec xml:id, utilisable directement par @wit.
+- À chaque ouverture de document, tous les diagnostics RELAX NG précédents sont
+  vidés avant validation afin qu'un autre projet ne puisse laisser de résultats
+  visuellement obsolètes.
+
+
+
+
+
+
+
+NOUVEAUTÉ V0.7.6 — SYNCHRONISATION FACULTATIVE ET AJOUTABLE ULTÉRIEUREMENT
+----------------------------------------------------------------------------
+La synchronisation inter-témoins est désormais gérée comme une ressource
+facultative au même titre que les images et les ALTO. Dans la fiche d’un
+témoin, un JSON de synchronisation peut être ajouté, remplacé ou retiré à
+n’importe quel moment. Par défaut, un nouveau JSON peut être copié dans
+alignments/<sigle>.json pour garder le projet portable ; il est aussi possible
+de conserver une référence externe. Les sources d’images et ALTO déjà
+déclarées ne sont pas modifiées par cette opération.
+
+NOUVEAUTÉ V0.7.5 — ALTO INDÉPENDANT
+=====================================
+
+Les fichiers ALTO peuvent désormais être associés à un témoin indépendamment
+de sa source d’images et de son fichier de synchronisation. Dans la fiche d’un
+témoin, choisir « Fichiers ALTO séparés », ajouter les XML ALTO et choisir de
+les copier dans le projet ou de conserver des références externes.
+
+Varians extrait les pages, dimensions, TextLine, bbox et texte HTR/OCR. Quand
+un fichier de synchronisation existe déjà, les données ALTO sont fusionnées en
+préservant les base_keys, scores et autres métadonnées. Sans synchronisation,
+les lignes ALTO restent utilisables comme structure physique du témoin.
+
+L’association avec des images locales privilégie le nom d’image déclaré dans
+sourceImageInformation/fileName puis utilise l’ordre des listes comme repli.
+
+NOUVEAUTÉ V0.7.4 — IMPORT DE MANIFEST IIIF
+=============================================
+- La fiche d’un témoin propose maintenant « Manifest IIIF ».
+- Les Manifest IIIF Presentation API 2 et 3 sont pris en charge.
+- Varians extrait automatiquement l’ordre des canvases, leurs libellés,
+  dimensions, URL d’image et services IIIF Image API.
+- Le Manifest est mis en cache sous `iiif/<sigle>.manifest.json` dans le projet :
+  l’ouverture du projet ne dépend donc pas d’un nouveau téléchargement des
+  métadonnées.
+- Le bouton « Charger / actualiser » permet de tester l’URL et affiche le nombre
+  de pages et la version Presentation détectée.
+- Si un alignement ALTO existe déjà, les nouvelles images IIIF remplacent
+  seulement la couche visuelle, dans le même ordre ; lignes et `base_keys` sont
+  conservés.
+
+Voir IMAGE_SOURCES.md et TEST_REPORT_V0_7_4.txt.
+
+
+NOUVEAUTÉ V0.7.3 — IMAGES LOCALES
+===================================
+- La fiche d’un témoin propose maintenant « Images locales ».
+- Plusieurs JPEG/PNG/TIFF/BMP/WebP peuvent être sélectionnés, réordonnés et
+  recevoir des libellés éditoriaux.
+- Par défaut, Varians copie les images dans `images/<sigle>/` pour rendre le
+  projet portable ; il est aussi possible de conserver des références externes.
+- Un témoin sans ALTO ni synchronisation peut feuilleter ces images de manière
+  autonome dans l’application de bureau.
+- Si un alignement existe déjà, les images locales remplacent seulement la source
+  visuelle des pages ; les lignes ALTO et `base_keys` sont préservés.
+- L’affichage local utilise l’auto-orientation EXIF de Qt.
+
+Voir IMAGE_SOURCES.md, PROJECT_MANAGEMENT.md et TEST_REPORT_V0_7_3.txt.
+
+NOUVEAUTÉ V0.7.2 — TÉMOIN SANS IMAGE EXPLICITE
+================================================
+- La source d’image est désormais un choix explicite dans la fiche d’un témoin.
+- « Aucune image pour le moment » est un état normal et persistant du projet.
+- Ce choix est sérialisé sous <images type="none"/> dans project.xml.
+- Les anciens témoins sans bloc <images> restent en mode automatique : les
+  images décrites dans leurs anciens JSON d’alignement continuent à fonctionner.
+- Le modèle réserve déjà les types files et iiif pour les prochaines étapes.
+
+NOUVEAUTÉ V0.7.1 — NOUVELLE TRANSCRIPTION « FROM SCRATCH »
+---------------------------------------------------------------
+- Fichier > Nouveau projet… propose maintenant deux points de départ :
+  * une édition TEI existante ;
+  * une nouvelle transcription sans fichier XML préalable.
+- Dans le second cas, Varians crée automatiquement `xml/edition.xml` avec un
+  `teiHeader` minimal, un `<body><p>…</p></body>` prêt à éditer et le titre du
+  projet.
+- Aucun fichier image, ALTO ou synchronisation n'est requis : un premier témoin
+  sans ressource suffit.
+- En mode de schéma automatique, le nouveau TEI reçoit une instruction
+  `xml-model` vers TEI All afin de rendre disponibles validation et complétion
+  RNG dès que le schéma est accessible ; le cache de Varians permet ensuite la
+  réutilisation hors ligne.
+- Le mode schéma projet et le mode sans schéma restent disponibles.
+
+Voir PROJECT_MANAGEMENT.md et TEST_REPORT_V0_7_1.txt.
+
+NOUVEAUTÉ V0.7.0 — SOURCES D’IMAGES FLEXIBLES / TÉMOINS SANS RESSOURCES
+--------------------------------------------------------------------------
+- Première couche du nouveau modèle de ressources : une page peut utiliser une
+  source `image` de type `iiif`, `file` ou `none`.
+- Les anciens blocs `iiif` restent entièrement compatibles et ne nécessitent
+  aucune migration.
+- Les fichiers locaux sont déjà compris par le moteur d’affichage de bureau
+  lorsqu’un JSON les déclare manuellement ; l’assistant d’import arrivera dans
+  une version ultérieure.
+- Un témoin peut désormais être déclaré dans project.xml sans fichier
+  `alignment`. L’édition TEI fonctionne alors sans image, ALTO ni
+  synchronisation.
+- Le contrôle du nombre de <lb> n’impose plus de total attendu lorsqu’aucun
+  alignement du témoin de base n’est disponible.
+- Le viewer web continue à fonctionner pour les projets IIIF existants et sait
+  transporter le nouveau bloc générique dans ses données ; le paquetage des
+  images locales sera ajouté avec l’interface d’import.
+
+Voir IMAGE_SOURCES.md, ALIGNMENT_FORMAT.md et PROJECT_MANAGEMENT.md.
+
+NOUVEAUTÉ V0.6.4 — WRAP VISUEL DANS L’ÉDITEUR DE FRAGMENT
+-------------------------------------------------------------
+- L’éditeur de fragment TEI dispose maintenant de la même case « Retour
+  automatique à la ligne (affichage uniquement) » que la vue XML source.
+- Le repli reste purement visuel : il ne modifie ni le XML, ni les numéros de
+  lignes logiques, ni les offsets utilisés pour la validation et la réinjection.
+- La préférence est mémorisée localement pour les ouvertures suivantes. Lors de
+  sa première utilisation, elle hérite du réglage de la vue XML source.
+
+NOUVEAUTÉ V0.6.3 — ÉDITION DANS LE SOUS-DOSSIER XML
+-------------------------------------------------------
+Les nouveaux projets placent désormais le document TEI dans `xml/edition.xml`.
+`project.xml` reste le seul fichier XML de configuration directement visible à
+la racine d'un dossier projet, afin d'éviter de confondre le projet et l'édition.
+
+Nouvelle arborescence :
+  project.xml
+  xml/
+    edition.xml
+  alignments/
+  rendering/
+  i18n/
+  web_output/
+
+Les anciens projets avec `edition.xml` à la racine restent entièrement lisibles :
+Varians respecte le chemin déclaré dans `<edition file="…"/>` et ne déplace pas
+automatiquement leurs fichiers.
+
+NOUVEAUTÉ V0.6.2 — ÉTAT « AUCUN PROJET OUVERT »
+---------------------------------------------------
+- Correction du texte affiché après fermeture de l’écran d’accueil lorsqu’aucun
+  projet n’est ouvert : le message ne peut plus être rogné verticalement.
+- L’état vide est maintenant placé dans un panneau central de largeur contrôlée,
+  avec hauteur minimale, marges internes et retour à la ligne explicite.
+- Aucun autre comportement de la V0.6.1 n’est modifié.
+
+
+NOUVEAUTÉ V0.6.1 — LISTES DE POINTEURS ET LISIBILITÉ XPATH
+-------------------------------------------------------------
+- Dans le panneau de résultats XPath, le survol et la sélection utilisent
+  désormais des bleus très pâles afin de conserver un contraste élevé du texte.
+- Ctrl+Espace reconnaît les listes de pointeurs lorsque toutes les valeurs
+  proposées commencent par #. Les pointeurs déjà présents sont retirés de la
+  liste des propositions.
+- Après <rdg wit="#T2|">, les valeurs restantes du projet sont proposées et
+  l'espace séparateur est inséré automatiquement.
+- Dans <rdg wit="#T2 #T|">, seul le token partiel #T est remplacé : la valeur
+  déjà saisie #T2 est conservée. Les pointeurs placés à droite du curseur sont
+  eux aussi exclus afin d'éviter les doublons.
+
+
+NOUVEAUTÉ V0.6.0 — CUSTOM-ELEMENTS : AIDE DE SAISIE DISTINCTE DU RNG
+-----------------------------------------------------------------------
+- Ctrl+E et Ctrl+Espace fusionnent désormais les suggestions du RELAX NG et
+  celles de rendering/custom-elements.xml en affichant leur provenance :
+  « RNG », « Projet » ou « RNG + Projet ».
+- Ces indications séparent explicitement validité et commodité : une suggestion
+  Projet n'est jamais présentée comme une règle de validité RELAX NG.
+- custom-elements.xml peut fournir des listes de valeurs d'attribut avec
+  valuesMode="append" ou valuesMode="replace". Le mode replace ne restreint que
+  les propositions de l'interface, jamais le schéma.
+- Les valeurs peuvent être explicites (<value>…) ou dynamiques. La source
+  witnesses génère les pointeurs à partir des témoins déclarés dans project.xml.
+  Le fichier livré configure donc rdg/@wit sans figer #T1/#T2/#P dans le logiciel.
+- Le logo Varians fourni par le projet remplace définitivement l'illustration
+  provisoire de la V0.5.9.
+
+Voir CUSTOM_ELEMENTS.md, RNG_COMPLETION.md, help/fr.html et help/en.html.
+
+NOUVEAUTÉ V0.5.9 — SESSION, MARQUE ET CTRL+E PILOTÉ PAR LE RNG
+-----------------------------------------------------------------
+- Varians rouvre au démarrage le dernier projet qui était encore ouvert lorsque
+  l'application a été quittée. La préférence est distincte de la liste des récents.
+- Fichier > Fermer le projet (Ctrl+W) revient à l'accueil sans quitter Varians et
+  empêche ce projet d'être rouvert automatiquement au prochain démarrage.
+- L'accueil devient une carte centrale compacte : logo Varians, nom « Varians »
+  en Cormorant Garamond SemiBold lorsqu'elle est installée, sous-titre, responsable,
+  version et logos institutionnels CIHAM/CNRS.
+- Aide > À propos… réaffiche la même identité visuelle dans une boîte dédiée.
+- Ctrl+E interroge désormais le RNG à la position exacte de la sélection/du curseur
+  et propose en premier les éléments autorisés. Le champ reste éditable afin de
+  préserver le fonctionnement historique pendant la correction d'un document.
+- Les attributs configurés dans custom-elements.xml continuent d'être ajoutés après
+  le choix de l'élément ; l'enrichissement/restriction des suggestions par ce fichier
+  reste l'étape suivante.
+
+Voir RNG_COMPLETION.md, PROJECT_MANAGEMENT.md, help/fr.html, help/en.html et
+TEST_REPORT_V0_5_9.txt.
+
+NOUVEAUTÉ V0.5.8 — WRAP VISUEL, XPATH ET CORRECTIF CTRL+ESPACE
+-------------------------------------------------------------------
+- Correction de Ctrl+Espace juste avant la fermeture d'une balise vide :
+  <lb edRef="#T1"|/> est désormais reconnu comme contexte d'attribut et propose
+  les attributs encore autorisés par le RNG.
+- La vue XML source dispose d'une case « Retour automatique à la ligne » : le
+  repli est purement visuel, ne modifie pas le XML et ne crée pas de nouveaux
+  numéros de lignes logiques. Le choix est mémorisé localement.
+- Une recherche XPath a été ajoutée (bouton XPath / Ctrl+Shift+F). Les résultats
+  sont affichés dans un panneau inférieur ; un simple clic place le curseur sur
+  l'élément correspondant dans le XML.
+- Les expressions XPath standards avec le préfixe tei: sont acceptées. Pour le
+  cas courant d'une TEI à espace de noms par défaut, une requête simple comme
+  //note est automatiquement réinterprétée comme //tei:note si nécessaire.
+- La future extension de custom-elements.xml pourra fournir des valeurs de saisie
+  recommandées ou plus restrictives (par ex. rdg/@wit = #T1, #T2, #P) sans
+  confondre cette aide éditoriale avec la validité RELAX NG.
+
+Voir help/fr.html, help/en.html, RNG_COMPLETION.md et TEST_REPORT_V0_5_8.txt.
+
+
+NOUVEAUTÉ V0.5.7 — ACCUEIL, AIDE ET VALEURS D’ATTRIBUTS RNG
+-------------------------------------------------------------
+- L'application démarre désormais sans charger le projet de démonstration.
+- La fenêtre est maximisée au démarrage et lors du passage à un autre projet.
+- Un écran d'accueil léger affiche le titre du projet logiciel, Marjorie Burghart
+  comme responsable / Principal Investigator, les logos CIHAM et CNRS et la version.
+  Il disparaît au premier clic, sans bloquer l'action cliquée.
+- Le projet de démonstration reste livré sous project.xml mais ne s'ouvre plus
+  automatiquement.
+- Un menu Aide a été ajouté à côté de Fichier : Enigma, Dictionnaire de Latin,
+  puis l'aide intégrée du logiciel (F1). Les ressources en ligne s'ouvrent dans
+  le navigateur système.
+- Ctrl+? ouvre https://www.vocabula.lat/?q= avec le texte sélectionné ; à défaut,
+  le mot sous le curseur est utilisé.
+- Ctrl+Espace complète maintenant les valeurs d'attributs lorsque le RNG fournit
+  une énumération finie explicite via value / choice / ref. Les patterns ouverts
+  (text, data, listes libres...) ne produisent volontairement aucune pseudo-liste.
+- Les annotations étrangères présentes dans les RNG TEI générés sont ignorées
+  lors du calcul de ces énumérations.
+
+Voir RNG_COMPLETION.md, help/fr.html, help/en.html et TEST_REPORT_V0_5_7.txt.
+
+
+NOUVEAUTÉ V0.5.6 — CTRL+S SANS RECOMPILATION RNG INUTILE
+----------------------------------------------------------
+- Les schémas RELAX NG compilés sont désormais mis en cache.
+- Le cache est invalidé automatiquement si le RNG racine ou un include/externalRef local change.
+- Ctrl+S réutilise le résultat du contrôle automatique de bonne formation lorsqu'il correspond exactement à la révision courante.
+- Si F8/l'ouverture a déjà validé la même révision avec le même schéma, Ctrl+S réutilise également ce résultat RNG.
+- La sauvegarde n'extrait le texte de l'éditeur qu'une seule fois.
+- Le fichier .bak est conservé par renommage atomique au lieu d'une copie intégrale préalable ; le nouveau contenu est d'abord écrit dans un temporaire du même dossier.
+- Les avertissements XML mal formé / RNG invalide restent en place : aucun garde-fou n'est supprimé.
+
+Voir RELAXNG_VALIDATION.md et TEST_REPORT_V0_5_6.txt pour les détails.
+
+NOUVEAUTÉ V0.5.5 — COMPLÉTION ET CONTRÔLE XML PLUS FLUIDES
+------------------------------------------------------------
+- Ctrl+Espace conserve maintenant des points de reprise lexicaux : après une modification locale, il ne rescane plus systématiquement tout le document depuis le début.
+- La résolution xml-model/RNG est réutilisée tant que les déclarations xml-model n'ont pas changé ; un RNG distant n'est donc plus re-résolu à chaque complétion.
+- Le contrôle automatique de bonne formation XML reste actif, mais son parsing complet s'effectue hors du thread graphique après une courte pause de saisie.
+- Le même instantané de texte sert au contrôle XML et à la reconstruction des repères <lb>, évitant une seconde lecture intégrale.
+- Lors d'une frappe textuelle ordinaire, les positions des <lb> sont ajustées par décalage au lieu de relancer un balayage complet des milliers de balises. Un balayage complet reste déclenché si l'édition touche réellement la structure des balises.
+- Les validations explicites nécessaires à la sauvegarde et F8 restent synchrones : aucun garde-fou de validité n'est supprimé.
+
+Voir RNG_COMPLETION.md et TEST_REPORT_V0_5_5.txt pour les détails.
+
+NOUVEAUTÉ V0.5.4 — POSITION DANS LES SÉQUENCES RELAX NG
+--------------------------------------------------------
+- Ctrl+Espace tient maintenant compte des frères directs déjà présents avant le curseur.
+- Les structures group, choice, optional, zeroOrMore, oneOrMore et interleave sont conservées dans le modèle de complétion.
+- Dans une séquence A puis B, après A seul B est proposé.
+- Lorsque le curseur est au milieu d'un contenu existant, les frères situés à droite servent aussi de contrainte afin d'éviter les insertions incompatibles.
+- Si le contenu déjà présent à gauche est lui-même invalide, le moteur revient volontairement à la liste large du parent pour rester utile pendant la correction.
+- Le correctif V0.5.3 des contextes <rdg|> / <rdg |> / <rdg wi|> est conservé.
+- À ce stade elles ne l’étaient pas encore ; la complétion des valeurs finies est désormais réalisée en V0.5.7.
+- La validation F8 reste l’autorité pour la validité du document.
+
+Voir RNG_COMPLETION.md et TEST_REPORT_V0_5_4.txt pour les détails.
+
+NOUVEAUTÉ V0.5.3 — CONTEXTE DES BALISES OUVRANTES
+--------------------------------------------------
+- <rdg|>, <rdg |> et <rdg wi|> sont correctement reconnus comme contextes d'attributs.
+- <rdg>| reste un contexte de contenu d'élément.
+
+NOUVEAUTÉ V0.5.1 — XML-MODEL ET ÉTATS DE VALIDITÉ
+---------------------------------------------------
+- Trois modes de schéma : détection automatique <?xml-model?>, schéma du projet, aucun RNG.
+- Les href RNG relatifs et distants sont pris en charge ; les schémas distants et leurs dépendances sont mis en cache.
+- Un bouton ↻ du panneau permet de rafraîchir un schéma distant.
+- Les déclarations Schematron de <?xml-model?> sont détectées et signalées, sans validation Schematron pour l'instant.
+- Onglets rouge pâle : XML non bien formé.
+- Onglets orange pâle : XML bien formé mais invalide selon RELAX NG.
+- La sauvegarde est désormais autorisée dans les deux cas après un avertissement explicite.
+- L'éditeur de fragment reste strict : il refuse toujours d'appliquer un fragment qui rendrait le document mal formé.
+
+Voir RELAXNG_VALIDATION.md pour le contrat détaillé.
+
+NOUVEAUTÉS V0.4
+----------------
+Le menu Fichier contient maintenant :
+- Nouveau projet… (Ctrl+N)
+- Ouvrir un projet… (Ctrl+O)
+- Réouvrir un projet récent…
+- Paramètres du projet…
+- Enregistrer l'édition (Ctrl+S)
+- Enregistrer l'édition sous… (Ctrl+Maj+S)
+- Configuration Ctrl+E…
+- Générer le viewer web
+- Quitter (Ctrl+Q)
+
+NOUVEAU PROJET
+--------------
+L'assistant « Nouveau projet… » demande un dossier vide, un point de départ (TEI existante ou nouvelle transcription), une langue et
+les témoins avec leurs fichiers d'alignement JSON. L'un des témoins est défini
+comme témoin de base.
+
+Le projet créé est autonome :
+  project.xml
+  xml/
+    edition.xml
+  alignments/
+  rendering/
+  i18n/
+  web_output/
+
+Les ressources génériques de rendu et d'internationalisation sont copiées dans
+le nouveau projet. Les alignements doivent déjà exister dans cette V0.4 ; ils
+seront à terme produits par l'outil d'alignement séparé TEI ↔ ALTO.
+
+PARAMÈTRES DU PROJET
+--------------------
+« Fichier > Paramètres du projet… » permet de modifier graphiquement :
+- le titre et la TEI ;
+- la langue ;
+- XSLT / CSS / custom-elements.xml ;
+- le dossier i18n ;
+- le dossier et le nom du viewer web ;
+- les témoins, leurs libellés et alignements ;
+- le témoin de base.
+
+Avant modification, project.xml est copié en project.xml.bak. Le projet est
+rechargé après sauvegarde des paramètres.
+
+PROJETS RÉCENTS
+---------------
+L'application mémorise jusqu'à 10 project.xml récemment ouverts. Cet historique
+est une préférence locale de l'application et n'est jamais écrit dans un projet.
+Le sous-menu « Réouvrir un projet récent… » permet de passer rapidement d'une
+édition à l'autre et de nettoyer la liste.
+
+Un chemin récent qui n'existe plus est retiré de la liste lorsqu'on le choisit.
+
+PLUSIEURS PROJETS
+-----------------
+Chaque édition possède son propre dossier et son propre project.xml ; aucune
+configuration spécifique à une édition n'est supposée globale. On peut donc
+maintenir plusieurs éditions/projets et passer de l'un à l'autre via les récents.
+
+La V0.4 conserve une seule fenêtre de projet active à la fois. Le format et la
+gestion des projets n'empêchent pas une évolution ultérieure vers plusieurs
+fenêtres simultanées.
+
+INTERFACE ET CORRECTIONS V0.3 CONSERVÉES
+----------------------------------------
+- les onglets XML source / Vue XSLT-CSS restent l'interface principale ;
+- pas de boutons redondants XML/XSLT dans la barre ;
+- pas de bouton « Aller au XML » ;
+- Configuration Ctrl+E s'édite dans un éditeur XML interne ;
+- correction du tremblement liée aux scrollbars des viewers ;
+- internationalisation externe FR/EN ;
+- générateur web dans web_viewer/.
+
+INTERNATIONALISATION
+--------------------
+Les textes visibles sont dans :
+  i18n/fr.xml
+  i18n/en.xml
+
+Les catalogues ont les mêmes clés et incluent maintenant les dialogues de
+création/modification de projet et le menu des projets récents.
+Voir I18N_FORMAT.md.
+
+LANCEMENT
+---------
+Démarrage normal, sans projet chargé :
+  python editeur_tei.py
+
+Ouverture directe d'un projet précis :
+  python editeur_tei.py chemin/vers/project.xml
+
+Sous Windows : lancer_editeur.bat
+
+VIEWER WEB
+----------
+Depuis l'éditeur :
+  Fichier > Générer le viewer web
+
+Indépendamment :
+  python web_viewer/generator.py project.xml
+
+DOCUMENTATION
+-------------
+PROJECT_MANAGEMENT.md  gestion des projets V0.4
+ALIGNMENT_FORMAT.md    contrat des fichiers d'alignement
+I18N_FORMAT.md         format des traductions
+RELAXNG_VALIDATION.md  validation RELAX NG et panneau d’erreurs
+
+TESTS EFFECTUÉS
+---------------
+- complétion des valeurs d'attributs RNG finies et refus des patterns ouverts ;
+- contexte de valeur d'attribut entre guillemets et remplacement de la valeur entière ;
+- accueil sans projet, présence des ressources/logo/aide et cohérence FR/EN ;
+- complétion RNG positionnelle : séquences, choix, optionnels, répétitions et interleave ;
+- prise en compte des frères XML avant et après le curseur ;
+- séquences exprimées par plusieurs <ref> frères ;
+- compilation syntaxique de tous les modules Python ;
+- parsing FR/EN et mêmes clés de traduction ;
+- création programmatique d'un nouveau projet autonome ;
+- chemins relatifs vérifiés dans le project.xml créé ;
+- relecture du projet créé avec project_config.py ;
+- modification/sérialisation d'un projet ;
+- génération du viewer web : 3 témoins et 3790 lignes de base.
+
+LIMITATION DE TEST
+------------------
+PySide6 n'est pas installé dans l'environnement de construction utilisé ici.
+Les nouveaux dialogues Qt n'ont donc pas pu être manipulés graphiquement ; leur
+syntaxe et leur branchement ont été contrôlés statiquement, et toute la logique
+de fichiers/projets a été testée hors interface.
+
+V0.4.1 — correctif <lb break="no"/>
+-----------------------------------
+Correction de la vue XSLT lorsque le même nœud texte XML est situé entre deux
+<lb break="no"/> (par exemple deux témoins différents). La XSLT nettoie
+maintenant les espaces de début ET de fin du nœud texte dans ce cas.
+Exemple corrigé : ope + <lb edRef="#T1" break="no"/> + rosa -> operosa.
+Aucune modification du générateur web n'était nécessaire.
+
+V0.4.2 — Choix de la source XSLT
+--------------------------------
+Fichier > Nouveau projet… : « XSLT par défaut de l’éditeur » est le choix
+initial. La XSLT n'est alors pas copiée dans le dossier du projet : les
+correctifs de la XSLT installée sont utilisés automatiquement.
+« XSLT personnalisée » crée au contraire une copie locale modifiable.
+Fichier > Paramètres du projet… permet de changer de mode ensuite.
+Les projets antérieurs continuent à utiliser leur XSLT propre sans migration
+implicite ; aucune XSLT existante n'est écrasée ou supprimée.
+Lire XSLT_POLICY.md pour les détails et la procédure de migration.
+
+V0.4.3 — Menu Fichier compact et recherche XML sécurisée
+--------------------------------------------------------
+- Le menu déroulant « Fichier » se trouve désormais SUR la barre d'outils,
+  à gauche. La barre de menu distincte a été supprimée pour gagner en hauteur.
+- Le contenu du menu et les raccourcis existants (Ctrl+N/O/S/Maj+S/Q)
+  restent disponibles, ainsi que les projets récents.
+- Dans l'onglet XML source, la recherche souligne visuellement son résultat
+  d'un jaune très vif, sans le sélectionner dans le document éditable.
+  Ainsi, Entrée ne remplace plus le texte par un retour à la ligne.
+- Après une recherche, le focus retourne au champ « Rechercher source » :
+  Entrée passe à l'occurrence suivante ; les boutons « Précédent » / « Suivant »
+  et les raccourcis F3 / Maj+F3 fonctionnent toujours.
+- La même sécurité s'applique à la recherche dans l'éditeur de fragments.
+- Le résultat courant reste surligné même si l'onglet XML n'a pas le focus ;
+  le surlignage disparaît si l'on modifie le texte ou si la recherche échoue.
+- Les versions V8o/V11, les données TEI, les alignements, le projet et la XSLT
+  restent inchangés. L'internationalisation FR/EN est conservée.
+
+Pour contrôler le mécanisme sans installation Qt :
+  python tests/test_recherche_sans_qt.py
+
+Les vérifications GUI du menu et du surlignage restent à réaliser avec PySide6.
+
+V0.4.4 — Ctrl+E : imbrication et insertion sans sélection
+--------------------------------------------------------
+- Avec texte sélectionné : Ctrl+E entoure la sélection, puis laisse sélectionné
+  le NOUVEL élément complet (balises comprises). Un second Ctrl+E peut entourer
+  immédiatement le premier élément (ex. <rdg><app>…</app></rdg>).
+- Sans sélection : Ctrl+E + « note » produit <note></note>, avec le curseur
+  entre les balises ; Ctrl+E + « lb/ » produit <lb/>.
+- Les attributs de custom-elements.xml sont conservés. Sans sélection, si un
+  attribut n'a pas de defaultValue, le curseur reste d'abord entre ses guillemets.
+- Fonctionne dans l'onglet XML source et dans l'éditeur de fragments, en FR/EN.
+- Les projets et leurs personnalisations ne sont pas modifiés.
+- Tests hors Qt : python tests/test_ctrl_e_sans_qt.py
+
+V0.4.5 — Ctrl+E : sélection intérieure, compatible avec l'usage Oxygen
+------------------------------------------------------------------------
+- Quand du texte est sélectionné, Ctrl+E l'entoure de balises et conserve
+  exactement LE TEXTE sélectionné, sans les balises nouvellement insérées.
+- Enchaînement : [uerbum] → Ctrl+E app → <app>[uerbum]</app>
+  → Ctrl+E rdg → <app><rdg>[uerbum]</rdg></app>.
+  (Les crochets [ ] représentent la sélection, pas du XML.)
+- Cette correction remplace le comportement de la V0.4.4 qui sélectionnait
+  le bloc entier et pouvait conduire à une imbrication inversée.
+- La direction d'une sélection faite de droite à gauche est aussi conservée.
+- Sans sélection, comportement V0.4.4 inchangé : insertion <note>|</note>,
+  insertion <lb/>, attributs sans defaultValue prioritaires.
+- Le changement vaut pour la source XML et l'éditeur de fragments.
+- Tester hors Qt : python tests/test_ctrl_e_sans_qt.py.
+
+
+CORRECTIF V0.4.6 — SPYDER ET MODULES DES ANCIENNES VERSIONS
+---------------------------------------------------------
+Lorsque plusieurs versions ont été exécutées dans le même noyau Spyder,
+Python peut réutiliser project_management.py / project_config.py / i18n.py
+provenant d'un autre dossier. Le symptôme est par exemple :
+« cannot import name create_local_xslt_if_needed from project_management »
+avec un chemin pointant vers V0.4 au lieu de V0.4.5.
+
+L'éditeur V0.4.6 place son propre dossier en tête du chemin de recherche
+et élimine de la mémoire les modules de CETTE application chargés depuis
+d'autres versions. Cela n'affecte pas les fichiers XML du projet.
+
+Pour démarrer dans Spyder, lancez editeur_tei.py depuis le dossier V0.4.6.
+En cas de blocage dû à un noyau déjà instable, redémarrer le noyau Python
+de Spyder reste un dépannage possible, mais ne devrait plus être requis.
+
+Si vous ouvrez un projet précédemment créé, utilisez
+Fichier > Ouvrir un projet… et sélectionnez son project.xml.
+
+
+MISE À JOUR V0.4.7 — RECHERCHE DANS LA VUE XSLT
+--------------------------------------------------
+Dans la vue XSLT, rechercher « effeminatus » trouve désormais aussi la forme
+affichée « effe[WORD JOINER]minatus » (U+2060 au point de jonction d'un
+<lb break="no"/>). Le texte visible et les marqueurs de synchronisation avec
+les images ne sont pas modifiés.
+
+La recherche riche repose sur QTextDocument.find(QRegularExpression) et accepte
+U+2060 entre les caractères du mot recherché, en conservant les positions
+exactes de QTextCursor pour sélectionner et synchroniser le passage. Elle
+continue à distinguer les VRAIS espaces de ces caractères invisibles.
+Le champ de recherche garde le focus (Entrée = occurrence suivante).
+
+Les deux modes XSLT (par défaut de l'éditeur / personnalisée) restent pris
+en charge ; ce correctif s'applique au moteur de recherche de l'éditeur et
+ne nécessite donc pas de mise à jour des fichiers projet ni des XSLT locales
+qui utilisent U+2060. L'isolation des modules Spyder de la V0.4.6 est gardée.
+
+Test fonctionnel ciblé :
+  python tests/test_recherche_xslt_joiner_sans_qt.py
+Voir TEST_REPORT_V0_4_7.txt pour les tests et leurs limites.
+
+MISE À JOUR V0.4.9 — SÉLECTION CONSERVÉE ENTRE XML ET XSLT
+-----------------------------------------------------------
+Lorsqu'un utilisateur sélectionne une chaîne dans l'onglet XML source puis
+passe à la vue XSLT, l'éditeur tente désormais de sélectionner le même passage
+visible dans l'aperçu. Le transfert fonctionne aussi dans l'autre sens.
+
+Le transfert privilégie l'occurrence la plus proche de la ligne du témoin de
+base actuellement active, afin d'éviter de sauter vers une occurrence identique
+située ailleurs dans le sermon ou le document.
+
+Cas particulier : si une sélection de la vue XSLT traverse un <lb break="no"/>,
+le texte y est continu (par ex. « simplex »), tandis que la source XML contient
+une balise au milieu. Dans la source, la sélection correspondante englobe alors
+la plage continue « sim ... <lb break="no"/> ... plex », balise comprise. C'est
+le seul équivalent possible avec une sélection QTextCursor continue.
+
+Si aucune correspondance fiable n'est trouvée, l'ancien comportement est
+conservé : l'éditeur synchronise et centre le passage sans créer de sélection
+artificielle.
+
+Test textuel hors Qt :
+  python tests/test_selection_onglets_sans_qt.py
+Documentation développeur (V0.8.4.2)
+------------------------------------
+Pour une reprise complète du projet par un développeur, lire en priorité
+`DEVELOPER_HANDOFF.md`, puis `CODE_MAP.md`. Ces documents décrivent la
+philosophie de sûreté éditoriale, les contrats de données, la carte des modules,
+les invariants de compatibilité, la matrice de tests et les zones de dette
+technique. Les documents spécialisés (`PROJECT_MANAGEMENT.md`,
+`FACSIMILE_PAGES.md`, `ALTO_IMPORT.md`, `SYNCHRONIZATION.md`, etc.) complètent
+ce dossier de transmission.
+
+Depuis la V0.8.4.2, l'interface installée fournit les catalogues français,
+anglais, allemand, japonais, tchèque, italien et russe. Les noms des standards
+TEI, ALTO, IIIF, XPath, RELAX NG, Schematron, XSLT et CSS sont conservés tels
+quels dans les traductions.
+
+
+## Extension Varians 0.8.5 — PAGE XML et copies IIIF
+
+Voir **PAGE_IIIF_LOCAL.md** pour les procédures, les formats ALTO/PAGE mixtes, les copies locales IIIF, les deux cases indépendantes par témoin (éditeur / export), les chemins, le protocole de cache et les limites. Les anciens projets restent lisibles sans migration.
+
+
+VARIANS 0.8.5.9 — CORRECTION DU CADRAGE AUX CHANGEMENTS DE COLONNE
+
+Une ligne correctement synchronisée pouvait apparaître sur une image trop large,
+car la fenêtre de contexte comprenait la dernière ligne de la colonne précédente
+et la première de la colonne suivante. Le recadrage de l'image ignore désormais
+les lignes voisines séparées par un changement de colonne ou de page ; la
+synchronisation et les données TEI ne sont pas modifiées. Version établie
+uniquement sur les sources complètes de Varians 0.8.5.8.
+
+
+V0.8.5.10 — CADRES DES LIGNES
+- Restaure l'encadrement du témoin secondaire lorsque plusieurs correspondances
+  non contiguës auraient placé le centre sur une ligne non synchronisée.
+- Cadres orange = synchronisés, bleus = ligne consultée manuellement.
+- État activé plus visible, diagnostic si la ligne ne possède pas de géométrie.
+- Fenêtre PySide6 : PAGE polygonal / ALTO rectangulaire (ou polygonal si fourni).
+- Viewer web : surlignage rectangulaire à ce stade.
+
+
+V0.8.5.11 — NAVIGATION MIXTE PAR TÉMOIN
+- Un témoin avec images seules suit ses pb/edRef/facs (ou n exact et unique),
+  pendant que le pivot et les témoins synchronisés suivent les lb/base_keys.
+- Même logique pour le texte source, la vue mise en forme et le viewer web.
+- Voir MIXED_NAVIGATION.md pour les invariants et les essais.
+
+
+VARIANS V0.8.5.12 — PANNEAUX DÉFILABLES ET MANUSCRIT PIVOT
+============================================================
+* Une colonne d'images de quatre manuscrits (ou plus) défile verticalement,
+  sans écraser les panneaux du bas. Les poignées, boutons de maximisation et
+  tailles mémorisées restent utilisables.
+* Deux manuscrits peuvent porter le même @n (par exemple 3r) : la navigation
+  suit les repères TEI @edRef + @n, puis la surface, témoin par témoin.
+  @facs reste prioritaire ; pas d'association spéculative.
+* « Manuscrit pivot » désigne le référent technique de synchronisation,
+  jamais une décision concernant le manuscrit de base de l'édition critique.
+  Les sept traductions et aides sont à jour, sans rupture du format project.xml.
+* Tests : tests/test_v08512_scroll_pivot_name.py et suite historique.
+* Pour une vérification visuelle, utiliser l'application sous PySide6/Windows,
+  macOS ou Linux avec quatre témoins visibles.
+
+
+Varians V0.8.5.18 — Navigation par folios et images doubles
+Voir FOLIO_NAVIGATION.md. Une surface peut contenir deux zones de folio ; aucun changement des JSON/ALTO ou des images source.
+
+V0.8.5.22 : repliage structurel XML non destructif (menu Affichage, chevrons en marge). Voir XML_FOLDING.md.

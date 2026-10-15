@@ -1,0 +1,15 @@
+VARIANS V0.8.5.26 — RAPPORT DE VALIDATION, 14 octobre 2026
+
+Sources de référence : V0.8.5.25.3, archive complète conservée.
+
+PYTHON : python -m pytest -q --disable-warnings
+  465 passed, 2 skipped, 0 failed (12.71 s)
+  Les 2 tests ignorés sont ceux de la suite précédente (environnement sans PySide6 GUI natif).
+COMPILATION : python -m compileall -q . → aucun échec.
+JAVASCRIPT : node --check sur le script HTML exporté → syntaxe valide.
+TESTS A03 : tests Node (`test_v08526_interim_features.py`) → réussis ; graphies u/v, i/j, c/t, offsets UTF-16 et expressions sur deux segments.
+EXPORT : `web_output/viewer.html` régénéré depuis `project.xml` de démonstration ; pivot = 3790/3790, aucune clé textuelle orpheline, aucun fichier déclaré manquant à la génération.
+CHROMIUM SYNTHÉTIQUE : test de 2 segments TEI avec texte `seruus iusticia gracia`; recherche exacte `servvs` => 0, mode u/v => 1 occurrence surlignée en 2 fragments ; clic résultat => ligne courante sélectionnée ; 0 erreur JS. Code de reproduction : tests/manual_v08526_browser.py.
+LIMITES : aucun essai graphique du panneau Qt et de la complétion Qt (PySide6 absent). Les navigateurs Chromium de l'environnement refusaient les URL file:// et http://localhost ; le chargement direct d'un HTML de 5 Mo par set_content a échoué. Les tests réels des manuscrits Mu/F/A/N/L restent à faire chez l'utilisateur.
+
+FEUILLE DE ROUTE : les anciennes priorités sont suspendues ; la version V0.8.5.26 est une étape intermédiaire, non une validation de nouvelle roadmap.

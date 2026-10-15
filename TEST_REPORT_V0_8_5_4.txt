@@ -1,0 +1,36 @@
+Varians 0.8.5.4 — vérification du rapprochement exact IIIF ↔ ALTO/PAGE
+Date : 2026-10-11
+Base : Varians 0.8.5.3 (archive complète fournie par l'utilisateur)
+
+CHANGEMENTS
+- Suggestion automatique d'association OCR ↔ canvas IIIF par nom de base exact
+  de l'image (casse et extension ignorées, sans rapprochement approximatif).
+- Exploitation du nom d'image source déclaré dans ALTO/PAGE, y compris si le
+  fichier XML lui-même a été renommé.
+- Propositions affichées dans le sélecteur IIIF pour les nouvelles sélections.
+- Bouton « Associer automatiquement (noms exacts) » pour compléter les champs
+  vides des sélections anciennes ou nouvelles.
+- Conservation des choix explicites; absence d'inférence par position.
+- Refus automatique des collisions / métadonnées contradictoires / multi-pages.
+- Traductions et aides des sept langues actualisées.
+
+TESTS
+- pytest : 206 réussis, 0 échec (suite intégrale de cette distribution).
+- 9 nouveaux tests : correspondance ALTO et PAGE, OCR renommé, casse/extensions,
+  noms dupliqués dans IIIF, ALTO et PAGE concurrents sur la même image,
+  priorité des liens explicites, indices contradictoires, absence de
+  rapprochement flou, conventions de noms PERO.
+- Vérification complémentaire avec les vrais fichiers ALTO et PAGE PERO
+  fournis par l'utilisateur : chaque fichier (testé séparément) a été associé
+  sans ambiguïté au bon canvas d'un manifeste IIIF synthétique exposant le
+  nom de l'image d'origine. Fichiers originaux NON redistribués.
+- XML de traduction : sept catalogues analysés sans erreur.
+- Aides : sept fichiers contrôlés syntaxiquement (analyse HTML élémentaire).
+- Code Python : compilation syntaxique sans erreur.
+
+LIMITES DE VALIDATION
+- Pas de test graphique interactif PySide6 (module non disponible ici).
+- Pas de connexion réelle à un serveur IIIF dans cette campagne de tests.
+- Si les noms ne correspondent pas, l'association manuelle de V0.8.5.3 reste
+  nécessaire. Les sélections anciennes délibérément sans OCR ne sont pas
+  automatiquement remplies à la réouverture; utiliser le bouton dédié.

@@ -1,0 +1,68 @@
+ÉDITEUR XML TEI POUR L'ECDOTIQUE — RAPPORT DE TEST V0.5.7
+==========================================================
+
+OBJECTIFS
+---------
+1. Réaliser l'étape 2 de la feuille de route : complétion des valeurs
+   d'attributs finies déclarées par le RELAX NG.
+2. Démarrer sans charger le projet de démonstration.
+3. Ajouter l'écran d'accueil CIHAM/CNRS, le menu Aide et les ressources en ligne.
+4. Ouvrir les fenêtres de travail maximisées.
+
+COMPLÉTION RNG DES VALEURS
+--------------------------
+- détection du contexte à l'intérieur d'une valeur entre guillemets : OK
+- remplacement de toute la valeur existante, même si le curseur est au milieu : OK
+- <value> direct : OK
+- <choice> entièrement fini : OK
+- valeurs finies via <ref> : OK
+- annotations étrangères a:documentation ignorées : OK
+- pattern <text/> : aucune pseudo-énumération, OK
+- pattern <data/> : aucune pseudo-énumération, OK
+- choice mêlant valeur finie et branche ouverte : aucune liste partielle, OK
+- valeurs vides non présentées comme une entrée de dialogue : OK
+
+DÉMARRAGE / ACCUEIL
+-------------------
+- lancer_editeur.bat ne passe plus project.xml en argument : OK
+- main() sans argument crée WelcomeWindow, pas MainWindow(project.xml) : OK statique
+- project.xml de démonstration reste livré : OK
+- logos resources/ciham.png et resources/cnrs.png présents : OK
+- titre d'accueil et responsable / Principal Investigator externalisés FR/EN : OK
+- numéro de version V0.5.7 affiché : OK statique
+- premier clic : eventFilter masque l'accueil sans consommer l'événement : OK statique
+- ouverture/rechargement de projet par showMaximized() : OK statique
+
+MENU AIDE
+---------
+- bouton/menu Aide ajouté à côté de Fichier : OK statique
+- Enigma -> https://enigma.huma-num.fr : OK statique
+- Dictionnaire de Latin -> https://www.vocabula.lat/?q= : OK statique
+- Ctrl+? enregistré comme raccourci : OK statique
+- sélection active / mot sous curseur encodé dans q= : OK statique
+- aide intégrée FR/EN fournie dans help/fr.html et help/en.html : OK
+- F1 ouvre l'aide intégrée : OK statique
+
+NON-RÉGRESSION
+--------------
+- pytest : 26 tests réussis
+- complétion positionnelle V0.5.4 : OK
+- cache lexical/performance V0.5.5 : OK
+- cache RNG et sauvegarde atomique V0.5.6 : OK
+- Ctrl+E / recherche / sélection synchronisée : OK
+- compilation syntaxique de tous les fichiers Python : OK
+- project.xml / project-template.xml / i18n XML : OK
+- catalogues FR / EN : 336 clés identiques
+- variables {…} FR / EN : identiques pour chaque clé
+- génération du viewer web : OK
+  * témoins : 3
+  * lignes de base : 3790
+  * pages IIIF manquantes dans les JSON de test : 0
+
+LIMITATION DE L'ENVIRONNEMENT
+-----------------------------
+PySide6 n'est pas installé dans l'environnement de construction. Les widgets Qt
+ne peuvent donc pas être manipulés graphiquement ici. La compilation Python,
+les branchements statiques et toute la logique indépendante de Qt sont testés.
+Le rendu de l'écran d'accueil, le comportement visuel maximisé et le raccourci
+Ctrl+? devront être confirmés sous Windows/PySide6.

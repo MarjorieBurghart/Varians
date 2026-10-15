@@ -1,0 +1,35 @@
+ÉDITEUR TEI GÉNÉRIQUE — V0.4.7 : RECHERCHE À TRAVERS U+2060
+=================================================================
+
+Correction par rapport à V0.4.6 : dans le QTextBrowser de la vue XSLT,
+la recherche accepte désormais les WORD JOINER U+2060 insérés dans le texte
+par les marqueurs des <lb> TEI, sans les supprimer.
+
+TESTS VALIDÉS (hors Qt graphique)
+- Mot "effeminatus" trouvé sur "effe\u2060minatus".
+- La plage sélectionnée contient bien le mot entier et le marqueur invisible.
+- Recherche insensible à la casse.
+- Plusieurs WORD JOINER dans le mot ; occurrences mixtes avec/sans marqueurs.
+- Suivant/Précédent, retour à la première/dernière occurrence, mot absent.
+- Les véritables espaces ne sont pas effacés par la recherche.
+- Le focus n'est pas déplacé vers le QTextBrowser.
+- XSLT réelle : restitution sans séparation du mot et émission du marqueur.
+- Recherche XML sécurisée antérieure : passe.
+- Ctrl+E avec sélection conservée : passe.
+- Isolation modules Spyder V0.4.6 : passe.
+- Compilation Python et XML/XSLT bien formés : passent.
+- Les ressources d'édition, alignements, XSLT, CSS, i18n et générateur web
+  sont IDENTIQUES aux fichiers correspondants de V0.4.6.
+
+LIMITATION
+Qt (PySide6) n'est pas disponible dans l'environnement de construction.
+Le comportement réel de QTextDocument.find(QRegularExpression) au travers
+de fragments HTML d'ancres doit être confirmé sous Spyder/Windows.
+La syntaxe de l'appel Qt est conforme à l'API de PySide6.
+
+COMMANDES
+ python tests/test_recherche_xslt_joiner_sans_qt.py
+ python tests/test_recherche_sans_qt.py
+ python tests/test_ctrl_e_sans_qt.py
+ python -m unittest discover -s tests -p test_spyder_import_isolation.py
+ python -m compileall -q .

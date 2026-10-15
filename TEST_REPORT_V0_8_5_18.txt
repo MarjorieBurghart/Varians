@@ -1,0 +1,35 @@
+VARIANS V0.8.5.18 — RAPPORT DE TESTS ET DISTRIBUTION
+
+BASE : archive intégrale de Varians V0.8.5.17.
+
+OBJECTIFS
+- Navigation par folios (unités logiques), distincte des images/canvases physiques.
+- Une surface TEI peut contenir deux zones définies dans les coordonnées du fichier source.
+- Aucune duplication des images, des URL IIIF ou des données ALTO/PAGE/JSON.
+- Suivi par pb/@facs vers zone et par @edRef + @n dans le témoin.
+- Création incrémentale de deux zones via l'interface Double page… ; refus de réécriture en présence de zones existantes.
+- Sélecteur de folios, flèches de navigation logique et cadrage sur la portion voulue.
+- Visualiseur web : données des zones, choix de folio, recadrage IIIF ou local.
+- Modes par lignes et par pages inchangés et combinables selon le témoin.
+
+VÉRIFICATIONS
+- 363 tests Python réussis : python -m pytest -q
+- Compilation Python : python -m compileall -q .
+- Contrôle JavaScript du viewer : node --check
+- 7 catalogues de traduction XML de 594 chaînes distinctes et mêmes clés.
+- 7 aides HTML actualisées.
+- Tests spécifiques sur l'image double de Leiden : 3924 × 2704, deux zones, une surface.
+- Tests de pb/@facs, @edRef + @n, homonymes intertémoins, XML malformé,
+  refus des collisions xml:id, noms XML préfixés, de zoom sur dérivés réduits,
+  navigateur côté bureau et génération des données du visualiseur web.
+
+LIMITES ET POINTS DE CONTRÔLE
+- Pas de PySide6 installé ici : le rendu graphique Windows/macOS/Linux reste à vérifier.
+- Aucune requête externe vers des serveurs IIIF pendant les tests.
+- Les zones existantes ne sont ni déplacées ni remplacées automatiquement.
+- L'outil de création de double page prend en charge deux zones juxtaposées
+  séparées verticalement. Pas encore d'éditeur polygonal interactif.
+- La TEI source doit être bien formée pour insérer les deux zones.
+
+DOCUMENTATION : FOLIO_NAVIGATION.md, DISPLAY_NAVIGATION.md,
+DEVELOPER_HANDOFF.md, CODE_MAP.md, README.txt et aides des 7 langues.

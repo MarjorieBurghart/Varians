@@ -1,0 +1,36 @@
+VARIANS 0.8.5.23 — RAPPORT DE VALIDATION
+Date : 2026-10-13
+Base : archive complète V0.8.5.22
+
+OBJECTIF
+Mise en évidence non destructive et bidirectionnelle des balises XML appariées ;
+actualisation de la feuille de route et conception de l'amélioration du viewer web.
+
+RÉSULTATS
+- pytest : 428 tests réussis, aucune erreur ni échec (9 nouveaux tests V0.8.5.23).
+- Compilation : python -m compileall -q . sans erreur.
+- 7 catalogues i18n conservés : fr, en, de, ja, cs, it, ru (621 messages chacun).
+- 7 fichiers d'aide complétés et actualisés (section xml-pairs-v08523).
+- Les anciens mécanismes XML (renommage synchronisé, suppression couplée,
+  auto-complétion, repliage) n'ont pas été modifiés.
+- Aucun format de projet ou ressource externe n'a été modifié.
+- Documentation : XML_TAG_HIGHLIGHT.md ; feuille de route révisée ; propositions
+  techniques pour viewer web/XSLT/CSS et audit scientifique.
+
+TESTS AJOUTÉS
+- Pairage des deux côtés sur <app> et </app>.
+- Imbrication de balises portant le même QName.
+- Espaces de noms qualifiés et préfixes distincts.
+- Balises autofermantes, commentaires, CDATA.
+- Refus des structures croisées, fermetures orphelines ou incomplètes.
+- Sélection complète ou partielle d'une balise, bornes exclues.
+- Conservation du comportement d'ouverture existant.
+- Validation statique des sélections visuelles, sans modification de TEI.
+
+LIMITES
+- PySide6 non installé ici : les interactions graphiques restent à valider
+  sous Windows, Linux et macOS.
+- Les documents de conception WEB_EXPORT_CUSTOMIZATION_DESIGN.md et
+  PROJECT_AUDIT_PLAN.md ne sont PAS une implémentation de ces fonctions.
+- Le moteur des balises est conservateur et lexical ; il ne remplace pas une
+  validation XML ou RELAX NG complète.

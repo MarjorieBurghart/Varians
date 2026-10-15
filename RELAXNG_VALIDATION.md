@@ -1,0 +1,167 @@
+# Validation RELAX NG — V0.5.1
+
+Cette couche TEI-aware distingue trois notions :
+
+1. **XML bien formé** : la syntaxe XML est correcte.
+2. **XML valide selon RELAX NG** : le document bien formé respecte le schéma actif.
+3. **Schematron** : les déclarations sont détectées mais ne sont pas encore exécutées.
+
+## Politique de schéma du projet
+
+`project.xml` accepte trois modes.
+
+### 1. Détection automatique depuis `<?xml-model?>` — mode recommandé
+
+```xml
+<schema type="relaxng" source="xml-model"/>
+```
+
+L'éditeur inspecte le prologue de l'édition et cherche une instruction :
+
+```xml
+<?xml-model
+  href="schema/edition.rng"
+  type="application/xml"
+  schematypens="http://relaxng.org/ns/structure/1.0"?>
+```
+
+Le `href` peut être relatif, absolu, `file:` ou HTTP/HTTPS.
+
+### 2. Schéma explicitement choisi pour le projet
+
+```xml
+<schema type="relaxng" source="project" file="schema/edition.rng"/>
+```
+
+Le schéma déclaré dans le projet est alors prioritaire ; `<?xml-model?>` n'est
+pas utilisé pour RELAX NG.
+
+### 3. Aucune validation RELAX NG
+
+```xml
+<schema type="relaxng" source="none"/>
+```
+
+Le document reste éditable normalement. Les déclarations Schematron de
+`<?xml-model?>` peuvent toutefois être détectées à titre informatif.
+
+Les anciens projets contenant simplement :
+
+```xml
+<schema type="relaxng" file="schema/edition.rng"/>
+```
+
+restent compatibles et sont interprétés comme `source="project"`.
+
+Un projet sans élément `<schema>` est interprété comme `source="xml-model"`.
+
+## Schémas distants et cache
+
+Une URL HTTP/HTTPS n'est pas téléchargée à chaque validation. Le schéma et ses
+`include` / `externalRef` distants sont mis en cache localement :
+
+- Windows : `%LOCALAPPDATA%/TEIManuscriptEditor/schema_cache`
+- autres systèmes : `~/.cache/tei-manuscript-editor/schema_cache`
+
+Le bouton `↻` du panneau de validation force un nouveau téléchargement puis une
+nouvelle validation. Le cache n'est pas stocké dans le dossier du projet.
+
+## Schematron
+
+Une instruction de la forme :
+
+```xml
+<?xml-model
+  href="rules.sch"
+  type="application/xml"
+  schematypens="http://purl.oclc.org/dsdl/schematron"?>
+```
+
+est détectée et signalée dans la barre d'état. **Aucune validation Schematron
+n'est encore exécutée en V0.5.1.** Cette détection réserve le contrat pour une
+intégration ultérieure sans changer le format de projet.
+
+## Signal visuel des états
+
+Les deux onglets `XML source` et `Vue XSLT/CSS` partagent un indicateur visuel :
+
+- **rouge pâle** : XML non bien formé ;
+- **orange pâle** : XML bien formé mais invalide selon le RELAX NG actif ;
+- apparence normale : XML bien formé et aucune invalidité RNG connue.
+
+Le rouge est prioritaire sur l'orange.
+
+Après une modification du texte, l'ancien résultat RNG est considéré comme
+périmé. Le contrôle de bien-formation continue après une courte pause ; la
+validation RNG est relancée manuellement avec `F8`, à l'ouverture et lors de la
+sauvegarde.
+
+## Sauvegarde : avertir, ne pas bloquer
+
+La V0.5.1 protège en priorité le travail de l'utilisateur.
+
+### XML non bien formé
+
+L'enregistrement est **autorisé**, mais un dialogue prévient que :
+
+- le document contient une erreur de syntaxe XML ;
+- l'aperçu XSLT et le RNG peuvent être indisponibles ;
+- le fichier pourra être corrigé plus tard.
+
+L'utilisateur choisit explicitement `Enregistrer quand même` ou `Annuler`.
+
+### XML bien formé mais non valide selon RELAX NG
+
+L'enregistrement est également **autorisé** après un avertissement indiquant le
+nombre d'erreurs RNG.
+
+### Éditeur de fragment
+
+L'éditeur de fragment reste volontairement plus strict : un fragment qui
+rendrait le document non bien formé ne peut pas être appliqué. Comme la zone à
+corriger est limitée et localisée, cette protection reste utile et évite de
+réinjecter une erreur syntaxique dans le document complet.
+
+## Panneau de validation
+
+`F8` ou `Valider RNG` affiche les diagnostics structurés : niveau, ligne,
+colonne et message. Un double-clic sur une erreur positionne la source XML à la
+ligne correspondante.
+
+La validation RELAX NG requiert `lxml`. L'éditeur reste utilisable sans cette
+dépendance ; seul le contrôle RNG est alors indisponible.
+
+
+## V0.5.5 — contrôle automatique de bonne formation
+
+Le contrôle automatique qui suit la frappe reste distinct de la validation RELAX NG F8. Il vérifie la **bonne formation XML** et maintient l'état visuel rouge/normal.
+
+À partir de V0.5.5, cette passe est lancée après une courte pause de saisie dans un worker séparé du thread graphique. Un résultat calculé sur une ancienne révision du document est ignoré. Les opérations qui exigent une réponse immédiate — notamment la sauvegarde — conservent un contrôle synchrone avant de poursuivre.
+
+La reconstruction des repères de lignes `<lb>` réutilise le même instantané de texte. Pendant la saisie ordinaire, les positions des repères existants sont ajustées incrémentalement ; un balayage complet n'est demandé que lorsqu'une modification peut toucher la structure des balises.
+
+
+## V0.5.6 — optimisation de Ctrl+S
+
+La sauvegarde conserve les mêmes contrôles de sécurité, mais évite désormais les travaux répétés inutiles.
+
+- Le RNG compilé par `lxml.etree.RelaxNG` est conservé en mémoire et réutilisé entre validations.
+- Le cache est invalidé automatiquement si le fichier RNG racine ou l'un des `include` / `externalRef` locaux change.
+- Le graphe des dépendances est lui-même mémorisé : lorsqu'aucun fichier n'a changé, seules des métadonnées de fichiers sont consultées.
+- Si le contrôle automatique de bonne formation porte déjà sur la révision courante, Ctrl+S réutilise ce résultat au lieu de relancer `ElementTree.fromstring`.
+- Si une validation RNG antérieure porte exactement sur la même révision et le même jeton de schéma, son résultat est réutilisé.
+- L'écriture du fichier est atomique : le nouveau texte est écrit dans un temporaire du même dossier, l'ancien fichier est renommé en `.bak`, puis le temporaire prend sa place. Cela évite la copie complète que faisait `shutil.copy2` avant chaque sauvegarde.
+
+La validation du document XML courant reste effectuée lorsqu'il a changé : seule la recompilation du schéma, beaucoup plus coûteuse sur un gros RNG TEI, est amortie.
+
+## V0.8.5.26 — Actualisation du panneau
+Lorsqu’il est affiché, le panneau invalide et efface immédiatement les résultats périmés puis recalcule les erreurs après 1,25 seconde de pause. Le contrôle automatique n’ouvre pas un panneau fermé. Le bouton F8 conserve son comportement explicite. Le parse RELAX NG est encore exécuté dans le fil Qt après debounce, distinct du contrôle XML hors fil existant.
+
+## V0.8.5.26.2 — invalidation fiable des diagnostics du panneau
+
+- Après une première activation du panneau par F8, toute modification du document invalide aussitôt le résultat RNG et vide les erreurs périmées.
+- Le temporisateur de 1 250 ms reste actif après un changement d’onglet ou la fermeture du panneau ; rouvrir le panneau revalide si la dernière révision n’est pas couverte.
+- Les modifications via QTextCursor et annuler/refaire sont suivies également par `QTextDocument.contentsChanged`, avec garde de révision contre le double traitement.
+- Un contrôle tardif dont la révision ne correspond plus à l’édition courante est rejeté, et une nouvelle passe est demandée.
+- La validation explicite F8 et la résolution des schémas d’origine ne changent pas ; aucune correction XML ou RNG n’est appliquée automatiquement.
+- Limite : tests de cycle exécutés sur des substituts Qt, l’interface PySide6 Windows doit être vérifiée par l’utilisateur.

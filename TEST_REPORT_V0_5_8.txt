@@ -1,0 +1,56 @@
+ÉDITEUR XML TEI POUR L'ECDOTIQUE V0.5.8 — RAPPORT DE TEST
+===========================================================
+
+NOUVEAUTÉS
+----------
+1. Correctif Ctrl+Espace avant '/>'
+   - <lb edRef="#T1"|/> est reconnu comme contexte d'attribut : OK
+   - les attributs déjà présents restent exclus de la liste : logique conservée
+   - les contextes historiques <rdg|>, <rdg |>, <rdg wi|> restent couverts : OK
+
+2. Retour à la ligne visuel dans XML source
+   - case à cocher intégrée dans l'onglet XML source
+   - WidgetWidth quand activé / NoWrap quand désactivé
+   - aucune modification du texte XML
+   - un QTextBlock reste une ligne logique : la numérotation source ne change pas
+   - préférence mémorisée par QSettings
+
+3. Recherche XPath
+   - nouveau module xpath_search.py indépendant de Qt
+   - XPath 1.0 via lxml
+   - //note sur une TEI à namespace par défaut : repli automatique vers //tei:note
+   - requête explicite //tei:note[@type="..."] : OK
+   - positions exactes des éléments inline : OK
+   - résultats scalaires (ex. count(...)) : signalés sans navigation
+   - XPath invalide : erreur structurée
+   - panneau inférieur avec ligne / élément / chemin / aperçu
+   - simple clic prévu pour replacer le curseur à la balise ouvrante
+   - raccourci : Ctrl+Shift+F
+
+TEST SUR LE PROJET D'EXEMPLE
+----------------------------
+- expression //note : 335 éléments trouvés
+- chaque résultat est relié à l'offset de sa balise ouvrante dans edition.xml
+
+NON-RÉGRESSION
+--------------
+- pytest : 34 tests réussis
+- compilation Python : 25 fichiers compilés
+- project.xml / project-template.xml / i18n / custom-elements.xml : XML valide
+- catalogues FR / EN : 354 clés chacun, mêmes ensembles de clés
+- génération du viewer web : OK
+  * témoins : 3
+  * lignes de base : 3790
+- isolation des modules sous Spyder : xpath_search ajouté au mécanisme de protection
+
+LIMITES / PRÉCISIONS
+--------------------
+- PySide6 n'est pas installé dans l'environnement de construction : l'apparence
+  exacte de la case de wrap et du panneau XPath doit être confirmée sous Windows/Qt.
+- La recherche XPath exige un XML bien formé et le module lxml.
+- Le confort automatique pour les noms non préfixés vise les chemins TEI usuels
+  (par ex. //note, //div/p). Pour des XPath complexes, employer explicitement le
+  préfixe tei: reste la forme recommandée.
+- La proposition évoquée pour custom-elements.xml (valeurs recommandées ou liste
+  volontairement plus restrictive, par ex. rdg/@wit = #T1 #T2 #P) est documentée
+  pour l'étape suivante mais n'est PAS encore implémentée dans V0.5.8.

@@ -1,0 +1,17 @@
+VARIANS 0.8.5.6 — rapport de validation
+======================================
+Base de départ : V0.8.5.5 complète, aucune branche ancienne réutilisée.
+
+Implémentation : tei_pivot_scaffold.py, project_dialogs.py, editeur_tei.py ;
+options pb oui / lb facultatif (coché par défaut) / zones non, confirmation ;
+aide et catalogues français, anglais, allemand, japonais, tchèque, italien, russe.
+
+Tests exécutés : 241 réussis (225 historiques + 16 nouveaux), 0 échec.
+Compilation Python et contrôle des traductions et aides des sept langues : réussis.
+Syntaxe du JavaScript du viewer inchangé : vérifiée.
+Validation graphique PySide6 : NON RÉALISÉE (PySide6 absent ici).
+Validation interactive sur de véritables serveurs IIIF : NON RÉALISÉE.
+Les fichiers Mu/F du projet de l'utilisateur ne sont pas disponibles ;
+les scénarios IIIF sont synthétiques. Un échantillon PERO fourni précédemment
+a été utilisé localement mais n'est pas redistribué dans l'archive.
+La revue humaine linguistique native des sept traductions reste à faire.

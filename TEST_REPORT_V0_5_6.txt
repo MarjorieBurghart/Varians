@@ -1,0 +1,59 @@
+ÉDITEUR TEI GÉNÉRIQUE — RAPPORT DE TEST V0.5.6
+================================================
+
+OBJECTIF
+--------
+Supprimer les blocages de plusieurs secondes observés lors de Ctrl+S tout en
+conservant les contrôles de bonne formation XML et de validité RELAX NG.
+
+CAUSE IDENTIFIÉE
+-----------------
+La V0.5.5 recompilait le schéma RELAX NG complet à chaque sauvegarde via
+lxml.etree.RelaxNG, puis validait le document. Sur un gros schéma TEI, cette
+recompilation est de très loin l'opération la plus coûteuse.
+
+OPTIMISATIONS
+-------------
+1. Cache du RNG compilé
+   - compilation unique tant que le schéma ne change pas
+   - invalidation automatique du RNG racine et des include/externalRef locaux
+   - graphe de dépendances lui-même mis en cache
+
+2. Réutilisation des résultats
+   - bonne formation XML automatique réutilisée si la révision est identique
+   - résultat RNG réutilisé si révision + jeton de schéma sont identiques
+   - Ctrl+S n'extrait le texte QPlainTextEdit qu'une seule fois
+
+3. Écriture disque
+   - nouveau contenu écrit dans un temporaire du même dossier
+   - ancien fichier renommé en .bak
+   - remplacement atomique du fichier final
+   - suppression de la copie complète shutil.copy2 pour l'édition XML
+
+TESTS AUTOMATIQUES
+------------------
+- pytest : 19 tests réussis
+- cache RNG : même schéma compilé une seule fois
+- invalidation : modification d'un include => recompilation vérifiée
+- sauvegarde atomique : rotation edition.xml / edition.xml.bak vérifiée
+- tests historiques Ctrl+E / recherche / sélection / RNG / complétion : OK
+- compilation syntaxique Python : OK
+- project.xml / project-template.xml / i18n XML : OK
+- génération viewer web : OK
+
+MESURES INDICATIVES DANS L'ENVIRONNEMENT DE CONSTRUCTION
+--------------------------------------------------------
+Schéma RNG synthétique (250 définitions) :
+- première validation avec compilation : ~148 ms
+- validations suivantes avec schéma compilé : ~0,1 à 0,4 ms
+
+Écriture atomique de l'edition.xml d'exemple (~528 Ko) sur disque local :
+- environ 0,8 ms en moyenne
+
+Ces chiffres illustrent le gain architectural ; les temps absolus sous Windows,
+antivirus, disque réseau ou schéma TEI complet peuvent être différents.
+
+LIMITATION
+----------
+PySide6 n'est pas installé dans l'environnement de construction. La sensation
+de fluidité de Ctrl+S doit donc être confirmée dans l'application Windows.

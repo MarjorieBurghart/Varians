@@ -1,0 +1,46 @@
+VARIANS 0.8.5.2 — RAPPORT DE VALIDATION
+====================================
+
+A. PORTÉE
+- Gestionnaire de téléchargements IIIF en tâche de fond pour témoins configurés.
+- Choix par témoin : toutes les pages du manifeste OU seulement les pages PAGE/ALTO
+  dont la correspondance avec un canvas IIIF est univoque.
+- Arrêt, pause, reprise entre fichiers, réutilisation des téléchargements achevés,
+  actualisation sur demande, progression, journal d'échecs.
+- Configuration XML persistante (downloadScope=all|ocr), sans migration destructrice.
+- Import mixte ALTO/PAGE, export web et choix indépendant local/distant conservés.
+- Sept langues et aides intégrées mises à jour.
+
+B. VALIDATIONS AUTOMATISÉES
+Commande : python -m compileall -q .
+Commande : PYTHONPATH=. pytest -q
+Résultat : 187 tests réussis (suite complète).
+- Mode sélectif : manifeste avec couvertures/folios sans OCR ; seules pages
+  correspondantes sont demandées au faux transport réseau.
+- Absence d'ALTO/PAGE : zéro image choisie ; pas de téléchargement général implicite.
+- Métadonnées ambiguës/non correspondantes : pages rejetées et diagnostics.
+- Mode historique 'all' : téléchargement de tous les canvases conservé.
+- Cache/annulation : nouvelles images atomiquement indexées, copie partielle conservée.
+- Roundtrip de project.xml : downloadScope=ocr conservé, absence -> all.
+- Tests historiques de PAGE, ALTO, TEI, IIIF, viewer web : réussis.
+
+C. CONTRÔLE SUR LA PAIRE RÉELLE PERO OCR FOURNIE
+- Assisi541-test-1r.xml (ALTO) et Assisi541-test-1r-PAGE.xml :
+  reconnaissances conservées indépendantes ; les deux noms source correspondent
+  à une même entrée IIIF libellée « f. 1r » dans un manifeste de test local.
+- Une seule image sélectionnée, aucune ambiguïté ; fichiers utilisateur NON
+  redistribués dans la distribution logicielle.
+
+D. INTERNATIONALISATION
+- Fichiers i18n : fr, en, de, ja, cs, it, ru.
+- 28 nouveaux libellés/commandes par langue ; clés et placeholders vérifiés.
+- 7 aides HTML : section propre au téléchargement sélectif ; sommaire actualisé.
+
+E. LIMITES DE VALIDATION
+- PySide6 non disponible dans l'environnement de validation : interface Qt
+  vérifiée statiquement et compilée, mais test interactif utilisateur requis.
+- Aucun test en ligne sur un serveur IIIF distant réel dans cette session.
+- Les pauses/arrêts ne peuvent interrompre le corps d'une requête HTTP en cours :
+  son timeout est de 25 secondes ; l'arrêt agit entre les images.
+- Les manuscrits sans copie intégrale requièrent encore l'accès aux images distantes
+  pour leurs pages non stockées.
