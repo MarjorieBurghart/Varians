@@ -22,6 +22,7 @@ APPLICATION_MODULES = (
     "editeur_tei.py",
     "app_context.py",
     "document_session.py",
+    "completion_ui.py",
     "validation_panel.py",
     "xpath_panel.py",
 )

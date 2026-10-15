@@ -34,12 +34,13 @@ if str(ROOT) not in sys.path:
 
 PySide6 = pytest.importorskip("PySide6")
 from PySide6.QtCore import QSettings, QThreadPool  # noqa: E402
-from PySide6.QtWidgets import QApplication, QMessageBox  # noqa: E402
+from PySide6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
 
 
-# Schéma minimal : racine TEI, contenu libre, sauf l'élément <forbidden>.
-# Il permet de produire une erreur RELAX NG à un endroit choisi sans
-# dépendre du schéma TEI distant déclaré par le projet exemple.
+# Schéma minimal : racine TEI, contenu libre, sauf l'élément <forbidden>
+# (pour produire une erreur RELAX NG à un endroit choisi) ; l'élément
+# <varianstest kind="…"> est déclaré explicitement (pour la complétion).
+# Aucune dépendance au schéma TEI distant déclaré par le projet exemple.
 TEST_RNG = """<?xml version="1.0" encoding="UTF-8"?>
 <grammar xmlns="http://relaxng.org/ns/structure/1.0"
          ns="http://www.tei-c.org/ns/1.0">
@@ -51,8 +52,12 @@ TEST_RNG = """<?xml version="1.0" encoding="UTF-8"?>
       <choice>
         <attribute><anyName/></attribute>
         <text/>
+        <element name="varianstest">
+          <attribute name="kind"/>
+          <text/>
+        </element>
         <element>
-          <anyName><except><name>forbidden</name></except></anyName>
+          <anyName><except><name>forbidden</name><name>varianstest</name></except></anyName>
           <ref name="any"/>
         </element>
       </choice>
@@ -74,9 +79,11 @@ class DialogScript:
 
     ``expect(kind, answer)`` empile une réponse : ``kind`` vaut
     « question », « warning », « critical », « information » (méthodes
-    statiques de QMessageBox) ou « box » (QMessageBox construite puis
-    ``exec()``). Pour « box », ``answer`` est le rôle du bouton à cliquer
-    (``QMessageBox.ButtonRole``) ou ``None`` pour fermer sans choix.
+    statiques de QMessageBox), « box » (QMessageBox construite puis
+    ``exec()``) ou « dialog » (toute autre QDialog ``exec()``). Pour « box »,
+    ``answer`` est le rôle du bouton à cliquer (``QMessageBox.ButtonRole``)
+    ou ``None`` pour fermer sans choix. Pour « dialog », ``answer`` est une
+    fonction qui reçoit la boîte et renvoie le code de retour de ``exec()``.
     Chaque boîte affichée est enregistrée dans ``seen``.
     """
 
@@ -119,6 +126,11 @@ class DialogScript:
                 button.click()
                 return 0
         raise UnexpectedDialog(f"Aucun bouton de rôle {role} dans « {box.windowTitle()} »")
+
+    # QDialog(...) … dlg.exec() ---------------------------------------------
+    def dialog_exec(self, dialog):
+        answer = self._next("dialog", dialog.windowTitle(), type(dialog).__name__)
+        return answer(dialog) if callable(answer) else 0
 
 
 @pytest.fixture(autouse=True)
@@ -165,6 +177,7 @@ def dialogs(monkeypatch):
     for kind in ("question", "warning", "critical", "information"):
         monkeypatch.setattr(QMessageBox, kind, staticmethod(script.static(kind)))
     monkeypatch.setattr(QMessageBox, "exec", lambda box: script.box_exec(box))
+    monkeypatch.setattr(QDialog, "exec", lambda dialog: script.dialog_exec(dialog))
     yield script
     assert not script.pending(), f"Boîtes de dialogue attendues mais jamais affichées : {script.pending()}"
 
