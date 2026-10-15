@@ -164,3 +164,13 @@ def test_mark_loaded_and_saved(tmp_path):
     session.modified = True
     session.mark_saved(Path(tmp_path / "b.xml"))
     assert session.path == tmp_path / "b.xml" and session.modified is False
+
+
+def test_reset_validation_forgets_schema_resolution():
+    session = DocumentSession()
+    session.last_rng_result = object()
+    session.last_rng_revision = 2
+    session.last_schema_resolution = object()
+    session.reset_validation()
+    assert session.last_rng_result is None and session.last_rng_revision == -1
+    assert session.last_schema_resolution is None

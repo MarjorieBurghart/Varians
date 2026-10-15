@@ -157,6 +157,11 @@ class DocumentSession:
         self.last_rng_revision = -1
         self.last_rng_schema_token = None
 
+    def reset_validation(self) -> None:
+        """Nouveau document : oublier aussi le schéma résolu précédemment."""
+        self.invalidate_rng()
+        self.last_schema_resolution = None
+
     def mark_loaded(self, path: Path, revision: int) -> None:
         """Un fichier vient d'être chargé dans ``text_document``."""
         self.path = Path(path)

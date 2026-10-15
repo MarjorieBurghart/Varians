@@ -4650,10 +4650,7 @@ class MainWindow(QMainWindow):
         de fichier afin qu'aucune erreur RELAX NG antérieure ne reste visible
         pendant que la validation du nouveau document se prépare.
         """
-        self._last_rng_result = None
-        self._last_rng_revision = -1
-        self._last_rng_schema_token = None
-        self._last_schema_resolution = None
+        self.document.reset_validation()
         if hasattr(self, 'rng_refresh_timer'):
             self.rng_refresh_timer.stop()
         self._clear_validation_table()
@@ -7382,7 +7379,6 @@ class MainWindow(QMainWindow):
             self._reset_validation_state()
         try: text=Path(path).read_text(encoding="utf-8")
         except Exception as exc: QMessageBox.critical(self,_t("file.open.error.title"),str(exc)); return
-        self._source_completion_context_cache.clear()
         self._loading_editor_document = True
         try:
             self.editor.blockSignals(True)
@@ -7390,11 +7386,9 @@ class MainWindow(QMainWindow):
         finally:
             self.editor.blockSignals(False)
             self._loading_editor_document = False
-        self._last_processed_edit_revision = self.editor.document().revision()
-        self.current_path=Path(path); self.modified=False; self._lb_cache_dirty=True; self.editor.document().setModified(False); self._set_title(); self.validate_text(False)
+        self.document.mark_loaded(Path(path), self.editor.document().revision())
+        self.editor.document().setModified(False); self._set_title(); self.validate_text(False)
         self.editor.moveCursor(QTextCursor.MoveOperation.Start)
-        self._last_synced_ordinal = None
-        self._last_synced_surface = None
         if hasattr(self, "formatted_view"):
             self.formatted_view.current_paragraph = None
             self.formatted_view.fragment_original = ""
@@ -7475,7 +7469,8 @@ class MainWindow(QMainWindow):
             atomic_write_text_with_backup(path, text, encoding="utf-8")
         except Exception as exc:
             QMessageBox.critical(self,_t("file.save.error.title"),str(exc)); return False
-        self.current_path=path; self.modified=False; self.editor.document().setModified(False); self._set_title(); self.statusBar().showMessage(_t("status.saved", path=path),4000)
+        self.document.mark_saved(path)
+        self.editor.document().setModified(False); self._set_title(); self.statusBar().showMessage(_t("status.saved", path=path),4000)
         # Si la validation n'a pas encore été faite (p.ex. XML mal formé),
         # l'état visuel calculé ci-dessus reste en place.
         if well_formed and rng_result is None and self._last_schema_resolution is None:
