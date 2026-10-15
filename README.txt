@@ -1,3 +1,7 @@
+Note (V0.8.6.0) : les rapports TEST_REPORT_*.txt, les addenda PASSATION_V*.md
+et RELEASE_MANIFEST_SHA256.txt cités ci-dessous ont été déplacés dans
+docs/historique/.
+
 VARIANS V0.8.5.26.2 — CORRECTIF DU RAFRAÎCHISSEMENT RELAX NG
 
 • Après une modification XML, les diagnostics attachés à une révision antérieure sont invalidés sans délai.
