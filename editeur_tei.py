@@ -51,7 +51,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -72,6 +72,11 @@ from project_dialogs import NewProjectDialog, ProjectSettingsDialog, run_pivot_s
 from i18n import I18nManager
 from relaxng_validation import validate_relaxng, lxml_available, relaxng_schema_token
 from save_io import atomic_write_text_with_backup
+from app_context import (
+    set_i18n, tr, _settings, SETTINGS_ORGANIZATION, SETTINGS_APPLICATION, MAX_RECENT_PROJECTS,
+    recent_project_paths, remember_recent_project, remove_recent_project, clear_recent_projects,
+    last_open_project_path, remember_open_project, forget_open_project,
+)
 from document_session import DocumentSession, LbIndex
 from schema_resolution import resolve_schema, detect_xml_models
 from rng_completion import (
@@ -149,78 +154,13 @@ def _install_light_selection_palette(app):
     if marker not in existing:
         app.setStyleSheet((existing + "\n" + LIGHT_SELECTION_QSS).strip())
 I18N = I18nManager(HERE / "i18n", "fr", "en")
+set_i18n(I18N)
 
 def _t(key, default=None, **values):
-    return I18N.tr(key, default=default, **values)
+    return tr(key, default=default, **values)
 
 DISK_CACHE = Path.home() / ".cache_tei_manuscript_editor"
 DISK_CACHE.mkdir(parents=True, exist_ok=True)
-
-SETTINGS_ORGANIZATION = "TEIManuscriptTools"
-SETTINGS_APPLICATION = "GenericTEIManuscriptEditor"
-MAX_RECENT_PROJECTS = 10
-
-def _settings():
-    # Identifiants stables et indépendants de la langue affichée.
-    return QSettings(SETTINGS_ORGANIZATION, SETTINGS_APPLICATION)
-
-def recent_project_paths():
-    value = _settings().value("recentProjects", [])
-    if isinstance(value, str):
-        value = [value]
-    result = []
-    seen = set()
-    for raw in value or []:
-        try:
-            path = str(Path(raw).expanduser().resolve())
-        except Exception:
-            continue
-        if path not in seen:
-            seen.add(path); result.append(path)
-    return result[:MAX_RECENT_PROJECTS]
-
-def remember_recent_project(path):
-    path = str(Path(path).expanduser().resolve())
-    values = [p for p in recent_project_paths() if p != path]
-    values.insert(0, path)
-    _settings().setValue("recentProjects", values[:MAX_RECENT_PROJECTS])
-
-def remove_recent_project(path):
-    target = str(Path(path).expanduser().resolve())
-    _settings().setValue("recentProjects", [p for p in recent_project_paths() if p != target])
-
-def clear_recent_projects():
-    _settings().remove("recentProjects")
-
-
-def last_open_project_path():
-    """Projet à rouvrir au démarrage s'il était encore ouvert à la fermeture.
-
-    Cette préférence est volontairement distincte de la liste des récents :
-    « Fermer le projet » l'efface, tandis que quitter l'application avec un
-    projet ouvert la conserve.
-    """
-    raw = _settings().value("lastOpenProject", "")
-    if not raw:
-        return None
-    try:
-        path = Path(str(raw)).expanduser().resolve()
-    except Exception:
-        _settings().remove("lastOpenProject")
-        return None
-    if not path.is_file():
-        _settings().remove("lastOpenProject")
-        return None
-    return path
-
-
-def remember_open_project(path):
-    _settings().setValue("lastOpenProject", str(Path(path).expanduser().resolve()))
-
-
-def forget_open_project():
-    _settings().remove("lastOpenProject")
-
 
 def load_json(path: Path):
     with open(path, "r", encoding="utf-8") as fh:
@@ -4076,6 +4016,7 @@ class MainWindow(QMainWindow):
         remember_recent_project(self.project.path)
         global I18N
         I18N = I18nManager(self.project.translations_dir, self.project.language, self.project.fallback_language)
+        set_i18n(I18N)
         app = QApplication.instance()
         if app is not None:
             app.setApplicationName(_t("app.name"))

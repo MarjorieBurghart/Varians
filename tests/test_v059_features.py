@@ -1,11 +1,13 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
+from varians_source import application_source
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_v059_session_branding_and_ctrl_e_rng_integration_are_present():
-    source = (ROOT / "editeur_tei.py").read_text(encoding="utf-8")
+    source = application_source()
     assert 'APP_VERSION = "' in source
     assert 'lastOpenProject' in source
     assert 'def close_project(self):' in source

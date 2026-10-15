@@ -1,0 +1,109 @@
+# -*- coding: utf-8 -*-
+"""Contexte partagé de l'application Varians.
+
+Traductions actives, réglages QSettings et projets récents. Ces services
+étaient définis dans ``editeur_tei.py`` ; ils sont regroupés ici pour que les
+modules de l'interface (panneaux, menus, etc.) puissent les importer sans
+importer ``editeur_tei`` lui-même. Ce dernier peut en effet être exécuté comme
+script (``__main__``) : l'importer depuis un autre module en chargerait une
+seconde copie, avec ses propres traductions.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+
+from PySide6.QtCore import QSettings
+
+HERE = Path(__file__).resolve().parent
+
+# --- Traductions --------------------------------------------------------------
+
+_i18n = None
+
+
+def set_i18n(manager) -> None:
+    """Déclare le gestionnaire de traductions actif (I18nManager)."""
+    global _i18n
+    _i18n = manager
+
+
+def current_i18n():
+    return _i18n
+
+
+def tr(key, default=None, **values):
+    """Texte traduit dans la langue active (équivalent de ``_t``)."""
+    return _i18n.tr(key, default=default, **values)
+
+
+# --- Réglages locaux (QSettings) ------------------------------------------------
+
+SETTINGS_ORGANIZATION = "TEIManuscriptTools"
+SETTINGS_APPLICATION = "GenericTEIManuscriptEditor"
+MAX_RECENT_PROJECTS = 10
+
+
+def _settings():
+    # Identifiants stables et indépendants de la langue affichée.
+    return QSettings(SETTINGS_ORGANIZATION, SETTINGS_APPLICATION)
+
+
+def recent_project_paths():
+    value = _settings().value("recentProjects", [])
+    if isinstance(value, str):
+        value = [value]
+    result = []
+    seen = set()
+    for raw in value or []:
+        try:
+            path = str(Path(raw).expanduser().resolve())
+        except Exception:
+            continue
+        if path not in seen:
+            seen.add(path); result.append(path)
+    return result[:MAX_RECENT_PROJECTS]
+
+
+def remember_recent_project(path):
+    path = str(Path(path).expanduser().resolve())
+    values = [p for p in recent_project_paths() if p != path]
+    values.insert(0, path)
+    _settings().setValue("recentProjects", values[:MAX_RECENT_PROJECTS])
+
+
+def remove_recent_project(path):
+    target = str(Path(path).expanduser().resolve())
+    _settings().setValue("recentProjects", [p for p in recent_project_paths() if p != target])
+
+
+def clear_recent_projects():
+    _settings().remove("recentProjects")
+
+
+def last_open_project_path():
+    """Projet à rouvrir au démarrage s'il était encore ouvert à la fermeture.
+
+    Cette préférence est volontairement distincte de la liste des récents :
+    « Fermer le projet » l'efface, tandis que quitter l'application avec un
+    projet ouvert la conserve.
+    """
+    raw = _settings().value("lastOpenProject", "")
+    if not raw:
+        return None
+    try:
+        path = Path(str(raw)).expanduser().resolve()
+    except Exception:
+        _settings().remove("lastOpenProject")
+        return None
+    if not path.is_file():
+        _settings().remove("lastOpenProject")
+        return None
+    return path
+
+
+def remember_open_project(path):
+    _settings().setValue("lastOpenProject", str(Path(path).expanduser().resolve()))
+
+
+def forget_open_project():
+    _settings().remove("lastOpenProject")
