@@ -3,7 +3,7 @@ import ast
 import re
 import html as html_lib
 from pathlib import Path
-from varians_source import application_ast
+from varians_source import application_ast, application_source
 
 SOURCE = Path(__file__).resolve().parents[1] / 'editeur_tei.py'
 root = application_ast()
@@ -31,7 +31,7 @@ pat2 = to_xml_pattern('prima secunda')
 m2 = re.search(pat2, src2, flags=re.DOTALL)
 assert m2, pat2
 
-source_text = SOURCE.read_text(encoding='utf-8')
+source_text = application_source()
 block = source_text.split('def _left_tab_changed(self, index):', 1)[1].split('def validate_text(', 1)[0]
 assert '_selection_xml_to_visible_text' in block
 assert 'select_visible_text_near_line' in block

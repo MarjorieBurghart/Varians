@@ -10,7 +10,7 @@ import html as html_lib
 from pathlib import Path
 import re
 from types import SimpleNamespace
-from varians_source import application_ast
+from varians_source import application_ast, application_source
 
 CODE = Path(__file__).resolve().parents[1] / "editeur_tei.py"
 code_ast = application_ast()
@@ -232,5 +232,5 @@ print("OK : sélection du contenu multiligne et positions UTF-16 correctes")
 
 # 9. Le comportement est commun aux deux éditeurs, car un même corps de méthode
 # est invoqué avec le target_editor concerné.
-assert "target_editor.setTextCursor(new_cursor)" in CODE.read_text(encoding="utf-8")
+assert "target_editor.setTextCursor(new_cursor)" in application_source()
 print("Tous les tests Ctrl+E hors Qt sont passés.")

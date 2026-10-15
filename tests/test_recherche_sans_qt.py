@@ -6,7 +6,7 @@ ne sélectionne jamais de texte éditable ni ne force le focus sur l'éditeur.
 """
 import ast
 from pathlib import Path
-from varians_source import application_ast
+from varians_source import application_ast, application_source
 
 SOURCE = Path(__file__).resolve().parents[1] / 'editeur_tei.py'
 root = application_ast()
@@ -77,7 +77,7 @@ assert editor.match is None
 print('OK : 1→2→3→1, précédent 3→2, pas de sélection, pas de focus XML, absence efface le surlignage')
 
 # Contrôles structurels du menu et du rappel d'entrée.
-source = SOURCE.read_text(encoding='utf-8')
+source = application_source()
 assert 'menu = QMenu(_t("menu.file"), self)' in source
 assert 'self.file_menu_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)' in source
 assert 'self.find_box.returnPressed.connect(self.find_source_next)' in source
