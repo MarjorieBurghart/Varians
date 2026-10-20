@@ -62,6 +62,7 @@ d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
 | `main_menus.py` | barre d'outils, menus, projets récents, langue |
 | `project_actions.py` | export web, ouverture/création/réglages de projet |
 | `document_tabs.py` | documents du projet affichés : édition et documents auxiliaires |
+| `document_display.py` | onglets affichés et leur ordre (préférence locale du projet), fenêtre « Documents affichés », clic droit sur un onglet |
 | `document_dialogs.py` | ajouter, créer, retirer un document XML auxiliaire |
 | `references_ui.py` | références entre documents : identifiants proposés, F12 / Alt+←, commande « Références » |
 

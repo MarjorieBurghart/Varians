@@ -384,6 +384,9 @@ def test_an_empty_name_shows_the_file_name_again(open_window, three_documents, t
     assert window.rename_document_tab(_doc(window, "personnes.xml"))
     assert _tabs(window) == [_edition_tab(), "personnes.xml", "lieux.xml"]
     assert [d.label for d in load_project(three_documents).documents] == ["", ""]
+    (element,) = [line for line in three_documents.read_text(encoding="utf-8").splitlines()
+                  if "personnes.xml" in line]
+    assert "<document " in element and "label=" not in element          # attribut supprimé
 
 
 def test_cancelled_or_unchanged_rename_leaves_project_xml_alone(open_window, three_documents, tab_name):

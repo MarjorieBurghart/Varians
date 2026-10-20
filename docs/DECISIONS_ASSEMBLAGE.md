@@ -82,6 +82,9 @@ vingtaine de fichiers, un par sermon.
 ## Choix des onglets affichés
 
 Indépendant d'XInclude, et déjà utile avec les fichiers d'autorités.
+**Réalisé en V0.8.9.0** (module `document_display.py`), pour l'édition et
+les documents auxiliaires ; les parties de l'édition s'y ajouteront avec
+XInclude.
 
 - Affichage ▸ **« Choisir les documents affichés… »**, sur le modèle de
   « Choisir les témoins affichés… » : une case par document (parties de
@@ -94,8 +97,11 @@ Indépendant d'XInclude, et déjà utile avec les fichiers d'autorités.
 - **Clic droit sur un onglet** :
   - « Masquer l'onglet » : le document reste dans le projet et revient par le
     menu Affichage ;
+  - « Renommer l'onglet… » (sauf pour l'édition) : modifie `@label` du
+    `<document>` dans `project.xml` ; un nom vide revient au nom du
+    fichier ;
   - « Choisir les documents affichés… » ;
-  - « Retirer le document du projet… » : la commande existante, avec sa
+  - « Retirer le document du projet » : la commande existante, avec sa
     confirmation ; le fichier n'est jamais supprimé.
 
   « Masquer » plutôt que « Fermer » : « Fermer » laisserait croire que le
@@ -104,10 +110,22 @@ Indépendant d'XInclude, et déjà utile avec les fichiers d'autorités.
   Varians propose de les enregistrer avant de quitter ; masquer l'onglet du
   document affiché fait passer à l'onglet voisin ; le dernier onglet visible
   ne peut pas être masqué.
+- **Précisions arrêtées pendant la réalisation** :
+  - un onglet que F12 ou le panneau « Références » fait réapparaître reste
+    affiché aux ouvertures suivantes ;
+  - l'enregistrement de tous les documents ne fait réapparaître aucun
+    onglet ; si l'enregistrement d'un document masqué échoue, ce document
+    reste affiché, avec son onglet ;
+  - le document affiché a toujours son onglet : à l'ouverture, Varians
+    affiche l'édition, et son onglet réapparaît s'il avait été masqué ;
+  - décocher le document affiché dans la fenêtre fait afficher le premier
+    onglet resté visible ;
+  - la commande du menu Affichage n'est active que si le projet compte
+    plusieurs documents.
 
 ## Ordre de réalisation prévu
 
-1. Choix des onglets affichés.
+1. Choix des onglets affichés — réalisé en V0.8.9.0.
 2. XInclude, références et validation : identifiants des parties comptés dans
    le document maître ; validation du document assemblé, erreurs ramenées au
    bon fichier ; les deux formes de parties (`xpointer` par identifiant et
@@ -123,10 +141,31 @@ Indépendant d'XInclude, et déjà utile avec les fichiers d'autorités.
   sermon.
 - La création d'une nouvelle partie depuis Varians (fichier et `xi:include`
   ajoutés au document maître).
-- Proposé : « Renommer l'onglet… » dans le menu du clic droit d'un onglet
-  (modifie `@label` du `<document>` dans `project.xml`). Le nom, le schéma
-  et l'ordre des documents ne se règlent aujourd'hui qu'en modifiant
-  `project.xml` à la main, projet fermé.
+- Le schéma d'un document auxiliaire et l'ordre des `<document>` dans
+  `project.xml` ne se règlent encore qu'en modifiant ce fichier à la main,
+  projet fermé.
+
+## Essai préalable d'XInclude (20 octobre 2026)
+
+Essai fait en mémoire, avant la V0.8.9.0, pour vérifier que les décisions
+ci-dessus sont réalisables avec lxml :
+
+- avec un résolveur (`etree.Resolver`) qui sert les textes en mémoire, y
+  compris ceux des parties non enregistrées, lxml assemble les deux formes
+  de parties : fragments, et documents complets inclus par `xpointer`, par
+  identifiant comme par `element()` ; chaque élément garde sa ligne
+  d'origine (`sourceline`) ;
+- difficulté : une erreur RELAX NG dans une partie est rapportée avec le
+  nom du fichier **maître** et la ligne de la **partie** ;
+- solution retenue : un assemblage fait par Varians (futur
+  `xml_assembly.py`), qui remplace chaque `xi:include` par une copie de la
+  partie et retient l'origine de chaque copie ; le chemin de l'erreur
+  (`error_log.path`) mène à l'élément fautif, donc à sa partie. L'essai a
+  donné « s01.xml, ligne 3 », ce qui est exact ;
+- à adapter alors : `ValidationIssue`, qui recevra le fichier ; le panneau
+  RELAX NG (colonne Document, saut dans la bonne partie) ; la clé de
+  dédoublonnage des erreurs ; l'invalidation du résultat quand une partie
+  est modifiée.
 
 ## Autres décisions de la série 0.8.8.0
 
