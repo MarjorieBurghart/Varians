@@ -61,7 +61,7 @@ from app_context import (
     remove_recent_project, clear_recent_projects, last_open_project_path, remember_open_project,
     forget_open_project,
 )
-from document_session import DocumentSession, LbIndex
+from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 from formatted_view import (
     _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget, paragraph_spans,
 )
@@ -866,14 +866,18 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         lb = self.document.lb
         if lb.dirty:
             return
+        start = max(0, int(position))
+        cursor = QTextCursor(self.editor.document())
         inserted = ""
         if chars_added:
-            start = max(0, int(position))
-            cursor = QTextCursor(self.editor.document())
             cursor.setPosition(start)
             cursor.setPosition(start + max(0, int(chars_added)), QTextCursor.MoveMode.KeepAnchor)
             inserted = cursor.selectedText()
-        lb.apply_edit(position, chars_removed, chars_added, inserted)
+        # Texte qui précède la modification : permet de savoir si elle a lieu
+        # à l'intérieur d'une balise.
+        cursor.setPosition(max(0, start - LB_EDIT_LOOKBACK))
+        cursor.setPosition(start, QTextCursor.MoveMode.KeepAnchor)
+        lb.apply_edit(position, chars_removed, chars_added, inserted, cursor.selectedText())
 
     def _set_lb_spans(self, spans):
         self.document.lb.set(spans)

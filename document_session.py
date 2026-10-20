@@ -21,6 +21,10 @@ from rng_completion import XmlContextCache
 
 Span = tuple[int, int]
 
+# Longueur du texte, avant une modification, examinée pour savoir si elle a
+# lieu à l'intérieur d'une balise (voir LbIndex.apply_edit).
+LB_EDIT_LOOKBACK = 4096
+
 
 class LbIndex:
     """Positions des ``<lb/>`` du témoin pivot dans le texte source.
@@ -57,15 +61,23 @@ class LbIndex:
         return max(0, min(len(spans) - 1, i))
 
     def apply_edit(self, position: int, chars_removed: int, chars_added: int,
-                   inserted: str = "") -> None:
+                   inserted: str = "", preceding: str = "") -> None:
         """Répercute une modification du texte sur l'index.
 
-        ``inserted`` est le texte inséré à ``position``. Une modification qui
-        touche un ``<lb/>`` existant ou qui insère ``<`` ou ``>`` invalide
-        l'index (nouveau balayage au prochain accès) ; sinon les ``<lb/>``
-        situés après la modification sont simplement décalés.
+        ``inserted`` est le texte inséré à ``position`` ; ``preceding`` est le
+        texte qui précède ``position`` après la modification (quelques milliers
+        de caractères suffisent). Une modification qui touche un ``<lb/>``
+        existant, qui insère ``<`` ou ``>`` ou qui a lieu à l'intérieur d'une
+        balise invalide l'index (nouveau balayage au prochain accès) ; sinon
+        les ``<lb/>`` situés après la modification sont simplement décalés.
         """
         if self.dirty:
+            return
+        # À l'intérieur d'une balise (dernier « < » après le dernier « > »),
+        # même sans saisir « < » ni « > », une balise quelconque peut devenir
+        # un <lb/> pivot, ou cesser de l'être (ex. edRef="#T" -> "#T1").
+        if preceding.rfind("<") > preceding.rfind(">"):
+            self.dirty = True
             return
         position = max(0, int(position))
         chars_removed = max(0, int(chars_removed))

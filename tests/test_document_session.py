@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from document_session import DocumentSession, LbIndex
+from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 
 LB_T1 = re.compile(
     r"<(?:[A-Za-z_][\w.-]*:)?lb\b(?=[^>]*\bedRef\s*=\s*(['\"])#T1\1)[^>]*?/?>",
@@ -86,35 +86,51 @@ def test_dirty_index_ignores_edits():
     assert idx.dirty and idx.spans == []
 
 
-KNOWN_LIMITATION = (
-    "Comportement hérité de V0.8.5.26.2 : une modification à l'intérieur d'une "
-    "balise qui n'est pas (encore) un <lb/> pivot, sans saisie de '<' ni de '>', "
-    "peut créer ou détruire un <lb/> sans invalider l'index. Le contrôle XML "
-    "automatique qui suit la pause de frappe reconstruit l'index. Correction "
-    "prévue en phase 4."
-)
+def _apply(idx, text_after, pos, removed, inserted):
+    """Comme l'éditeur : transmet le texte qui précède la position modifiée."""
+    idx.apply_edit(pos, removed, len(inserted), inserted,
+                   preceding=text_after[max(0, pos - LB_EDIT_LOOKBACK):pos])
 
 
 def test_typing_inside_tag_that_becomes_pivot_lb():
+    """edRef="#T" -> "#T1" : l'index doit voir apparaître le nouveau <lb/>."""
     text = '<p><lb edRef="#T"/>x</p>'
     idx = _index(text)
     assert idx.spans == []
     pos = text.index('"/>')
     text = text[:pos] + "1" + text[pos:]
-    idx.apply_edit(pos, 0, 1, "1")
-    if idx.dirty:
-        idx.set(LbIndex.scan(text, LB_T1))
-    expected = LbIndex.scan(text, LB_T1)
-    assert expected, "le texte contient désormais un <lb/> pivot"
-    if idx.spans != expected:
-        pytest.xfail(KNOWN_LIMITATION)
+    _apply(idx, text, pos, 0, "1")
+    assert idx.dirty                              # modification à l'intérieur d'une balise
+    idx.set(LbIndex.scan(text, LB_T1))
+    assert idx.spans == LbIndex.scan(text, LB_T1) != []
 
 
-def test_random_edits_match_full_rescan():
+def test_typing_inside_tag_that_stops_being_pivot_lb():
+    text = '<p><lb edRef="#T1"/>x</p>'
+    idx = _index(text)
+    pos = text.index('1"/>') + 1
+    text = text[:pos] + "2" + text[pos:]          # #T1 -> #T12 : plus un <lb/> pivot
+    _apply(idx, text, pos, 0, "2")
+    assert idx.dirty
+
+
+def test_typing_in_text_does_not_invalidate():
+    text = SAMPLE
+    idx = _index(text)
+    pos = text.index("verbum et")
+    text = text[:pos] + "x" + text[pos:]
+    _apply(idx, text, pos, 0, "x")
+    assert not idx.dirty
+    assert idx.spans == LbIndex.scan(text, LB_T1)
+
+
+@pytest.mark.parametrize("seed", range(12))
+def test_random_edits_match_full_rescan(seed):
     """Après chaque modification, l'index incrémental (s'il reste valide)
     coïncide exactement avec un balayage complet du nouveau texte."""
-    rng = random.Random(20261015)
-    pieces = ["a", "bc ", " ", "\n", "é", "<", ">", "lb", '<lb edRef="#T1"/>', '<lb edRef="#T2"/>', "/"]
+    rng = random.Random(20261015 + seed)
+    pieces = ["a", "bc ", " ", "\n", "é", "<", ">", "lb", '<lb edRef="#T1"/>', '<lb edRef="#T2"/>',
+              "/", "1", "2", '"', "#T", "edRef=", "e"]
     text = SAMPLE * 3
     idx = _index(text)
     for _ in range(2000):
@@ -125,9 +141,9 @@ def test_random_edits_match_full_rescan():
         removed = min(removed, len(text) - pos)
         inserted = rng.choice(["", "", rng.choice(pieces), rng.choice(pieces) + rng.choice(pieces)])
         text = text[:pos] + inserted + text[pos + removed:]
-        idx.apply_edit(pos, removed, len(inserted), inserted)
-        if not idx.dirty and idx.spans != LbIndex.scan(text, LB_T1):
-            pytest.xfail(KNOWN_LIMITATION)
+        _apply(idx, text, pos, removed, inserted)
+        if not idx.dirty:
+            assert idx.spans == LbIndex.scan(text, LB_T1)
 
 
 def test_session_defaults():

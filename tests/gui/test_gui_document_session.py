@@ -117,3 +117,21 @@ def test_document_signals_follow_the_displayed_document(qtbot, editor_module):
 
     QTextCursor(second).insertText("<!-- affiché -->")
     assert editor._fold_regions_cache is None
+
+
+def test_typing_inside_a_tag_that_becomes_a_pivot_lb(open_window, example_project):
+    """edRef="#T" -> "#T1" : le nouveau <lb/> pivot est pris en compte aussitôt."""
+    window = open_window(example_project)
+    text = window.editor.toPlainText()
+    position = text.index("<p>", text.index("<body>")) + len("<p>")
+    _type_at(window, position, '<lb edRef="#T"/>')
+    before = len(window.lb_spans())                       # index reconstruit
+    _type_at(window, position + len('<lb edRef="#T'), "1")
+    assert len(window.lb_spans()) == before + 1
+    assert window.lb_spans() == _rescan(window)
+
+
+def _rescan(window):
+    from document_session import LbIndex
+
+    return LbIndex.scan(window.editor.toPlainText(), window.lb_base_re)

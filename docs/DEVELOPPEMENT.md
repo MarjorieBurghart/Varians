@@ -93,14 +93,16 @@ La version affichée par l'application est `APP_VERSION` dans
 
 ## Défauts connus (hérités de V0.8.5.26.2, correction prévue)
 
-1. **Index des `<lb/>` momentanément périmé** lorsqu'on modifie l'intérieur
-   d'une balise sans saisir `<` ni `>` (ex. `edRef="#T"` → `"#T1"`), jusqu'au
-   contrôle XML automatique suivant (voir `tests/test_document_session.py`).
-2. **Erreur dans la console** (`Signal source has been deleted`) si une
+1. **Erreur dans la console** (`Signal source has been deleted`) si une
    fenêtre est fermée pendant un téléchargement d'image.
-3. **Erreur dans la console** si une fenêtre est fermée moins de 120 ms
+2. **Erreur dans la console** si une fenêtre est fermée moins de 120 ms
    après l'ouverture d'un document (validation différée de `open_path`).
 
-Corrigé depuis : la lenteur à la frappe d'une balise ouvrante dans un long
-document (recherche de la balise fermante de coût quadratique dans
-`xml_tag_pairs`) — voir `tests/test_xml_tag_pairs_performance.py`.
+Corrigés depuis :
+
+- la lenteur à la frappe d'une balise ouvrante dans un long document
+  (recherche de la balise fermante de coût quadratique dans
+  `xml_tag_pairs`) — voir `tests/test_xml_tag_pairs_performance.py` ;
+- l'index des `<lb/>` momentanément périmé lorsqu'on modifiait l'intérieur
+  d'une balise sans saisir `<` ni `>` (ex. `edRef="#T"` → `"#T1"`) — voir
+  `tests/test_document_session.py`.
