@@ -168,6 +168,10 @@ La version affichée par l'application est `APP_VERSION` dans
 `<section id="vXYZ">` dans chacune des sept aides (`help/*.html`) ;
 `tests/test_version.py` vérifie l'ensemble.
 
+Les décisions arrêtées pour les versions suivantes (éditions assemblées par
+XInclude, choix des onglets affichés) sont consignées dans
+`docs/DECISIONS_ASSEMBLAGE.md`.
+
 ## Défauts connus
 
 Aucun défaut hérité de V0.8.5.26.2 n'est actuellement connu. Corrigés en
