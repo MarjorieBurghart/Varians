@@ -324,7 +324,7 @@ Les zones `<zone>` créées par la commande « Double page… » appartiennent �
 Voir [`WORKSPACE_LAYOUT.md`](WORKSPACE_LAYOUT.md). Les vues verticale, horizontale, grille, les fenêtres individuelles et le mode « Toujours au premier plan » ne changent que les préférences d’affichage `QSettings`. Le même `ManuscriptPanel` est transféré entre parents Qt ; `workspace_layout.py` ne contient pas de logique de synchronisation. Le ratio XML/manuscrits est librement redimensionnable, y compris vers 20 % XML.
 
 
-## Documents XML auxiliaires (`<documents>`)
+## V0.8.7.0 — Documents XML auxiliaires (`<documents>`)
 
 Un projet peut déclarer, à côté de l’édition, des documents XML auxiliaires
 (fichier d’autorités, notes, etc.) :
@@ -348,6 +348,6 @@ Varians ne lui en ajoute jamais. La fenêtre « Paramètres du projet » conserv
 les documents déclarés. `project_management.update_project_documents` modifie
 cette liste sans toucher au reste du fichier (copie `.bak` préalable).
 
-Limite : une version de Varians antérieure à cette fonction lit le projet
+Limite : une version de Varians antérieure à 0.8.7.0 lit le projet
 normalement, mais supprime `<documents>` si l’on y enregistre les paramètres
 du projet.
