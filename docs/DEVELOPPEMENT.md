@@ -85,6 +85,30 @@ Un nouveau message de l'interface s'ajoute, traduit, aux sept catalogues
 `i18n/*.xml` ; `CATALOG_SIZE` dans `tests/varians_source.py` donne le
 nombre de messages attendu dans chacun.
 
+## Documents auxiliaires
+
+Un projet peut déclarer des documents XML auxiliaires (format décrit dans
+`PROJECT_MANAGEMENT.md`). La fenêtre tient leur liste dans
+`self.documents` : `self.edition_session` d'abord, puis une
+`DocumentSession` par document, lue à son premier affichage.
+`self.document` désigne toujours le document affiché, et
+`show_document(session)` en change.
+
+Règles pour le code de la fenêtre :
+
+- ce qui vaut pour « le document » (texte, révision, état modifié,
+  validation, schéma via `_schema_mode` / `_schema_file`) se lit dans
+  `self.document` ou dans l'éditeur ;
+- ce qui ne vaut que pour l'édition (témoins, `<lb/>` du pivot, aperçu,
+  export web) vérifie `self._edition_displayed()` ou utilise
+  `self.edition_session` ;
+- une commande d'un panneau de témoin qui écrit dans l'édition se connecte
+  via `self._edition_write(...)`, une navigation via
+  `self._edition_navigation(...)` ;
+- un résultat calculé en différé (minuterie, fil d'exécution) vérifie qu'il
+  concerne encore le document affiché : les numéros de révision sont
+  propres à chaque `QTextDocument`.
+
 ## Transformations XSLT de l'aperçu
 
 `formatted_view.transform_with_xslt` emploie lxml (XSLT 1.0). Une feuille
