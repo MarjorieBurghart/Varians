@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.8.7.0.
+"""Varians — éditeur TEI/manuscrits générique — V0.8.8.0.
 
-Refactorisation de la base V8o : le projet, le témoin de base, les témoins
+Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
 ``project.xml``. Aucun sigle de manuscrit n'est requis par la logique métier.
 

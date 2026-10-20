@@ -1,3 +1,40 @@
+VARIANS V0.8.8.0 — RÉFÉRENCES ENTRE DOCUMENTS
+
+• Références : dans un attribut pointeur (@ref, @corresp, @target, @who,
+  @wit, @edRef…), « #bernard » désigne un xml:id du document lui-même,
+  sinon des autres documents du projet ; « personnes.xml#bernard » vise
+  explicitement un fichier. Les adresses web ne sont pas traitées.
+• Saisie : taper « # » dans la valeur ouvre d'elle-même la liste des
+  identifiants (« #bernard — Bernardus — personnes.xml »), limitée au type
+  d'entrée attendu (persName/@ref → person, placeName/@ref → place…), @wit
+  compris (témoins du projet). Entrée ou Tab insère, Échap ferme ;
+  Ctrl+Espace reste disponible. custom-elements.xml : nouvelle source
+  <values source="ids" elements="…"/> (voir CUSTOM_ELEMENTS.md).
+• Navigation : F12, Ctrl+clic ou clic droit ▸ Aller à la cible affiche
+  l'élément visé, même dans un autre document ; Alt+← (Revenir) ramène au
+  point de départ. Une cible définie plusieurs fois est choisie dans une
+  liste.
+• Vérification : le bouton « Références » de la barre d'outils liste dans
+  un panneau les références introuvables, ambiguës ou vers un fichier
+  absent ; un double-clic y mène, « Vérifier à nouveau » relance la
+  vérification. Elle n'empêche jamais d'enregistrer.
+• Viewer web : les cases « Variantes » et « Notes » permettent au lecteur
+  de masquer les marqueurs correspondants ; le navigateur mémorise le
+  choix. Régénérez le viewer pour en bénéficier.
+• Terminologie : « témoin pivot » remplace « manuscrit pivot » dans les
+  sept langues, et le rôle s'appelle « Pivot » dans les paramètres du
+  projet. Le pivot sert à la synchronisation, sans préjuger de sa place
+  dans le stemma ni de son statut dans l'édition. project.xml est inchangé
+  (role="base").
+• Projets créés avant la V0.8.8.0 : leur dossier i18n/ contient une copie
+  des traductions, prioritaire sur celle de Varians ; ils affichent donc
+  encore « manuscrit pivot ». Pour adopter les nouveaux termes, supprimez
+  le dossier i18n/ du projet (Varians emploie alors ses propres
+  traductions) ou remplacez ses fichiers par ceux du dossier i18n/ de
+  Varians. Si vous aviez personnalisé des messages, reportez-les ensuite.
+• Aucun changement des données TEI, JSON, ALTO/PAGE ni du format de
+  project.xml.
+
 VARIANS V0.8.7.0 — DOCUMENTS XML AUXILIAIRES
 
 • Un projet peut réunir, à côté de l'édition, d'autres documents XML :
