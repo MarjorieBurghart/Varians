@@ -51,7 +51,7 @@
   <string key="status.ctrl_e.config">Настройка Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Вернуться к соответствию для текущего фрагмента XML</string>
   <string key="manuscript.no_direct">нет прямого соответствия</string>
-  <string key="manuscript.no_match">Для этой строки опорной рукописи соответствие не предложено.</string>
+  <string key="manuscript.no_match">Для этой строки опорного свидетеля соответствие не предложено.</string>
   <string key="manuscript.no_line">нет строки</string>
   <string key="manuscript.status">{page} · строка {line}{extra}</string>
   <string key="manuscript.score"> · оценка {score}</string>
@@ -73,10 +73,10 @@
   <string key="preview.files_missing">Файл XSLT или CSS не найден. Выберите файлы кнопками выше.</string>
   <string key="preview.up_to_date">Предпросмотр уже актуален · {engine}. Перезагрузка не требуется.</string>
   <string key="preview.xml_invalid">Предпросмотр не обновлён: XML временно не является корректно сформированным ({error}). Продолжает отображаться последнее корректное представление.</string>
-  <string key="preview.updated.lines">Предпросмотр обновлён: редактируемых абзацев — {paragraphs} · кликабельных строк опорной рукописи — {lines}.</string>
-  <string key="preview.updated.no_lines">Предпросмотр обновлён: редактируемых абзацев — {paragraphs}. Этот XSLT не создаёт маркеры строк опорной рукописи.</string>
+  <string key="preview.updated.lines">Предпросмотр обновлён: редактируемых абзацев — {paragraphs} · кликабельных строк опорного свидетеля — {lines}.</string>
+  <string key="preview.updated.no_lines">Предпросмотр обновлён: редактируемых абзацев — {paragraphs}. Этот XSLT не создаёт маркеры строк опорного свидетеля.</string>
   <string key="preview.transform_error">Ошибка преобразования XSLT: {error}</string>
-  <string key="preview.base_selected">Выбрана строка {line} опорной рукописи · свидетели синхронизированы.</string>
+  <string key="preview.base_selected">Выбрана строка {line} опорного свидетеля · свидетели синхронизированы.</string>
   <string key="preview.toc">Содержание</string>
   <string key="preview.edit_paragraph">Редактировать этот абзац TEI</string>
   <string key="fragment.initial">Фрагмент TEI: нажмите ✎ в предпросмотре</string>
@@ -152,10 +152,10 @@
   <string key="webgen.done.text">Просмотрщик создан:
 {output}
 
-Свидетелей: {witnesses}, строк опорной рукописи: {lines}.</string>
+Свидетелей: {witnesses}, строк опорного свидетеля: {lines}.</string>
   <string key="webgen.missing">
 
-Страницы, отсутствующие в кэше опорной рукописи: {pages}</string>
+Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>
   <string key="project.open_error">Не удалось открыть проект</string>
   <string key="viewer.search.placeholder">Поиск…</string>
   <string key="viewer.prev_base">← строка</string>
@@ -173,18 +173,18 @@
   <string key="viewer.score"> · {score} %</string>
   <string key="viewer.info.line">{page} · строка {line}</string>
   <string key="viewer.info.no_line">Строки нет.</string>
-  <string key="viewer.stats">свидетелей: {witnesses} · строк опорной рукописи: {lines} · разночтений: {variants}</string>
+  <string key="viewer.stats">свидетелей: {witnesses} · строк опорного свидетеля: {lines} · разночтений: {variants}</string>
   <string key="viewer.toc">Содержание</string>
   <string key="viewer.language">Язык</string>
   <string key="viewer.variant">разночтение</string>
   <string key="viewer.note">примечание</string>
   <string key="console.viewer_generated">Просмотрщик создан: {path}</string>
-  <string key="console.viewer_stats">Свидетелей: {witnesses} · строк опорной рукописи: {lines}</string>
-  <string key="console.missing_pages">Страницы, отсутствующие в кэше опорной рукописи: {pages}</string>
+  <string key="console.viewer_stats">Свидетелей: {witnesses} · строк опорного свидетеля: {lines}</string>
+  <string key="console.missing_pages">Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>
   <string key="preview.choose_xslt">Выбрать таблицу стилей XSLT</string>
   <string key="preview.choose_css">Выбрать таблицу стилей CSS</string>
-  <string key="preview.updated.timed.lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых абзацев {marked}/{paragraphs} · кликабельных строк опорной рукописи {lines}.</string>
-  <string key="preview.updated.timed.no_lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых абзацев {marked}/{paragraphs}. Этот XSLT не создаёт маркеры строк опорной рукописи.</string>
+  <string key="preview.updated.timed.lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых абзацев {marked}/{paragraphs} · кликабельных строк опорного свидетеля {lines}.</string>
+  <string key="preview.updated.timed.no_lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых абзацев {marked}/{paragraphs}. Этот XSLT не создаёт маркеры строк опорного свидетеля.</string>
   <string key="viewer.image_unavailable">Изображение IIIF недоступно</string>
   <string key="status.base_line">{base} строка {line}/{total}</string>
   <string key="common.all_files">Все файлы</string>
@@ -242,8 +242,8 @@
   <string key="project.witness.add">Добавить…</string>
   <string key="project.witness.edit">Изменить…</string>
   <string key="project.witness.remove">Удалить</string>
-  <string key="project.witness.set_base">Назначить опорную рукопись для синхронизации</string>
-  <string key="project.witness.base">Опорная рукопись</string>
+  <string key="project.witness.set_base">Назначить опорным свидетелем</string>
+  <string key="project.witness.base">Опорный</string>
   <string key="project.witness.secondary">Вторичный</string>
   <string key="project.validation.title">Недопустимый проект</string>
   <string key="project.validation.witness_id">Идентификатор свидетеля обязателен, не должен содержать пробелов и начинаться с #.</string>
@@ -255,7 +255,7 @@
   <string key="project.validation.edition_missing">Файл TEI не найден:
 {path}</string>
   <string key="project.validation.no_witness">Добавьте хотя бы одного свидетеля.</string>
-  <string key="project.validation.no_base">Выберите опорную рукопись для синхронизации.</string>
+  <string key="project.validation.no_base">Выберите опорного свидетеля для синхронизации.</string>
   <string key="project.validation.rendering_missing">Один или несколько файлов представления (XSLT, CSS, конфигурация Ctrl+E) не найдены.</string>
   <string key="project.validation.i18n_missing">Папка переводов не найдена.</string>
   <string key="project.new.error.title">Не удалось создать проект</string>
@@ -573,19 +573,19 @@
   <string key="manuscript.no_image_reason.canvas_not_found">Canvas IIIF не найден: проверьте манифест и связь страницы.</string>
   <string key="manuscript.no_image_reason.ambiguous">Найдено несколько подходящих Canvas: явно выберите нужный лист.</string>
   <string key="manuscript.no_image_reason.no_match">Для этой страницы невозможно надёжно определить Canvas; укажите его в настройках свидетеля.</string>
-  <string key="pivot.option.pb">Создать метки &lt;pb/&gt; опорного списка в пустом TEI</string>
+  <string key="pivot.option.pb">Создать метки &lt;pb/&gt; опорного свидетеля в пустом TEI</string>
   <string key="pivot.option.lb">Также создать метки &lt;lb/&gt; по ALTO, PAGE или данным синхронизации</string>
-  <string key="pivot.title">Подготовка транскрипции опорного списка</string>
+  <string key="pivot.title">Подготовка транскрипции опорного свидетеля</string>
   <string key="pivot.not_empty">В транскрипции уже есть текст или метки; изменений нет. Функция предназначена только для изначально пустого тела TEI.</string>
-  <string key="pivot.no_pages">Для опорного списка нет страниц с &lt;surface&gt;. Выберите нужные изображения.</string>
+  <string key="pivot.no_pages">Для опорного свидетеля нет страниц с &lt;surface&gt;. Выберите нужные изображения.</string>
   <string key="pivot.preview.title">Предпросмотр перед созданием разметки TEI</string>
-  <string key="pivot.preview.summary">Опорный список {witness}: страниц — {pages}, начал строк для вставки — {lines}.</string>
+  <string key="pivot.preview.summary">Опорный свидетель {witness}: страниц — {pages}, начал строк для вставки — {lines}.</string>
   <string key="pivot.preview.warnings">Предупреждения и сведения о страницах</string>
   <string key="pivot.preview.confirm">Подтвердить вставку? Перед изменением будет создана резервная копия с датой и временем. Текст OCR не переносится.</string>
   <string key="pivot.done">Разметка создана. Резервная копия: {backup}.</string>
-  <string key="project.witness.pivot_tip">Опорная рукопись используется только как технический ориентир синхронизации; она не обязательно является основным списком критического издания.</string>
-  <string key="manuscript.sync.no_base_keys">В JSON нет связей с опорной рукописью: доступна только навигация по страницам.</string>
-  <string key="manuscript.sync.unmatched_base_keys">Связи из JSON не соответствуют ни одной строке опорной рукописи. Проверьте идентификаторы синхронизации.</string>
+  <string key="project.witness.pivot_tip">Опорный свидетель используется только как технический ориентир синхронизации; он не обязательно является основным списком критического издания.</string>
+  <string key="manuscript.sync.no_base_keys">В JSON нет связей с опорным свидетелем: доступна только навигация по страницам.</string>
+  <string key="manuscript.sync.unmatched_base_keys">Связи из JSON не соответствуют ни одной строке опорного свидетеля. Проверьте идентификаторы синхронизации.</string>
   <string key="diagnostics.menu">Диагностика рукописей…</string>
   <string key="diagnostics.title">Диагностика рукописей</string>
   <string key="diagnostics.intro">Состояние ресурсов текущего проекта. ALTO/PAGE описывает строки рукописи, но не обязательно содержит синхронизацию.</string>
@@ -594,7 +594,7 @@
   <string key="diagnostics.column.pages">Страницы</string>
   <string key="diagnostics.column.images">Изображения</string>
   <string key="diagnostics.column.geometry">Строки рукописи</string>
-  <string key="diagnostics.column.links">Связи с опорной рукописью</string>
+  <string key="diagnostics.column.links">Связи с опорным свидетелем</string>
   <string key="diagnostics.column.issues">Замечания</string>
   <string key="diagnostics.mode.active">Синхронизация по строкам</string>
   <string key="diagnostics.mode.page">По страницам / без связей</string>
@@ -614,15 +614,15 @@
   <string key="diagnostics.refresh.done">Ресурсы обновлены (изменено рукописей: {count}).</string>
   <string key="diagnostics.issue.alignment_missing">JSON-файл синхронизации не найден</string>
   <string key="diagnostics.issue.witness_mismatch">Идентификатор рукописи в JSON не совпадает</string>
-  <string key="diagnostics.issue.pivot_mismatch">В JSON указана другая опорная рукопись</string>
+  <string key="diagnostics.issue.pivot_mismatch">В JSON указан другой опорный свидетель</string>
   <string key="diagnostics.issue.local_images_missing">Часть локальных изображений отсутствует</string>
   <string key="diagnostics.issue.ocr_unassociated">Страницы ALTO/PAGE не связаны с IIIF</string>
-  <string key="diagnostics.issue.no_base_keys">Отсутствуют связи base_keys с опорной рукописью</string>
-  <string key="diagnostics.issue.pivot_unavailable">Синхронизация опорной рукописи недоступна</string>
-  <string key="diagnostics.issue.all_keys_unknown">Не найдено совпадений идентификаторов строк опорной рукописи</string>
-  <string key="diagnostics.issue.some_keys_unknown">Некоторые ссылки на строки опорной рукописи неизвестны</string>
+  <string key="diagnostics.issue.no_base_keys">Отсутствуют связи base_keys с опорным свидетелем</string>
+  <string key="diagnostics.issue.pivot_unavailable">Синхронизация опорного свидетеля недоступна</string>
+  <string key="diagnostics.issue.all_keys_unknown">Не найдено совпадений идентификаторов строк опорного свидетеля</string>
+  <string key="diagnostics.issue.some_keys_unknown">Некоторые ссылки на строки опорного свидетеля неизвестны</string>
   <string key="diagnostics.issue.pages_only">Доступна навигация по страницам, JSON синхронизации отсутствует</string>
-  <string key="diagnostics.issue.pivot_no_lines">В JSON опорной рукописи нет пригодных строк</string>
+  <string key="diagnostics.issue.pivot_no_lines">В JSON опорного свидетеля нет пригодных строк</string>
   <string key="diagnostics.refresh.mapping_changed">— связи или идентификаторы изменены</string>
   <string key="folio.navigator.label">Листы:</string>
   <string key="folio.full_image">Изображение целиком</string>
@@ -664,8 +664,8 @@
   <string key="fold.none">Развернуть всё</string>
   <string key="viewer.external_iiif_notice">Удалённые изображения IIIF: {count}. Требуются подключение к сети и права доступа.</string>
   <string key="viewer.line_no_anchor">У этого фрагмента текста нет проверяемой привязки к строке TEI. Отображение рукописи не изменено.</string>
-  <string key="viewer.line_unresolved">Строка TEI {key} отсутствует среди экспортированных строк опорной рукописи. Соответствие не было выведено предположительно.</string>
-  <string key="viewer.pivot_lb_mismatch">Маркеров строк TEI опорной рукописи: {markers}; физических строк: {physical}. Недостающие соответствия не выводятся предположительно.</string>
+  <string key="viewer.line_unresolved">Строка TEI {key} отсутствует среди экспортированных строк опорного свидетеля. Соответствие не было выведено предположительно.</string>
+  <string key="viewer.pivot_lb_mismatch">Маркеров строк TEI опорного свидетеля: {markers}; физических строк: {physical}. Недостающие соответствия не выводятся предположительно.</string>
   <string key="viewer.search.medieval">Средневековые варианты написания</string>
   <string key="viewer.search.run">Найти</string>
   <string key="viewer.search.close">Закрыть поиск</string>

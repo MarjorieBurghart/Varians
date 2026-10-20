@@ -51,7 +51,7 @@
   <string key="status.ctrl_e.config">Configurazione Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Torna alla corrispondenza del passo XML</string>
   <string key="manuscript.no_direct">nessuna corrispondenza diretta</string>
-  <string key="manuscript.no_match">Nessuna corrispondenza proposta per questa riga del manoscritto pivot.</string>
+  <string key="manuscript.no_match">Nessuna corrispondenza proposta per questa riga del testimone pivot.</string>
   <string key="manuscript.no_line">nessuna riga</string>
   <string key="manuscript.status">{page} · riga {line}{extra}</string>
   <string key="manuscript.score"> · punteggio {score}</string>
@@ -73,10 +73,10 @@
   <string key="preview.files_missing">File XSLT o CSS non trovato. Seleziona i file con i pulsanti qui sopra.</string>
   <string key="preview.up_to_date">Anteprima già aggiornata · {engine}. Nessun ricaricamento necessario.</string>
   <string key="preview.xml_invalid">Anteprima non aggiornata: l’XML è temporaneamente non ben formato ({error}). Resta visualizzata l’ultima vista valida.</string>
-  <string key="preview.updated.lines">Anteprima aggiornata con {paragraphs} paragrafi modificabili · {lines} righe cliccabili del manoscritto pivot.</string>
-  <string key="preview.updated.no_lines">Anteprima aggiornata con {paragraphs} paragrafi modificabili. Questo XSLT non produce marcatori di riga del manoscritto pivot.</string>
+  <string key="preview.updated.lines">Anteprima aggiornata con {paragraphs} paragrafi modificabili · {lines} righe cliccabili del testimone pivot.</string>
+  <string key="preview.updated.no_lines">Anteprima aggiornata con {paragraphs} paragrafi modificabili. Questo XSLT non produce marcatori di riga del testimone pivot.</string>
   <string key="preview.transform_error">Errore di trasformazione XSLT: {error}</string>
-  <string key="preview.base_selected">Riga {line} del manoscritto pivot selezionata · testimoni sincronizzati.</string>
+  <string key="preview.base_selected">Riga {line} del testimone pivot selezionata · testimoni sincronizzati.</string>
   <string key="preview.toc">Indice</string>
   <string key="preview.edit_paragraph">Modifica questo paragrafo TEI</string>
   <string key="fragment.initial">Frammento TEI: fai clic su ✎ nell’anteprima</string>
@@ -152,10 +152,10 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="webgen.done.text">Viewer generato:
 {output}
 
-{witnesses} testimone/i, {lines} righe del manoscritto pivot.</string>
+{witnesses} testimone/i, {lines} righe del testimone pivot.</string>
   <string key="webgen.missing">
 
-Pagine mancanti nella cache del manoscritto pivot: {pages}</string>
+Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="project.open_error">Impossibile aprire il progetto</string>
   <string key="viewer.search.placeholder">Cerca…</string>
   <string key="viewer.prev_base">← riga</string>
@@ -173,18 +173,18 @@ Pagine mancanti nella cache del manoscritto pivot: {pages}</string>
   <string key="viewer.score"> · {score}%</string>
   <string key="viewer.info.line">{page} · riga {line}</string>
   <string key="viewer.info.no_line">Nessuna riga.</string>
-  <string key="viewer.stats">{witnesses} testimone/i · {lines} righe del manoscritto pivot · {variants} varianti</string>
+  <string key="viewer.stats">{witnesses} testimone/i · {lines} righe del testimone pivot · {variants} varianti</string>
   <string key="viewer.toc">Indice</string>
   <string key="viewer.language">Lingua</string>
   <string key="viewer.variant">variante</string>
   <string key="viewer.note">nota</string>
   <string key="console.viewer_generated">Viewer generato: {path}</string>
-  <string key="console.viewer_stats">Testimoni: {witnesses} · righe del manoscritto pivot: {lines}</string>
-  <string key="console.missing_pages">Pagine mancanti nella cache del manoscritto pivot: {pages}</string>
+  <string key="console.viewer_stats">Testimoni: {witnesses} · righe del testimone pivot: {lines}</string>
+  <string key="console.missing_pages">Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="preview.choose_xslt">Scegli foglio di stile XSLT</string>
   <string key="preview.choose_css">Scegli foglio di stile CSS</string>
-  <string key="preview.updated.timed.lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} paragrafi modificabili · {lines} righe cliccabili del manoscritto pivot.</string>
-  <string key="preview.updated.timed.no_lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} paragrafi modificabili. Questo XSLT non produce marcatori di riga del manoscritto pivot.</string>
+  <string key="preview.updated.timed.lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} paragrafi modificabili · {lines} righe cliccabili del testimone pivot.</string>
+  <string key="preview.updated.timed.no_lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} paragrafi modificabili. Questo XSLT non produce marcatori di riga del testimone pivot.</string>
   <string key="viewer.image_unavailable">Immagine IIIF non disponibile</string>
   <string key="status.base_line">Riga {base} {line}/{total}</string>
   <string key="common.all_files">Tutti i file</string>
@@ -242,8 +242,8 @@ Pagine mancanti nella cache del manoscritto pivot: {pages}</string>
   <string key="project.witness.add">Aggiungi…</string>
   <string key="project.witness.edit">Modifica…</string>
   <string key="project.witness.remove">Rimuovi</string>
-  <string key="project.witness.set_base">Imposta come manoscritto pivot</string>
-  <string key="project.witness.base">Manoscritto pivot</string>
+  <string key="project.witness.set_base">Imposta come testimone pivot</string>
+  <string key="project.witness.base">Pivot</string>
   <string key="project.witness.secondary">Secondario</string>
   <string key="project.validation.title">Progetto non valido</string>
   <string key="project.validation.witness_id">L’identificatore del testimone è obbligatorio, non deve contenere spazi né iniziare con #.</string>
@@ -255,7 +255,7 @@ Pagine mancanti nella cache del manoscritto pivot: {pages}</string>
   <string key="project.validation.edition_missing">File TEI non trovato:
 {path}</string>
   <string key="project.validation.no_witness">Aggiungi almeno un testimone.</string>
-  <string key="project.validation.no_base">Selezionare un manoscritto pivot per la sincronizzazione.</string>
+  <string key="project.validation.no_base">Selezionare un testimone pivot per la sincronizzazione.</string>
   <string key="project.validation.rendering_missing">Uno o più file di resa (XSLT, CSS, configurazione Ctrl+E) non sono stati trovati.</string>
   <string key="project.validation.i18n_missing">La cartella delle traduzioni non è stata trovata.</string>
   <string key="project.new.error.title">Impossibile creare il progetto</string>
@@ -583,9 +583,9 @@ Identificativi (estratto): {ids}</string>
   <string key="pivot.preview.warnings">Avvertenze e dettaglio delle pagine</string>
   <string key="pivot.preview.confirm">Confermare l’inserimento? Verrà creata una copia di sicurezza con data e ora. Il testo OCR non sarà copiato.</string>
   <string key="pivot.done">Marcatori generati. Copia di sicurezza: {backup}.</string>
-  <string key="project.witness.pivot_tip">Il manoscritto pivot è soltanto il riferimento tecnico per la sincronizzazione; non è necessariamente il manoscritto di base dell’edizione critica.</string>
-  <string key="manuscript.sync.no_base_keys">Il JSON non contiene collegamenti al manoscritto pivot: navigazione solo per pagina.</string>
-  <string key="manuscript.sync.unmatched_base_keys">I collegamenti nel JSON non corrispondono a nessuna riga del manoscritto pivot. Verificare gli identificatori di sincronizzazione.</string>
+  <string key="project.witness.pivot_tip">Il testimone pivot è soltanto il riferimento tecnico per la sincronizzazione; non è necessariamente il manoscritto di base dell’edizione critica.</string>
+  <string key="manuscript.sync.no_base_keys">Il JSON non contiene collegamenti al testimone pivot: navigazione solo per pagina.</string>
+  <string key="manuscript.sync.unmatched_base_keys">I collegamenti nel JSON non corrispondono a nessuna riga del testimone pivot. Verificare gli identificatori di sincronizzazione.</string>
   <string key="diagnostics.menu">Diagnostica dei testimoni…</string>
   <string key="diagnostics.title">Diagnostica dei testimoni</string>
   <string key="diagnostics.intro">Stato delle risorse del progetto corrente. ALTO/PAGE descrive le righe fisiche, ma non implica necessariamente una sincronizzazione.</string>
@@ -594,7 +594,7 @@ Identificativi (estratto): {ids}</string>
   <string key="diagnostics.column.pages">Pagine</string>
   <string key="diagnostics.column.images">Immagini</string>
   <string key="diagnostics.column.geometry">Righe fisiche</string>
-  <string key="diagnostics.column.links">Collegamenti al manoscritto pivot</string>
+  <string key="diagnostics.column.links">Collegamenti al testimone pivot</string>
   <string key="diagnostics.column.issues">Osservazioni</string>
   <string key="diagnostics.mode.active">Righe sincronizzate</string>
   <string key="diagnostics.mode.page">Pagine / senza collegamenti</string>
@@ -614,10 +614,10 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
   <string key="diagnostics.refresh.done">Risorse aggiornate ({count} testimoni modificati).</string>
   <string key="diagnostics.issue.alignment_missing">File JSON di sincronizzazione non trovato</string>
   <string key="diagnostics.issue.witness_mismatch">Identificativo del testimone non coerente nel JSON</string>
-  <string key="diagnostics.issue.pivot_mismatch">Il JSON indica un altro manoscritto pivot</string>
+  <string key="diagnostics.issue.pivot_mismatch">Il JSON indica un altro testimone pivot</string>
   <string key="diagnostics.issue.local_images_missing">Alcune immagini locali non sono disponibili</string>
   <string key="diagnostics.issue.ocr_unassociated">Pagine ALTO/PAGE non associate a IIIF</string>
-  <string key="diagnostics.issue.no_base_keys">Nessun base_keys verso il manoscritto pivot</string>
+  <string key="diagnostics.issue.no_base_keys">Nessun base_keys verso il testimone pivot</string>
   <string key="diagnostics.issue.pivot_unavailable">Sincronizzazione del pivot non disponibile</string>
   <string key="diagnostics.issue.all_keys_unknown">Nessun identificativo di riga del pivot riconosciuto</string>
   <string key="diagnostics.issue.some_keys_unknown">Alcuni riferimenti al pivot sono sconosciuti</string>

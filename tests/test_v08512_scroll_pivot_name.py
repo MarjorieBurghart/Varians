@@ -113,8 +113,9 @@ def test_seven_locales_use_pivot_not_base_witness_in_project_creation():
         assert len(strings['project.witness.pivot_tip']) > 40
         assert (ROOT/'help'/f'{file.stem}.html').exists()
     fr={x.attrib['key']:x.text for x in ET.parse(ROOT/'i18n'/'fr.xml').getroot().findall('string')}
-    assert fr['project.witness.base']=='Manuscrit pivot'
-    assert fr['project.witness.set_base']=='Définir comme manuscrit pivot'
+    # « Témoin pivot », rôle « Pivot » : jamais « manuscrit de base ».
+    assert fr['project.witness.base']=='Pivot'
+    assert fr['project.witness.set_base']=='Définir comme témoin pivot'
     assert 'manuscrit de base' not in fr['project.witness.set_base']
     en={x.attrib['key']:x.text for x in ET.parse(ROOT/'i18n'/'en.xml').getroot().findall('string')}
-    assert en['project.witness.base']=='Pivot manuscript'
+    assert en['project.witness.base']=='Pivot'
