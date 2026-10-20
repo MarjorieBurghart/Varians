@@ -725,4 +725,11 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="references.summary.problems">{count} riferimento/i verificato/i, {problems} problema/i. Fai doppio clic su una riga per andare al riferimento.</string>
   <string key="references.summary.none">Nessun riferimento («#id», «file.xml#id») nei documenti del progetto.</string>
   <string key="project.error.unknown_pivot">Testimone pivot sconosciuto: «{witness}» non figura tra i testimoni di project.xml ({witnesses}).</string>
+  <string key="project.error.unknown_value">project.xml: valore «{value}» sconosciuto per {attribute} (valori possibili: {expected}).</string>
+  <string key="project.error.missing_attribute">project.xml: {element} richiede l’attributo {attribute}.</string>
+  <string key="project.error.root">La radice di project.xml deve essere &lt;teiManuscriptProject&gt; (o &lt;project&gt;).</string>
+  <string key="project.error.missing_elements">project.xml deve contenere &lt;edition&gt; e &lt;witnesses&gt;.</string>
+  <string key="project.error.default_xslt_missing">Foglio XSLT predefinito di Varians non trovato: {path}. L’installazione di Varians è incompleta.</string>
+  <string key="project.error.no_witness">project.xml non dichiara alcun testimone: aggiungi almeno un &lt;witness id="…"&gt; in &lt;witnesses&gt;.</string>
+  <string key="project.error.no_pivot">project.xml non designa alcun testimone pivot: indicalo con &lt;witnesses base="…"&gt; oppure con role="base" su un solo &lt;witness&gt;.</string>
 </translations>

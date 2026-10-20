@@ -725,4 +725,11 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="references.summary.problems">{count} Verweis(e) geprüft, {problems} Problem(e). Doppelklicken Sie auf eine Zeile, um zum Verweis zu springen.</string>
   <string key="references.summary.none">Kein Verweis („#id“, „datei.xml#id“) in den Dokumenten des Projekts.</string>
   <string key="project.error.unknown_pivot">Unbekannter Pivot-Textzeuge: „{witness}“ gehört nicht zu den Textzeugen in project.xml ({witnesses}).</string>
+  <string key="project.error.unknown_value">project.xml: unbekannter Wert „{value}“ für {attribute} (mögliche Werte: {expected}).</string>
+  <string key="project.error.missing_attribute">project.xml: {element} erfordert das Attribut {attribute}.</string>
+  <string key="project.error.root">Das Wurzelelement von project.xml muss &lt;teiManuscriptProject&gt; (oder &lt;project&gt;) sein.</string>
+  <string key="project.error.missing_elements">project.xml muss &lt;edition&gt; und &lt;witnesses&gt; enthalten.</string>
+  <string key="project.error.default_xslt_missing">Standard-XSLT-Stylesheet von Varians nicht gefunden: {path}. Die Installation von Varians ist unvollständig.</string>
+  <string key="project.error.no_witness">project.xml deklariert keinen Textzeugen: Fügen Sie in &lt;witnesses&gt; mindestens ein &lt;witness id="…"&gt; hinzu.</string>
+  <string key="project.error.no_pivot">project.xml bestimmt keinen Pivot-Textzeugen: Geben Sie ihn mit &lt;witnesses base="…"&gt; oder mit role="base" an genau einem &lt;witness&gt; an.</string>
 </translations>

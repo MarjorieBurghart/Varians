@@ -725,4 +725,11 @@
   <string key="references.summary.problems">Проверено ссылок: {count}, проблем: {problems}. Дважды щёлкните строку, чтобы перейти к ссылке.</string>
   <string key="references.summary.none">В документах проекта нет ссылок («#id», «файл.xml#id»).</string>
   <string key="project.error.unknown_pivot">Неизвестный опорный свидетель: «{witness}» отсутствует среди свидетелей в project.xml ({witnesses}).</string>
+  <string key="project.error.unknown_value">project.xml: неизвестное значение «{value}» для {attribute} (возможные значения: {expected}).</string>
+  <string key="project.error.missing_attribute">project.xml: для {element} требуется атрибут {attribute}.</string>
+  <string key="project.error.root">Корневым элементом project.xml должен быть &lt;teiManuscriptProject&gt; (или &lt;project&gt;).</string>
+  <string key="project.error.missing_elements">project.xml должен содержать &lt;edition&gt; и &lt;witnesses&gt;.</string>
+  <string key="project.error.default_xslt_missing">Стандартная таблица стилей XSLT Varians не найдена: {path}. Установка Varians неполная.</string>
+  <string key="project.error.no_witness">В project.xml не объявлено ни одного свидетеля: добавьте в &lt;witnesses&gt; хотя бы один &lt;witness id="…"&gt;.</string>
+  <string key="project.error.no_pivot">В project.xml не указан опорный свидетель: укажите его через &lt;witnesses base="…"&gt; или через role="base" ровно у одного &lt;witness&gt;.</string>
 </translations>

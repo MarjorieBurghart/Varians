@@ -725,4 +725,11 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="references.summary.problems">Zkontrolováno odkazů: {count}, problémů: {problems}. Dvojitým kliknutím na řádek přejdete na odkaz.</string>
   <string key="references.summary.none">Dokumenty projektu neobsahují žádný odkaz („#id“, „soubor.xml#id“).</string>
   <string key="project.error.unknown_pivot">Neznámý pivotní svědek: „{witness}“ není mezi svědky v project.xml ({witnesses}).</string>
+  <string key="project.error.unknown_value">project.xml: neznámá hodnota „{value}“ pro {attribute} (možné hodnoty: {expected}).</string>
+  <string key="project.error.missing_attribute">project.xml: {element} vyžaduje atribut {attribute}.</string>
+  <string key="project.error.root">Kořenový prvek project.xml musí být &lt;teiManuscriptProject&gt; (nebo &lt;project&gt;).</string>
+  <string key="project.error.missing_elements">project.xml musí obsahovat &lt;edition&gt; a &lt;witnesses&gt;.</string>
+  <string key="project.error.default_xslt_missing">Výchozí šablona XSLT programu Varians nebyla nalezena: {path}. Instalace programu Varians je neúplná.</string>
+  <string key="project.error.no_witness">project.xml nedeklaruje žádného svědka: přidejte do &lt;witnesses&gt; alespoň jeden &lt;witness id="…"&gt;.</string>
+  <string key="project.error.no_pivot">project.xml neurčuje pivotního svědka: uveďte ho pomocí &lt;witnesses base="…"&gt; nebo pomocí role="base" u jediného &lt;witness&gt;.</string>
 </translations>
