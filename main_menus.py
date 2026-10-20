@@ -138,6 +138,14 @@ class MainMenusMixin:
         menu.addSeparator()
         menu.addAction(self.action_save)
         menu.addAction(self.action_save_as)
+        self.documents_menu = menu.addMenu(_t("documents.menu"))
+        self.action_add_document = self._make_action(_t("documents.add.menu"), "", self.add_document_dialog)
+        self.action_new_document = self._make_action(_t("documents.new.menu"), "", self.new_document_dialog)
+        self.action_remove_document = self._make_action(
+            _t("documents.remove.menu"), "", self.remove_document_from_project)
+        self.action_remove_document.setEnabled(False)       # l'édition est affichée
+        for action in (self.action_add_document, self.action_new_document, self.action_remove_document):
+            self.documents_menu.addAction(action)
         menu.addSeparator()
         menu.addAction(self.action_ctrl_e_config)
         menu.addSeparator()
@@ -330,6 +338,10 @@ class MainMenusMixin:
         self.action_close_project.setText(_t("menu.close_project"))
         self.action_save.setText(_t("menu.save_edition" if self._edition_displayed() else "menu.save_document"))
         self.action_save_as.setText(_t("menu.save_edition_as"))
+        self.documents_menu.setTitle(_t("documents.menu"))
+        self.action_add_document.setText(_t("documents.add.menu"))
+        self.action_new_document.setText(_t("documents.new.menu"))
+        self.action_remove_document.setText(_t("documents.remove.menu"))
         self.action_ctrl_e_config.setText(_t("menu.ctrl_e_config"))
         self.action_ctrl_e_config.setToolTip(_t("toolbar.ctrl_e_config.tip", path=self.project.custom_elements))
         self.action_generate_web_menu.setText(_t("menu.generate_web"))

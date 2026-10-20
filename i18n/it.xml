@@ -676,4 +676,21 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
   <string key="documents.edition_tab">Edizione</string>
   <string key="documents.unsaved.text">I documenti seguenti contengono modifiche non salvate:</string>
   <string key="documents.save_all">Salva tutto</string>
+  <string key="documents.menu">Documenti XML del progetto</string>
+  <string key="documents.add.menu">Aggiungi un documento XML…</string>
+  <string key="documents.add.title">Aggiungi un documento XML al progetto</string>
+  <string key="documents.add.already">«{name}» fa già parte del progetto.</string>
+  <string key="documents.add.copied">Documento copiato nel progetto: {path}</string>
+  <string key="documents.new.menu">Nuovo documento XML…</string>
+  <string key="documents.new.title">Nuovo documento XML</string>
+  <string key="documents.new.root">Nome dell’elemento radice:</string>
+  <string key="documents.new.root_invalid">«{name}» non è un nome di elemento XML valido.</string>
+  <string key="documents.new.exists">Questo file esiste già; non viene sostituito:
+{path}</string>
+  <string key="documents.remove.menu">Rimuovi il documento dal progetto</string>
+  <string key="documents.remove.title">Rimuovi il documento</string>
+  <string key="documents.remove.question">Rimuovere «{name}» dal progetto?
+
+Il file non viene eliminato: resta sul disco.</string>
+  <string key="documents.error.title">Documenti del progetto</string>
 </translations>

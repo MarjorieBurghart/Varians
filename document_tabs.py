@@ -9,6 +9,7 @@ synchronisation et l'aperçu ne concernent que l'édition.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 from PySide6.QtGui import QColor, QTextCursor, QTextDocument
@@ -16,6 +17,7 @@ from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout, QTabBar, QV
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
+from project_management import update_project_documents
 
 
 # Couleur du nom d'un document selon sa bonne formation (cf. _set_document_health).
@@ -56,6 +58,54 @@ class DocumentTabsMixin:
         layout.addWidget(bar)
         layout.addWidget(views, 1)
         return area
+
+    def _register_document(self, config):
+        """Déclare ``config`` dans project.xml, l'ajoute aux onglets et l'affiche."""
+        documents = list(self.project.documents) + [config]
+        try:
+            update_project_documents(self.project.path, documents)
+        except Exception as exc:
+            QMessageBox.critical(self, _t("documents.error.title"), str(exc))
+            return False
+        self.project = replace(self.project, documents=tuple(documents))
+        session = DocumentSession.auxiliary(config)
+        self.documents.append(session)
+        self._update_document_tabs()
+        return self.show_document(session)
+
+    def _unregister_document(self, session):
+        """Retire ``session`` de project.xml et des onglets ; le fichier reste."""
+        documents = [config for config in self.project.documents
+                     if Path(config.path).resolve() != Path(session.path).resolve()]
+        try:
+            update_project_documents(self.project.path, documents)
+        except Exception as exc:
+            QMessageBox.critical(self, _t("documents.error.title"), str(exc))
+            return False
+        self.project = replace(self.project, documents=tuple(documents))
+        if session is self.document:
+            self.show_document(self.edition_session)
+        self.documents.remove(session)
+        self._update_document_tabs()
+        if session.text_document is not None:
+            session.text_document.deleteLater()
+        return True
+
+    def _update_document_tabs(self):
+        """Un onglet par document (après un ajout ou un retrait)."""
+        bar = self.document_tab_bar
+        bar.blockSignals(True)
+        try:
+            while bar.count() > len(self.documents):
+                bar.removeTab(bar.count() - 1)
+            while bar.count() < len(self.documents):
+                bar.addTab("")
+        finally:
+            bar.blockSignals(False)
+        for session in self.documents:
+            self._refresh_document_tab(session)
+        bar.setVisible(len(self.documents) > 1)
+        self._select_document_tab()
 
     def _document_tab_changed(self, index):
         if 0 <= index < len(self.documents) and not self.show_document(self.documents[index]):
@@ -327,6 +377,7 @@ class DocumentTabsMixin:
             for window in hidden["detached"]:
                 window.hide()
         self.action_save.setText(_t("menu.save_edition" if edition else "menu.save_document"))
+        self.action_remove_document.setEnabled(not edition)
 
     # --- Garde-fous : commandes réservées à l'édition -------------------------
 

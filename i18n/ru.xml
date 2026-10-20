@@ -676,4 +676,21 @@
   <string key="documents.edition_tab">Издание</string>
   <string key="documents.unsaved.text">В следующих документах есть несохранённые изменения:</string>
   <string key="documents.save_all">Сохранить все</string>
+  <string key="documents.menu">XML-документы проекта</string>
+  <string key="documents.add.menu">Добавить XML-документ…</string>
+  <string key="documents.add.title">Добавить XML-документ в проект</string>
+  <string key="documents.add.already">«{name}» уже входит в проект.</string>
+  <string key="documents.add.copied">Документ скопирован в проект: {path}</string>
+  <string key="documents.new.menu">Новый XML-документ…</string>
+  <string key="documents.new.title">Новый XML-документ</string>
+  <string key="documents.new.root">Имя корневого элемента:</string>
+  <string key="documents.new.root_invalid">«{name}» не является допустимым именем XML-элемента.</string>
+  <string key="documents.new.exists">Этот файл уже существует; он не будет заменён:
+{path}</string>
+  <string key="documents.remove.menu">Исключить документ из проекта</string>
+  <string key="documents.remove.title">Исключить документ</string>
+  <string key="documents.remove.question">Исключить «{name}» из проекта?
+
+Файл не удаляется: он остаётся на диске.</string>
+  <string key="documents.error.title">Документы проекта</string>
 </translations>

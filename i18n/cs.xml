@@ -676,4 +676,21 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="documents.edition_tab">Edice</string>
   <string key="documents.unsaved.text">Následující dokumenty obsahují neuložené změny:</string>
   <string key="documents.save_all">Uložit vše</string>
+  <string key="documents.menu">Dokumenty XML projektu</string>
+  <string key="documents.add.menu">Přidat dokument XML…</string>
+  <string key="documents.add.title">Přidat do projektu dokument XML</string>
+  <string key="documents.add.already">„{name}“ už je součástí projektu.</string>
+  <string key="documents.add.copied">Dokument byl zkopírován do projektu: {path}</string>
+  <string key="documents.new.menu">Nový dokument XML…</string>
+  <string key="documents.new.title">Nový dokument XML</string>
+  <string key="documents.new.root">Název kořenového prvku:</string>
+  <string key="documents.new.root_invalid">„{name}“ není platný název prvku XML.</string>
+  <string key="documents.new.exists">Tento soubor již existuje; nebude nahrazen:
+{path}</string>
+  <string key="documents.remove.menu">Odebrat dokument z projektu</string>
+  <string key="documents.remove.title">Odebrat dokument</string>
+  <string key="documents.remove.question">Odebrat „{name}“ z projektu?
+
+Soubor se nesmaže: zůstane na disku.</string>
+  <string key="documents.error.title">Dokumenty projektu</string>
 </translations>

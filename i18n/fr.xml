@@ -662,4 +662,21 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="documents.edition_tab">Édition</string>
   <string key="documents.unsaved.text">Les documents suivants contiennent des modifications non enregistrées :</string>
   <string key="documents.save_all">Tout enregistrer</string>
+  <string key="documents.menu">Documents XML du projet</string>
+  <string key="documents.add.menu">Ajouter un document XML…</string>
+  <string key="documents.add.title">Ajouter un document XML au projet</string>
+  <string key="documents.add.already">« {name} » fait déjà partie du projet.</string>
+  <string key="documents.add.copied">Document copié dans le projet : {path}</string>
+  <string key="documents.new.menu">Nouveau document XML…</string>
+  <string key="documents.new.title">Nouveau document XML</string>
+  <string key="documents.new.root">Nom de l’élément racine :</string>
+  <string key="documents.new.root_invalid">« {name} » n’est pas un nom d’élément XML valide.</string>
+  <string key="documents.new.exists">Ce fichier existe déjà ; il n’est pas remplacé :
+{path}</string>
+  <string key="documents.remove.menu">Retirer le document du projet</string>
+  <string key="documents.remove.title">Retirer le document</string>
+  <string key="documents.remove.question">Retirer « {name} » du projet ?
+
+Le fichier n’est pas supprimé : il reste sur le disque.</string>
+  <string key="documents.error.title">Documents du projet</string>
 </translations>

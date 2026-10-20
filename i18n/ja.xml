@@ -676,4 +676,21 @@
   <string key="documents.edition_tab">校訂本文</string>
   <string key="documents.unsaved.text">次の文書には保存されていない変更があります：</string>
   <string key="documents.save_all">すべて保存</string>
+  <string key="documents.menu">プロジェクトのXML文書</string>
+  <string key="documents.add.menu">XML文書を追加…</string>
+  <string key="documents.add.title">プロジェクトにXML文書を追加</string>
+  <string key="documents.add.already">「{name}」はすでにプロジェクトに含まれています。</string>
+  <string key="documents.add.copied">文書をプロジェクトにコピーしました：{path}</string>
+  <string key="documents.new.menu">新しいXML文書…</string>
+  <string key="documents.new.title">新しいXML文書</string>
+  <string key="documents.new.root">ルート要素名：</string>
+  <string key="documents.new.root_invalid">「{name}」は有効なXML要素名ではありません。</string>
+  <string key="documents.new.exists">このファイルはすでに存在するため、置き換えません：
+{path}</string>
+  <string key="documents.remove.menu">文書をプロジェクトから外す</string>
+  <string key="documents.remove.title">文書を外す</string>
+  <string key="documents.remove.question">「{name}」をプロジェクトから外しますか？
+
+ファイルは削除されず、ディスク上に残ります。</string>
+  <string key="documents.error.title">プロジェクトの文書</string>
 </translations>
