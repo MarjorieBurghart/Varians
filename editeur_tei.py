@@ -892,6 +892,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _set_lb_spans(self, spans):
         self.document.lb.set(spans)
+        if not self.document.is_edition:
+            return  # l'état de structure est celui de l'édition
         n = len(self.document.lb.spans)
         if self.expected_base_lines is None:
             self.structure_status.setText(_t("status.structure.free", base=self.base_id, count=n))
@@ -1111,7 +1113,9 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
             if ordinal is not None:
                 self.navigate_to_base_ordinal(ordinal, move_xml_cursor=True)
 
-            def restore_xml_context(selected=selected_visible, n=ordinal, desc=descriptor):
+            def restore_xml_context(selected=selected_visible, n=ordinal, desc=descriptor, shown=self.document):
+                if self.document is not shown:
+                    return  # un autre document est affiché entre-temps
                 if selected and desc and self._select_xml_text_in_paragraph(selected, desc):
                     return
                 if selected and self._select_xml_text_near_ordinal(selected, n):

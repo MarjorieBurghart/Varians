@@ -672,4 +672,5 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="viewer.search.count">{count} Treffer</string>
   <string key="documents.edition_required.title">Edition nicht angezeigt</string>
   <string key="documents.edition_required.text">Dieser Befehl ändert die Edition. Zeigen Sie zuerst die Edition ({name}) an und versuchen Sie es dann erneut.</string>
+  <string key="menu.save_document">Dokument speichern</string>
 </translations>

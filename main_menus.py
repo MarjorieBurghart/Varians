@@ -328,7 +328,7 @@ class MainMenusMixin:
         self.action_project_settings.setText(_t("menu.project_settings"))
         self.action_iiif_manager.setText(_t('iiif.manager.menu'))
         self.action_close_project.setText(_t("menu.close_project"))
-        self.action_save.setText(_t("menu.save_edition"))
+        self.action_save.setText(_t("menu.save_edition" if self._edition_displayed() else "menu.save_document"))
         self.action_save_as.setText(_t("menu.save_edition_as"))
         self.action_ctrl_e_config.setText(_t("menu.ctrl_e_config"))
         self.action_ctrl_e_config.setToolTip(_t("toolbar.ctrl_e_config.tip", path=self.project.custom_elements))

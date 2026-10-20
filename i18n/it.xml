@@ -672,4 +672,5 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
   <string key="viewer.search.count">{count} risultati</string>
   <string key="documents.edition_required.title">Edizione non visualizzata</string>
   <string key="documents.edition_required.text">Questo comando modifica l’edizione. Visualizzate prima l’edizione ({name}), poi riprovate.</string>
+  <string key="menu.save_document">Salva documento</string>
 </translations>
