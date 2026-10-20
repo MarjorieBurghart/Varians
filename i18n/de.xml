@@ -51,7 +51,7 @@
   <string key="status.ctrl_e.config">Ctrl+E-Konfiguration: {path}</string>
   <string key="manuscript.home.tip">Zur Entsprechung der aktuellen XML-Passage zurückkehren</string>
   <string key="manuscript.no_direct">keine direkte Entsprechung</string>
-  <string key="manuscript.no_match">Für diese Zeile des Pivot-Handschrift wurde keine Entsprechung vorgeschlagen.</string>
+  <string key="manuscript.no_match">Für diese Zeile des Pivot-Textzeugen wurde keine Entsprechung vorgeschlagen.</string>
   <string key="manuscript.no_line">keine Zeile</string>
   <string key="manuscript.status">{page} · Zeile {line}{extra}</string>
   <string key="manuscript.score"> · Wert {score}</string>
@@ -73,10 +73,10 @@
   <string key="preview.files_missing">XSLT- oder CSS-Datei nicht gefunden. Wählen Sie die Dateien mit den Schaltflächen oben aus.</string>
   <string key="preview.up_to_date">Vorschau bereits aktuell · {engine}. Kein erneutes Laden nötig.</string>
   <string key="preview.xml_invalid">Vorschau nicht aktualisiert: XML ist vorübergehend nicht wohlgeformt ({error}). Die letzte gültige Ansicht bleibt sichtbar.</string>
-  <string key="preview.updated.lines">Vorschau aktualisiert: {paragraphs} bearbeitbare Absätze · {lines} anklickbare Zeilen des Pivot-Handschrift.</string>
-  <string key="preview.updated.no_lines">Vorschau aktualisiert: {paragraphs} bearbeitbare Absätze. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Handschrift.</string>
+  <string key="preview.updated.lines">Vorschau aktualisiert: {paragraphs} bearbeitbare Absätze · {lines} anklickbare Zeilen des Pivot-Textzeugen.</string>
+  <string key="preview.updated.no_lines">Vorschau aktualisiert: {paragraphs} bearbeitbare Absätze. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
   <string key="preview.transform_error">Fehler bei der XSLT-Transformation: {error}</string>
-  <string key="preview.base_selected">Zeile {line} des Pivot-Handschrift ausgewählt · Textzeugen synchronisiert.</string>
+  <string key="preview.base_selected">Zeile {line} des Pivot-Textzeugen ausgewählt · Textzeugen synchronisiert.</string>
   <string key="preview.toc">Inhalt</string>
   <string key="preview.edit_paragraph">Diesen TEI-Absatz bearbeiten</string>
   <string key="fragment.initial">TEI-Fragment: Klicken Sie in der Vorschau auf ✎</string>
@@ -152,10 +152,10 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="webgen.done.text">Viewer erzeugt:
 {output}
 
-{witnesses} Textzeuge(n), {lines} Zeilen der Pivot-Handschrift.</string>
+{witnesses} Textzeuge(n), {lines} Zeilen des Pivot-Textzeugen.</string>
   <string key="webgen.missing">
 
-Im Cache der Pivot-Handschrift fehlende Seiten: {pages}</string>
+Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="project.open_error">Projekt konnte nicht geöffnet werden</string>
   <string key="viewer.search.placeholder">Suchen…</string>
   <string key="viewer.prev_base">← Zeile</string>
@@ -173,18 +173,18 @@ Im Cache der Pivot-Handschrift fehlende Seiten: {pages}</string>
   <string key="viewer.score"> · {score} %</string>
   <string key="viewer.info.line">{page} · Zeile {line}</string>
   <string key="viewer.info.no_line">Keine Zeile.</string>
-  <string key="viewer.stats">{witnesses} Textzeuge(n) · {lines} Zeilen der Pivot-Handschrift · {variants} Varianten</string>
+  <string key="viewer.stats">{witnesses} Textzeuge(n) · {lines} Zeilen des Pivot-Textzeugen · {variants} Varianten</string>
   <string key="viewer.toc">Inhalt</string>
   <string key="viewer.language">Sprache</string>
   <string key="viewer.variant">Variante</string>
   <string key="viewer.note">Anmerkung</string>
   <string key="console.viewer_generated">Viewer erzeugt: {path}</string>
-  <string key="console.viewer_stats">Textzeugen: {witnesses} · Zeilen der Pivot-Handschrift: {lines}</string>
-  <string key="console.missing_pages">Im Cache der Pivot-Handschrift fehlende Seiten: {pages}</string>
+  <string key="console.viewer_stats">Textzeugen: {witnesses} · Zeilen des Pivot-Textzeugen: {lines}</string>
+  <string key="console.missing_pages">Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="preview.choose_xslt">XSLT-Stylesheet auswählen</string>
   <string key="preview.choose_css">CSS-Stylesheet auswählen</string>
-  <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Absätze · {lines} anklickbare Zeilen des Pivot-Handschrift.</string>
-  <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Absätze. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Handschrift.</string>
+  <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Absätze · {lines} anklickbare Zeilen des Pivot-Textzeugen.</string>
+  <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Absätze. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
   <string key="viewer.image_unavailable">IIIF-Bild nicht verfügbar</string>
   <string key="status.base_line">{base} Zeile {line}/{total}</string>
   <string key="common.all_files">Alle Dateien</string>
@@ -242,8 +242,8 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.witness.add">Hinzufügen…</string>
   <string key="project.witness.edit">Bearbeiten…</string>
   <string key="project.witness.remove">Entfernen</string>
-  <string key="project.witness.set_base">Als Pivot-Handschrift festlegen</string>
-  <string key="project.witness.base">Pivot-Handschrift</string>
+  <string key="project.witness.set_base">Als Pivot-Textzeugen festlegen</string>
+  <string key="project.witness.base">Pivot</string>
   <string key="project.witness.secondary">Sekundär</string>
   <string key="project.validation.title">Ungültiges Projekt</string>
   <string key="project.validation.witness_id">Die Kennung des Textzeugen ist erforderlich, darf keine Leerzeichen enthalten und nicht mit # beginnen.</string>
@@ -255,7 +255,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.validation.edition_missing">TEI-Datei nicht gefunden:
 {path}</string>
   <string key="project.validation.no_witness">Fügen Sie mindestens einen Textzeugen hinzu.</string>
-  <string key="project.validation.no_base">Legen Sie eine Pivot-Handschrift für die Synchronisierung fest.</string>
+  <string key="project.validation.no_base">Legen Sie einen Pivot-Textzeugen für die Synchronisierung fest.</string>
   <string key="project.validation.rendering_missing">Mindestens eine Darstellungsdatei (XSLT, CSS, Ctrl+E-Konfiguration) wurde nicht gefunden.</string>
   <string key="project.validation.i18n_missing">Der Übersetzungsordner wurde nicht gefunden.</string>
   <string key="project.new.error.title">Projekt konnte nicht erstellt werden</string>
@@ -583,9 +583,9 @@ Kennungen (Auszug): {ids}</string>
   <string key="pivot.preview.warnings">Hinweise und Seitenübersicht</string>
   <string key="pivot.preview.confirm">Markierungen einfügen? Zuvor wird eine datierte Sicherungskopie angelegt. OCR-Texte werden nicht übernommen.</string>
   <string key="pivot.done">Markierungen erzeugt. Sicherungskopie: {backup}.</string>
-  <string key="project.witness.pivot_tip">Die Pivot-Handschrift dient ausschließlich als technische Referenz der Synchronisierung. Sie ist nicht zwangsläufig die Leithandschrift der kritischen Edition.</string>
-  <string key="manuscript.sync.no_base_keys">Die JSON-Datei enthält keine Verknüpfungen zur Pivot-Handschrift: nur Seitennavigation.</string>
-  <string key="manuscript.sync.unmatched_base_keys">Die JSON-Verknüpfungen passen zu keiner Zeile der Pivot-Handschrift. Prüfen Sie die Synchronisierungskennungen.</string>
+  <string key="project.witness.pivot_tip">Der Pivot-Textzeuge dient ausschließlich als technische Referenz der Synchronisierung. Er ist nicht zwangsläufig die Leithandschrift der kritischen Edition.</string>
+  <string key="manuscript.sync.no_base_keys">Die JSON-Datei enthält keine Verknüpfungen zum Pivot-Textzeugen: nur Seitennavigation.</string>
+  <string key="manuscript.sync.unmatched_base_keys">Die JSON-Verknüpfungen passen zu keiner Zeile des Pivot-Textzeugen. Prüfen Sie die Synchronisierungskennungen.</string>
   <string key="diagnostics.menu">Handschriften prüfen…</string>
   <string key="diagnostics.title">Diagnose der Handschriften</string>
   <string key="diagnostics.intro">Status der Projektressourcen. ALTO/PAGE erfasst Schriftzeilen, stellt aber nicht zwangsläufig eine Synchronisierung her.</string>
@@ -594,7 +594,7 @@ Kennungen (Auszug): {ids}</string>
   <string key="diagnostics.column.pages">Seiten</string>
   <string key="diagnostics.column.images">Bilder</string>
   <string key="diagnostics.column.geometry">Schriftzeilen</string>
-  <string key="diagnostics.column.links">Bezüge zur Pivot-Handschrift</string>
+  <string key="diagnostics.column.links">Bezüge zum Pivot-Textzeugen</string>
   <string key="diagnostics.column.issues">Befunde</string>
   <string key="diagnostics.mode.active">Synchronisierte Zeilen</string>
   <string key="diagnostics.mode.page">Seiten / keine Verknüpfung</string>
@@ -614,10 +614,10 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="diagnostics.refresh.done">Ressourcen aktualisiert ({count} Handschrift(en) geändert).</string>
   <string key="diagnostics.issue.alignment_missing">Synchronisierungs-JSON nicht gefunden</string>
   <string key="diagnostics.issue.witness_mismatch">Handschriftensigle in der JSON-Datei abweichend</string>
-  <string key="diagnostics.issue.pivot_mismatch">JSON verweist auf eine andere Pivot-Handschrift</string>
+  <string key="diagnostics.issue.pivot_mismatch">JSON verweist auf einen anderen Pivot-Textzeugen</string>
   <string key="diagnostics.issue.local_images_missing">Einige lokale Bilder fehlen</string>
   <string key="diagnostics.issue.ocr_unassociated">ALTO/PAGE-Seiten ohne IIIF-Zuordnung</string>
-  <string key="diagnostics.issue.no_base_keys">Keine base_keys zur Pivot-Handschrift</string>
+  <string key="diagnostics.issue.no_base_keys">Keine base_keys zum Pivot-Textzeugen</string>
   <string key="diagnostics.issue.pivot_unavailable">Pivot-Synchronisierung nicht verfügbar</string>
   <string key="diagnostics.issue.all_keys_unknown">Keine Pivot-Zeilenkennungen erkannt</string>
   <string key="diagnostics.issue.some_keys_unknown">Einige Pivot-Zeilenverweise unbekannt</string>
@@ -693,4 +693,45 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
 
 Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="documents.error.title">Dokumente des Projekts</string>
+  <string key="viewer.show_variants">Varianten</string>
+  <string key="viewer.show_variants.tip">Variantenmarken (v) im Text ein- oder ausblenden</string>
+  <string key="viewer.show_notes">Anmerkungen</string>
+  <string key="viewer.show_notes.tip">Anmerkungsmarken (n) im Text ein- oder ausblenden</string>
+  <string key="completion.ids.label">Kennungen des Projekts für @{attribute} in &lt;{element}&gt;:</string>
+  <string key="references.goto">Zum Ziel springen</string>
+  <string key="references.back">Zurück</string>
+  <string key="references.none_here">Kein Verweis („#id“ oder „datei.xml#id“) unter dem Cursor.</string>
+  <string key="references.missing">Ziel nicht gefunden: {token}</string>
+  <string key="references.no_file">Datei nicht gefunden: {file}</string>
+  <string key="references.outside_project">Das Ziel liegt in {file}, das kein Dokument des Projekts ist.</string>
+  <string key="references.ambiguous.title">Mehrdeutiges Ziel</string>
+  <string key="references.ambiguous.label">Der Bezeichner von {token} ist mehrfach definiert. Wählen Sie das Ziel:</string>
+  <string key="references.ambiguous.item">{file}, Zeile {line}</string>
+  <string key="references.jumped">Ziel: {file}, Zeile {line} (Alt+← für zurück)</string>
+  <string key="references.no_history">Keine vorherige Position zum Zurückkehren.</string>
+  <string key="references.action">Verweise</string>
+  <string key="references.action.tip">Verweise („#id“, „datei.xml#id“) aller Dokumente des Projekts prüfen</string>
+  <string key="references.recheck">Erneut prüfen</string>
+  <string key="references.close">Verweisbereich ausblenden</string>
+  <string key="references.column.document">Dokument</string>
+  <string key="references.column.line">Zeile</string>
+  <string key="references.column.attribute">Attribut</string>
+  <string key="references.column.value">Wert</string>
+  <string key="references.column.problem">Problem</string>
+  <string key="references.problem.missing">Ziel nicht gefunden</string>
+  <string key="references.problem.ambiguous">Mehrdeutiges Ziel: {targets}</string>
+  <string key="references.problem.no_file">Datei nicht gefunden</string>
+  <string key="references.summary.ok">{count} Verweis(e) geprüft: alle aufgelöst ✓</string>
+  <string key="references.summary.problems">{count} Verweis(e) geprüft, {problems} Problem(e). Doppelklicken Sie auf eine Zeile, um zum Verweis zu springen.</string>
+  <string key="references.summary.none">Kein Verweis („#id“, „datei.xml#id“) in den Dokumenten des Projekts.</string>
+  <string key="project.error.unknown_pivot">Unbekannter Pivot-Textzeuge: „{witness}“ gehört nicht zu den Textzeugen in project.xml ({witnesses}).</string>
+  <string key="project.error.unknown_value">project.xml: unbekannter Wert „{value}“ für {attribute} (mögliche Werte: {expected}).</string>
+  <string key="project.error.missing_attribute">project.xml: {element} erfordert das Attribut {attribute}.</string>
+  <string key="project.error.root">Das Wurzelelement von project.xml muss &lt;teiManuscriptProject&gt; (oder &lt;project&gt;) sein.</string>
+  <string key="project.error.missing_elements">project.xml muss &lt;edition&gt; und &lt;witnesses&gt; enthalten.</string>
+  <string key="project.error.default_xslt_missing">Standard-XSLT-Stylesheet von Varians nicht gefunden: {path}. Die Installation von Varians ist unvollständig.</string>
+  <string key="project.error.no_witness">project.xml deklariert keinen Textzeugen: Fügen Sie in &lt;witnesses&gt; mindestens ein &lt;witness id="…"&gt; hinzu.</string>
+  <string key="project.error.no_pivot">project.xml bestimmt keinen Pivot-Textzeugen: Geben Sie ihn mit &lt;witnesses base="…"&gt; oder mit role="base" an genau einem &lt;witness&gt; an.</string>
+  <string key="references.other_document">Kurzform: {token} bezeichnet nur dieses Dokument. Um auf dieses Ziel zu verweisen, schreiben Sie {suggestion}.</string>
+  <string key="references.problem.other_document">Kurzform, Ziel in einem anderen Dokument: {suggestions} schreiben</string>
 </translations>

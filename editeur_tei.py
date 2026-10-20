@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.8.7.0.
+"""Varians — éditeur TEI/manuscrits générique — V0.8.8.0.
 
-Refactorisation de la base V8o : le projet, le témoin de base, les témoins
+Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
 ``project.xml``. Aucun sigle de manuscrit n'est requis par la logique métier.
 
@@ -38,7 +38,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_dialogs"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_dialogs", "xml_references", "references_ui"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -57,7 +57,7 @@ from project_management import create_portable_project, create_new_transcription
 from project_dialogs import NewProjectDialog, run_pivot_scaffold_dialog
 from i18n import I18nManager
 from app_context import (
-    call_later, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
+    call_later, error_message, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
     remove_recent_project, clear_recent_projects, last_open_project_path, remember_open_project,
     forget_open_project,
 )
@@ -80,6 +80,7 @@ from validation_panel import ValidationPanelMixin
 from xpath_panel import XPathPanelMixin
 from document_tabs import DocumentTabsMixin
 from document_dialogs import DocumentDialogsMixin
+from references_ui import ReferencesMixin
 from rng_completion import XmlContextCache
 from image_sources import (
     page_image_source, apply_witness_image_policy, image_only_items, page_navigation_items,
@@ -261,7 +262,7 @@ def _document_attribute(path):
     )
 
 
-class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDialogsMixin, QMainWindow):
+class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDialogsMixin, ReferencesMixin, QMainWindow):
     # --- État du document ouvert (voir document_session.DocumentSession) ---
     current_path = _document_attribute("path")
     modified = _document_attribute("modified")
@@ -442,6 +443,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.formatted_view = FormattedEditionWidget(self)
         self.editor.attribute_completion_provider = self._auto_attribute_choices
         self.formatted_view.fragment_editor.attribute_completion_provider = self._auto_attribute_choices
+        self.editor.value_completion_provider = self._auto_value_choices
+        self.formatted_view.fragment_editor.value_completion_provider = self._auto_value_choices
         # Invalidation incrémentale : les points lexicaux antérieurs à l'édition
         # restent valides et accélèrent les Ctrl+Espace suivants.
         self.editor.document().contentsChange.connect(self._source_contents_changed)
@@ -462,6 +465,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.source_completion_action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self.source_completion_action.triggered.connect(lambda: self.show_rng_completion(self.editor))
         self.editor.addAction(self.source_completion_action)
+        self._install_reference_actions()
 
         self.left_tabs = QTabWidget()
 
@@ -601,14 +605,15 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         # utile, afin de ne pas pénaliser les petits écrans.
         self.validation_panel = self._build_validation_panel()
         self.xpath_panel = self._build_xpath_panel()
+        self.references_panel = self._build_references_panel()
+        self._bottom_panels = [self.validation_panel, self.xpath_panel, self.references_panel]
         self.left_splitter = QSplitter(Qt.Orientation.Vertical)
         self.left_splitter.addWidget(self._build_document_area(self.left_tabs))
-        self.left_splitter.addWidget(self.validation_panel)
-        self.left_splitter.addWidget(self.xpath_panel)
         self.left_splitter.setStretchFactor(0, 1)
-        self.left_splitter.setStretchFactor(1, 0)
-        self.left_splitter.setStretchFactor(2, 0)
-        self.left_splitter.setSizes([760, 0, 0])
+        for index, panel in enumerate(self._bottom_panels, 1):
+            self.left_splitter.addWidget(panel)
+            self.left_splitter.setStretchFactor(index, 0)
+        self.left_splitter.setSizes([760] + [0] * len(self._bottom_panels))
         # Do not let sizeHint/minimums from the XML widgets force a 50:50
         # layout. The splitter handle may be dragged down to ~20% editor width.
         self.left_splitter.setMinimumWidth(140)
@@ -701,16 +706,21 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _show_bottom_panel(self, panel, height=230):
         """N'affiche qu'un panneau inférieur à la fois."""
-        other = self.xpath_panel if panel is self.validation_panel else self.validation_panel
-        other.setVisible(False)
+        for other in self._bottom_panels:
+            if other is not panel:
+                other.setVisible(False)
         panel.setVisible(True)
         total = max(450, self.left_splitter.height())
         bottom = min(max(150, int(height)), max(150, total // 2))
-        sizes = [max(240, total - bottom), 0, 0]
+        sizes = [max(240, total - bottom)] + [0] * len(self._bottom_panels)
         index = self.left_splitter.indexOf(panel)
         if 0 <= index < len(sizes):
             sizes[index] = bottom
         self.left_splitter.setSizes(sizes)
+
+    def _hide_bottom_panel(self, panel):
+        panel.setVisible(False)
+        self.left_splitter.setSizes([max(300, self.left_splitter.height())] + [0] * len(self._bottom_panels))
 
     def format_xml_source(self):
         """Indente les seules zones XML/TEI dont la mise en forme est sûre.
@@ -806,7 +816,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         try:
             new_window = MainWindow(Path(project_path))
         except Exception as exc:
-            QMessageBox.critical(self, _t("project.open_error"), str(exc))
+            QMessageBox.critical(self, _t("project.open_error"), error_message(exc))
             return False
         self._replacement_window = new_window
         new_window.showMaximized()
@@ -1458,7 +1468,7 @@ class WelcomeWindow(QMainWindow):
         try:
             new_window = MainWindow(Path(project_path))
         except Exception as exc:
-            QMessageBox.critical(self, _t("project.open_error"), str(exc))
+            QMessageBox.critical(self, _t("project.open_error"), error_message(exc))
             return False
         self._replacement_window = new_window
         new_window.showMaximized()
@@ -1549,14 +1559,14 @@ def main():
                 except Exception as exc:
                     forget_open_project()
                     QMessageBox.warning(None, _t("project.reopen_error.title"),
-                                        _t("project.reopen_error", path=startup_project, error=exc))
+                                        _t("project.reopen_error", path=startup_project, error=error_message(exc)))
                     win = WelcomeWindow()
             else:
                 # Le projet de démonstration reste livré, mais n'est jamais ouvert
                 # automatiquement à la première utilisation.
                 win = WelcomeWindow()
     except Exception as exc:
-        QMessageBox.critical(None, _t("project.open_error"), str(exc))
+        QMessageBox.critical(None, _t("project.open_error"), error_message(exc))
         return 2
     # « Plein écran » au sens bureau : fenêtre maximisée, sans masquer la barre
     # des tâches ni les contrôles natifs de la fenêtre.

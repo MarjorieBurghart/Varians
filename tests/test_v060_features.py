@@ -16,12 +16,15 @@ def test_v060_version_and_custom_completion_integration_are_present():
 
 
 def test_project_custom_values_are_dynamic_not_hardcoded():
-    text = (ROOT / "rendering" / "custom-elements.xml").read_text(encoding="utf-8")
-    assert '<values source="witnesses" prefix="#"/>' in text
-    assert 'valuesMode="replace"' in text
-    # Les identifiants des témoins ne doivent pas être figés dans la configuration active.
     import xml.etree.ElementTree as ET
     root = ET.parse(ROOT / "rendering" / "custom-elements.xml").getroot()
+    # V0.8.8.0 : rdg/@wit suit les <witness> de la TEI (source « ids »), comme
+    # lem/@wit et comme la vérification des références.
+    attribute = root.find("./element[@name='rdg']/attribute[@name='wit']")
+    assert attribute.get("valuesMode") == "replace"
+    (values,) = attribute.findall("values")
+    assert (values.get("source"), values.get("elements"), values.get("prefix")) == ("ids", "witness", "#")
+    # Les identifiants des témoins ne doivent pas être figés dans la configuration active.
     explicit = [(v.text or "").strip() for v in root.findall("./element/attribute/value")]
     assert "#T1" not in explicit and "#T2" not in explicit and "#P" not in explicit
 

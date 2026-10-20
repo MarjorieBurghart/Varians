@@ -16,7 +16,7 @@ import shiboken6
 from PySide6.QtCore import QSettings, QTimer
 
 HERE = Path(__file__).resolve().parent
-APP_VERSION = "0.8.7.0"
+APP_VERSION = "0.8.8.0"
 
 # --- Traductions --------------------------------------------------------------
 
@@ -36,6 +36,15 @@ def current_i18n():
 def tr(key, default=None, **values):
     """Texte traduit dans la langue active (équivalent de ``_t``)."""
     return _i18n.tr(key, default=default, **values)
+
+
+def error_message(exc) -> str:
+    """Texte d'une exception pour l'interface : traduit lorsqu'elle porte une
+    clé des catalogues (``project_config.ProjectConfigError``), sinon tel quel."""
+    key = getattr(exc, "key", None)
+    if key:
+        return tr(key, default=str(exc), **getattr(exc, "values", {}))
+    return str(exc)
 
 
 # --- Appels différés -----------------------------------------------------------

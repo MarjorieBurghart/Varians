@@ -7,6 +7,41 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 
+class _TranslatableError:
+    """Erreur de project.xml traduisible : ``key`` est une clé des catalogues
+    i18n et ``values`` ses paramètres ; l'interface affiche le message dans sa
+    langue (``app_context.error_message``). ``str()`` donne le texte français,
+    identique au catalogue français, pour les appels sans interface (export en
+    ligne de commande, tests)."""
+
+    def __init__(self, key, default, **values):
+        super().__init__(default.format(**values))
+        self.key = key
+        self.values = values
+
+
+class ProjectConfigError(_TranslatableError, ValueError):
+    """project.xml incorrect."""
+
+
+class ProjectFileError(_TranslatableError, FileNotFoundError):
+    """Fichier de Varians indispensable introuvable."""
+
+
+def _unknown_value(attribute, value, expected):
+    return ProjectConfigError(
+        "project.error.unknown_value",
+        "project.xml : valeur « {value} » inconnue pour {attribute} (valeurs possibles : {expected}).",
+        attribute=attribute, value=value, expected=expected)
+
+
+def _missing_attribute(element, attribute):
+    return ProjectConfigError(
+        "project.error.missing_attribute",
+        "project.xml : {element} exige l’attribut {attribute}.",
+        element=element, attribute=attribute)
+
+
 APPLICATION_ROOT = Path(__file__).resolve().parent
 DEFAULT_APPLICATION_XSLT = APPLICATION_ROOT / "rendering" / "tei-to-html.xsl"
 
@@ -136,6 +171,7 @@ _SCHEMA_SOURCE_ALIASES = {
     "project": "file", "file": "file", "manual": "file",
     "none": "none", "disabled": "none", "off": "none",
 }
+_SCHEMA_SOURCES = "xml-model, project, none"            # valeurs annoncées dans les messages
 
 
 def _parse_schema(root: ET.Element, root_dir: Path) -> tuple[str, Path | None, str]:
@@ -150,7 +186,7 @@ def _parse_schema(root: ET.Element, root_dir: Path) -> tuple[str, Path | None, s
 
     schema_type = (schema_el.get("type") or "relaxng").strip().lower()
     if schema_type not in {"relaxng", "rng"}:
-        raise ValueError(f"Type de schéma inconnu : {schema_type!r} (attendu : relaxng)")
+        raise _unknown_value('<schema type="…">', schema_type, "relaxng")
 
     source = (schema_el.get("source") or "").strip().lower()
     raw_schema = (schema_el.get("file") or "").strip()
@@ -160,12 +196,12 @@ def _parse_schema(root: ET.Element, root_dir: Path) -> tuple[str, Path | None, s
 
     mode = _SCHEMA_SOURCE_ALIASES.get(source)
     if mode is None:
-        raise ValueError(f"Source de schéma inconnue : {source!r}")
+        raise _unknown_value('<schema source="…">', source, _SCHEMA_SOURCES)
 
     schema = None
     if mode == "file":
         if not raw_schema:
-            raise ValueError("Le mode de schéma projet exige un attribut file=\"…\".")
+            raise _missing_attribute(f'<schema source="{source}">', 'file="…"')
         schema = _resolve(root_dir, raw_schema, "schema/edition.rng")
     return mode, schema, "relaxng"
 
@@ -193,13 +229,12 @@ def _parse_documents(root: ET.Element, root_dir: Path, edition: Path) -> tuple[D
         source = (document_el.get("schema") or "auto").strip().lower()
         mode = _SCHEMA_SOURCE_ALIASES.get(source)
         if mode is None:
-            raise ValueError(f"Source de schéma inconnue pour {raw_file} : {source!r}")
+            raise _unknown_value(f'<document file="{raw_file}" schema="…">', source, _SCHEMA_SOURCES)
         schema = None
         if mode == "file":
             raw_schema = (document_el.get("schemaFile") or "").strip()
             if not raw_schema:
-                raise ValueError(
-                    f"Le document {raw_file} déclare schema=\"file\" sans attribut schemaFile=\"…\".")
+                raise _missing_attribute(f'<document file="{raw_file}" schema="{source}">', 'schemaFile="…"')
             schema = _resolve(root_dir, raw_schema, raw_schema)
         documents.append(DocumentConfig(path, (document_el.get("label") or "").strip(), mode, schema))
     return tuple(documents)
@@ -210,14 +245,16 @@ def load_project(path: str | Path) -> ProjectConfig:
     root_dir = path.parent
     root = ET.parse(path).getroot()
     if root.tag not in {"teiManuscriptProject", "project"}:
-        raise ValueError("La racine du projet doit être <teiManuscriptProject> ou <project>.")
+        raise ProjectConfigError(
+            "project.error.root", "La racine de project.xml doit être <teiManuscriptProject> (ou <project>).")
 
     title = (root.findtext("title") or path.stem).strip()
     edition_el = root.find("edition")
     rendering_el = root.find("rendering")
     witnesses_el = root.find("witnesses")
     if edition_el is None or witnesses_el is None:
-        raise ValueError("Le projet doit contenir <edition> et <witnesses>.")
+        raise ProjectConfigError(
+            "project.error.missing_elements", "project.xml doit contenir <edition> et <witnesses>.")
 
     raw_edition = (edition_el.get("file") or "").strip()
     if raw_edition:
@@ -232,12 +269,15 @@ def load_project(path: str | Path) -> ProjectConfig:
 
     xslt_mode = ((rendering_el.get("xsltMode") if rendering_el is not None else None) or "file").strip().lower()
     if xslt_mode not in {"builtin", "file"}:
-        raise ValueError(f"Mode XSLT inconnu : {xslt_mode!r} (attendu : builtin ou file)")
+        raise _unknown_value('<rendering xsltMode="…">', xslt_mode, "builtin, file")
     xslt = (DEFAULT_APPLICATION_XSLT if xslt_mode == "builtin" else
             _resolve(root_dir, rendering_el.get("xslt") if rendering_el is not None else None,
                      "rendering/tei-to-html.xsl"))
     if xslt_mode == "builtin" and not xslt.is_file():
-        raise FileNotFoundError(f"XSLT par défaut de l’application introuvable : {xslt}")
+        raise ProjectFileError(
+            "project.error.default_xslt_missing",
+            "Feuille XSLT par défaut de Varians introuvable : {path}. L’installation de Varians est incomplète.",
+            path=str(xslt))
     css = _resolve(root_dir, rendering_el.get("css") if rendering_el is not None else None, "rendering/tei.css")
     custom = _resolve(root_dir, rendering_el.get("customElements") if rendering_el is not None else None, "rendering/custom-elements.xml")
 
@@ -257,7 +297,7 @@ def load_project(path: str | Path) -> ProjectConfig:
     for w in witnesses_el.findall("witness"):
         wid = (w.get("id") or "").strip()
         if not wid:
-            raise ValueError("Chaque <witness> doit avoir un @id.")
+            raise _missing_attribute("<witness>", 'id="…"')
         label = (w.get("label") or wid).strip()
         raw_alignment = (w.get("alignment") or "").strip()
         if raw_alignment:
@@ -282,9 +322,8 @@ def load_project(path: str | Path) -> ProjectConfig:
         else:
             image_source_type = (images_el.get("type") or "none").strip().lower()
             if image_source_type not in {"auto", "none", "files", "iiif"}:
-                raise ValueError(
-                    f"Type de source d’image inconnu pour {wid}: {image_source_type!r}"
-                )
+                raise _unknown_value(f'<witness id="{wid}"> <images type="…">', image_source_type,
+                                     "auto, none, files, iiif")
             image_files = []
             if image_source_type == "files":
                 raw = (images_el.get("path") or "").strip()
@@ -324,10 +363,12 @@ def load_project(path: str | Path) -> ProjectConfig:
         iiif_download_scope = ((images_el.get('downloadScope') or 'all').strip().lower()
                                if images_el is not None and image_source_type == 'iiif' else 'all')
         if iiif_download_scope not in {'all', 'ocr'}:
-            raise ValueError(f'Invalid IIIF download scope for {wid}: {iiif_download_scope}')
+            raise _unknown_value(f'<witness id="{wid}"> <images downloadScope="…">', iiif_download_scope,
+                                 "all, ocr")
         iiif_selection_mode = (images_el.get('selectionMode') or 'all').strip().lower() if images_el is not None else 'all'
         if iiif_selection_mode not in ('all', 'selected'):
-            raise ValueError(f'Invalid IIIF selection mode for {wid}: {iiif_selection_mode}')
+            raise _unknown_value(f'<witness id="{wid}"> <images selectionMode="…">', iiif_selection_mode,
+                                 "all, selected")
         iiif_selected_canvases = tuple((x.get('ref') or '').strip() for x in images_el.findall('canvas') if (x.get('ref') or '').strip()) if images_el is not None else ()
         iiif_ocr_links = tuple((_resolve(root_dir, x.get('file'), x.get('file')), (x.get('canvas') or '').strip()) for x in images_el.findall('ocrLink') if x.get('file') and x.get('canvas')) if images_el is not None else ()
         iiif_page_links = tuple(
@@ -341,7 +382,7 @@ def load_project(path: str | Path) -> ProjectConfig:
         if alto_el is not None:
             alto_source_type = (alto_el.get("type") or "files").strip().lower()
             if alto_source_type not in {"auto", "files"}:
-                raise ValueError(f"Type de source ALTO inconnu pour {wid}: {alto_source_type!r}")
+                raise _unknown_value(f'<witness id="{wid}"> <alto type="…">', alto_source_type, "auto, files")
             if alto_source_type == "files":
                 for file_el in alto_el.findall("file"):
                     raw_file = (file_el.get("file") or file_el.get("path") or "").strip()
@@ -359,15 +400,23 @@ def load_project(path: str | Path) -> ProjectConfig:
         ))
 
     if not witnesses:
-        raise ValueError("Le projet ne contient aucun témoin.")
+        raise ProjectConfigError(
+            "project.error.no_witness",
+            'project.xml ne déclare aucun témoin : ajoutez au moins un <witness id="…"> dans <witnesses>.')
     explicit_bases = [w.id for w in witnesses if w.is_base]
     if not base_witness:
         if len(explicit_bases) == 1:
             base_witness = explicit_bases[0]
         else:
-            raise ValueError("Déclarez le témoin pivot avec <witnesses base=\"…\"> ou role=\"base\".")
+            raise ProjectConfigError(
+                "project.error.no_pivot",
+                'project.xml ne désigne pas de témoin pivot : indiquez-le par <witnesses base="…">, '
+                'ou par role="base" sur un seul <witness>.')
     if base_witness not in {w.id for w in witnesses}:
-        raise ValueError(f"Témoin de base inconnu : {base_witness}")
+        raise ProjectConfigError(
+            "project.error.unknown_pivot",
+            "Témoin pivot inconnu : « {witness} » ne figure pas parmi les témoins de project.xml ({witnesses}).",
+            witness=base_witness, witnesses=", ".join(w.id for w in witnesses))
 
     witnesses = [
         WitnessConfig(

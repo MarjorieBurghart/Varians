@@ -38,6 +38,8 @@ import os
 import re
 import xml.etree.ElementTree as ET
 
+from xml_references import parse_pointer
+
 RNG_NS = "http://relaxng.org/ns/structure/1.0"
 RNG = "{" + RNG_NS + "}"
 _XML_NAME_RE = re.compile(r"[A-Za-z_][\w:.-]*")
@@ -818,8 +820,9 @@ def adapt_pointer_list_value_context(
     """Adapte une complétion de valeur pour les listes de pointeurs ``#id``.
 
     Les attributs TEI de type pointeur peuvent contenir plusieurs références
-    séparées par des espaces. Lorsque toutes les valeurs proposées commencent
-    par ``#``, on traite donc la valeur comme une liste de tokens :
+    séparées par des espaces. Lorsque toutes les valeurs proposées sont des
+    pointeurs (``#id``, ou ``fichier.xml#id`` vers un autre document), on
+    traite donc la valeur comme une liste de tokens :
 
     * les pointeurs déjà présents ne sont plus proposés ;
     * un token partiellement saisi est seul remplacé ;
@@ -828,13 +831,13 @@ def adapt_pointer_list_value_context(
 
     La fonction est volontairement indépendante de Qt. Elle ne prétend pas
     déduire le datatype RNG : le comportement « liste » n'est activé que pour
-    une liste finie de suggestions toutes préfixées par ``#``.
+    une liste finie de suggestions qui sont toutes des pointeurs.
     """
     values = tuple(dict.fromkeys(str(v) for v in allowed_values if str(v)))
     if (
         context.kind != "attribute_value"
         or not values
-        or not all(value.startswith("#") for value in values)
+        or not all(parse_pointer(value) is not None for value in values)
     ):
         return context, values
 
@@ -902,7 +905,7 @@ def format_pointer_list_insertion(
     start = max(0, min(int(start), len(text)))
     end = max(start, min(int(end), len(text)))
     replacement = str(value)
-    if start != end or not replacement.startswith("#"):
+    if start != end or parse_pointer(replacement) is None:
         return replacement, start + len(replacement)
 
     previous = text[start - 1:start] if start > 0 else ""

@@ -13,7 +13,7 @@ from PySide6.QtCore import QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 from app_context import (
-    current_i18n, HERE, remember_recent_project, remove_recent_project, tr as _t,
+    current_i18n, error_message, HERE, remember_recent_project, remove_recent_project, tr as _t,
 )
 from project_dialogs import NewProjectDialog, ProjectSettingsDialog, run_pivot_scaffold_dialog
 from project_management import (
@@ -259,7 +259,7 @@ class ProjectActionsMixin:
         try:
             new_window = type(self)(self.project.path)
         except Exception as exc:
-            QMessageBox.critical(self, _t("project.open_error"), str(exc))
+            QMessageBox.critical(self, _t("project.open_error"), error_message(exc))
             return
         self._replacement_window = new_window
         new_window.showMaximized()

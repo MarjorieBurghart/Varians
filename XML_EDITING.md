@@ -133,3 +133,17 @@ Chevrons interactifs dans la marge, `Ctrl+Alt+F` (élément), commandes « Repli
 ## V0.8.5.23 — Mise en évidence bidirectionnelle des balises
 
 Un curseur placé à l’intérieur d’une balise ouvrante ou fermante fait surligner les deux membres de la paire par `QTextEdit.ExtraSelection`. La sélection réelle et le texte restent inchangés. `pair_at_context` réutilise `opening_pair_at_context` pour l’ouverture et `closing_pair_at_context` pour la fermeture. Une pile stricte refuse les fermetures croisées/orphelines avant la position. Les balises autofermantes n’ont pas de paire. Voir `XML_TAG_HIGHLIGHT.md`.
+
+## Références entre documents
+
+Dans la valeur d'un attribut de référence (`@ref`, `@wit`, `@corresp`…),
+taper `#` ouvre la liste des identifiants du projet ; Entrée ou Tab insère
+la valeur, Échap ferme la liste. Comme en TEI standard, `#id` désigne le
+document lui-même : un identifiant d'un autre document est inséré sous la
+forme `personnes.xml#bernard`. **F12**, **Ctrl+clic** ou « Aller à la
+cible » (clic droit) sur `#bernard` ou `personnes.xml#bernard` affiche
+l'élément visé, même dans un autre document du projet ; **Alt+←** revient
+au point de départ. Le bouton **Références** de la barre d'outils vérifie
+les références de tous les documents et liste celles qui sont
+introuvables, ambiguës, ou en forme courte vers un autre document. Le moteur pur est `xml_references.py` ;
+l'intégration est dans `references_ui.py` (voir `docs/DEVELOPPEMENT.md`).

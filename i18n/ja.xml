@@ -51,7 +51,7 @@
   <string key="status.ctrl_e.config">Ctrl+E 設定：{path}</string>
   <string key="manuscript.home.tip">XMLの現在箇所に対応する位置へ戻る</string>
   <string key="manuscript.no_direct">直接の対応なし</string>
-  <string key="manuscript.no_match">このピボット写本行に対応する行は提案されていません。</string>
+  <string key="manuscript.no_match">このピボット伝本行に対応する行は提案されていません。</string>
   <string key="manuscript.no_line">行なし</string>
   <string key="manuscript.status">{page} · {line}行{extra}</string>
   <string key="manuscript.score"> · スコア {score}</string>
@@ -73,10 +73,10 @@
   <string key="preview.files_missing">XSLTまたはCSSファイルが見つかりません。上のボタンからファイルを選択してください。</string>
   <string key="preview.up_to_date">プレビューは最新です · {engine}。再読み込みは不要です。</string>
   <string key="preview.xml_invalid">プレビューを更新できません：XMLが一時的に整形式ではありません（{error}）。最後の有効なビューを表示し続けます。</string>
-  <string key="preview.updated.lines">プレビューを更新しました：編集可能な段落 {paragraphs}件 · クリック可能なピボット写本行 {lines}行。</string>
-  <string key="preview.updated.no_lines">プレビューを更新しました：編集可能な段落 {paragraphs}件。このXSLTはピボット写本ピボット写本の行マーカーを生成しません。</string>
+  <string key="preview.updated.lines">プレビューを更新しました：編集可能な段落 {paragraphs}件 · クリック可能なピボット伝本行 {lines}行。</string>
+  <string key="preview.updated.no_lines">プレビューを更新しました：編集可能な段落 {paragraphs}件。このXSLTはピボット伝本の行マーカーを生成しません。</string>
   <string key="preview.transform_error">XSLT変換エラー：{error}</string>
-  <string key="preview.base_selected">ピボット写本の{line}行目を選択 · 伝本を同期しました。</string>
+  <string key="preview.base_selected">ピボット伝本の{line}行目を選択 · 伝本を同期しました。</string>
   <string key="preview.toc">目次</string>
   <string key="preview.edit_paragraph">このTEI段落を編集</string>
   <string key="fragment.initial">TEI断片：プレビューの✎をクリックしてください</string>
@@ -152,10 +152,10 @@
   <string key="webgen.done.text">ビューアを生成しました：
 {output}
 
-伝本 {witnesses}件、ピボット写本行 {lines}行。</string>
+伝本 {witnesses}件、ピボット伝本行 {lines}行。</string>
   <string key="webgen.missing">
 
-ピボット写本キャッシュにないページ：{pages}</string>
+ピボット伝本キャッシュにないページ：{pages}</string>
   <string key="project.open_error">プロジェクトを開けません</string>
   <string key="viewer.search.placeholder">検索…</string>
   <string key="viewer.prev_base">← 行</string>
@@ -173,18 +173,18 @@
   <string key="viewer.score"> · {score}%</string>
   <string key="viewer.info.line">{page} · {line}行</string>
   <string key="viewer.info.no_line">行なし。</string>
-  <string key="viewer.stats">伝本 {witnesses}件 · ピボット写本行 {lines}行 · 異読 {variants}件</string>
+  <string key="viewer.stats">伝本 {witnesses}件 · ピボット伝本行 {lines}行 · 異読 {variants}件</string>
   <string key="viewer.toc">目次</string>
   <string key="viewer.language">言語</string>
   <string key="viewer.variant">異読</string>
   <string key="viewer.note">注記</string>
   <string key="console.viewer_generated">ビューアを生成しました：{path}</string>
-  <string key="console.viewer_stats">伝本：{witnesses} · ピボット写本行：{lines}</string>
-  <string key="console.missing_pages">ピボット写本キャッシュにないページ：{pages}</string>
+  <string key="console.viewer_stats">伝本：{witnesses} · ピボット伝本行：{lines}</string>
+  <string key="console.missing_pages">ピボット伝本キャッシュにないページ：{pages}</string>
   <string key="preview.choose_xslt">XSLTスタイルシートを選択</string>
   <string key="preview.choose_css">CSSスタイルシートを選択</string>
-  <string key="preview.updated.timed.lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な段落 {marked}/{paragraphs}件 · クリック可能なピボット写本行 {lines}行。</string>
-  <string key="preview.updated.timed.no_lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な段落 {marked}/{paragraphs}件。このXSLTはピボット写本ピボット写本の行マーカーを生成しません。</string>
+  <string key="preview.updated.timed.lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な段落 {marked}/{paragraphs}件 · クリック可能なピボット伝本行 {lines}行。</string>
+  <string key="preview.updated.timed.no_lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な段落 {marked}/{paragraphs}件。このXSLTはピボット伝本の行マーカーを生成しません。</string>
   <string key="viewer.image_unavailable">IIIF画像を利用できません</string>
   <string key="status.base_line">{base} {line}/{total}行</string>
   <string key="common.all_files">すべてのファイル</string>
@@ -242,8 +242,8 @@
   <string key="project.witness.add">追加…</string>
   <string key="project.witness.edit">編集…</string>
   <string key="project.witness.remove">削除</string>
-  <string key="project.witness.set_base">ピボット写本に設定</string>
-  <string key="project.witness.base">ピボット写本</string>
+  <string key="project.witness.set_base">ピボット伝本に設定</string>
+  <string key="project.witness.base">ピボット</string>
   <string key="project.witness.secondary">対校本</string>
   <string key="project.validation.title">無効なプロジェクト</string>
   <string key="project.validation.witness_id">伝本の識別子は必須です。空白を含めず、#で始めないでください。</string>
@@ -255,7 +255,7 @@
   <string key="project.validation.edition_missing">TEIファイルが見つかりません：
 {path}</string>
   <string key="project.validation.no_witness">少なくとも1つの伝本を追加してください。</string>
-  <string key="project.validation.no_base">同期の基準となるピボット写本を指定してください。</string>
+  <string key="project.validation.no_base">同期の基準となるピボット伝本を指定してください。</string>
   <string key="project.validation.rendering_missing">表示用ファイル（XSLT、CSS、Ctrl+E設定）の一部が見つかりません。</string>
   <string key="project.validation.i18n_missing">翻訳フォルダが見つかりません。</string>
   <string key="project.new.error.title">プロジェクトを作成できません</string>
@@ -573,19 +573,19 @@
   <string key="manuscript.no_image_reason.canvas_not_found">IIIF Canvasが見つかりません。Manifestとページの対応関係を確認してください。</string>
   <string key="manuscript.no_image_reason.ambiguous">候補のCanvasが複数あります。正しい葉を手動で選択してください。</string>
   <string key="manuscript.no_image_reason.no_match">このページに対応するCanvasを確実に特定できません。写本資料の設定で指定してください。</string>
-  <string key="pivot.option.pb">空のTEIにピボット写本の&lt;pb/&gt;（改ページ）を生成する</string>
+  <string key="pivot.option.pb">空のTEIにピボット伝本の&lt;pb/&gt;（改ページ）を生成する</string>
   <string key="pivot.option.lb">ALTO・PAGE・同期データから&lt;lb/&gt;（改行）も生成する</string>
-  <string key="pivot.title">ピボット写本から転写の枠組みを準備</string>
+  <string key="pivot.title">ピボット伝本から転写の枠組みを準備</string>
   <string key="pivot.not_empty">本文には既にテキストまたは区切り記号があるため変更しません。この機能は本文が空のTEIにのみ使用できます。</string>
-  <string key="pivot.no_pages">ピボット写本に対応する&lt;surface&gt;がありません。使用する画像を選択してください。</string>
+  <string key="pivot.no_pages">ピボット伝本に対応する&lt;surface&gt;がありません。使用する画像を選択してください。</string>
   <string key="pivot.preview.title">TEI区切り記号の生成前プレビュー</string>
-  <string key="pivot.preview.summary">ピボット写本 {witness}：{pages}ページ、挿入する改行記号 {lines}個。</string>
+  <string key="pivot.preview.summary">ピボット伝本 {witness}：{pages}ページ、挿入する改行記号 {lines}個。</string>
   <string key="pivot.preview.warnings">警告とページの詳細</string>
   <string key="pivot.preview.confirm">挿入しますか？変更前のTEIを日時付きでバックアップします。OCR本文は転記しません。</string>
   <string key="pivot.done">区切り記号を生成しました。バックアップ：{backup}。</string>
-  <string key="project.witness.pivot_tip">ピボット写本は同期のための技術的な基準です。校訂における底本として指定するものではありません。</string>
-  <string key="manuscript.sync.no_base_keys">JSON にピボット写本への対応付けがありません。ページ単位でのみ移動します。</string>
-  <string key="manuscript.sync.unmatched_base_keys">JSON の対応付けがピボット写本のどの行とも一致しません。同期識別子を確認してください。</string>
+  <string key="project.witness.pivot_tip">ピボット伝本は同期のための技術的な基準です。校訂における底本として指定するものではありません。</string>
+  <string key="manuscript.sync.no_base_keys">JSON にピボット伝本への対応付けがありません。ページ単位でのみ移動します。</string>
+  <string key="manuscript.sync.unmatched_base_keys">JSON の対応付けがピボット伝本のどの行とも一致しません。同期識別子を確認してください。</string>
   <string key="diagnostics.menu">写本の状態を診断…</string>
   <string key="diagnostics.title">写本の状態診断</string>
   <string key="diagnostics.intro">現在のプロジェクトに登録された資料の状態です。ALTO/PAGE の行情報だけでは、写本間の同期が成立するとは限りません。</string>
@@ -594,7 +594,7 @@
   <string key="diagnostics.column.pages">ページ数</string>
   <string key="diagnostics.column.images">画像数</string>
   <string key="diagnostics.column.geometry">物理行数</string>
-  <string key="diagnostics.column.links">ピボット写本への対応</string>
+  <string key="diagnostics.column.links">ピボット伝本への対応</string>
   <string key="diagnostics.column.issues">確認事項</string>
   <string key="diagnostics.mode.active">行単位で同期</string>
   <string key="diagnostics.mode.page">ページ単位／対応なし</string>
@@ -614,15 +614,15 @@
   <string key="diagnostics.refresh.done">資料を更新しました（変更のある写本：{count}件）。</string>
   <string key="diagnostics.issue.alignment_missing">同期用JSONファイルが見つかりません</string>
   <string key="diagnostics.issue.witness_mismatch">JSON内の写本識別子が一致しません</string>
-  <string key="diagnostics.issue.pivot_mismatch">JSONで指定されたピボット写本が異なります</string>
+  <string key="diagnostics.issue.pivot_mismatch">JSONで指定されたピボット伝本が異なります</string>
   <string key="diagnostics.issue.local_images_missing">一部のローカル画像が見つかりません</string>
   <string key="diagnostics.issue.ocr_unassociated">IIIF画像と対応しないALTO/PAGEページがあります</string>
-  <string key="diagnostics.issue.no_base_keys">ピボット写本へのbase_keysがありません</string>
-  <string key="diagnostics.issue.pivot_unavailable">ピボット写本の同期データを利用できません</string>
-  <string key="diagnostics.issue.all_keys_unknown">ピボット写本の行識別子が一つも一致しません</string>
-  <string key="diagnostics.issue.some_keys_unknown">ピボット写本への参照の一部が不明です</string>
+  <string key="diagnostics.issue.no_base_keys">ピボット伝本へのbase_keysがありません</string>
+  <string key="diagnostics.issue.pivot_unavailable">ピボット伝本の同期データを利用できません</string>
+  <string key="diagnostics.issue.all_keys_unknown">ピボット伝本の行識別子が一つも一致しません</string>
+  <string key="diagnostics.issue.some_keys_unknown">ピボット伝本への参照の一部が不明です</string>
   <string key="diagnostics.issue.pages_only">同期JSONなし：ページ単位で閲覧可能</string>
-  <string key="diagnostics.issue.pivot_no_lines">ピボット写本のJSONに利用可能な行がありません</string>
+  <string key="diagnostics.issue.pivot_no_lines">ピボット伝本のJSONに利用可能な行がありません</string>
   <string key="diagnostics.refresh.mapping_changed">— 対応関係または識別子が変更されました</string>
   <string key="folio.navigator.label">葉番号：</string>
   <string key="folio.full_image">画像全体</string>
@@ -693,4 +693,45 @@
 
 ファイルは削除されず、ディスク上に残ります。</string>
   <string key="documents.error.title">プロジェクトの文書</string>
+  <string key="viewer.show_variants">異読</string>
+  <string key="viewer.show_variants.tip">本文中の異読マーカー（v）を表示または非表示にする</string>
+  <string key="viewer.show_notes">注</string>
+  <string key="viewer.show_notes.tip">本文中の注マーカー（n）を表示または非表示にする</string>
+  <string key="completion.ids.label">&lt;{element}&gt; の @{attribute} に使えるプロジェクト内の識別子：</string>
+  <string key="references.goto">参照先へ移動</string>
+  <string key="references.back">戻る</string>
+  <string key="references.none_here">カーソル位置に参照（「#id」または「file.xml#id」）はありません。</string>
+  <string key="references.missing">参照先が見つかりません：{token}</string>
+  <string key="references.no_file">ファイルが見つかりません：{file}</string>
+  <string key="references.outside_project">参照先は {file} にありますが、このファイルはプロジェクトの文書ではありません。</string>
+  <string key="references.ambiguous.title">参照先が複数あります</string>
+  <string key="references.ambiguous.label">{token} の識別子は複数回定義されています。参照先を選んでください：</string>
+  <string key="references.ambiguous.item">{file}、{line}行</string>
+  <string key="references.jumped">参照先：{file}、{line}行（Alt+← で戻る）</string>
+  <string key="references.no_history">戻る位置がありません。</string>
+  <string key="references.action">参照</string>
+  <string key="references.action.tip">プロジェクトの全文書の参照（「#id」「file.xml#id」）を検査します</string>
+  <string key="references.recheck">再検査</string>
+  <string key="references.close">参照パネルを隠す</string>
+  <string key="references.column.document">文書</string>
+  <string key="references.column.line">行</string>
+  <string key="references.column.attribute">属性</string>
+  <string key="references.column.value">値</string>
+  <string key="references.column.problem">問題</string>
+  <string key="references.problem.missing">参照先が見つかりません</string>
+  <string key="references.problem.ambiguous">参照先が複数あります：{targets}</string>
+  <string key="references.problem.no_file">ファイルが見つかりません</string>
+  <string key="references.summary.ok">{count}件の参照を検査しました：すべて解決済みです ✓</string>
+  <string key="references.summary.problems">{count}件の参照を検査しました。問題：{problems}件。行をダブルクリックすると参照へ移動します。</string>
+  <string key="references.summary.none">プロジェクトの文書に参照（「#id」「file.xml#id」）はありません。</string>
+  <string key="project.error.unknown_pivot">不明なピボット伝本：「{witness}」は project.xml の伝本（{witnesses}）に含まれていません。</string>
+  <string key="project.error.unknown_value">project.xml：{attribute} の値「{value}」は不明です（使用できる値：{expected}）。</string>
+  <string key="project.error.missing_attribute">project.xml：{element} には属性 {attribute} が必要です。</string>
+  <string key="project.error.root">project.xml のルート要素は &lt;teiManuscriptProject&gt;（または &lt;project&gt;）でなければなりません。</string>
+  <string key="project.error.missing_elements">project.xml には &lt;edition&gt; と &lt;witnesses&gt; が必要です。</string>
+  <string key="project.error.default_xslt_missing">Varians の既定のXSLTスタイルシートが見つかりません：{path}。Varians のインストールが不完全です。</string>
+  <string key="project.error.no_witness">project.xml に伝本が宣言されていません。&lt;witnesses&gt; に &lt;witness id="…"&gt; を少なくとも一つ追加してください。</string>
+  <string key="project.error.no_pivot">project.xml にピボット伝本が指定されていません。&lt;witnesses base="…"&gt; で、または一つの &lt;witness&gt; だけに role="base" を付けて指定してください。</string>
+  <string key="references.other_document">短い形式：{token} はこの文書の中だけを指します。この参照先を指すには {suggestion} と書いてください。</string>
+  <string key="references.problem.other_document">短い形式（参照先は別の文書）：{suggestions} と書いてください</string>
 </translations>

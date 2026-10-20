@@ -51,7 +51,7 @@
   <string key="status.ctrl_e.config">Nastavení Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Vrátit se ke korespondenci aktuální pasáže XML</string>
   <string key="manuscript.no_direct">bez přímé korespondence</string>
-  <string key="manuscript.no_match">Pro tento řádek pivotního rukopisu nebyla navržena žádná korespondence.</string>
+  <string key="manuscript.no_match">Pro tento řádek pivotního svědka nebyla navržena žádná korespondence.</string>
   <string key="manuscript.no_line">žádný řádek</string>
   <string key="manuscript.status">{page} · řádek {line}{extra}</string>
   <string key="manuscript.score"> · skóre {score}</string>
@@ -73,10 +73,10 @@
   <string key="preview.files_missing">Soubor XSLT nebo CSS nebyl nalezen. Vyberte soubory tlačítky výše.</string>
   <string key="preview.up_to_date">Náhled je již aktuální · {engine}. Není třeba jej znovu načítat.</string>
   <string key="preview.xml_invalid">Náhled nebyl aktualizován: XML dočasně není správně utvořené ({error}). Zůstává zobrazen poslední platný náhled.</string>
-  <string key="preview.updated.lines">Náhled aktualizován: {paragraphs} upravitelných odstavců · {lines} klikacích řádků pivotního rukopisu.</string>
-  <string key="preview.updated.no_lines">Náhled aktualizován: {paragraphs} upravitelných odstavců. Tento XSLT nevytváří značky řádků pivotního rukopisu.</string>
+  <string key="preview.updated.lines">Náhled aktualizován: {paragraphs} upravitelných odstavců · {lines} klikacích řádků pivotního svědka.</string>
+  <string key="preview.updated.no_lines">Náhled aktualizován: {paragraphs} upravitelných odstavců. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
   <string key="preview.transform_error">Chyba transformace XSLT: {error}</string>
-  <string key="preview.base_selected">Vybrán řádek {line} pivotního rukopisu · svědci synchronizováni.</string>
+  <string key="preview.base_selected">Vybrán řádek {line} pivotního svědka · svědci synchronizováni.</string>
   <string key="preview.toc">Obsah</string>
   <string key="preview.edit_paragraph">Upravit tento odstavec TEI</string>
   <string key="fragment.initial">Fragment TEI: klikněte v náhledu na ✎</string>
@@ -155,7 +155,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
 {witnesses} svědků, {lines} základních řádků.</string>
   <string key="webgen.missing">
 
-Stránky chybějící v mezipaměti pivotního rukopisu: {pages}</string>
+Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="project.open_error">Projekt se nepodařilo otevřít</string>
   <string key="viewer.search.placeholder">Hledat…</string>
   <string key="viewer.prev_base">← řádek</string>
@@ -180,11 +180,11 @@ Stránky chybějící v mezipaměti pivotního rukopisu: {pages}</string>
   <string key="viewer.note">poznámka</string>
   <string key="console.viewer_generated">Prohlížeč vygenerován: {path}</string>
   <string key="console.viewer_stats">Svědci: {witnesses} · základní řádky: {lines}</string>
-  <string key="console.missing_pages">Stránky chybějící v mezipaměti pivotního rukopisu: {pages}</string>
+  <string key="console.missing_pages">Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="preview.choose_xslt">Vybrat styl XSLT</string>
   <string key="preview.choose_css">Vybrat styl CSS</string>
-  <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných odstavců · {lines} klikacích řádků pivotního rukopisu.</string>
-  <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných odstavců. Tento XSLT nevytváří značky řádků pivotního rukopisu.</string>
+  <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných odstavců · {lines} klikacích řádků pivotního svědka.</string>
+  <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných odstavců. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
   <string key="viewer.image_unavailable">Obrázek IIIF není dostupný</string>
   <string key="status.base_line">{base} řádek {line}/{total}</string>
   <string key="common.all_files">Všechny soubory</string>
@@ -242,8 +242,8 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.witness.add">Přidat…</string>
   <string key="project.witness.edit">Upravit…</string>
   <string key="project.witness.remove">Odebrat</string>
-  <string key="project.witness.set_base">Nastavit jako pivotní rukopis</string>
-  <string key="project.witness.base">Pivotní rukopis</string>
+  <string key="project.witness.set_base">Nastavit jako pivotního svědka</string>
+  <string key="project.witness.base">Pivotní</string>
   <string key="project.witness.secondary">Sekundární</string>
   <string key="project.validation.title">Neplatný projekt</string>
   <string key="project.validation.witness_id">Identifikátor svědka je povinný, nesmí obsahovat mezery ani začínat znakem #.</string>
@@ -255,7 +255,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.validation.edition_missing">Soubor TEI nebyl nalezen:
 {path}</string>
   <string key="project.validation.no_witness">Přidejte alespoň jednoho textového svědka.</string>
-  <string key="project.validation.no_base">Vyberte pivotní rukopis pro synchronizaci.</string>
+  <string key="project.validation.no_base">Vyberte pivotního svědka pro synchronizaci.</string>
   <string key="project.validation.rendering_missing">Jeden nebo více souborů zobrazení (XSLT, CSS, konfigurace Ctrl+E) nebylo nalezeno.</string>
   <string key="project.validation.i18n_missing">Složka překladů nebyla nalezena.</string>
   <string key="project.new.error.title">Projekt se nepodařilo vytvořit</string>
@@ -573,19 +573,19 @@ Identifikátory (výběr): {ids}</string>
   <string key="manuscript.no_image_reason.canvas_not_found">Canvas IIIF nenalezen: zkontrolujte manifest a přiřazení stránky.</string>
   <string key="manuscript.no_image_reason.ambiguous">Existuje více možných Canvasů: správný list vyberte ručně.</string>
   <string key="manuscript.no_image_reason.no_match">Pro tuto stránku nelze Canvas spolehlivě určit; použijte nastavení svědka.</string>
-  <string key="pivot.option.pb">Připravit značky &lt;pb/&gt; pivotního rukopisu v prázdném TEI</string>
+  <string key="pivot.option.pb">Připravit značky &lt;pb/&gt; pivotního svědka v prázdném TEI</string>
   <string key="pivot.option.lb">Vytvořit také značky &lt;lb/&gt; podle ALTO, PAGE či synchronizace</string>
-  <string key="pivot.title">Příprava transkripce pivotního rukopisu</string>
+  <string key="pivot.title">Příprava transkripce pivotního svědka</string>
   <string key="pivot.not_empty">Transkripce již obsahuje text nebo značky; nic nebylo změněno. Funkce je určena pouze pro původně prázdné tělo TEI.</string>
-  <string key="pivot.no_pages">Pro pivotní rukopis nejsou dostupné stránky s plochami &lt;surface&gt;. Vyberte příslušné snímky.</string>
+  <string key="pivot.no_pages">Pro pivotního svědka nejsou dostupné stránky s plochami &lt;surface&gt;. Vyberte příslušné snímky.</string>
   <string key="pivot.preview.title">Náhled před vytvořením značek TEI</string>
   <string key="pivot.preview.summary">Výchozí rukopis {witness}: {pages} stran, {lines} začátků řádků k vložení.</string>
   <string key="pivot.preview.warnings">Upozornění a přehled stran</string>
   <string key="pivot.preview.confirm">Potvrdit vložení? Před úpravou bude vytvořena záloha s časovým údajem. Text OCR se nekopíruje.</string>
   <string key="pivot.done">Značky byly vytvořeny. Záloha: {backup}.</string>
-  <string key="project.witness.pivot_tip">Pivotní rukopis slouží pouze jako technická reference pro synchronizaci; nemusí jít o základní rukopis kritické edice.</string>
-  <string key="manuscript.sync.no_base_keys">Soubor JSON neobsahuje vazby na pivotní rukopis: dostupná je pouze navigace po stránkách.</string>
-  <string key="manuscript.sync.unmatched_base_keys">Vazby v JSON neodpovídají žádnému řádku pivotního rukopisu. Zkontrolujte identifikátory synchronizace.</string>
+  <string key="project.witness.pivot_tip">Pivotní svědek slouží pouze jako technická reference pro synchronizaci; nemusí jít o základní rukopis kritické edice.</string>
+  <string key="manuscript.sync.no_base_keys">Soubor JSON neobsahuje vazby na pivotního svědka: dostupná je pouze navigace po stránkách.</string>
+  <string key="manuscript.sync.unmatched_base_keys">Vazby v JSON neodpovídají žádnému řádku pivotního svědka. Zkontrolujte identifikátory synchronizace.</string>
   <string key="diagnostics.menu">Diagnostika rukopisů…</string>
   <string key="diagnostics.title">Diagnostika rukopisů</string>
   <string key="diagnostics.intro">Stav zdrojů aktuálního projektu. ALTO/PAGE popisuje fyzické řádky, ale nemusí obsahovat jejich synchronizaci.</string>
@@ -594,7 +594,7 @@ Identifikátory (výběr): {ids}</string>
   <string key="diagnostics.column.pages">Strany</string>
   <string key="diagnostics.column.images">Obrazy</string>
   <string key="diagnostics.column.geometry">Fyzické řádky</string>
-  <string key="diagnostics.column.links">Vazby na pivotní rukopis</string>
+  <string key="diagnostics.column.links">Vazby na pivotního svědka</string>
   <string key="diagnostics.column.issues">Zjištění</string>
   <string key="diagnostics.mode.active">Synchronizované řádky</string>
   <string key="diagnostics.mode.page">Strany / bez vazeb</string>
@@ -614,15 +614,15 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="diagnostics.refresh.done">Zdroje aktualizovány (změněných rukopisů: {count}).</string>
   <string key="diagnostics.issue.alignment_missing">Soubor JSON synchronizace nebyl nalezen</string>
   <string key="diagnostics.issue.witness_mismatch">Identifikátor rukopisu v JSON nesouhlasí</string>
-  <string key="diagnostics.issue.pivot_mismatch">JSON odkazuje na jiný pivotní rukopis</string>
+  <string key="diagnostics.issue.pivot_mismatch">JSON odkazuje na jiného pivotního svědka</string>
   <string key="diagnostics.issue.local_images_missing">Některé místní obrazy chybějí</string>
   <string key="diagnostics.issue.ocr_unassociated">Strany ALTO/PAGE nejsou přiřazeny k IIIF</string>
-  <string key="diagnostics.issue.no_base_keys">Chybějí vazby base_keys na pivotní rukopis</string>
-  <string key="diagnostics.issue.pivot_unavailable">Synchronizace pivotního rukopisu není dostupná</string>
-  <string key="diagnostics.issue.all_keys_unknown">Nebyl rozpoznán žádný identifikátor řádku pivotního rukopisu</string>
-  <string key="diagnostics.issue.some_keys_unknown">Některé odkazy na pivotní rukopis nejsou známé</string>
+  <string key="diagnostics.issue.no_base_keys">Chybějí vazby base_keys na pivotního svědka</string>
+  <string key="diagnostics.issue.pivot_unavailable">Synchronizace pivotního svědka není dostupná</string>
+  <string key="diagnostics.issue.all_keys_unknown">Nebyl rozpoznán žádný identifikátor řádku pivotního svědka</string>
+  <string key="diagnostics.issue.some_keys_unknown">Některé odkazy na pivotního svědka nejsou známé</string>
   <string key="diagnostics.issue.pages_only">Rukopis lze prohlížet po stranách, bez synchronizačního JSON</string>
-  <string key="diagnostics.issue.pivot_no_lines">JSON pivotního rukopisu neobsahuje použitelné řádky</string>
+  <string key="diagnostics.issue.pivot_no_lines">JSON pivotního svědka neobsahuje použitelné řádky</string>
   <string key="diagnostics.refresh.mapping_changed">— změněny vazby nebo identifikátory</string>
   <string key="folio.navigator.label">Folia:</string>
   <string key="folio.full_image">Celý snímek</string>
@@ -693,4 +693,45 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
 
 Soubor se nesmaže: zůstane na disku.</string>
   <string key="documents.error.title">Dokumenty projektu</string>
+  <string key="viewer.show_variants">Varianty</string>
+  <string key="viewer.show_variants.tip">Zobrazit nebo skrýt značky variant (v) v textu</string>
+  <string key="viewer.show_notes">Poznámky</string>
+  <string key="viewer.show_notes.tip">Zobrazit nebo skrýt značky poznámek (n) v textu</string>
+  <string key="completion.ids.label">Identifikátory projektu pro @{attribute} v &lt;{element}&gt;:</string>
+  <string key="references.goto">Přejít na cíl</string>
+  <string key="references.back">Zpět</string>
+  <string key="references.none_here">Pod kurzorem není žádný odkaz („#id“ nebo „soubor.xml#id“).</string>
+  <string key="references.missing">Cíl nenalezen: {token}</string>
+  <string key="references.no_file">Soubor nenalezen: {file}</string>
+  <string key="references.outside_project">Cíl je v souboru {file}, který není dokumentem projektu.</string>
+  <string key="references.ambiguous.title">Nejednoznačný cíl</string>
+  <string key="references.ambiguous.label">Identifikátor {token} je definován vícekrát. Vyberte cíl:</string>
+  <string key="references.ambiguous.item">{file}, řádek {line}</string>
+  <string key="references.jumped">Cíl: {file}, řádek {line} (Alt+← zpět)</string>
+  <string key="references.no_history">Není kam se vrátit.</string>
+  <string key="references.action">Odkazy</string>
+  <string key="references.action.tip">Zkontrolovat odkazy („#id“, „soubor.xml#id“) ve všech dokumentech projektu</string>
+  <string key="references.recheck">Znovu zkontrolovat</string>
+  <string key="references.close">Skrýt panel odkazů</string>
+  <string key="references.column.document">Dokument</string>
+  <string key="references.column.line">Řádek</string>
+  <string key="references.column.attribute">Atribut</string>
+  <string key="references.column.value">Hodnota</string>
+  <string key="references.column.problem">Problém</string>
+  <string key="references.problem.missing">Cíl nenalezen</string>
+  <string key="references.problem.ambiguous">Nejednoznačný cíl: {targets}</string>
+  <string key="references.problem.no_file">Soubor nenalezen</string>
+  <string key="references.summary.ok">Zkontrolováno odkazů: {count}; všechny jsou vyřešeny ✓</string>
+  <string key="references.summary.problems">Zkontrolováno odkazů: {count}, problémů: {problems}. Dvojitým kliknutím na řádek přejdete na odkaz.</string>
+  <string key="references.summary.none">Dokumenty projektu neobsahují žádný odkaz („#id“, „soubor.xml#id“).</string>
+  <string key="project.error.unknown_pivot">Neznámý pivotní svědek: „{witness}“ není mezi svědky v project.xml ({witnesses}).</string>
+  <string key="project.error.unknown_value">project.xml: neznámá hodnota „{value}“ pro {attribute} (možné hodnoty: {expected}).</string>
+  <string key="project.error.missing_attribute">project.xml: {element} vyžaduje atribut {attribute}.</string>
+  <string key="project.error.root">Kořenový prvek project.xml musí být &lt;teiManuscriptProject&gt; (nebo &lt;project&gt;).</string>
+  <string key="project.error.missing_elements">project.xml musí obsahovat &lt;edition&gt; a &lt;witnesses&gt;.</string>
+  <string key="project.error.default_xslt_missing">Výchozí šablona XSLT programu Varians nebyla nalezena: {path}. Instalace programu Varians je neúplná.</string>
+  <string key="project.error.no_witness">project.xml nedeklaruje žádného svědka: přidejte do &lt;witnesses&gt; alespoň jeden &lt;witness id="…"&gt;.</string>
+  <string key="project.error.no_pivot">project.xml neurčuje pivotního svědka: uveďte ho pomocí &lt;witnesses base="…"&gt; nebo pomocí role="base" u jediného &lt;witness&gt;.</string>
+  <string key="references.other_document">Krátký tvar: {token} označuje pouze tento dokument. Chcete-li odkázat na tento cíl, napište {suggestion}.</string>
+  <string key="references.problem.other_document">Krátký tvar, cíl v jiném dokumentu: napište {suggestions}</string>
 </translations>
