@@ -70,3 +70,30 @@ def test_prefixed_names_match_local_names(tmp_path):
     cfg = load_custom_completion(p)
     assert cfg.attribute_names("tei:rdg") == ("xml:id",)
     assert cfg.attribute_values("tei:rdg", "id")[0] == ("x",)
+
+
+def test_dynamic_identifier_values_from_project_documents(tmp_path):
+    # Source « ids » : identifiants des documents du projet, limités à
+    # certains éléments (ici <place>), comme « witnesses » pour @wit.
+    p = tmp_path / "custom-elements.xml"
+    p.write_text('''<customElements>
+      <element name="name">
+        <attribute name="ref" valuesMode="replace">
+          <values source="ids" elements="place settlement" prefix="#"/>
+        </attribute>
+      </element>
+    </customElements>''', encoding="utf-8")
+    cfg = load_custom_completion(p)
+    (source,) = cfg.attribute_spec("name", "ref").dynamic_values
+    assert source.source == "ids" and source.elements == ("place", "settlement")
+    asked = []
+
+    def ids_for(elements):
+        asked.append(elements)
+        return ("clairvaux", "citeaux")
+
+    values, mode = cfg.attribute_values("name", "ref", ("T1",), ids_for)
+    assert values == ("#clairvaux", "#citeaux") and mode == "replace"
+    assert asked == [("place", "settlement")]
+    # Sans fournisseur d'identifiants (ancien appel), la source est vide.
+    assert cfg.attribute_values("name", "ref", ("T1",)) == ((), "replace")

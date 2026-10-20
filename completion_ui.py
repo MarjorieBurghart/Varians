@@ -15,6 +15,7 @@ from rng_completion import (
     adapt_pointer_list_value_context, format_pointer_list_insertion, load_completion_model,
 )
 from schema_resolution import resolve_schema
+from xml_references import REFERENCE_ATTRIBUTES, target_elements
 
 
 class CompletionDialog(QDialog):
@@ -35,12 +36,18 @@ class CompletionDialog(QDialog):
         for item in items:
             if isinstance(item, (tuple, list)) and len(item) >= 2:
                 value, source = str(item[0]), str(item[1])
+                # Troisième élément facultatif : description de la valeur
+                # (texte de l'entrée visée par un identifiant, nom du témoin).
+                description = str(item[2]) if len(item) >= 3 and item[2] else ""
                 source_key = {
                     "rng": "completion.source.rng",
                     "custom": "completion.source.custom",
                     "both": "completion.source.both",
                 }.get(source)
-                display = (f"{value}    [{_t(source_key)}]" if source_key else value)
+                if description:
+                    display = f"{value}    [{description}]"
+                else:
+                    display = (f"{value}    [{_t(source_key)}]" if source_key else value)
             else:
                 value = str(item)
                 display = value
@@ -48,7 +55,8 @@ class CompletionDialog(QDialog):
         self._selected = None
         self._allow_custom = bool(allow_custom)
         self.setWindowTitle(title)
-        self.resize(360, 330)
+        # Plus large lorsque des descriptions (nom d'une personne…) suivent les valeurs.
+        self.resize(560 if any(display != value for value, display in self._all_items) else 360, 330)
         root = QVBoxLayout(self)
         root.setContentsMargins(8, 8, 8, 8)
         root.setSpacing(6)
@@ -77,7 +85,7 @@ class CompletionDialog(QDialog):
         needle = (text or "").casefold()
         starts = [x for x in self._all_items if x[0].casefold().startswith(needle)]
         contains = [x for x in self._all_items
-                    if needle in x[0].casefold() and x not in starts]
+                    if (needle in x[0].casefold() or needle in x[1].casefold()) and x not in starts]
         values = starts + contains
         self.list_widget.clear()
         for value, display in values:
@@ -296,30 +304,14 @@ class CompletionMixin:
             label = _t("completion.attributes.label", element=context.current_element or "?")
 
         elif context.kind == "attribute_value":
-            rng_values = (model.allowed_attribute_values(
-                context.current_element, context.current_attribute
-            ) if model is not None else ())
-            custom_values, custom_mode = (
-                custom.attribute_values(
-                    context.current_element,
-                    context.current_attribute,
-                    self._custom_witness_ids(),
-                ) if custom is not None else ((), "append")
-            )
-            items = merge_suggestion_sources(rng_values, custom_values, custom_mode)
-            # Les listes de pointeurs TEI (valeurs commençant par #) peuvent
-            # contenir plusieurs tokens séparés par des espaces. Adapte alors
-            # le contexte au token courant et retire les pointeurs déjà saisis.
-            context, remaining_pointer_values = adapt_pointer_list_value_context(
-                context, text, position, [value for value, _source in items]
-            )
-            if remaining_pointer_values != tuple(value for value, _source in items):
-                remaining_set = set(remaining_pointer_values)
-                items = [item for item in items if item[0] in remaining_set]
+            context, items, custom_values, custom_mode = self._attribute_value_suggestions(
+                context, text, position, model, custom)
             has_project_suggestions = bool(custom_values)
             title = _t("completion.values.title")
+            # Identifiants du projet : des suggestions, non des valeurs imposées par le schéma.
             label = _t(
-                "completion.values.label",
+                "completion.ids.label" if any(item[1] != "rng" and item[2] for item in items)
+                else "completion.values.label",
                 attribute=context.current_attribute or "?",
                 element=context.current_element or "?",
             )
@@ -343,11 +335,11 @@ class CompletionMixin:
         # Dédupliquer sans perdre l'ordre RNG d'abord, Projet ensuite.
         dedup = []
         seen = set()
-        for value, source in items:
-            if value in seen:
+        for item in items:
+            if item[0] in seen:
                 continue
-            seen.add(value)
-            dedup.append((value, source))
+            seen.add(item[0])
+            dedup.append(item)
         items = dedup
         if not items:
             if model is None and custom is None:
@@ -365,6 +357,54 @@ class CompletionMixin:
         if dlg.exec() != QDialog.DialogCode.Accepted or not dlg.selected_value:
             return
         self._apply_rng_completion(editor, context, dlg.selected_value)
+
+    def _attribute_value_suggestions(self, context, text, position, model, custom):
+        """Valeurs proposées dans la valeur d'un attribut : valeurs finies du
+        RNG, valeurs de custom-elements.xml et, pour un attribut de référence
+        (@ref, @who, @wit…), identifiants des documents du projet.
+
+        Renvoie ``(contexte, [(valeur, provenance, description)], valeurs
+        projet, mode)``. Pour une liste de pointeurs (``wit="#T1 #T2"``), le
+        contexte est réduit au jeton courant et les pointeurs déjà saisis
+        sont retirés.
+        """
+        element, attribute = context.current_element, context.current_attribute
+        rng_values = (model.allowed_attribute_values(element, attribute)
+                      if model is not None else ())
+        entries_by_targets = {}
+
+        def entries(elements):
+            key = frozenset(elements) if elements else None
+            if key not in entries_by_targets:
+                entries_by_targets[key] = self._reference_id_entries(key)
+            return entries_by_targets[key]
+
+        def ids_for(elements):
+            return tuple(dict.fromkeys(value.rsplit("#", 1)[-1] for value, _d, _e in entries(elements)))
+
+        custom_values, custom_mode = (
+            custom.attribute_values(element, attribute, self._custom_witness_ids(), ids_for)
+            if custom is not None else ((), "append")
+        )
+        id_values = ()
+        if ((attribute or "").split(":", 1)[-1] in REFERENCE_ATTRIBUTES
+                and not (custom_values and custom_mode == "replace")):
+            id_values = tuple(value for value, _d, _e in entries(target_elements(element, attribute)))
+        items = merge_suggestion_sources(rng_values, tuple(custom_values) + id_values, custom_mode)
+        descriptions = {}
+        for found in entries_by_targets.values():
+            for value, description, _element in found:
+                descriptions.setdefault(value, description)
+        for witness_id, label in getattr(self, "witness_labels", {}).items():
+            descriptions[f"#{witness_id}"] = label
+        context, remaining_pointer_values = adapt_pointer_list_value_context(
+            context, text, position, [value for value, _source in items]
+        )
+        if remaining_pointer_values != tuple(value for value, _source in items):
+            remaining_set = set(remaining_pointer_values)
+            items = [item for item in items if item[0] in remaining_set]
+        items = [(value, source, descriptions.get(value, "")) for value, source in items]
+        return context, items, custom_values, custom_mode
 
     def _apply_rng_completion(self, editor, context, value):
         """Insère la suggestion sans remplacer une sélection éditoriale existante."""

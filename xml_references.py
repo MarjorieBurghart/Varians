@@ -40,6 +40,23 @@ _TAG_RE = re.compile(r"<[^>]*>")
 LABEL_LENGTH = 60
 
 
+_PERSONS = frozenset({"person", "personGrp", "persona"})
+# Éléments visés par défaut, selon l'élément porteur de @ref ou l'attribut.
+_REF_TARGETS = {"persName": _PERSONS, "placeName": frozenset({"place"}), "orgName": frozenset({"org"})}
+_ATTRIBUTE_TARGETS = {"who": _PERSONS, "wit": frozenset({"witness"}), "edRef": frozenset({"witness"})}
+
+
+def target_elements(element, attribute):
+    """Noms locaux des éléments qu'un attribut vise d'ordinaire, ou None
+    (tous) : ``persName/@ref`` vise ``person``, ``@wit`` vise ``witness``…"""
+    attribute = _local_name(attribute or "")
+    if attribute in _ATTRIBUTE_TARGETS:
+        return _ATTRIBUTE_TARGETS[attribute]
+    if attribute == "ref":
+        return _REF_TARGETS.get(_local_name(element or ""))
+    return None
+
+
 def parse_pointer(token):
     """``(fichier ou None, id)`` pour un pointeur local, sinon ``None``."""
     token = str(token or "").strip()

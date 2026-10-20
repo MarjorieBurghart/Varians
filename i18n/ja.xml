@@ -697,4 +697,5 @@
   <string key="viewer.show_variants.tip">本文中の異読マーカー（v）を表示または非表示にする</string>
   <string key="viewer.show_notes">注</string>
   <string key="viewer.show_notes.tip">本文中の注マーカー（n）を表示または非表示にする</string>
+  <string key="completion.ids.label">&lt;{element}&gt; の @{attribute} に使えるプロジェクト内の識別子：</string>
 </translations>

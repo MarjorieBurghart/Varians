@@ -697,4 +697,5 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="viewer.show_variants.tip">Zobrazit nebo skrýt značky variant (v) v textu</string>
   <string key="viewer.show_notes">Poznámky</string>
   <string key="viewer.show_notes.tip">Zobrazit nebo skrýt značky poznámek (n) v textu</string>
+  <string key="completion.ids.label">Identifikátory projektu pro @{attribute} v &lt;{element}&gt;:</string>
 </translations>

@@ -25,6 +25,13 @@ Valeurs dynamiques tirées des témoins du projet::
       <values source="witnesses" prefix="#"/>
     </attribute>
 
+Valeurs dynamiques tirées des identifiants (``xml:id``) des documents du
+projet, éventuellement limités à certains éléments::
+
+    <attribute name="ref" valuesMode="replace">
+      <values source="ids" elements="person personGrp" prefix="#"/>
+    </attribute>
+
 ``valuesMode="append"`` (défaut) ajoute les valeurs personnalisées aux valeurs
 finies du RNG. ``valuesMode="replace"`` remplace uniquement la *liste proposée*
 par l'interface ; le schéma RELAX NG reste seul juge de la validité.
@@ -49,6 +56,8 @@ class DynamicValues:
     source: str
     prefix: str = ""
     suffix: str = ""
+    # Source « ids » : noms locaux des éléments retenus ; vide = tous.
+    elements: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -60,11 +69,16 @@ class CustomAttributeSpec:
     dynamic_values: tuple[DynamicValues, ...] = ()
     values_mode: str = "append"
 
-    def resolved_values(self, witness_ids=()) -> tuple[str, ...]:
+    def resolved_values(self, witness_ids=(), ids_for=None) -> tuple[str, ...]:
+        """``ids_for(elements)`` fournit les identifiants de la source « ids »
+        (aucun si l'appelant ne la connaît pas)."""
         out: list[str] = list(self.values)
         for source in self.dynamic_values:
             if source.source == "witnesses":
                 out.extend(f"{source.prefix}{wid}{source.suffix}" for wid in witness_ids if wid)
+            elif source.source == "ids" and ids_for is not None:
+                out.extend(f"{source.prefix}{ident}{source.suffix}"
+                           for ident in ids_for(source.elements) if ident)
         return tuple(dict.fromkeys(v for v in out if v != ""))
 
 
@@ -111,11 +125,12 @@ class CustomCompletionConfig:
                 return attr
         return None
 
-    def attribute_values(self, element: str | None, attribute: str | None, witness_ids=()) -> tuple[tuple[str, ...], str]:
+    def attribute_values(self, element: str | None, attribute: str | None, witness_ids=(),
+                         ids_for=None) -> tuple[tuple[str, ...], str]:
         spec = self.attribute_spec(element, attribute)
         if spec is None:
             return (), "append"
-        return spec.resolved_values(witness_ids), spec.values_mode
+        return spec.resolved_values(witness_ids, ids_for), spec.values_mode
 
     def formatting_for(self, element: str | None) -> str:
         """Retourne la règle de mise en forme projet pour un élément.
@@ -168,12 +183,13 @@ def load_custom_completion(path: str | Path) -> CustomCompletionConfig:
                         explicit.append(str(value).strip())
                 elif child.tag == "values":
                     source = (child.get("source") or "").strip().lower()
-                    if source not in {"witnesses"}:
+                    if source not in {"witnesses", "ids"}:
                         raise ValueError(f"UNKNOWN_VALUES_SOURCE:{source}")
                     dynamic.append(DynamicValues(
                         source=source,
                         prefix=child.get("prefix", ""),
                         suffix=child.get("suffix", ""),
+                        elements=tuple((child.get("elements") or "").split()),
                     ))
             attrs.append(CustomAttributeSpec(
                 name=attr_name,

@@ -697,4 +697,5 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="viewer.show_variants.tip">Variantenmarken (v) im Text ein- oder ausblenden</string>
   <string key="viewer.show_notes">Anmerkungen</string>
   <string key="viewer.show_notes.tip">Anmerkungsmarken (n) im Text ein- oder ausblenden</string>
+  <string key="completion.ids.label">Kennungen des Projekts für @{attribute} in &lt;{element}&gt;:</string>
 </translations>
