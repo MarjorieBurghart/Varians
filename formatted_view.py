@@ -550,7 +550,14 @@ def transform_with_xslt(xml_text, xsl_path, params=None):
                 if k[0] == str(xp):
                     _LXML_TRANSFORM_CACHE.pop(k, None)
             xsl_doc = LET.parse(str(xp), parser=parser)
-            transform = LET.XSLT(xsl_doc)
+            # Une feuille peut lire des fichiers locaux (document(), import),
+            # mais jamais écrire de fichier, créer de dossier ni accéder au
+            # réseau.
+            access = LET.XSLTAccessControl(
+                read_file=True, write_file=False, create_dir=False,
+                read_network=False, write_network=False,
+            )
+            transform = LET.XSLT(xsl_doc, access_control=access)
             _LXML_TRANSFORM_CACHE[cache_key] = transform
         xslt_params = {str(k): LET.XSLT.strparam(str(v)) for k, v in (params or {}).items()}
         return str(transform(xml_doc, **xslt_params)), "lxml (XSLT en cache)"

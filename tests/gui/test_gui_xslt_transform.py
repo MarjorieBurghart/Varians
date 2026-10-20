@@ -96,3 +96,31 @@ def test_error_message_does_not_repeat_a_previous_error(tmp_path, fv):
     message = str(info.value)
     assert "seconde.xsl" in message
     assert "premiere.xsl" not in message and "///" not in message
+
+
+# --- Accès aux fichiers et au réseau pendant une transformation ---------------
+
+def test_stylesheet_cannot_write_files(tmp_path, fv):
+    target = tmp_path / "ecrit_par_la_feuille.txt"
+    xsl = _xsl(tmp_path, f'<xsl:template match="/"><exsl:document href="{target.as_uri()}" '
+                         'method="text">contenu</exsl:document><p/></xsl:template>')
+    with pytest.raises(RuntimeError) as info:
+        fv.transform_with_xslt(TEI, xsl)
+    assert not target.exists()
+    assert "write" in str(info.value).lower()
+
+
+def test_stylesheet_cannot_read_from_network(tmp_path, fv):
+    xsl = _xsl(tmp_path, '<xsl:template match="/"><xsl:value-of '
+                         'select="document(\'http://example.invalid/autorites.xml\')//p"/></xsl:template>')
+    with pytest.raises(RuntimeError) as info:
+        fv.transform_with_xslt(TEI, xsl)
+    assert "example.invalid" in str(info.value)          # aucun accès réseau tenté
+
+
+def test_stylesheet_can_still_read_local_files(tmp_path, fv):
+    (tmp_path / "autorites.xml").write_text("<personnes><p>Abélard</p></personnes>", encoding="utf-8")
+    xsl = _xsl(tmp_path, '<xsl:output method="text"/><xsl:template match="/">'
+                         '<xsl:value-of select="document(\'autorites.xml\')//p"/></xsl:template>')
+    html, _engine = fv.transform_with_xslt(TEI, xsl)
+    assert html.strip() == "Abélard"

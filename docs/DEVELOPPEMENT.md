@@ -79,6 +79,15 @@ exécuté comme script) : les services communs passent par `app_context`.
 Tout nouveau module local importé par `editeur_tei.py` doit figurer dans
 `_LOCAL_MODULE_NAMES` (un test le vérifie).
 
+## Transformations XSLT de l'aperçu
+
+`formatted_view.transform_with_xslt` emploie lxml (XSLT 1.0). Une feuille
+peut lire des fichiers locaux (`document()`, `xsl:import`), mais ne peut ni
+écrire de fichier (`exsl:document`), ni créer de dossier, ni accéder au
+réseau. Une erreur de la feuille est signalée telle quelle, au format
+`fichier:ligne: message`. Le moteur .NET via PowerShell ne sert de secours
+que si lxml n'est pas installé.
+
 ## Historique et versions
 
 Depuis V0.8.6.0, l'historique est porté par Git. Les rapports de test et
