@@ -69,10 +69,13 @@ class DocumentTabsMixin:
         affichage : aucun signal n'atteint encore la fenêtre."""
         document = QTextDocument(self)
         document.setDocumentLayout(QPlainTextDocumentLayout(document))
+        # Coloration attachée AVANT le texte : attachée à un document déjà
+        # rempli, sa passe différée incrémenterait la révision, que la fenêtre
+        # prendrait pour une modification.
+        session.highlighter = XMLHighlighter(document)
         document.setPlainText(text)
         document.setModified(False)
         session.text_document = document
-        session.highlighter = XMLHighlighter(document)
         session.mark_loaded(session.path, document.revision())
 
     def _attach_document(self, session):

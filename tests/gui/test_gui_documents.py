@@ -179,3 +179,15 @@ def test_missing_document_file_is_reported(open_window, project_with_documents, 
     dialogs.expect("critical")
     assert not window.show_document(aux)
     assert window.document is window.edition_session
+
+
+def test_displayed_document_is_not_marked_modified_by_syntax_highlighting(open_window, project_with_documents, qtbot):
+    # QSyntaxHighlighter colore en différé ; s'il est attaché à un document
+    # déjà rempli, sa passe incrémente la révision du document.
+    window = open_window(project_with_documents)
+    aux = _aux(window)
+    window.show_document(aux)
+    qtbot.wait(100)
+    assert aux.modified is False
+    assert "*" not in window.windowTitle()
+    assert aux.text_document.firstBlock().next().layout().formats()    # bien coloré
