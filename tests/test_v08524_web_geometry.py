@@ -28,8 +28,11 @@ const request=JSON.parse(fs.readFileSync(0,'utf8'));
 const out=globalThis.__geom[request.op](...request.args);
 process.stdout.write(JSON.stringify(out));'''
     args = kwargs['args']
+    # Un processus node par calcul : sur une machine Windows chargée, son
+    # démarrage a déjà dépassé 10 s (tests GitHub). Le délai ne sert qu'à ne
+    # pas rester bloqué.
     result = subprocess.run(['node', '-e', code, str(JS)], input=json.dumps({'op': op, 'args': args}),
-                            capture_output=True, text=True, timeout=10, check=True)
+                            capture_output=True, text=True, timeout=60, check=True)
     return json.loads(result.stdout)
 
 
