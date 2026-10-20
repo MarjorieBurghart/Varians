@@ -117,6 +117,30 @@ class CodeEditor(QPlainTextEdit):
         self._value_completer.setCompletionRole(Qt.ItemDataRole.UserRole)
         self._value_completer.activated[str].connect(self._accept_value_completion)
         self.cursorPositionChanged.connect(self._check_value_completion_cursor)
+        # Rappels facultatifs de la fenêtre : Ctrl+clic (``position`` -> True
+        # si le clic est traité) et menu du clic droit (``menu, position``).
+        self.reference_click_provider = None
+        self.context_menu_provider = None
+
+    def mousePressEvent(self, event):
+        if (event.button() == Qt.MouseButton.LeftButton
+                and event.modifiers() & Qt.KeyboardModifier.ControlModifier
+                and callable(self.reference_click_provider)):
+            position = self.cursorForPosition(event.position().toPoint()).position()
+            if self.reference_click_provider(position):
+                event.accept()
+                return
+        super().mousePressEvent(event)
+
+    def contextMenuEvent(self, event):
+        if not callable(self.context_menu_provider):
+            super().contextMenuEvent(event)
+            return
+        # Comme QPlainTextEdit lui-même : menu non bloquant, détruit à sa fermeture.
+        menu = self.createStandardContextMenu(event.pos())
+        menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        self.context_menu_provider(menu, self.cursorForPosition(event.pos()).position())
+        menu.popup(event.globalPos())
 
     def _value_proposals(self):
         if self.textCursor().hasSelection() or not callable(self.value_completion_provider):

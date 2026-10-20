@@ -698,4 +698,15 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="viewer.show_notes">Poznámky</string>
   <string key="viewer.show_notes.tip">Zobrazit nebo skrýt značky poznámek (n) v textu</string>
   <string key="completion.ids.label">Identifikátory projektu pro @{attribute} v &lt;{element}&gt;:</string>
+  <string key="references.goto">Přejít na cíl</string>
+  <string key="references.back">Zpět</string>
+  <string key="references.none_here">Pod kurzorem není žádný odkaz („#id“ nebo „soubor.xml#id“).</string>
+  <string key="references.missing">Cíl nenalezen: {token}</string>
+  <string key="references.no_file">Soubor nenalezen: {file}</string>
+  <string key="references.outside_project">Cíl je v souboru {file}, který není dokumentem projektu.</string>
+  <string key="references.ambiguous.title">Nejednoznačný cíl</string>
+  <string key="references.ambiguous.label">Identifikátor {token} je definován vícekrát. Vyberte cíl:</string>
+  <string key="references.ambiguous.item">{file}, řádek {line}</string>
+  <string key="references.jumped">Cíl: {file}, řádek {line} (Alt+← zpět)</string>
+  <string key="references.no_history">Není kam se vrátit.</string>
 </translations>

@@ -684,4 +684,15 @@ The file is not deleted: it stays on disk.</string>
   <string key="viewer.show_notes">Notes</string>
   <string key="viewer.show_notes.tip">Show or hide the note markers (n) in the text</string>
   <string key="completion.ids.label">Project identifiers for @{attribute} in &lt;{element}&gt;:</string>
+  <string key="references.goto">Go to target</string>
+  <string key="references.back">Go back</string>
+  <string key="references.none_here">No reference (“#id” or “file.xml#id”) under the cursor.</string>
+  <string key="references.missing">Target not found: {token}</string>
+  <string key="references.no_file">File not found: {file}</string>
+  <string key="references.outside_project">The target is in {file}, which is not a document of the project.</string>
+  <string key="references.ambiguous.title">Ambiguous target</string>
+  <string key="references.ambiguous.label">The identifier of {token} is defined more than once. Choose the target:</string>
+  <string key="references.ambiguous.item">{file}, line {line}</string>
+  <string key="references.jumped">Target: {file}, line {line} (Alt+← to go back)</string>
+  <string key="references.no_history">No previous position to go back to.</string>
 </translations>

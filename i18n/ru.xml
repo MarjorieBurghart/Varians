@@ -698,4 +698,15 @@
   <string key="viewer.show_notes">Примечания</string>
   <string key="viewer.show_notes.tip">Показать или скрыть метки примечаний (n) в тексте</string>
   <string key="completion.ids.label">Идентификаторы проекта для @{attribute} в &lt;{element}&gt;:</string>
+  <string key="references.goto">Перейти к цели</string>
+  <string key="references.back">Вернуться</string>
+  <string key="references.none_here">Под курсором нет ссылки («#id» или «файл.xml#id»).</string>
+  <string key="references.missing">Цель не найдена: {token}</string>
+  <string key="references.no_file">Файл не найден: {file}</string>
+  <string key="references.outside_project">Цель находится в {file}, который не является документом проекта.</string>
+  <string key="references.ambiguous.title">Неоднозначная цель</string>
+  <string key="references.ambiguous.label">Идентификатор {token} определён несколько раз. Выберите цель:</string>
+  <string key="references.ambiguous.item">{file}, строка {line}</string>
+  <string key="references.jumped">Цель: {file}, строка {line} (Alt+← — вернуться)</string>
+  <string key="references.no_history">Нет позиции, к которой можно вернуться.</string>
 </translations>

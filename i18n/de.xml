@@ -698,4 +698,15 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="viewer.show_notes">Anmerkungen</string>
   <string key="viewer.show_notes.tip">Anmerkungsmarken (n) im Text ein- oder ausblenden</string>
   <string key="completion.ids.label">Kennungen des Projekts für @{attribute} in &lt;{element}&gt;:</string>
+  <string key="references.goto">Zum Ziel springen</string>
+  <string key="references.back">Zurück</string>
+  <string key="references.none_here">Kein Verweis („#id“ oder „datei.xml#id“) unter dem Cursor.</string>
+  <string key="references.missing">Ziel nicht gefunden: {token}</string>
+  <string key="references.no_file">Datei nicht gefunden: {file}</string>
+  <string key="references.outside_project">Das Ziel liegt in {file}, das kein Dokument des Projekts ist.</string>
+  <string key="references.ambiguous.title">Mehrdeutiges Ziel</string>
+  <string key="references.ambiguous.label">Der Bezeichner von {token} ist mehrfach definiert. Wählen Sie das Ziel:</string>
+  <string key="references.ambiguous.item">{file}, Zeile {line}</string>
+  <string key="references.jumped">Ziel: {file}, Zeile {line} (Alt+← für zurück)</string>
+  <string key="references.no_history">Keine vorherige Position zum Zurückkehren.</string>
 </translations>

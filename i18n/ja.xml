@@ -698,4 +698,15 @@
   <string key="viewer.show_notes">注</string>
   <string key="viewer.show_notes.tip">本文中の注マーカー（n）を表示または非表示にする</string>
   <string key="completion.ids.label">&lt;{element}&gt; の @{attribute} に使えるプロジェクト内の識別子：</string>
+  <string key="references.goto">参照先へ移動</string>
+  <string key="references.back">戻る</string>
+  <string key="references.none_here">カーソル位置に参照（「#id」または「file.xml#id」）はありません。</string>
+  <string key="references.missing">参照先が見つかりません：{token}</string>
+  <string key="references.no_file">ファイルが見つかりません：{file}</string>
+  <string key="references.outside_project">参照先は {file} にありますが、このファイルはプロジェクトの文書ではありません。</string>
+  <string key="references.ambiguous.title">参照先が複数あります</string>
+  <string key="references.ambiguous.label">{token} の識別子は複数回定義されています。参照先を選んでください：</string>
+  <string key="references.ambiguous.item">{file}、{line}行</string>
+  <string key="references.jumped">参照先：{file}、{line}行（Alt+← で戻る）</string>
+  <string key="references.no_history">戻る位置がありません。</string>
 </translations>

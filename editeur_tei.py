@@ -465,6 +465,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.source_completion_action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self.source_completion_action.triggered.connect(lambda: self.show_rng_completion(self.editor))
         self.editor.addAction(self.source_completion_action)
+        self._install_reference_actions()
 
         self.left_tabs = QTabWidget()
 
