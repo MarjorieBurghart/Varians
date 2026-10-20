@@ -742,4 +742,8 @@
   <string key="documents.view.none">すべて解除</string>
   <string key="documents.view.move_up">上へ</string>
   <string key="documents.view.move_down">下へ</string>
+  <string key="documents.tab.hide">タブを隠す</string>
+  <string key="documents.tab.rename">タブの名前を変更…</string>
+  <string key="documents.tab.rename.title">タブの名前を変更</string>
+  <string key="documents.tab.rename.label">タブ名（project.xml の label 属性に保存されます。空欄にするとファイル名を表示します）：</string>
 </translations>

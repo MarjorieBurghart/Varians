@@ -742,4 +742,8 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="documents.view.none">Zrušit výběr všech</string>
   <string key="documents.view.move_up">Posunout nahoru</string>
   <string key="documents.view.move_down">Posunout dolů</string>
+  <string key="documents.tab.hide">Skrýt kartu</string>
+  <string key="documents.tab.rename">Přejmenovat kartu…</string>
+  <string key="documents.tab.rename.title">Přejmenovat kartu</string>
+  <string key="documents.tab.rename.label">Název karty (uloží se do project.xml, atribut label; ponechte prázdné pro zobrazení názvu souboru):</string>
 </translations>

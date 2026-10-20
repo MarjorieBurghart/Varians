@@ -14,20 +14,24 @@ Varians propose de les enregistrer avant de quitter.
 - Le dernier onglet visible ne peut pas être masqué.
 
 Affichage ▸ « Choisir les documents affichés… » ouvre
-``DocumentVisibilityDialog``, sur le modèle de la fenêtre des témoins.
+``DocumentVisibilityDialog``, sur le modèle de la fenêtre des témoins. Le
+clic droit sur un onglet propose : Masquer l'onglet, Renommer l'onglet…
+(attribut ``label`` du ``<document>`` dans ``project.xml``), Choisir les
+documents affichés…, Retirer le document du projet.
 """
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QAbstractItemView, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QListWidget,
-    QListWidgetItem, QPushButton, QVBoxLayout,
+    QAbstractItemView, QDialog, QDialogButtonBox, QHBoxLayout, QInputDialog, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QMenu, QMessageBox, QPushButton, QVBoxLayout,
 )
 from app_context import _settings, tr as _t
-from project_management import portable_path
+from project_management import portable_path, update_project_documents
 
 EDITION_KEY = "edition"
 _SETTINGS_SUFFIX = "documentTabs"
@@ -238,4 +242,59 @@ class DocumentDisplayMixin:
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return False
         self.set_document_tabs(dialog.ordered_keys(), dialog.hidden_keys())
+        return True
+
+    # --- Clic droit sur un onglet ---------------------------------------------
+
+    def _document_tab_menu(self, index):
+        """Menu de l'onglet ``index`` (None hors des onglets). Ses commandes
+        portent sur le document de cet onglet, même s'il n'est pas affiché."""
+        if not 0 <= index < len(self._tab_sessions):
+            return None
+        session = self._tab_sessions[index]
+        menu = QMenu(self)
+        hide = menu.addAction(_t("documents.tab.hide"))
+        hide.setEnabled(len(self._tab_sessions) > 1)
+        hide.triggered.connect(lambda _checked=False: self.hide_document_tab(session))
+        rename = menu.addAction(_t("documents.tab.rename"))
+        rename.setEnabled(not session.is_edition)
+        rename.triggered.connect(lambda _checked=False: self.rename_document_tab(session))
+        choose = menu.addAction(_t("documents.view.choose"))
+        choose.triggered.connect(lambda _checked=False: self.choose_displayed_documents())
+        menu.addSeparator()
+        remove = menu.addAction(_t("documents.remove.menu"))
+        remove.setEnabled(not session.is_edition)
+        remove.triggered.connect(lambda _checked=False: self._remove_document(session))
+        return menu
+
+    def _document_tab_context_menu(self, position):
+        bar = self.document_tab_bar
+        menu = self._document_tab_menu(bar.tabAt(position))
+        if menu is not None:
+            # Comme le menu de la source : non bloquant, détruit à sa fermeture.
+            menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            menu.popup(bar.mapToGlobal(position))
+
+    def rename_document_tab(self, session):
+        """« Renommer l'onglet… » d'un document auxiliaire : le nom est écrit
+        dans ``@label`` de son ``<document>`` (project.xml, copie ``.bak``) ;
+        un nom vide revient au nom du fichier. True si le nom a changé."""
+        if session.is_edition:
+            return False
+        name, ok = QInputDialog.getText(self, _t("documents.tab.rename.title"), _t("documents.tab.rename.label"),
+                                        QLineEdit.EchoMode.Normal, session.label)
+        label = name.strip()
+        if not ok or (label or Path(session.path).name) == session.label:
+            return False
+        target = Path(session.path).resolve()
+        configs = [replace(config, label=label) if Path(config.path).resolve() == target else config
+                   for config in self.project.documents]
+        try:
+            update_project_documents(self.project.path, configs)
+        except Exception as exc:
+            QMessageBox.critical(self, _t("documents.error.title"), str(exc))
+            return False
+        self.project = replace(self.project, documents=tuple(configs))
+        session.label = label or Path(session.path).name
+        self._refresh_document_tab(session)
         return True

@@ -728,4 +728,8 @@ The file is not deleted: it stays on disk.</string>
   <string key="documents.view.none">Select none</string>
   <string key="documents.view.move_up">Move up</string>
   <string key="documents.view.move_down">Move down</string>
+  <string key="documents.tab.hide">Hide tab</string>
+  <string key="documents.tab.rename">Rename tab…</string>
+  <string key="documents.tab.rename.title">Rename tab</string>
+  <string key="documents.tab.rename.label">Tab name (saved in project.xml, label attribute; leave empty to show the file name):</string>
 </translations>

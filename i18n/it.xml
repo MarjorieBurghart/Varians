@@ -742,4 +742,8 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="documents.view.none">Deseleziona tutto</string>
   <string key="documents.view.move_up">Sposta su</string>
   <string key="documents.view.move_down">Sposta giù</string>
+  <string key="documents.tab.hide">Nascondi la scheda</string>
+  <string key="documents.tab.rename">Rinomina la scheda…</string>
+  <string key="documents.tab.rename.title">Rinomina la scheda</string>
+  <string key="documents.tab.rename.label">Nome della scheda (salvato in project.xml, attributo label; lasciare vuoto per mostrare il nome del file):</string>
 </translations>

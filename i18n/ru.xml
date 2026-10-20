@@ -742,4 +742,8 @@
   <string key="documents.view.none">Снять выбор со всех</string>
   <string key="documents.view.move_up">Выше</string>
   <string key="documents.view.move_down">Ниже</string>
+  <string key="documents.tab.hide">Скрыть вкладку</string>
+  <string key="documents.tab.rename">Переименовать вкладку…</string>
+  <string key="documents.tab.rename.title">Переименовать вкладку</string>
+  <string key="documents.tab.rename.label">Название вкладки (сохраняется в project.xml, атрибут label; оставьте пустым, чтобы показывать имя файла):</string>
 </translations>

@@ -5,7 +5,8 @@ from __future__ import annotations
 
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtGui import QContextMenuEvent
+from PySide6.QtWidgets import QApplication, QInputDialog, QMenu, QMessageBox
 
 from app_context import _settings, tr
 from project_config import DocumentConfig, load_project
@@ -322,3 +323,109 @@ def test_display_command_follows_the_interface_language(open_window, three_docum
         assert window.action_choose_documents.toolTip() == tr("documents.view.choose.tip")
     finally:
         window._set_language_code("fr")
+
+
+# --- Clic droit sur un onglet ------------------------------------------------
+
+def _menu_entries(menu):
+    return [(action.text(), action.isEnabled()) for action in menu.actions() if not action.isSeparator()]
+
+
+def _menu_action(menu, key):
+    return next(action for action in menu.actions() if action.text() == tr(key))
+
+
+@pytest.fixture
+def tab_name(monkeypatch):
+    """Réponse de la boîte « Renommer l'onglet » ; les questions posées sont notées."""
+    asked = []
+
+    def _set(name, ok=True):
+        def answer(parent, title, label, mode, text):
+            asked.append((title, text))
+            return name, ok
+        monkeypatch.setattr(QInputDialog, "getText", staticmethod(answer))
+    _set.asked = asked
+    return _set
+
+
+def test_tab_menu_entries_depend_on_the_clicked_tab(open_window, three_documents):
+    window = open_window(three_documents)
+    keys = ["documents.tab.hide", "documents.tab.rename", "documents.view.choose", "documents.remove.menu"]
+    assert _menu_entries(window._document_tab_menu(0)) == list(zip(map(tr, keys), [True, False, True, False]))
+    assert _menu_entries(window._document_tab_menu(1)) == list(zip(map(tr, keys), [True, True, True, True]))
+    assert window._document_tab_menu(-1) is None                        # hors des onglets
+    window.hide_document_tab(_doc(window, "personnes.xml"))
+    window.hide_document_tab(_doc(window, "lieux.xml"))
+    assert not _menu_action(window._document_tab_menu(0), "documents.tab.hide").isEnabled()
+
+
+def test_hide_from_the_tab_menu(open_window, three_documents):
+    window = open_window(three_documents)
+    window.show_document(_doc(window, "personnes.xml"))
+    _menu_action(window._document_tab_menu(1), "documents.tab.hide").trigger()
+    assert _tabs(window) == [_edition_tab(), "lieux.xml"]
+    assert window.document is _doc(window, "lieux.xml")
+
+
+def test_rename_from_the_tab_menu_writes_the_label_in_project_xml(open_window, three_documents, tab_name):
+    window = open_window(three_documents)
+    tab_name("  Lieux  ")
+    _menu_action(window._document_tab_menu(2), "documents.tab.rename").trigger()
+    assert tab_name.asked == [(tr("documents.tab.rename.title"), "lieux.xml")]
+    assert _tabs(window) == [_edition_tab(), "Personnes", "Lieux"]
+    assert [d.label for d in load_project(three_documents).documents] == ["Personnes", "Lieux"]
+    assert _tabs(open_window(three_documents)) == [_edition_tab(), "Personnes", "Lieux"]
+
+
+def test_an_empty_name_shows_the_file_name_again(open_window, three_documents, tab_name):
+    window = open_window(three_documents)
+    tab_name("")
+    assert window.rename_document_tab(_doc(window, "personnes.xml"))
+    assert _tabs(window) == [_edition_tab(), "personnes.xml", "lieux.xml"]
+    assert [d.label for d in load_project(three_documents).documents] == ["", ""]
+
+
+def test_cancelled_or_unchanged_rename_leaves_project_xml_alone(open_window, three_documents, tab_name):
+    window = open_window(three_documents)
+    before = three_documents.read_bytes()
+    tab_name("Autre", ok=False)
+    assert not window.rename_document_tab(_doc(window, "personnes.xml"))
+    tab_name("Personnes")
+    assert not window.rename_document_tab(_doc(window, "personnes.xml"))
+    assert not window.rename_document_tab(window.edition_session)
+    assert three_documents.read_bytes() == before
+    assert _tabs(window) == [_edition_tab(), "Personnes", "lieux.xml"]
+
+
+def test_remove_from_the_menu_of_a_tab_that_is_not_displayed(open_window, three_documents, dialogs):
+    window = open_window(three_documents)
+    lieux = _doc(window, "lieux.xml")
+    dialogs.expect("question", QMessageBox.StandardButton.Yes)
+    _menu_action(window._document_tab_menu(2), "documents.remove.menu").trigger()
+    assert lieux not in window.documents
+    assert [d.path.name for d in load_project(three_documents).documents] == ["personnes.xml"]
+    assert lieux.path.exists()                                          # le fichier reste
+    assert window.document is window.edition_session
+    assert _tabs(window) == [_edition_tab(), "Personnes"]
+
+
+def test_choose_from_the_tab_menu_opens_the_display_dialog(open_window, three_documents, dialogs):
+    window = open_window(three_documents)
+    dialogs.expect("dialog", lambda dialog: dialog.reject() or dialog.result())
+    _menu_action(window._document_tab_menu(0), "documents.view.choose").trigger()
+    assert dialogs.seen[-1][:2] == ("dialog", tr("documents.view.title"))
+
+
+def test_right_click_opens_the_menu_of_the_clicked_tab(open_window, three_documents):
+    window = open_window(three_documents)
+    bar = window.document_tab_bar
+    point = bar.tabRect(1).center()
+    QApplication.sendEvent(bar, QContextMenuEvent(QContextMenuEvent.Reason.Mouse, point, bar.mapToGlobal(point)))
+    menu = QApplication.activePopupWidget()
+    try:
+        assert isinstance(menu, QMenu)
+        _menu_action(menu, "documents.tab.hide").trigger()
+    finally:
+        menu.close()
+    assert _tabs(window) == [_edition_tab(), "lieux.xml"]

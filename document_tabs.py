@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QTextCursor, QTextDocument
 from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout, QTabBar, QVBoxLayout, QWidget
 from app_context import call_later, current_i18n, tr as _t
@@ -53,6 +54,8 @@ class DocumentTabsMixin:
             self._refresh_document_tab(session)
         bar.setVisible(len(self.documents) > 1)
         bar.currentChanged.connect(self._document_tab_changed)
+        bar.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        bar.customContextMenuRequested.connect(self._document_tab_context_menu)
         area = QWidget(self)
         layout = QVBoxLayout(area)
         layout.setContentsMargins(0, 0, 0, 0)

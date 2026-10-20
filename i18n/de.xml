@@ -742,4 +742,8 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="documents.view.none">Keine auswählen</string>
   <string key="documents.view.move_up">Nach oben</string>
   <string key="documents.view.move_down">Nach unten</string>
+  <string key="documents.tab.hide">Registerkarte ausblenden</string>
+  <string key="documents.tab.rename">Registerkarte umbenennen…</string>
+  <string key="documents.tab.rename.title">Registerkarte umbenennen</string>
+  <string key="documents.tab.rename.label">Name der Registerkarte (in project.xml im Attribut label gespeichert; leer lassen, um den Dateinamen anzuzeigen):</string>
 </translations>
