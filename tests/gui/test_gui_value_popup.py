@@ -38,14 +38,14 @@ def test_typing_a_hash_in_a_reference_opens_the_identifier_list(open_window, pro
     _cursor_inside(window, '<persName ref=""></persName>', 'ref="')
     qtbot.keyClicks(window.editor, "#")
     assert _popup_visible(window)
-    assert _popup_values(window) == ["#bernard", "#petrus"]
+    assert _popup_values(window) == ["personnes.xml#bernard", "personnes.xml#petrus"]
     assert any("Bernardus" in text for text in _popup_texts(window))
 
-    qtbot.keyClicks(window.editor, "be")
-    assert _popup_values(window) == ["#bernard"]
+    qtbot.keyClicks(window.editor, "be")                     # « #be » trouve « personnes.xml#bernard »
+    assert _popup_values(window) == ["personnes.xml#bernard"]
     qtbot.keyClick(window.editor, Qt.Key.Key_Return)
     assert not _popup_visible(window)
-    assert '<persName ref="#bernard"></persName>' in window.editor.toPlainText()
+    assert '<persName ref="personnes.xml#bernard"></persName>' in window.editor.toPlainText()
 
 
 def test_typing_a_hash_in_rdg_wit_lists_the_witnesses(open_window, example_project, qtbot):
@@ -87,7 +87,7 @@ def test_attribute_name_popup_is_not_disturbed(open_window, example_project, qtb
     assert not _popup_visible(window)
 
 
-def test_an_ambiguous_identifier_is_listed_in_its_qualified_form(open_window, project_with_documents, qtbot):
+def test_identifiers_present_in_two_documents_name_their_file(open_window, project_with_documents, qtbot):
     from project_config import DocumentConfig, load_project
     from project_management import update_project_documents
 
@@ -98,8 +98,8 @@ def test_an_ambiguous_identifier_is_listed_in_its_qualified_form(open_window, pr
     window = open_window(project_with_documents)
     _cursor_inside(window, '<persName ref=""></persName>', 'ref="')
     qtbot.keyClicks(window.editor, "#")
-    assert _popup_values(window) == ["#bernard", "personnes.xml#petrus"]
-    qtbot.keyClicks(window.editor, "pe")                     # « #pe » trouve la forme qualifiée
+    assert _popup_values(window) == ["personnes.xml#bernard", "personnes.xml#petrus"]
+    qtbot.keyClicks(window.editor, "pe")
     assert _popup_values(window) == ["personnes.xml#petrus"]
     qtbot.keyClick(window.editor, Qt.Key.Key_Return)
     assert '<persName ref="personnes.xml#petrus"></persName>' in window.editor.toPlainText()

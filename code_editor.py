@@ -115,7 +115,7 @@ class CodeEditor(QPlainTextEdit):
         self._value_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
         self._value_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self._value_completer.setCompletionRole(Qt.ItemDataRole.UserRole)
-        # « #mo » doit aussi trouver « personnes.xml#molesme » (identifiant ambigu).
+        # « #be » doit trouver « personnes.xml#bernard » (identifiant d'un autre document).
         self._value_completer.setFilterMode(Qt.MatchFlag.MatchContains)
         self._value_completer.activated[str].connect(self._accept_value_completion)
         self.cursorPositionChanged.connect(self._check_value_completion_cursor)

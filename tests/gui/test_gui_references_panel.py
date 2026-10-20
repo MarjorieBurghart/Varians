@@ -60,7 +60,7 @@ def test_toolbar_command_follows_xpath_and_reports_the_example_as_resolved(open_
     assert window.references_summary.text() == tr("references.summary.ok", count=count)
 
 
-def test_missing_and_ambiguous_references_of_every_document_are_listed(open_window, project_with_documents):
+def test_problems_of_every_document_are_listed(open_window, project_with_documents):
     window = open_window(_with_lieux(project_with_documents))
     _insert_in_body(window, PROBLEMS)
     window.check_references()
@@ -68,8 +68,8 @@ def test_missing_and_ambiguous_references_of_every_document_are_listed(open_wind
     line = str(text[:text.index("#absent")].count("\n") + 1)
     assert _rows(window) == [
         ("edition.xml", line, "ref", "#absent", tr("references.problem.missing")),
-        ("edition.xml", line, "ref", "#petrus",
-         tr("references.problem.ambiguous", targets="personnes.xml, lieux.xml")),
+        ("edition.xml", line, "ref", "#petrus",                 # forme courte : vise l'édition
+         tr("references.problem.other_document", suggestions="personnes.xml#petrus, lieux.xml#petrus")),
         ("lieux.xml", "2", "corresp", "#nulle", tr("references.problem.missing")),
     ]
     total = len(collect_references(text)) + 1                   # + celle de lieux.xml
@@ -109,7 +109,7 @@ def test_check_again_after_a_correction(open_window, project_with_documents, qtb
     cursor = window.editor.textCursor()
     cursor.setPosition(text.index("#absent"))
     cursor.setPosition(text.index("#absent") + len("#absent"), cursor.MoveMode.KeepAnchor)
-    cursor.insertText("#bernard")
+    cursor.insertText("personnes.xml#bernard")
     qtbot.mouseClick(window.references_recheck, Qt.MouseButton.LeftButton)
     assert window.references_table.rowCount() == 0
     count = len(collect_references(window.editor.toPlainText()))

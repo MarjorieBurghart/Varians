@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Ctrl+Espace dans un attribut de référence : identifiants des documents du projet."""
+"""Ctrl+Espace dans un attribut de référence : identifiants des documents du
+projet, sous la forme « fichier.xml#id » pour un autre document (« #id » ne
+désigne que le document lui-même)."""
 from __future__ import annotations
 
 import pytest
@@ -57,11 +59,11 @@ def _proposals(dialogs, choose=None):
 def test_person_name_proposes_the_persons_of_the_authority_file(open_window, project_with_authorities, dialogs):
     window = open_window(project_with_authorities)
     _type_in_body(window, '<persName ref=""></persName>', 'ref="')
-    seen = _proposals(dialogs, choose="#bernard")
+    seen = _proposals(dialogs, choose="personnes.xml#bernard")
     window.show_rng_completion(window.editor)
-    assert set(seen) == {"#bernard", "#petrus"}                   # ni lieux, ni citations
-    assert "Bernardus — personnes.xml" in seen["#bernard"]
-    assert '<persName ref="#bernard">' in window.editor.toPlainText()
+    assert set(seen) == {"personnes.xml#bernard", "personnes.xml#petrus"}   # ni lieux, ni citations
+    assert "Bernardus" in seen["personnes.xml#bernard"]
+    assert '<persName ref="personnes.xml#bernard">' in window.editor.toPlainText()
 
 
 def test_place_name_proposes_only_places(open_window, project_with_authorities, dialogs):
@@ -69,8 +71,8 @@ def test_place_name_proposes_only_places(open_window, project_with_authorities, 
     _type_in_body(window, '<placeName ref="#"></placeName>', 'ref="#')
     seen = _proposals(dialogs)
     window.show_rng_completion(window.editor)
-    assert set(seen) == {"#clairvaux"}
-    assert "Clara Vallis — lieux.xml" in seen["#clairvaux"]
+    assert set(seen) == {"lieux.xml#clairvaux"}
+    assert "Clara Vallis" in seen["lieux.xml#clairvaux"]
 
 
 def test_typed_text_filters_on_the_label_too(open_window, project_with_authorities, dialogs):
@@ -85,7 +87,7 @@ def test_typed_text_filters_on_the_label_too(open_window, project_with_authoriti
 
     dialogs.expect("dialog", answer)
     window.show_rng_completion(window.editor)
-    assert seen == ["#clairvaux"]
+    assert seen == ["lieux.xml#clairvaux"]
 
 
 def test_project_rule_in_custom_elements_restricts_the_list(open_window, project_with_authorities, dialogs):
@@ -99,7 +101,7 @@ def test_project_rule_in_custom_elements_restricts_the_list(open_window, project
     _type_in_body(window, '<name ref=""></name>', 'ref="')
     seen = _proposals(dialogs)
     window.show_rng_completion(window.editor)
-    assert set(seen) == {"#clairvaux"}
+    assert set(seen) == {"lieux.xml#clairvaux"}
 
 
 def test_rdg_wit_keeps_the_project_witnesses(open_window, project_with_authorities, dialogs):

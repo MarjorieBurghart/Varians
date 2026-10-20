@@ -732,4 +732,6 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="project.error.default_xslt_missing">Standard-XSLT-Stylesheet von Varians nicht gefunden: {path}. Die Installation von Varians ist unvollständig.</string>
   <string key="project.error.no_witness">project.xml deklariert keinen Textzeugen: Fügen Sie in &lt;witnesses&gt; mindestens ein &lt;witness id="…"&gt; hinzu.</string>
   <string key="project.error.no_pivot">project.xml bestimmt keinen Pivot-Textzeugen: Geben Sie ihn mit &lt;witnesses base="…"&gt; oder mit role="base" an genau einem &lt;witness&gt; an.</string>
+  <string key="references.other_document">Kurzform: {token} bezeichnet nur dieses Dokument. Um auf dieses Ziel zu verweisen, schreiben Sie {suggestion}.</string>
+  <string key="references.problem.other_document">Kurzform, Ziel in einem anderen Dokument: {suggestions} schreiben</string>
 </translations>

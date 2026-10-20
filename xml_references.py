@@ -5,12 +5,13 @@ Une référence est un jeton de la valeur d'un attribut pointeur TEI (``ref``,
 ``corresp``, ``who``, ``wit``…) de la forme ``#id`` ou ``fichier.xml#id``. Les
 adresses web et les valeurs sans ``#`` ne sont pas des références locales.
 
-Résolution :
+Résolution, au sens standard des URI (que suivent les autres outils XML) :
 
 - ``fichier.xml#id`` vise ce fichier, relatif au document qui le cite ;
-- ``#id`` est cherché d'abord dans le document lui-même, puis dans les autres
-  documents du projet. Un identifiant présent plusieurs fois (dans le
-  document, ou dans plusieurs autres documents) est ambigu.
+- ``#id`` vise le document lui-même. Un identifiant absent du document mais
+  défini dans un autre document du projet est signalé (``other_document``),
+  avec sa cible, pour qu'on écrive ``fichier.xml#id`` ;
+- un identifiant présent plusieurs fois dans le document visé est ambigu.
 
 L'analyse est lexicale (``xml_tag_pairs.scan_xml_tags``) : elle fonctionne sur
 un document momentanément mal formé et ignore commentaires et CDATA.
@@ -68,6 +69,17 @@ def parse_pointer(token):
     return (file or None, ident)
 
 
+def explicit_pointer(source_path, target_path, ident):
+    """Pointeur ``fichier.xml#id`` vers ``ident`` de ``target_path``, écrit
+    depuis le document ``source_path`` : chemin relatif, barres obliques."""
+    target = Path(target_path).resolve()
+    try:
+        relative = Path(os.path.relpath(target, Path(source_path).resolve().parent)).as_posix()
+    except ValueError:                  # autre lecteur sous Windows
+        relative = target.name
+    return f"{relative}#{ident}"
+
+
 @dataclass(frozen=True)
 class IdTarget:
     """Élément portant un ``xml:id`` : position de sa balise ouvrante."""
@@ -94,7 +106,7 @@ class Reference:
 
 @dataclass(frozen=True)
 class Resolution:
-    status: str                 # ok | missing | ambiguous | no_file
+    status: str                 # ok | missing | ambiguous | no_file | other_document
     targets: tuple = ()         # ((chemin, IdTarget), …)
 
 
@@ -255,13 +267,15 @@ class ReferenceResolver:
         own = self.ids(source) or {}
         if reference.id in own:
             return self._status([(self._paths[source_key], t) for t in own[reference.id]])
+        # « #id » ne désigne que ce document : une cible ailleurs dans le projet
+        # n'est indiquée que pour aider à écrire la forme « fichier.xml#id ».
         found = []
         for key in self._order:
             if key == source_key:
                 continue
             for target in (self.ids(self._paths[key]) or {}).get(reference.id, ()):
                 found.append((self._paths[key], target))
-        return self._status(found)
+        return Resolution("other_document", tuple(found)) if found else Resolution("missing")
 
     @staticmethod
     def _status(found):
@@ -271,7 +285,7 @@ class ReferenceResolver:
 
     def check(self):
         """``(nombre de références, problèmes)`` pour tous les documents ;
-        les problèmes sont les références introuvables ou ambiguës."""
+        voir ``problems``."""
         count = 0
         result = []
         for key in self._order:
@@ -284,5 +298,6 @@ class ReferenceResolver:
         return count, result
 
     def problems(self):
-        """Références introuvables ou ambiguës de tous les documents."""
+        """Références que les autres outils XML ne peuvent pas suivre :
+        introuvables, ambiguës, ou « #id » dont la cible est ailleurs."""
         return self.check()[1]

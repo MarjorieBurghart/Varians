@@ -247,9 +247,9 @@ class CompletionMixin:
     def _auto_value_choices(self, editor):
         """Liste automatique des pointeurs (frappe de « # » dans une valeur
         d'attribut) : les valeurs de Ctrl+Espace, à condition qu'elles soient
-        toutes des pointeurs (« #id », ou « fichier.xml#id » pour un
-        identifiant ambigu). Le texte tapé (« #mo ») est cherché dans la
-        valeur, ce qui trouve aussi « personnes.xml#molesme ». Renvoie
+        toutes des pointeurs (« #id » dans le document lui-même,
+        « fichier.xml#id » vers un autre document). Le texte tapé (« #be ») est
+        cherché dans la valeur, ce qui trouve « personnes.xml#bernard ». Renvoie
         ``([(valeur, description)], contexte)``. Les valeurs finies du RNG,
         qui ne sont jamais des pointeurs, ne sont pas consultées à chaque
         frappe."""
@@ -404,7 +404,7 @@ class CompletionMixin:
             return entries_by_targets[key]
 
         def ids_for(elements):
-            # « bernard », ou « personnes.xml#molesme » pour un identifiant ambigu.
+            # « bernard » (document affiché) ou « personnes.xml#bernard » (autre document).
             return tuple(dict.fromkeys(value[1:] if value.startswith("#") else value
                                        for value, _d, _e in entries(elements)))
 

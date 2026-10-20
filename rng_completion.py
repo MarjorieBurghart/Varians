@@ -821,7 +821,7 @@ def adapt_pointer_list_value_context(
 
     Les attributs TEI de type pointeur peuvent contenir plusieurs références
     séparées par des espaces. Lorsque toutes les valeurs proposées sont des
-    pointeurs (``#id``, ou ``fichier.xml#id`` pour un identifiant ambigu), on
+    pointeurs (``#id``, ou ``fichier.xml#id`` vers un autre document), on
     traite donc la valeur comme une liste de tokens :
 
     * les pointeurs déjà présents ne sont plus proposés ;

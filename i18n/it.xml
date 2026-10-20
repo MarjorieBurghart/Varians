@@ -732,4 +732,6 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="project.error.default_xslt_missing">Foglio XSLT predefinito di Varians non trovato: {path}. L’installazione di Varians è incompleta.</string>
   <string key="project.error.no_witness">project.xml non dichiara alcun testimone: aggiungi almeno un &lt;witness id="…"&gt; in &lt;witnesses&gt;.</string>
   <string key="project.error.no_pivot">project.xml non designa alcun testimone pivot: indicalo con &lt;witnesses base="…"&gt; oppure con role="base" su un solo &lt;witness&gt;.</string>
+  <string key="references.other_document">Forma breve: {token} designa solo questo documento. Per puntare a questa destinazione, scrivi {suggestion}.</string>
+  <string key="references.problem.other_document">Forma breve, destinazione in un altro documento: scrivi {suggestions}</string>
 </translations>

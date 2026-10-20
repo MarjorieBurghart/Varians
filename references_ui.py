@@ -24,7 +24,9 @@ from PySide6.QtWidgets import (
 
 from app_context import call_later, tr as _t
 from completion_ui import CompletionDialog
-from xml_references import REFERENCE_ATTRIBUTES, Reference, ReferenceResolver, collect_ids, parse_pointer
+from xml_references import (
+    REFERENCE_ATTRIBUTES, Reference, ReferenceResolver, collect_ids, explicit_pointer, parse_pointer,
+)
 
 _XML_ID_VALUES_RE = re.compile(r"""xml:id\s*=\s*["']([^"']*)""")
 _STATUS_MSEC = 6000
@@ -67,41 +69,28 @@ class ReferencesMixin:
         """Identifiants proposés dans le document affiché : ``[(valeur,
         description, élément)]``, ceux des autres documents d'abord.
 
-        ``elements`` limite aux éléments de ces noms locaux (None : tous). La
-        valeur est ``#id``, ou ``fichier.xml#id`` lorsque la forme courte
-        désignerait un autre élément (identifiant du document affiché, ou
-        présent dans plusieurs autres documents).
+        ``elements`` limite aux éléments de ces noms locaux (None : tous). Au
+        sens standard des URI, que suivent les autres outils XML, ``#id`` ne
+        désigne que le document lui-même : un identifiant d'un autre document
+        est proposé sous la forme ``fichier.xml#id``, chemin relatif.
         """
         current = self.document
-        current_dir = Path(current.path).resolve().parent
-        indexes = []
+        entries = []
+        own = []
         for session in self.documents:
             text = self._session_text(session)
-            if text is not None:
-                indexes.append((session, self._session_ids(session, text)))
-        own = next((index for session, index in indexes if session is current), {})
-        others = [(s, index) for s, index in indexes if s is not current]
-        counts = {}
-        for _session, index in others:
-            for ident in index:
-                counts[ident] = counts.get(ident, 0) + 1
-        entries = []
-        for session, index in others + [(current, own)]:
-            name = Path(session.path).name
-            relative = None
-            for ident, targets in index.items():
+            if text is None:
+                continue
+            for ident, targets in self._session_ids(session, text).items():
                 target = targets[0]
                 if elements is not None and target.element not in elements:
                     continue
-                if session is current or (ident not in own and counts.get(ident) == 1):
-                    value = f"#{ident}"
+                if session is current:
+                    own.append((f"#{ident}", target.label or target.element, target.element))
                 else:
-                    if relative is None:
-                        relative = Path(os.path.relpath(Path(session.path).resolve(), current_dir)).as_posix()
-                    value = f"{relative}#{ident}"
-                label = target.label or target.element
-                entries.append((value, f"{label} — {name}", target.element))
-        return entries
+                    entries.append((explicit_pointer(current.path, session.path, ident),
+                                    target.label or target.element, target.element))
+        return entries + own
 
     def _reference_documents(self):
         """``[(chemin, texte)]`` des documents du projet lisibles, l'édition d'abord."""
@@ -173,7 +162,7 @@ class ReferencesMixin:
             self.statusBar().showMessage(_t("references.missing", token=reference.token), _STATUS_MSEC)
             return False
         target = resolution.targets[0]
-        if resolution.status == "ambiguous":
+        if len(resolution.targets) > 1:
             target = self._choose_reference_target(reference, resolution.targets)
             if target is None:
                 return False
@@ -187,8 +176,13 @@ class ReferencesMixin:
         if not self._show_location(session, id_target.start, id_target.end):
             return False
         self.__dict__.setdefault("_reference_history", []).append(departure)
-        self.statusBar().showMessage(
-            _t("references.jumped", file=Path(path).name, line=id_target.line), _STATUS_MSEC)
+        if resolution.status == "other_document":
+            # « #id » ne désigne que le document cité : la forme à écrire.
+            message = _t("references.other_document", token=reference.token,
+                         suggestion=explicit_pointer(departure[0].path, path, reference.id))
+        else:
+            message = _t("references.jumped", file=Path(path).name, line=id_target.line)
+        self.statusBar().showMessage(message, _STATUS_MSEC)
         return True
 
     def _choose_reference_target(self, reference, targets):
@@ -338,17 +332,22 @@ class ReferencesMixin:
             self.references_table.insertRow(row)
             reference = problem.reference
             values = (Path(problem.path).name, str(reference.line), reference.attribute,
-                      reference.token, self._reference_problem_text(problem.resolution))
+                      reference.token, self._reference_problem_text(problem))
             for column, value in enumerate(values):
                 self.references_table.setItem(row, column, QTableWidgetItem(value))
             self.references_table.item(row, 0).setToolTip(str(problem.path))
 
     @staticmethod
-    def _reference_problem_text(resolution):
+    def _reference_problem_text(problem):
+        resolution = problem.resolution
         if resolution.status == "no_file":
             return _t("references.problem.no_file")
         if resolution.status == "missing":
             return _t("references.problem.missing")
+        if resolution.status == "other_document":
+            suggestions = ", ".join(dict.fromkeys(
+                explicit_pointer(problem.path, path, problem.reference.id) for path, _target in resolution.targets))
+            return _t("references.problem.other_document", suggestions=suggestions)
         names = [Path(path).name for path, _target in resolution.targets]
         targets = ", ".join(name if names.count(name) == 1 else f"{name}:{target.line}"
                             for name, (_path, target) in zip(names, resolution.targets))

@@ -718,4 +718,6 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="project.error.default_xslt_missing">Feuille XSLT par défaut de Varians introuvable : {path}. L’installation de Varians est incomplète.</string>
   <string key="project.error.no_witness">project.xml ne déclare aucun témoin : ajoutez au moins un &lt;witness id="…"&gt; dans &lt;witnesses&gt;.</string>
   <string key="project.error.no_pivot">project.xml ne désigne pas de témoin pivot : indiquez-le par &lt;witnesses base="…"&gt;, ou par role="base" sur un seul &lt;witness&gt;.</string>
+  <string key="references.other_document">Forme courte : {token} ne désigne que ce document. Pour viser cette cible, écrivez {suggestion}.</string>
+  <string key="references.problem.other_document">Forme courte, cible dans un autre document : écrire {suggestions}</string>
 </translations>

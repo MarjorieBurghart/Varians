@@ -732,4 +732,6 @@
   <string key="project.error.default_xslt_missing">Varians の既定のXSLTスタイルシートが見つかりません：{path}。Varians のインストールが不完全です。</string>
   <string key="project.error.no_witness">project.xml に伝本が宣言されていません。&lt;witnesses&gt; に &lt;witness id="…"&gt; を少なくとも一つ追加してください。</string>
   <string key="project.error.no_pivot">project.xml にピボット伝本が指定されていません。&lt;witnesses base="…"&gt; で、または一つの &lt;witness&gt; だけに role="base" を付けて指定してください。</string>
+  <string key="references.other_document">短い形式：{token} はこの文書の中だけを指します。この参照先を指すには {suggestion} と書いてください。</string>
+  <string key="references.problem.other_document">短い形式（参照先は別の文書）：{suggestions} と書いてください</string>
 </translations>

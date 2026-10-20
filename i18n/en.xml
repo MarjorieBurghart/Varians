@@ -718,4 +718,6 @@ The file is not deleted: it stays on disk.</string>
   <string key="project.error.default_xslt_missing">Varians default XSLT stylesheet not found: {path}. The Varians installation is incomplete.</string>
   <string key="project.error.no_witness">project.xml declares no witness: add at least one &lt;witness id="…"&gt; in &lt;witnesses&gt;.</string>
   <string key="project.error.no_pivot">project.xml does not designate a pivot witness: declare it with &lt;witnesses base="…"&gt;, or with role="base" on a single &lt;witness&gt;.</string>
+  <string key="references.other_document">Short form: {token} only designates this document. To point to this target, write {suggestion}.</string>
+  <string key="references.problem.other_document">Short form, target in another document: write {suggestions}</string>
 </translations>

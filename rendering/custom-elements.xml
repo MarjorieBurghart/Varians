@@ -27,11 +27,12 @@
     <values source="witnesses" prefix="#"/>
       -> produit automatiquement #<id> pour chaque témoin déclaré dans project.xml.
     <values source="ids" elements="person personGrp" prefix="#"/>
-      -> produit #<id> pour chaque xml:id des documents du projet (édition et
-         documents auxiliaires, par exemple un fichier d'autorités), limité aux
-         éléments nommés ; sans @elements, tous les identifiants. Un
-         identifiant défini dans plusieurs documents est proposé sous la forme
-         fichier.xml#<id>.
+      -> produit un pointeur pour chaque xml:id des documents du projet
+         (édition et documents auxiliaires, par exemple un fichier
+         d'autorités), limité aux éléments nommés ; sans @elements, tous les
+         identifiants. Comme en TEI standard, #<id> désigne le document
+         lui-même ; un identifiant d'un autre document est proposé sous la
+         forme fichier.xml#<id> (chemin relatif).
 
   Sans configuration, les attributs de référence (ref, corresp, who, wit…)
   proposent déjà les identifiants du projet : persName/@ref les <person>,

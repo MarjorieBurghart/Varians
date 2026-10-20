@@ -732,4 +732,6 @@
   <string key="project.error.default_xslt_missing">Стандартная таблица стилей XSLT Varians не найдена: {path}. Установка Varians неполная.</string>
   <string key="project.error.no_witness">В project.xml не объявлено ни одного свидетеля: добавьте в &lt;witnesses&gt; хотя бы один &lt;witness id="…"&gt;.</string>
   <string key="project.error.no_pivot">В project.xml не указан опорный свидетель: укажите его через &lt;witnesses base="…"&gt; или через role="base" ровно у одного &lt;witness&gt;.</string>
+  <string key="references.other_document">Краткая форма: {token} обозначает только этот документ. Чтобы указать на эту цель, напишите {suggestion}.</string>
+  <string key="references.problem.other_document">Краткая форма, цель в другом документе: напишите {suggestions}</string>
 </translations>

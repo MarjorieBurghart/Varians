@@ -32,7 +32,7 @@ def _aux(window):
 
 def test_f12_shows_the_target_in_the_authority_file_and_alt_left_comes_back(open_window, project_with_documents, qtbot):
     window = open_window(project_with_documents)
-    start = _insert_in_body(window, '<persName ref="#bernard">B</persName>', 'ref="#ber')
+    start = _insert_in_body(window, '<persName ref="personnes.xml#bernard">B</persName>', 'ref="personnes.xml#ber')
     assert window.action_go_to_reference.shortcut().toString() == "F12"
     assert window.action_reference_back.shortcut().toString() == "Alt+Left"
 
@@ -49,7 +49,7 @@ def test_f12_shows_the_target_in_the_authority_file_and_alt_left_comes_back(open
 
 def test_ctrl_click_on_a_reference_goes_to_its_target(open_window, project_with_documents, qtbot):
     window = open_window(project_with_documents)
-    target = _insert_in_body(window, '<persName ref="#petrus">P</persName>', 'ref="#pe')
+    target = _insert_in_body(window, '<persName ref="personnes.xml#petrus">P</persName>', 'ref="personnes.xml#pe')
     cursor = window.editor.textCursor()
     cursor.setPosition(target)
     point = window.editor.cursorRect(cursor).center()
@@ -84,7 +84,20 @@ def test_nothing_happens_outside_a_reference(open_window, project_with_documents
     assert window.statusBar().currentMessage() == tr("references.none_here")
 
 
-def test_an_ambiguous_reference_asks_which_target(open_window, project_with_documents, dialogs):
+def test_short_form_pointing_elsewhere_still_leads_to_the_target_and_gives_the_tei_form(
+        open_window, project_with_documents):
+    # « #bernard » ne désigne que l'édition : Varians mène tout de même à la
+    # cible trouvée dans personnes.xml et indique la forme à écrire.
+    window = open_window(project_with_documents)
+    _insert_in_body(window, '<persName ref="#bernard">B</persName>', 'ref="#ber')
+    assert window.go_to_reference()
+    assert window.document is _aux(window)
+    assert window.editor.textCursor().selectedText() == '<person xml:id="bernard">'
+    assert window.statusBar().currentMessage() == tr(
+        "references.other_document", token="#bernard", suggestion="personnes.xml#bernard")
+
+
+def test_short_form_found_in_two_other_documents_asks_which_target(open_window, project_with_documents, dialogs):
     lieux = project_with_documents.parent / "xml" / "lieux.xml"
     lieux.write_text('<listPlace><place xml:id="petrus"/></listPlace>', encoding="utf-8")
     documents = list(load_project(project_with_documents).documents) + [DocumentConfig(lieux, "Lieux")]
@@ -104,6 +117,8 @@ def test_an_ambiguous_reference_asks_which_target(open_window, project_with_docu
     assert len(choices) == 2 and "lieux.xml" in choices[1]
     assert window.document is window.documents[2]
     assert window.editor.textCursor().selectedText() == '<place xml:id="petrus"/>'
+    assert window.statusBar().currentMessage() == tr(
+        "references.other_document", token="#petrus", suggestion="lieux.xml#petrus")
 
 
 def test_pointer_to_the_document_itself(open_window, example_project):
@@ -134,9 +149,9 @@ def test_context_menu_offers_go_to_target_on_a_reference(open_window, project_wi
 
 def test_right_click_uses_the_clicked_position(open_window, project_with_documents):
     window = open_window(project_with_documents)
-    start = _insert_in_body(window, '<persName ref="#bernard">B</persName>', '<persName')
+    start = _insert_in_body(window, '<persName ref="personnes.xml#bernard">B</persName>', '<persName')
     cursor = window.editor.textCursor()
-    cursor.setPosition(start + len(' ref="#be'))                  # le curseur reste hors de la valeur
+    cursor.setPosition(start + len(' ref="personnes.xml#be'))                  # le curseur reste hors de la valeur
     point = window.editor.cursorRect(cursor).center()
     event = QContextMenuEvent(QContextMenuEvent.Reason.Mouse, point,
                               window.editor.viewport().mapToGlobal(point))

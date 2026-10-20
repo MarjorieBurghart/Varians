@@ -732,4 +732,6 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="project.error.default_xslt_missing">Výchozí šablona XSLT programu Varians nebyla nalezena: {path}. Instalace programu Varians je neúplná.</string>
   <string key="project.error.no_witness">project.xml nedeklaruje žádného svědka: přidejte do &lt;witnesses&gt; alespoň jeden &lt;witness id="…"&gt;.</string>
   <string key="project.error.no_pivot">project.xml neurčuje pivotního svědka: uveďte ho pomocí &lt;witnesses base="…"&gt; nebo pomocí role="base" u jediného &lt;witness&gt;.</string>
+  <string key="references.other_document">Krátký tvar: {token} označuje pouze tento dokument. Chcete-li odkázat na tento cíl, napište {suggestion}.</string>
+  <string key="references.problem.other_document">Krátký tvar, cíl v jiném dokumentu: napište {suggestions}</string>
 </translations>

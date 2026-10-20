@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Pointeurs qualifiés « fichier.xml#id » parmi les valeurs proposées : un
-identifiant ambigu est proposé sous cette forme et doit se comporter comme
+"""Pointeurs « fichier.xml#id » parmi les valeurs proposées : un identifiant
+d'un autre document est proposé sous cette forme, qui doit se comporter comme
 « #id » (liste de pointeurs, insertion, source « ids »)."""
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def test_a_qualified_pointer_is_added_with_a_separator():
     assert replacement == " personnes.xml#molesme"
 
 
-def test_ids_source_keeps_the_qualified_form_of_an_ambiguous_identifier(tmp_path):
+def test_ids_source_keeps_the_file_form_of_an_identifier_of_another_document(tmp_path):
     path = tmp_path / "custom-elements.xml"
     path.write_text('''<customElements>
       <element name="name"><attribute name="ref" valuesMode="replace">

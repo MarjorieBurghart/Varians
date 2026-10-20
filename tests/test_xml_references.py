@@ -8,7 +8,8 @@ from pathlib import Path
 import pytest
 
 from xml_references import (
-    REFERENCE_ATTRIBUTES, ReferenceResolver, collect_ids, collect_references, parse_pointer,
+    REFERENCE_ATTRIBUTES, ReferenceResolver, collect_ids, collect_references, explicit_pointer,
+    parse_pointer,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -89,33 +90,44 @@ def _reference(text, token):
     return next(r for r in collect_references(text) if r.token == token)
 
 
-def test_short_reference_looks_in_the_document_then_in_the_project(tmp_path):
+def test_short_reference_designates_the_document_itself(tmp_path):
+    # Sens standard des URI : « #id » vise le document qui contient la
+    # référence. Un identifiant trouvé seulement dans un autre document du
+    # projet est signalé, avec sa cible, pour écrire « fichier.xml#id ».
     text = ('<TEI><witness xml:id="T1"/><persName ref="#bernard"/><rdg wit="#T1"/>'
             '<placeName ref="#clairvaux"/><persName ref="#absent"/></TEI>')
     resolver, edition, personnes, lieux = _resolver(tmp_path, text)
     own = resolver.resolve(_reference(text, "#T1"), edition)
     assert own.status == "ok" and own.targets[0][0] == edition
-    found = resolver.resolve(_reference(text, "#bernard"), edition)
-    assert found.status == "ok"
-    path, target = found.targets[0]
+    elsewhere = resolver.resolve(_reference(text, "#bernard"), edition)
+    assert elsewhere.status == "other_document"
+    path, target = elsewhere.targets[0]
     assert path == personnes and target.element == "person"
     assert resolver.resolve(_reference(text, "#clairvaux"), edition).targets[0][0] == lieux
     assert resolver.resolve(_reference(text, "#absent"), edition).status == "missing"
 
 
-def test_identifier_defined_in_two_other_documents_is_ambiguous(tmp_path):
+def test_short_reference_to_an_identifier_of_two_other_documents(tmp_path):
     text = '<TEI><persName ref="#petrus"/></TEI>'
     resolver, edition, personnes, lieux = _resolver(tmp_path, text)
     resolution = resolver.resolve(_reference(text, "#petrus"), edition)
-    assert resolution.status == "ambiguous"
+    assert resolution.status == "other_document"
     assert {path for path, _ in resolution.targets} == {personnes, lieux}
 
 
-def test_identifier_defined_in_the_document_itself_wins(tmp_path):
+def test_identifier_defined_in_the_document_itself(tmp_path):
     text = '<TEI><person xml:id="petrus"/><persName ref="#petrus"/></TEI>'
     resolver, edition, *_ = _resolver(tmp_path, text)
     resolution = resolver.resolve(_reference(text, "#petrus"), edition)
     assert resolution.status == "ok" and resolution.targets[0][0] == edition
+
+
+def test_identifier_repeated_in_the_target_document_is_ambiguous(tmp_path):
+    text = '<TEI><seg xml:id="x"/><seg xml:id="x"/><ref target="#x"/><ref target="edition.xml#x"/></TEI>'
+    resolver, edition, *_ = _resolver(tmp_path, text)
+    for token in ("#x", "edition.xml#x"):
+        resolution = resolver.resolve(_reference(text, token), edition)
+        assert resolution.status == "ambiguous" and len(resolution.targets) == 2
 
 
 def test_explicit_file_reference(tmp_path):
@@ -137,21 +149,30 @@ def test_file_outside_the_project_is_read_from_disk(tmp_path):
     assert resolution.status == "ok" and resolution.targets[0][0] == other.resolve()
 
 
-def test_problems_lists_only_unresolved_or_ambiguous_references(tmp_path):
-    text = '<TEI><persName ref="#bernard"/><persName ref="#absent"/><persName ref="#petrus"/></TEI>'
+def test_problems_lists_every_reference_other_tools_cannot_follow(tmp_path):
+    text = ('<TEI><persName ref="personnes.xml#bernard"/><persName ref="#bernard"/>'
+            '<persName ref="#absent"/><persName ref="#petrus"/></TEI>')
     resolver, edition, *_ = _resolver(tmp_path, text)
     problems = resolver.problems()
     assert [(p.path, p.reference.token, p.resolution.status) for p in problems] == [
-        (edition, "#absent", "missing"), (edition, "#petrus", "ambiguous")]
+        (edition, "#bernard", "other_document"), (edition, "#absent", "missing"),
+        (edition, "#petrus", "other_document")]
 
 
 def test_check_counts_every_reference_and_lists_the_problems(tmp_path):
-    text = '<TEI><persName ref="#bernard"/><rdg wit="#absent #petrus"/></TEI>'
+    text = '<TEI><persName ref="personnes.xml#bernard"/><rdg wit="#absent #petrus"/></TEI>'
     resolver, edition, *_ = _resolver(tmp_path, text)
     count, problems = resolver.check()
     assert count == 3
     assert problems == resolver.problems()
     assert [p.reference.token for p in problems] == ["#absent", "#petrus"]
+
+
+def test_explicit_pointer_is_relative_to_the_citing_document(tmp_path):
+    edition = tmp_path / "xml" / "edition.xml"
+    assert explicit_pointer(edition, tmp_path / "xml" / "personnes.xml", "bernard") == "personnes.xml#bernard"
+    assert explicit_pointer(edition, tmp_path / "autorites" / "lieux.xml", "x") == "../autorites/lieux.xml#x"
+    assert parse_pointer(explicit_pointer(edition, tmp_path / "autorites" / "lieux.xml", "x"))
 
 
 def test_example_project_has_no_reference_problem():
