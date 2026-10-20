@@ -1332,4 +1332,7 @@ class ProjectSettingsDialog(QDialog):
             web_filename=self.web_filename.text().strip() or "viewer.html",
             witnesses=self.witnesses_table.witnesses(),
             base_witness=self.witnesses_table.base_witness(),
+            # Non modifiables ici : conservés tels quels, sinon la réécriture
+            # de project.xml les effacerait.
+            documents=list(self.project.documents),
         )

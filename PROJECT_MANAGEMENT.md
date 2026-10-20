@@ -322,3 +322,32 @@ Les zones `<zone>` créées par la commande « Double page… » appartiennent �
 ## Extension 0.8.5.21 : dispositions de travail
 
 Voir [`WORKSPACE_LAYOUT.md`](WORKSPACE_LAYOUT.md). Les vues verticale, horizontale, grille, les fenêtres individuelles et le mode « Toujours au premier plan » ne changent que les préférences d’affichage `QSettings`. Le même `ManuscriptPanel` est transféré entre parents Qt ; `workspace_layout.py` ne contient pas de logique de synchronisation. Le ratio XML/manuscrits est librement redimensionnable, y compris vers 20 % XML.
+
+
+## Documents XML auxiliaires (`<documents>`)
+
+Un projet peut déclarer, à côté de l’édition, des documents XML auxiliaires
+(fichier d’autorités, notes, etc.) :
+
+```xml
+<documents>
+  <document file="xml/personnes.xml" label="Personnes"/>
+  <document file="xml/lieux.xml" schema="none"/>
+  <document file="xml/notes.xml" schema="file" schemaFile="schema/notes.rng"/>
+</documents>
+```
+
+- `file` (obligatoire) : chemin relatif au projet ;
+- `label` (facultatif) : nom affiché, sinon le nom du fichier ;
+- `schema` (facultatif) : `auto` par défaut (suivre le `<?xml-model?>` du
+  document), `none` (aucune validation) ou `file`, avec `schemaFile`.
+
+Les entrées sans fichier, les doublons et l’édition elle-même sont ignorés.
+Un projet sans documents auxiliaires n’a pas d’élément `<documents>`, et
+Varians ne lui en ajoute jamais. La fenêtre « Paramètres du projet » conserve
+les documents déclarés. `project_management.update_project_documents` modifie
+cette liste sans toucher au reste du fichier (copie `.bak` préalable).
+
+Limite : une version de Varians antérieure à cette fonction lit le projet
+normalement, mais supprime `<documents>` si l’on y enregistre les paramètres
+du projet.

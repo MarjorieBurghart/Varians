@@ -54,6 +54,22 @@ class WitnessConfig:
         return self.role == "base"
 
 
+@dataclass(frozen=True)
+class DocumentConfig:
+    """Document XML auxiliaire du projet (fichier d'autorités, notes…), édité
+    à côté de l'édition mais sans aperçu ni témoins."""
+    path: Path
+    label: str = ""
+    # Mêmes valeurs que ProjectConfig.schema_mode ; ``schema`` n'est
+    # renseigné qu'en mode file.
+    schema_mode: str = "auto"
+    schema: Path | None = None
+
+    @property
+    def display_label(self) -> str:
+        return self.label or self.path.name
+
+
 def has_line_synchronization(witness: WitnessConfig) -> bool:
     """Vrai si une *ressource* JSON de synchronisation explicite existe.
 
@@ -93,6 +109,9 @@ class ProjectConfig:
     schema_mode: str = "auto"
     schema: Path | None = None
     schema_type: str = "relaxng"
+    # Documents XML auxiliaires, dans l'ordre de <documents>. Vide pour un
+    # projet qui n'en déclare pas.
+    documents: tuple[DocumentConfig, ...] = ()
 
     @property
     def root_dir(self) -> Path:
@@ -110,6 +129,13 @@ class ProjectConfig:
 def _resolve(root: Path, value: str | None, default: str) -> Path:
     p = Path(value or default)
     return p if p.is_absolute() else (root / p).resolve()
+
+
+_SCHEMA_SOURCE_ALIASES = {
+    "xml-model": "auto", "xmlmodel": "auto", "auto": "auto",
+    "project": "file", "file": "file", "manual": "file",
+    "none": "none", "disabled": "none", "off": "none",
+}
 
 
 def _parse_schema(root: ET.Element, root_dir: Path) -> tuple[str, Path | None, str]:
@@ -132,12 +158,7 @@ def _parse_schema(root: ET.Element, root_dir: Path) -> tuple[str, Path | None, s
         # Rétrocompatibilité : un @file ancien signifiait schéma explicite.
         source = "project" if raw_schema else "xml-model"
 
-    aliases = {
-        "xml-model": "auto", "xmlmodel": "auto", "auto": "auto",
-        "project": "file", "file": "file", "manual": "file",
-        "none": "none", "disabled": "none", "off": "none",
-    }
-    mode = aliases.get(source)
+    mode = _SCHEMA_SOURCE_ALIASES.get(source)
     if mode is None:
         raise ValueError(f"Source de schéma inconnue : {source!r}")
 
@@ -147,6 +168,41 @@ def _parse_schema(root: ET.Element, root_dir: Path) -> tuple[str, Path | None, s
             raise ValueError("Le mode de schéma projet exige un attribut file=\"…\".")
         schema = _resolve(root_dir, raw_schema, "schema/edition.rng")
     return mode, schema, "relaxng"
+
+
+def _parse_documents(root: ET.Element, root_dir: Path, edition: Path) -> tuple[DocumentConfig, ...]:
+    """Lit <documents><document file label schema schemaFile/></documents>.
+
+    Une entrée sans fichier, un doublon ou l'édition elle-même sont ignorés :
+    l'édition reste toujours le document principal. Un fichier absent du
+    disque n'empêche pas d'ouvrir le projet.
+    """
+    documents_el = root.find("documents")
+    if documents_el is None:
+        return ()
+    documents = []
+    seen = {edition}
+    for document_el in documents_el.findall("document"):
+        raw_file = (document_el.get("file") or "").strip()
+        if not raw_file:
+            continue
+        path = _resolve(root_dir, raw_file, raw_file)
+        if path in seen:
+            continue
+        seen.add(path)
+        source = (document_el.get("schema") or "auto").strip().lower()
+        mode = _SCHEMA_SOURCE_ALIASES.get(source)
+        if mode is None:
+            raise ValueError(f"Source de schéma inconnue pour {raw_file} : {source!r}")
+        schema = None
+        if mode == "file":
+            raw_schema = (document_el.get("schemaFile") or "").strip()
+            if not raw_schema:
+                raise ValueError(
+                    f"Le document {raw_file} déclare schema=\"file\" sans attribut schemaFile=\"…\".")
+            schema = _resolve(root_dir, raw_schema, raw_schema)
+        documents.append(DocumentConfig(path, (document_el.get("label") or "").strip(), mode, schema))
+    return tuple(documents)
 
 
 def load_project(path: str | Path) -> ProjectConfig:
@@ -343,6 +399,7 @@ def load_project(path: str | Path) -> ProjectConfig:
         schema_mode=schema_mode,
         schema=schema,
         schema_type=schema_type,
+        documents=_parse_documents(root, root_dir, edition),
     )
 
 
