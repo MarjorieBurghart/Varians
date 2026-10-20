@@ -359,3 +359,26 @@ affichés… », clic droit ▸ « Masquer l’onglet ») ne sont pas enregistr�
 `project.xml` : comme la disposition des témoins, c’est une préférence locale
 (`QSettings`) propre à chaque projet. L’ordre des `<document>` dans
 `project.xml` reste celui de leur ajout.
+
+## V0.8.9.1 — Requêtes XPath nommées (`<xpathQueries>`)
+
+Les requêtes de « Mes requêtes », dans Aide ▸ « Débugger l’apparat… », sont
+enregistrées dans le projet, pour être réutilisées et partagées avec lui :
+
+```xml
+<xpathQueries>
+  <query name="rdg sans @wit">//tei:rdg[not(@wit)]</query>
+</xpathQueries>
+```
+
+- `name` (obligatoire) : nom affiché dans la liste ; à nom égal, la première
+  requête est gardée ;
+- le contenu de `<query>` est l’expression XPath 1.0 (préfixe `tei:` pour
+  l’espace de noms TEI) ; une requête vide est ignorée.
+
+Un projet sans requête n’a pas d’élément `<xpathQueries>`. Comme pour
+`<documents>`, la fenêtre « Paramètres du projet » conserve les requêtes, et
+`project_management.update_project_xpath_queries` ne réécrit que cet élément
+(copie `.bak` préalable). Une version de Varians antérieure à 0.8.9.1 lit le
+projet normalement, mais supprime `<xpathQueries>` si l’on y enregistre les
+paramètres du projet.
