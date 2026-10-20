@@ -241,14 +241,18 @@ def open_window(qtbot, editor_module, dialogs):
     """Fabrique de MainWindow ; les fenêtres sont fermées proprement à la fin."""
     windows = []
 
-    def _open(project_path):
+    def _open(project_path, wait_validation=True):
         window = editor_module.MainWindow(Path(project_path))
         window.show()
         qtbot.waitExposed(window)
-        # Laisser passer les minuteries de démarrage (synchronisation à
-        # 50 ms, validation RELAX NG à 120 ms).
-        qtbot.wait(250)
         windows.append(window)
+        # Laisser passer les minuteries de démarrage (synchronisation à
+        # 50 ms, validation RELAX NG à 120 ms), puis la réponse du processus
+        # de validation, qui arrive sans bloquer la fenêtre.
+        qtbot.wait(250)
+        if wait_validation:
+            import validation_worker
+            qtbot.waitUntil(lambda: not validation_worker.worker_client().busy, timeout=60000)
         return window
 
     yield _open

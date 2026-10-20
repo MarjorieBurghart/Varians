@@ -756,4 +756,5 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="apparatus.query.invalid">Expression XPath invalide : {error}</string>
   <string key="apparatus.query.duplicate">Une requête nommée « {name} » existe déjà.</string>
   <string key="apparatus.query.remove.question">Supprimer la requête « {name} » du projet ?</string>
+  <string key="rng.worker.fallback">Validation RELAX NG faite dans Varians (processus de validation indisponible : {reason}) : la fenêtre peut se figer pendant la compilation d’un gros schéma.</string>
 </translations>

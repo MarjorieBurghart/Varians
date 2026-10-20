@@ -770,4 +770,5 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="apparatus.query.invalid">Ungültiger XPath-Ausdruck: {error}</string>
   <string key="apparatus.query.duplicate">Eine Abfrage mit dem Namen „{name}“ ist bereits vorhanden.</string>
   <string key="apparatus.query.remove.question">Abfrage „{name}“ aus dem Projekt löschen?</string>
+  <string key="rng.worker.fallback">RELAX-NG-Validierung innerhalb von Varians (Validierungsprozess nicht verfügbar: {reason}): Das Fenster kann einfrieren, während ein großes Schema kompiliert wird.</string>
 </translations>

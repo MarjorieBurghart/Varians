@@ -770,4 +770,5 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="apparatus.query.invalid">Neplatný výraz XPath: {error}</string>
   <string key="apparatus.query.duplicate">Dotaz s názvem „{name}“ již existuje.</string>
   <string key="apparatus.query.remove.question">Odstranit dotaz „{name}“ z projektu?</string>
+  <string key="rng.worker.fallback">Validace RELAX NG probíhá přímo ve Varians (validační proces není k dispozici: {reason}): během kompilace velkého schématu může okno zamrznout.</string>
 </translations>

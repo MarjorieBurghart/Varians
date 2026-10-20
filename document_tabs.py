@@ -275,7 +275,7 @@ class DocumentTabsMixin:
             session.last_xml_health_revision = -1   # afficher le résultat
             self.validate_text(False)
             call_later(120, self, lambda shown=session: self.document is shown and
-                       self.validate_relaxng_document(show_panel=False, automatic=True))
+                       self.validate_relaxng_document(show_panel=False, automatic=True, background=True))
             return
         (xml_text, xml_style, rng_text, rng_style,
          schematron_text, schematron_tip, summary) = status
