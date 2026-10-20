@@ -235,6 +235,57 @@ class DocumentTabsMixin:
                 and session.last_rng_revision != revision):
             self.rng_refresh_timer.start()
 
+    # --- Enregistrement de plusieurs documents --------------------------------
+
+    def _unsaved_sessions(self):
+        """Documents dont des modifications ne sont pas enregistrées. Pour le
+        document affiché, un fragment modifié dans l'aperçu compte aussi."""
+        return [session for session in self.documents
+                if (self._has_unsaved_work() if session is self.document else session.modified)]
+
+    def _document_display_name(self, session):
+        name = _t("documents.edition_tab") if session.is_edition else session.label
+        return f"{name} ({Path(session.path).name})"
+
+    def _save_session(self, session):
+        """Enregistre ``session``. Un document non affiché l'est le temps de
+        l'enregistrement : les avertissements (XML mal formé…) le montrent.
+        En cas d'échec, il reste affiché."""
+        if session is self.document:
+            return bool(self.save())
+        previous = self.document
+        if not self.show_document(session) or not self.save():
+            return False
+        self.show_document(previous)
+        return True
+
+    def _confirm_unsaved_documents(self, sessions, *, quitting=False):
+        """Plusieurs documents (ou un document auxiliaire) à enregistrer :
+        Tout enregistrer / Ignorer / Annuler. Renvoie True si l'on peut
+        continuer."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(_t("file.unsaved.title"))
+        box.setText(_t("documents.unsaved.text") + "\n\n" + "\n".join(
+            "• " + self._document_display_name(session) for session in sessions))
+        save_btn = box.addButton(_t("documents.save_all"), QMessageBox.ButtonRole.AcceptRole)
+        discard_btn = box.addButton(_t("file.discard_quit") if quitting else _t("common.discard"),
+                                    QMessageBox.ButtonRole.DestructiveRole)
+        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(save_btn)
+        box.setEscapeButton(cancel_btn)
+        box.exec()
+        clicked = box.clickedButton()
+        if clicked is discard_btn:
+            return True
+        if clicked is not save_btn:
+            return False
+        view = self.formatted_view
+        if (self._edition_displayed() and view.frag_box.isVisible()
+                and view.fragment_has_unapplied_changes() and not view.apply_fragment()):
+            return False
+        return all(self._save_session(session) for session in sessions)
+
     # --- Interface réservée à l'édition ---------------------------------------
 
     def _edition_only_actions(self):

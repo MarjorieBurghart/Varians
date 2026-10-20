@@ -674,4 +674,6 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="documents.edition_required.text">Tento příkaz mění edici. Nejprve zobrazte edici ({name}) a poté akci zopakujte.</string>
   <string key="menu.save_document">Uložit dokument</string>
   <string key="documents.edition_tab">Edice</string>
+  <string key="documents.unsaved.text">Následující dokumenty obsahují neuložené změny:</string>
+  <string key="documents.save_all">Uložit vše</string>
 </translations>

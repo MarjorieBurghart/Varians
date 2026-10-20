@@ -660,4 +660,6 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="documents.edition_required.text">Cette commande modifie l’édition. Affichez d’abord l’édition ({name}), puis recommencez.</string>
   <string key="menu.save_document">Enregistrer le document</string>
   <string key="documents.edition_tab">Édition</string>
+  <string key="documents.unsaved.text">Les documents suivants contiennent des modifications non enregistrées :</string>
+  <string key="documents.save_all">Tout enregistrer</string>
 </translations>

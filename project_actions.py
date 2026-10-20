@@ -32,15 +32,23 @@ class ProjectActionsMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
     def generate_web_viewer(self):
-        """Sauvegarde l'édition du projet puis lance le générateur web générique."""
-        if self.current_path is None:
+        """Sauvegarde l'édition du projet puis lance le générateur web générique.
+
+        L'édition est enregistrée si nécessaire, même lorsqu'un document
+        auxiliaire est affiché ; les autres documents ne sont pas concernés.
+        """
+        edition = self.edition_session
+        if edition.path is None:
             return
-        if self.current_path.resolve() != self.project.edition.resolve():
+        if edition.path.resolve() != self.project.edition.resolve():
             QMessageBox.warning(
                 self, _t("webgen.wrong_file.title"), _t("webgen.wrong_file.text")
             )
             return
-        if self._has_unsaved_work() and not self.save_contextual():
+        if edition is self.document:
+            if self._has_unsaved_work() and not self.save_contextual():
+                return
+        elif edition.modified and not self._save_session(edition):
             return
         try:
             from web_viewer.generator import generate

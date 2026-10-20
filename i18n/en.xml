@@ -660,4 +660,6 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="documents.edition_required.text">This command modifies the edition. Display the edition ({name}) first, then try again.</string>
   <string key="menu.save_document">Save document</string>
   <string key="documents.edition_tab">Edition</string>
+  <string key="documents.unsaved.text">The following documents have unsaved changes:</string>
+  <string key="documents.save_all">Save all</string>
 </translations>

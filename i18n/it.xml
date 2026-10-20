@@ -674,4 +674,6 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
   <string key="documents.edition_required.text">Questo comando modifica l’edizione. Visualizzate prima l’edizione ({name}), poi riprovate.</string>
   <string key="menu.save_document">Salva documento</string>
   <string key="documents.edition_tab">Edizione</string>
+  <string key="documents.unsaved.text">I documenti seguenti contengono modifiche non salvate:</string>
+  <string key="documents.save_all">Salva tutto</string>
 </translations>

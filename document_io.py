@@ -144,18 +144,22 @@ class DocumentIOMixin:
         return self._write_to(Path(fn))
 
     def maybe_save(self):
+        unsaved = self._unsaved_sessions()
+        if not unsaved: return True
+        # Plusieurs documents, ou un document auxiliaire : liste complète.
+        if unsaved != [self.edition_session]:
+            return self._confirm_unsaved_documents(unsaved)
         fragment_dirty = (
             hasattr(self, "formatted_view")
             and self.formatted_view.frag_box.isVisible()
             and self.formatted_view.fragment_has_unapplied_changes()
         )
-        if not self.modified and not fragment_dirty: return True
         r=QMessageBox.question(self,_t("file.unsaved.title"),_t("file.unsaved.continue"),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Discard|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Save)
         if r==QMessageBox.StandardButton.Cancel: return False
         if r==QMessageBox.StandardButton.Save:
             if fragment_dirty and not self.formatted_view.apply_fragment():
                 return False
-            return bool(self.save())
+            return self._save_session(self.edition_session)
         return True
 
     def _has_unsaved_work(self):
@@ -173,8 +177,11 @@ class DocumentIOMixin:
         Retourne True uniquement si la fermeture est autorisée. Les modifications
         du fragment ne sont appliquées que si l'utilisateur choisit d'enregistrer.
         """
-        if not self._has_unsaved_work():
+        unsaved = self._unsaved_sessions()
+        if not unsaved:
             return True
+        if unsaved != [self.edition_session]:
+            return self._confirm_unsaved_documents(unsaved, quitting=True)
 
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Icon.Warning)
@@ -206,5 +213,5 @@ _t("file.unsaved.quit.info")
             ):
                 if not self.formatted_view.apply_fragment():
                     return False
-            return bool(self.save())
+            return self._save_session(self.edition_session)
         return False

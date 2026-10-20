@@ -674,4 +674,6 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="documents.edition_required.text">Dieser Befehl ändert die Edition. Zeigen Sie zuerst die Edition ({name}) an und versuchen Sie es dann erneut.</string>
   <string key="menu.save_document">Dokument speichern</string>
   <string key="documents.edition_tab">Edition</string>
+  <string key="documents.unsaved.text">Die folgenden Dokumente enthalten nicht gespeicherte Änderungen:</string>
+  <string key="documents.save_all">Alle speichern</string>
 </translations>

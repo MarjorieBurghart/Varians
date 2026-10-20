@@ -674,4 +674,6 @@
   <string key="documents.edition_required.text">Эта команда изменяет издание. Сначала откройте издание ({name}), затем повторите попытку.</string>
   <string key="menu.save_document">Сохранить документ</string>
   <string key="documents.edition_tab">Издание</string>
+  <string key="documents.unsaved.text">В следующих документах есть несохранённые изменения:</string>
+  <string key="documents.save_all">Сохранить все</string>
 </translations>
