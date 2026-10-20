@@ -734,4 +734,12 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="project.error.no_pivot">project.xml neurčuje pivotního svědka: uveďte ho pomocí &lt;witnesses base="…"&gt; nebo pomocí role="base" u jediného &lt;witness&gt;.</string>
   <string key="references.other_document">Krátký tvar: {token} označuje pouze tento dokument. Chcete-li odkázat na tento cíl, napište {suggestion}.</string>
   <string key="references.problem.other_document">Krátký tvar, cíl v jiném dokumentu: napište {suggestions}</string>
+  <string key="documents.view.choose">Vybrat zobrazené dokumenty…</string>
+  <string key="documents.view.choose.tip">Vyberte zobrazené karty dokumentů a jejich pořadí.</string>
+  <string key="documents.view.title">Zobrazené dokumenty a pořadí</string>
+  <string key="documents.view.hint">Zaškrtněte dokumenty, jejichž karta se má zobrazit, a upravte jejich pořadí. Skrytý dokument zůstává v projektu. Nastavení se ukládá lokálně pro projekt a nemění soubor project.xml.</string>
+  <string key="documents.view.all">Vybrat vše</string>
+  <string key="documents.view.none">Zrušit výběr všech</string>
+  <string key="documents.view.move_up">Posunout nahoru</string>
+  <string key="documents.view.move_down">Posunout dolů</string>
 </translations>

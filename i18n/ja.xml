@@ -734,4 +734,12 @@
   <string key="project.error.no_pivot">project.xml にピボット伝本が指定されていません。&lt;witnesses base="…"&gt; で、または一つの &lt;witness&gt; だけに role="base" を付けて指定してください。</string>
   <string key="references.other_document">短い形式：{token} はこの文書の中だけを指します。この参照先を指すには {suggestion} と書いてください。</string>
   <string key="references.problem.other_document">短い形式（参照先は別の文書）：{suggestions} と書いてください</string>
+  <string key="documents.view.choose">表示する文書を選択…</string>
+  <string key="documents.view.choose.tip">表示する文書タブとその順序を選択します。</string>
+  <string key="documents.view.title">表示する文書と並び順</string>
+  <string key="documents.view.hint">タブを表示する文書を選び、順序を設定します。非表示にした文書もプロジェクトに残ります。この設定はプロジェクトごとにローカル保存され、project.xmlは変更されません。</string>
+  <string key="documents.view.all">すべて選択</string>
+  <string key="documents.view.none">すべて解除</string>
+  <string key="documents.view.move_up">上へ</string>
+  <string key="documents.view.move_down">下へ</string>
 </translations>

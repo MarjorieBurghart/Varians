@@ -111,6 +111,7 @@ class DocumentTabsMixin:
         for session in self._tab_sessions:
             self._refresh_document_tab(session)
         bar.setVisible(len(self.documents) > 1)
+        self.action_choose_documents.setEnabled(len(self.documents) > 1)
         self._select_document_tab()
 
     def _document_tab_changed(self, index):
@@ -136,8 +137,7 @@ class DocumentTabsMixin:
         if bar is None or session not in self._tab_sessions:
             return
         index = self._tab_sessions.index(session)
-        name = _t("documents.edition_tab") if session.is_edition else session.label
-        bar.setTabText(index, name + (" *" if session.modified else ""))
+        bar.setTabText(index, self._document_tab_name(session) + (" *" if session.modified else ""))
         color = _HEALTH_TAB_COLORS.get(session.health)
         bar.setTabTextColor(index, QColor(color) if color else self._normal_tab_color)
         tip = str(session.path)
@@ -302,8 +302,7 @@ class DocumentTabsMixin:
                 if (self._has_unsaved_work() if session is self.document else session.modified)]
 
     def _document_display_name(self, session):
-        name = _t("documents.edition_tab") if session.is_edition else session.label
-        return f"{name} ({Path(session.path).name})"
+        return f"{self._document_tab_name(session)} ({Path(session.path).name})"
 
     def _save_session(self, session):
         """Enregistre ``session``. Un document non affiché l'est le temps de

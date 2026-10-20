@@ -4,6 +4,7 @@ pour le projet ; un document masqué atteint par une référence réapparaît.""
 from __future__ import annotations
 
 import pytest
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QMessageBox
 
 from app_context import _settings, tr
@@ -187,3 +188,137 @@ def test_an_unusable_setting_still_shows_the_edition(open_window, three_document
     reopened = open_window(three_documents)
     assert _edition_tab() in _tabs(reopened)
     assert reopened.document is reopened.edition_session
+
+
+# --- Affichage ▸ « Choisir les documents affichés… » -------------------------
+
+def _rows(dialog):
+    return [(dialog.list.item(i).text(), dialog.list.item(i).checkState() == Qt.CheckState.Checked)
+            for i in range(dialog.list.count())]
+
+
+def _row_of(dialog, key):
+    return next(i for i in range(dialog.list.count())
+                if dialog.list.item(i).data(Qt.ItemDataRole.UserRole) == key)
+
+
+def test_display_command_follows_the_witness_command_in_the_display_menu(open_window, three_documents):
+    window = open_window(three_documents)
+    actions = window.display_menu.actions()
+    assert actions.index(window.action_choose_documents) == actions.index(window.action_choose_witnesses) + 1
+    assert window.action_choose_documents.text() == tr("documents.view.choose")
+    assert window.action_choose_documents.isEnabled()
+    window.show_document(_doc(window, "personnes.xml"))
+    assert window.action_choose_documents.isEnabled()                   # pas réservée à l'édition
+
+
+def test_display_dialog_lists_every_document_in_tab_order(open_window, three_documents, dialogs):
+    window = open_window(three_documents)
+    lieux = _doc(window, "lieux.xml")
+    window.hide_document_tab(lieux)
+    seen = {}
+
+    def look(dialog):
+        seen["rows"] = _rows(dialog)
+        seen["tip"] = dialog.list.item(_row_of(dialog, "xml/lieux.xml")).toolTip()
+        seen["title"] = dialog.windowTitle()
+        dialog.reject()
+        return dialog.result()
+
+    dialogs.expect("dialog", look)
+    assert not window.choose_displayed_documents()
+    assert seen["rows"] == [(_edition_tab(), True), ("Personnes", True), ("lieux.xml", False)]
+    assert str(lieux.path) in seen["tip"]
+    assert seen["title"] == tr("documents.view.title")
+
+
+def test_display_dialog_hides_and_reorders_tabs(open_window, three_documents, dialogs):
+    window = open_window(three_documents)
+
+    def choose(dialog):
+        dialog.list.item(_row_of(dialog, "xml/personnes.xml")).setCheckState(Qt.CheckState.Unchecked)
+        dialog.list.setCurrentRow(_row_of(dialog, "xml/lieux.xml"))
+        dialog.up_btn.click()
+        dialog.up_btn.click()
+        assert not dialog.up_btn.isEnabled()                            # déjà en tête
+        dialog.accept()
+        return dialog.result()
+
+    dialogs.expect("dialog", choose)
+    assert window.choose_displayed_documents()
+    assert _tabs(window) == ["lieux.xml", _edition_tab()]
+    assert window.document is window.edition_session
+    assert _tabs(open_window(three_documents)) == ["lieux.xml", _edition_tab()]
+
+
+def test_display_dialog_cannot_hide_every_document(open_window, three_documents, dialogs):
+    window = open_window(three_documents)
+    states = []
+
+    def choose(dialog):
+        dialog.none_btn.click()
+        states.append(dialog.ok_button.isEnabled())
+        dialog.list.item(_row_of(dialog, "xml/personnes.xml")).setCheckState(Qt.CheckState.Checked)
+        states.append(dialog.ok_button.isEnabled())
+        dialog.none_btn.click()
+        dialog.all_btn.click()
+        states.append(dialog.ok_button.isEnabled())
+        dialog.reject()
+        return dialog.result()
+
+    dialogs.expect("dialog", choose)
+    window.choose_displayed_documents()
+    assert states == [False, True, True]
+
+
+def test_cancelling_the_display_dialog_changes_nothing(open_window, three_documents, dialogs):
+    window = open_window(three_documents)
+
+    def choose(dialog):
+        dialog.list.item(_row_of(dialog, "edition")).setCheckState(Qt.CheckState.Unchecked)
+        dialog.list.setCurrentRow(0)
+        dialog.down_btn.click()
+        dialog.reject()
+        return dialog.result()
+
+    dialogs.expect("dialog", choose)
+    assert not window.choose_displayed_documents()
+    assert _tabs(window) == [_edition_tab(), "Personnes", "lieux.xml"]
+    assert _tabs(open_window(three_documents)) == [_edition_tab(), "Personnes", "lieux.xml"]
+
+
+def test_unchecking_the_displayed_document_shows_the_first_visible_tab(open_window, three_documents, dialogs):
+    window = open_window(three_documents)
+    window.show_document(_doc(window, "lieux.xml"))
+
+    def choose(dialog):
+        dialog.list.item(_row_of(dialog, "xml/lieux.xml")).setCheckState(Qt.CheckState.Unchecked)
+        dialog.list.item(_row_of(dialog, "edition")).setCheckState(Qt.CheckState.Unchecked)
+        dialog.accept()
+        return dialog.result()
+
+    dialogs.expect("dialog", choose)
+    assert window.choose_displayed_documents()
+    assert window.document is _doc(window, "personnes.xml")
+    assert _tabs(window) == ["Personnes"]
+
+
+def test_display_command_needs_several_documents(open_window, example_project):
+    window = open_window(example_project)
+    assert not window.action_choose_documents.isEnabled()               # projet simple : inchangé
+    path = example_project.parent / "xml" / "notes.xml"
+    path.write_text('<TEI xmlns="http://www.tei-c.org/ns/1.0"/>\n', encoding="utf-8")
+    assert window._register_document(DocumentConfig(path))
+    assert window.action_choose_documents.isEnabled()
+    assert window._unregister_document(_doc(window, "notes.xml"))
+    assert not window.action_choose_documents.isEnabled()
+
+
+def test_display_command_follows_the_interface_language(open_window, three_documents):
+    window = open_window(three_documents)
+    window._set_language_code("en")
+    try:
+        assert window.action_choose_documents.text() == tr("documents.view.choose") == "Choose displayed documents…"
+        assert window.action_choose_documents.toolTip() == tr("documents.view.choose.tip")
+    finally:
+        window._set_language_code("fr")

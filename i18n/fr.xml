@@ -720,4 +720,12 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="project.error.no_pivot">project.xml ne désigne pas de témoin pivot : indiquez-le par &lt;witnesses base="…"&gt;, ou par role="base" sur un seul &lt;witness&gt;.</string>
   <string key="references.other_document">Forme courte : {token} ne désigne que ce document. Pour viser cette cible, écrivez {suggestion}.</string>
   <string key="references.problem.other_document">Forme courte, cible dans un autre document : écrire {suggestions}</string>
+  <string key="documents.view.choose">Choisir les documents affichés…</string>
+  <string key="documents.view.choose.tip">Choisir les onglets de documents visibles et leur ordre.</string>
+  <string key="documents.view.title">Documents affichés et ordre</string>
+  <string key="documents.view.hint">Cochez les documents dont l'onglet doit être affiché et ajustez leur ordre. Un document masqué reste dans le projet. Cette préférence est enregistrée localement pour le projet, sans modifier project.xml.</string>
+  <string key="documents.view.all">Tout sélectionner</string>
+  <string key="documents.view.none">Tout désélectionner</string>
+  <string key="documents.view.move_up">Monter</string>
+  <string key="documents.view.move_down">Descendre</string>
 </translations>

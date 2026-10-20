@@ -12,13 +12,21 @@ Varians propose de les enregistrer avant de quitter.
   document atteint par une référence (F12, panneau « Références »). Son
   onglet réapparaît alors durablement.
 - Le dernier onglet visible ne peut pas être masqué.
+
+Affichage ▸ « Choisir les documents affichés… » ouvre
+``DocumentVisibilityDialog``, sur le modèle de la fenêtre des témoins.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from app_context import _settings
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QAbstractItemView, QDialog, QDialogButtonBox, QHBoxLayout, QLabel, QListWidget,
+    QListWidgetItem, QPushButton, QVBoxLayout,
+)
+from app_context import _settings, tr as _t
 from project_management import portable_path
 
 EDITION_KEY = "edition"
@@ -32,6 +40,92 @@ def _keys(value):
     return [key for key in value if isinstance(key, str)]
 
 
+class DocumentVisibilityDialog(QDialog):
+    """Documents dont l'onglet est affiché, et ordre des onglets. OK reste
+    inactif tant qu'aucun document n'est coché."""
+
+    def __init__(self, entries, parent=None):
+        """``entries`` : (clé, nom, info-bulle, visible), dans l'ordre des onglets."""
+        super().__init__(parent)
+        self.setWindowTitle(_t("documents.view.title"))
+        self.resize(520, 400)
+        root = QVBoxLayout(self)
+        info = QLabel(_t("documents.view.hint"), self)
+        info.setWordWrap(True)
+        root.addWidget(info)
+
+        self.list = QListWidget(self)
+        self.list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        for key, name, tip, visible in entries:
+            item = QListWidgetItem(name)
+            item.setData(Qt.ItemDataRole.UserRole, key)
+            item.setToolTip(tip)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked if visible else Qt.CheckState.Unchecked)
+            self.list.addItem(item)
+        root.addWidget(self.list, 1)
+
+        controls = QHBoxLayout()
+        self.all_btn = QPushButton(_t("documents.view.all"), self)
+        self.none_btn = QPushButton(_t("documents.view.none"), self)
+        self.up_btn = QPushButton(_t("documents.view.move_up"), self)
+        self.down_btn = QPushButton(_t("documents.view.move_down"), self)
+        self.all_btn.clicked.connect(lambda: self._check_all(Qt.CheckState.Checked))
+        self.none_btn.clicked.connect(lambda: self._check_all(Qt.CheckState.Unchecked))
+        self.up_btn.clicked.connect(lambda: self._move_current(-1))
+        self.down_btn.clicked.connect(lambda: self._move_current(1))
+        self.list.currentRowChanged.connect(self._update_move_buttons)
+        controls.addWidget(self.all_btn)
+        controls.addWidget(self.none_btn)
+        controls.addStretch(1)
+        controls.addWidget(self.up_btn)
+        controls.addWidget(self.down_btn)
+        root.addLayout(controls)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
+                                   parent=self)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        self.ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        root.addWidget(buttons)
+        self.list.itemChanged.connect(self._update_ok_button)
+        self.list.setCurrentRow(0)
+        self._update_move_buttons()
+        self._update_ok_button()
+
+    def _update_move_buttons(self, *_args):
+        row = self.list.currentRow()
+        self.up_btn.setEnabled(row > 0)
+        self.down_btn.setEnabled(0 <= row < self.list.count() - 1)
+
+    def _update_ok_button(self, *_args):
+        self.ok_button.setEnabled(bool(self.visible_keys()))
+
+    def _move_current(self, direction):
+        row = self.list.currentRow()
+        target = row + direction
+        if row < 0 or not 0 <= target < self.list.count():
+            return
+        self.list.insertItem(target, self.list.takeItem(row))
+        self.list.setCurrentRow(target)
+
+    def _check_all(self, state):
+        for i in range(self.list.count()):
+            self.list.item(i).setCheckState(state)
+
+    def ordered_keys(self):
+        """Tous les documents, cochés ou non, dans l'ordre choisi."""
+        return [self.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list.count())]
+
+    def visible_keys(self):
+        return [self.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list.count())
+                if self.list.item(i).checkState() == Qt.CheckState.Checked]
+
+    def hidden_keys(self):
+        visible = set(self.visible_keys())
+        return [key for key in self.ordered_keys() if key not in visible]
+
+
 class DocumentDisplayMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
@@ -41,6 +135,11 @@ class DocumentDisplayMixin:
         if session.is_edition:
             return EDITION_KEY
         return portable_path(self.project.root_dir, Path(session.path))
+
+    def _document_tab_name(self, session):
+        """Nom de l'onglet : « Édition », ou le label du document (à défaut,
+        le nom de son fichier)."""
+        return _t("documents.edition_tab") if session.is_edition else session.label
 
     def _load_document_tabs(self):
         """Ordre et onglets masqués mémorisés pour ce projet."""
@@ -128,3 +227,15 @@ class DocumentDisplayMixin:
                 self.show_document(visible[0])
         self._update_document_tabs()
         self._save_document_tabs()
+
+    def choose_displayed_documents(self):
+        """Affichage ▸ « Choisir les documents affichés… ». True si le choix
+        est validé."""
+        entries = [(self._document_key(session), self._document_tab_name(session), str(session.path),
+                    session not in self._hidden_documents)
+                   for session in self._document_tab_order]
+        dialog = DocumentVisibilityDialog(entries, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return False
+        self.set_document_tabs(dialog.ordered_keys(), dialog.hidden_keys())
+        return True

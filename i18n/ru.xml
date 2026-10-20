@@ -734,4 +734,12 @@
   <string key="project.error.no_pivot">В project.xml не указан опорный свидетель: укажите его через &lt;witnesses base="…"&gt; или через role="base" ровно у одного &lt;witness&gt;.</string>
   <string key="references.other_document">Краткая форма: {token} обозначает только этот документ. Чтобы указать на эту цель, напишите {suggestion}.</string>
   <string key="references.problem.other_document">Краткая форма, цель в другом документе: напишите {suggestions}</string>
+  <string key="documents.view.choose">Выбрать отображаемые документы…</string>
+  <string key="documents.view.choose.tip">Выберите видимые вкладки документов и их порядок.</string>
+  <string key="documents.view.title">Отображаемые документы и порядок</string>
+  <string key="documents.view.hint">Отметьте документы, вкладки которых нужно показывать, и измените их порядок. Скрытый документ остаётся в проекте. Настройка сохраняется локально для проекта и не изменяет project.xml.</string>
+  <string key="documents.view.all">Выбрать все</string>
+  <string key="documents.view.none">Снять выбор со всех</string>
+  <string key="documents.view.move_up">Выше</string>
+  <string key="documents.view.move_down">Ниже</string>
 </translations>

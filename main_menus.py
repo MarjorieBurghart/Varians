@@ -176,8 +176,13 @@ class MainMenusMixin:
             _t("view.witnesses.choose"), "", self.choose_visible_witnesses, _t("view.witnesses.choose.tip")
         )
         self.action_choose_witnesses.setEnabled(bool(getattr(self, "has_any_images", True)))
+        self.action_choose_documents = self._make_action(
+            _t("documents.view.choose"), "", self.choose_displayed_documents, _t("documents.view.choose.tip")
+        )
+        self.action_choose_documents.setEnabled(len(self.documents) > 1)
         menu.addAction(self.action_reload_images)
         menu.addAction(self.action_choose_witnesses)
+        menu.addAction(self.action_choose_documents)
         self.workspace_layout_menu = menu.addMenu(_t('workspace.menu'))
         self.workspace_mode_group = QActionGroup(self)
         self.workspace_mode_group.setExclusive(True)
@@ -357,6 +362,8 @@ class MainMenusMixin:
         self.action_reload_images.setText(_t("toolbar.reload_images"))
         self.action_choose_witnesses.setText(_t("view.witnesses.choose"))
         self.action_choose_witnesses.setToolTip(_t("view.witnesses.choose.tip"))
+        self.action_choose_documents.setText(_t("documents.view.choose"))
+        self.action_choose_documents.setToolTip(_t("documents.view.choose.tip"))
         self.workspace_layout_menu.setTitle(_t('workspace.menu'))
         self.detach_witness_menu.setTitle(_t('workspace.detach.menu'))
         for mode, key in (('vertical', 'workspace.vertical'), ('horizontal', 'workspace.horizontal'), ('grid', 'workspace.grid')):

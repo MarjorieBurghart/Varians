@@ -734,4 +734,12 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="project.error.no_pivot">project.xml bestimmt keinen Pivot-Textzeugen: Geben Sie ihn mit &lt;witnesses base="…"&gt; oder mit role="base" an genau einem &lt;witness&gt; an.</string>
   <string key="references.other_document">Kurzform: {token} bezeichnet nur dieses Dokument. Um auf dieses Ziel zu verweisen, schreiben Sie {suggestion}.</string>
   <string key="references.problem.other_document">Kurzform, Ziel in einem anderen Dokument: {suggestions} schreiben</string>
+  <string key="documents.view.choose">Angezeigte Dokumente auswählen…</string>
+  <string key="documents.view.choose.tip">Sichtbare Dokument-Registerkarten und deren Reihenfolge auswählen.</string>
+  <string key="documents.view.title">Angezeigte Dokumente und Reihenfolge</string>
+  <string key="documents.view.hint">Markieren Sie die Dokumente, deren Registerkarte angezeigt werden soll, und legen Sie ihre Reihenfolge fest. Ein ausgeblendetes Dokument bleibt im Projekt. Diese Einstellung wird lokal für das Projekt gespeichert und ändert project.xml nicht.</string>
+  <string key="documents.view.all">Alle auswählen</string>
+  <string key="documents.view.none">Keine auswählen</string>
+  <string key="documents.view.move_up">Nach oben</string>
+  <string key="documents.view.move_down">Nach unten</string>
 </translations>
