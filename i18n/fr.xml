@@ -656,4 +656,6 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="viewer.search.run">Chercher</string>
   <string key="viewer.search.close">Fermer la recherche</string>
   <string key="viewer.search.count">{count} résultat(s)</string>
+  <string key="documents.edition_required.title">Édition non affichée</string>
+  <string key="documents.edition_required.text">Cette commande modifie l’édition. Affichez d’abord l’édition ({name}), puis recommencez.</string>
 </translations>

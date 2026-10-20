@@ -670,4 +670,6 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="viewer.search.run">Hledat</string>
   <string key="viewer.search.close">Zavřít hledání</string>
   <string key="viewer.search.count">Nalezeno: {count}</string>
+  <string key="documents.edition_required.title">Edice není zobrazena</string>
+  <string key="documents.edition_required.text">Tento příkaz mění edici. Nejprve zobrazte edici ({name}) a poté akci zopakujte.</string>
 </translations>

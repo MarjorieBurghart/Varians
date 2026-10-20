@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
 from xml_folding import foldable_xml_regions, region_at_header, region_for_cursor, visible_line_numbers
-from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION, CATALOG_SIZE
 
 ROOT=Path(__file__).resolve().parents[1]
 SRC=application_source()
@@ -130,7 +130,7 @@ def test_all_locales_and_help_pages():
     for lang in languages:
         root=ET.parse(ROOT/'i18n'/f'{lang}.xml').getroot()
         translations={n.get('key'):n.text for n in root.findall('string')}
-        assert len(translations)==len(root.findall('string'))==629
+        assert len(translations)==len(root.findall('string'))==CATALOG_SIZE
         for key in ('fold.menu','fold.current','fold.all','fold.none'):
             assert translations[key]
         help_text=(ROOT/'help'/f'{lang}.html').read_text(encoding='utf-8')

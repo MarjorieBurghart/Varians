@@ -670,4 +670,6 @@
   <string key="viewer.search.run">検索</string>
   <string key="viewer.search.close">検索を閉じる</string>
   <string key="viewer.search.count">検索結果：{count}件</string>
+  <string key="documents.edition_required.title">校訂本文が表示されていません</string>
+  <string key="documents.edition_required.text">このコマンドは校訂本文を変更します。先に校訂本文（{name}）を表示してから、もう一度実行してください。</string>
 </translations>

@@ -670,4 +670,6 @@
   <string key="viewer.search.run">Найти</string>
   <string key="viewer.search.close">Закрыть поиск</string>
   <string key="viewer.search.count">Найдено: {count}</string>
+  <string key="documents.edition_required.title">Издание не отображается</string>
+  <string key="documents.edition_required.text">Эта команда изменяет издание. Сначала откройте издание ({name}), затем повторите попытку.</string>
 </translations>

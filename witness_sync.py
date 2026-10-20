@@ -567,6 +567,8 @@ class WitnessSyncMixin:
 
     def navigate_to_base_ordinal(self, ordinal, move_xml_cursor=True):
         """Synchronise tous les témoins sur un segment cliqué dans la vue mise en forme."""
+        if not self._edition_displayed():
+            return
         if not self.base_alignment_available or not self.base_items:
             return
         ordinal = max(0, min(len(self.base_items)-1, int(ordinal)))
@@ -805,6 +807,7 @@ class WitnessSyncMixin:
     def _release_panel_sync(self): self._sync_from_panel=False
 
     def goto_xml_from_base(self):
+        if not self._edition_displayed(): return
         spans=self.lb_spans()
         if not spans: return
         i=max(0,min(len(spans)-1,self.base_panel.center_index)); c=self.editor.textCursor(); c.setPosition(spans[i][1]); self.editor.setTextCursor(c); self.editor.centerCursor(); self.editor.setFocus()

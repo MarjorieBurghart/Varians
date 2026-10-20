@@ -61,6 +61,7 @@ d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
 | `witness_sync.py` | synchronisation XML ↔ témoins, folios, ressources |
 | `main_menus.py` | barre d'outils, menus, projets récents, langue |
 | `project_actions.py` | export web, ouverture/création/réglages de projet |
+| `document_tabs.py` | documents du projet affichés : édition et documents auxiliaires |
 
 Composants autonomes utilisés par la fenêtre :
 
@@ -78,6 +79,10 @@ Les modules de l'interface n'importent jamais `editeur_tei` (il peut être
 exécuté comme script) : les services communs passent par `app_context`.
 Tout nouveau module local importé par `editeur_tei.py` doit figurer dans
 `_LOCAL_MODULE_NAMES` (un test le vérifie).
+
+Un nouveau message de l'interface s'ajoute, traduit, aux sept catalogues
+`i18n/*.xml` ; `CATALOG_SIZE` dans `tests/varians_source.py` donne le
+nombre de messages attendu dans chacun.
 
 ## Transformations XSLT de l'aperçu
 

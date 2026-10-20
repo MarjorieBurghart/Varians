@@ -38,7 +38,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -78,6 +78,7 @@ from document_io import DocumentIOMixin
 from completion_ui import CompletionMixin
 from validation_panel import ValidationPanelMixin
 from xpath_panel import XPathPanelMixin
+from document_tabs import DocumentTabsMixin
 from rng_completion import XmlContextCache
 from image_sources import (
     page_image_source, apply_witness_image_policy, image_only_items, page_navigation_items,
@@ -259,7 +260,7 @@ def _document_attribute(path):
     )
 
 
-class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, QMainWindow):
+class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, QMainWindow):
     # --- État du document ouvert (voir document_session.DocumentSession) ---
     current_path = _document_attribute("path")
     modified = _document_attribute("modified")
@@ -294,6 +295,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.project = load_project(project_path or DEMO_PROJECT)
         self.document.schema_mode = self.project.schema_mode
         self.document.schema_file = self.project.schema
+        self._init_documents()
         remember_recent_project(self.project.path)
         global I18N
         I18N = I18nManager(self.project.translations_dir, self.project.language, self.project.fallback_language)
@@ -338,6 +340,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self._xml_health_running = False
         self._xml_health_pending = False
         self._xml_health_worker = None
+        self._xml_health_session = None
         self._last_xml_health_revision = -1
         self._last_xml_health_well_formed = None
 
@@ -564,13 +567,15 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
                 for page in (cache.get("pages", []) or [])
             )
             self.witness_splitter.addWidget(panel)
-            panel.markPageRequested.connect(self._mark_page_in_tei)
-            panel.splitFolioRequested.connect(self._split_double_folio)
+            # Ces commandes écrivent dans l'édition : refusées si un autre
+            # document est affiché.
+            panel.markPageRequested.connect(self._edition_write(self._mark_page_in_tei))
+            panel.splitFolioRequested.connect(self._edition_write(self._split_double_folio))
             panel.maximizeRequested.connect(self._toggle_witness_panel_maximize)
             panel.detachRequested.connect(self._toggle_detached_witness)
             if w.is_base:
                 # Connect once, even if synchronization becomes active later.
-                panel.primaryNavigate.connect(self._primary_panel_navigate)
+                panel.primaryNavigate.connect(self._edition_navigation(self._primary_panel_navigate))
             if panel.items and not panel.sync_enabled:
                 QTimer.singleShot(0, panel.reload)
         self.base_panel = self.panels[self.base_id]
@@ -1017,7 +1022,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _cursor_changed(self):
         c=self.editor.textCursor(); self.cursor_status.setText(_t("status.cursor", line=c.blockNumber()+1, column=c.positionInBlock()+1))
-        if not self._sync_from_panel: self.sync_timer.start()
+        # Les témoins ne suivent que le curseur de l'édition.
+        if not self._sync_from_panel and self._edition_displayed(): self.sync_timer.start()
 
     def _text_changed(self):
         """Invalide tout diagnostic antérieur, quel que soit le panneau actif.
@@ -1173,6 +1179,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         text = self.editor.toPlainText()
         self._xml_health_running = True
         self._xml_health_pending = False
+        self._xml_health_session = self.document
         worker = XmlHealthWorker(revision, text, self.lb_base_re)
         self._xml_health_worker = worker
         worker.signals.finished.connect(self._async_xml_health_finished)
@@ -1182,14 +1189,19 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
     def _async_xml_health_finished(self, revision, well_formed, line, column, error, spans):
         self._xml_health_running = False
         self._xml_health_worker = None
+        # Le résultat ne vaut que pour le document contrôlé : un autre a pu
+        # être affiché entre-temps (les révisions sont propres à chaque document).
+        checked = self._xml_health_session
+        self._xml_health_session = None
+        same_document = checked is None or checked is self.document
         current_revision = self.editor.document().revision()
-        if revision == current_revision:
+        if same_document and revision == current_revision:
             self._last_xml_health_revision = revision
             self._last_xml_health_well_formed = bool(well_formed)
             self._apply_xml_health_result(well_formed, line, column, error, spans, False)
         # Si le document a changé pendant un contrôle exceptionnellement long
         # et que le timer a déjà expiré, programmer une nouvelle passe courte.
-        if (self._xml_health_pending or revision != current_revision) and not self.validate_timer.isActive():
+        if (self._xml_health_pending or not same_document or revision != current_revision) and not self.validate_timer.isActive():
             self._xml_health_pending = False
             call_later(180, self, self.validate_editor)
 

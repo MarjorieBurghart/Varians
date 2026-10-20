@@ -42,7 +42,7 @@ class DocumentIOMixin:
             self.formatted_view.frag_box.setVisible(False)
             self.formatted_view.dirty_preview = True
             self.formatted_view._last_preview_key = None
-        call_later(50, self, lambda: self.sync_panels_to_cursor(True))
+        call_later(50, self, lambda: self._edition_displayed() and self.sync_panels_to_cursor(True))
         # Même en mode RNG « aucun », on résout les xml-model pour détecter
         # à titre informatif une éventuelle déclaration Schematron.
         call_later(120, self, lambda: self.validate_relaxng_document(show_panel=False, show_success_message=False))
@@ -103,7 +103,8 @@ class DocumentIOMixin:
                 ):
                     return False
 
-        if self.expected_base_lines is not None and len(self.lb_spans()) != self.expected_base_lines:
+        # Le nombre de <lb/> du témoin pivot ne concerne que l'édition.
+        if self.document.is_edition and self.expected_base_lines is not None and len(self.lb_spans()) != self.expected_base_lines:
             r=QMessageBox.warning(self,_t("file.structure.title", base=self.base_id),_t("file.structure.text", count=len(self.lb_spans()), base=self.base_id, expected=self.expected_base_lines),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Cancel)
             if r==QMessageBox.StandardButton.Cancel: return False
         try:

@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 import pytest
-from varians_source import application_source
+from varians_source import application_source, CATALOG_SIZE
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -83,7 +83,7 @@ def test_languages_and_help_maintained():
     for lang in ('fr','en','de','ja','cs','it','ru'):
         strings=ET.parse(ROOT/'i18n'/f'{lang}.xml').getroot().findall('string')
         mapping={x.get('key'):x.text for x in strings}
-        assert len(strings)==len(mapping)==629
+        assert len(strings)==len(mapping)==CATALOG_SIZE
         assert all(mapping.get('viewer.search.'+k) for k in ('medieval','run','close','count'))
         assert '{count}' in mapping['viewer.search.count']
         page=(ROOT/'help'/f'{lang}.html').read_text(encoding='utf8')

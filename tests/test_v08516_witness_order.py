@@ -9,7 +9,7 @@ import textwrap
 import xml.etree.ElementTree as ET
 
 from witness_layout import normalized_witness_order, ordered_visible_witnesses
-from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION, CATALOG_SIZE
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = application_source()
@@ -235,7 +235,7 @@ def test_translations_7_languages_all_present_and_unambiguous():
     for language in expected:
         root=ET.parse(ROOT/'i18n'/f'{language}.xml').getroot()
         keys=[e.attrib['key'] for e in root.findall('string')]
-        assert len(keys) == len(set(keys)) == 629
+        assert len(keys) == len(set(keys)) == CATALOG_SIZE
         trans={e.attrib['key']:e.text for e in root.findall('string')}
         for key in ('view.witnesses.hint','view.witnesses.move_up','view.witnesses.move_down'):
             assert trans[key] and len(trans[key])>1

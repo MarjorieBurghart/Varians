@@ -656,4 +656,6 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="viewer.search.run">Find</string>
   <string key="viewer.search.close">Close search</string>
   <string key="viewer.search.count">{count} result(s)</string>
+  <string key="documents.edition_required.title">Edition not displayed</string>
+  <string key="documents.edition_required.text">This command modifies the edition. Display the edition ({name}) first, then try again.</string>
 </translations>
