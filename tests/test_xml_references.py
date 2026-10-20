@@ -145,6 +145,15 @@ def test_problems_lists_only_unresolved_or_ambiguous_references(tmp_path):
         (edition, "#absent", "missing"), (edition, "#petrus", "ambiguous")]
 
 
+def test_check_counts_every_reference_and_lists_the_problems(tmp_path):
+    text = '<TEI><persName ref="#bernard"/><rdg wit="#absent #petrus"/></TEI>'
+    resolver, edition, *_ = _resolver(tmp_path, text)
+    count, problems = resolver.check()
+    assert count == 3
+    assert problems == resolver.problems()
+    assert [p.reference.token for p in problems] == ["#absent", "#petrus"]
+
+
 def test_example_project_has_no_reference_problem():
     edition = ROOT / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")

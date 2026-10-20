@@ -261,13 +261,20 @@ class ReferenceResolver:
             return Resolution("missing")
         return Resolution("ok" if len(found) == 1 else "ambiguous", tuple(found))
 
-    def problems(self):
-        """Références introuvables ou ambiguës de tous les documents."""
+    def check(self):
+        """``(nombre de références, problèmes)`` pour tous les documents ;
+        les problèmes sont les références introuvables ou ambiguës."""
+        count = 0
         result = []
         for key in self._order:
             path = self._paths[key]
             for reference in collect_references(self._texts[key]):
+                count += 1
                 resolution = self.resolve(reference, path)
                 if resolution.status != "ok":
                     result.append(ReferenceProblem(path, reference, resolution))
-        return result
+        return count, result
+
+    def problems(self):
+        """Références introuvables ou ambiguës de tous les documents."""
+        return self.check()[1]

@@ -605,14 +605,15 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         # utile, afin de ne pas pénaliser les petits écrans.
         self.validation_panel = self._build_validation_panel()
         self.xpath_panel = self._build_xpath_panel()
+        self.references_panel = self._build_references_panel()
+        self._bottom_panels = [self.validation_panel, self.xpath_panel, self.references_panel]
         self.left_splitter = QSplitter(Qt.Orientation.Vertical)
         self.left_splitter.addWidget(self._build_document_area(self.left_tabs))
-        self.left_splitter.addWidget(self.validation_panel)
-        self.left_splitter.addWidget(self.xpath_panel)
         self.left_splitter.setStretchFactor(0, 1)
-        self.left_splitter.setStretchFactor(1, 0)
-        self.left_splitter.setStretchFactor(2, 0)
-        self.left_splitter.setSizes([760, 0, 0])
+        for index, panel in enumerate(self._bottom_panels, 1):
+            self.left_splitter.addWidget(panel)
+            self.left_splitter.setStretchFactor(index, 0)
+        self.left_splitter.setSizes([760] + [0] * len(self._bottom_panels))
         # Do not let sizeHint/minimums from the XML widgets force a 50:50
         # layout. The splitter handle may be dragged down to ~20% editor width.
         self.left_splitter.setMinimumWidth(140)
@@ -705,16 +706,21 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _show_bottom_panel(self, panel, height=230):
         """N'affiche qu'un panneau inférieur à la fois."""
-        other = self.xpath_panel if panel is self.validation_panel else self.validation_panel
-        other.setVisible(False)
+        for other in self._bottom_panels:
+            if other is not panel:
+                other.setVisible(False)
         panel.setVisible(True)
         total = max(450, self.left_splitter.height())
         bottom = min(max(150, int(height)), max(150, total // 2))
-        sizes = [max(240, total - bottom), 0, 0]
+        sizes = [max(240, total - bottom)] + [0] * len(self._bottom_panels)
         index = self.left_splitter.indexOf(panel)
         if 0 <= index < len(sizes):
             sizes[index] = bottom
         self.left_splitter.setSizes(sizes)
+
+    def _hide_bottom_panel(self, panel):
+        panel.setVisible(False)
+        self.left_splitter.setSizes([max(300, self.left_splitter.height())] + [0] * len(self._bottom_panels))
 
     def format_xml_source(self):
         """Indente les seules zones XML/TEI dont la mise en forme est sûre.

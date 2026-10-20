@@ -709,4 +709,19 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="references.ambiguous.item">{file}, riga {line}</string>
   <string key="references.jumped">Destinazione: {file}, riga {line} (Alt+← per tornare)</string>
   <string key="references.no_history">Nessuna posizione precedente a cui tornare.</string>
+  <string key="references.action">Riferimenti</string>
+  <string key="references.action.tip">Verifica i riferimenti («#id», «file.xml#id») di tutti i documenti del progetto</string>
+  <string key="references.recheck">Verifica di nuovo</string>
+  <string key="references.close">Nascondi il pannello dei riferimenti</string>
+  <string key="references.column.document">Documento</string>
+  <string key="references.column.line">Riga</string>
+  <string key="references.column.attribute">Attributo</string>
+  <string key="references.column.value">Valore</string>
+  <string key="references.column.problem">Problema</string>
+  <string key="references.problem.missing">Destinazione non trovata</string>
+  <string key="references.problem.ambiguous">Destinazione ambigua: {targets}</string>
+  <string key="references.problem.no_file">File non trovato</string>
+  <string key="references.summary.ok">{count} riferimento/i verificato/i: tutti risolti ✓</string>
+  <string key="references.summary.problems">{count} riferimento/i verificato/i, {problems} problema/i. Fai doppio clic su una riga per andare al riferimento.</string>
+  <string key="references.summary.none">Nessun riferimento («#id», «file.xml#id») nei documenti del progetto.</string>
 </translations>

@@ -2,7 +2,7 @@
 """Références entre les documents du projet dans la fenêtre principale :
 identifiants proposés à la saisie d'un pointeur (« #bernard »), navigation
 de la référence à sa cible (F12, Ctrl+clic, menu contextuel) et retour
-(Alt+←).
+(Alt+←), commande « Références » et son panneau des problèmes.
 
 Le calcul est fait par ``xml_references`` ; ce module fournit les textes des
 documents (le document affiché tel qu'il est dans l'éditeur, les autres en
@@ -17,7 +17,10 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QKeySequence, QTextCursor
-from PySide6.QtWidgets import QDialog
+from PySide6.QtWidgets import (
+    QAbstractItemView, QDialog, QFrame, QHBoxLayout, QHeaderView, QLabel, QPushButton,
+    QTableWidget, QTableWidgetItem, QToolButton, QVBoxLayout,
+)
 
 from app_context import call_later, tr as _t
 from completion_ui import CompletionDialog
@@ -97,6 +100,18 @@ class ReferencesMixin:
                 entries.append((value, f"{label} — {name}", target.element))
         return entries
 
+    def _reference_documents(self):
+        """``[(chemin, texte)]`` des documents du projet lisibles, l'édition d'abord."""
+        documents = []
+        for session in self.documents:
+            text = self._session_text(session)
+            if text is not None:
+                documents.append((session.path, text))
+        return documents
+
+    def _session_for_path(self, path):
+        return next((s for s in self.documents if _same_path(s.path, path)), None)
+
     # --- Navigation -------------------------------------------------------
 
     def _install_reference_actions(self):
@@ -147,12 +162,7 @@ class ReferencesMixin:
         if reference is None:
             self.statusBar().showMessage(_t("references.none_here"), _STATUS_MSEC)
             return False
-        documents = []
-        for session in self.documents:
-            text = self._session_text(session)
-            if text is not None:
-                documents.append((session.path, text))
-        resolution = ReferenceResolver(documents).resolve(reference, self.document.path)
+        resolution = ReferenceResolver(self._reference_documents()).resolve(reference, self.document.path)
         if resolution.status == "no_file":
             self.statusBar().showMessage(_t("references.no_file", file=reference.file), _STATUS_MSEC)
             return False
@@ -165,7 +175,7 @@ class ReferencesMixin:
             if target is None:
                 return False
         path, id_target = target
-        session = next((s for s in self.documents if _same_path(s.path, path)), None)
+        session = self._session_for_path(path)
         if session is None:
             self.statusBar().showMessage(_t("references.outside_project", file=Path(path).name),
                                          _STATUS_MSEC)
@@ -243,3 +253,131 @@ class ReferencesMixin:
             menu.insertAction(first, back)
         if first is not None:
             menu.insertSeparator(first)
+
+    # --- Commande « Références » et panneau ----------------------------------
+
+    def _build_references_panel(self):
+        """Panneau inférieur des références introuvables ou ambiguës."""
+        panel = QFrame(self)
+        panel.setFrameShape(QFrame.Shape.StyledPanel)
+        root = QVBoxLayout(panel)
+        root.setContentsMargins(6, 4, 6, 6)
+        root.setSpacing(4)
+
+        head = QHBoxLayout()
+        self.references_title = QLabel(_t("references.action"))
+        title_font = self.references_title.font(); title_font.setBold(True)
+        self.references_title.setFont(title_font)
+        self.references_summary = QLabel("")
+        self.references_summary.setWordWrap(True)
+        self.references_recheck = QPushButton(_t("references.recheck"), panel)
+        self.references_recheck.clicked.connect(lambda: self.check_references())
+        self.references_close = QToolButton(panel)
+        self.references_close.setText("×")
+        self.references_close.setToolTip(_t("references.close"))
+        self.references_close.clicked.connect(self.hide_references_panel)
+        head.addWidget(self.references_title)
+        head.addWidget(self.references_summary, 1)
+        head.addWidget(self.references_recheck)
+        head.addWidget(self.references_close)
+        root.addLayout(head)
+
+        self.references_table = QTableWidget(0, 5, panel)
+        self._set_references_headers()
+        header = self.references_table.horizontalHeader()
+        for column in range(4):
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeMode.Stretch)
+        self.references_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.references_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.references_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.references_table.setAlternatingRowColors(True)
+        self.references_table.cellDoubleClicked.connect(self.goto_reference_problem)
+        root.addWidget(self.references_table, 1)
+        self._reference_check = None            # (nombre de références, problèmes)
+        panel.setVisible(False)
+        return panel
+
+    def _set_references_headers(self):
+        self.references_table.setHorizontalHeaderLabels([
+            _t("references.column.document"), _t("references.column.line"),
+            _t("references.column.attribute"), _t("references.column.value"),
+            _t("references.column.problem"),
+        ])
+
+    def hide_references_panel(self):
+        self._hide_bottom_panel(self.references_panel)
+
+    def check_references(self):
+        """Vérifie les références de tous les documents du projet et liste
+        celles qui sont introuvables ou ambiguës. N'empêche jamais rien :
+        l'enregistrement ne dépend pas de ce résultat."""
+        self._reference_check = ReferenceResolver(self._reference_documents()).check()
+        self._show_reference_check()
+        self._show_bottom_panel(self.references_panel, 220)
+
+    def _show_reference_check(self):
+        """Résumé et lignes du panneau, dans la langue de l'interface."""
+        self.references_table.setRowCount(0)
+        if self._reference_check is None:
+            self.references_summary.setText("")
+            return
+        count, problems = self._reference_check
+        if not count:
+            self.references_summary.setText(_t("references.summary.none"))
+        elif not problems:
+            self.references_summary.setText(_t("references.summary.ok", count=count))
+        else:
+            self.references_summary.setText(
+                _t("references.summary.problems", count=count, problems=len(problems)))
+        for problem in problems:
+            row = self.references_table.rowCount()
+            self.references_table.insertRow(row)
+            reference = problem.reference
+            values = (Path(problem.path).name, str(reference.line), reference.attribute,
+                      reference.token, self._reference_problem_text(problem.resolution))
+            for column, value in enumerate(values):
+                self.references_table.setItem(row, column, QTableWidgetItem(value))
+            self.references_table.item(row, 0).setToolTip(str(problem.path))
+
+    @staticmethod
+    def _reference_problem_text(resolution):
+        if resolution.status == "no_file":
+            return _t("references.problem.no_file")
+        if resolution.status == "missing":
+            return _t("references.problem.missing")
+        names = [Path(path).name for path, _target in resolution.targets]
+        targets = ", ".join(name if names.count(name) == 1 else f"{name}:{target.line}"
+                            for name, (_path, target) in zip(names, resolution.targets))
+        return _t("references.problem.ambiguous", targets=targets)
+
+    def goto_reference_problem(self, row, _column=0):
+        """Double-clic : sélectionne la référence, même dans un autre document.
+        Si le texte a changé depuis la vérification, l'occurrence du jeton la
+        plus proche de sa position d'alors est retenue."""
+        if self._reference_check is None or not 0 <= row < len(self._reference_check[1]):
+            return False
+        problem = self._reference_check[1][row]
+        session = self._session_for_path(problem.path)
+        if session is None:
+            return False
+        reference = problem.reference
+        text = self._session_text(session) or ""
+        start = reference.start
+        if text[start:start + len(reference.token)] != reference.token:
+            pattern = re.compile(r"(?<![^\s\"'])" + re.escape(reference.token) + r"(?![^\s\"'])")
+            found = [m.start() for m in pattern.finditer(text)]
+            if found:
+                start = min(found, key=lambda position: abs(position - reference.start))
+        return self._show_location(session, start, start + len(reference.token))
+
+    def _retranslate_references(self):
+        self.action_go_to_reference.setText(_t("references.goto"))
+        self.action_reference_back.setText(_t("references.back"))
+        self.action_check_references.setText(_t("references.action"))
+        self.action_check_references.setToolTip(_t("references.action.tip"))
+        self.references_title.setText(_t("references.action"))
+        self.references_recheck.setText(_t("references.recheck"))
+        self.references_close.setToolTip(_t("references.close"))
+        self._set_references_headers()
+        self._show_reference_check()

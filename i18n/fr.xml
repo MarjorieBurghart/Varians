@@ -695,4 +695,19 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="references.ambiguous.item">{file}, ligne {line}</string>
   <string key="references.jumped">Cible : {file}, ligne {line} (Alt+← pour revenir)</string>
   <string key="references.no_history">Aucune position précédente où revenir.</string>
+  <string key="references.action">Références</string>
+  <string key="references.action.tip">Vérifier les références (« #id », « fichier.xml#id ») de tous les documents du projet</string>
+  <string key="references.recheck">Vérifier à nouveau</string>
+  <string key="references.close">Masquer le panneau des références</string>
+  <string key="references.column.document">Document</string>
+  <string key="references.column.line">Ligne</string>
+  <string key="references.column.attribute">Attribut</string>
+  <string key="references.column.value">Valeur</string>
+  <string key="references.column.problem">Problème</string>
+  <string key="references.problem.missing">Cible introuvable</string>
+  <string key="references.problem.ambiguous">Cible ambiguë : {targets}</string>
+  <string key="references.problem.no_file">Fichier introuvable</string>
+  <string key="references.summary.ok">{count} référence(s) vérifiée(s) : toutes sont résolues ✓</string>
+  <string key="references.summary.problems">{count} référence(s) vérifiée(s), {problems} problème(s). Double-cliquez sur une ligne pour aller à la référence.</string>
+  <string key="references.summary.none">Aucune référence (« #id », « fichier.xml#id ») dans les documents du projet.</string>
 </translations>

@@ -64,7 +64,7 @@ class MainMenusMixin:
         tool_gap.setFixedWidth(12)
         tb.addWidget(tool_gap)
 
-        # Bloc XML : conserver ces trois commandes côte à côte.
+        # Bloc XML : conserver ces commandes côte à côte.
         self.action_validate_rng = self._make_action(
             _t("toolbar.validate_rng"), "F8", self.validate_relaxng_manual, _t("toolbar.validate_rng.tip")
         )
@@ -76,7 +76,11 @@ class MainMenusMixin:
         )
         tb.addAction(self.action_validate_rng)
         tb.addAction(self.action_format_xml)
+        self.action_check_references = self._make_action(
+            _t("references.action"), "", self.check_references, _t("references.action.tip")
+        )
         tb.addAction(self.action_xpath_search)
+        tb.addAction(self.action_check_references)
         xml_gap = QWidget()
         xml_gap.setFixedWidth(12)
         tb.addWidget(xml_gap)
@@ -381,6 +385,7 @@ class MainMenusMixin:
         self.action_find_prev.setText(_t("toolbar.previous"))
         self.action_find_next.setText(_t("toolbar.next"))
         self.action_xpath_search.setText(_t("xpath.action"))
+        self._retranslate_references()
         self.source_visual_wrap.setText(_t("source.visual_wrap"))
         self.xpath_title.setText(_t("xpath.panel.title"))
         self.xpath_query.setPlaceholderText(_t("xpath.placeholder"))

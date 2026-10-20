@@ -709,4 +709,19 @@
   <string key="references.ambiguous.item">{file}、{line}行</string>
   <string key="references.jumped">参照先：{file}、{line}行（Alt+← で戻る）</string>
   <string key="references.no_history">戻る位置がありません。</string>
+  <string key="references.action">参照</string>
+  <string key="references.action.tip">プロジェクトの全文書の参照（「#id」「file.xml#id」）を検査します</string>
+  <string key="references.recheck">再検査</string>
+  <string key="references.close">参照パネルを隠す</string>
+  <string key="references.column.document">文書</string>
+  <string key="references.column.line">行</string>
+  <string key="references.column.attribute">属性</string>
+  <string key="references.column.value">値</string>
+  <string key="references.column.problem">問題</string>
+  <string key="references.problem.missing">参照先が見つかりません</string>
+  <string key="references.problem.ambiguous">参照先が複数あります：{targets}</string>
+  <string key="references.problem.no_file">ファイルが見つかりません</string>
+  <string key="references.summary.ok">{count}件の参照を検査しました：すべて解決済みです ✓</string>
+  <string key="references.summary.problems">{count}件の参照を検査しました。問題：{problems}件。行をダブルクリックすると参照へ移動します。</string>
+  <string key="references.summary.none">プロジェクトの文書に参照（「#id」「file.xml#id」）はありません。</string>
 </translations>

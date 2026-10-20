@@ -98,8 +98,7 @@ class ValidationPanelMixin:
             self._auto_refresh_rng()
 
     def hide_validation_panel(self):
-        self.validation_panel.setVisible(False)
-        self.left_splitter.setSizes([max(300, self.left_splitter.height()), 0, 0])
+        self._hide_bottom_panel(self.validation_panel)
 
     def _clear_validation_table(self):
         self.validation_table.setRowCount(0)

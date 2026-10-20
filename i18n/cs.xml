@@ -709,4 +709,19 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="references.ambiguous.item">{file}, řádek {line}</string>
   <string key="references.jumped">Cíl: {file}, řádek {line} (Alt+← zpět)</string>
   <string key="references.no_history">Není kam se vrátit.</string>
+  <string key="references.action">Odkazy</string>
+  <string key="references.action.tip">Zkontrolovat odkazy („#id“, „soubor.xml#id“) ve všech dokumentech projektu</string>
+  <string key="references.recheck">Znovu zkontrolovat</string>
+  <string key="references.close">Skrýt panel odkazů</string>
+  <string key="references.column.document">Dokument</string>
+  <string key="references.column.line">Řádek</string>
+  <string key="references.column.attribute">Atribut</string>
+  <string key="references.column.value">Hodnota</string>
+  <string key="references.column.problem">Problém</string>
+  <string key="references.problem.missing">Cíl nenalezen</string>
+  <string key="references.problem.ambiguous">Nejednoznačný cíl: {targets}</string>
+  <string key="references.problem.no_file">Soubor nenalezen</string>
+  <string key="references.summary.ok">Zkontrolováno odkazů: {count}; všechny jsou vyřešeny ✓</string>
+  <string key="references.summary.problems">Zkontrolováno odkazů: {count}, problémů: {problems}. Dvojitým kliknutím na řádek přejdete na odkaz.</string>
+  <string key="references.summary.none">Dokumenty projektu neobsahují žádný odkaz („#id“, „soubor.xml#id“).</string>
 </translations>

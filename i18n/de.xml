@@ -709,4 +709,19 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="references.ambiguous.item">{file}, Zeile {line}</string>
   <string key="references.jumped">Ziel: {file}, Zeile {line} (Alt+← für zurück)</string>
   <string key="references.no_history">Keine vorherige Position zum Zurückkehren.</string>
+  <string key="references.action">Verweise</string>
+  <string key="references.action.tip">Verweise („#id“, „datei.xml#id“) aller Dokumente des Projekts prüfen</string>
+  <string key="references.recheck">Erneut prüfen</string>
+  <string key="references.close">Verweisbereich ausblenden</string>
+  <string key="references.column.document">Dokument</string>
+  <string key="references.column.line">Zeile</string>
+  <string key="references.column.attribute">Attribut</string>
+  <string key="references.column.value">Wert</string>
+  <string key="references.column.problem">Problem</string>
+  <string key="references.problem.missing">Ziel nicht gefunden</string>
+  <string key="references.problem.ambiguous">Mehrdeutiges Ziel: {targets}</string>
+  <string key="references.problem.no_file">Datei nicht gefunden</string>
+  <string key="references.summary.ok">{count} Verweis(e) geprüft: alle aufgelöst ✓</string>
+  <string key="references.summary.problems">{count} Verweis(e) geprüft, {problems} Problem(e). Doppelklicken Sie auf eine Zeile, um zum Verweis zu springen.</string>
+  <string key="references.summary.none">Kein Verweis („#id“, „datei.xml#id“) in den Dokumenten des Projekts.</string>
 </translations>

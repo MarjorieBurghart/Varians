@@ -695,4 +695,19 @@ The file is not deleted: it stays on disk.</string>
   <string key="references.ambiguous.item">{file}, line {line}</string>
   <string key="references.jumped">Target: {file}, line {line} (Alt+← to go back)</string>
   <string key="references.no_history">No previous position to go back to.</string>
+  <string key="references.action">References</string>
+  <string key="references.action.tip">Check the references (“#id”, “file.xml#id”) of every document of the project</string>
+  <string key="references.recheck">Check again</string>
+  <string key="references.close">Hide the references panel</string>
+  <string key="references.column.document">Document</string>
+  <string key="references.column.line">Line</string>
+  <string key="references.column.attribute">Attribute</string>
+  <string key="references.column.value">Value</string>
+  <string key="references.column.problem">Problem</string>
+  <string key="references.problem.missing">Target not found</string>
+  <string key="references.problem.ambiguous">Ambiguous target: {targets}</string>
+  <string key="references.problem.no_file">File not found</string>
+  <string key="references.summary.ok">{count} reference(s) checked: all resolved ✓</string>
+  <string key="references.summary.problems">{count} reference(s) checked, {problems} problem(s). Double-click a row to go to the reference.</string>
+  <string key="references.summary.none">No reference (“#id”, “file.xml#id”) in the documents of the project.</string>
 </translations>

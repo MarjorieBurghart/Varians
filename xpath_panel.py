@@ -76,8 +76,7 @@ class XPathPanelMixin:
         self._show_bottom_panel(self.xpath_panel, 250)
 
     def hide_xpath_panel(self):
-        self.xpath_panel.setVisible(False)
-        self.left_splitter.setSizes([max(300, self.left_splitter.height()), 0, 0])
+        self._hide_bottom_panel(self.xpath_panel)
 
     def focus_xpath_search(self):
         self.left_tabs.setCurrentIndex(0)

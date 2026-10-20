@@ -709,4 +709,19 @@
   <string key="references.ambiguous.item">{file}, строка {line}</string>
   <string key="references.jumped">Цель: {file}, строка {line} (Alt+← — вернуться)</string>
   <string key="references.no_history">Нет позиции, к которой можно вернуться.</string>
+  <string key="references.action">Ссылки</string>
+  <string key="references.action.tip">Проверить ссылки («#id», «файл.xml#id») во всех документах проекта</string>
+  <string key="references.recheck">Проверить снова</string>
+  <string key="references.close">Скрыть панель ссылок</string>
+  <string key="references.column.document">Документ</string>
+  <string key="references.column.line">Строка</string>
+  <string key="references.column.attribute">Атрибут</string>
+  <string key="references.column.value">Значение</string>
+  <string key="references.column.problem">Проблема</string>
+  <string key="references.problem.missing">Цель не найдена</string>
+  <string key="references.problem.ambiguous">Неоднозначная цель: {targets}</string>
+  <string key="references.problem.no_file">Файл не найден</string>
+  <string key="references.summary.ok">Проверено ссылок: {count}; все разрешены ✓</string>
+  <string key="references.summary.problems">Проверено ссылок: {count}, проблем: {problems}. Дважды щёлкните строку, чтобы перейти к ссылке.</string>
+  <string key="references.summary.none">В документах проекта нет ссылок («#id», «файл.xml#id»).</string>
 </translations>
