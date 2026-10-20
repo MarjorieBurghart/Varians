@@ -58,6 +58,9 @@ class DummyMain:
         self.doc = DummyDoc()
         self.editor = SimpleNamespace(document=lambda: self.doc)
         self.project = SimpleNamespace(schema_mode='project')
+        # Schéma du document affiché (MainWindow._schema_mode).
+        self._schema_mode = 'project'
+        self._schema_file = None
         self.validation_panel = SimpleNamespace(isVisible=lambda: self.visible)
         self.visible = False
         self._rng_watch_enabled = False

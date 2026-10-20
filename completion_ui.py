@@ -124,10 +124,10 @@ class CompletionMixin:
             if resolution.schema_path is None or Path(resolution.schema_path).is_file():
                 return resolution
         resolution = resolve_schema(
-            mode=self.project.schema_mode,
+            mode=self._schema_mode,
             xml_text=text,
             xml_path=self.current_path or self.project.edition,
-            project_schema=self.project.schema,
+            project_schema=self._schema_file,
             force_refresh=False,
         )
         self._completion_resolution_key = key
@@ -202,7 +202,7 @@ class CompletionMixin:
         rng_items = ()
         try:
             resolution = self._resolve_completion_schema(source_text)
-            if (self.project.schema_mode != "none" and not resolution.error
+            if (self._schema_mode != "none" and not resolution.error
                     and resolution.schema_path is not None):
                 model = self._completion_model_for_schema(resolution.schema_path)
                 rng_items = model.child_elements_at(
@@ -226,7 +226,7 @@ class CompletionMixin:
             return (), context
         model = None
         resolution = self._resolve_completion_schema(self.editor.toPlainText())
-        if self.project.schema_mode != "none" and not resolution.error and resolution.schema_path:
+        if self._schema_mode != "none" and not resolution.error and resolution.schema_path:
             model = self._completion_model_for_schema(resolution.schema_path)
         # La complétion automatique est strictement limitée aux noms démontrés
         # par le RELAX NG. Les suggestions libres du projet restent accessibles
@@ -243,7 +243,7 @@ class CompletionMixin:
         source_text = self.editor.toPlainText()
         model = None
         resolution = self._resolve_completion_schema(source_text)
-        if self.project.schema_mode != "none":
+        if self._schema_mode != "none":
             if resolution.error:
                 QMessageBox.warning(
                     self, _t("completion.error.title"),

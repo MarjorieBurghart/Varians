@@ -124,9 +124,25 @@ class DocumentSession:
     anciens attributs de ``MainWindow`` indiqués en commentaire.
     """
 
-    def __init__(self, text_document: Any = None) -> None:
+    def __init__(self, text_document: Any = None, *, role: str = "edition", label: str = "",
+                 schema_mode: str = "auto", schema_file: Optional[Path] = None) -> None:
         # Texte et historique annuler/refaire (QTextDocument).
         self.text_document = text_document
+        # Coloration syntaxique attachée à text_document (XMLHighlighter).
+        self.highlighter = None
+        # Position du curseur et défilement, mémorisés quand un autre document
+        # est affiché.
+        self.view_state = None
+
+        # « edition » : l'édition TEI du projet, liée aux témoins et à l'aperçu ;
+        # « auxiliary » : document XML auxiliaire déclaré dans <documents>.
+        self.role = role
+        self.label = label
+
+        # Politique de schéma RELAX NG du document (valeurs de
+        # ProjectConfig.schema_mode ; schema_file n'est utilisé qu'en mode file).
+        self.schema_mode = schema_mode
+        self.schema_file = schema_file
 
         # Fichier et état d'enregistrement.
         self.path: Optional[Path] = None                 # current_path
@@ -160,6 +176,18 @@ class DocumentSession:
         # Dernière position synchronisée avec les témoins.
         self.last_synced_ordinal: Optional[int] = None   # _last_synced_ordinal
         self.last_synced_surface = None                  # _last_synced_surface
+
+    @classmethod
+    def auxiliary(cls, config, text_document: Any = None) -> "DocumentSession":
+        """Session d'un document auxiliaire (``project_config.DocumentConfig``)."""
+        session = cls(text_document, role="auxiliary", label=config.display_label,
+                      schema_mode=config.schema_mode, schema_file=config.schema)
+        session.path = Path(config.path)
+        return session
+
+    @property
+    def is_edition(self) -> bool:
+        return self.role == "edition"
 
     # --- Transitions d'état -------------------------------------------------
 

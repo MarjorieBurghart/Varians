@@ -281,6 +281,10 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
     _source_completion_context_cache = _document_attribute("completion_context_cache")
     _last_synced_ordinal = _document_attribute("last_synced_ordinal")
     _last_synced_surface = _document_attribute("last_synced_surface")
+    highlighter = _document_attribute("highlighter")
+    # Schéma du document affiché (celui du projet pour l'édition).
+    _schema_mode = _document_attribute("schema_mode")
+    _schema_file = _document_attribute("schema_file")
 
     def __init__(self, project_path=None):
         super().__init__()
@@ -288,6 +292,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         # de compatibilité ci-dessus.
         self.document = DocumentSession()
         self.project = load_project(project_path or DEMO_PROJECT)
+        self.document.schema_mode = self.project.schema_mode
+        self.document.schema_file = self.project.schema
         remember_recent_project(self.project.path)
         global I18N
         I18N = I18nManager(self.project.translations_dir, self.project.language, self.project.fallback_language)
@@ -628,7 +634,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
             if self.expected_base_lines is not None
             else _t("status.structure.no_alignment", base=self.base_id)
         )
-        self.rng_status = QLabel(_t("rng.status.none") if self.project.schema_mode == "none" else _t("rng.status.pending"))
+        self.rng_status = QLabel(_t("rng.status.none") if self._schema_mode == "none" else _t("rng.status.pending"))
         self.schematron_status = QLabel("")
         self.statusBar().addWidget(self.xml_status,1)
         self.statusBar().addPermanentWidget(self.rng_status)
@@ -716,7 +722,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         model = None
         try:
             resolution = self._resolve_completion_schema(source)
-            if (self.project.schema_mode != "none" and not resolution.error
+            if (self._schema_mode != "none" and not resolution.error
                     and resolution.schema_path is not None):
                 model = self._completion_model_for_schema(resolution.schema_path)
         except Exception:
@@ -1032,7 +1038,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self._last_rng_result = None
         self._last_rng_revision = -1
         self._last_rng_schema_token = None
-        if getattr(self.project, 'schema_mode', 'auto') != 'none' and hasattr(self, 'rng_status'):
+        if self._schema_mode != 'none' and hasattr(self, 'rng_status'):
             self.rng_status.setText(_t('rng.status.modified'))
             self.rng_status.setStyleSheet('color:#a06a20')
             if hasattr(self, 'validation_table'):

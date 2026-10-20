@@ -190,3 +190,25 @@ def test_reset_validation_forgets_schema_resolution():
     session.reset_validation()
     assert session.last_rng_result is None and session.last_rng_revision == -1
     assert session.last_schema_resolution is None
+
+
+# --- Documents auxiliaires ---------------------------------------------------
+
+def test_session_is_the_edition_by_default():
+    session = DocumentSession()
+    assert session.role == "edition" and session.is_edition
+    assert session.label == ""
+    assert session.schema_mode == "auto" and session.schema_file is None
+    assert session.highlighter is None and session.view_state is None
+
+
+def test_auxiliary_session_takes_its_settings_from_the_project(tmp_path):
+    from project_config import DocumentConfig
+
+    config = DocumentConfig(tmp_path / "personnes.xml", "", "file", tmp_path / "p.rng")
+    session = DocumentSession.auxiliary(config)
+    assert session.role == "auxiliary" and not session.is_edition
+    assert session.label == "personnes.xml"
+    assert session.path == tmp_path / "personnes.xml"
+    assert session.schema_mode == "file" and session.schema_file == tmp_path / "p.rng"
+    assert session.modified is False and session.text_document is None
