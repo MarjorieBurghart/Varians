@@ -44,6 +44,7 @@ APPLICATION_MODULES = (
     "validation_panel.py",
     "xpath_panel.py",
     "document_tabs.py",
+    "document_display.py",
     "document_dialogs.py",
     "references_ui.py",
 )
