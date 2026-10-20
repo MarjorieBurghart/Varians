@@ -528,11 +528,15 @@ def transform_with_xslt(xml_text, xsl_path, params=None):
     """Transformation XSLT 1.0 optimisée.
 
     Avec lxml, la feuille XSLT compilée est mise en cache tant que le fichier
-    n'a pas changé. Sans lxml, on conserve le moteur .NET/PowerShell de secours.
+    n'a pas changé ; une erreur de la feuille ou de la transformation est
+    signalée telle quelle. Le moteur .NET/PowerShell ne sert que de secours si
+    lxml n'est pas installé.
     """
-    first_error = None
     try:
         from lxml import etree as LET
+    except ImportError as exc:
+        return _transform_without_lxml(xml_text, xsl_path, params, exc)
+    try:
         parser = LET.XMLParser(resolve_entities=False, no_network=True, recover=False)
         xml_doc = LET.fromstring(xml_text.encode("utf-8"), parser=parser)
         xp = Path(xsl_path).resolve()
@@ -551,8 +555,28 @@ def transform_with_xslt(xml_text, xsl_path, params=None):
         xslt_params = {str(k): LET.XSLT.strparam(str(v)) for k, v in (params or {}).items()}
         return str(transform(xml_doc, **xslt_params)), "lxml (XSLT en cache)"
     except Exception as exc:
-        first_error = exc
+        # Seules les erreurs XSLT ont un journal propre à la transformation ;
+        # celui d'une erreur de syntaxe XML est global et contient aussi les
+        # erreurs antérieures.
+        log = exc.error_log if isinstance(exc, LET.XSLTError) else ()
+        raise RuntimeError(_xslt_error_text(exc, xsl_path, log)) from exc
 
+
+def _xslt_error_text(exc, xsl_path, log=()):
+    """Message d'erreur lxml au format « fichier:ligne: message »."""
+    default_name = Path(xsl_path).name
+    parts = [f"{default_name}: {str(exc).strip() or type(exc).__name__}"]
+    for entry in list(log or [])[:3]:
+        filename = str(entry.filename or "")
+        name = Path(filename).name if filename and not filename.startswith("<") else default_name
+        detail = f"{name}:{entry.line}: {entry.message}" if entry.line else f"{name}: {entry.message}"
+        if entry.message and detail not in parts and entry.message not in parts[0]:
+            parts.append(detail)
+    return " ; ".join(parts)
+
+
+def _transform_without_lxml(xml_text, xsl_path, params, first_error):
+    """Secours sans lxml : moteur .NET via PowerShell (Windows)."""
     ps = shutil.which("powershell.exe") or shutil.which("powershell") or shutil.which("pwsh")
     if ps:
         try:
