@@ -11,11 +11,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtGui import QTextCursor, QTextDocument
-from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout
+from PySide6.QtGui import QColor, QTextCursor, QTextDocument
+from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout, QTabBar, QVBoxLayout, QWidget
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
+
+
+# Couleur du nom d'un document selon sa bonne formation (cf. _set_document_health).
+_HEALTH_TAB_COLORS = {"malformed": "#a13d32", "rng_invalid": "#a06a20"}
 
 
 class DocumentTabsMixin:
@@ -30,6 +34,60 @@ class DocumentTabsMixin:
 
     def _edition_displayed(self):
         return self.document.is_edition
+
+    def _build_document_area(self, views):
+        """Rangée d'onglets des documents au-dessus de ``views`` (source et
+        aperçu). Elle reste masquée tant que le projet ne compte que l'édition."""
+        bar = QTabBar(self)
+        bar.setDocumentMode(True)
+        bar.setExpanding(False)
+        bar.setUsesScrollButtons(True)
+        self.document_tab_bar = bar
+        self._normal_tab_color = bar.tabTextColor(0)
+        for session in self.documents:
+            bar.addTab("")
+            self._refresh_document_tab(session)
+        bar.setVisible(len(self.documents) > 1)
+        bar.currentChanged.connect(self._document_tab_changed)
+        area = QWidget(self)
+        layout = QVBoxLayout(area)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(bar)
+        layout.addWidget(views, 1)
+        return area
+
+    def _document_tab_changed(self, index):
+        if 0 <= index < len(self.documents) and not self.show_document(self.documents[index]):
+            self._select_document_tab()
+
+    def _select_document_tab(self):
+        """Onglet courant = document affiché, sans redéclencher l'affichage."""
+        bar = getattr(self, "document_tab_bar", None)
+        if bar is None:
+            return
+        bar.blockSignals(True)
+        try:
+            bar.setCurrentIndex(self.documents.index(self.document))
+        finally:
+            bar.blockSignals(False)
+
+    def _refresh_document_tab(self, session):
+        """Nom, « * » si modifié, couleur et info-bulle selon l'état XML."""
+        bar = getattr(self, "document_tab_bar", None)
+        if bar is None or session not in self.documents:
+            return
+        index = self.documents.index(session)
+        name = _t("documents.edition_tab") if session.is_edition else session.label
+        bar.setTabText(index, name + (" *" if session.modified else ""))
+        color = _HEALTH_TAB_COLORS.get(session.health)
+        bar.setTabTextColor(index, QColor(color) if color else self._normal_tab_color)
+        tip = str(session.path)
+        if session.health == "malformed":
+            tip += "\n" + _t("xml.health.malformed.tooltip")
+        elif session.health == "rng_invalid":
+            tip += "\n" + _t("xml.health.rng_invalid.tooltip")
+        bar.setTabToolTip(index, tip)
 
     def show_document(self, session):
         """Affiche ``session`` dans l'éditeur.
@@ -104,6 +162,7 @@ class DocumentTabsMixin:
         self.xpath_table.setRowCount(0)
         self.xpath_summary.setText("")
         self._set_title()
+        self._select_document_tab()
         self._apply_edition_ui()
         self._restore_document_view(session)
 

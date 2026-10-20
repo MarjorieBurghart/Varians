@@ -659,4 +659,5 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="documents.edition_required.title">Edition not displayed</string>
   <string key="documents.edition_required.text">This command modifies the edition. Display the edition ({name}) first, then try again.</string>
   <string key="menu.save_document">Save document</string>
+  <string key="documents.edition_tab">Edition</string>
 </translations>

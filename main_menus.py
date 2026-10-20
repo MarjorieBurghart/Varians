@@ -379,6 +379,8 @@ class MainMenusMixin:
             _t("xpath.column.path"), _t("xpath.column.preview"),
         ])
         self.left_tabs.setTabText(0, _t("tab.xml_source"))
+        for session in self.documents:
+            self._refresh_document_tab(session)
         self.left_tabs.setTabText(1, _t("tab.preview"))
         self.validation_title.setText(_t("rng.panel.title"))
         self.validation_refresh.setToolTip(_t("rng.panel.refresh"))

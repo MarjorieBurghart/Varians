@@ -673,4 +673,5 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="documents.edition_required.title">Edice není zobrazena</string>
   <string key="documents.edition_required.text">Tento příkaz mění edici. Nejprve zobrazte edici ({name}) a poté akci zopakujte.</string>
   <string key="menu.save_document">Uložit dokument</string>
+  <string key="documents.edition_tab">Edice</string>
 </translations>

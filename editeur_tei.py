@@ -601,7 +601,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.validation_panel = self._build_validation_panel()
         self.xpath_panel = self._build_xpath_panel()
         self.left_splitter = QSplitter(Qt.Orientation.Vertical)
-        self.left_splitter.addWidget(self.left_tabs)
+        self.left_splitter.addWidget(self._build_document_area(self.left_tabs))
         self.left_splitter.addWidget(self.validation_panel)
         self.left_splitter.addWidget(self.xpath_panel)
         self.left_splitter.setStretchFactor(0, 1)
@@ -865,10 +865,12 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
             tip = ""
         for i in range(self.left_tabs.count()):
             self.left_tabs.setTabToolTip(i, tip)
+        self._refresh_document_tab(self.document)
 
     def _set_title(self):
         name = self.current_path.name if self.current_path else _t("app.untitled"); mark = " *" if self.modified else ""
         self.setWindowTitle(_t("app.window.file", project=self.project.title, name=name, mark=mark))
+        self._refresh_document_tab(self.document)
 
     @Slot(int, int, int)
     def _source_contents_changed(self, position, chars_removed, chars_added):

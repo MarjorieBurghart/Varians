@@ -673,4 +673,5 @@
   <string key="documents.edition_required.title">校訂本文が表示されていません</string>
   <string key="documents.edition_required.text">このコマンドは校訂本文を変更します。先に校訂本文（{name}）を表示してから、もう一度実行してください。</string>
   <string key="menu.save_document">文書を保存</string>
+  <string key="documents.edition_tab">校訂本文</string>
 </translations>

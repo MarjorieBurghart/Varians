@@ -659,4 +659,5 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="documents.edition_required.title">Édition non affichée</string>
   <string key="documents.edition_required.text">Cette commande modifie l’édition. Affichez d’abord l’édition ({name}), puis recommencez.</string>
   <string key="menu.save_document">Enregistrer le document</string>
+  <string key="documents.edition_tab">Édition</string>
 </translations>
