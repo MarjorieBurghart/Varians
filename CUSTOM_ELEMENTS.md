@@ -85,6 +85,29 @@ propose :
 
 Si les sigles des témoins changent dans un autre projet, la liste change automatiquement.
 
+## Identifiants des documents du projet
+
+Dans les attributs de référence (`@ref`, `@corresp`, `@target`, `@who`…),
+Varians propose déjà les `xml:id` de tous les documents du projet (édition
+et documents auxiliaires), limités par défaut au type d'entrée attendu :
+`persName/@ref` → `person`, `personGrp`, `persona` ; `placeName/@ref` →
+`place` ; `orgName/@ref` → `org` ; `@who` → personnes ; `@wit` et `@edRef`
+→ `witness`. La source `ids` règle cette liste pour un attribut :
+
+```xml
+<element name="name">
+  <attribute name="ref" valuesMode="replace">
+    <values source="ids" elements="person place" prefix="#"/>
+  </attribute>
+</element>
+```
+
+`elements` donne les noms locaux des éléments dont les identifiants sont
+proposés (sans `elements`, tous). Les valeurs proposées sont `#id`, ou
+`fichier.xml#id` lorsque la forme courte désignerait un autre élément. Avec
+`valuesMode="replace"`, seuls ces identifiants sont proposés. Taper `#`
+dans la valeur ouvre la liste sans Ctrl+Espace.
+
 ## Valeurs TEI recommandées mais non imposées
 
 Le même mécanisme peut servir à fournir des valeurs de travail pour un attribut ouvert par le RNG. Par exemple :

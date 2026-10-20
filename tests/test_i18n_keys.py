@@ -47,3 +47,21 @@ def test_each_help_explains_auxiliary_documents_with_the_menu_labels():
         for key in labels:
             assert catalog[key] in section, (language, key)
         assert "&lt;documents&gt;" in section
+
+
+def test_each_help_explains_references_with_the_command_labels():
+    labels = ("references.action", "references.goto", "references.back", "references.recheck",
+              "references.column.problem")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="references">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("F12", "Alt+←", "#bernard", "personnes.xml#bernard", 'source="ids"',
+                     'href="#auxiliary-documents"'):
+            assert text in section, (language, text)
+        # Raccourcis principaux
+        assert "<td>F12</td>" in page and "<td>Alt+←</td>" in page, language

@@ -63,12 +63,14 @@ d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
 | `project_actions.py` | export web, ouverture/création/réglages de projet |
 | `document_tabs.py` | documents du projet affichés : édition et documents auxiliaires |
 | `document_dialogs.py` | ajouter, créer, retirer un document XML auxiliaire |
+| `references_ui.py` | références entre documents : identifiants proposés, F12 / Alt+←, commande « Références » |
 
 Composants autonomes utilisés par la fenêtre :
 
 | Module | Rôle |
 |---|---|
 | `document_session.py` | état d'un document ouvert (`DocumentSession`, `LbIndex`) |
+| `xml_references.py` | pointeurs `#id` et identifiants des documents, sans Qt (`ReferenceResolver`) |
 | `code_editor.py` | éditeur de la source XML (`CodeEditor`) |
 | `formatted_view.py` | aperçu XSLT/CSS et édition par fragments |
 | `manuscript_panel.py` | panneau d'un témoin manuscrit |
@@ -108,6 +110,35 @@ Règles pour le code de la fenêtre :
 - un résultat calculé en différé (minuterie, fil d'exécution) vérifie qu'il
   concerne encore le document affiché : les numéros de révision sont
   propres à chaque `QTextDocument`.
+
+## Références entre documents
+
+Un pointeur `#id` ou `fichier.xml#id` dans un attribut de
+`xml_references.REFERENCE_ATTRIBUTES` (`ref`, `corresp`, `wit`, `edRef`…)
+désigne un `xml:id`. Tout le calcul est dans `xml_references.py`, testé
+sans Qt : `collect_ids`, `collect_references` et `ReferenceResolver`, qui
+cherche `#id` dans le document lui-même puis dans les autres documents du
+projet ; `target_elements` donne les éléments attendus (`persName/@ref` →
+`person`…). Le mixin `references_ui.py` lui fournit les textes
+(`_session_text` : l'éditeur pour le document affiché, puis le texte en
+mémoire, puis le fichier).
+
+Règles :
+
+- la liste des identifiants (frappe de `#`, Ctrl+Espace) relit à chaque
+  frappe un index mis en cache par document (`_session_ids`), recalculé
+  seulement quand la liste des `xml:id` change : ses positions peuvent être
+  périmées, la navigation et la vérification recalculent les leurs ;
+- `CodeEditor` ne connaît pas la fenêtre : il reçoit des rappels facultatifs
+  (`attribute_completion_provider`, `value_completion_provider`,
+  `reference_click_provider`, `context_menu_provider`). L'éditeur de
+  fragment de l'aperçu ne reçoit que ceux de la complétion ; l'éditeur de
+  `custom-elements.xml` aucun ;
+- les panneaux du bas (validation, XPath, références) forment la liste
+  `self._bottom_panels` : un seul est visible à la fois
+  (`_show_bottom_panel`, `_hide_bottom_panel`) ;
+- la vérification des références n'est qu'une aide : elle n'empêche jamais
+  d'enregistrer et ne modifie aucun fichier.
 
 ## Transformations XSLT de l'aperçu
 
