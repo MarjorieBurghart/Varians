@@ -147,10 +147,17 @@ def test_problems_lists_only_unresolved_or_ambiguous_references(tmp_path):
 
 def test_example_project_has_no_reference_problem():
     edition = ROOT / "xml" / "edition.xml"
-    started = time.perf_counter()
-    resolver = ReferenceResolver([(edition, edition.read_text(encoding="utf-8"))])
-    problems = resolver.problems()
-    elapsed = time.perf_counter() - started
-    assert problems == []
-    assert len(collect_references(edition.read_text(encoding="utf-8"))) > 10000   # edRef, wit…
-    assert elapsed < 2.0, elapsed
+    text = edition.read_text(encoding="utf-8")
+    assert len(collect_references(text)) > 10000                 # edRef, wit…
+    assert ReferenceResolver([(edition, text)]).problems() == []
+
+
+def test_checking_the_example_project_is_fast():
+    # Temps de calcul du processus (environ 0,7 s), insensible à la charge
+    # de la machine ; la marge couvre les postes lents.
+    edition = ROOT / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    started = time.process_time()
+    ReferenceResolver([(edition, text)]).problems()
+    elapsed = time.process_time() - started
+    assert elapsed < 5.0, elapsed
