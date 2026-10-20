@@ -71,14 +71,23 @@ class CustomAttributeSpec:
 
     def resolved_values(self, witness_ids=(), ids_for=None) -> tuple[str, ...]:
         """``ids_for(elements)`` fournit les identifiants de la source « ids »
-        (aucun si l'appelant ne la connaît pas)."""
+        (aucun si l'appelant ne la connaît pas) : « bernard », ou le pointeur
+        qualifié « personnes.xml#molesme » d'un identifiant ambigu, repris tel
+        quel lorsque la source produit des pointeurs (``prefix="#"``)."""
         out: list[str] = list(self.values)
         for source in self.dynamic_values:
             if source.source == "witnesses":
                 out.extend(f"{source.prefix}{wid}{source.suffix}" for wid in witness_ids if wid)
             elif source.source == "ids" and ids_for is not None:
-                out.extend(f"{source.prefix}{ident}{source.suffix}"
-                           for ident in ids_for(source.elements) if ident)
+                pointers = source.prefix == "#" and not source.suffix
+                for ident in ids_for(source.elements):
+                    if "#" in ident:
+                        if pointers:
+                            out.append(ident)
+                            continue
+                        ident = ident.rsplit("#", 1)[1]
+                    if ident:
+                        out.append(f"{source.prefix}{ident}{source.suffix}")
         return tuple(dict.fromkeys(v for v in out if v != ""))
 
 

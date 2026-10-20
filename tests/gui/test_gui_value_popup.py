@@ -85,3 +85,21 @@ def test_attribute_name_popup_is_not_disturbed(open_window, example_project, qtb
     qtbot.keyClicks(window.editor, "k")
     assert window.editor._attribute_completer.popup().isVisible()
     assert not _popup_visible(window)
+
+
+def test_an_ambiguous_identifier_is_listed_in_its_qualified_form(open_window, project_with_documents, qtbot):
+    from project_config import DocumentConfig, load_project
+    from project_management import update_project_documents
+
+    lieux = project_with_documents.parent / "xml" / "lieux.xml"
+    lieux.write_text('<listPlace><place xml:id="petrus"/></listPlace>', encoding="utf-8")
+    documents = list(load_project(project_with_documents).documents) + [DocumentConfig(lieux, "Lieux")]
+    update_project_documents(project_with_documents, documents)
+    window = open_window(project_with_documents)
+    _cursor_inside(window, '<persName ref=""></persName>', 'ref="')
+    qtbot.keyClicks(window.editor, "#")
+    assert _popup_values(window) == ["#bernard", "personnes.xml#petrus"]
+    qtbot.keyClicks(window.editor, "pe")                     # « #pe » trouve la forme qualifiée
+    assert _popup_values(window) == ["personnes.xml#petrus"]
+    qtbot.keyClick(window.editor, Qt.Key.Key_Return)
+    assert '<persName ref="personnes.xml#petrus"></persName>' in window.editor.toPlainText()

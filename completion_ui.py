@@ -15,7 +15,7 @@ from rng_completion import (
     adapt_pointer_list_value_context, format_pointer_list_insertion, load_completion_model,
 )
 from schema_resolution import resolve_schema
-from xml_references import REFERENCE_ATTRIBUTES, target_elements
+from xml_references import REFERENCE_ATTRIBUTES, parse_pointer, target_elements
 
 
 class CompletionDialog(QDialog):
@@ -247,9 +247,12 @@ class CompletionMixin:
     def _auto_value_choices(self, editor):
         """Liste automatique des pointeurs (frappe de « # » dans une valeur
         d'attribut) : les valeurs de Ctrl+Espace, à condition qu'elles soient
-        toutes des pointeurs « #… ». Renvoie ``([(valeur, description)],
-        contexte)``. Les valeurs finies du RNG, qui ne sont jamais des
-        pointeurs, ne sont pas consultées à chaque frappe."""
+        toutes des pointeurs (« #id », ou « fichier.xml#id » pour un
+        identifiant ambigu). Le texte tapé (« #mo ») est cherché dans la
+        valeur, ce qui trouve aussi « personnes.xml#molesme ». Renvoie
+        ``([(valeur, description)], contexte)``. Les valeurs finies du RNG,
+        qui ne sont jamais des pointeurs, ne sont pas consultées à chaque
+        frappe."""
         text = editor.toPlainText()
         position = editor.textCursor().position()
         cache = (self._source_completion_context_cache if editor is self.editor
@@ -259,11 +262,11 @@ class CompletionMixin:
             return (), context
         context, items, _custom_values, _mode = self._attribute_value_suggestions(
             context, text, position, None, self._custom_completion_config())
-        if not items or not all(value.startswith("#") for value, _source, _description in items):
+        if not items or not all(parse_pointer(value) is not None for value, _source, _description in items):
             return (), context
         prefix = (context.prefix or "").casefold()
         return tuple((value, description) for value, _source, description in items
-                     if value.casefold().startswith(prefix)), context
+                     if prefix in value.casefold()), context
 
     def show_rng_completion(self, editor):
         """Ctrl+Espace : fermeture XML prioritaire, sinon RNG / aides projet."""
@@ -401,7 +404,9 @@ class CompletionMixin:
             return entries_by_targets[key]
 
         def ids_for(elements):
-            return tuple(dict.fromkeys(value.rsplit("#", 1)[-1] for value, _d, _e in entries(elements)))
+            # « bernard », ou « personnes.xml#molesme » pour un identifiant ambigu.
+            return tuple(dict.fromkeys(value[1:] if value.startswith("#") else value
+                                       for value, _d, _e in entries(elements)))
 
         custom_values, custom_mode = (
             custom.attribute_values(element, attribute, self._custom_witness_ids(), ids_for)
