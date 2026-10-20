@@ -710,4 +710,5 @@ The file is not deleted: it stays on disk.</string>
   <string key="references.summary.ok">{count} reference(s) checked: all resolved ✓</string>
   <string key="references.summary.problems">{count} reference(s) checked, {problems} problem(s). Double-click a row to go to the reference.</string>
   <string key="references.summary.none">No reference (“#id”, “file.xml#id”) in the documents of the project.</string>
+  <string key="project.error.unknown_pivot">Unknown pivot witness: “{witness}” is not one of the witnesses in project.xml ({witnesses}).</string>
 </translations>

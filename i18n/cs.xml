@@ -724,4 +724,5 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="references.summary.ok">Zkontrolováno odkazů: {count}; všechny jsou vyřešeny ✓</string>
   <string key="references.summary.problems">Zkontrolováno odkazů: {count}, problémů: {problems}. Dvojitým kliknutím na řádek přejdete na odkaz.</string>
   <string key="references.summary.none">Dokumenty projektu neobsahují žádný odkaz („#id“, „soubor.xml#id“).</string>
+  <string key="project.error.unknown_pivot">Neznámý pivotní svědek: „{witness}“ není mezi svědky v project.xml ({witnesses}).</string>
 </translations>

@@ -724,4 +724,5 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="references.summary.ok">{count} Verweis(e) geprüft: alle aufgelöst ✓</string>
   <string key="references.summary.problems">{count} Verweis(e) geprüft, {problems} Problem(e). Doppelklicken Sie auf eine Zeile, um zum Verweis zu springen.</string>
   <string key="references.summary.none">Kein Verweis („#id“, „datei.xml#id“) in den Dokumenten des Projekts.</string>
+  <string key="project.error.unknown_pivot">Unbekannter Pivot-Textzeuge: „{witness}“ gehört nicht zu den Textzeugen in project.xml ({witnesses}).</string>
 </translations>

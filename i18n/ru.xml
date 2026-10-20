@@ -724,4 +724,5 @@
   <string key="references.summary.ok">Проверено ссылок: {count}; все разрешены ✓</string>
   <string key="references.summary.problems">Проверено ссылок: {count}, проблем: {problems}. Дважды щёлкните строку, чтобы перейти к ссылке.</string>
   <string key="references.summary.none">В документах проекта нет ссылок («#id», «файл.xml#id»).</string>
+  <string key="project.error.unknown_pivot">Неизвестный опорный свидетель: «{witness}» отсутствует среди свидетелей в project.xml ({witnesses}).</string>
 </translations>

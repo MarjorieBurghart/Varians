@@ -724,4 +724,5 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="references.summary.ok">{count} riferimento/i verificato/i: tutti risolti ✓</string>
   <string key="references.summary.problems">{count} riferimento/i verificato/i, {problems} problema/i. Fai doppio clic su una riga per andare al riferimento.</string>
   <string key="references.summary.none">Nessun riferimento («#id», «file.xml#id») nei documenti del progetto.</string>
+  <string key="project.error.unknown_pivot">Testimone pivot sconosciuto: «{witness}» non figura tra i testimoni di project.xml ({witnesses}).</string>
 </translations>

@@ -724,4 +724,5 @@
   <string key="references.summary.ok">{count}件の参照を検査しました：すべて解決済みです ✓</string>
   <string key="references.summary.problems">{count}件の参照を検査しました。問題：{problems}件。行をダブルクリックすると参照へ移動します。</string>
   <string key="references.summary.none">プロジェクトの文書に参照（「#id」「file.xml#id」）はありません。</string>
+  <string key="project.error.unknown_pivot">不明なピボット伝本：「{witness}」は project.xml の伝本（{witnesses}）に含まれていません。</string>
 </translations>

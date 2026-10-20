@@ -57,7 +57,7 @@ from project_management import create_portable_project, create_new_transcription
 from project_dialogs import NewProjectDialog, run_pivot_scaffold_dialog
 from i18n import I18nManager
 from app_context import (
-    call_later, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
+    call_later, error_message, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
     remove_recent_project, clear_recent_projects, last_open_project_path, remember_open_project,
     forget_open_project,
 )
@@ -816,7 +816,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         try:
             new_window = MainWindow(Path(project_path))
         except Exception as exc:
-            QMessageBox.critical(self, _t("project.open_error"), str(exc))
+            QMessageBox.critical(self, _t("project.open_error"), error_message(exc))
             return False
         self._replacement_window = new_window
         new_window.showMaximized()
@@ -1468,7 +1468,7 @@ class WelcomeWindow(QMainWindow):
         try:
             new_window = MainWindow(Path(project_path))
         except Exception as exc:
-            QMessageBox.critical(self, _t("project.open_error"), str(exc))
+            QMessageBox.critical(self, _t("project.open_error"), error_message(exc))
             return False
         self._replacement_window = new_window
         new_window.showMaximized()
@@ -1559,14 +1559,14 @@ def main():
                 except Exception as exc:
                     forget_open_project()
                     QMessageBox.warning(None, _t("project.reopen_error.title"),
-                                        _t("project.reopen_error", path=startup_project, error=exc))
+                                        _t("project.reopen_error", path=startup_project, error=error_message(exc)))
                     win = WelcomeWindow()
             else:
                 # Le projet de démonstration reste livré, mais n'est jamais ouvert
                 # automatiquement à la première utilisation.
                 win = WelcomeWindow()
     except Exception as exc:
-        QMessageBox.critical(None, _t("project.open_error"), str(exc))
+        QMessageBox.critical(None, _t("project.open_error"), error_message(exc))
         return 2
     # « Plein écran » au sens bureau : fenêtre maximisée, sans masquer la barre
     # des tâches ni les contrôles natifs de la fenêtre.

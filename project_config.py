@@ -7,6 +7,18 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 
+class ProjectConfigError(ValueError):
+    """Erreur de project.xml traduisible : ``key`` est une clé des catalogues
+    i18n et ``values`` ses paramètres ; l'interface affiche le message dans sa
+    langue (``app_context.error_message``). ``str()`` donne le texte français,
+    pour les appels sans interface (export en ligne de commande, tests)."""
+
+    def __init__(self, key, default, **values):
+        super().__init__(default.format(**values))
+        self.key = key
+        self.values = values
+
+
 APPLICATION_ROOT = Path(__file__).resolve().parent
 DEFAULT_APPLICATION_XSLT = APPLICATION_ROOT / "rendering" / "tei-to-html.xsl"
 
@@ -367,7 +379,10 @@ def load_project(path: str | Path) -> ProjectConfig:
         else:
             raise ValueError("Déclarez le témoin pivot avec <witnesses base=\"…\"> ou role=\"base\".")
     if base_witness not in {w.id for w in witnesses}:
-        raise ValueError(f"Témoin de base inconnu : {base_witness}")
+        raise ProjectConfigError(
+            "project.error.unknown_pivot",
+            "Témoin pivot inconnu : « {witness} » ne figure pas parmi les témoins de project.xml ({witnesses}).",
+            witness=base_witness, witnesses=", ".join(w.id for w in witnesses))
 
     witnesses = [
         WitnessConfig(
