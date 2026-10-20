@@ -2,7 +2,7 @@ from pathlib import Path
 import sys
 
 import pytest
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -50,7 +50,7 @@ def test_editor_goto_xpath_uses_selection_anchor_and_current_version():
     source = application_source()
     assert 'int(match.end_position)' in source
     assert 'QTextCursor.MoveMode.KeepAnchor' in source
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source
 
 
 def test_help_is_current_and_covers_new_workflows_in_both_languages():

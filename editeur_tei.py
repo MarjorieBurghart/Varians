@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.8.5.26.2.
+"""Varians — éditeur TEI/manuscrits générique — V0.8.6.0.
 
 Refactorisation de la base V8o : le projet, le témoin de base, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans

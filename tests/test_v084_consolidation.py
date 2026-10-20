@@ -10,7 +10,7 @@ from resource_state import (
     effective_base_line_sync,
     effective_secondary_line_sync,
 )
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 from web_viewer.generator import build_dataset
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -173,4 +173,4 @@ def test_editor_uses_raw_sync_counts_before_alto_overlay():
     assert "self._base_sync_line_count = primary_sync_line_count(cache)" in source
     assert "self._secondary_sync_link_counts[w.id] = secondary_sync_link_count(cache)" in source
     assert "(self._base_sync_line_count or 0) > 0" in source
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source

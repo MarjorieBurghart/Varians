@@ -1,7 +1,7 @@
 from pathlib import Path
 import string
 import xml.etree.ElementTree as ET
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 LANGUAGES = {
@@ -33,7 +33,7 @@ def _fields(text: str):
 
 def test_current_version_and_toolbar_filename_label_removed():
     source = application_source()
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source
     assert "self.file_label" not in source
     assert "tb.addWidget(self.file_label)" not in source
 

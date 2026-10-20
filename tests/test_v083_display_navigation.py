@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from selection_sync import containing_span_index, occurrence_index_for_position, choose_occurrence
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,7 +21,7 @@ def test_containing_paragraph_span():
 
 def test_editor_has_vertical_witness_splitter_and_project_local_visibility():
     source = application_source()
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source
     assert 'self.witness_splitter = QSplitter(Qt.Orientation.Vertical)' in source
     assert 'visibleWitnesses' in source
     assert 'witnessHeights' in source

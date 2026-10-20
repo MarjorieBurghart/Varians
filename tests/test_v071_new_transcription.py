@@ -8,7 +8,7 @@ from project_management import (
     create_new_transcription_project,
     minimal_tei_text,
 )
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 from schema_resolution import detect_xml_models
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -108,4 +108,4 @@ def test_ui_source_contains_both_creation_modes_and_switches_creator():
     assert 'self.edition.setEnabled(mode == "existing")' in dialogs
     assert 'create_new_transcription_project' in editor
     assert 'values.get("creation_mode") == "blank"' in editor
-    assert 'APP_VERSION = "0.8.5.26.2"' in editor
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in editor

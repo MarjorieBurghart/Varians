@@ -7,7 +7,7 @@ from image_sources import (
     apply_witness_image_policy, image_only_items, display_window_indices,
     page_image_source,
 )
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 from alto_import import build_alto_cache, overlay_alto
 
 ALTO_TMPL = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -99,4 +99,4 @@ def test_editor_uses_explicit_sync_not_alto_for_expected_line_count():
     assert '(self._base_sync_line_count or 0) > 0' in source
     assert 'self.expected_base_lines = self._base_sync_line_count if self.base_alignment_available else None' in source
     assert 'sync_enabled=((self.base_alignment_available and bool(self.base_items))' in source
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source

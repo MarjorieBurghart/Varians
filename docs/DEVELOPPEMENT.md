@@ -98,7 +98,11 @@ trouve dans `docs/passation_V0.8.5.26.2/` : ses invariants scientifiques
 restent la référence.
 
 La version affichée par l'application est `APP_VERSION` dans
-`app_context.py`.
+`app_context.py`. Pour une nouvelle version : modifier `APP_VERSION`,
+`CURRENT_VERSION` dans `tests/varians_source.py`, l'en-tête de
+`editeur_tei.py`, ajouter une section en tête de `README.txt` et une section
+`<section id="vXYZ">` dans chacune des sept aides (`help/*.html`) ;
+`tests/test_version.py` vérifie l'ensemble.
 
 ## Défauts connus
 

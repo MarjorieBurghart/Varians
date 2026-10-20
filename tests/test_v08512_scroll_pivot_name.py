@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 from tei_facsimile import facsimile_ref_at_position
 from witness_layout import minimum_witness_stack_height
-from varians_source import application_source, application_ast, node_source
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -51,7 +51,7 @@ def test_real_scroll_extent_reacts_to_visibility_and_maximize_without_qt():
 
 def test_editor_uses_real_vertical_scroll_area_around_existing_splitter():
     code=application_source()
-    assert 'APP_VERSION = "0.8.5.26.2"' in code
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in code
     for fragment in (
         'self.witness_scroll = QScrollArea(self)',
         'self.witness_scroll.setWidgetResizable(True)',

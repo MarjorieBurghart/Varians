@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
 from xml_folding import foldable_xml_regions, region_at_header, region_for_cursor, visible_line_numbers
-from varians_source import application_source, application_ast, node_source
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
 
 ROOT=Path(__file__).resolve().parents[1]
 SRC=application_source()
@@ -119,7 +119,7 @@ def test_no_xml_modification_and_ui_actions_are_connected():
     assert 'self.editor.toggle_xml_fold()' in SRC
     assert 'self.editor.fold_all_xml()' in SRC
     assert 'self.editor.unfold_all_xml()' in SRC
-    assert 'APP_VERSION = "0.8.5.26.2"' in SRC
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in SRC
     assert 'self.document().markContentsDirty' in SRC
     assert 'self._unfold_for_hidden_cursor' in SRC
 

@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
 import pytest
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -121,7 +121,7 @@ def test_editor_hooks_present_and_distinguish_page_line():
     s=application_source()
     for name in ('set_folios','set_folio','_split_double_folio','folio_at_position','_refresh_folio_navigation','folio_focus_rect','panel.sync_enabled'):
         assert name in s
-    assert 'APP_VERSION = "0.8.5.26.2"' in s
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in s
 
 
 def test_web_dataset_includes_one_image_two_folio_regions(tmp_path):

@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from project_config import load_project
 from project_management import WitnessDraft, create_new_transcription_project
 from image_sources import apply_witness_image_policy, page_image_source
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -85,7 +85,7 @@ def test_explicit_none_suppresses_legacy_iiif_but_keeps_alto_lines():
 
 def test_v072_version_and_documentation_present():
     editor = application_source()
-    assert 'APP_VERSION = "0.8.5.26.2"' in editor
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in editor
     image_doc = (ROOT / "IMAGE_SOURCES.md").read_text(encoding="utf-8")
     assert 'V0.7.2' in image_doc
     assert '<images type="none"' in image_doc

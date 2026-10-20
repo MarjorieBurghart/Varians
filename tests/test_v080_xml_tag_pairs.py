@@ -4,7 +4,7 @@ from xml_tag_pairs import (
     scan_xml_tags, tag_pairs, opening_pair_at_context,
     exact_selected_opening_pair, closing_rename_mirror, apply_rename_mirror,
 )
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 
 
 def test_nested_same_name_pairs_are_exact():
@@ -85,7 +85,7 @@ def test_invalid_or_self_closing_new_opening_is_not_mirrored():
 def test_static_editor_integration_v080():
     root = Path(__file__).resolve().parents[1]
     source = application_source()
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source
     # opening_pair_at_context était importé sans être utilisé (import retiré en
     # V0.8.6.0) ; l'éditeur s'appuie sur pair_at_context.
     assert 'pair_at_context(' in source

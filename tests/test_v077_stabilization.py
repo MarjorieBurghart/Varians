@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from project_management import WitnessDraft, create_new_transcription_project
 from project_config import load_project
 from web_viewer.generator import build_dataset, make_html
-from varians_source import application_source
+from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 TEI = "{http://www.tei-c.org/ns/1.0}"
@@ -71,4 +71,4 @@ def test_opening_document_explicitly_resets_rng_diagnostics():
 
 def test_version_is_077():
     source = application_source()
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source

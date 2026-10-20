@@ -1,6 +1,26 @@
-Note (V0.8.6.0) : les rapports TEST_REPORT_*.txt, les addenda PASSATION_V*.md
-et RELEASE_MANIFEST_SHA256.txt cités ci-dessous ont été déplacés dans
-docs/historique/.
+VARIANS V0.8.6.0 — RESTRUCTURATION, TESTS ET CORRECTIFS
+
+• Code : editeur_tei.py, auparavant d'environ 7 900 lignes, est découpé en
+  modules, un par responsabilité ; l'état d'un document ouvert est regroupé
+  dans document_session.py. Carte des modules : docs/DEVELOPPEMENT.md.
+• Tests : en plus des tests historiques, des tests pilotent la véritable
+  fenêtre de Varians (tests/gui/) ; ils sont lancés automatiquement sur GitHub
+  sous Linux et Windows à chaque envoi.
+• Saisie : taper une nouvelle balise dans un long document ne fige plus
+  l'éditeur (0,12 s par frappe au lieu de plusieurs dizaines de secondes sur
+  le projet exemple).
+• Synchronisation : une modification à l'intérieur d'une balise (par exemple
+  edRef="#T" complété en "#T1") est aussitôt prise en compte.
+• Vue XSLT / CSS : une erreur de feuille XSLT est signalée telle quelle
+  (fichier, ligne, message) ; une transformation peut lire des fichiers
+  locaux, mais ne peut ni écrire de fichier ni accéder au réseau.
+• Fermer une fenêtre juste après l'ouverture d'un document, ou pendant le
+  chargement d'images, n'affiche plus d'erreur dans la console.
+• Aucun changement du format des projets (project.xml), des données TEI,
+  JSON, ALTO/PAGE ni du viewer web.
+• Historique : les rapports TEST_REPORT_*.txt, les addenda PASSATION_V*.md
+  et RELEASE_MANIFEST_SHA256.txt cités ci-dessous sont dans docs/historique/ ;
+  le dossier de passation V0.8.5.26.2 est dans docs/passation_V0.8.5.26.2/.
 
 VARIANS V0.8.5.26.2 — CORRECTIF DU RAFRAÎCHISSEMENT RELAX NG
 

@@ -16,6 +16,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Version attendue de l'application (app_context.APP_VERSION). À changer ici,
+# en même temps que APP_VERSION, à chaque nouvelle version.
+CURRENT_VERSION = "0.8.6.0"
+
 # Ordre de concaténation : editeur_tei.py d'abord (les recherches de texte
 # par position, comme source.index(...), y trouvent leurs repères en premier).
 APPLICATION_MODULES = (

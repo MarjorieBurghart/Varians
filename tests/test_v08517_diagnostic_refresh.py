@@ -10,7 +10,7 @@ import pytest
 from witness_resource_refresh import (assemble_resources, diagnostic_rows,
                                       changed_witnesses, read_alignment_json,
                                       sync_fingerprint)
-from varians_source import application_source, application_ast, node_source
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -162,7 +162,7 @@ def test_seven_locales_have_independent_diagnostic_strings():
 
 def test_mainwindow_menu_preview_and_in_place_reload_are_wired_without_replacing_xml():
     text=application_source()
-    assert 'APP_VERSION = "0.8.5.26.2"' in text
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in text
     assert 'self.action_diagnose_witnesses' in text
     assert 'self.action_refresh_synchronizations' in text
     reload_func=text.split('    def refresh_witness_synchronizations(self):')[1].split('    def reload_images(self):')[0]

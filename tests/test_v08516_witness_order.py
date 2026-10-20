@@ -9,7 +9,7 @@ import textwrap
 import xml.etree.ElementTree as ET
 
 from witness_layout import normalized_witness_order, ordered_visible_witnesses
-from varians_source import application_source, application_ast, node_source
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = application_source()
@@ -226,7 +226,7 @@ def test_existing_view_menu_reuses_witness_dialog_not_project_editor():
     assert 'self.witness_splitter.insertWidget(index, panel)' in SOURCE
     assert '_t("view.witnesses.choose")' in SOURCE
     assert 'projectView/' in SOURCE
-    assert 'APP_VERSION = "0.8.5.26.2"' in SOURCE
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in SOURCE
 
 
 def test_translations_7_languages_all_present_and_unambiguous():

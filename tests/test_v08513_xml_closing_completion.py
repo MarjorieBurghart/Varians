@@ -3,7 +3,7 @@ from pathlib import Path
 import ast
 
 from xml_tag_pairs import closing_tag_suggestion, complete_closing_tag
-from varians_source import application_source, application_ast
+from varians_source import application_source, application_ast, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -101,5 +101,5 @@ def test_editor_wires_popup_enter_escape_and_ctrl_space_without_qt():
     assert 'Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab' in source
     assert 'Qt.Key.Key_Escape' in source
     assert 'if editor.show_closing_tag_completion(force=True):' in source
-    assert 'APP_VERSION = "0.8.5.26.2"' in source
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in source
     assert 'QCompleter' in source and 'QStringListModel' in source

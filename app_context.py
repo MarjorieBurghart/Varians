@@ -16,7 +16,7 @@ import shiboken6
 from PySide6.QtCore import QSettings, QTimer
 
 HERE = Path(__file__).resolve().parent
-APP_VERSION = "0.8.5.26.2"
+APP_VERSION = "0.8.6.0"
 
 # --- Traductions --------------------------------------------------------------
 

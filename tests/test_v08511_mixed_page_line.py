@@ -11,7 +11,7 @@ from image_sources import page_label as image_page_label
 from project_management import ProjectDraft, WitnessDraft, LocalImageDraft, write_project_xml
 from project_config import load_project
 from web_viewer.generator import build_dataset
-from varians_source import application_source, application_ast, node_source
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 TEI = 'http://www.tei-c.org/ns/1.0'
@@ -198,4 +198,4 @@ def test_navigation_entrypoints_and_browser_lines_update_independent_pages():
     assert 'syncAll(true);return true' in browser
     assert "document.querySelectorAll('.pb[data-doc-pos]')" in browser
     assert 'labelIndex' in browser and 'data-n=' in browser
-    assert 'APP_VERSION = "0.8.5.26.2"' in editor
+    assert f'APP_VERSION = "{CURRENT_VERSION}"' in editor
