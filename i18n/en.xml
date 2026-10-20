@@ -720,4 +720,16 @@ The file is not deleted: it stays on disk.</string>
   <string key="project.error.no_pivot">project.xml does not designate a pivot witness: declare it with &lt;witnesses base="…"&gt;, or with role="base" on a single &lt;witness&gt;.</string>
   <string key="references.other_document">Short form: {token} only designates this document. To point to this target, write {suggestion}.</string>
   <string key="references.problem.other_document">Short form, target in another document: write {suggestions}</string>
+  <string key="documents.view.choose">Choose displayed documents…</string>
+  <string key="documents.view.choose.tip">Choose which document tabs are shown and their order.</string>
+  <string key="documents.view.title">Displayed documents and order</string>
+  <string key="documents.view.hint">Check the documents whose tab should be shown and arrange their order. A hidden document stays in the project. This preference is saved locally for the project and does not change project.xml.</string>
+  <string key="documents.view.all">Select all</string>
+  <string key="documents.view.none">Select none</string>
+  <string key="documents.view.move_up">Move up</string>
+  <string key="documents.view.move_down">Move down</string>
+  <string key="documents.tab.hide">Hide tab</string>
+  <string key="documents.tab.rename">Rename tab…</string>
+  <string key="documents.tab.rename.title">Rename tab</string>
+  <string key="documents.tab.rename.label">Tab name (saved in project.xml, label attribute; leave empty to show the file name):</string>
 </translations>

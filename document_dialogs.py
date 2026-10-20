@@ -120,7 +120,11 @@ class DocumentDialogsMixin:
 
     def remove_document_from_project(self):
         """Retire du projet le document auxiliaire affiché ; son fichier reste."""
-        session = self.document
+        return self._remove_document(self.document)
+
+    def _remove_document(self, session):
+        """Retire ``session`` du projet, après confirmation (et enregistrement
+        de ses modifications, si on le demande) ; son fichier reste."""
         if session.is_edition:
             return False
         answer = QMessageBox.question(

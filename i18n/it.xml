@@ -734,4 +734,16 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="project.error.no_pivot">project.xml non designa alcun testimone pivot: indicalo con &lt;witnesses base="…"&gt; oppure con role="base" su un solo &lt;witness&gt;.</string>
   <string key="references.other_document">Forma breve: {token} designa solo questo documento. Per puntare a questa destinazione, scrivi {suggestion}.</string>
   <string key="references.problem.other_document">Forma breve, destinazione in un altro documento: scrivi {suggestions}</string>
+  <string key="documents.view.choose">Scegli i documenti visualizzati…</string>
+  <string key="documents.view.choose.tip">Scegli le schede dei documenti visibili e il loro ordine.</string>
+  <string key="documents.view.title">Documenti visualizzati e ordine</string>
+  <string key="documents.view.hint">Seleziona i documenti di cui mostrare la scheda e modifica il loro ordine. Un documento nascosto resta nel progetto. Questa preferenza viene salvata localmente per progetto e non modifica project.xml.</string>
+  <string key="documents.view.all">Seleziona tutto</string>
+  <string key="documents.view.none">Deseleziona tutto</string>
+  <string key="documents.view.move_up">Sposta su</string>
+  <string key="documents.view.move_down">Sposta giù</string>
+  <string key="documents.tab.hide">Nascondi la scheda</string>
+  <string key="documents.tab.rename">Rinomina la scheda…</string>
+  <string key="documents.tab.rename.title">Rinomina la scheda</string>
+  <string key="documents.tab.rename.label">Nome della scheda (salvato in project.xml, attributo label; lasciare vuoto per mostrare il nome del file):</string>
 </translations>

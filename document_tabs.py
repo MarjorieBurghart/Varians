@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QTextCursor, QTextDocument
 from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout, QTabBar, QVBoxLayout, QWidget
 from app_context import call_later, current_i18n, tr as _t
@@ -33,24 +34,30 @@ class DocumentTabsMixin:
         self.documents = [self.edition_session] + [
             DocumentSession.auxiliary(config) for config in self.project.documents
         ]
+        self._load_document_tabs()
 
     def _edition_displayed(self):
         return self.document.is_edition
 
     def _build_document_area(self, views):
         """Rangée d'onglets des documents au-dessus de ``views`` (source et
-        aperçu). Elle reste masquée tant que le projet ne compte que l'édition."""
+        aperçu), un par document visible (voir document_display). Elle reste
+        masquée tant que le projet ne compte que l'édition."""
         bar = QTabBar(self)
         bar.setDocumentMode(True)
         bar.setExpanding(False)
         bar.setUsesScrollButtons(True)
         self.document_tab_bar = bar
         self._normal_tab_color = bar.tabTextColor(0)
-        for session in self.documents:
+        for session in self._tab_sessions:
             bar.addTab("")
             self._refresh_document_tab(session)
+        # L'onglet de l'édition n'est pas forcément le premier.
+        self._select_document_tab()
         bar.setVisible(len(self.documents) > 1)
         bar.currentChanged.connect(self._document_tab_changed)
+        bar.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        bar.customContextMenuRequested.connect(self._document_tab_context_menu)
         area = QWidget(self)
         layout = QVBoxLayout(area)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -71,6 +78,7 @@ class DocumentTabsMixin:
         session = DocumentSession.auxiliary(config)
         self.documents.append(session)
         self._update_document_tabs()
+        self._save_document_tabs()
         return self.show_document(session)
 
     def _unregister_document(self, session):
@@ -87,49 +95,54 @@ class DocumentTabsMixin:
             self.show_document(self.edition_session)
         self.documents.remove(session)
         self._update_document_tabs()
+        self._save_document_tabs()
         if session.text_document is not None:
             session.text_document.deleteLater()
         return True
 
     def _update_document_tabs(self):
-        """Un onglet par document (après un ajout ou un retrait)."""
+        """Un onglet par document visible (après un ajout, un retrait, un
+        onglet masqué ou rendu, un nouvel ordre)."""
+        self._sync_document_tabs()
         bar = self.document_tab_bar
         bar.blockSignals(True)
         try:
-            while bar.count() > len(self.documents):
+            while bar.count() > len(self._tab_sessions):
                 bar.removeTab(bar.count() - 1)
-            while bar.count() < len(self.documents):
+            while bar.count() < len(self._tab_sessions):
                 bar.addTab("")
         finally:
             bar.blockSignals(False)
-        for session in self.documents:
+        for session in self._tab_sessions:
             self._refresh_document_tab(session)
         bar.setVisible(len(self.documents) > 1)
+        self.action_choose_documents.setEnabled(len(self.documents) > 1)
         self._select_document_tab()
 
     def _document_tab_changed(self, index):
-        if 0 <= index < len(self.documents) and not self.show_document(self.documents[index]):
+        if 0 <= index < len(self._tab_sessions) and not self.show_document(self._tab_sessions[index]):
             self._select_document_tab()
 
     def _select_document_tab(self):
-        """Onglet courant = document affiché, sans redéclencher l'affichage."""
+        """Onglet courant = document affiché, sans redéclencher l'affichage.
+        Un document masqué affiché le temps de l'enregistrer n'a pas d'onglet."""
         bar = getattr(self, "document_tab_bar", None)
-        if bar is None:
+        if bar is None or self.document not in self._tab_sessions:
             return
         bar.blockSignals(True)
         try:
-            bar.setCurrentIndex(self.documents.index(self.document))
+            bar.setCurrentIndex(self._tab_sessions.index(self.document))
         finally:
             bar.blockSignals(False)
 
     def _refresh_document_tab(self, session):
-        """Nom, « * » si modifié, couleur et info-bulle selon l'état XML."""
+        """Nom, « * » si modifié, couleur et info-bulle selon l'état XML
+        (rien pour un document masqué)."""
         bar = getattr(self, "document_tab_bar", None)
-        if bar is None or session not in self.documents:
+        if bar is None or session not in self._tab_sessions:
             return
-        index = self.documents.index(session)
-        name = _t("documents.edition_tab") if session.is_edition else session.label
-        bar.setTabText(index, name + (" *" if session.modified else ""))
+        index = self._tab_sessions.index(session)
+        bar.setTabText(index, self._document_tab_name(session) + (" *" if session.modified else ""))
         color = _HEALTH_TAB_COLORS.get(session.health)
         bar.setTabTextColor(index, QColor(color) if color else self._normal_tab_color)
         tip = str(session.path)
@@ -294,17 +307,18 @@ class DocumentTabsMixin:
                 if (self._has_unsaved_work() if session is self.document else session.modified)]
 
     def _document_display_name(self, session):
-        name = _t("documents.edition_tab") if session.is_edition else session.label
-        return f"{name} ({Path(session.path).name})"
+        return f"{self._document_tab_name(session)} ({Path(session.path).name})"
 
     def _save_session(self, session):
         """Enregistre ``session``. Un document non affiché l'est le temps de
         l'enregistrement : les avertissements (XML mal formé…) le montrent.
-        En cas d'échec, il reste affiché."""
+        En cas d'échec, il reste affiché, avec son onglet s'il était masqué."""
         if session is self.document:
             return bool(self.save())
         previous = self.document
         if not self.show_document(session) or not self.save():
+            if self.document is session:
+                self.show_document_tab(session)
             return False
         self.show_document(previous)
         return True

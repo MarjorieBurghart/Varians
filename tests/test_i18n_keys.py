@@ -37,7 +37,10 @@ def test_every_literal_translation_key_exists_in_the_seven_catalogs():
 
 def test_each_help_explains_auxiliary_documents_with_the_menu_labels():
     labels = ("documents.menu", "documents.add.menu", "documents.new.menu",
-              "documents.remove.menu", "documents.edition_tab")
+              "documents.remove.menu", "documents.edition_tab",
+              # Onglets affichés (V0.8.9.0)
+              "menu.display", "documents.view.choose", "documents.tab.hide", "documents.tab.rename",
+              "references.action")
     for language in LANGUAGES:
         root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
         catalog = {string.get("key"): string.text for string in root.findall("string")}
@@ -47,6 +50,7 @@ def test_each_help_explains_auxiliary_documents_with_the_menu_labels():
         for key in labels:
             assert catalog[key] in section, (language, key)
         assert "&lt;documents&gt;" in section
+        assert "<code>label</code>" in section, language
 
 
 def test_each_help_explains_references_with_the_command_labels():

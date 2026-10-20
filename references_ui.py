@@ -201,9 +201,11 @@ class ReferencesMixin:
 
     def _show_location(self, session, anchor, position):
         """Affiche ``session`` dans la source et sélectionne ``anchor``…
-        ``position``, au centre de l'éditeur. False si l'affichage est refusé."""
+        ``position``, au centre de l'éditeur. Un document masqué retrouve
+        durablement son onglet. False si l'affichage est refusé."""
         if not self.show_document(session):
             return False
+        self.show_document_tab(session)
         if self.left_tabs.currentIndex() != 0:
             self.left_tabs.setCurrentIndex(0)
 

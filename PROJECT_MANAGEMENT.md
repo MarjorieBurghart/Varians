@@ -338,7 +338,9 @@ Un projet peut déclarer, à côté de l’édition, des documents XML auxiliair
 ```
 
 - `file` (obligatoire) : chemin relatif au projet ;
-- `label` (facultatif) : nom affiché, sinon le nom du fichier ;
+- `label` (facultatif) : nom affiché, sinon le nom du fichier ; depuis la
+  V0.8.9.0, il se modifie aussi par un clic droit sur l’onglet du document,
+  « Renommer l’onglet… » (un nom vide supprime l’attribut) ;
 - `schema` (facultatif) : `auto` par défaut (suivre le `<?xml-model?>` du
   document), `none` (aucune validation) ou `file`, avec `schemaFile`.
 
@@ -351,3 +353,9 @@ cette liste sans toucher au reste du fichier (copie `.bak` préalable).
 Limite : une version de Varians antérieure à 0.8.7.0 lit le projet
 normalement, mais supprime `<documents>` si l’on y enregistre les paramètres
 du projet.
+
+Les onglets masqués et leur ordre (Affichage ▸ « Choisir les documents
+affichés… », clic droit ▸ « Masquer l’onglet ») ne sont pas enregistrés dans
+`project.xml` : comme la disposition des témoins, c’est une préférence locale
+(`QSettings`) propre à chaque projet. L’ordre des `<document>` dans
+`project.xml` reste celui de leur ajout.
