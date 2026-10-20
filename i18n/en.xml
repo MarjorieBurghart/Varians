@@ -679,4 +679,8 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
 
 The file is not deleted: it stays on disk.</string>
   <string key="documents.error.title">Project documents</string>
+  <string key="viewer.show_variants">Variants</string>
+  <string key="viewer.show_variants.tip">Show or hide the variant markers (v) in the text</string>
+  <string key="viewer.show_notes">Notes</string>
+  <string key="viewer.show_notes.tip">Show or hide the note markers (n) in the text</string>
 </translations>

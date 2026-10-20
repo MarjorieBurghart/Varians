@@ -693,4 +693,8 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
 
 Soubor se nesmaže: zůstane na disku.</string>
   <string key="documents.error.title">Dokumenty projektu</string>
+  <string key="viewer.show_variants">Varianty</string>
+  <string key="viewer.show_variants.tip">Zobrazit nebo skrýt značky variant (v) v textu</string>
+  <string key="viewer.show_notes">Poznámky</string>
+  <string key="viewer.show_notes.tip">Zobrazit nebo skrýt značky poznámek (n) v textu</string>
 </translations>

@@ -693,4 +693,8 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
 
 Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="documents.error.title">Dokumente des Projekts</string>
+  <string key="viewer.show_variants">Varianten</string>
+  <string key="viewer.show_variants.tip">Variantenmarken (v) im Text ein- oder ausblenden</string>
+  <string key="viewer.show_notes">Anmerkungen</string>
+  <string key="viewer.show_notes.tip">Anmerkungsmarken (n) im Text ein- oder ausblenden</string>
 </translations>

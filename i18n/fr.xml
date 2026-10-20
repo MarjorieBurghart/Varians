@@ -679,4 +679,8 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
 
 Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="documents.error.title">Documents du projet</string>
+  <string key="viewer.show_variants">Variantes</string>
+  <string key="viewer.show_variants.tip">Afficher ou masquer les marqueurs de variantes (v) dans le texte</string>
+  <string key="viewer.show_notes">Notes</string>
+  <string key="viewer.show_notes.tip">Afficher ou masquer les marqueurs de notes (n) dans le texte</string>
 </translations>

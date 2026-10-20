@@ -693,4 +693,8 @@
 
 Файл не удаляется: он остаётся на диске.</string>
   <string key="documents.error.title">Документы проекта</string>
+  <string key="viewer.show_variants">Разночтения</string>
+  <string key="viewer.show_variants.tip">Показать или скрыть метки разночтений (v) в тексте</string>
+  <string key="viewer.show_notes">Примечания</string>
+  <string key="viewer.show_notes.tip">Показать или скрыть метки примечаний (n) в тексте</string>
 </translations>

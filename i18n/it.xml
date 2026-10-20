@@ -693,4 +693,8 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
 
 Il file non viene eliminato: resta sul disco.</string>
   <string key="documents.error.title">Documenti del progetto</string>
+  <string key="viewer.show_variants">Varianti</string>
+  <string key="viewer.show_variants.tip">Mostra o nascondi i marcatori delle varianti (v) nel testo</string>
+  <string key="viewer.show_notes">Note</string>
+  <string key="viewer.show_notes.tip">Mostra o nascondi i marcatori delle note (n) nel testo</string>
 </translations>
