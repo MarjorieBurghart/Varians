@@ -161,8 +161,21 @@ def test_example_project_has_no_reference_problem():
     assert ReferenceResolver([(edition, text)]).problems() == []
 
 
+def test_paths_are_resolved_once_per_file_not_per_reference(monkeypatch):
+    # Path.resolve() est coûteux, surtout sous Windows : 10 000 références
+    # ne doivent pas donner 30 000 résolutions.
+    edition = ROOT / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    calls = []
+    original = Path.resolve
+    monkeypatch.setattr(Path, "resolve", lambda self, *a, **k: calls.append(self) or original(self, *a, **k))
+    count, problems = ReferenceResolver([(edition, text)]).check()
+    assert count > 10000 and problems == []
+    assert len(calls) < 10, len(calls)
+
+
 def test_checking_the_example_project_is_fast():
-    # Temps de calcul du processus (environ 0,7 s), insensible à la charge
+    # Temps de calcul du processus (environ 0,15 s), insensible à la charge
     # de la machine ; la marge couvre les postes lents.
     edition = ROOT / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")

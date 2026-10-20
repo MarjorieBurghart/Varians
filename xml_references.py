@@ -191,10 +191,6 @@ def collect_references(text):
     return result
 
 
-def _key(path):
-    return os.path.normcase(str(Path(path).resolve()))
-
-
 class ReferenceResolver:
     """Résout les références à partir des textes des documents du projet.
 
@@ -203,53 +199,65 @@ class ReferenceResolver:
     """
 
     def __init__(self, documents):
+        self._locations = {}
         self._paths = {}
         self._texts = {}
         self._order = []
         for path, text in documents:
-            key = _key(path)
+            key, resolved = self._location(path)
             if key in self._texts:
                 continue
-            self._paths[key] = Path(path).resolve()
+            self._paths[key] = resolved
             self._texts[key] = str(text or "")
             self._order.append(key)
         self._ids = {}
+
+    def _location(self, path):
+        """``(clé, chemin absolu)`` de ``path``. ``Path.resolve`` coûte cher,
+        surtout sous Windows : une fois par chemin, non par référence."""
+        name = os.fspath(path)
+        found = self._locations.get(name)
+        if found is None:
+            resolved = Path(name).resolve()
+            found = self._locations[name] = (os.path.normcase(str(resolved)), resolved)
+        return found
 
     def documents(self):
         return [self._paths[key] for key in self._order]
 
     def text(self, path):
-        key = _key(path)
+        key, resolved = self._location(path)
         if key not in self._texts:
             try:
-                self._texts[key] = Path(path).read_text(encoding="utf-8")
-                self._paths[key] = Path(path).resolve()
+                self._texts[key] = resolved.read_text(encoding="utf-8")
+                self._paths[key] = resolved
             except (OSError, UnicodeError):
                 return None
         return self._texts[key]
 
     def ids(self, path):
         """Index des identifiants d'un document, ou None s'il est illisible."""
-        key = _key(path)
+        key = self._location(path)[0]
         if key not in self._ids:
             text = self.text(path)
             self._ids[key] = None if text is None else collect_ids(text)
         return self._ids[key]
 
     def resolve(self, reference, source_path):
-        source = Path(source_path).resolve()
+        source_key, source = self._location(source_path)
         if reference.file:
-            target = (source.parent / reference.file).resolve()
+            target = os.path.join(source.parent, reference.file)
             index = self.ids(target)
             if index is None:
                 return Resolution("no_file")
-            return self._status([(self._paths[_key(target)], t) for t in index.get(reference.id, ())])
+            path = self._paths[self._location(target)[0]]
+            return self._status([(path, t) for t in index.get(reference.id, ())])
         own = self.ids(source) or {}
         if reference.id in own:
-            return self._status([(self._paths[_key(source)], t) for t in own[reference.id]])
+            return self._status([(self._paths[source_key], t) for t in own[reference.id]])
         found = []
         for key in self._order:
-            if key == _key(source):
+            if key == source_key:
                 continue
             for target in (self.ids(self._paths[key]) or {}).get(reference.id, ()):
                 found.append((self._paths[key], target))

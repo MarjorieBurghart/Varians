@@ -88,6 +88,7 @@ class ReferencesMixin:
         entries = []
         for session, index in others + [(current, own)]:
             name = Path(session.path).name
+            relative = None
             for ident, targets in index.items():
                 target = targets[0]
                 if elements is not None and target.element not in elements:
@@ -95,7 +96,9 @@ class ReferencesMixin:
                 if session is current or (ident not in own and counts.get(ident) == 1):
                     value = f"#{ident}"
                 else:
-                    value = f"{Path(os.path.relpath(Path(session.path).resolve(), current_dir)).as_posix()}#{ident}"
+                    if relative is None:
+                        relative = Path(os.path.relpath(Path(session.path).resolve(), current_dir)).as_posix()
+                    value = f"{relative}#{ident}"
                 label = target.label or target.element
                 entries.append((value, f"{label} — {name}", target.element))
         return entries
