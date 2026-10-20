@@ -93,9 +93,7 @@ La version affichée par l'application est `APP_VERSION` dans
 
 ## Défauts connus (hérités de V0.8.5.26.2, correction prévue)
 
-1. **Erreur dans la console** (`Signal source has been deleted`) si une
-   fenêtre est fermée pendant un téléchargement d'image.
-2. **Erreur dans la console** si une fenêtre est fermée moins de 120 ms
+1. **Erreur dans la console** si une fenêtre est fermée moins de 120 ms
    après l'ouverture d'un document (validation différée de `open_path`).
 
 Corrigés depuis :
@@ -105,4 +103,7 @@ Corrigés depuis :
   `xml_tag_pairs`) — voir `tests/test_xml_tag_pairs_performance.py` ;
 - l'index des `<lb/>` momentanément périmé lorsqu'on modifiait l'intérieur
   d'une balise sans saisir `<` ni `>` (ex. `edRef="#T"` → `"#T1"`) — voir
-  `tests/test_document_session.py`.
+  `tests/test_document_session.py` ;
+- l'erreur `Signal source has been deleted` affichée si une fenêtre était
+  fermée pendant un téléchargement d'image — voir
+  `tests/gui/test_gui_image_fetch.py`.

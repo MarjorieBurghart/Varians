@@ -80,6 +80,17 @@ class FetchWorker(QRunnable):
         with urllib.request.urlopen(req, timeout=45) as resp:
             return resp.read()
 
+    def _emit(self, data, error, mode):
+        """Transmet le résultat, sauf si son destinataire a disparu entre-temps.
+
+        Une fenêtre fermée pendant le téléchargement détruit l'objet émetteur :
+        le résultat n'a plus personne à qui être remis et il est abandonné.
+        """
+        try:
+            self.signals.finished.emit(self.token, self.key, data, error, mode)
+        except RuntimeError:
+            pass
+
     @Slot()
     def run(self):
         urls = [(self.url, "crop")]
@@ -103,7 +114,7 @@ class FetchWorker(QRunnable):
                         data = self._cached_or_download(candidate_url)
                     if not data:
                         raise RuntimeError("réponse vide")
-                    self.signals.finished.emit(self.token, self.key, data, "", mode)
+                    self._emit(data, "", mode)
                     return
                 except Exception as exc:
                     last_exc = exc
@@ -116,5 +127,5 @@ class FetchWorker(QRunnable):
             msg = "Gallica limite temporairement les requêtes (HTTP 429)."
         elif "10054" in msg or "forcibly closed" in msg.lower() or "reset" in msg.lower():
             msg = "Gallica a réinitialisé la connexion (WinError 10054), même après plusieurs nouvelles tentatives."
-        self.signals.finished.emit(self.token, self.key, b"", msg, "")
+        self._emit(b"", msg, "")
 
