@@ -1,3 +1,25 @@
+VARIANS V0.8.9.1 — DÉBUGGER L'APPARAT
+
+• Aide ▸ Débugger l'apparat… : requêtes XPath toutes prêtes pour repérer
+  les erreurs de l'apparat critique du document affiché, encodé en
+  parallel segmentation (<app>, <lem>, <rdg>, <rdgGrp>, @wit="#A #B") :
+  - <app> où un témoin est cité plusieurs fois (leçon ambiguë) ;
+  - <app> incomplets (un témoin du <listWit> n'a pas de leçon ; pour un
+    <app> imbriqué, les témoins de la leçon qui le contient) ;
+  - <app> où un témoin choisi apparaît, ou n'apparaît pas, dans <lem> ou
+    <rdg>, ou dans <rdg> seulement.
+  Un <lem> sans @wit est réputé couvrir les témoins absents des <rdg>.
+• Mes requêtes : requêtes XPath personnelles, nommées, enregistrées dans
+  project.xml (élément <xpathQueries>, voir PROJECT_MANAGEMENT.md) et
+  réutilisables à volonté.
+• La requête est lancée dans le panneau XPath : un clic sur un résultat
+  mène à l'<app>. C'est du XPath 1.0 ordinaire (préfixe tei:), que l'on
+  peut copier dans d'autres outils XML.
+• Limite : une version antérieure à 0.8.9.1 ouvre normalement un projet
+  qui contient des requêtes, mais les efface si l'on y enregistre les
+  paramètres du projet.
+• Aucun changement des données TEI, JSON, ALTO/PAGE ni du viewer web.
+
 VARIANS V0.8.9.0 — ONGLETS DE DOCUMENTS AFFICHÉS
 
 • Affichage ▸ Choisir les documents affichés… : une case par document du
