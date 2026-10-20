@@ -1,3 +1,26 @@
+VARIANS V0.8.9.0 — ONGLETS DE DOCUMENTS AFFICHÉS
+
+• Affichage ▸ Choisir les documents affichés… : une case par document du
+  projet (Édition, documents auxiliaires) et un ordre réglable (Monter,
+  Descendre). Ce choix est mémorisé localement pour le projet ; project.xml
+  n'est pas modifié.
+• Clic droit sur un onglet : Masquer l'onglet, Renommer l'onglet…,
+  Choisir les documents affichés…, Retirer le document du projet. Ces
+  commandes portent sur le document de l'onglet cliqué, même s'il n'est
+  pas affiché.
+• Un document masqué reste dans le projet : ses modifications sont gardées
+  et Varians propose de les enregistrer avant de quitter. F12, Ctrl+clic ou
+  un double-clic dans le panneau « Références » qui y mènent font
+  réapparaître son onglet, durablement.
+• Le dernier onglet visible ne peut pas être masqué. À l'ouverture du
+  projet, l'édition est affichée, avec son onglet.
+• Renommer l'onglet… écrit le nom dans l'attribut label du <document>, dans
+  project.xml (copie .bak) ; un nom vide revient au nom du fichier.
+• Un projet qui ne compte que l'édition est inchangé : pas de rangée
+  d'onglets, commande inactive.
+• Aucun changement des données TEI, JSON, ALTO/PAGE, du viewer web ni du
+  format de project.xml.
+
 VARIANS V0.8.8.0 — RÉFÉRENCES ENTRE DOCUMENTS
 
 • Références : dans un attribut pointeur (@ref, @corresp, @target, @who,
