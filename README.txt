@@ -8,8 +8,13 @@ VARIANS V0.8.8.0 — RÉFÉRENCES ENTRE DOCUMENTS
 • Saisie : taper « # » dans la valeur ouvre d'elle-même la liste des
   identifiants (« personnes.xml#bernard — Bernardus »), limitée au type
   d'entrée attendu (persName/@ref → person, placeName/@ref → place…), @wit
-  compris (témoins du projet). Un identifiant d'un autre document est
-  inséré sous la forme fichier.xml#id. Entrée ou Tab insère, Échap ferme ;
+  compris (témoins du <listWit>). Un identifiant d'un autre document est
+  inséré sous la forme fichier.xml#id.
+• rdg/@wit propose désormais, comme lem/@wit, les <witness> décrits dans la
+  TEI (le <listWit>), que vérifie la commande « Références », et non plus la
+  liste des témoins de project.xml. Un projet existant garde sa copie de
+  rendering/custom-elements.xml : pour adopter cette règle, y remplacer
+  source="witnesses" par source="ids" elements="witness". Entrée ou Tab insère, Échap ferme ;
   Ctrl+Espace reste disponible. custom-elements.xml : nouvelle source
   <values source="ids" elements="…"/> (voir CUSTOM_ELEMENTS.md).
 • Navigation : F12, Ctrl+clic ou clic droit ▸ Aller à la cible affiche

@@ -57,19 +57,27 @@ La liste projet **remplace uniquement les propositions affichées** par Varians.
 
 C'est utile lorsqu'un schéma autorise un domaine très large mais que l'édition suit une convention plus étroite.
 
-## Témoins du projet
+## Témoins
 
-Pour les pointeurs comme `rdg/@wit`, les identifiants de témoins peuvent être produits dynamiquement :
+Pour les pointeurs comme `rdg/@wit`, les identifiants de témoins sont produits dynamiquement. Depuis V0.8.8.0, le fichier fourni propose les `<witness>` décrits dans la TEI (le `<listWit>`), comme pour `lem/@wit` ; ce sont eux que vérifie la commande « Références » :
 
 ```xml
 <element name="rdg">
   <attribute name="wit" valuesMode="replace">
-    <values source="witnesses" prefix="#"/>
+    <values source="ids" elements="witness" prefix="#"/>
   </attribute>
 </element>
 ```
 
-Avec des témoins `T1`, `T2` et `P` déclarés dans `project.xml`, `Ctrl+Espace` dans :
+La source `witnesses` propose plutôt les témoins déclarés dans `project.xml` (ceux qui ont des images ou une synchronisation), qui peuvent différer du `<listWit>` :
+
+```xml
+<values source="witnesses" prefix="#"/>
+```
+
+Un projet créé avant V0.8.8.0 garde sa copie de `rendering/custom-elements.xml`, donc l'ancienne règle `source="witnesses"` ; pour adopter la nouvelle, la remplacer par `source="ids" elements="witness"`.
+
+Avec des témoins `T1`, `T2` et `P` décrits dans le `<listWit>`, `Ctrl+Espace` dans :
 
 ```xml
 <rdg wit="|">

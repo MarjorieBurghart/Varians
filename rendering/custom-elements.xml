@@ -25,7 +25,9 @@
 
   Valeurs dynamiques :
     <values source="witnesses" prefix="#"/>
-      -> produit automatiquement #<id> pour chaque témoin déclaré dans project.xml.
+      -> produit automatiquement #<id> pour chaque témoin déclaré dans project.xml
+         (témoins pourvus d'images ou de synchronisation, qui peuvent différer
+         des <witness> décrits dans la TEI).
     <values source="ids" elements="person personGrp" prefix="#"/>
       -> produit un pointeur pour chaque xml:id des documents du projet
          (édition et documents auxiliaires, par exemple un fichier
@@ -48,9 +50,11 @@
   xml:space="preserve").
 -->
 <customElements>
+  <!-- rdg/@wit : les <witness> déclarés dans la TEI (le <listWit>), comme
+       lem/@wit ; ce sont eux que vérifie la commande « Références ». -->
   <element name="rdg">
     <attribute name="wit" valuesMode="replace">
-      <values source="witnesses" prefix="#"/>
+      <values source="ids" elements="witness" prefix="#"/>
     </attribute>
   </element>
 
@@ -63,7 +67,7 @@
 
   <element name="lem">
     <attribute name="wit" valuesMode="replace">
-      <values source="witnesses" prefix="#"/>
+      <values source="ids" elements="witness" prefix="#"/>
     </attribute>
   </element>
 

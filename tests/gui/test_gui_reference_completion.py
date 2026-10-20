@@ -120,3 +120,18 @@ def test_without_auxiliary_documents_the_document_identifiers_are_proposed(open_
     window.show_rng_completion(window.editor)
     # @wit vise les <witness> de la <listWit> de l'édition.
     assert set(seen) == {"#T1", "#T2", "#P"}
+
+
+def test_rdg_wit_follows_the_witnesses_of_the_tei_list(open_window, example_project, dialogs):
+    # Comme lem/@wit : les <witness> du <listWit>, que vérifie aussi la
+    # commande « Références », et non la liste de project.xml.
+    window = open_window(example_project)
+    text = window.editor.toPlainText()
+    cursor = window.editor.textCursor()
+    cursor.setPosition(text.index("</listWit>"))
+    window.editor.setTextCursor(cursor)
+    window.editor.insertPlainText('<witness xml:id="Q">Témoin seulement décrit en TEI</witness>')
+    _type_in_body(window, '<app><rdg wit=""></rdg></app>', 'wit="')
+    seen = _proposals(dialogs)
+    window.show_rng_completion(window.editor)
+    assert set(seen) == {"#T1", "#T2", "#P", "#Q"}
