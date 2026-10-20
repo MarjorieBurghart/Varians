@@ -65,7 +65,10 @@ def test_tab_order_is_kept_after_reopening(open_window, three_documents):
     assert window.document_tab_bar.currentIndex() == 1                 # l'édition reste affichée
     reopened = open_window(three_documents)
     assert _tabs(reopened) == ["lieux.xml", _edition_tab(), "Personnes"]
+    assert reopened.document_tab_bar.currentIndex() == 1               # onglet de l'édition affichée
     assert [s.path.name for s in reopened.documents] == ["edition.xml", "personnes.xml", "lieux.xml"]
+    reopened.document_tab_bar.setCurrentIndex(0)
+    assert reopened.document is _doc(reopened, "lieux.xml")
 
 
 def test_tab_index_designates_the_visible_documents(open_window, three_documents):

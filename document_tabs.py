@@ -52,6 +52,8 @@ class DocumentTabsMixin:
         for session in self._tab_sessions:
             bar.addTab("")
             self._refresh_document_tab(session)
+        # L'onglet de l'édition n'est pas forcément le premier.
+        self._select_document_tab()
         bar.setVisible(len(self.documents) > 1)
         bar.currentChanged.connect(self._document_tab_changed)
         bar.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
