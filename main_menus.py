@@ -266,13 +266,14 @@ class MainMenusMixin:
         self.action_about = self._make_action(
             _t("help.about"), "", lambda: _show_about(self)
         )
-        # Les ressources en ligne sont volontairement placées en premier.
+        # « Débugger l'apparat » en tête, puis les ressources en ligne ;
+        # l'aide du logiciel reste en bas, juste au-dessus de « À propos ».
+        menu.addAction(self.action_debug_apparatus)
+        menu.addSeparator()
         menu.addAction(self.action_enigma)
         menu.addAction(self.action_latin_dictionary)
         menu.addSeparator()
         menu.addAction(self.action_software_help)
-        menu.addAction(self.action_debug_apparatus)
-        menu.addSeparator()
         menu.addAction(self.action_about)
         self.addAction(self.action_latin_dictionary)
         self.addAction(self.action_software_help)

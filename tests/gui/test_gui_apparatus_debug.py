@@ -41,10 +41,15 @@ def _close(dialog):
     return dialog.result()
 
 
-def test_the_command_follows_the_software_help_in_the_help_menu(open_window, example_project):
+def test_the_command_opens_the_help_menu(open_window, example_project):
+    # Débugger en tête, puis les outils externes ; l'aide du logiciel reste
+    # en bas, juste au-dessus de « À propos ».
     window = open_window(example_project)
-    actions = window.help_menu.actions()
-    assert actions.index(window.action_debug_apparatus) == actions.index(window.action_software_help) + 1
+    separator = object()
+    assert [separator if action.isSeparator() else action for action in window.help_menu.actions()] == [
+        window.action_debug_apparatus, separator,
+        window.action_enigma, window.action_latin_dictionary, separator,
+        window.action_software_help, window.action_about]
     assert window.action_debug_apparatus.text() == tr("apparatus.menu")
 
 
