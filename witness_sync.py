@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton,
     QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
-from app_context import tr as _t
+from app_context import call_later, tr as _t
 from folio_navigation import (
     configure_surface_parts, folio_at_position, folios_for_witness,
     inspect_surface_part_split,
@@ -580,7 +580,7 @@ class WitnessSyncMixin:
                 self.editor.setTextCursor(c)
                 self.editor.centerCursor()
             finally:
-                QTimer.singleShot(90, self._release_panel_sync)
+                call_later(90, self, self._release_panel_sync)
         self._last_synced_ordinal = ordinal
         key = self.base_items[ordinal]["key"]
         for panel in self.panels.values():
@@ -800,7 +800,7 @@ class WitnessSyncMixin:
                     panel.set_primary(ordinal, key)
             self._sync_page_panels_to_cursor(force=True)
         finally:
-            QTimer.singleShot(90,self._release_panel_sync)
+            call_later(90, self, self._release_panel_sync)
 
     def _release_panel_sync(self): self._sync_from_panel=False
 

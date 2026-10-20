@@ -91,12 +91,10 @@ restent la référence.
 La version affichée par l'application est `APP_VERSION` dans
 `app_context.py`.
 
-## Défauts connus (hérités de V0.8.5.26.2, correction prévue)
+## Défauts connus
 
-1. **Erreur dans la console** si une fenêtre est fermée moins de 120 ms
-   après l'ouverture d'un document (validation différée de `open_path`).
-
-Corrigés depuis :
+Aucun défaut hérité de V0.8.5.26.2 n'est actuellement connu. Corrigés en
+V0.8.6.0 :
 
 - la lenteur à la frappe d'une balise ouvrante dans un long document
   (recherche de la balise fermante de coût quadratique dans
@@ -106,4 +104,8 @@ Corrigés depuis :
   `tests/test_document_session.py` ;
 - l'erreur `Signal source has been deleted` affichée si une fenêtre était
   fermée pendant un téléchargement d'image — voir
-  `tests/gui/test_gui_image_fetch.py`.
+  `tests/gui/test_gui_image_fetch.py` ;
+- les erreurs affichées si une fenêtre était détruite peu après
+  l'ouverture d'un document (appels différés) — voir
+  `tests/gui/test_gui_delayed_calls.py`. Pour programmer un appel différé
+  visant une fenêtre ou un widget, utiliser `app_context.call_later`.

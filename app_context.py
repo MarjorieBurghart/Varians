@@ -12,7 +12,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QSettings
+import shiboken6
+from PySide6.QtCore import QSettings, QTimer
 
 HERE = Path(__file__).resolve().parent
 APP_VERSION = "0.8.5.26.2"
@@ -35,6 +36,19 @@ def current_i18n():
 def tr(key, default=None, **values):
     """Texte traduit dans la langue active (équivalent de ``_t``)."""
     return _i18n.tr(key, default=default, **values)
+
+
+# --- Appels différés -----------------------------------------------------------
+
+
+def call_later(msec, owner, callback) -> None:
+    """Comme ``QTimer.singleShot(msec, callback)``, sans effet si ``owner`` (un
+    QObject, en général la fenêtre) a été détruit entre-temps."""
+    def guarded():
+        if shiboken6.isValid(owner):
+            callback()
+
+    QTimer.singleShot(int(msec), guarded)
 
 
 # --- Réglages locaux (QSettings) ------------------------------------------------

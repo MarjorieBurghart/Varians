@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QTimer
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
-from app_context import HERE, tr as _t
+from app_context import call_later, HERE, tr as _t
 from relaxng_validation import relaxng_schema_token
 from save_io import atomic_write_text_with_backup
 
@@ -43,10 +42,10 @@ class DocumentIOMixin:
             self.formatted_view.frag_box.setVisible(False)
             self.formatted_view.dirty_preview = True
             self.formatted_view._last_preview_key = None
-        QTimer.singleShot(50,lambda: self.sync_panels_to_cursor(True))
+        call_later(50, self, lambda: self.sync_panels_to_cursor(True))
         # Même en mode RNG « aucun », on résout les xml-model pour détecter
         # à titre informatif une éventuelle déclaration Schematron.
-        QTimer.singleShot(120, lambda: self.validate_relaxng_document(show_panel=False, show_success_message=False))
+        call_later(120, self, lambda: self.validate_relaxng_document(show_panel=False, show_success_message=False))
 
     def _confirm_save_warning(self, title, text):
         box = QMessageBox(self)

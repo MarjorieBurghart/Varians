@@ -57,7 +57,7 @@ from project_management import create_portable_project, create_new_transcription
 from project_dialogs import NewProjectDialog, run_pivot_scaffold_dialog
 from i18n import I18nManager
 from app_context import (
-    set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
+    call_later, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
     remove_recent_project, clear_recent_projects, last_open_project_path, remember_open_project,
     forget_open_project,
 )
@@ -1076,7 +1076,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
                 if n is not None:
                     self.formatted_view.scroll_to_t1_line(n)
 
-            QTimer.singleShot(20, restore_preview_context)
+            call_later(20, self, restore_preview_context)
             return
 
         if index == 0 and previous == 1:
@@ -1185,7 +1185,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         # et que le timer a déjà expiré, programmer une nouvelle passe courte.
         if (self._xml_health_pending or revision != current_revision) and not self.validate_timer.isActive():
             self._xml_health_pending = False
-            QTimer.singleShot(180, self.validate_editor)
+            call_later(180, self, self.validate_editor)
 
     def _focus_inside(self, widget):
         focus = QApplication.focusWidget()

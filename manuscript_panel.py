@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QGraphicsScene, QGraphicsView, QHBoxLayout, QInputDialog, QLabel, QPushButton,
     QVBoxLayout, QWidget,
 )
-from app_context import tr as _t
+from app_context import call_later, tr as _t
 from folio_navigation import markable_part_for_line, scene_rect_for_folio
 from image_fetch import FetchWorker
 from image_sources import (
@@ -132,7 +132,7 @@ class ImageSceneView(QGraphicsView):
             if self.user_zoom == 1.0:
                 self._apply_fit()
 
-        QTimer.singleShot(0, run)
+        call_later(0, self, run)
 
     def reset_zoom(self):
         self.user_zoom = 1.0
