@@ -443,6 +443,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.formatted_view = FormattedEditionWidget(self)
         self.editor.attribute_completion_provider = self._auto_attribute_choices
         self.formatted_view.fragment_editor.attribute_completion_provider = self._auto_attribute_choices
+        self.editor.value_completion_provider = self._auto_value_choices
+        self.formatted_view.fragment_editor.value_completion_provider = self._auto_value_choices
         # Invalidation incrémentale : les points lexicaux antérieurs à l'édition
         # restent valides et accélèrent les Ctrl+Espace suivants.
         self.editor.document().contentsChange.connect(self._source_contents_changed)

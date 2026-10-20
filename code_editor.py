@@ -6,11 +6,13 @@ import re
 
 from PySide6.QtCore import QRect, QSize, QStringListModel, Qt
 from PySide6.QtGui import (
-    QColor, QFont, QPainter, QSyntaxHighlighter, QTextCharFormat, QTextCursor, QTextFormat,
+    QColor, QFont, QPainter, QStandardItem, QStandardItemModel, QSyntaxHighlighter,
+    QTextCharFormat, QTextCursor, QTextFormat,
 )
 from PySide6.QtWidgets import (
     QCompleter, QPlainTextDocumentLayout, QPlainTextEdit, QTextEdit, QWidget,
 )
+from rng_completion import format_pointer_list_insertion
 from xml_folding import foldable_xml_regions, region_at_header, region_for_cursor
 from xml_tag_pairs import (
     closing_rename_mirror_for_change, closing_tag_suggestion, exact_selected_opening_pair,
@@ -103,6 +105,80 @@ class CodeEditor(QPlainTextEdit):
         self._attribute_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self._attribute_completer.activated[str].connect(self._accept_attribute_completion)
         self.cursorPositionChanged.connect(self._check_attribute_completion_cursor)
+        # Pointeurs (#id) à la frappe de « # » dans la valeur d'un attribut :
+        # le fournisseur renvoie des couples (valeur, description) et le
+        # contexte réduit au jeton courant. La valeur est portée par UserRole,
+        # le texte affiché ajoute la description.
+        self.value_completion_provider = None
+        self._value_completer = QCompleter(self)
+        self._value_completer.setWidget(self)
+        self._value_completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
+        self._value_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self._value_completer.setCompletionRole(Qt.ItemDataRole.UserRole)
+        self._value_completer.activated[str].connect(self._accept_value_completion)
+        self.cursorPositionChanged.connect(self._check_value_completion_cursor)
+
+    def _value_proposals(self):
+        if self.textCursor().hasSelection() or not callable(self.value_completion_provider):
+            return (), None
+        try:
+            items, context = self.value_completion_provider(self)
+            if (context is None or context.kind != "attribute_value"
+                    or not (context.prefix or "").startswith("#")):
+                return (), None
+            return tuple(items), context
+        except Exception:
+            return (), None
+
+    def _check_value_completion_cursor(self):
+        popup = self._value_completer.popup()
+        if popup.isVisible():
+            items, context = self._value_proposals()
+            if context is None or not items:
+                popup.hide()
+
+    def show_value_completion(self):
+        items, context = self._value_proposals()
+        popup = self._value_completer.popup()
+        if not items:
+            popup.hide()
+            return False
+        self._closing_completer.popup().hide()
+        self._attribute_completer.popup().hide()
+        model = QStandardItemModel(self._value_completer)
+        texts = []
+        for value, description in items:
+            text = f"{value} — {description}" if description else str(value)
+            item = QStandardItem(text)
+            item.setData(str(value), Qt.ItemDataRole.UserRole)
+            item.setEditable(False)
+            model.appendRow(item)
+            texts.append(text)
+        self._value_completer.setModel(model)
+        self._value_completer.setCompletionPrefix(context.prefix)
+        self._value_completer.setCurrentRow(0)
+        rect = self.cursorRect()
+        rect.setWidth(min(640, max(160, max(self.fontMetrics().horizontalAdvance(x) for x in texts) + 40)))
+        self._value_completer.complete(rect)
+        return True
+
+    def _accept_value_completion(self, value):
+        items, context = self._value_proposals()  # Recontrôle après édition/curseur.
+        if context is None or str(value) not in {str(v) for v, _description in items}:
+            self._value_completer.popup().hide()
+            return
+        start, end = int(context.replace_start), int(context.replace_end)
+        replacement, final_pos = format_pointer_list_insertion(self.toPlainText(), start, end, str(value))
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        cursor.insertText(replacement)
+        cursor.endEditBlock()
+        cursor.setPosition(final_pos)
+        self.setTextCursor(cursor)
+        self._value_completer.popup().hide()
+        self.ensureCursorVisible()
 
     def _check_attribute_completion_cursor(self):
         popup = self._attribute_completer.popup()
@@ -215,6 +291,15 @@ class CodeEditor(QPlainTextEdit):
         self._closing_completer.popup().hide()
 
     def keyPressEvent(self, event):
+        vpopup = self._value_completer.popup()
+        if vpopup.isVisible() and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab):
+            self._accept_value_completion(self._value_completer.currentCompletion())
+            event.accept()
+            return
+        if vpopup.isVisible() and event.key() == Qt.Key.Key_Escape:
+            vpopup.hide()
+            event.accept()
+            return
         apopup = self._attribute_completer.popup()
         if apopup.isVisible() and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab):
             self._accept_attribute_completion(self._attribute_completer.currentCompletion())
@@ -237,6 +322,11 @@ class CodeEditor(QPlainTextEdit):
             return
         super().keyPressEvent(event)
         ch = event.text() or ""
+        if (ch == "#" or (vpopup.isVisible() and ch and (ch.isalnum() or ch in "_.:-"))
+                or (event.key() == Qt.Key.Key_Backspace and vpopup.isVisible())):
+            self.show_value_completion()
+        elif vpopup.isVisible():
+            vpopup.hide()
         if ((ch and (ch.isalpha() or (apopup.isVisible() and (ch.isalnum() or ch in "_.:-"))))
                 or (event.key() == Qt.Key.Key_Backspace and apopup.isVisible())):
             self.show_attribute_completion()

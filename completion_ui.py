@@ -244,6 +244,27 @@ class CompletionMixin:
         prefix = context.prefix.casefold()
         return tuple(dict.fromkeys(n for n in names if n.casefold().startswith(prefix))), context
 
+    def _auto_value_choices(self, editor):
+        """Liste automatique des pointeurs (frappe de « # » dans une valeur
+        d'attribut) : les valeurs de Ctrl+Espace, à condition qu'elles soient
+        toutes des pointeurs « #… ». Renvoie ``([(valeur, description)],
+        contexte)``. Les valeurs finies du RNG, qui ne sont jamais des
+        pointeurs, ne sont pas consultées à chaque frappe."""
+        text = editor.toPlainText()
+        position = editor.textCursor().position()
+        cache = (self._source_completion_context_cache if editor is self.editor
+                 else self._fragment_completion_context_cache)
+        context = cache.analyze(text, position)
+        if context.kind != "attribute_value":
+            return (), context
+        context, items, _custom_values, _mode = self._attribute_value_suggestions(
+            context, text, position, None, self._custom_completion_config())
+        if not items or not all(value.startswith("#") for value, _source, _description in items):
+            return (), context
+        prefix = (context.prefix or "").casefold()
+        return tuple((value, description) for value, _source, description in items
+                     if value.casefold().startswith(prefix)), context
+
     def show_rng_completion(self, editor):
         """Ctrl+Espace : fermeture XML prioritaire, sinon RNG / aides projet."""
         if editor.show_closing_tag_completion(force=True):
