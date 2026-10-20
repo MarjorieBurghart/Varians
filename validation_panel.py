@@ -81,8 +81,8 @@ class ValidationPanelMixin:
         if hasattr(self, "validation_summary"):
             self.validation_summary.setText(_t("rng.panel.no_validation"))
         if hasattr(self, "rng_status"):
-            self.rng_status.setText(_t("rng.status.none") if self.project.schema_mode == "none" else _t("rng.status.pending"))
-            self.rng_status.setStyleSheet("color:#777" if self.project.schema_mode == "none" else "")
+            self.rng_status.setText(_t("rng.status.none") if self._schema_mode == "none" else _t("rng.status.pending"))
+            self.rng_status.setStyleSheet("color:#777" if self._schema_mode == "none" else "")
 
     def show_validation_panel(self):
         # Une hauteur modeste garde la vue d'édition utilisable sur petit écran.
@@ -91,7 +91,7 @@ class ValidationPanelMixin:
         # L'onglet XPath, le masquage du panneau ou la restauration d'une
         # fenêtre ne doivent pas faire réapparaître des erreurs anciennes.
         # F8 a déjà validé la révision courante : aucune passe redondante.
-        if (self.project.schema_mode != 'none'
+        if (self._schema_mode != 'none'
                 and not getattr(self, '_rng_validation_in_progress', False)
                 and self._last_rng_revision != self.editor.document().revision()):
             self.rng_refresh_timer.stop()
@@ -153,7 +153,7 @@ class ValidationPanelMixin:
         Le délai de frappe est conservé, mais le rechargement du tableau ne
         dépend plus du fait que le widget soit visible à l'instant du signal.
         """
-        if (not self._rng_watch_enabled or self.project.schema_mode == 'none'
+        if (not self._rng_watch_enabled or self._schema_mode == 'none'
                 or getattr(self, '_loading_editor_document', False)):
             return
         revision = self.editor.document().revision()
@@ -219,10 +219,10 @@ class ValidationPanelMixin:
             resolution = self._completion_resolution
         else:
             resolution = resolve_schema(
-                mode=self.project.schema_mode,
+                mode=self._schema_mode,
                 xml_text=text,
                 xml_path=self.current_path or self.project.edition,
-                project_schema=self.project.schema,
+                project_schema=self._schema_file,
                 force_refresh=refresh_schema,
             )
         # Le chargement/résolution du schéma peut être long (cache distant).
@@ -240,7 +240,7 @@ class ValidationPanelMixin:
         self._completion_resolution = resolution
         self._update_schematron_status(resolution)
 
-        if self.project.schema_mode == "none":
+        if self._schema_mode == "none":
             self._last_rng_result = None
             self._last_rng_revision = revision
             self._clear_validation_table()
@@ -266,7 +266,7 @@ class ValidationPanelMixin:
             self._last_rng_result = None
             self._last_rng_revision = revision
             self._clear_validation_table()
-            if self.project.schema_mode == "auto":
+            if self._schema_mode == "auto":
                 self.validation_summary.setText(_t("rng.panel.no_xml_model"))
                 self.rng_status.setText(_t("rng.status.no_xml_model"))
             else:
@@ -353,8 +353,8 @@ class ValidationPanelMixin:
 
     def _schema_resolution_cache_key(self, xml_text):
         """Clé légère : seules les déclarations xml-model influencent ce cache."""
-        mode = (getattr(self.project, "schema_mode", "auto") or "auto").lower()
-        project_schema = str(self.project.schema or "")
+        mode = (self._schema_mode or "auto").lower()
+        project_schema = str(self._schema_file or "")
         xml_path = str((self.current_path or self.project.edition).resolve())
         declarations = detect_xml_models(xml_text) if mode in {"auto", "none"} else ()
         return (mode, project_schema, xml_path, declarations)

@@ -209,6 +209,27 @@ def example_project(tmp_path):
     return root / "project.xml"
 
 
+# Document auxiliaire : fichier d'autorités sans <?xml-model?>.
+PERSONNES_XML = """<?xml version="1.0" encoding="UTF-8"?>
+<listPerson xmlns="http://www.tei-c.org/ns/1.0">
+  <person xml:id="bernard"><persName>Bernardus</persName></person>
+  <person xml:id="petrus"><persName>Petrus</persName></person>
+</listPerson>
+"""
+
+
+@pytest.fixture
+def project_with_documents(example_project):
+    """Projet exemple déclarant le document auxiliaire xml/personnes.xml."""
+    from project_config import DocumentConfig
+    from project_management import update_project_documents
+
+    personnes = example_project.parent / "xml" / "personnes.xml"
+    personnes.write_text(PERSONNES_XML, encoding="utf-8")
+    update_project_documents(example_project, [DocumentConfig(personnes, "Personnes")])
+    return example_project
+
+
 @pytest.fixture
 def editor_module(qapp):
     import editeur_tei

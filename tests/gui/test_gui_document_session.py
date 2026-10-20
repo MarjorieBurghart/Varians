@@ -135,3 +135,45 @@ def _rescan(window):
     from document_session import LbIndex
 
     return LbIndex.scan(window.editor.toPlainText(), window.lb_base_re)
+
+
+# --- Schéma propre à chaque document ------------------------------------------
+
+def test_edition_session_carries_the_project_schema_and_highlighter(open_window, example_project):
+    window = open_window(example_project)
+    session = window.document
+    assert session.role == "edition"
+    assert session.schema_mode == window.project.schema_mode
+    assert session.schema_file == window.project.schema
+    assert session.highlighter is window.highlighter
+    assert session.highlighter.document() is session.text_document
+
+
+def test_validation_follows_the_schema_of_the_displayed_document(open_window, example_project):
+    # Un document auxiliaire peut être dispensé de validation alors que
+    # l'édition est validée : le mode de schéma est celui du document.
+    from app_context import tr
+
+    window = open_window(example_project)
+    window.validate_relaxng_document(show_panel=False)
+    assert window.document.last_rng_result is not None      # test.rng (xml-model)
+
+    window.document.schema_mode = "none"
+    window.validate_relaxng_document(show_panel=False)
+    assert window.document.last_rng_result is None
+    assert window.validation_summary.text() == tr("rng.panel.disabled")
+
+
+def test_completion_follows_the_schema_of_the_displayed_document(open_window, example_project):
+    window = open_window(example_project)
+    text = window.editor.toPlainText()
+    cursor = window.editor.textCursor()
+    cursor.setPosition(text.index("<body>") + len("<body>"))
+    window.editor.setTextCursor(cursor)
+    window.editor.insertPlainText("<varianstest k")
+    names, _context = window._auto_attribute_choices(window.editor)
+    assert names == ("kind",)
+
+    window.document.schema_mode = "none"
+    names, _context = window._auto_attribute_choices(window.editor)
+    assert names == ()

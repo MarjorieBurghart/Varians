@@ -42,7 +42,7 @@ class DocumentIOMixin:
             self.formatted_view.frag_box.setVisible(False)
             self.formatted_view.dirty_preview = True
             self.formatted_view._last_preview_key = None
-        call_later(50, self, lambda: self.sync_panels_to_cursor(True))
+        call_later(50, self, lambda: self._edition_displayed() and self.sync_panels_to_cursor(True))
         # Même en mode RNG « aucun », on résout les xml-model pour détecter
         # à titre informatif une éventuelle déclaration Schematron.
         call_later(120, self, lambda: self.validate_relaxng_document(show_panel=False, show_success_message=False))
@@ -103,7 +103,8 @@ class DocumentIOMixin:
                 ):
                     return False
 
-        if self.expected_base_lines is not None and len(self.lb_spans()) != self.expected_base_lines:
+        # Le nombre de <lb/> du témoin pivot ne concerne que l'édition.
+        if self.document.is_edition and self.expected_base_lines is not None and len(self.lb_spans()) != self.expected_base_lines:
             r=QMessageBox.warning(self,_t("file.structure.title", base=self.base_id),_t("file.structure.text", count=len(self.lb_spans()), base=self.base_id, expected=self.expected_base_lines),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Cancel)
             if r==QMessageBox.StandardButton.Cancel: return False
         try:
@@ -143,18 +144,22 @@ class DocumentIOMixin:
         return self._write_to(Path(fn))
 
     def maybe_save(self):
+        unsaved = self._unsaved_sessions()
+        if not unsaved: return True
+        # Plusieurs documents, ou un document auxiliaire : liste complète.
+        if unsaved != [self.edition_session]:
+            return self._confirm_unsaved_documents(unsaved)
         fragment_dirty = (
             hasattr(self, "formatted_view")
             and self.formatted_view.frag_box.isVisible()
             and self.formatted_view.fragment_has_unapplied_changes()
         )
-        if not self.modified and not fragment_dirty: return True
         r=QMessageBox.question(self,_t("file.unsaved.title"),_t("file.unsaved.continue"),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Discard|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Save)
         if r==QMessageBox.StandardButton.Cancel: return False
         if r==QMessageBox.StandardButton.Save:
             if fragment_dirty and not self.formatted_view.apply_fragment():
                 return False
-            return bool(self.save())
+            return self._save_session(self.edition_session)
         return True
 
     def _has_unsaved_work(self):
@@ -172,8 +177,11 @@ class DocumentIOMixin:
         Retourne True uniquement si la fermeture est autorisée. Les modifications
         du fragment ne sont appliquées que si l'utilisateur choisit d'enregistrer.
         """
-        if not self._has_unsaved_work():
+        unsaved = self._unsaved_sessions()
+        if not unsaved:
             return True
+        if unsaved != [self.edition_session]:
+            return self._confirm_unsaved_documents(unsaved, quitting=True)
 
         box = QMessageBox(self)
         box.setIcon(QMessageBox.Icon.Warning)
@@ -205,5 +213,5 @@ _t("file.unsaved.quit.info")
             ):
                 if not self.formatted_view.apply_fragment():
                     return False
-            return bool(self.save())
+            return self._save_session(self.edition_session)
         return False

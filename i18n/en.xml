@@ -656,4 +656,27 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="viewer.search.run">Find</string>
   <string key="viewer.search.close">Close search</string>
   <string key="viewer.search.count">{count} result(s)</string>
+  <string key="documents.edition_required.title">Edition not displayed</string>
+  <string key="documents.edition_required.text">This command modifies the edition. Display the edition ({name}) first, then try again.</string>
+  <string key="menu.save_document">Save document</string>
+  <string key="documents.edition_tab">Edition</string>
+  <string key="documents.unsaved.text">The following documents have unsaved changes:</string>
+  <string key="documents.save_all">Save all</string>
+  <string key="documents.menu">Project XML documents</string>
+  <string key="documents.add.menu">Add an XML document…</string>
+  <string key="documents.add.title">Add an XML document to the project</string>
+  <string key="documents.add.already">“{name}” is already part of the project.</string>
+  <string key="documents.add.copied">Document copied into the project: {path}</string>
+  <string key="documents.new.menu">New XML document…</string>
+  <string key="documents.new.title">New XML document</string>
+  <string key="documents.new.root">Root element name:</string>
+  <string key="documents.new.root_invalid">“{name}” is not a valid XML element name.</string>
+  <string key="documents.new.exists">This file already exists; it is not replaced:
+{path}</string>
+  <string key="documents.remove.menu">Remove the document from the project</string>
+  <string key="documents.remove.title">Remove the document</string>
+  <string key="documents.remove.question">Remove “{name}” from the project?
+
+The file is not deleted: it stays on disk.</string>
+  <string key="documents.error.title">Project documents</string>
 </translations>

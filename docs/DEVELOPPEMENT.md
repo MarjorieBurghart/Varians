@@ -61,6 +61,8 @@ d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
 | `witness_sync.py` | synchronisation XML ↔ témoins, folios, ressources |
 | `main_menus.py` | barre d'outils, menus, projets récents, langue |
 | `project_actions.py` | export web, ouverture/création/réglages de projet |
+| `document_tabs.py` | documents du projet affichés : édition et documents auxiliaires |
+| `document_dialogs.py` | ajouter, créer, retirer un document XML auxiliaire |
 
 Composants autonomes utilisés par la fenêtre :
 
@@ -78,6 +80,34 @@ Les modules de l'interface n'importent jamais `editeur_tei` (il peut être
 exécuté comme script) : les services communs passent par `app_context`.
 Tout nouveau module local importé par `editeur_tei.py` doit figurer dans
 `_LOCAL_MODULE_NAMES` (un test le vérifie).
+
+Un nouveau message de l'interface s'ajoute, traduit, aux sept catalogues
+`i18n/*.xml` ; `CATALOG_SIZE` dans `tests/varians_source.py` donne le
+nombre de messages attendu dans chacun.
+
+## Documents auxiliaires
+
+Un projet peut déclarer des documents XML auxiliaires (format décrit dans
+`PROJECT_MANAGEMENT.md`). La fenêtre tient leur liste dans
+`self.documents` : `self.edition_session` d'abord, puis une
+`DocumentSession` par document, lue à son premier affichage.
+`self.document` désigne toujours le document affiché, et
+`show_document(session)` en change.
+
+Règles pour le code de la fenêtre :
+
+- ce qui vaut pour « le document » (texte, révision, état modifié,
+  validation, schéma via `_schema_mode` / `_schema_file`) se lit dans
+  `self.document` ou dans l'éditeur ;
+- ce qui ne vaut que pour l'édition (témoins, `<lb/>` du pivot, aperçu,
+  export web) vérifie `self._edition_displayed()` ou utilise
+  `self.edition_session` ;
+- une commande d'un panneau de témoin qui écrit dans l'édition se connecte
+  via `self._edition_write(...)`, une navigation via
+  `self._edition_navigation(...)` ;
+- un résultat calculé en différé (minuterie, fil d'exécution) vérifie qu'il
+  concerne encore le document affiché : les numéros de révision sont
+  propres à chaque `QTextDocument`.
 
 ## Transformations XSLT de l'aperçu
 

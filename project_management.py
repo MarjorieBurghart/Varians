@@ -12,7 +12,7 @@ import shutil
 import tempfile
 import xml.etree.ElementTree as ET
 
-from project_config import DEFAULT_APPLICATION_XSLT
+from project_config import DEFAULT_APPLICATION_XSLT, DocumentConfig
 
 
 
@@ -83,6 +83,7 @@ class ProjectDraft:
     schema_mode: str = "auto"
     schema: Path | None = None
     schema_type: str = "relaxng"
+    documents: list[DocumentConfig] = field(default_factory=list)
 
 
 
@@ -307,9 +308,58 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
                 }
                 ET.SubElement(alto_el, "file", attrs)
 
+    documents_el = documents_element(root_dir, draft.documents)
+    if documents_el is not None:
+        root.append(documents_el)
+
     tree = ET.ElementTree(root)
     ET.indent(tree, space="  ")
     path.parent.mkdir(parents=True, exist_ok=True)
+    tree.write(path, encoding="utf-8", xml_declaration=True)
+    return path
+
+
+def documents_element(root_dir: Path, documents) -> ET.Element | None:
+    """Élément <documents> des documents auxiliaires, ou None s'il n'y en a
+    aucun : un projet simple ne reçoit jamais d'élément vide."""
+    if not documents:
+        return None
+    documents_el = ET.Element("documents")
+    for document in documents:
+        mode = document.schema_mode or "auto"
+        if mode not in {"auto", "file", "none"}:
+            raise ValueError(f"Mode de schéma inconnu : {mode}")
+        attrs = {"file": portable_path(root_dir, Path(document.path))}
+        if document.label:
+            attrs["label"] = document.label
+        if mode != "auto":
+            attrs["schema"] = mode
+        if mode == "file":
+            if document.schema is None:
+                raise ValueError("Le mode de schéma projet exige un fichier RELAX NG.")
+            attrs["schemaFile"] = portable_path(root_dir, Path(document.schema))
+        ET.SubElement(documents_el, "document", attrs)
+    return documents_el
+
+
+def update_project_documents(path: str | Path, documents) -> Path:
+    """Remplace les documents auxiliaires déclarés dans project.xml sans
+    modifier le reste du fichier ; l'ancienne version est copiée en ``.bak``."""
+    path = Path(path).expanduser().resolve()
+    parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True))
+    tree = ET.parse(path, parser)
+    root = tree.getroot()
+    new_el = documents_element(path.parent, documents)
+    old_el = root.find("documents")
+    if old_el is not None:
+        index = list(root).index(old_el)
+        root.remove(old_el)
+        if new_el is not None:
+            root.insert(index, new_el)
+    elif new_el is not None:
+        root.append(new_el)
+    shutil.copy2(path, path.with_suffix(path.suffix + ".bak"))
+    ET.indent(tree, space="  ")
     tree.write(path, encoding="utf-8", xml_declaration=True)
     return path
 

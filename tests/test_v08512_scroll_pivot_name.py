@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 from tei_facsimile import facsimile_ref_at_position
 from witness_layout import minimum_witness_stack_height
-from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
+from varians_source import application_source, application_ast, node_source, CURRENT_VERSION, CATALOG_SIZE
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -107,7 +107,7 @@ def test_seven_locales_use_pivot_not_base_witness_in_project_creation():
     assert {f.stem for f in files}=={'fr','en','de','it','cs','ja','ru'}
     for file in files:
         strings={x.attrib['key']:x.text for x in ET.parse(file).getroot().findall('string')}
-        assert len(strings)==629
+        assert len(strings)==CATALOG_SIZE
         assert strings['project.witness.base']
         assert 'pivot_tip' in 'project.witness.pivot_tip'
         assert len(strings['project.witness.pivot_tip']) > 40

@@ -24,3 +24,37 @@ def test_validating_project_settings_reloads_project_in_new_window(open_window, 
         if new_window is not None:
             new_window._force_close = True
             new_window.close()
+
+
+def test_project_settings_keep_declared_documents(open_window, example_project, dialogs, qtbot):
+    # La fenêtre de réglages régénère project.xml : les documents auxiliaires
+    # déclarés ne doivent pas disparaître.
+    from project_config import load_project
+
+    root = example_project.parent
+    (root / "xml" / "personnes.xml").write_text("<listPerson/>", encoding="utf-8")
+    text = example_project.read_text(encoding="utf-8")
+    text = text.replace(
+        "</teiManuscriptProject>",
+        '  <documents><document file="xml/personnes.xml" label="Personnes" schema="none"/></documents>\n'
+        "</teiManuscriptProject>")
+    example_project.write_text(text, encoding="utf-8")
+    declared = load_project(example_project).documents
+    assert [d.label for d in declared] == ["Personnes"]
+
+    window = open_window(example_project)
+
+    def accept(dialog):
+        dialog.accept()
+        return dialog.result()
+
+    dialogs.expect("dialog", accept)
+    dialogs.expect("information")
+    window.project_settings_dialog()
+    new_window = window._replacement_window
+    try:
+        assert load_project(example_project).documents == declared
+    finally:
+        if new_window is not None:
+            new_window._force_close = True
+            new_window.close()

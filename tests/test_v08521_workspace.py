@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 
 from workspace_layout import (normalize_workspace_mode, workspace_slots,
                               normalized_detached_witnesses)
-from varians_source import application_source, application_ast, node_source
+from varians_source import application_source, application_ast, node_source, CATALOG_SIZE
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = application_source()
@@ -226,7 +226,7 @@ def test_all_seven_locales_have_identical_and_complete_workspace_translations():
         root=ET.parse(ROOT/'i18n'/f'{lang}.xml').getroot()
         values={x.get('key'):x.text for x in root.findall('string')}
         new={k for k in values if k.startswith('workspace.')}
-        assert len(values)==len(root.findall('string'))==629
+        assert len(values)==len(root.findall('string'))==CATALOG_SIZE
         assert len(new)==11 and all(values[k] for k in new)
         assert '{witness}' in values['workspace.detached.title']
         assert '0.8.5.24' in (ROOT/'help'/f'{lang}.html').read_text(encoding='utf-8')

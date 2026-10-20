@@ -1,3 +1,32 @@
+VARIANS V0.8.7.0 — DOCUMENTS XML AUXILIAIRES
+
+• Un projet peut réunir, à côté de l'édition, d'autres documents XML :
+  fichier d'autorités (personnes, lieux), notes, etc. Menu
+  Fichier ▸ Documents XML du projet : Ajouter un document XML… (un fichier
+  situé hors du projet est copié dans xml/, sans jamais remplacer un
+  fichier), Nouveau document XML… (élément racine au choix), Retirer le
+  document du projet (le fichier n'est jamais supprimé).
+• Une rangée d'onglets « Édition | … » apparaît au-dessus de la source XML
+  dès qu'un document auxiliaire existe ; elle reste invisible pour un projet
+  simple.
+• Chaque document garde son historique d'annulation, sa position, son état
+  « modifié » (*) et sa validation RELAX NG, qui suit son propre
+  <?xml-model?>.
+• Les manuscrits, la vue XSLT / CSS et les commandes des témoins ne
+  concernent que l'édition : ils sont masqués pendant l'affichage d'un autre
+  document, puis retrouvés tels quels. « Marquer la page » et
+  « Double page… » n'écrivent jamais dans l'édition lorsqu'elle n'est pas
+  affichée.
+• Ctrl+S enregistre le document affiché ; avant de quitter ou de changer de
+  projet, Varians propose d'enregistrer tous les documents modifiés. L'export
+  web enregistre et utilise l'édition seule.
+• project.xml : les documents sont déclarés par un élément facultatif
+  <documents> (voir PROJECT_MANAGEMENT.md). Un projet sans document
+  auxiliaire reste strictement inchangé. Limite : une version antérieure à
+  0.8.7.0 ouvre un tel projet normalement, mais efface <documents> si l'on y
+  enregistre les paramètres du projet.
+• Aucun changement des données TEI, JSON, ALTO/PAGE ni du viewer web.
+
 VARIANS V0.8.6.0 — RESTRUCTURATION, TESTS ET CORRECTIFS
 
 • Code : editeur_tei.py, auparavant d'environ 7 900 lignes, est découpé en
