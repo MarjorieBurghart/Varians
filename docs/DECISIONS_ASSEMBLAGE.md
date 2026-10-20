@@ -123,6 +123,10 @@ Indépendant d'XInclude, et déjà utile avec les fichiers d'autorités.
   sermon.
 - La création d'une nouvelle partie depuis Varians (fichier et `xi:include`
   ajoutés au document maître).
+- Proposé : « Renommer l'onglet… » dans le menu du clic droit d'un onglet
+  (modifie `@label` du `<document>` dans `project.xml`). Le nom, le schéma
+  et l'ordre des documents ne se règlent aujourd'hui qu'en modifiant
+  `project.xml` à la main, projet fermé.
 
 ## Autres décisions de la série 0.8.8.0
 
