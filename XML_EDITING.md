@@ -138,10 +138,12 @@ Un curseur placé à l’intérieur d’une balise ouvrante ou fermante fait sur
 
 Dans la valeur d'un attribut de référence (`@ref`, `@wit`, `@corresp`…),
 taper `#` ouvre la liste des identifiants du projet ; Entrée ou Tab insère
-la valeur, Échap ferme la liste. **F12**, **Ctrl+clic** ou « Aller à la
+la valeur, Échap ferme la liste. Comme en TEI standard, `#id` désigne le
+document lui-même : un identifiant d'un autre document est inséré sous la
+forme `personnes.xml#bernard`. **F12**, **Ctrl+clic** ou « Aller à la
 cible » (clic droit) sur `#bernard` ou `personnes.xml#bernard` affiche
 l'élément visé, même dans un autre document du projet ; **Alt+←** revient
 au point de départ. Le bouton **Références** de la barre d'outils vérifie
 les références de tous les documents et liste celles qui sont
-introuvables ou ambiguës. Le moteur pur est `xml_references.py` ;
+introuvables, ambiguës, ou en forme courte vers un autre document. Le moteur pur est `xml_references.py` ;
 l'intégration est dans `references_ui.py` (voir `docs/DEVELOPPEMENT.md`).

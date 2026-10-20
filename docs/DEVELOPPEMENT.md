@@ -117,8 +117,11 @@ Un pointeur `#id` ou `fichier.xml#id` dans un attribut de
 `xml_references.REFERENCE_ATTRIBUTES` (`ref`, `corresp`, `wit`, `edRef`…)
 désigne un `xml:id`. Tout le calcul est dans `xml_references.py`, testé
 sans Qt : `collect_ids`, `collect_references` et `ReferenceResolver`, qui
-cherche `#id` dans le document lui-même puis dans les autres documents du
-projet ; `target_elements` donne les éléments attendus (`persName/@ref` →
+suit le sens standard des URI, comme les autres outils XML : `#id` désigne
+le document lui-même, `fichier.xml#id` un autre fichier. Un `#id` dont la
+cible n'existe que dans un autre document est un problème
+(`other_document`) ; `explicit_pointer` donne la forme à écrire.
+`target_elements` donne les éléments attendus (`persName/@ref` →
 `person`…). Le mixin `references_ui.py` lui fournit les textes
 (`_session_text` : l'éditeur pour le document affiché, puis le texte en
 mémoire, puis le fichier).

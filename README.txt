@@ -1,13 +1,15 @@
 VARIANS V0.8.8.0 — RÉFÉRENCES ENTRE DOCUMENTS
 
 • Références : dans un attribut pointeur (@ref, @corresp, @target, @who,
-  @wit, @edRef…), « #bernard » désigne un xml:id du document lui-même,
-  sinon des autres documents du projet ; « personnes.xml#bernard » vise
-  explicitement un fichier. Les adresses web ne sont pas traitées.
+  @wit, @edRef…), « personnes.xml#bernard » désigne l'élément bernard du
+  fichier personnes.xml, et « #bernard », comme en TEI standard, un élément
+  du document lui-même. Les liens restent ainsi lisibles par tous les
+  outils XML. Les adresses web ne sont pas traitées.
 • Saisie : taper « # » dans la valeur ouvre d'elle-même la liste des
-  identifiants (« #bernard — Bernardus — personnes.xml »), limitée au type
+  identifiants (« personnes.xml#bernard — Bernardus »), limitée au type
   d'entrée attendu (persName/@ref → person, placeName/@ref → place…), @wit
-  compris (témoins du projet). Entrée ou Tab insère, Échap ferme ;
+  compris (témoins du projet). Un identifiant d'un autre document est
+  inséré sous la forme fichier.xml#id. Entrée ou Tab insère, Échap ferme ;
   Ctrl+Espace reste disponible. custom-elements.xml : nouvelle source
   <values source="ids" elements="…"/> (voir CUSTOM_ELEMENTS.md).
 • Navigation : F12, Ctrl+clic ou clic droit ▸ Aller à la cible affiche
@@ -15,8 +17,9 @@ VARIANS V0.8.8.0 — RÉFÉRENCES ENTRE DOCUMENTS
   point de départ. Une cible définie plusieurs fois est choisie dans une
   liste.
 • Vérification : le bouton « Références » de la barre d'outils liste dans
-  un panneau les références introuvables, ambiguës ou vers un fichier
-  absent ; un double-clic y mène, « Vérifier à nouveau » relance la
+  un panneau les références introuvables, ambiguës, vers un fichier absent,
+  ou en forme courte (« #bernard ») alors que la cible est dans un autre
+  document — avec la forme à écrire ; un double-clic y mène, « Vérifier à nouveau » relance la
   vérification. Elle n'empêche jamais d'enregistrer.
 • Viewer web : les cases « Variantes » et « Notes » permettent au lecteur
   de masquer les marqueurs correspondants ; le navigateur mémorise le

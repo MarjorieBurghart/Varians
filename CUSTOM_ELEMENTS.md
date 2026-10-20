@@ -103,8 +103,9 @@ et documents auxiliaires), limités par défaut au type d'entrée attendu :
 ```
 
 `elements` donne les noms locaux des éléments dont les identifiants sont
-proposés (sans `elements`, tous). Les valeurs proposées sont `#id`, ou
-`fichier.xml#id` lorsque la forme courte désignerait un autre élément. Avec
+proposés (sans `elements`, tous). Comme en TEI standard, la valeur est
+`#id` pour un identifiant du document affiché, et `fichier.xml#id` (chemin
+relatif) pour un identifiant d'un autre document. Avec
 `valuesMode="replace"`, seuls ces identifiants sont proposés. Taper `#`
 dans la valeur ouvre la liste sans Ctrl+Espace.
 
