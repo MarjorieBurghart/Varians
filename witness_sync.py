@@ -217,9 +217,7 @@ def load_split_thumbnail(widget, page, project_root):
 class WitnessDiagnosticDialog(QDialog):
     """Read-only audit of witness resources (no OCR or TEI text is exposed)."""
 
-    def __init__(self, rows, parent=None, note=''):
-        """``note`` : avertissement affiché sous l'introduction (synchronisation
-        suspendue, par exemple) ; aucun s'il est vide."""
+    def __init__(self, rows, parent=None):
         super().__init__(parent)
         self.setWindowTitle(_t('diagnostics.title'))
         self.resize(1040, 520)
@@ -228,11 +226,6 @@ class WitnessDiagnosticDialog(QDialog):
         self.intro = QLabel(_t('diagnostics.intro'))
         self.intro.setWordWrap(True)
         root.addWidget(self.intro)
-        self.note = QLabel(note)
-        self.note.setWordWrap(True)
-        self.note.setStyleSheet('color:#a14b2f')
-        self.note.setVisible(bool(note))
-        root.addWidget(self.note)
         self.table = QTableWidget(len(rows), 7, self)
         self.table.setHorizontalHeaderLabels([
             _t('diagnostics.column.witness'), _t('diagnostics.column.mode'),
@@ -301,7 +294,7 @@ class WitnessSyncMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
     def _refresh_folio_navigation(self, text=None, force=False):
-        if not hasattr(self, 'panels') or self._witness_sync_suspended():
+        if not hasattr(self, 'panels'):
             return
         if text is None:
             text = self.editor.toPlainText()
@@ -323,7 +316,7 @@ class WitnessSyncMixin:
         reconnus lorsque leur ``@facs`` pointe sans ambiguïté vers une surface
         connue du panneau concerné.
         """
-        if not self.has_any_images or self._witness_sync_suspended():
+        if not self.has_any_images:
             return
         cursor = self.editor.textCursor()
         text = self.editor.toPlainText()
@@ -555,15 +548,13 @@ class WitnessSyncMixin:
         )
 
     def sync_panels_to_cursor(self, force=False):
-        # Édition en parties (V0.9.0.0) : témoins en navigation libre.
-        if self._witness_sync_suspended():
-            return
         # En mode mixte, mettre à jour les folios indépendants sur la foi des
         # pb/edRef/facs, même si le pivot possède une synchronisation de lignes.
         self._sync_page_panels_to_cursor(force)
         if not self.base_alignment_available:
             return
-        ordinal=self.ordinal_at_cursor()
+        # Édition en parties (V0.9.1.0) : ligne comptée dans l'édition assemblée.
+        ordinal=self._base_ordinal_at_cursor()
         if ordinal is None or not self.base_items: return
         ordinal=max(0,min(len(self.base_items)-1,ordinal))
         if not force and ordinal == self._last_synced_ordinal:
@@ -577,20 +568,15 @@ class WitnessSyncMixin:
 
     def navigate_to_base_ordinal(self, ordinal, move_xml_cursor=True):
         """Synchronise tous les témoins sur un segment cliqué dans la vue mise en forme."""
-        if not self._edition_displayed() or self._witness_sync_suspended():
+        if not self.document.in_edition:
             return
         if not self.base_alignment_available or not self.base_items:
             return
         ordinal = max(0, min(len(self.base_items)-1, int(ordinal)))
-        spans = self.lb_spans()
-        if move_xml_cursor and spans:
-            i = max(0, min(len(spans)-1, ordinal))
+        if move_xml_cursor:
             self._sync_from_panel = True
             try:
-                c = self.editor.textCursor()
-                c.setPosition(spans[i][1])
-                self.editor.setTextCursor(c)
-                self.editor.centerCursor()
+                self._show_base_ordinal(ordinal)
             finally:
                 call_later(90, self, self._release_panel_sync)
         self._last_synced_ordinal = ordinal
@@ -658,8 +644,7 @@ class WitnessSyncMixin:
 
     def show_witness_diagnostics(self):
         rows = diagnostic_rows(self.project, self._witness_resource_snapshot())
-        note = _t('diagnostics.sync_suspended') if self._witness_sync_suspended() else ''
-        WitnessDiagnosticDialog(rows, self, note=note).exec()
+        WitnessDiagnosticDialog(rows, self).exec()
 
     def refresh_witness_synchronizations(self):
         """Reload the alignments and OCR without replacing the editor widget.
@@ -798,13 +783,13 @@ class WitnessSyncMixin:
 
     @Slot(int)
     def _primary_panel_navigate(self, ordinal):
-        if self._witness_sync_suspended(): return
-        spans=self.lb_spans()
-        if not spans: return
-        ordinal=max(0,min(len(spans)-1,int(ordinal)))
+        if not self.base_items: return
         self._sync_from_panel=True
         try:
-            c=self.editor.textCursor(); c.setPosition(spans[ordinal][1]); self.editor.setTextCursor(c); self.editor.centerCursor()
+            # Dans une édition en parties, la ligne peut être dans une autre
+            # partie : elle est alors affichée.
+            ordinal=self._show_base_ordinal(min(len(self.base_items)-1, int(ordinal)))
+            if ordinal is None: return
             self._last_synced_ordinal = ordinal
             key=self.base_items[ordinal]["key"]
             # Le témoin de base vient déjà de naviguer ; on actualise tous les panneaux.
@@ -819,7 +804,5 @@ class WitnessSyncMixin:
     def _release_panel_sync(self): self._sync_from_panel=False
 
     def goto_xml_from_base(self):
-        if not self._edition_displayed() or self._witness_sync_suspended(): return
-        spans=self.lb_spans()
-        if not spans: return
-        i=max(0,min(len(spans)-1,self.base_panel.center_index)); c=self.editor.textCursor(); c.setPosition(spans[i][1]); self.editor.setTextCursor(c); self.editor.centerCursor(); self.editor.setFocus()
+        if not self.document.in_edition: return
+        if self._show_base_ordinal(self.base_panel.center_index) is not None: self.editor.setFocus()

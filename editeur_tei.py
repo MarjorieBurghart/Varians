@@ -69,6 +69,7 @@ from app_context import (
     forget_open_project,
 )
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
+from pivot_lines import pivot_lb_pattern
 from formatted_view import (
     _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget, paragraph_spans,
 )
@@ -319,11 +320,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.base_id = self.project.base_witness
         self.witness_configs = list(self.project.witnesses)
         self.witness_labels = {w.id: w.label for w in self.witness_configs}
-        escaped_base = re.escape(self.base_id)
-        self.lb_base_re = re.compile(
-            rf"<(?:[A-Za-z_][\w.-]*:)?lb\b(?=[^>]*\bedRef\s*=\s*(['\"])#{escaped_base}\1)[^>]*?/?>",
-            re.IGNORECASE | re.DOTALL,
-        )
+        self.lb_base_re = pivot_lb_pattern(self.base_id)
 
         self.setWindowTitle(_t("app.window.project", title=self.project.title))
         self.resize(1650, 980)
@@ -925,15 +922,12 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _set_lb_spans(self, spans):
         self.document.lb.set(spans)
-        if not self.document.is_edition:
+        if not self.document.in_edition:
             return  # l'état de structure est celui de l'édition
-        n = len(self.document.lb.spans)
-        self.structure_status.setToolTip("")
-        if self._witness_sync_suspended():
-            self.structure_status.setText(_t("status.structure.suspended", base=self.base_id))
-            self.structure_status.setToolTip(_t("status.structure.suspended.tip"))
-            self.structure_status.setStyleSheet("color:#746b61")
-        elif self.expected_base_lines is None:
+        # Édition en parties : lignes comptées dans l'édition assemblée.
+        n = self._base_line_count()
+        self.structure_status.setToolTip(_t("status.structure.assembled.tip") if self._edition_has_parts() else "")
+        if self.expected_base_lines is None:
             self.structure_status.setText(_t("status.structure.free", base=self.base_id, count=n))
             self.structure_status.setStyleSheet("color:#746b61")
         elif n == self.expected_base_lines:
@@ -1062,8 +1056,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _cursor_changed(self):
         c=self.editor.textCursor(); self.cursor_status.setText(_t("status.cursor", line=c.blockNumber()+1, column=c.positionInBlock()+1))
-        # Les témoins ne suivent que le curseur de l'édition.
-        if not self._sync_from_panel and self._edition_displayed(): self.sync_timer.start()
+        # Les témoins suivent le curseur de l'édition et de ses parties.
+        if not self._sync_from_panel and self.document.in_edition: self.sync_timer.start()
 
     def _text_changed(self):
         """Invalide tout diagnostic antérieur, quel que soit le panneau actif.

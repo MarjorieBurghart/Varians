@@ -105,12 +105,11 @@ class DocumentIOMixin:
                 ):
                     return False
 
-        # Le nombre de <lb/> du témoin pivot ne concerne que l'édition ; il
-        # n'est pas vérifié tant que la synchronisation est suspendue (édition
-        # en parties).
-        if (self.document.is_edition and not self._witness_sync_suspended()
-                and self.expected_base_lines is not None and len(self.lb_spans()) != self.expected_base_lines):
-            r=QMessageBox.warning(self,_t("file.structure.title", base=self.base_id),_t("file.structure.text", count=len(self.lb_spans()), base=self.base_id, expected=self.expected_base_lines),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Cancel)
+        # Le nombre de <lb/> du témoin pivot concerne l'édition et ses parties ;
+        # pour une édition en parties, il est compté dans l'édition assemblée.
+        count = self._base_line_count() if self.document.in_edition else None
+        if count is not None and self.expected_base_lines is not None and count != self.expected_base_lines:
+            r=QMessageBox.warning(self,_t("file.structure.title", base=self.base_id),_t("file.structure.text", count=count, base=self.base_id, expected=self.expected_base_lines),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Cancel)
             if r==QMessageBox.StandardButton.Cancel: return False
         try:
             path=Path(path)
