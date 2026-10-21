@@ -798,4 +798,7 @@
   <string key="parts.webgen.continue">Всё равно экспортировать</string>
   <string key="preview.assembled.read_only">Предпросмотр собранного издания, включая части, только для чтения: редактирование фрагментов для издания из частей пока недоступно.</string>
   <string key="status.structure.assembled.tip">Строки опорного свидетеля считаются в собранном издании вместе с частями (XInclude), в порядке собранного документа.</string>
+  <string key="manuscript.text_absent">Для этого текста нет выравнивания этого свидетеля.</string>
+  <string key="status.structure.text.tip">Строки {base} в тексте {name}, синхронизируемом отдельно, со своими выравниваниями (папка alignments/{name}/).</string>
+  <string key="text_sync.error">Не удаётся прочитать выравнивания текста {name}: {error}</string>
 </translations>

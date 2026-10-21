@@ -61,3 +61,39 @@ def make_corpus(root: Path) -> Path:
                         '  <parts>\n    <part name="s02" base="B" />\n  </parts>\n</teiManuscriptProject>')
     project.write_text(text, encoding="utf-8")
     return project
+
+
+def split_alignments(root: Path, text: str, pivot: str, first: int, count: int, witnesses):
+    """Fait de ``text`` un texte synchronisé à part : les lignes ``first`` à
+    ``first + count - 1`` (rangs, à partir de 0) du JSON du pivot, et les
+    lignes des ``witnesses`` qui les désignent, passent de
+    ``alignments/<témoin>.json`` à ``alignments/<text>/<témoin>.json``.
+    Un témoin absent de ``witnesses`` perd ces lignes sans recevoir de JSON
+    pour le texte."""
+    alignments = root / "alignments"
+    pivot_data = json.loads((alignments / f"{pivot}.json").read_text(encoding="utf-8"))
+    keys = [f"{page['id']}::{line.get('line')}" for page in pivot_data["pages"] for line in page["lines"]]
+    moved = set(keys[first:first + count])
+
+    def split(data, belongs):
+        kept, taken = [], []
+        for page in data["pages"]:
+            stay = [line for line in page["lines"] if not belongs(page, line)]
+            go = [line for line in page["lines"] if belongs(page, line)]
+            if stay:
+                kept.append(dict(page, lines=stay))
+            if go:
+                taken.append(dict(page, lines=go))
+        return dict(data, pages=kept), dict(data, pages=taken)
+
+    rest, part = split(pivot_data, lambda page, line: f"{page['id']}::{line.get('line')}" in moved)
+    write_json(alignments / f"{pivot}.json", rest)
+    write_json(alignments / text / f"{pivot}.json", part)
+    for path in sorted(alignments.glob("*.json")):
+        if path.stem == pivot:
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        rest, part = split(data, lambda page, line: bool(set(line.get("base_keys") or []) & moved))
+        write_json(path, rest)
+        if path.stem in witnesses:
+            write_json(alignments / text / path.name, part)

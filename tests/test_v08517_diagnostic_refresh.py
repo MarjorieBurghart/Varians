@@ -166,12 +166,17 @@ def test_mainwindow_menu_preview_and_in_place_reload_are_wired_without_replacing
     assert 'self.action_diagnose_witnesses' in text
     assert 'self.action_refresh_synchronizations' in text
     reload_func=text.split('    def refresh_witness_synchronizations(self):')[1].split('    def reload_images(self):')[0]
-    assert 'assemble_resources(self.project)' in reload_func
+    assert 'assemble_resources(' in reload_func
     assert 'QMessageBox.question(' in reload_func
-    assert 'self._raw_alignment_caches = staged.raw' in reload_func
-    assert 'self.editor.setPlainText(' not in reload_func
-    assert 'self._replace_with_project(' not in reload_func
-    assert 'self.panels[w.id]' in reload_func
+    # V0.9.1.1 : l'application des données est commune avec le passage d'un
+    # texte synchronisé à part à l'autre (_apply_runtime_state).
+    assert 'self._apply_runtime_state(staged' in reload_func
+    apply_func=text.split('    def _apply_runtime_state(self,')[1].split('\ndef ')[0]
+    assert 'self._raw_alignment_caches = state.raw' in apply_func
+    assert 'self.panels[w.id]' in apply_func
+    for func in (reload_func, apply_func):
+        assert 'self.editor.setPlainText(' not in func
+        assert 'self._replace_with_project(' not in func
 
 
 def _real_refresh_method(monkeypatch):
@@ -214,7 +219,19 @@ def _real_refresh_method(monkeypatch):
            'Qt':SimpleNamespace(CursorShape=SimpleNamespace(WaitCursor=1)),
            '_t':lambda key,**kwargs:key.format(**kwargs) if kwargs else key}
     exec(textwrap.dedent(node_source(func)),globs)
+    # Méthode commune avec le passage d'un texte à l'autre (V0.9.1.1).
+    import text_segments
+    apply=next(n for n in cls.body
+               if isinstance(n,ast.FunctionDef) and n.name=='_apply_runtime_state')
+    globs.update(pivot_lb_pattern=text_segments.pivot_lb_pattern,
+                 has_line_synchronization=text_segments.has_line_synchronization,
+                 TEXT_ABSENT=text_segments.TEXT_ABSENT)
+    exec(textwrap.dedent(node_source(apply)),globs)
+    _APPLY[0]=globs['_apply_runtime_state']
     return globs[func.name],Messages,Application
+
+
+_APPLY=[None]
 
 
 class _FakeLabel:
@@ -230,6 +247,8 @@ class _FakePanel:
         self.items=items
         self.center_index=0
         self.reload_count=0
+        self.is_base=False
+        self.absent_key=None
         self.sync_issue=_FakeLabel()
         self.header=_FakeLabel()
         self.status=_FakeLabel()
@@ -237,6 +256,7 @@ class _FakePanel:
         self.zoom=2.4
     def current_item(self): return self.items[self.center_index] if self.items else None
     def reload(self): self.reload_count+=1
+    def set_base(self,is_base,label): self.is_base=is_base
 
 
 class _FakeAction:
@@ -275,7 +295,11 @@ def _controller_for_project(proj):
         _apply_witness_visibility=lambda initial:None,
         sync_panels_to_cursor=lambda force:None,
         statusBar=lambda:SimpleNamespace(showMessage=lambda *args:None),
+        base_id=proj.base_witness,
+        witness_labels={w.id:w.id for w in proj.witnesses},
+        _text_witness_ids=lambda:set(),
     )
+    fake._apply_runtime_state=lambda state,project,images=None:_APPLY[0](fake,state,project,images)
     fake._witness_resource_snapshot=lambda: __import__('witness_resource_refresh').RuntimeState(
         fake._raw_alignment_caches,fake.alignment_caches,
         fake.witness_items,fake.witness_display_items,fake.base_by_key,

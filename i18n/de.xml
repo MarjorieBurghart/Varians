@@ -798,4 +798,7 @@ Trotzdem exportieren?</string>
   <string key="parts.webgen.continue">Trotzdem exportieren</string>
   <string key="preview.assembled.read_only">Vorschau der zusammengesetzten Edition, Teile eingeschlossen, schreibgeschützt: Die Bearbeitung von Fragmenten ist für eine Edition in Teilen noch nicht möglich.</string>
   <string key="status.structure.assembled.tip">Zeilen des Pivot-Textzeugen in der zusammengesetzten Edition gezählt, Teile eingeschlossen (XInclude), in der Reihenfolge des zusammengesetzten Dokuments.</string>
+  <string key="manuscript.text_absent">Kein Alignment dieses Textzeugen für diesen Text.</string>
+  <string key="status.structure.text.tip">Zeilen von {base} im Text {name}, separat mit eigenen Alignments synchronisiert (Ordner alignments/{name}/).</string>
+  <string key="text_sync.error">Alignments des Textes {name} nicht lesbar: {error}</string>
 </translations>

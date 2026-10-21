@@ -750,73 +750,8 @@ class WitnessSyncMixin:
                 return False
         # Commit; from this point on, all expensive and error-prone disk reads
         # have completed. Preserve each existing panel, zoom and frame toggle.
-        self._raw_alignment_caches = staged.raw
-        self.alignment_caches = staged.caches
-        self.witness_items = staged.witness_items
-        self.witness_display_items = staged.display_items
-        self.base_by_key = staged.base_by_key
-        self.base_maps = staged.base_maps
-        self.base_items = staged.base_items
-        self._base_sync_line_count = staged.base_sync_count
-        self.base_alignment_available = staged.base_active
-        self._secondary_sync_link_counts = staged.secondary_links
-        self._witness_image_available = staged.images_available
-        self.has_any_images = any(staged.images_available.values())
-        self.expected_base_lines = staged.base_sync_count if staged.base_active else None
-        self.action_reload_images.setEnabled(self.has_any_images)
-        self.action_choose_witnesses.setEnabled(self.has_any_images)
-        valid_pivot_keys = set(staged.base_by_key)
-        for w in self.witness_configs:
-            panel = self.panels[w.id]
-            old = panel.current_item()
-            old_page_id = str((old or {}).get('p', {}).get('id', ''))
-            old_line_id = str((old or {}).get('l', {}).get('alto_id') or (old or {}).get('l', {}).get('line'))
-            new_items = staged.display_items[w.id]
-            panel.items = new_items
-            panel.map_base = staged.base_maps.get(w.id) or {}
-            panel.sync_enabled = bool(staged.base_active and (
-                w.is_base or staged.secondary_links.get(w.id, 0) > 0))
-            # The same witness may switch from page-only to synchronized after
-            # a Varians-Synchro JSON refresh; folio controls follow its mode.
-            if hasattr(panel, 'folio_combo'):
-                panel.folio_combo.setEnabled(not panel.sync_enabled)
-            if hasattr(panel, 'split_folio_btn'):
-                panel.split_folio_btn.setEnabled(bool(panel.items))
-            panel._surface_indices = {
-                str(it['p'].get('tei_surface_id')): i
-                for i, it in enumerate(new_items) if it['p'].get('tei_surface_id')
-            }
-            chosen = next((i for i, it in enumerate(new_items)
-                           if str(it['p'].get('id', '')) == old_page_id
-                           and str(it['l'].get('alto_id') or it['l'].get('line')) == old_line_id), None)
-            if chosen is None:
-                chosen = next((i for i, it in enumerate(new_items)
-                               if str(it['p'].get('id', '')) == old_page_id), None)
-            panel.center_index = (chosen if chosen is not None else
-                                  min(panel.center_index, max(0, len(new_items) - 1)))
-            panel.origin_center_index = panel.center_index
-            panel.match_indices = set()
-            panel.primary_key = None
-            panel.sync_issue.hide()
-            panel.sync_issue.setText('')
-            if not w.is_base and w.alignment and staged.base_active:
-                keys = panel.map_base
-                if not staged.secondary_links.get(w.id, 0):
-                    reason = _t('manuscript.sync.no_base_keys')
-                elif not set(keys).intersection(valid_pivot_keys):
-                    reason = _t('manuscript.sync.unmatched_base_keys')
-                else:
-                    reason = ''
-                if reason:
-                    panel.sync_issue.setText(reason)
-                    panel.sync_issue.setToolTip(reason)
-                    panel.sync_issue.show()
-            unmatched = int((staged.caches[w.id].get('meta') or {}).get('iiif_unassociated_layout_count') or 0)
-            tip = (_t('manuscript.iiif_unassociated_layout.tip', count=unmatched)
-                   if unmatched else '')
-            panel.header.setToolTip(tip)
-            panel.status.setToolTip(tip)
-            panel.reload()
+        self._apply_runtime_state(staged, self.project, images=staged.images_available)
+        self.__dict__.setdefault('_segment_states', {})[None] = (staged, self.project)
         self._last_synced_ordinal = None
         self._last_synced_surface = None
         self._folio_revision = None
