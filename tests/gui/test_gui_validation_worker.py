@@ -152,3 +152,16 @@ def test_one_client_for_the_whole_application(monkeypatch):
         assert validation_worker.worker_client() is first
     finally:
         first.shutdown()
+
+
+def test_closing_during_a_validation_stops_the_process_at_once(make_client, schema, qtbot):
+    # Fermer Varians pendant la compilation d'un gros schéma ne doit pas
+    # attendre la fin de celle-ci.
+    client = make_client(_slow(30))
+    client.validate_async("<root/>", schema, None, QPushButton(), lambda result: None)
+    qtbot.wait(300)
+    process = client._process
+    started = time.perf_counter()
+    client.shutdown()
+    assert time.perf_counter() - started < 1.0
+    assert process.poll() is not None

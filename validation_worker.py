@@ -270,8 +270,11 @@ class RelaxNGWorkerClient(QObject):
             process.wait(timeout)
 
     def shutdown(self):
-        """Arrête le processus (fermeture de Varians)."""
+        """Arrête le processus (fermeture de Varians) ; une validation en cours
+        n'est pas attendue."""
         self._stopping = True
+        if self.busy and self._process is not None:
+            self._process.kill()
         self._stop_process()
 
 
