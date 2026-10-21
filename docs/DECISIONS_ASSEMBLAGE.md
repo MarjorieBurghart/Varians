@@ -133,7 +133,7 @@ XInclude.
    La synchronisation des témoins y est suspendue pour une édition qui a
    des parties.
 3. Synchronisation des collections, cas 1 (numérotation continue) —
-   V0.9.1.0.
+   réalisé en V0.9.1.0 (voir ci-dessous).
 4. Synchronisation des collections, cas 2 (un JSON par texte) — V0.9.2.0.
 5. Vue XSLT / CSS et export web à partir du document assemblé,
    modifications par fragment réécrites dans le bon fichier, avec les mêmes
@@ -234,6 +234,40 @@ devra offrir les mêmes continuités. Dans le cas 2, suivre un manuscrit d'un
 texte à l'autre suppose de déduire l'ordre des textes dans ce manuscrit à
 partir de ses pages : c'est la partie la plus délicate, qui peut venir en
 second temps.
+
+## Réalisé en V0.9.1.0 (cas 1)
+
+- **Numérotation** : les `<lb edRef="#pivot"/>` sont comptés dans l'ordre
+  du document assemblé (module `pivot_lines.py`), comme le font la XSLT, le
+  viewer web et `xmllint --xinclude` : un `<lb/>` placé dans un commentaire
+  ou hors de l'élément inclus d'une partie ne compte pas. Un texte placé
+  avant le premier `<lb/>` d'une partie appartient à la dernière ligne de ce
+  qui la précède, comme dans un fichier unique ; une position placée après
+  un `xi:include` reçoit la dernière ligne de son contenu.
+- **Les deux sens** : le curseur de l'édition ou d'une partie fait suivre
+  les témoins ; un clic ou un défilement dans le pivot place le curseur dans
+  la partie qui contient la ligne et l'affiche (son onglet réapparaît s'il
+  était masqué, ses modifications non enregistrées sont conservées).
+- **Interface** : les témoins, leurs fenêtres détachées, l'état de structure
+  et leurs commandes restent affichés sur une partie ; la Vue XSLT / CSS et
+  « Enregistrer l'édition sous… » restent réservées à l'édition.
+- **Structure** : l'état de structure et l'avertissement à l'enregistrement
+  (de l'édition ou d'une partie) comptent les lignes de l'édition assemblée.
+  La condition du cas 1 (le pivot contient les textes dans l'ordre de
+  l'édition) n'est pas vérifiable : seul le nombre de lignes l'est.
+- **Mode page** : le dernier `<pb>` d'un témoin est cherché dans l'ordre de
+  l'édition, y compris dans une partie précédente ; un témoin qui a les
+  textes dans un autre ordre doit donc porter son `<pb>` au début de chaque
+  texte. Les folios sont lus dans le `<facsimile>` de l'édition.
+- **« Marquer la page » et « Couper le folio » dans une partie** (décidé le
+  21 octobre 2026) : le `<pb>` va dans la partie, le `<facsimile>` dans
+  l'édition, modifiée sans être affichée ; annuler dans la partie retire le
+  `<pb>`, pas le `<facsimile>` complété.
+- **Vue XSLT / CSS** (décidé le 21 octobre 2026) : toujours en lecture
+  seule, sans synchronisation par un clic, jusqu'à l'étape 5.
+- **Mesure** : projet exemple découpé en 22 parties (3790 lignes du pivot),
+  environ 45 ms pour un assemblage complet ; aucun assemblage pendant la
+  saisie de texte ordinaire.
 
 ## Restent à décider
 

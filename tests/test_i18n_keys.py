@@ -117,3 +117,18 @@ def test_each_help_explains_assembled_editions():
             assert text in section, (language, text)
         version = page[page.index('<section id="v0900">'):]
         assert 'href="#xinclude"' in version[:version.index("</section>")], language
+
+
+def test_each_help_explains_the_synchronization_across_parts():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="xinclude">'):]
+        section = section[:section.index("</section>")]
+        for key in ("manuscript.mark_page", "folio.split.button", "documents.tab.hide"):
+            assert catalog[key] in section, (language, key)
+        for text in ('&lt;lb edRef="#A"/&gt;', "&lt;pb", "&lt;facsimile&gt;"):
+            assert text in section, (language, text)
+        version = page[page.index('<section id="v0910">'):]
+        assert 'href="#xinclude"' in version[:version.index("</section>")], language

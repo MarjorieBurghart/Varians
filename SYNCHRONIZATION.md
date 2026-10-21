@@ -61,3 +61,14 @@ Un témoin sans JSON n'est pas un témoin erroné. Tant qu'il n'a aucune corresp
 ## V0.8.5.17 — Diagnostic / actualisation
 
 Voir `WITNESS_DIAGNOSTICS.md`. Le module `witness_resource_refresh.py` centralise le rapport indépendant de Qt et la préparation transactionnelle des ressources. L’éditeur conserve sa TEI, sa pile d’annulation et ses panneaux ; il ne commet le rechargement qu’après validation. La synchronisation n’est jamais déduite des seules données ALTO/PAGE.
+
+## V0.9.1.0 — Édition assemblée par XInclude
+
+Pour une édition qui inclut ses parties (`xi:include`), les lignes du pivot
+sont comptées dans l'ordre de l'édition assemblée, d'une partie à l'autre :
+le n-ième `<lb edRef="#pivot"/>` du document assemblé correspond, comme dans
+un fichier unique, à la n-ième ligne du JSON du pivot. Les JSON ne changent
+pas (un par témoin pour toute l'édition) ; le pivot doit contenir les textes
+dans l'ordre de l'édition. Le curseur d'une partie fait suivre les témoins,
+et un clic dans le pivot affiche la partie qui contient la ligne. Voir
+`docs/DECISIONS_ASSEMBLAGE.md`.

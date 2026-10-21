@@ -174,13 +174,33 @@ Règles :
 - la Vue XSLT / CSS transforme `_assembled_preview_text()` (l'édition
   assemblée) : sans marqueurs d'édition ni de ligne, `load_fragment` refusé,
   pas de report de position entre la source et l'aperçu ;
-- `_witness_sync_suspended()` garde les points d'entrée de la
-  synchronisation (`witness_sync.py`) tant que la synchronisation à travers
-  les parties n'est pas réalisée ;
+- synchronisation des témoins (V0.9.1.0, cas 1 : numérotation continue) :
+  `pivot_lines.pivot_lines` assemble l'édition et numérote les
+  `<lb edRef="#pivot"/>` dans l'ordre du document assemblé ; chaque numéro
+  est rattaché, dans son fichier, au `<lb/>` que trouve `lb_base_re` (même
+  ligne, même rang dans la ligne), et chaque `xi:include` reçoit le dernier
+  numéro atteint à la fin de son contenu (`Assembly.site` donne la ligne du
+  `xi:include` de chaque copie). Côté fenêtre, `_pivot_lines()` (en cache
+  selon les révisions ; gardé pendant la saisie tant que le document
+  affiché garde ses `<lb/>` et ses `xi:include`), `_base_ordinal_at` /
+  `_base_ordinal_at_cursor` (curseur → ligne du pivot), `_show_base_ordinal`
+  (ligne → curseur, en affichant la partie) et `_base_line_count` (état de
+  structure, avertissement à l'enregistrement). Sans parties, ces méthodes
+  reviennent à l'index du document affiché, comme avant ;
+- mode page : `PivotLines.page_at` cherche le dernier `<pb>` d'un témoin
+  dans l'ordre assemblé (règle commune `folio_navigation.pb_folio`) ; les
+  folios sont lus dans le `<facsimile>` de l'édition (`_edition_text`).
+  « Marquer la page » et « Couper le folio » écrivent dans l'édition non
+  affichée par `_write_edition_text` (correctif `_patch_text_document`) ;
+- `_apply_edition_ui` distingue deux groupes : l'aperçu et « Enregistrer
+  l'édition sous… » (édition seule) ; les témoins, l'état de structure et
+  leurs commandes (édition et parties, `document.in_edition`) ;
 - des tests anciens exécutent le corps de certaines méthodes avec des objets
   factices (`_text_changed`, `_auto_refresh_rng`, `show_validation_panel`,
-  `_validate_relaxng_document_impl`, `sync_panels_to_cursor`…) : une
-  nouvelle méthode appelée par ces corps doit être ajoutée à ces objets ;
+  `_validate_relaxng_document_impl`, `sync_panels_to_cursor`,
+  `_sync_page_panels_to_cursor`, `_mark_page_in_tei`,
+  `_split_double_folio`…) : une nouvelle méthode appelée par ces corps doit
+  être ajoutée à ces objets ;
 - jeu de données : `tests/data/sermons` (copie du projet d'essai « Essai
   sermons Varians »), copié dans `tmp_path` par les fixtures
   `sermons_project` et `collection_project` de `tests/gui/conftest.py`. La

@@ -1,3 +1,34 @@
+VARIANS V0.9.1.0 — SYNCHRONISATION DES TÉMOINS À TRAVERS LES PARTIES
+
+• Pour une édition assemblée par XInclude (V0.9.0.0), les témoins se
+  synchronisent de nouveau. Cas d'une collection découpée en fichiers par
+  commodité : les lignes du pivot (<lb edRef="#pivot"/>) sont comptées dans
+  l'ordre de l'édition assemblée, d'une partie à l'autre, comme dans une
+  édition en un seul fichier ; les JSON d'alignement sont ceux d'aujourd'hui,
+  un par témoin pour toute l'édition.
+• Le curseur de l'édition ou d'une partie fait suivre les témoins ; un clic
+  ou un défilement dans le pivot place le curseur dans la partie qui
+  contient la ligne et ouvre son onglet (même masqué).
+• Les témoins, leurs fenêtres détachées et l'état de structure restent
+  affichés sur une partie ; l'état de structure et l'avertissement à
+  l'enregistrement comptent les lignes de toute l'édition assemblée.
+• Témoins en mode page : le dernier <pb> qui les concerne est cherché dans
+  l'ordre de l'édition, y compris dans une partie précédente (page tenue à
+  la jonction de deux textes). Les folios sont lus dans le <facsimile> de
+  l'édition.
+• Depuis une partie, « Marquer la page » insère le <pb> dans la partie et
+  complète le <facsimile> de l'édition ; « Double page… » écrit ses zones
+  dans l'édition. L'édition est alors modifiée sans être affichée (« * »
+  sur son onglet).
+• Condition : le pivot contient les textes dans l'ordre de l'édition ;
+  Varians vérifie le nombre de lignes, pas leur ordre. Les autres témoins
+  peuvent avoir un autre ordre ou ne pas avoir un texte.
+• Limites : la synchronisation d'un corpus aux témoins variables (un JSON
+  par texte, alignments/s02/B.json) viendra en V0.9.2.0 ; la Vue XSLT / CSS
+  de l'édition assemblée reste en lecture seule, sans synchronisation par
+  un clic ; l'export web ne contient pas encore les parties.
+• Un projet sans xi:include est inchangé ; format de project.xml inchangé.
+
 VARIANS V0.9.0.0 — ÉDITIONS ASSEMBLÉES PAR XINCLUDE
 
 • Une édition peut inclure ses parties (un fichier par sermon, par
