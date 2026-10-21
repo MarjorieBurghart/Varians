@@ -799,4 +799,5 @@
 
 それでも書き出しますか？</string>
   <string key="parts.webgen.continue">それでも書き出す</string>
+  <string key="preview.assembled.read_only">組み立てられた版（部分を含む）のプレビュー、読み取り専用：部分に分かれた版では、断片の編集はまだできません。</string>
 </translations>

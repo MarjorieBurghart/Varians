@@ -785,4 +785,5 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
 
 Export anyway?</string>
   <string key="parts.webgen.continue">Export anyway</string>
+  <string key="preview.assembled.read_only">Preview of the assembled edition, parts included, read-only: fragment editing is not yet available for an edition in parts.</string>
 </translations>

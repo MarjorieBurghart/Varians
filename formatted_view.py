@@ -1265,6 +1265,11 @@ class FormattedEditionWidget(QWidget):
 
     def refresh_preview(self, force=False):
         xml_text = self.main.editor.toPlainText()
+        # Édition en parties (XInclude) : l'aperçu montre l'édition assemblée,
+        # en lecture seule (ses paragraphes ne sont plus ceux de la source).
+        assembled = self.main._assembled_preview_text(xml_text)
+        if assembled is not None:
+            xml_text = assembled
         if not self.xsl_path.exists() or not self.css_path.exists():
             self.info.setText(_t("preview.files_missing"))
             self.info.setStyleSheet("color:#a14b2f")
@@ -1277,8 +1282,12 @@ class FormattedEditionWidget(QWidget):
         if not force and preview_key == self._last_preview_key:
             self.dirty_preview = False
             engine = self._last_preview_engine or "cache"
-            self.info.setText(_t("preview.up_to_date", engine=engine))
-            self.info.setStyleSheet("color:#376b3c")
+            if assembled is not None:
+                self.info.setText(_t("preview.assembled.read_only"))
+                self.info.setStyleSheet("color:#9a6a2f")
+            else:
+                self.info.setText(_t("preview.up_to_date", engine=engine))
+                self.info.setStyleSheet("color:#376b3c")
             return
 
         try:
@@ -1299,9 +1308,10 @@ class FormattedEditionWidget(QWidget):
         t0 = time.perf_counter()
         try:
             html_text, engine = transform_with_xslt(xml_text, self.xsl_path, {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc")})
-            spans = paragraph_spans(xml_text)
-            html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
-            html_text, marked = inject_edit_markers(html_text, len(spans))
+            if assembled is None:
+                spans = paragraph_spans(xml_text)
+                html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
+                html_text, marked = inject_edit_markers(html_text, len(spans))
             css = self._resolved_css_cached()
 
             # setHtml() et zoomIn()/zoomOut() n’ont pas des sémantiques identiques
@@ -1326,7 +1336,10 @@ class FormattedEditionWidget(QWidget):
             self._last_preview_key = preview_key
             self._last_preview_engine = engine
             elapsed = time.perf_counter() - t0
-            if clickable_lines:
+            if assembled is not None:
+                self.info.setText(_t("preview.assembled.read_only"))
+                self.info.setStyleSheet("color:#9a6a2f")
+            elif clickable_lines:
                 self.info.setText(_t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans), lines=clickable_lines))
                 self.info.setStyleSheet("color:#376b3c")
             else:
@@ -1414,6 +1427,9 @@ class FormattedEditionWidget(QWidget):
         return False
 
     def load_fragment(self, idx, move_source=False):
+        # Édition en parties : aperçu en lecture seule (voir refresh_preview).
+        if self.main._edition_has_parts():
+            return False
         # Ne jamais remplacer silencieusement un fragment modifié par un
         # autre paragraphe. Le choix est explicite : appliquer, ignorer ou
         # annuler.

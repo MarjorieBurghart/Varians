@@ -25,6 +25,7 @@ from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
 from project_management import update_project_documents
+from lxml import etree
 from xml_assembly import assemble, path_key
 
 
@@ -123,6 +124,21 @@ class DocumentTabsMixin:
         """L'édition inclut des parties (XInclude) : elle est validée
         assemblée."""
         return any(session.is_part for session in self.documents)
+
+    def _assembled_preview_text(self, edition_text):
+        """Texte de l'édition assemblée, parties comprises (texte non enregistré
+        des parties modifiées), pour la Vue XSLT / CSS ; None si l'édition
+        n'est pas affichée, n'a pas de parties ou est mal formée. L'aperçu est
+        alors en lecture seule : ses paragraphes ne sont plus ceux de la
+        source."""
+        if not self.document.is_edition or not self._edition_has_parts():
+            return None
+        parts = {str(s.path): s.text_document.toPlainText() for s in self.documents
+                 if s.is_part and s.text_document is not None and s.modified}
+        assembly = assemble(edition_text, self.edition_session.path or self.project.edition, parts)
+        if assembly.root is None:
+            return None
+        return etree.tostring(assembly.root, encoding="unicode")
 
     def _witness_sync_suspended(self):
         """Synchronisation des témoins suspendue (V0.9.0.0) : l'édition a des

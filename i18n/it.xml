@@ -799,4 +799,5 @@ Salvata in un’altra cartella, non le troverebbe più. Copiate anche le parti, 
 
 Esportare comunque?</string>
   <string key="parts.webgen.continue">Esporta comunque</string>
+  <string key="preview.assembled.read_only">Anteprima dell’edizione assemblata, parti comprese, in sola lettura: la modifica per frammenti non è ancora possibile per un’edizione in parti.</string>
 </translations>

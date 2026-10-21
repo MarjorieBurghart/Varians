@@ -219,3 +219,52 @@ def test_the_web_export_of_a_simple_project_does_not_warn(open_window, project_w
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # compte rendu seulement
     window.generate_web_viewer()
     assert dialogs.seen[-1][1] == tr("webgen.done.title")
+
+
+# --- Vue XSLT / CSS d'une édition en parties : lecture seule ------------------
+
+def _preview(window):
+    view = window.formatted_view
+    window.left_tabs.setCurrentIndex(window.left_tabs.indexOf(view))
+    view.refresh_preview(force=True)
+    return view
+
+
+def test_the_preview_shows_the_assembled_edition_read_only(open_window, sermons_project):
+    window = open_window(sermons_project)
+    view = _preview(window)
+    text = view.preview.toPlainText()
+    for included in ("Sermo in adventu Domini", "Puer natus est nobis", "Surrexit Dominus vere",
+                     "Veni, Sancte Spiritus", "Narrat"):                 # s01 à s04 et l'exemplum
+        assert included in text, included
+    assert view.info.text() == tr("preview.assembled.read_only")
+    # Pas d'édition par fragment : aucun marqueur, et aucun fragment ouvert.
+    assert "tei-edit:" not in view.preview.toHtml()
+    assert view.load_fragment(0) is False and view.frag_box.isHidden()
+
+
+def test_the_preview_shows_the_unsaved_text_of_a_part(open_window, sermons_project):
+    window = open_window(sermons_project)
+    view = _preview(window)                                             # aperçu déjà calculé
+    window.left_tabs.setCurrentIndex(0)
+    window.show_document(_doc(window, "s02.xml"))
+    text = window.editor.toPlainText()
+    cursor = window.editor.textCursor()
+    start = text.index("Sermo in nativitate Domini</head>")
+    cursor.setPosition(start)
+    cursor.setPosition(start + len("Sermo in nativitate Domini"), QTextCursor.MoveMode.KeepAnchor)
+    cursor.insertText("Sermo non enregistré")
+    window.show_document(window.edition_session)
+    # Retour sur l'aperçu, sans actualisation forcée : la partie a changé.
+    window.left_tabs.setCurrentIndex(window.left_tabs.indexOf(view))
+    assert "Sermo non enregistré" in view.preview.toPlainText()
+    assert view.info.text() == tr("preview.assembled.read_only")
+    view.refresh_preview()                                              # déjà à jour
+    assert view.info.text() == tr("preview.assembled.read_only")
+
+
+def test_the_preview_of_a_simple_edition_stays_editable(open_window, project_with_documents):
+    window = open_window(project_with_documents)
+    view = _preview(window)
+    assert "tei-edit:" in view.preview.toHtml()
+    assert view.info.text() != tr("preview.assembled.read_only")

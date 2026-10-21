@@ -1103,6 +1103,14 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         previous = getattr(self, "_previous_left_tab_index", 0)
         self._previous_left_tab_index = index
 
+        # Édition en parties : l'aperçu montre l'édition assemblée ; ses
+        # paragraphes ne correspondent pas à ceux de la source (pas de report
+        # de la position d'une vue à l'autre).
+        if self._edition_has_parts():
+            if self.left_tabs.widget(index) is self.formatted_view:
+                self.formatted_view.became_visible()
+            return
+
         if self.left_tabs.widget(index) is self.formatted_view:
             # XML -> XSLT : la chaîne seule ne suffit pas ("qui" peut apparaître
             # plusieurs fois). On transporte aussi le paragraphe et le rang de

@@ -264,6 +264,8 @@ class ValidationPanelMixin:
         autres documents ; ils seront validés à nouveau à leur affichage."""
         if getattr(self, "_loading_editor_document", False) or self._assembly_context() is None:
             return
+        # L'aperçu de l'édition assemblée contient aussi le texte des parties.
+        self.formatted_view.dirty_preview = True
         for session in self.documents:
             if session is self.document or not session.in_edition or session.last_rng_result is None:
                 continue

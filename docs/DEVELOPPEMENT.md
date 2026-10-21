@@ -171,6 +171,9 @@ Règles :
   l'édition et ses parties (`_share_assembled_result`) ; `_assembly_changed`
   (relié à `contentsChanged`, comme `_text_changed`) le rend périmé pour
   les autres documents ;
+- la Vue XSLT / CSS transforme `_assembled_preview_text()` (l'édition
+  assemblée) : sans marqueurs d'édition ni de ligne, `load_fragment` refusé,
+  pas de report de position entre la source et l'aperçu ;
 - `_witness_sync_suspended()` garde les points d'entrée de la
   synchronisation (`witness_sync.py`) tant que la synchronisation à travers
   les parties n'est pas réalisée ;

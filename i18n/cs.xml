@@ -799,4 +799,5 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
 
 Přesto exportovat?</string>
   <string key="parts.webgen.continue">Přesto exportovat</string>
+  <string key="preview.assembled.read_only">Náhled sestavené edice včetně částí, jen pro čtení: úprava fragmentů zatím u edice v částech není možná.</string>
 </translations>

@@ -179,6 +179,13 @@ XInclude.
   cités dans ses `@wit`. Les trois pratiques de déclaration sont acceptées :
   `<listWit>` dans chaque texte, dans l'édition seule, ou les deux. Un même
   manuscrit garde le même sigle dans toute la collection.
+- **Vue XSLT / CSS** (décidé à l'essai de la V0.9.0.0) : elle montre
+  l'édition assemblée, parties comprises (texte non enregistré des parties
+  modifiées), en **lecture seule** : ses paragraphes ne sont plus ceux de la
+  source, donc pas d'édition par fragment ni de report de position entre
+  la source et l'aperçu. L'édition par fragment réécrite dans le bon
+  fichier reste pour l'étape 5. L'export web, lui, ne contient pas encore
+  les parties (message avant l'export).
 - **Folios d'un texte dans un témoin** : notés soit par `<locus from to>`
   dans un en-tête (forme structurée, lisible par Varians), soit seulement
   par les `<pb/>` de l'édition ; les deux pratiques existent.

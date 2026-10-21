@@ -799,4 +799,5 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
 
 Trotzdem exportieren?</string>
   <string key="parts.webgen.continue">Trotzdem exportieren</string>
+  <string key="preview.assembled.read_only">Vorschau der zusammengesetzten Edition, Teile eingeschlossen, schreibgeschützt: Die Bearbeitung von Fragmenten ist für eine Edition in Teilen noch nicht möglich.</string>
 </translations>

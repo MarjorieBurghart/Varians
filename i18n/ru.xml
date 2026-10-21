@@ -799,4 +799,5 @@
 
 Всё равно экспортировать?</string>
   <string key="parts.webgen.continue">Всё равно экспортировать</string>
+  <string key="preview.assembled.read_only">Предпросмотр собранного издания, включая части, только для чтения: редактирование фрагментов для издания из частей пока недоступно.</string>
 </translations>

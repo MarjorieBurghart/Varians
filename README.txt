@@ -28,8 +28,11 @@ VARIANS V0.9.0.0 — ÉDITIONS ASSEMBLÉES PAR XINCLUDE
     des parties (navigation libre, état indiqué dans la barre d'état) ;
     elle viendra en V0.9.1.0 (numérotation continue) et V0.9.2.0 (un JSON
     de synchronisation par texte) ;
-  - la Vue XSLT / CSS et l'export web ne contiennent pas encore les
-    parties ; un message le dit avant l'export.
+  - la Vue XSLT / CSS montre l'édition assemblée, parties comprises
+    (texte non enregistré compris), mais en lecture seule : l'édition par
+    fragment n'y est pas encore possible ;
+  - l'export web ne contient pas encore les parties ; un message le dit
+    avant l'export.
 • Un projet sans xi:include est inchangé ; format de project.xml inchangé.
 
 VARIANS V0.8.9.2 — VALIDATION RELAX NG SANS FIGER LA FENÊTRE
