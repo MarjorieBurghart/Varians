@@ -777,4 +777,7 @@ Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi le
   <string key="status.structure.suspended">{base} : synchronisation suspendue (édition en parties)</string>
   <string key="status.structure.suspended.tip">L’édition inclut ses parties par XInclude : la synchronisation des témoins à travers les parties viendra dans une prochaine version. Les témoins restent consultables en navigation libre. Voir l’aide, « Éditions assemblées (XInclude) ».</string>
   <string key="diagnostics.sync_suspended">Synchronisation suspendue : l’édition inclut des parties (XInclude). Les témoins restent consultables en navigation libre ; la synchronisation à travers les parties viendra dans une prochaine version.</string>
+  <string key="apparatus.witnesses.part">Témoins de cette partie (son &lt;listWit&gt;) : {ids}</string>
+  <string key="apparatus.witnesses.locus">Témoins de cette partie (&lt;locus target&gt; de l’édition) : {ids}</string>
+  <string key="apparatus.witnesses.wit">Témoins cités dans les @wit de cette partie : {ids}</string>
 </translations>

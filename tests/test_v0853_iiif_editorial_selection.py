@@ -222,3 +222,17 @@ def test_large_manifest_500_canvases_only_six_editorial_pages(tmp_path):
     assert plan['indices']==list(chosen_positions)
     assert [p.surface_id for p in pages]==[
         'W-p0001','W-p0013','W-p0058','W-p0302','W-p0408','W-p0500']
+
+
+def test_a_surface_cited_only_in_a_part_of_the_edition_is_kept(tmp_path):
+    # V0.9.0.0 : une édition assemblée par XInclude ; le <pb> qui cite la
+    # surface est dans une partie (autre fichier).
+    from tei_facsimile import removable_generated_iiif_surfaces
+    src,m,p1,p2,selected,links=setup(tmp_path)
+    w=WitnessDraft('W','W',role='base',image_source_type='iiif',image_source_value=src)
+    all_surfaces=project_facsimile_pages([w],tmp_path,tmp_path/'edition.xml')
+    tei='<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader/><text><body/></text></TEI>'
+    text,_=sync_facsimile_text(tei,all_surfaces)
+    part='<div xmlns="http://www.tei-c.org/ns/1.0"><pb facs="#W-p0002"/></div>'
+    _new_text,removed=removable_generated_iiif_surfaces(text,m,'W',selected,other_texts=[part])
+    assert 'W-p0002' not in removed and 'W-p0006' in removed

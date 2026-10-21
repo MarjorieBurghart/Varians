@@ -514,12 +514,14 @@ def previous_surface_labels(witnesses) -> dict[str, str]:
 
 
 def removable_generated_iiif_surfaces(xml_text: str, manifest, witness_id: str,
-                                      selected_canvas_ids=()) -> tuple[str, tuple[str, ...]]:
+                                      selected_canvas_ids=(), other_texts=()) -> tuple[str, tuple[str, ...]]:
     """Preview-only, conservative removal of abandoned Varians-generated surfaces.
 
     REQUIREMENTS: exact generated (id,n,graphic url) triple for an unselected
     canvas, no other attributes or child elements, and no ``#id`` reference
     elsewhere in the TEI. Keep all changed, annotated or referenced surfaces.
+    ``other_texts``: the other files of an edition assembled by XInclude
+    (V0.9.0.0); a reference in one of them also keeps the surface.
     This function does not modify any file; callers MUST request confirmation.
     """
     from iiif_page_selection import canvas_key
@@ -562,7 +564,8 @@ def removable_generated_iiif_surfaces(xml_text: str, manifest, witness_id: str,
         if (_attr(attrs,'n'), _attr(gr.group('attrs'),'url')) != expected[sid]:
             continue
         outside = original[:m.start()] + original[m.end():]
-        if re.search(r'#' + re.escape(sid) + r'(?![\w.-])', outside):
+        cited = re.compile(r'#' + re.escape(sid) + r'(?![\w.-])')
+        if cited.search(outside) or any(cited.search(str(text or '')) for text in other_texts):
             continue
         candidates.append((m.start(), m.end(), sid))
     revised = original

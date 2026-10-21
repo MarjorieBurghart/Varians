@@ -791,4 +791,7 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="status.structure.suspended">{base}: synchronizace pozastavena (edice v částech)</string>
   <string key="status.structure.suspended.tip">Edice vkládá své části pomocí XInclude: synchronizace textových svědků napříč částmi přijde v některé z příštích verzí. Svědky lze nadále volně procházet. Viz nápověda, „Sestavené edice (XInclude)“.</string>
   <string key="diagnostics.sync_suspended">Synchronizace pozastavena: edice vkládá části (XInclude). Svědky lze nadále volně procházet; synchronizace napříč částmi přijde v některé z příštích verzí.</string>
+  <string key="apparatus.witnesses.part">Svědkové této části (její &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Svědkové této části (&lt;locus target&gt; edice): {ids}</string>
+  <string key="apparatus.witnesses.wit">Svědkové uvedení v @wit této části: {ids}</string>
 </translations>

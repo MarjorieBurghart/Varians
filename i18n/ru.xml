@@ -791,4 +791,7 @@
   <string key="status.structure.suspended">{base}: синхронизация приостановлена (издание из частей)</string>
   <string key="status.structure.suspended.tip">Издание включает свои части через XInclude: синхронизация свидетелей между частями появится в одной из следующих версий. Свидетелей можно свободно просматривать. См. справку, «Собранные издания (XInclude)».</string>
   <string key="diagnostics.sync_suspended">Синхронизация приостановлена: издание включает части (XInclude). Свидетелей можно свободно просматривать; синхронизация между частями появится в одной из следующих версий.</string>
+  <string key="apparatus.witnesses.part">Свидетели этой части (её &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Свидетели этой части (&lt;locus target&gt; издания): {ids}</string>
+  <string key="apparatus.witnesses.wit">Свидетели, указанные в @wit этой части: {ids}</string>
 </translations>

@@ -791,4 +791,7 @@
   <string key="status.structure.suspended">{base}：同期を一時停止中（部分に分かれた版）</string>
   <string key="status.structure.suspended.tip">この版は XInclude で部分を取り込んでいます。部分をまたぐ伝本の同期は今後のバージョンで対応します。伝本は自由に閲覧できます。ヘルプの「組み立てられた版（XInclude）」を参照してください。</string>
   <string key="diagnostics.sync_suspended">同期を一時停止中：この版は部分を取り込んでいます（XInclude）。伝本は自由に閲覧できます。部分をまたぐ同期は今後のバージョンで対応します。</string>
+  <string key="apparatus.witnesses.part">この部分の伝本（その &lt;listWit&gt;）：{ids}</string>
+  <string key="apparatus.witnesses.locus">この部分の伝本（版の &lt;locus target&gt;）：{ids}</string>
+  <string key="apparatus.witnesses.wit">この部分の @wit に挙げられた伝本：{ids}</string>
 </translations>

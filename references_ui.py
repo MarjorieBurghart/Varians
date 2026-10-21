@@ -7,6 +7,10 @@ de la référence à sa cible (F12, Ctrl+clic, menu contextuel) et retour
 Le calcul est fait par ``xml_references`` ; ce module fournit les textes des
 documents (le document affiché tel qu'il est dans l'éditeur, les autres en
 mémoire ou sur le disque) et met en cache leurs identifiants.
+
+Édition assemblée par XInclude (V0.9.0.0) : l'édition et ses parties forment
+un seul document ; un identifiant qu'une autre partie apporte à l'édition
+assemblée est proposé et suivi sous la forme ``#id``.
 """
 from __future__ import annotations
 
@@ -24,6 +28,7 @@ from PySide6.QtWidgets import (
 
 from app_context import call_later, tr as _t
 from completion_ui import CompletionDialog
+from xml_assembly import assemble, path_key
 from xml_references import (
     REFERENCE_ATTRIBUTES, Reference, ReferenceResolver, collect_ids, explicit_pointer, parse_pointer,
 )
@@ -72,25 +77,55 @@ class ReferencesMixin:
         ``elements`` limite aux éléments de ces noms locaux (None : tous). Au
         sens standard des URI, que suivent les autres outils XML, ``#id`` ne
         désigne que le document lui-même : un identifiant d'un autre document
-        est proposé sous la forme ``fichier.xml#id``, chemin relatif.
+        est proposé sous la forme ``fichier.xml#id``, chemin relatif. Dans une
+        édition assemblée, un identifiant qu'une autre partie apporte à
+        l'édition est proposé sous la forme ``#id``.
         """
         current = self.document
+        group = {}
+        if current.in_edition:
+            for path, ids in (self._reference_groups() or ({},))[0].items():
+                group[path_key(path)] = ids
         entries = []
+        grouped = {}
         own = []
         for session in self.documents:
             text = self._session_text(session)
             if text is None:
                 continue
+            visible = group.get(path_key(session.path), ()) if session is not current else ()
             for ident, targets in self._session_ids(session, text).items():
                 target = targets[0]
                 if elements is not None and target.element not in elements:
                     continue
                 if session is current:
                     own.append((f"#{ident}", target.label or target.element, target.element))
+                elif ident in visible:
+                    grouped.setdefault(f"#{ident}", (f"#{ident}", target.label or target.element, target.element))
                 else:
                     entries.append((explicit_pointer(current.path, session.path, ident),
                                     target.label or target.element, target.element))
-        return entries + own
+        own_values = {value for value, _label, _element in own}
+        return entries + [entry for value, entry in grouped.items() if value not in own_values] + own
+
+    def _reference_groups(self):
+        """Groupe de l'édition assemblée pour ``ReferenceResolver`` :
+        ``({chemin: identifiants apportés à l'édition assemblée},)`` ; aucun
+        si l'édition n'a pas de parties. Recalculé quand l'édition ou une
+        partie chargée change."""
+        if not self._edition_has_parts():
+            return ()
+        edition = self.edition_session
+        loaded = [s for s in self.documents if s.in_edition and s.text_document is not None]
+        key = tuple((id(s), s.text_document.revision()) for s in loaded)
+        cache = self.__dict__.get("_reference_group_cache")
+        if cache is not None and cache[0] == key:
+            return cache[1]
+        texts = {s.path: s.text_document.toPlainText() for s in loaded if s.is_part}
+        assembly = assemble(edition.text_document.toPlainText(), edition.path or self.project.edition, texts)
+        groups = (assembly.visible_ids(),) if assembly.root is not None else ()
+        self.__dict__["_reference_group_cache"] = (key, groups)
+        return groups
 
     def _reference_documents(self):
         """``[(chemin, texte)]`` des documents du projet lisibles, l'édition d'abord."""
@@ -154,7 +189,8 @@ class ReferencesMixin:
         if reference is None:
             self.statusBar().showMessage(_t("references.none_here"), _STATUS_MSEC)
             return False
-        resolution = ReferenceResolver(self._reference_documents()).resolve(reference, self.document.path)
+        resolution = ReferenceResolver(self._reference_documents(),
+                                       self._reference_groups()).resolve(reference, self.document.path)
         if resolution.status == "no_file":
             self.statusBar().showMessage(_t("references.no_file", file=reference.file), _STATUS_MSEC)
             return False
@@ -311,7 +347,7 @@ class ReferencesMixin:
         """Vérifie les références de tous les documents du projet et liste
         celles qui sont introuvables ou ambiguës. N'empêche jamais rien :
         l'enregistrement ne dépend pas de ce résultat."""
-        self._reference_check = ReferenceResolver(self._reference_documents()).check()
+        self._reference_check = ReferenceResolver(self._reference_documents(), self._reference_groups()).check()
         self._show_reference_check()
         self._show_bottom_panel(self.references_panel, 220)
 

@@ -207,8 +207,10 @@ class ProjectActionsMixin:
                     continue
                 xml_text = Path(draft.edition).read_text(encoding='utf-8-sig')
                 try:
+                    # Édition assemblée : un <pb> d'une partie peut citer la surface.
                     updated, candidates = removable_generated_iiif_surfaces(
-                        xml_text, manifest, w.id, getattr(w, 'iiif_selected_canvases', ()))
+                        xml_text, manifest, w.id, getattr(w, 'iiif_selected_canvases', ()),
+                        other_texts=[self._session_text(s) for s in self.documents if s.is_part])
                 except ET.ParseError:
                     # Optional cleanup must not prevent valid project setting
                     # changes if an in-progress TEI cannot be parsed here.

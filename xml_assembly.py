@@ -39,6 +39,7 @@ XI_NS = "http://www.w3.org/2001/XInclude"
 _INCLUDE = f"{{{XI_NS}}}include"
 _FALLBACK = f"{{{XI_NS}}}fallback"
 _XML_BASE = "{http://www.w3.org/XML/1998/namespace}base"
+_XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
 _NCNAME = re.compile(r"[A-Za-z_][\w.\-]*\Z")
 # Une partie de pointeur XPointer : schéma(données), sans parenthèses
 # imbriquées (une telle forme relève d'un schéma non pris en charge).
@@ -96,6 +97,19 @@ class Assembly:
                 return path
             node = node.getparent()
         return self.master
+
+    def visible_ids(self) -> dict:
+        """``{fichier: identifiants}`` des éléments du document assemblé,
+        selon leur fichier d'origine. Pour une partie incluse par
+        ``xpointer``, seuls ceux de l'élément inclus y figurent (pas ceux de
+        son ``<teiHeader>``, par exemple)."""
+        found = {}
+        if self.root is not None:
+            for element in self.root.iter():
+                ident = element.get(_XML_ID) if isinstance(element.tag, str) else None
+                if ident:
+                    found.setdefault(self.origin(element), set()).add(ident)
+        return {path: frozenset(ids) for path, ids in found.items()}
 
 
 def path_key(path) -> str:

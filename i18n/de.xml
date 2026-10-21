@@ -791,4 +791,7 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="status.structure.suspended">{base}: Synchronisierung ausgesetzt (Edition in Teilen)</string>
   <string key="status.structure.suspended.tip">Die Edition bindet ihre Teile per XInclude ein: Die Synchronisierung der Textzeugen über die Teile hinweg folgt in einer späteren Version. Die Textzeugen bleiben frei durchblätterbar. Siehe die Hilfe, „Zusammengesetzte Editionen (XInclude)“.</string>
   <string key="diagnostics.sync_suspended">Synchronisierung ausgesetzt: Die Edition bindet Teile ein (XInclude). Die Textzeugen bleiben frei durchblätterbar; die Synchronisierung über die Teile hinweg folgt in einer späteren Version.</string>
+  <string key="apparatus.witnesses.part">Textzeugen dieses Teils (sein &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Textzeugen dieses Teils (&lt;locus target&gt; der Edition): {ids}</string>
+  <string key="apparatus.witnesses.wit">In den @wit dieses Teils genannte Textzeugen: {ids}</string>
 </translations>
