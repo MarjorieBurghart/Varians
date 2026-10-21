@@ -771,4 +771,6 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="apparatus.query.duplicate">Eine Abfrage mit dem Namen „{name}“ ist bereits vorhanden.</string>
   <string key="apparatus.query.remove.question">Abfrage „{name}“ aus dem Projekt löschen?</string>
   <string key="rng.worker.fallback">RELAX-NG-Validierung innerhalb von Varians (Validierungsprozess nicht verfügbar: {reason}): Das Fenster kann einfrieren, während ein großes Schema kompiliert wird.</string>
+  <string key="rng.status.running">RNG: wird validiert…</string>
+  <string key="rng.status.running.tip">RELAX-NG-Validierung läuft in einem eigenen Prozess: Das Fenster bleibt benutzbar. Die erste Validierung mit einem großen Schema wie TEI_ALL kann etwa zehn Sekunden dauern.</string>
 </translations>

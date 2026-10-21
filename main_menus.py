@@ -390,6 +390,7 @@ class MainMenusMixin:
         for code, action in self.language_actions.items():
             action.setText(language_labels.get(code, code))
             action.setChecked(code == I18N.language)
+        self.rng_busy.setToolTip(_t("rng.status.running.tip"))
         self.action_validate_rng.setText(_t("toolbar.validate_rng"))
         self.action_validate_rng.setToolTip(_t("toolbar.validate_rng.tip"))
         self.action_format_xml.setText(_t("toolbar.format_xml"))

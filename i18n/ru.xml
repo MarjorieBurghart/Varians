@@ -771,4 +771,6 @@
   <string key="apparatus.query.duplicate">Запрос с названием «{name}» уже существует.</string>
   <string key="apparatus.query.remove.question">Удалить запрос «{name}» из проекта?</string>
   <string key="rng.worker.fallback">Проверка RELAX NG выполняется внутри Varians (процесс проверки недоступен: {reason}): во время компиляции большой схемы окно может зависнуть.</string>
+  <string key="rng.status.running">RNG: идёт проверка…</string>
+  <string key="rng.status.running.tip">Проверка RELAX NG выполняется в отдельном процессе: окном можно пользоваться. Первая проверка по большой схеме, например TEI_ALL, может занять около десяти секунд.</string>
 </translations>

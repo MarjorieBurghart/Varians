@@ -22,7 +22,7 @@ CURRENT_VERSION = "0.8.9.1"
 
 # Nombre de messages de chaque catalogue i18n (i18n/*.xml, identique dans les
 # sept langues). À changer ici à chaque ajout ou retrait de message.
-CATALOG_SIZE = 727
+CATALOG_SIZE = 729
 
 # Ordre de concaténation : editeur_tei.py d'abord (les recherches de texte
 # par position, comme source.index(...), y trouvent leurs repères en premier).
@@ -48,6 +48,8 @@ APPLICATION_MODULES = (
     "document_dialogs.py",
     "references_ui.py",
     "apparatus_ui.py",
+    "validation_worker.py",
+    "busy_indicator.py",
 )
 
 

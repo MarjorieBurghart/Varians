@@ -307,6 +307,8 @@ class ValidationPanelMixin:
         base_url = self.current_path or self.project.edition
         options = dict(revision=revision, schema=schema, resolution=resolution, show_panel=show_panel,
                        show_success_message=show_success_message, automatic=automatic)
+        self.rng_status.setText(_t("rng.status.running"))
+        self.rng_status.setStyleSheet("color:#777")
         if background:
             self._validate_in_background(text, schema, base_url, options)
             return None
@@ -331,6 +333,13 @@ class ValidationPanelMixin:
 
         pending.add(key)
         worker_client().validate_async(text, schema, base_url, self, arrived)
+
+    def _rng_busy_changed(self, busy):
+        """Lueur de la barre d'état pendant une validation en cours."""
+        if busy:
+            self.rng_busy.start()
+        else:
+            self.rng_busy.stop()
 
     def _rng_worker_fell_back(self, reason):
         """Le processus de validation est indisponible (signalé une fois)."""
