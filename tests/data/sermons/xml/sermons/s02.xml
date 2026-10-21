@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="la">
+  <teiHeader xml:lang="fr">
+    <fileDesc>
+      <titleStmt>
+        <title>Sermo in nativitate Domini (sermon 2 de l'édition d'essai)</title>
+      </titleStmt>
+      <publicationStmt>
+        <p>Document TEI complet. Seul le div xml:id="s02" entre dans l'édition (xi:include, xpointer="s02").</p>
+      </publicationStmt>
+      <sourceDesc>
+        <listWit>
+          <witness xml:id="B">Manuscrit fictif B, f. 30r-31r (témoin pivot de ce sermon)</witness>
+          <witness xml:id="D">Manuscrit fictif D, f. 101r-102r</witness>
+        </listWit>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div xml:id="s02" type="sermo" n="2">
+        <head>Sermo in nativitate Domini</head>
+        <p xml:id="s02_p1">
+          <pb edRef="#B" n="30r"/>
+          <pb edRef="#D" n="101r"/>
+          <lb edRef="#B"/><quote typ="thema">Puer natus est nobis, et filius datus est nobis.</quote> Haec
+          <lb edRef="#B"/>verba propheta Isaias <app><lem wit="#B">dixit</lem><rdg wit="#D">cecinit</rdg></app> multo tempore ante
+          <lb edRef="#B"/>nativitatem Christi. Puer natus est per humanitatem, filius
+          <pb edRef="#B" n="30v"/>
+          <lb edRef="#B"/>datus est per divinitatem.
+        </p>
+        <p xml:id="s02_p2">
+          <lb edRef="#B"/>Natus est autem in Bethlehem, quae interpretatur domus panis,
+          <pb edRef="#D" n="101v"/>
+          <lb edRef="#B"/>quia ipse est panis vivus qui de caelo descendit<note type="commentaire" xml:lang="fr">Même
+          thème de l'humilité dans le <ref target="#s01_p2">sermon pour l'Avent</ref>.</note>.
+          <lb edRef="#B"/>Natus est in nocte, ut <app><lem wit="#B">tenebras</lem><rdg wit="#D">tenebras nostras</rdg></app> illuminaret.
+        </p>
+        <p xml:id="s02_p3">
+          <pb edRef="#B" n="31r"/>
+          <pb edRef="#D" n="102r"/>
+          <lb edRef="#B"/>Gaudeamus igitur, fratres, quia hodie nobis natus est Salvator. Amen.
+        </p>
+      </div>
+    </body>
+  </text>
+</TEI>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<div xmlns="http://www.tei-c.org/ns/1.0" xml:id="s04_exemplum" type="exemplum">
+  <p>
+    <lb edRef="#A"/>Narrat <persName ref="../personnes.xml#gregorius">beatus Gregorius</persName> de quodam monacho qui,
+    <pb edRef="#A" n="14r"/>
+    <lb edRef="#A"/>cum diu in tepore vixisset, Spiritum Sanctum invocavit et
+    <lb edRef="#A"/><app><lem wit="#A">statim</lem><rdg wit="#C">subito</rdg></app> fervorem recepit. Amen.
+  </p>
+</div>

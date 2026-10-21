@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="la">
+  <teiHeader xml:lang="fr">
+    <fileDesc>
+      <titleStmt>
+        <title>Sermones de tempore : édition d'essai assemblée par XInclude</title>
+      </titleStmt>
+      <publicationStmt>
+        <p>Jeu d'essai pour Varians. Les sermons et les manuscrits sont fictifs.</p>
+      </publicationStmt>
+      <sourceDesc>
+        <listWit>
+          <witness xml:id="A">Manuscrit fictif A : sermons 1 (f. 12r-13r), 4 (f. 13r-14r) et 3 (f. 14v-15v), dans cet ordre ; le sermon 2 manque.</witness>
+          <witness xml:id="B">Manuscrit fictif B : sermons 2 (f. 30r-31r) et 1 (f. 31r-32r), dans cet ordre.</witness>
+          <witness xml:id="C">Manuscrit fictif C : sermons 1 (f. 2r-3r), 4 (f. 3r-3v) et 3 (f. 4r-5r), dans cet ordre.</witness>
+          <witness xml:id="D">Manuscrit fictif D : sermons 2 (f. 101r-102r) et 3 (f. 102r-103r), dans cet ordre.</witness>
+        </listWit>
+      </sourceDesc>
+    </fileDesc>
+    <encodingDesc>
+      <variantEncoding method="parallel-segmentation" location="internal"/>
+    </encodingDesc>
+  </teiHeader>
+  <text>
+    <front>
+      <div type="praefatio" xml:lang="fr">
+        <p>Quatre sermons de tempore, parfois attribués à <persName ref="personnes.xml#bernard">saint Bernard</persName>.
+          Le <ref target="#s02">sermon pour Noël</ref> manque dans le manuscrit A : il est édité d'après B.</p>
+      </div>
+    </front>
+    <body>
+      <!-- Fragment : la racine de s01.xml est le <div> du sermon. -->
+      <xi:include href="sermons/s01.xml"/>
+      <!-- Document TEI complet, inclus par identifiant. -->
+      <xi:include href="sermons/s02.xml" xpointer="s02"/>
+      <!-- Document TEI complet, inclus par chemin : TEI / text / body / premier div. -->
+      <xi:include href="sermons/s03.xml" xpointer="element(/1/2/1/1)"/>
+      <!-- Fragment qui inclut lui-même un autre fichier (l'exemplum). -->
+      <xi:include href="sermons/s04.xml"/>
+    </body>
+  </text>
+</TEI>

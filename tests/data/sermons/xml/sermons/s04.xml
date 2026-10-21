@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<div xmlns="http://www.tei-c.org/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude" xml:id="s04" type="sermo" n="4">
+  <head>Sermo in die Pentecostes</head>
+  <p xml:id="s04_p1">
+    <lb edRef="#A"/><quote>Veni, Sancte Spiritus, reple tuorum corda fidelium.</quote> Hodie
+    <lb edRef="#A"/>descendit Spiritus Sanctus super apostolos in specie <app><lem wit="#A">ignis</lem><rdg wit="#C">linguarum</rdg></app>,
+    <pb edRef="#A" n="13v"/>
+    <lb edRef="#A"/>quia ignis illuminat, calefacit et purgat.
+  </p>
+  <p xml:id="s04_p2">
+    <lb edRef="#A"/>Sic Spiritus Sanctus illuminat intellectum, calefacit
+    <pb edRef="#C" n="3v"/>
+    <lb edRef="#A"/>affectum et purgat peccatum<note type="commentaire" xml:lang="fr">La suite de cette image
+    se trouverait dans le <ref target="#s05">sermon 5</ref>.</note>.
+  </p>
+  <!-- Inclusion imbriquée : l'exemplum est dans un fichier à part. -->
+  <xi:include href="s04_exemplum.xml"/>
+</div>

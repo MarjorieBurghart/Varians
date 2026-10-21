@@ -73,6 +73,7 @@ Composants autonomes utilisés par la fenêtre :
 |---|---|
 | `document_session.py` | état d'un document ouvert (`DocumentSession`, `LbIndex`) |
 | `xml_references.py` | pointeurs `#id` et identifiants des documents, sans Qt (`ReferenceResolver`) |
+| `xml_assembly.py` | assemblage de l'édition par XInclude : parties, `xpointer`, fichier et ligne d'origine de chaque élément, sans Qt |
 | `apparatus_xpath.py` | requêtes XPath 1.0 de contrôle de l'apparat (parallel segmentation), sans Qt |
 | `relaxng_worker.py` | processus de validation RELAX NG séparé (Varians relancé avec `--relaxng-worker`), sans Qt |
 | `validation_worker.py` | client de ce processus : requêtes, attente sans figer la fenêtre, repli |

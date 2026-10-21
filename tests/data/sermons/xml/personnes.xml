@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="fr">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Personnes citées dans les sermons</title>
+      </titleStmt>
+      <publicationStmt>
+        <p>Fichier d'autorités de l'édition d'essai « Sermones de tempore ».</p>
+      </publicationStmt>
+      <sourceDesc>
+        <p>Né numérique.</p>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <listPerson>
+        <person xml:id="augustinus">
+          <persName>Augustin d'Hippone</persName>
+          <death when="0430"/>
+        </person>
+        <person xml:id="gregorius">
+          <persName>Grégoire le Grand</persName>
+          <death when="0604"/>
+        </person>
+        <person xml:id="bernard">
+          <persName>Bernard de Clairvaux</persName>
+          <death when="1153"/>
+        </person>
+      </listPerson>
+    </body>
+  </text>
+</TEI>

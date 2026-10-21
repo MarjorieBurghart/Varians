@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Varians — configuration de l'aide à la saisie Ctrl+E / Ctrl+Espace.
+
+  IMPORTANT : ce fichier ne remplace PAS le schéma RELAX NG.
+  - RNG = validité du document.
+  - custom-elements.xml = commodité éditoriale et conventions du projet.
+
+  Attributs :
+    <attribute name="wit"/>
+      -> Ctrl+E insère wit="" et place le curseur dans la valeur.
+
+    <attribute name="rend" defaultValue="italic"/>
+      -> Ctrl+E insère directement rend="italic".
+
+  Suggestions de valeurs :
+    valuesMode="append"  (défaut) : ajoute les valeurs projet aux éventuelles
+      valeurs finies du RNG.
+    valuesMode="replace" : la liste projet remplace les propositions affichées
+      par Ctrl+Espace. Cela NE rend pas les autres valeurs invalides au regard
+      du RNG ; seule l'interface de saisie est volontairement plus restrictive.
+
+  Valeurs explicites :
+    <value>#T1</value>
+
+  Valeurs dynamiques :
+    <values source="witnesses" prefix="#"/>
+      -> produit automatiquement #<id> pour chaque témoin déclaré dans project.xml
+         (témoins pourvus d'images ou de synchronisation, qui peuvent différer
+         des <witness> décrits dans la TEI).
+    <values source="ids" elements="person personGrp" prefix="#"/>
+      -> produit un pointeur pour chaque xml:id des documents du projet
+         (édition et documents auxiliaires, par exemple un fichier
+         d'autorités), limité aux éléments nommés ; sans @elements, tous les
+         identifiants. Comme en TEI standard, #<id> désigne le document
+         lui-même ; un identifiant d'un autre document est proposé sous la
+         forme fichier.xml#<id> (chemin relatif).
+
+  Sans configuration, les attributs de référence (ref, corresp, who, wit…)
+  proposent déjà les identifiants du projet : persName/@ref les <person>,
+  placeName/@ref les <place>, orgName/@ref les <org>, @who les personnes,
+  @wit et @edRef les <witness>, les autres attributs tous les identifiants.
+
+  Mise en forme XML source (facultatif) :
+    <element name="hi" formatting="inline"/>
+    <element name="teiHeader" formatting="block"/>
+    <element name="formula" formatting="preserve"/>
+  Cette indication n'affecte jamais la validité RNG. formatting="block" ne
+  contourne pas les protections absolues du formateur (contenu mixte, <lb/>,
+  xml:space="preserve").
+-->
+<customElements>
+  <!-- rdg/@wit : les <witness> déclarés dans la TEI (le <listWit>), comme
+       lem/@wit ; ce sont eux que vérifie la commande « Références ». -->
+  <element name="rdg">
+    <attribute name="wit" valuesMode="replace">
+      <values source="ids" elements="witness" prefix="#"/>
+    </attribute>
+  </element>
+
+  <!-- Exemples supplémentaires :
+  <element name="name">
+    <attribute name="ref" valuesMode="replace">
+      <values source="ids" elements="person place" prefix="#"/>
+    </attribute>
+  </element>
+
+  <element name="lem">
+    <attribute name="wit" valuesMode="replace">
+      <values source="ids" elements="witness" prefix="#"/>
+    </attribute>
+  </element>
+
+  <element name="hi">
+    <attribute name="rend" defaultValue="italic" valuesMode="replace">
+      <value>italic</value>
+      <value>bold</value>
+    </attribute>
+  </element>
+
+  Le TEI recommande souvent yes/no/maybe pour @break sans les imposer dans le
+  RNG. Si votre politique éditoriale veut proposer seulement ces valeurs :
+  <element name="lb">
+    <attribute name="break" valuesMode="replace">
+      <value>yes</value>
+      <value>no</value>
+      <value>maybe</value>
+    </attribute>
+  </element>
+  -->
+</customElements>
