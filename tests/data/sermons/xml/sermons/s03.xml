@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="la">
+  <teiHeader xml:lang="fr">
+    <fileDesc>
+      <titleStmt>
+        <title>Sermo in die Paschae (sermon 3 de l'édition d'essai)</title>
+      </titleStmt>
+      <publicationStmt>
+        <p>Document TEI complet. Seul le premier div du body entre dans l'édition (xi:include, xpointer="element(/1/2/1/1)").</p>
+      </publicationStmt>
+      <sourceDesc>
+        <listWit>
+          <witness xml:id="A">Manuscrit fictif A, f. 14v-15v (témoin pivot de ce sermon)</witness>
+          <witness xml:id="C">Manuscrit fictif C, f. 4r-5r</witness>
+          <witness xml:id="D">Manuscrit fictif D, f. 102r-103r</witness>
+          <witness xml:id="E">Fragment fictif E, f. 1r-2r : ne contient que ce sermon</witness>
+        </listWit>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text>
+    <body>
+      <div xml:id="s03" type="sermo" n="3">
+        <head>Sermo in die Paschae</head>
+        <p xml:id="s03_p1">
+          <pb edRef="#A" n="14v"/>
+          <pb edRef="#C" n="4r"/>
+          <pb edRef="#E" n="1r"/>
+          <lb edRef="#A"/><quote>Surrexit Dominus vere, et apparuit Simoni.</quote> In hac
+          <lb edRef="#A"/>sollemnitate gaudet <app><lem wit="#A #C #E">tota</lem><rdg wit="#D">omnis</rdg></app> ecclesia, quia Christus
+          <pb edRef="#D" n="102v"/>
+          <lb edRef="#A"/>mortem vicit et nobis vitam aeternam aperuit.
+        </p>
+        <p xml:id="s03_p2">
+          <lb edRef="#A"/>Tria sunt quae in resurrectione eius consideranda sunt :
+          <pb edRef="#C" n="4v"/>
+          <pb edRef="#E" n="1v"/>
+          <lb edRef="#A"/>veritas, gloria et exemplum. Veritas, quia vere surrexit ;
+          <pb edRef="#A" n="15r"/>
+          <lb edRef="#A"/>gloria, quia <app><lem wit="#A #C">immortalis</lem><rdg wit="#D">impassibilis</rdg></app> ; exemplum, quia
+          <lb edRef="#A"/>sicut ipse surrexit, ita et nos <app><lem wit="#A #D #E">resurgemus</lem><rdg wit="#C">surgemus</rdg></app>.
+        </p>
+        <p xml:id="s03_p3">
+          <pb edRef="#D" n="103r"/>
+          <pb edRef="#C" n="5r"/>
+          <pb edRef="#E" n="2r"/>
+          <lb edRef="#A"/>Ideo dicit apostolus : <quote>Si consurrexistis cum Christo, quae
+          <pb edRef="#A" n="15v"/>
+          <lb edRef="#A"/>sursum sunt quaerite.</quote> Amen.
+        </p>
+      </div>
+    </body>
+  </text>
+</TEI>

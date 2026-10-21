@@ -5,6 +5,10 @@ Le module valide le texte XML courant contre un fichier RNG déclaré par le
 projet et retourne des erreurs structurées. Depuis la V0.5.6, les schémas
 RELAX NG compilés sont mis en cache avec invalidation automatique dès que le
 fichier racine ou l'une de ses dépendances locales (include/externalRef) change.
+
+Depuis la V0.9.0.0, une édition qui inclut ses parties par XInclude est
+validée assemblée (``validate_assembled``) : chaque erreur est rapportée dans
+son fichier (``ValidationIssue.file``), à sa ligne.
 """
 from __future__ import annotations
 
@@ -29,6 +33,9 @@ class ValidationIssue:
     message: str
     domain: str = ""
     type_name: str = ""
+    # Fichier de l'erreur quand ce n'est pas le document validé : une partie
+    # d'une édition assemblée (chemin absolu).
+    file: str = ""
 
 
 @dataclass(frozen=True)
@@ -90,7 +97,7 @@ def relaxng_schema_token(schema_path: str | Path) -> tuple:
     return _schema_dependency_signature(Path(schema_path).expanduser().resolve())
 
 
-def _issue_from_log(entry) -> ValidationIssue:
+def _issue_from_log(entry, file="") -> ValidationIssue:
     return ValidationIssue(
         line=max(0, int(getattr(entry, "line", 0) or 0)),
         column=max(0, int(getattr(entry, "column", 0) or 0)),
@@ -98,15 +105,18 @@ def _issue_from_log(entry) -> ValidationIssue:
         message=str(getattr(entry, "message", "") or "").strip(),
         domain=str(getattr(entry, "domain_name", "") or ""),
         type_name=str(getattr(entry, "type_name", "") or ""),
+        file=file,
     )
 
 
-def _unique_issues(entries) -> tuple[ValidationIssue, ...]:
+def _unique_issues(entries, file_of=None) -> tuple[ValidationIssue, ...]:
+    """Erreurs du journal lxml, sans doublons ; ``file_of(entrée)`` donne le
+    fichier de chacune (document assemblé)."""
     result = []
     seen = set()
     for entry in entries:
-        issue = _issue_from_log(entry)
-        key = (issue.line, issue.column, issue.level, issue.message, issue.type_name)
+        issue = _issue_from_log(entry, file_of(entry) if file_of else "")
+        key = (issue.file, issue.line, issue.column, issue.level, issue.message, issue.type_name)
         if key not in seen:
             seen.add(key)
             result.append(issue)
@@ -222,6 +232,21 @@ def _compiled_relaxng(schema_path: Path) -> _CompiledSchema:
         return compiled
 
 
+def _load_schema(schema_path) -> tuple[_CompiledSchema | None, ValidationResult | None]:
+    """``(schéma compilé, None)``, ou ``(None, résultat d'échec)``."""
+    if etree is None:
+        return None, ValidationResult(False, False, False, False, (), "lxml is not installed")
+    schema_path = Path(schema_path).expanduser().resolve()
+    if not schema_path.is_file():
+        return None, ValidationResult(True, False, False, False, (), f"Schema file not found: {schema_path}")
+    try:
+        return _compiled_relaxng(schema_path), None
+    except (OSError, etree.XMLSyntaxError, etree.RelaxNGParseError) as exc:
+        log = getattr(exc, "error_log", None)
+        issues = _unique_issues(log or ())
+        return None, ValidationResult(True, False, False, False, issues, str(exc))
+
+
 def validate_relaxng(xml_text: str, schema_path: str | Path, *, base_url: str | Path | None = None) -> ValidationResult:
     """Valide *xml_text* contre *schema_path*.
 
@@ -229,19 +254,9 @@ def validate_relaxng(xml_text: str, schema_path: str | Path, *, base_url: str | 
     chaque validation, ce qui est nécessaire pour valider la révision courante,
     mais ce coût est très inférieur à la recompilation d'un gros RNG TEI.
     """
-    if etree is None:
-        return ValidationResult(False, False, False, False, (), "lxml is not installed")
-
-    schema_path = Path(schema_path).expanduser().resolve()
-    if not schema_path.is_file():
-        return ValidationResult(True, False, False, False, (), f"Schema file not found: {schema_path}")
-
-    try:
-        compiled = _compiled_relaxng(schema_path)
-    except (OSError, etree.XMLSyntaxError, etree.RelaxNGParseError) as exc:
-        log = getattr(exc, "error_log", None)
-        issues = _unique_issues(log or ())
-        return ValidationResult(True, False, False, False, issues, str(exc))
+    compiled, failure = _load_schema(schema_path)
+    if failure is not None:
+        return failure
 
     try:
         parser = etree.XMLParser(resolve_entities=False, no_network=True, recover=False, huge_tree=True)
@@ -267,3 +282,65 @@ def validate_relaxng(xml_text: str, schema_path: str | Path, *, base_url: str | 
         valid = bool(compiled.relaxng.validate(document))
         issues = () if valid else _unique_issues(compiled.relaxng.error_log)
     return ValidationResult(True, True, True, valid, issues, "")
+
+
+def validate_assembled(master_text: str, schema_path: str | Path, master_path: str | Path,
+                       parts: dict | None = None) -> ValidationResult:
+    """Valide l'édition *master_text* assemblée avec ses parties (XInclude).
+
+    *parts* : ``{chemin: texte}`` des parties ouvertes, prioritaire sur les
+    fichiers. Les erreurs d'une partie portent son chemin (``file``) et sa
+    ligne ; celles de l'édition, ``file`` vide. Une édition mal formée donne
+    le même résultat que ``validate_relaxng``.
+
+    Un problème d'assemblage (partie absente, mal formée…) est une erreur du
+    domaine ``XINCLUDE`` : ``type_name`` est son code
+    (``xml_assembly.AssemblyProblem``), ``message`` son détail (chemin,
+    xpointer, erreur de syntaxe) ; le panneau RELAX NG le met en forme dans
+    la langue de l'interface.
+    """
+    if etree is None:
+        return ValidationResult(False, False, False, False, (), "lxml is not installed")
+    # Importé ici : xml_assembly exige lxml, dont ce module se passe à l'import.
+    from xml_assembly import assemble
+
+    assembly = assemble(master_text, master_path, parts)
+    if assembly.root is None:
+        return validate_relaxng(master_text, schema_path, base_url=master_path)
+    compiled, failure = _load_schema(schema_path)
+    if failure is not None:
+        return failure
+
+    def file_name(path):
+        return "" if path == assembly.master else str(path)
+
+    problems = tuple(ValidationIssue(
+        line=problem.line, column=0, level="ERROR", message=problem.detail,
+        domain="XINCLUDE", type_name=problem.code, file=file_name(problem.file),
+    ) for problem in assembly.problems)
+
+    tree = assembly.root.getroottree()
+
+    def file_of(entry):
+        path = getattr(entry, "path", None)
+        try:
+            found = tree.xpath(path) if path else []
+        except etree.XPathError:
+            found = []
+        if found and isinstance(found[0], etree._Element):
+            return file_name(assembly.origin(found[0]))
+        return ""
+
+    with compiled.validate_lock:
+        valid = bool(compiled.relaxng.validate(tree))
+        issues = () if valid else _unique_issues(compiled.relaxng.error_log, file_of)
+    return ValidationResult(True, True, True, valid and not problems, problems + issues, "")
+
+
+def validate_document(xml_text: str, schema_path: str | Path, base_url: str | Path | None = None,
+                      parts: dict | None = None) -> ValidationResult:
+    """Point d'entrée commun au processus de validation et au repli dans
+    Varians : l'édition est assemblée quand *parts* est donné (même vide)."""
+    if parts is None:
+        return validate_relaxng(xml_text, schema_path, base_url=base_url)
+    return validate_assembled(xml_text, schema_path, base_url or "document.xml", parts)

@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<teiManuscriptProject version="1">
+  <title>Sermones de tempore — essai XInclude</title>
+  <edition file="xml/edition.xml" />
+  <schema type="relaxng" source="xml-model" />
+  <interface language="fr" translationsDir="i18n" fallbackLanguage="en" />
+  <rendering xsltMode="builtin" css="rendering/tei.css" customElements="rendering/custom-elements.xml" />
+  <webViewer outputDir="web_output" filename="viewer.html" />
+  <witnesses base="A">
+    <witness id="A" label="A · Manuscrit fictif A" role="base">
+      <images type="none" />
+    </witness>
+    <witness id="B" label="B · Manuscrit fictif B">
+      <images type="none" />
+    </witness>
+    <witness id="C" label="C · Manuscrit fictif C">
+      <images type="none" />
+    </witness>
+    <witness id="D" label="D · Manuscrit fictif D">
+      <images type="none" />
+    </witness>
+    <witness id="E" label="E · Fragment fictif E">
+      <images type="none" />
+    </witness>
+  </witnesses>
+  <documents>
+    <document file="xml/personnes.xml" label="Personnes" />
+  </documents>
+</teiManuscriptProject>

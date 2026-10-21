@@ -199,3 +199,33 @@ dans un processus à part.
   validation est en cours.
 - Limite : le téléchargement d’un schéma distant, à sa toute première
   utilisation, se fait encore dans Varians.
+
+## V0.9.0.0 — édition assemblée par XInclude
+
+Une édition qui inclut ses parties par `xi:include` est validée assemblée,
+comme le feraient `xmllint --xinclude` ou oXygen, mais chaque erreur est
+rapportée dans **son** fichier, à sa ligne :
+
+- `xml_assembly.assemble` remplace chaque `xi:include` par une copie de
+  l’élément inclus (fragment, `xpointer` par identifiant ou `element()`),
+  en retenant le fichier d’origine de chaque copie ; les éléments gardent
+  leur ligne. Le texte des parties ouvertes, même non enregistré, remplace
+  celui des fichiers.
+- `relaxng_validation.validate_assembled` valide le document assemblé et
+  ramène chaque erreur à son fichier par le chemin de l’élément fautif
+  (`error_log.path`) : `ValidationIssue.file` porte le chemin de la partie,
+  vide pour l’édition. (`xmllint` attribue ces erreurs au fichier maître.)
+- Un problème d’assemblage (partie absente ou mal formée, inclusion
+  circulaire, `parse="text"`, `xi:fallback`, autre schéma `xpointer`) est
+  une erreur du domaine `XINCLUDE` : `type_name` est son code, `message`
+  son détail ; le panneau le met en forme dans la langue de l’interface.
+- `validate_document` est le point d’entrée commun au processus de
+  validation (champ `parts` de la requête : `{chemin: texte}`, même vide)
+  et au repli dans Varians.
+- Le schéma est toujours celui de l’édition (son `<?xml-model?>` ou celui
+  du projet), même quand une partie est affichée.
+
+Dans la fenêtre : colonne **Document** (seulement pour une édition qui a des
+parties), double-clic vers la bonne partie, couleur de chaque onglet selon
+ses propres erreurs ; le résultat est partagé par l’édition et ses parties,
+et toute modification de l’une le rend périmé pour toutes.

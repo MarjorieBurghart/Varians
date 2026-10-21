@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<div xmlns="http://www.tei-c.org/ns/1.0" xml:id="s01" type="sermo" n="1">
+  <head>Sermo in adventu Domini</head>
+  <p xml:id="s01_p1">
+    <lb edRef="#A"/><quote>Ecce rex tuus venit tibi mansuetus.</quote> Verba ista scripta
+    <lb edRef="#A"/>sunt in evangelio, et <app><lem wit="#A #C">significant</lem><rdg wit="#B">signant</rdg></app> adventum Domini
+    <lb edRef="#A"/>nostri. Triplex est enim adventus eius : primus in carne, secundus
+    <pb edRef="#C" n="2v"/>
+    <lb edRef="#A"/>in mente, tertius in iudicio.
+  </p>
+  <p xml:id="s01_p2">
+    <lb edRef="#A"/>Primus adventus fuit in humilitate, quando natus est de
+    <pb edRef="#A" n="12v"/>
+    <lb edRef="#A"/>virgine<note type="commentaire" xml:lang="fr">Voir le <ref target="#s02">sermon pour Noël</ref>, qui manque dans A.</note> ;
+    secundus est cotidie in anima per gratiam,
+    <pb edRef="#B" n="31v"/>
+    <lb edRef="#A"/>ut dicit <persName ref="../personnes.xml#augustinus">beatus Augustinus</persName> ; tertius erit in fine
+    <lb edRef="#A"/>saeculi, quando veniet <app><lem wit="#A #B">iudicare</lem><rdg wit="#C">iudicaturus</rdg></app> vivos et mortuos.
+  </p>
+  <p xml:id="s01_p3">
+    <lb edRef="#A"/>Ideo, fratres carissimi, praeparemus corda nostra, ut cum
+    <pb edRef="#A" n="13r"/>
+    <pb edRef="#C" n="3r"/>
+    <pb edRef="#B" n="32r"/>
+    <lb edRef="#A"/>venerit inveniat nos <app><lem wit="#A">vigilantes</lem><rdg wit="#B">vigiles</rdg></app><note type="commentaire" xml:lang="fr">Même
+    image dans le <ref target="#s03_p1">sermon pour Pâques</ref>.</note>. Amen.
+  </p>
+</div>

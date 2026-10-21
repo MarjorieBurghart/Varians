@@ -773,4 +773,31 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="rng.worker.fallback">Validace RELAX NG probíhá přímo ve Varians (validační proces není k dispozici: {reason}): během kompilace velkého schématu může okno zamrznout.</string>
   <string key="rng.status.running">RNG: probíhá validace…</string>
   <string key="rng.status.running.tip">Validace RELAX NG probíhá v samostatném procesu: okno zůstává použitelné. První validace podle velkého schématu, jako je TEI_ALL, může trvat asi deset sekund.</string>
+  <string key="parts.save_as.title">Části edice</string>
+  <string key="parts.save_as.text">Edice vkládá své části pomocí relativních cest:
+{hrefs}
+
+Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo edici uložte do její současné složky.</string>
+  <string key="rng.column.document">Dokument</string>
+  <string key="rng.xinclude.malformed">Část není správně formovaná: {detail}</string>
+  <string key="rng.xinclude.missing">Vložený soubor nebyl nalezen: {detail}</string>
+  <string key="rng.xinclude.fallback">Vložený soubor nebyl nalezen (xi:fallback není podporován): {detail}</string>
+  <string key="rng.xinclude.circular">Kruhové vložení: {detail}</string>
+  <string key="rng.xinclude.parse_text">Vložení textu (parse="text") není podporováno</string>
+  <string key="rng.xinclude.parse_invalid">Neplatná hodnota parse: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">Nepodporovaný href, očekává se místní soubor: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">Nepodporovaný xpointer: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">Xpointeru neodpovídá žádný prvek: {detail}</string>
+  <string key="status.structure.suspended">{base}: synchronizace pozastavena (edice v částech)</string>
+  <string key="status.structure.suspended.tip">Edice vkládá své části pomocí XInclude: synchronizace textových svědků napříč částmi přijde v některé z příštích verzí. Svědky lze nadále volně procházet. Viz nápověda, „Sestavené edice (XInclude)“.</string>
+  <string key="diagnostics.sync_suspended">Synchronizace pozastavena: edice vkládá části (XInclude). Svědky lze nadále volně procházet; synchronizace napříč částmi přijde v některé z příštích verzí.</string>
+  <string key="apparatus.witnesses.part">Svědkové této části (její &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Svědkové této části (&lt;locus target&gt; edice): {ids}</string>
+  <string key="apparatus.witnesses.wit">Svědkové uvedení v @wit této části: {ids}</string>
+  <string key="parts.webgen.title">Edice v částech</string>
+  <string key="parts.webgen.text">Edice vkládá své části pomocí XInclude. Webový prohlížeč je zatím neobsahuje: exportuje se jen text souboru edice, bez částí.
+
+Přesto exportovat?</string>
+  <string key="parts.webgen.continue">Přesto exportovat</string>
+  <string key="preview.assembled.read_only">Náhled sestavené edice včetně částí, jen pro čtení: úprava fragmentů zatím u edice v částech není možná.</string>
 </translations>

@@ -31,17 +31,64 @@ _ENCLOSING = "ancestor::*[self::tei:lem or self::tei:rdg][1]"
 _NCNAME = re.compile(r"^[^\W\d][\w.\-]*$")
 
 
-def witness_ids(xml_text):
-    """Identifiants des ``<witness>`` des ``<listWit>``, dans l'ordre du
-    document ; liste vide si le XML est mal formé."""
+def _parse(xml_text):
+    """Racine du document, ou None s'il est mal formé."""
     try:
         from lxml import etree
         parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=True)
-        root = etree.fromstring((xml_text or "").encode("utf-8"), parser=parser)
+        return etree.fromstring((xml_text or "").encode("utf-8"), parser=parser)
     except Exception:
+        return None
+
+
+def witness_ids(xml_text):
+    """Identifiants des ``<witness>`` des ``<listWit>``, dans l'ordre du
+    document ; liste vide si le XML est mal formé."""
+    root = _parse(xml_text)
+    if root is None:
         return []
     ids = root.xpath("//tei:listWit//tei:witness/@xml:id", namespaces={"tei": TEI_NS, "xml": XML_NS})
     return [str(value) for value in ids]
+
+
+def part_witnesses(part_text, edition_text):
+    """``(identifiants, provenance)`` des témoins d'une partie d'une édition
+    assemblée (XInclude), dans cet ordre de préférence :
+
+    - ``part`` : le ``<listWit>`` de la partie (son en-tête) ;
+    - ``locus`` : les témoins de l'édition dont un ``<locus target>`` vise un
+      élément de la partie ;
+    - ``wit`` : les témoins cités dans les ``@wit`` de la partie, dans l'ordre
+      du ``<listWit>`` de l'édition, puis dans l'ordre de citation.
+    """
+    own = witness_ids(part_text)
+    if own:
+        return own, "part"
+    part = _parse(part_text)
+    if part is None:
+        return [], "part"
+    namespaces = {"tei": TEI_NS, "xml": XML_NS}
+    part_ids = {str(value) for value in part.xpath("//@xml:id", namespaces=namespaces)}
+    edition = _parse(edition_text)
+    order = []
+    if edition is not None:
+        located = []
+        for witness in edition.xpath("//tei:listWit//tei:witness[@xml:id]", namespaces=namespaces):
+            ident = witness.get(f"{{{XML_NS}}}id")
+            order.append(ident)
+            for locus in witness.xpath(".//tei:locus[@target]", namespaces=namespaces):
+                if {token[1:] for token in locus.get("target").split() if token.startswith("#")} & part_ids:
+                    located.append(ident)
+                    break
+        if located:
+            return located, "locus"
+    cited = []
+    for value in part.xpath("//@wit"):
+        for token in str(value).split():
+            if token.startswith("#") and token[1:] not in cited:
+                cited.append(token[1:])
+    rank = {ident: index for index, ident in enumerate(order)}
+    return sorted(cited, key=lambda ident: rank.get(ident, len(order))), "wit"
 
 
 def _cites(witness_id):

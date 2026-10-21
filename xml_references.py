@@ -13,6 +13,14 @@ Résolution, au sens standard des URI (que suivent les autres outils XML) :
   avec sa cible, pour qu'on écrive ``fichier.xml#id`` ;
 - un identifiant présent plusieurs fois dans le document visé est ambigu.
 
+Édition assemblée par XInclude (V0.9.0.0) : l'édition et ses parties forment
+un seul document, un *groupe*. Un ``#id`` écrit dans l'un de ses fichiers se
+cherche d'abord dans ce fichier (en-tête compris), puis parmi les
+identifiants que les autres fichiers apportent à l'édition assemblée (pour
+une partie incluse par ``xpointer``, ceux de l'élément inclus seulement). Un
+identifiant défini dans deux parties n'est donc ambigu que pour une
+référence qui ne le trouve pas dans son propre fichier.
+
 L'analyse est lexicale (``xml_tag_pairs.scan_xml_tags``) : elle fonctionne sur
 un document momentanément mal formé et ignore commentaires et CDATA.
 """
@@ -208,9 +216,12 @@ class ReferenceResolver:
 
     ``documents`` : couples ``(chemin, texte)``, l'édition d'abord. Un fichier
     cité qui n'en fait pas partie est lu sur le disque s'il existe.
+    ``groups`` : pour chaque édition assemblée, ``{chemin: identifiants}``
+    que chacun de ses fichiers apporte au document assemblé
+    (``xml_assembly.Assembly.visible_ids``).
     """
 
-    def __init__(self, documents):
+    def __init__(self, documents, groups=()):
         self._locations = {}
         self._paths = {}
         self._texts = {}
@@ -223,6 +234,15 @@ class ReferenceResolver:
             self._texts[key] = str(text or "")
             self._order.append(key)
         self._ids = {}
+        self._groups = {}
+        for group in groups:
+            members = {}
+            for path, ids in group.items():
+                key, resolved = self._location(path)
+                self._paths.setdefault(key, resolved)
+                members[key] = frozenset(ids)
+            for key in members:
+                self._groups[key] = members
 
     def _location(self, path):
         """``(clé, chemin absolu)`` de ``path``. ``Path.resolve`` coûte cher,
@@ -267,6 +287,12 @@ class ReferenceResolver:
         own = self.ids(source) or {}
         if reference.id in own:
             return self._status([(self._paths[source_key], t) for t in own[reference.id]])
+        group = self._groups.get(source_key, {})
+        found = [(self._paths[key], target) for key, visible in group.items()
+                 if key != source_key and reference.id in visible
+                 for target in (self.ids(self._paths[key]) or {}).get(reference.id, ())]
+        if found:
+            return self._status(found)
         # « #id » ne désigne que ce document : une cible ailleurs dans le projet
         # n'est indiquée que pour aider à écrire la forme « fichier.xml#id ».
         found = []

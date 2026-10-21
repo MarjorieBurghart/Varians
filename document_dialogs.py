@@ -124,8 +124,9 @@ class DocumentDialogsMixin:
 
     def _remove_document(self, session):
         """Retire ``session`` du projet, après confirmation (et enregistrement
-        de ses modifications, si on le demande) ; son fichier reste."""
-        if session.is_edition:
+        de ses modifications, si on le demande) ; son fichier reste. Une
+        partie de l'édition ne se retire pas : elle suit ses xi:include."""
+        if not session.is_auxiliary:
             return False
         answer = QMessageBox.question(
             self, _t("documents.remove.title"),

@@ -773,4 +773,31 @@
   <string key="rng.worker.fallback">Проверка RELAX NG выполняется внутри Varians (процесс проверки недоступен: {reason}): во время компиляции большой схемы окно может зависнуть.</string>
   <string key="rng.status.running">RNG: идёт проверка…</string>
   <string key="rng.status.running.tip">Проверка RELAX NG выполняется в отдельном процессе: окном можно пользоваться. Первая проверка по большой схеме, например TEI_ALL, может занять около десяти секунд.</string>
+  <string key="parts.save_as.title">Части издания</string>
+  <string key="parts.save_as.text">Издание включает свои части по относительным путям:
+{hrefs}
+
+При сохранении в другую папку оно их больше не найдёт. Скопируйте и части или сохраните издание в его текущей папке.</string>
+  <string key="rng.column.document">Документ</string>
+  <string key="rng.xinclude.malformed">Часть не является правильно сформированной: {detail}</string>
+  <string key="rng.xinclude.missing">Включаемый файл не найден: {detail}</string>
+  <string key="rng.xinclude.fallback">Включаемый файл не найден (xi:fallback не поддерживается): {detail}</string>
+  <string key="rng.xinclude.circular">Циклическое включение: {detail}</string>
+  <string key="rng.xinclude.parse_text">Включение текста (parse="text") не поддерживается</string>
+  <string key="rng.xinclude.parse_invalid">Неверное значение parse: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">Неподдерживаемый href, ожидается локальный файл: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">Неподдерживаемый xpointer: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">Ни один элемент не соответствует xpointer: {detail}</string>
+  <string key="status.structure.suspended">{base}: синхронизация приостановлена (издание из частей)</string>
+  <string key="status.structure.suspended.tip">Издание включает свои части через XInclude: синхронизация свидетелей между частями появится в одной из следующих версий. Свидетелей можно свободно просматривать. См. справку, «Собранные издания (XInclude)».</string>
+  <string key="diagnostics.sync_suspended">Синхронизация приостановлена: издание включает части (XInclude). Свидетелей можно свободно просматривать; синхронизация между частями появится в одной из следующих версий.</string>
+  <string key="apparatus.witnesses.part">Свидетели этой части (её &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Свидетели этой части (&lt;locus target&gt; издания): {ids}</string>
+  <string key="apparatus.witnesses.wit">Свидетели, указанные в @wit этой части: {ids}</string>
+  <string key="parts.webgen.title">Издание из частей</string>
+  <string key="parts.webgen.text">Издание включает свои части через XInclude. Веб-просмотрщик пока их не содержит: будет экспортирован только текст файла издания, без частей.
+
+Всё равно экспортировать?</string>
+  <string key="parts.webgen.continue">Всё равно экспортировать</string>
+  <string key="preview.assembled.read_only">Предпросмотр собранного издания, включая части, только для чтения: редактирование фрагментов для издания из частей пока недоступно.</string>
 </translations>

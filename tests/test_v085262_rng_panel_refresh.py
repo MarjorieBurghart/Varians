@@ -54,6 +54,10 @@ class DummyMain:
     _auto_refresh_rng = _method('_auto_refresh_rng')
     show_validation_panel = _method('show_validation_panel')
 
+    # Édition assemblée par XInclude (V0.9.0.0) : aucune ici.
+    def _assembly_context(self):
+        return None
+
     def __init__(self):
         self.doc = DummyDoc()
         self.editor = SimpleNamespace(document=lambda: self.doc)

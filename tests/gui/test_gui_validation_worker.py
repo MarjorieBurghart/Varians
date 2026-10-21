@@ -165,3 +165,20 @@ def test_closing_during_a_validation_stops_the_process_at_once(make_client, sche
     client.shutdown()
     assert time.perf_counter() - started < 1.0
     assert process.poll() is not None
+
+
+@pytest.mark.parametrize("command", [None, "absent"])
+def test_an_assembled_edition_is_validated_with_its_parts(make_client, schema, tmp_path, qtbot, command):
+    # Par le processus séparé, puis par le repli dans Varians : même fonction.
+    client = make_client([str(tmp_path / "absent")] if command else None)
+    part = tmp_path / "part.xml"
+    part.write_text("<p>\n<x/></p>", encoding="utf-8")
+    master = tmp_path / "edition.xml"
+    text = '<root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="part.xml"/></root>'
+    result = client.validate(text, schema, master, parts={})
+    assert [(Path(i.file).name, i.line) for i in result.issues] == [("part.xml", 2)]
+    answers = []
+    client.validate_async(text, schema, master, QPushButton(), answers.append, parts={str(part): "<p>b</p>"})
+    qtbot.waitUntil(lambda: bool(answers), timeout=30000)
+    assert answers[0].valid
+    assert client.uses_process is (command is None)

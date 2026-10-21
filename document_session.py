@@ -135,6 +135,7 @@ class DocumentSession:
         self.view_state = None
 
         # « edition » : l'édition TEI du projet, liée aux témoins et à l'aperçu ;
+        # « part » : partie de l'édition, incluse par un xi:include (V0.9.0.0) ;
         # « auxiliary » : document XML auxiliaire déclaré dans <documents>.
         self.role = role
         self.label = label
@@ -185,9 +186,30 @@ class DocumentSession:
         session.path = Path(config.path)
         return session
 
+    @classmethod
+    def part(cls, path, schema_mode: str = "auto", schema_file: Optional[Path] = None) -> "DocumentSession":
+        """Session d'une partie de l'édition (fichier inclus par XInclude) ;
+        son onglet porte le nom du fichier. Le schéma est celui de l'édition."""
+        session = cls(role="part", label=Path(path).name, schema_mode=schema_mode, schema_file=schema_file)
+        session.path = Path(path)
+        return session
+
     @property
     def is_edition(self) -> bool:
         return self.role == "edition"
+
+    @property
+    def is_part(self) -> bool:
+        return self.role == "part"
+
+    @property
+    def is_auxiliary(self) -> bool:
+        return self.role == "auxiliary"
+
+    @property
+    def in_edition(self) -> bool:
+        """L'édition ou l'une de ses parties : le document assemblé."""
+        return self.role in ("edition", "part")
 
     # --- Transitions d'état -------------------------------------------------
 

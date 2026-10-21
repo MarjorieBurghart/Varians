@@ -7,7 +7,9 @@ masqué reste dans le projet : il garde ses modifications en mémoire et
 Varians propose de les enregistrer avant de quitter.
 
 - À la première ouverture, tous les onglets sont affichés ; un document
-  ajouté plus tard l'est aussi, à la fin.
+  ajouté plus tard l'est aussi, à la fin, sauf une partie de l'édition :
+  elle se place après les parties déjà présentes (à défaut, après
+  l'édition), même si un ordre a été mémorisé.
 - Le document affiché a toujours son onglet : l'édition à l'ouverture, un
   document atteint par une référence (F12, panneau « Références »). Son
   onglet réapparaît alors durablement.
@@ -166,27 +168,42 @@ class DocumentDisplayMixin:
 
     def _arrange_document_tabs(self, order_keys, hidden_keys):
         """Ordre et documents masqués d'après leurs clés ; une clé inconnue
-        est ignorée, un document absent de ``order_keys`` vient à la fin."""
+        est ignorée, un document absent de ``order_keys`` est placé comme un
+        nouveau document (voir ``_place_new_documents``)."""
         keys = {session: self._document_key(session) for session in self.documents}
         remaining = {key: session for session, key in keys.items()}
         order = [remaining.pop(key) for key in order_keys if key in remaining]
-        order += remaining.values()
+        order = self._place_new_documents(order, remaining.values())
         hidden = set(hidden_keys)
         self._document_tab_order = order
         self._hidden_documents = {session for session in order if keys[session] in hidden}
 
     def _sync_document_tabs(self):
-        """Suit les ajouts et retraits de documents (un nouveau document vient
-        à la fin, visible), puis calcule les onglets visibles. Le document
-        affiché garde son onglet."""
+        """Suit les ajouts et retraits de documents (un nouveau document est
+        visible, placé par ``_place_new_documents``), puis calcule les onglets
+        visibles. Le document affiché garde son onglet."""
         present = set(self.documents)
         order = [session for session in self._document_tab_order if session in present]
         known = set(order)
-        order += [session for session in self.documents if session not in known]
+        order = self._place_new_documents(order, [s for s in self.documents if s not in known])
         self._document_tab_order = order
         self._hidden_documents &= present
         self._hidden_documents.discard(self.document)
         self._tab_sessions = [session for session in order if session not in self._hidden_documents]
+
+    @staticmethod
+    def _place_new_documents(order, sessions):
+        """``order`` complété par ``sessions`` : une partie après la dernière
+        partie (à défaut, après l'édition), tout autre document à la fin."""
+        order = list(order)
+        for session in sessions:
+            if not session.is_part:
+                order.append(session)
+                continue
+            anchors = ([i for i, s in enumerate(order) if s.is_part]
+                       or [i for i, s in enumerate(order) if s.is_edition])
+            order.insert(anchors[-1] + 1 if anchors else len(order), session)
+        return order
 
     def _visible_document_sessions(self):
         """Documents qui ont un onglet, dans l'ordre des onglets."""
@@ -256,14 +273,16 @@ class DocumentDisplayMixin:
         hide = menu.addAction(_t("documents.tab.hide"))
         hide.setEnabled(len(self._tab_sessions) > 1)
         hide.triggered.connect(lambda _checked=False: self.hide_document_tab(session))
+        # Renommer et retirer réécrivent <documents> : documents auxiliaires
+        # seulement (une partie se déduit des xi:include de l'édition).
         rename = menu.addAction(_t("documents.tab.rename"))
-        rename.setEnabled(not session.is_edition)
+        rename.setEnabled(session.is_auxiliary)
         rename.triggered.connect(lambda _checked=False: self.rename_document_tab(session))
         choose = menu.addAction(_t("documents.view.choose"))
         choose.triggered.connect(lambda _checked=False: self.choose_displayed_documents())
         menu.addSeparator()
         remove = menu.addAction(_t("documents.remove.menu"))
-        remove.setEnabled(not session.is_edition)
+        remove.setEnabled(session.is_auxiliary)
         remove.triggered.connect(lambda _checked=False: self._remove_document(session))
         return menu
 
@@ -279,7 +298,7 @@ class DocumentDisplayMixin:
         """« Renommer l'onglet… » d'un document auxiliaire : le nom est écrit
         dans ``@label`` de son ``<document>`` (project.xml, copie ``.bak``) ;
         un nom vide revient au nom du fichier. True si le nom a changé."""
-        if session.is_edition:
+        if not session.is_auxiliary:
             return False
         name, ok = QInputDialog.getText(self, _t("documents.tab.rename.title"), _t("documents.tab.rename.label"),
                                         QLineEdit.EchoMode.Normal, session.label)

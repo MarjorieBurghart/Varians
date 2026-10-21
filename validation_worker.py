@@ -13,6 +13,9 @@ jamais bloquée par la compilation d'un gros schéma.
   d'événements (la fenêtre se redessine, les animations avancent), mais en
   ignorant clics et frappes, pour qu'aucune action ne parte au milieu.
 
+Avec ``parts`` (``{chemin: texte}``, même vide), l'édition est validée
+assemblée par XInclude (``relaxng_validation.validate_document``).
+
 **Repli** : si le processus ne démarre pas ou s'arrête, la validation se fait
 dans Varians même, comme avant la V0.8.9.2 (la fenêtre est alors bloquée
 pendant la compilation), et les requêtes en cours ne sont pas perdues.
@@ -32,7 +35,7 @@ import shiboken6
 from PySide6.QtCore import QCoreApplication, QEvent, QEventLoop, QObject, QTimer, Qt, Signal
 from PySide6.QtWidgets import QApplication
 
-from relaxng_validation import validate_relaxng
+from relaxng_validation import validate_document
 from relaxng_worker import result_from_dict
 
 _APPLICATION_DIR = Path(__file__).resolve().parent
@@ -99,26 +102,28 @@ class RelaxNGWorkerClient(QObject):
 
     # --- Requêtes ---------------------------------------------------------------
 
-    def validate_async(self, xml_text, schema_path, base_url, owner, callback):
+    def validate_async(self, xml_text, schema_path, base_url, owner, callback, parts=None):
         """Valide sans attendre ; ``callback(result)`` est appelé dans le fil
         principal, sauf si ``owner`` (un QObject) a été détruit entre-temps."""
-        return self._submit(xml_text, schema_path, base_url, owner, callback)
+        return self._submit(xml_text, schema_path, base_url, owner, callback, parts)
 
-    def validate(self, xml_text, schema_path, base_url=None):
+    def validate(self, xml_text, schema_path, base_url=None, parts=None):
         """Valide et renvoie le résultat ; la fenêtre continue de se redessiner
         pendant l'attente, sans traiter clics ni frappes."""
         if QCoreApplication.instance() is None:             # pas de boucle d'événements
-            return validate_relaxng(xml_text, schema_path, base_url=base_url or None)
-        request_id = self._submit(xml_text, schema_path, base_url, None, None)
+            return validate_document(xml_text, schema_path, base_url or None, parts)
+        request_id = self._submit(xml_text, schema_path, base_url, None, None, parts)
         if request_id not in self._results:
             self._wait_for(request_id)
         return self._results.pop(request_id)
 
-    def _submit(self, xml_text, schema_path, base_url, owner, callback):
+    def _submit(self, xml_text, schema_path, base_url, owner, callback, parts=None):
         self._next_id += 1
         request_id = self._next_id
         request = {"id": request_id, "op": "validate", "xml": xml_text, "schema": str(schema_path),
                    "base_url": str(base_url) if base_url else None}
+        if parts is not None:
+            request["parts"] = {str(path): text for path, text in parts.items()}
         entry = _Pending(request, owner, callback)
         if not self._ensure_process():
             self._deliver(request_id, entry, self._validate_here(request), was_pending=False)
@@ -244,7 +249,8 @@ class RelaxNGWorkerClient(QObject):
 
     @staticmethod
     def _validate_here(request):
-        return validate_relaxng(request["xml"], request["schema"], base_url=request.get("base_url") or None)
+        return validate_document(request["xml"], request["schema"], request.get("base_url") or None,
+                                 request.get("parts"))
 
     def _fall_back(self, reason):
         """Le processus est indisponible : valider désormais dans Varians, y

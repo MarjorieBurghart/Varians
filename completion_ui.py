@@ -126,6 +126,12 @@ class CompletionMixin:
         Ctrl+Espace lorsque l'utilisateur ne modifie que le corps de la TEI.
         """
         text = self.editor.toPlainText() if xml_text is None else xml_text
+        xml_path = self.current_path or self.project.edition
+        # Partie d'une édition assemblée : le schéma est celui de l'édition.
+        edition = self._assembly_context()
+        if edition is not None and edition is not self.document:
+            text = edition.text_document.toPlainText()
+            xml_path = edition.path or self.project.edition
         key = self._schema_resolution_cache_key(text)
         if self._completion_resolution_key == key and self._completion_resolution is not None:
             resolution = self._completion_resolution
@@ -134,7 +140,7 @@ class CompletionMixin:
         resolution = resolve_schema(
             mode=self._schema_mode,
             xml_text=text,
-            xml_path=self.current_path or self.project.edition,
+            xml_path=xml_path,
             project_schema=self._schema_file,
             force_refresh=False,
         )

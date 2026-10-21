@@ -759,4 +759,31 @@ The file is not deleted: it stays on disk.</string>
   <string key="rng.worker.fallback">RELAX NG validation done inside Varians (validation process unavailable: {reason}): the window may freeze while a large schema is compiled.</string>
   <string key="rng.status.running">RNG: validating…</string>
   <string key="rng.status.running.tip">RELAX NG validation running in a separate process: the window remains usable. The first validation against a large schema such as TEI_ALL may take about ten seconds.</string>
+  <string key="parts.save_as.title">Parts of the edition</string>
+  <string key="parts.save_as.text">The edition includes its parts through relative paths:
+{hrefs}
+
+Saved in another folder, it would no longer find them. Copy the parts as well, or save the edition in its current folder.</string>
+  <string key="rng.column.document">Document</string>
+  <string key="rng.xinclude.malformed">Malformed part: {detail}</string>
+  <string key="rng.xinclude.missing">Included file not found: {detail}</string>
+  <string key="rng.xinclude.fallback">Included file not found (xi:fallback is not supported): {detail}</string>
+  <string key="rng.xinclude.circular">Circular inclusion: {detail}</string>
+  <string key="rng.xinclude.parse_text">Text inclusion (parse="text") is not supported</string>
+  <string key="rng.xinclude.parse_invalid">Invalid parse value: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">Unsupported href, a local file is expected: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">Unsupported xpointer: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">No element matches the xpointer: {detail}</string>
+  <string key="status.structure.suspended">{base}: synchronization suspended (edition in parts)</string>
+  <string key="status.structure.suspended.tip">The edition includes its parts through XInclude: witness synchronization across the parts will come in a later version. The witnesses can still be browsed freely. See the help, “Assembled editions (XInclude)”.</string>
+  <string key="diagnostics.sync_suspended">Synchronization suspended: the edition includes parts (XInclude). The witnesses can still be browsed freely; synchronization across the parts will come in a later version.</string>
+  <string key="apparatus.witnesses.part">Witnesses of this part (its &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Witnesses of this part (&lt;locus target&gt; of the edition): {ids}</string>
+  <string key="apparatus.witnesses.wit">Witnesses cited in the @wit of this part: {ids}</string>
+  <string key="parts.webgen.title">Edition in parts</string>
+  <string key="parts.webgen.text">The edition includes its parts through XInclude. The web viewer does not contain them yet: only the text of the edition file will be exported, without the parts.
+
+Export anyway?</string>
+  <string key="parts.webgen.continue">Export anyway</string>
+  <string key="preview.assembled.read_only">Preview of the assembled edition, parts included, read-only: fragment editing is not yet available for an edition in parts.</string>
 </translations>

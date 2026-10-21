@@ -1,0 +1,175 @@
+/* ================================================================
+   tei.css — Feuille de style pour la présentation HTML de TEI
+   ================================================================ */
+
+/* ---------- Variables & reset ---------------------------------- */
+:root {
+  --font-text:   "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-ui:     system-ui, -apple-system, sans-serif;
+  --color-bg:    #faf8f4;
+  --color-text:  #1a1612;
+  --color-muted: #6b6056;
+  --color-quote: #3b2c1a;
+  --color-accent:#7a3e10;
+  --color-note-bg: #fff8e7;
+  --color-note-border: #d4aa60;
+  --color-unclear: #a0522d;
+  --color-apparatus: #e0462b;
+  --color-pb:    #b0a090;
+  --max-width:   720px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 2rem 1.5rem 4rem;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-text);
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+/* ---------- Layout --------------------------------------------- */
+header, nav.toc, main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+/* ---------- Header --------------------------------------------- */
+header {
+  border-bottom: 2px solid var(--color-accent);
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+}
+
+header h1 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin: 0 0 0.3rem;
+  color: var(--color-accent);
+  font-family: var(--font-ui);
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  margin: 0;
+}
+
+/* ---------- Sommaire des sermons ------------------------------ */
+.toc {
+  margin: 0 auto 2.2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-pb);
+  border-radius: 5px;
+  background: #f5f0e8;
+  font-family: var(--font-ui);
+}
+
+.toc-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+  margin-bottom: 0.45rem;
+}
+
+.toc-list {
+  line-height: 1.8;
+}
+
+.toc-link {
+  display: inline-block;
+  margin: 0 0.55rem 0.15rem 0;
+  color: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.toc-link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Sections (div[@xml:id]) ---------------------------- */
+.section {
+  margin-bottom: 3rem;
+  padding-top: 0.5rem;
+}
+
+.section-title {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  border-left: 3px solid var(--color-accent);
+  padding-left: 0.6em;
+  margin: 0 0 1.2rem;
+}
+
+/* ---------- Paragraphs ----------------------------------------- */
+p {
+  margin: 0 0 1em;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* ---------- Quotes --------------------------------------------- */
+.quote {
+  font-style: italic;
+  color: var(--color-quote);
+}
+
+/* ---------- Unclear readings ----------------------------------- */
+.unclear {
+  color: var(--color-unclear);
+  border-bottom: 1px dotted var(--color-unclear);
+  cursor: help;
+}
+
+/* ---------- Apparatus ----------------------------------- */
+.apparatus {
+  color: var(--color-apparatus);
+  border-bottom: 1px var(--color-apparatus);
+}
+
+
+/* ---------- Editorial notes ------------------------------------ */
+.note {
+  font-size: 0.82em;
+  font-family: var(--font-ui);
+  color: var(--color-muted);
+  background: var(--color-note-bg);
+  border: 1px solid var(--color-note-border);
+  border-radius: 3px;
+  padding: 0 0.3em;
+  margin: 0 0.15em;
+  vertical-align: super;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ---------- Page-break markers --------------------------------- */
+.pb {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-family: var(--font-ui);
+  color: var(--color-pb);
+  border: 1px solid var(--color-pb);
+  border-radius: 3px;
+  padding: 0 0.35em;
+  margin: 0 0.3em;
+  vertical-align: middle;
+  cursor: default;
+}
+
+/* ---------- Responsive ----------------------------------------- */
+@media (max-width: 600px) {
+  body { font-size: 0.97rem; padding: 1rem 1rem 3rem; }
+  header h1 { font-size: 1.15rem; }
+}

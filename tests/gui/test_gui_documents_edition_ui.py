@@ -135,7 +135,12 @@ def test_language_change_while_another_document_is_displayed(open_window, projec
     assert window.action_save.text() == tr("menu.save_document") == "Save document"
 
     window.show_document(window.edition_session)
+    # Langue changée : l'état est recalculé, la validation repart en
+    # arrière-plan (V0.8.9.2) ; attendre sa réponse, non un délai fixe.
+    import validation_worker
     qtbot.wait(300)
+    qtbot.waitUntil(lambda: not validation_worker.worker_client().busy, timeout=60000)
+    qtbot.wait(50)
     assert window.action_save.text() == tr("menu.save_edition") == "Save edition"
     assert window.rng_status.text() == tr("rng.status.valid")
     assert window.xml_status.text() == tr("xml.valid")

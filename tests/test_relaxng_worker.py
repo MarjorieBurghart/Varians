@@ -41,6 +41,7 @@ def test_results_survive_a_json_round_trip():
     result = ValidationResult(True, True, True, False, (
         ValidationIssue(3, 7, "ERROR", "Did not expect element x there", "RELAXNGV", "RNG_ERR"),
         ValidationIssue(4, 1, "WARNING", "é « accents »"),
+        ValidationIssue(27, 0, "ERROR", "Invalid attribute", "RELAXNGV", "RNG_ERR", "/projet/xml/s02.xml"),
     ), "")
     assert result_from_dict(json.loads(json.dumps(result_to_dict(result)))) == result
 
@@ -119,3 +120,23 @@ def test_varians_itself_starts_the_worker_without_loading_qt(schema):
     ping, validation = (json.loads(line) for line in process.stdout.splitlines())
     assert ping["ok"] is True and ping["qt_loaded"] is False
     assert result_from_dict(validation["result"]).valid
+
+
+def test_an_assembled_edition_is_validated_with_its_parts(tmp_path, schema):
+    (tmp_path / "part.xml").write_text("<p>\n<x/></p>", encoding="utf-8")
+    master = tmp_path / "edition.xml"
+    master.write_text('<root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="part.xml"/></root>',
+                      encoding="utf-8")
+    request = {"id": 7, "op": "validate", "xml": master.read_text(encoding="utf-8"), "schema": str(schema),
+               "base_url": str(master), "parts": {}}
+    result = result_from_dict(handle_request(request)["result"])
+    assert [(Path(i.file).name, i.line) for i in result.issues] == [("part.xml", 2)]
+    # Le texte non enregistré de la partie est celui qui est validé.
+    request["parts"] = {str(tmp_path / "part.xml"): "<p>b</p>"}
+    assert result_from_dict(handle_request(request)["result"]).valid
+
+
+def test_parts_must_be_texts(schema):
+    response = handle_request({"id": 8, "op": "validate", "xml": "<root/>", "schema": str(schema),
+                               "parts": {"a.xml": 3}})
+    assert response["id"] == 8 and response["error"]

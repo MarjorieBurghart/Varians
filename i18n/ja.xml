@@ -773,4 +773,31 @@
   <string key="rng.worker.fallback">RELAX NG の検証を Varians 内で行います（検証プロセスを利用できません：{reason}）。大きなスキーマのコンパイル中はウィンドウが応答しなくなることがあります。</string>
   <string key="rng.status.running">RNG：検証中…</string>
   <string key="rng.status.running.tip">RELAX NG の検証を別プロセスで実行中です。ウィンドウはそのまま使えます。TEI_ALL のような大きなスキーマでは、最初の検証に 10 秒ほどかかることがあります。</string>
+  <string key="parts.save_as.title">版の部分</string>
+  <string key="parts.save_as.text">この版は相対パスで部分を取り込んでいます：
+{hrefs}
+
+別のフォルダーに保存すると、部分が見つからなくなります。部分もコピーするか、版を現在のフォルダーに保存してください。</string>
+  <string key="rng.column.document">文書</string>
+  <string key="rng.xinclude.malformed">整形式でない部分：{detail}</string>
+  <string key="rng.xinclude.missing">取り込まれたファイルが見つかりません：{detail}</string>
+  <string key="rng.xinclude.fallback">取り込まれたファイルが見つかりません（xi:fallback には対応していません）：{detail}</string>
+  <string key="rng.xinclude.circular">循環した取り込み：{detail}</string>
+  <string key="rng.xinclude.parse_text">テキストの取り込み（parse="text"）には対応していません</string>
+  <string key="rng.xinclude.parse_invalid">parse の値が正しくありません：{detail}</string>
+  <string key="rng.xinclude.href_unsupported">対応していない href です。ローカルファイルを指定してください：{detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">対応していない xpointer です：{detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">xpointer に一致する要素がありません：{detail}</string>
+  <string key="status.structure.suspended">{base}：同期を一時停止中（部分に分かれた版）</string>
+  <string key="status.structure.suspended.tip">この版は XInclude で部分を取り込んでいます。部分をまたぐ伝本の同期は今後のバージョンで対応します。伝本は自由に閲覧できます。ヘルプの「組み立てられた版（XInclude）」を参照してください。</string>
+  <string key="diagnostics.sync_suspended">同期を一時停止中：この版は部分を取り込んでいます（XInclude）。伝本は自由に閲覧できます。部分をまたぐ同期は今後のバージョンで対応します。</string>
+  <string key="apparatus.witnesses.part">この部分の伝本（その &lt;listWit&gt;）：{ids}</string>
+  <string key="apparatus.witnesses.locus">この部分の伝本（版の &lt;locus target&gt;）：{ids}</string>
+  <string key="apparatus.witnesses.wit">この部分の @wit に挙げられた伝本：{ids}</string>
+  <string key="parts.webgen.title">部分に分かれた版</string>
+  <string key="parts.webgen.text">この版は XInclude で部分を取り込んでいます。Web ビューアーはまだ部分を含みません。版のファイルの本文だけが書き出され、部分は含まれません。
+
+それでも書き出しますか？</string>
+  <string key="parts.webgen.continue">それでも書き出す</string>
+  <string key="preview.assembled.read_only">組み立てられた版（部分を含む）のプレビュー、読み取り専用：部分に分かれた版では、断片の編集はまだできません。</string>
 </translations>

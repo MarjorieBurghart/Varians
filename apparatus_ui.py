@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QListWidget, QMessageBox, QPushButton, QRadioButton, QVBoxLayout,
 )
 from app_context import tr as _t
-from apparatus_xpath import incomplete_app_xpath, repeated_witness_xpath, witness_ids, witness_xpath
+from apparatus_xpath import incomplete_app_xpath, part_witnesses, repeated_witness_xpath, witness_ids, witness_xpath
 from project_config import XPathQuery
 from project_management import update_project_xpath_queries
 from xpath_search import TEI_NS, XML_NS
@@ -90,7 +90,14 @@ class ApparatusDebugDialog(QDialog):
     chaque ajout, modification ou suppression ; elle renvoie False en cas
     d'échec (la liste affichée n'est alors pas modifiée)."""
 
-    def __init__(self, ids, queries, proposed_expression, save, parent=None):
+    # Origine de la liste des témoins (apparatus_xpath.part_witnesses).
+    _WITNESS_SOURCES = {"document": "apparatus.witnesses", "part": "apparatus.witnesses.part",
+                        "locus": "apparatus.witnesses.locus", "wit": "apparatus.witnesses.wit"}
+
+    def __init__(self, ids, queries, proposed_expression, save, parent=None, source="document"):
+        """``source`` : d'où vient la liste ``ids`` (« document » : le
+        ``<listWit>`` du document affiché ; pour une partie d'une édition
+        assemblée, voir ``part_witnesses``)."""
         super().__init__(parent)
         self.setWindowTitle(_t("apparatus.title"))
         self.resize(640, 520)
@@ -100,7 +107,7 @@ class ApparatusDebugDialog(QDialog):
         self._save = save
         root = QVBoxLayout(self)
         root.addWidget(_label(_t("apparatus.hint"), self))
-        self.witnesses_label = _label(_t("apparatus.witnesses", ids=", ".join(self._ids)) if self._ids
+        self.witnesses_label = _label(_t(self._WITNESS_SOURCES[source], ids=", ".join(self._ids)) if self._ids
                                       else _t("apparatus.no_witness"), self)
         root.addWidget(self.witnesses_label)
 
@@ -242,8 +249,15 @@ class ApparatusDebugMixin:
 
     def debug_apparatus(self):
         """Aide ▸ « Débugger l'apparat… ». True si une requête a été lancée."""
-        dialog = ApparatusDebugDialog(witness_ids(self.editor.toPlainText()), self.project.xpath_queries,
-                                      self.xpath_query.text().strip(), self._save_xpath_queries, self)
+        text = self.editor.toPlainText()
+        # Partie d'une édition assemblée : ses propres témoins (son <listWit>,
+        # les <locus target> de l'édition, sinon ses @wit).
+        if self.document.is_part:
+            ids, source = part_witnesses(text, self.edition_session.text_document.toPlainText())
+        else:
+            ids, source = witness_ids(text), "document"
+        dialog = ApparatusDebugDialog(ids, self.project.xpath_queries, self.xpath_query.text().strip(),
+                                      self._save_xpath_queries, self, source=source)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return False
         expression = dialog.selected_expression()

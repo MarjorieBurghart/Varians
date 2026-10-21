@@ -217,7 +217,9 @@ def load_split_thumbnail(widget, page, project_root):
 class WitnessDiagnosticDialog(QDialog):
     """Read-only audit of witness resources (no OCR or TEI text is exposed)."""
 
-    def __init__(self, rows, parent=None):
+    def __init__(self, rows, parent=None, note=''):
+        """``note`` : avertissement affiché sous l'introduction (synchronisation
+        suspendue, par exemple) ; aucun s'il est vide."""
         super().__init__(parent)
         self.setWindowTitle(_t('diagnostics.title'))
         self.resize(1040, 520)
@@ -226,6 +228,11 @@ class WitnessDiagnosticDialog(QDialog):
         self.intro = QLabel(_t('diagnostics.intro'))
         self.intro.setWordWrap(True)
         root.addWidget(self.intro)
+        self.note = QLabel(note)
+        self.note.setWordWrap(True)
+        self.note.setStyleSheet('color:#a14b2f')
+        self.note.setVisible(bool(note))
+        root.addWidget(self.note)
         self.table = QTableWidget(len(rows), 7, self)
         self.table.setHorizontalHeaderLabels([
             _t('diagnostics.column.witness'), _t('diagnostics.column.mode'),
@@ -294,7 +301,7 @@ class WitnessSyncMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
     def _refresh_folio_navigation(self, text=None, force=False):
-        if not hasattr(self, 'panels'):
+        if not hasattr(self, 'panels') or self._witness_sync_suspended():
             return
         if text is None:
             text = self.editor.toPlainText()
@@ -316,7 +323,7 @@ class WitnessSyncMixin:
         reconnus lorsque leur ``@facs`` pointe sans ambiguïté vers une surface
         connue du panneau concerné.
         """
-        if not self.has_any_images:
+        if not self.has_any_images or self._witness_sync_suspended():
             return
         cursor = self.editor.textCursor()
         text = self.editor.toPlainText()
@@ -548,6 +555,9 @@ class WitnessSyncMixin:
         )
 
     def sync_panels_to_cursor(self, force=False):
+        # Édition en parties (V0.9.0.0) : témoins en navigation libre.
+        if self._witness_sync_suspended():
+            return
         # En mode mixte, mettre à jour les folios indépendants sur la foi des
         # pb/edRef/facs, même si le pivot possède une synchronisation de lignes.
         self._sync_page_panels_to_cursor(force)
@@ -567,7 +577,7 @@ class WitnessSyncMixin:
 
     def navigate_to_base_ordinal(self, ordinal, move_xml_cursor=True):
         """Synchronise tous les témoins sur un segment cliqué dans la vue mise en forme."""
-        if not self._edition_displayed():
+        if not self._edition_displayed() or self._witness_sync_suspended():
             return
         if not self.base_alignment_available or not self.base_items:
             return
@@ -648,7 +658,8 @@ class WitnessSyncMixin:
 
     def show_witness_diagnostics(self):
         rows = diagnostic_rows(self.project, self._witness_resource_snapshot())
-        WitnessDiagnosticDialog(rows, self).exec()
+        note = _t('diagnostics.sync_suspended') if self._witness_sync_suspended() else ''
+        WitnessDiagnosticDialog(rows, self, note=note).exec()
 
     def refresh_witness_synchronizations(self):
         """Reload the alignments and OCR without replacing the editor widget.
@@ -787,6 +798,7 @@ class WitnessSyncMixin:
 
     @Slot(int)
     def _primary_panel_navigate(self, ordinal):
+        if self._witness_sync_suspended(): return
         spans=self.lb_spans()
         if not spans: return
         ordinal=max(0,min(len(spans)-1,int(ordinal)))
@@ -807,7 +819,7 @@ class WitnessSyncMixin:
     def _release_panel_sync(self): self._sync_from_panel=False
 
     def goto_xml_from_base(self):
-        if not self._edition_displayed(): return
+        if not self._edition_displayed() or self._witness_sync_suspended(): return
         spans=self.lb_spans()
         if not spans: return
         i=max(0,min(len(spans)-1,self.base_panel.center_index)); c=self.editor.textCursor(); c.setPosition(spans[i][1]); self.editor.setTextCursor(c); self.editor.centerCursor(); self.editor.setFocus()

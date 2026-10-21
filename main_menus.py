@@ -419,7 +419,7 @@ class MainMenusMixin:
         self.validation_close.setToolTip(_t("rng.panel.close"))
         self.validation_table.setHorizontalHeaderLabels([
             _t("rng.column.level"), _t("rng.column.line"),
-            _t("rng.column.column"), _t("rng.column.message"),
+            _t("rng.column.column"), _t("rng.column.message"), _t("rng.column.document"),
         ])
         self.source_wrap_element_action.setText(_t("fragment.wrap"))
         self.source_completion_action.setText(_t("completion.action"))

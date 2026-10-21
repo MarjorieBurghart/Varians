@@ -45,6 +45,9 @@ class ProjectActionsMixin:
                 self, _t("webgen.wrong_file.title"), _t("webgen.wrong_file.text")
             )
             return
+        # Édition assemblée (V0.9.0.0) : le viewer ne contient pas encore les parties.
+        if self._edition_has_parts() and not self._confirm_web_export_without_parts():
+            return
         if edition is self.document:
             if self._has_unsaved_work() and not self.save_contextual():
                 return
@@ -73,6 +76,18 @@ class ProjectActionsMixin:
         box.exec()
         if box.clickedButton() is open_btn:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(output)))
+
+    def _confirm_web_export_without_parts(self):
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setWindowTitle(_t("parts.webgen.title"))
+        box.setText(_t("parts.webgen.text"))
+        export_btn = box.addButton(_t("parts.webgen.continue"), QMessageBox.ButtonRole.AcceptRole)
+        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(cancel_btn)
+        box.setEscapeButton(cancel_btn)
+        box.exec()
+        return box.clickedButton() is export_btn
 
     def open_project_dialog(self):
         """Sélectionne un project.xml puis recharge l'application sur ce projet."""
@@ -207,8 +222,10 @@ class ProjectActionsMixin:
                     continue
                 xml_text = Path(draft.edition).read_text(encoding='utf-8-sig')
                 try:
+                    # Édition assemblée : un <pb> d'une partie peut citer la surface.
                     updated, candidates = removable_generated_iiif_surfaces(
-                        xml_text, manifest, w.id, getattr(w, 'iiif_selected_canvases', ()))
+                        xml_text, manifest, w.id, getattr(w, 'iiif_selected_canvases', ()),
+                        other_texts=[self._session_text(s) for s in self.documents if s.is_part])
                 except ET.ParseError:
                     # Optional cleanup must not prevent valid project setting
                     # changes if an in-progress TEI cannot be parsed here.

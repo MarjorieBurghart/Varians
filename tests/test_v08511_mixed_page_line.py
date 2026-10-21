@@ -99,6 +99,10 @@ class StubEditor:
 class StubWindow:
     _sync_page_panels_to_cursor = _editor_method('_sync_page_panels_to_cursor')
     sync_panels_to_cursor = _editor_method('sync_panels_to_cursor')
+
+    # Édition en parties (V0.9.0.0) : aucune ici.
+    def _witness_sync_suspended(self):
+        return False
     def __init__(self, text):
         self.editor = StubEditor(text, text.index('C opening'))
         self.project = SimpleNamespace(root_dir=Path('/tmp'))

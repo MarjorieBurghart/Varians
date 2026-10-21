@@ -773,4 +773,31 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="rng.worker.fallback">Validazione RELAX NG eseguita in Varians (processo di validazione non disponibile: {reason}): la finestra può bloccarsi durante la compilazione di uno schema grande.</string>
   <string key="rng.status.running">RNG: validazione in corso…</string>
   <string key="rng.status.running.tip">Validazione RELAX NG in corso in un processo separato: la finestra resta utilizzabile. La prima validazione con uno schema grande come TEI_ALL può richiedere una decina di secondi.</string>
+  <string key="parts.save_as.title">Parti dell’edizione</string>
+  <string key="parts.save_as.text">L’edizione include le sue parti tramite percorsi relativi:
+{hrefs}
+
+Salvata in un’altra cartella, non le troverebbe più. Copiate anche le parti, oppure salvate l’edizione nella sua cartella attuale.</string>
+  <string key="rng.column.document">Documento</string>
+  <string key="rng.xinclude.malformed">Parte non ben formata: {detail}</string>
+  <string key="rng.xinclude.missing">File incluso non trovato: {detail}</string>
+  <string key="rng.xinclude.fallback">File incluso non trovato (xi:fallback non è supportato): {detail}</string>
+  <string key="rng.xinclude.circular">Inclusione circolare: {detail}</string>
+  <string key="rng.xinclude.parse_text">L’inclusione di testo (parse="text") non è supportata</string>
+  <string key="rng.xinclude.parse_invalid">Valore di parse non valido: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">href non supportato, è atteso un file locale: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">xpointer non supportato: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">Nessun elemento corrisponde allo xpointer: {detail}</string>
+  <string key="status.structure.suspended">{base}: sincronizzazione sospesa (edizione in parti)</string>
+  <string key="status.structure.suspended.tip">L’edizione include le sue parti tramite XInclude: la sincronizzazione dei testimoni attraverso le parti arriverà in una prossima versione. I testimoni restano consultabili liberamente. Vedere la guida, «Edizioni assemblate (XInclude)».</string>
+  <string key="diagnostics.sync_suspended">Sincronizzazione sospesa: l’edizione include delle parti (XInclude). I testimoni restano consultabili liberamente; la sincronizzazione attraverso le parti arriverà in una prossima versione.</string>
+  <string key="apparatus.witnesses.part">Testimoni di questa parte (il suo &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Testimoni di questa parte (&lt;locus target&gt; dell’edizione): {ids}</string>
+  <string key="apparatus.witnesses.wit">Testimoni citati negli @wit di questa parte: {ids}</string>
+  <string key="parts.webgen.title">Edizione in parti</string>
+  <string key="parts.webgen.text">L’edizione include le sue parti tramite XInclude. Il viewer web non le contiene ancora: verrà esportato solo il testo del file dell’edizione, senza le parti.
+
+Esportare comunque?</string>
+  <string key="parts.webgen.continue">Esporta comunque</string>
+  <string key="preview.assembled.read_only">Anteprima dell’edizione assemblata, parti comprese, in sola lettura: la modifica per frammenti non è ancora possibile per un’edizione in parti.</string>
 </translations>

@@ -773,4 +773,31 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="rng.worker.fallback">RELAX-NG-Validierung innerhalb von Varians (Validierungsprozess nicht verfügbar: {reason}): Das Fenster kann einfrieren, während ein großes Schema kompiliert wird.</string>
   <string key="rng.status.running">RNG: wird validiert…</string>
   <string key="rng.status.running.tip">RELAX-NG-Validierung läuft in einem eigenen Prozess: Das Fenster bleibt benutzbar. Die erste Validierung mit einem großen Schema wie TEI_ALL kann etwa zehn Sekunden dauern.</string>
+  <string key="parts.save_as.title">Teile der Edition</string>
+  <string key="parts.save_as.text">Die Edition bindet ihre Teile über relative Pfade ein:
+{hrefs}
+
+In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren Sie auch die Teile oder speichern Sie die Edition in ihrem aktuellen Ordner.</string>
+  <string key="rng.column.document">Dokument</string>
+  <string key="rng.xinclude.malformed">Nicht wohlgeformter Teil: {detail}</string>
+  <string key="rng.xinclude.missing">Eingebundene Datei nicht gefunden: {detail}</string>
+  <string key="rng.xinclude.fallback">Eingebundene Datei nicht gefunden (xi:fallback wird nicht unterstützt): {detail}</string>
+  <string key="rng.xinclude.circular">Zirkuläre Einbindung: {detail}</string>
+  <string key="rng.xinclude.parse_text">Texteinbindung (parse="text") wird nicht unterstützt</string>
+  <string key="rng.xinclude.parse_invalid">Ungültiger parse-Wert: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">Nicht unterstütztes href, eine lokale Datei wird erwartet: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">Nicht unterstützter xpointer: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">Kein Element entspricht dem xpointer: {detail}</string>
+  <string key="status.structure.suspended">{base}: Synchronisierung ausgesetzt (Edition in Teilen)</string>
+  <string key="status.structure.suspended.tip">Die Edition bindet ihre Teile per XInclude ein: Die Synchronisierung der Textzeugen über die Teile hinweg folgt in einer späteren Version. Die Textzeugen bleiben frei durchblätterbar. Siehe die Hilfe, „Zusammengesetzte Editionen (XInclude)“.</string>
+  <string key="diagnostics.sync_suspended">Synchronisierung ausgesetzt: Die Edition bindet Teile ein (XInclude). Die Textzeugen bleiben frei durchblätterbar; die Synchronisierung über die Teile hinweg folgt in einer späteren Version.</string>
+  <string key="apparatus.witnesses.part">Textzeugen dieses Teils (sein &lt;listWit&gt;): {ids}</string>
+  <string key="apparatus.witnesses.locus">Textzeugen dieses Teils (&lt;locus target&gt; der Edition): {ids}</string>
+  <string key="apparatus.witnesses.wit">In den @wit dieses Teils genannte Textzeugen: {ids}</string>
+  <string key="parts.webgen.title">Edition in Teilen</string>
+  <string key="parts.webgen.text">Die Edition bindet ihre Teile per XInclude ein. Der Web-Viewer enthält sie noch nicht: Nur der Text der Editionsdatei wird exportiert, ohne die Teile.
+
+Trotzdem exportieren?</string>
+  <string key="parts.webgen.continue">Trotzdem exportieren</string>
+  <string key="preview.assembled.read_only">Vorschau der zusammengesetzten Edition, Teile eingeschlossen, schreibgeschützt: Die Bearbeitung von Fragmenten ist für eine Edition in Teilen noch nicht möglich.</string>
 </translations>

@@ -1,3 +1,40 @@
+VARIANS V0.9.0.0 — ÉDITIONS ASSEMBLÉES PAR XINCLUDE
+
+• Une édition peut inclure ses parties (un fichier par sermon, par
+  exemple) selon la norme XInclude : <xi:include href="s01.xml"/> pour un
+  fragment, ou xpointer="s02", "element(s02)", "element(/1/2/1/1)" pour un
+  élément d'un document TEI complet. L'édition déclarée dans project.xml
+  reste le document maître ; ses parties se déduisent de ses xi:include,
+  sans autre déclaration. Une partie peut en inclure d'autres.
+• Chaque partie a son onglet, nommé d'après son fichier, dans l'ordre
+  d'inclusion. Elle s'édite et s'enregistre seule, avec son propre
+  historique d'annulation ; la liste des parties est relue à chaque
+  enregistrement. Renommer et Retirer ne concernent que les documents
+  auxiliaires. « Enregistrer sous » dans un autre dossier avertit que les
+  xi:include ne trouveraient plus les parties.
+• Validation RELAX NG de l'édition assemblée, avec le schéma de l'édition
+  et le texte non enregistré des parties : une colonne Document indique
+  le fichier de chaque erreur, et un double-clic y mène. Partie absente
+  ou mal formée, inclusion circulaire, xi:fallback, parse="text" : signalés
+  à la ligne du xi:include. Chaque onglet prend la couleur de ses erreurs.
+• Références : l'édition et ses parties forment un seul document. #id se
+  cherche d'abord dans son propre fichier (en-tête compris), puis dans les
+  autres parties ; F12, la commande Références et la complétion en
+  tiennent compte. Dans une partie, la complétion prend le schéma de
+  l'édition, et « Débugger l'apparat » les témoins de la partie (son
+  <listWit>, sinon les <locus target> de l'édition, sinon ses @wit).
+• Limites de cette version :
+  - la synchronisation des témoins est suspendue pour une édition qui a
+    des parties (navigation libre, état indiqué dans la barre d'état) ;
+    elle viendra en V0.9.1.0 (numérotation continue) et V0.9.2.0 (un JSON
+    de synchronisation par texte) ;
+  - la Vue XSLT / CSS montre l'édition assemblée, parties comprises
+    (texte non enregistré compris), mais en lecture seule : l'édition par
+    fragment n'y est pas encore possible ;
+  - l'export web ne contient pas encore les parties ; un message le dit
+    avant l'export.
+• Un projet sans xi:include est inchangé ; format de project.xml inchangé.
+
 VARIANS V0.8.9.2 — VALIDATION RELAX NG SANS FIGER LA FENÊTRE
 
 • La validation RELAX NG se fait désormais dans un processus séparé, que

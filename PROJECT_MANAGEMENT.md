@@ -382,3 +382,38 @@ Un projet sans requête n’a pas d’élément `<xpathQueries>`. Comme pour
 (copie `.bak` préalable). Une version de Varians antérieure à 0.8.9.1 lit le
 projet normalement, mais supprime `<xpathQueries>` si l’on y enregistre les
 paramètres du projet.
+
+## V0.9.0.0 — Édition assemblée par XInclude (parties)
+
+L’édition déclarée par `<edition file="…"/>` peut inclure ses parties (un
+fichier par sermon, par exemple) selon la norme XInclude :
+
+```xml
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  …
+  <body>
+    <xi:include href="sermons/s01.xml"/>                              <!-- fragment -->
+    <xi:include href="sermons/s02.xml" xpointer="s02"/>               <!-- par identifiant -->
+    <xi:include href="sermons/s03.xml" xpointer="element(/1/2/1/1)"/> <!-- par chemin -->
+  </body>
+</TEI>
+```
+
+- **Rien n’est déclaré dans `project.xml`** : Varians lit les `xi:include`
+  de l’édition enregistrée, et les relit après chaque enregistrement de
+  l’édition ou d’une partie. Les parties ont chacune leur onglet, nommé
+  d’après le fichier. Le format de `project.xml` ne change pas.
+- Un fichier à la fois inclus et déclaré dans `<documents>` est traité comme
+  une partie (une seule session par fichier) ; s’il cesse d’être inclus, il
+  redevient un document auxiliaire. « Renommer l’onglet… » et « Retirer le
+  document du projet » ne concernent que les documents auxiliaires.
+- Les chemins des `xi:include` sont relatifs à l’édition : « Enregistrer
+  l’édition sous » dans un autre dossier le signale avant d’écrire.
+- Le schéma d’une partie est celui de l’édition (validation de l’édition
+  assemblée, complétion).
+- La synchronisation des témoins est suspendue pour une édition qui a des
+  parties (voir `docs/DECISIONS_ASSEMBLAGE.md` pour les versions suivantes,
+  où le pivot d’un texte pourra être déclaré par exception dans
+  `project.xml`).
+
+Un projet sans `xi:include` est inchangé.
