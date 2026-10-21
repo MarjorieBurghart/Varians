@@ -1,3 +1,24 @@
+VARIANS V0.8.9.2 — VALIDATION RELAX NG SANS FIGER LA FENÊTRE
+
+• La validation RELAX NG se fait désormais dans un processus séparé, que
+  Varians lance au premier besoin. La première validation après le
+  lancement compile le schéma (TEI_ALL : une dizaine de secondes) : la
+  fenêtre reste utilisable pendant ce temps, et une petite lueur tourne
+  dans la barre d'état, à côté de « RNG : validation en cours… ». Avant,
+  l'application restait figée (« Ne répond pas » sous Windows).
+• Le schéma compilé est gardé pour toute la session, même si l'on ouvre
+  un autre projet.
+• F8 (Valider RNG) et l'enregistrement attendent le résultat, en laissant
+  la fenêtre s'afficher ; clics et frappes sont ignorés pendant cette
+  attente. L'enregistrement garde donc sa vérification RELAX NG.
+• Si ce processus ne peut pas être lancé, Varians valide lui-même comme
+  avant, et le signale une fois dans la barre d'état.
+• Compatible avec une future version autonome (PyInstaller, Nuitka…) :
+  c'est Varians lui-même qui est relancé, avec l'option interne
+  --relaxng-worker, sans interpréteur Python ni fichier .py à part.
+• Aucun changement des résultats de validation, des données TEI, JSON,
+  ALTO/PAGE, du viewer web ni du format de project.xml.
+
 VARIANS V0.8.9.1 — DÉBUGGER L'APPARAT
 
 • Aide ▸ Débugger l'apparat… : requêtes XPath toutes prêtes pour repérer
