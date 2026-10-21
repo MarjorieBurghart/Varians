@@ -770,4 +770,7 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="apparatus.query.invalid">Espressione XPath non valida: {error}</string>
   <string key="apparatus.query.duplicate">Esiste già una query denominata «{name}».</string>
   <string key="apparatus.query.remove.question">Eliminare la query «{name}» dal progetto?</string>
+  <string key="rng.worker.fallback">Validazione RELAX NG eseguita in Varians (processo di validazione non disponibile: {reason}): la finestra può bloccarsi durante la compilazione di uno schema grande.</string>
+  <string key="rng.status.running">RNG: validazione in corso…</string>
+  <string key="rng.status.running.tip">Validazione RELAX NG in corso in un processo separato: la finestra resta utilizzabile. La prima validazione con uno schema grande come TEI_ALL può richiedere una decina di secondi.</string>
 </translations>

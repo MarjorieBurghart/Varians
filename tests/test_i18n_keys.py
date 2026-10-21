@@ -88,3 +88,14 @@ def test_each_help_explains_the_apparatus_debugging_with_the_command_labels():
         chapter = page[page.index('<h2 id="xpath">'):]
         chapter = chapter[:chapter.index("<h2", 4)]
         assert 'href="#apparatus-debug"' in chapter, language
+
+
+def test_each_help_explains_background_validation():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="rng-background">'):]
+        section = section[:section.index("</section>")]
+        for text in (catalog["rng.status.running"], catalog["toolbar.validate_rng"], "<kbd>F8</kbd>", "TEI_ALL"):
+            assert text in section, (language, text)

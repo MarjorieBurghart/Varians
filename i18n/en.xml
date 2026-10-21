@@ -756,4 +756,7 @@ The file is not deleted: it stays on disk.</string>
   <string key="apparatus.query.invalid">Invalid XPath expression: {error}</string>
   <string key="apparatus.query.duplicate">A query named “{name}” already exists.</string>
   <string key="apparatus.query.remove.question">Delete the query “{name}” from the project?</string>
+  <string key="rng.worker.fallback">RELAX NG validation done inside Varians (validation process unavailable: {reason}): the window may freeze while a large schema is compiled.</string>
+  <string key="rng.status.running">RNG: validating…</string>
+  <string key="rng.status.running.tip">RELAX NG validation running in a separate process: the window remains usable. The first validation against a large schema such as TEI_ALL may take about ten seconds.</string>
 </translations>

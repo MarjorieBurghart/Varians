@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Panneau de validation RELAX NG et résolution du schéma du document."""
+"""Panneau de validation RELAX NG et résolution du schéma du document.
+
+La validation elle-même se fait dans un processus séparé (validation_worker) :
+la validation automatique (ouverture, changement de document, modification)
+n'attend pas sa réponse, la fenêtre reste utilisable pendant la compilation
+d'un gros schéma ; la validation demandée (F8, enregistrement) l'attend en
+laissant la fenêtre se redessiner.
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,8 +18,9 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QToolButton, QVBoxLayout,
 )
 from app_context import tr as _t
-from relaxng_validation import lxml_available, relaxng_schema_token, validate_relaxng
+from relaxng_validation import lxml_available, relaxng_schema_token
 from schema_resolution import detect_xml_models, resolve_schema
+from validation_worker import worker_client
 
 
 class ValidationPanelMixin:
@@ -65,6 +73,7 @@ class ValidationPanelMixin:
         self.validation_table.cellDoubleClicked.connect(self.goto_validation_issue)
         root.addWidget(self.validation_table, 1)
         panel.setVisible(False)
+        worker_client().fellBack.connect(self._rng_worker_fell_back)
         return panel
 
     def _reset_validation_state(self):
@@ -159,7 +168,7 @@ class ValidationPanelMixin:
         if revision == self._last_rng_revision and self._last_rng_result is not None:
             return
         self.validate_relaxng_document(show_panel=False, automatic=True,
-                                       document_revision=revision)
+                                       document_revision=revision, background=True)
 
     def validate_relaxng_manual(self):
         self.validate_relaxng_document(show_panel=True, show_success_message=True)
@@ -190,8 +199,11 @@ class ValidationPanelMixin:
                 return resolution.href
         return Path(resolution.schema_path).name if resolution.schema_path else ""
 
-    def validate_relaxng_document(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False):
-        """Valide la révision courante, sans revalidation récursive du panneau."""
+    def validate_relaxng_document(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False, background=False):
+        """Valide la révision courante, sans revalidation récursive du panneau.
+
+        ``background`` : sans attendre la réponse (validation automatique) ;
+        renvoie alors None, le résultat est affiché à son arrivée."""
         if getattr(self, '_rng_validation_in_progress', False):
             return None
         self._rng_validation_in_progress = True
@@ -199,12 +211,12 @@ class ValidationPanelMixin:
             return self._validate_relaxng_document_impl(
                 show_panel=show_panel, show_success_message=show_success_message,
                 refresh_schema=refresh_schema, xml_text=xml_text,
-                document_revision=document_revision, automatic=automatic,
+                document_revision=document_revision, automatic=automatic, background=background,
             )
         finally:
             self._rng_validation_in_progress = False
 
-    def _validate_relaxng_document_impl(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False):
+    def _validate_relaxng_document_impl(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False, background=False):
         """Résout puis valide le RNG actif.
 
         ``xml_text`` permet à Ctrl+S de réutiliser son unique instantané du
@@ -292,10 +304,50 @@ class ValidationPanelMixin:
             return None
 
         schema = resolution.schema_path
-        result = validate_relaxng(
-            text, schema,
-            base_url=self.current_path or self.project.edition,
-        )
+        base_url = self.current_path or self.project.edition
+        options = dict(revision=revision, schema=schema, resolution=resolution, show_panel=show_panel,
+                       show_success_message=show_success_message, automatic=automatic)
+        self.rng_status.setText(_t("rng.status.running"))
+        self.rng_status.setStyleSheet("color:#777")
+        if background:
+            self._validate_in_background(text, schema, base_url, options)
+            return None
+        return self._apply_rng_result(worker_client().validate(text, schema, base_url), **options)
+
+    def _validate_in_background(self, text, schema, base_url, options):
+        """Validation automatique : la fenêtre reste utilisable. Le résultat est
+        affiché à son arrivée s'il concerne encore le document affiché ; un
+        document quitté entre-temps sera validé à nouveau à son retour."""
+        session = self.document
+        pending = self.__dict__.setdefault("_rng_background_pending", set())
+        key = (session, options["revision"])
+        if key in pending:                                  # déjà demandée
+            return
+
+        def arrived(result):
+            pending.discard(key)
+            if self.document is session:
+                self._apply_rng_result(result, **options)
+            elif session.view_state:
+                session.view_state["status"] = None
+
+        pending.add(key)
+        worker_client().validate_async(text, schema, base_url, self, arrived)
+
+    def _rng_busy_changed(self, busy):
+        """Lueur de la barre d'état pendant une validation en cours."""
+        if busy:
+            self.rng_busy.start()
+        else:
+            self.rng_busy.stop()
+
+    def _rng_worker_fell_back(self, reason):
+        """Le processus de validation est indisponible (signalé une fois)."""
+        self.statusBar().showMessage(_t("rng.worker.fallback", reason=reason), 10000)
+
+    def _apply_rng_result(self, result, *, revision, schema, resolution, show_panel, show_success_message, automatic):
+        """Affiche le résultat de la validation de la révision ``revision`` ;
+        rien si le document a changé depuis (une nouvelle validation suit)."""
         if revision != self.editor.document().revision():
             if self._rng_watch_enabled:
                 self.rng_refresh_timer.start(180)

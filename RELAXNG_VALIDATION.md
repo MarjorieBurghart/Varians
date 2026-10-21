@@ -165,3 +165,37 @@ Lorsqu’il est affiché, le panneau invalide et efface immédiatement les résu
 - Un contrôle tardif dont la révision ne correspond plus à l’édition courante est rejeté, et une nouvelle passe est demandée.
 - La validation explicite F8 et la résolution des schémas d’origine ne changent pas ; aucune correction XML ou RNG n’est appliquée automatiquement.
 - Limite : tests de cycle exécutés sur des substituts Qt, l’interface PySide6 Windows doit être vérifiée par l’utilisateur.
+
+## V0.8.9.2 — validation dans un processus séparé
+
+La compilation d’un gros schéma (TEI_ALL : une dizaine de secondes) bloquait
+toute la fenêtre : lxml garde le verrou de Python pendant la compilation, si
+bien qu’un fil d’exécution n’aurait pas suffi. La validation se fait donc
+dans un processus à part.
+
+- `relaxng_worker.py` (sans Qt) : une requête JSON par ligne sur le
+  descripteur 0, une réponse par ligne sur le descripteur 1 ; il réutilise
+  `validate_relaxng` et son cache, si bien qu’un schéma compilé l’est pour
+  toute la session. Les descripteurs sont lus directement, car `sys.stdin`
+  et `sys.stdout` peuvent manquer dans une application Windows sans console.
+- Lancement : c’est Varians lui-même, relancé avec `--relaxng-worker`
+  (`python editeur_tei.py --relaxng-worker` depuis les sources, l’exécutable
+  dans une version autonome). `editeur_tei.py` reconnaît l’option avant
+  d’importer PySide6 : le processus ne charge que lxml.
+- `validation_worker.py` : un seul processus pour l’application, lancé au
+  premier besoin (`CREATE_NO_WINDOW` sous Windows), arrêté à la fermeture ;
+  fils d’écriture et de lecture dédiés, réponses remises au fil principal.
+  - validation automatique (`validate_relaxng_document(background=True)` :
+    ouverture, changement de document, modification) : sans attente ; le
+    résultat n’est affiché que s’il concerne encore le document affiché
+    dans la même révision ;
+  - validation demandée (F8, enregistrement, rechargement du schéma) :
+    attend la réponse en laissant tourner la boucle d’événements, clics et
+    frappes ignorés.
+- Repli : processus introuvable, arrêté ou sans réponse pendant 5 minutes →
+  validation dans Varians comme avant, signalée une fois dans la barre
+  d’état, sans perte des requêtes en cours.
+- `busy_indicator.py` : la lueur affichée avant « RNG » tant qu’une
+  validation est en cours.
+- Limite : le téléchargement d’un schéma distant, à sa toute première
+  utilisation, se fait encore dans Varians.

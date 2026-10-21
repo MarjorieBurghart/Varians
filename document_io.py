@@ -45,7 +45,8 @@ class DocumentIOMixin:
         call_later(50, self, lambda: self._edition_displayed() and self.sync_panels_to_cursor(True))
         # Même en mode RNG « aucun », on résout les xml-model pour détecter
         # à titre informatif une éventuelle déclaration Schematron.
-        call_later(120, self, lambda: self.validate_relaxng_document(show_panel=False, show_success_message=False))
+        call_later(120, self, lambda: self.validate_relaxng_document(show_panel=False, show_success_message=False,
+                                                                     background=True))
 
     def _confirm_save_warning(self, title, text):
         box = QMessageBox(self)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.8.9.1.
+"""Varians — éditeur TEI/manuscrits générique — V0.8.9.2.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -38,7 +38,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -50,6 +50,13 @@ for _module_name, _module in tuple(sys.modules.items()):
         sys.modules.pop(_module_name, None)
     elif not Path(_module_file).resolve().is_relative_to(_APPLICATION_DIR):
         sys.modules.pop(_module_name, None)
+
+# Processus de validation RELAX NG (voir validation_worker) : Varians relancé
+# avec cette option ne charge que lxml, ni PySide6 ni fenêtre. Placé avant
+# tout import de l'interface, et valable aussi dans une version autonome.
+if __name__ == "__main__" and sys.argv[1:2] == ["--relaxng-worker"]:
+    from relaxng_worker import serve
+    raise SystemExit(serve())
 
 from project_config import load_project, has_line_synchronization
 from resource_state import primary_sync_line_count, secondary_sync_link_count
@@ -83,6 +90,8 @@ from document_display import DocumentDisplayMixin
 from document_dialogs import DocumentDialogsMixin
 from references_ui import ReferencesMixin
 from apparatus_ui import ApparatusDebugMixin
+from busy_indicator import BusyIndicator
+from validation_worker import worker_client
 from rng_completion import XmlContextCache
 from image_sources import (
     page_image_source, apply_witness_image_policy, image_only_items, page_navigation_items,
@@ -648,8 +657,15 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
             else _t("status.structure.no_alignment", base=self.base_id)
         )
         self.rng_status = QLabel(_t("rng.status.none") if self._schema_mode == "none" else _t("rng.status.pending"))
+        # Lueur qui tourne pendant une validation dans le processus séparé.
+        self.rng_busy = BusyIndicator(self)
+        self.rng_busy.setToolTip(_t("rng.status.running.tip"))
+        worker = worker_client()
+        worker.busyChanged.connect(self._rng_busy_changed)
+        self._rng_busy_changed(worker.busy)
         self.schematron_status = QLabel("")
         self.statusBar().addWidget(self.xml_status,1)
+        self.statusBar().addPermanentWidget(self.rng_busy)
         self.statusBar().addPermanentWidget(self.rng_status)
         self.statusBar().addPermanentWidget(self.schematron_status)
         self.statusBar().addPermanentWidget(self.structure_status)
