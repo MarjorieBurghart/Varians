@@ -1335,4 +1335,5 @@ class ProjectSettingsDialog(QDialog):
             # Non modifiables ici : conservés tels quels, sinon la réécriture
             # de project.xml les effacerait.
             documents=list(self.project.documents),
+            xpath_queries=list(self.project.xpath_queries),
         )

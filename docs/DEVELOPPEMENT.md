@@ -65,6 +65,7 @@ d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
 | `document_display.py` | onglets affichés et leur ordre (préférence locale du projet), fenêtre « Documents affichés », clic droit sur un onglet |
 | `document_dialogs.py` | ajouter, créer, retirer un document XML auxiliaire |
 | `references_ui.py` | références entre documents : identifiants proposés, F12 / Alt+←, commande « Références » |
+| `apparatus_ui.py` | Aide ▸ « Débugger l'apparat… » : contrôles de l'apparat et requêtes XPath personnelles |
 
 Composants autonomes utilisés par la fenêtre :
 
@@ -72,6 +73,7 @@ Composants autonomes utilisés par la fenêtre :
 |---|---|
 | `document_session.py` | état d'un document ouvert (`DocumentSession`, `LbIndex`) |
 | `xml_references.py` | pointeurs `#id` et identifiants des documents, sans Qt (`ReferenceResolver`) |
+| `apparatus_xpath.py` | requêtes XPath 1.0 de contrôle de l'apparat (parallel segmentation), sans Qt |
 | `code_editor.py` | éditeur de la source XML (`CodeEditor`) |
 | `formatted_view.py` | aperçu XSLT/CSS et édition par fragments |
 | `manuscript_panel.py` | panneau d'un témoin manuscrit |

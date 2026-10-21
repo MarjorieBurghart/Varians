@@ -69,3 +69,22 @@ def test_each_help_explains_references_with_the_command_labels():
             assert text in section, (language, text)
         # Raccourcis principaux
         assert "<td>F12</td>" in page and "<td>Alt+←</td>" in page, language
+
+
+def test_each_help_explains_the_apparatus_debugging_with_the_command_labels():
+    labels = ("menu.help", "apparatus.menu", "apparatus.search", "apparatus.query.add",
+              "apparatus.query.edit", "apparatus.query.remove", "references.action")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="apparatus-debug">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("&lt;listWit&gt;", "&lt;rdgGrp&gt;", "&lt;xpathQueries&gt;", "tei:", "#A"):
+            assert text in section, (language, text)
+        # Renvoi depuis le chapitre « Recherche XPath ».
+        chapter = page[page.index('<h2 id="xpath">'):]
+        chapter = chapter[:chapter.index("<h2", 4)]
+        assert 'href="#apparatus-debug"' in chapter, language

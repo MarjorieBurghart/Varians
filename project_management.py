@@ -84,6 +84,7 @@ class ProjectDraft:
     schema: Path | None = None
     schema_type: str = "relaxng"
     documents: list[DocumentConfig] = field(default_factory=list)
+    xpath_queries: list = field(default_factory=list)
 
 
 
@@ -311,6 +312,9 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
     documents_el = documents_element(root_dir, draft.documents)
     if documents_el is not None:
         root.append(documents_el)
+    queries_el = xpath_queries_element(draft.xpath_queries)
+    if queries_el is not None:
+        root.append(queries_el)
 
     tree = ET.ElementTree(root)
     ET.indent(tree, space="  ")
@@ -342,15 +346,38 @@ def documents_element(root_dir: Path, documents) -> ET.Element | None:
     return documents_el
 
 
+def xpath_queries_element(queries) -> ET.Element | None:
+    """Élément <xpathQueries> des requêtes nommées, ou None s'il n'y en a
+    pas (un projet sans requête reste inchangé)."""
+    if not queries:
+        return None
+    queries_el = ET.Element("xpathQueries")
+    for query in queries:
+        ET.SubElement(queries_el, "query", {"name": query.name}).text = query.expression
+    return queries_el
+
+
 def update_project_documents(path: str | Path, documents) -> Path:
     """Remplace les documents auxiliaires déclarés dans project.xml sans
     modifier le reste du fichier ; l'ancienne version est copiée en ``.bak``."""
     path = Path(path).expanduser().resolve()
+    return _replace_project_element(path, "documents", documents_element(path.parent, documents))
+
+
+def update_project_xpath_queries(path: str | Path, queries) -> Path:
+    """Remplace les requêtes XPath nommées de project.xml, comme
+    ``update_project_documents``."""
+    return _replace_project_element(Path(path).expanduser().resolve(), "xpathQueries",
+                                    xpath_queries_element(queries))
+
+
+def _replace_project_element(path: Path, tag: str, new_el: ET.Element | None) -> Path:
+    """Remplace (ou retire, si ``new_el`` est None) l'élément ``tag`` de
+    project.xml, à sa place, sans toucher au reste ; copie ``.bak`` préalable."""
     parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True))
     tree = ET.parse(path, parser)
     root = tree.getroot()
-    new_el = documents_element(path.parent, documents)
-    old_el = root.find("documents")
+    old_el = root.find(tag)
     if old_el is not None:
         index = list(root).index(old_el)
         root.remove(old_el)

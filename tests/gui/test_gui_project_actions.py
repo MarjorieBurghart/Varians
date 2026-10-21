@@ -58,3 +58,28 @@ def test_project_settings_keep_declared_documents(open_window, example_project, 
         if new_window is not None:
             new_window._force_close = True
             new_window.close()
+
+
+def test_project_settings_keep_saved_xpath_queries(open_window, example_project, dialogs, qtbot):
+    # Comme les documents : la réécriture de project.xml garde les requêtes.
+    from project_config import XPathQuery, load_project
+    from project_management import update_project_xpath_queries
+
+    queries = [XPathQuery("rdg sans @wit", "//tei:rdg[not(@wit)]")]
+    update_project_xpath_queries(example_project, queries)
+    window = open_window(example_project)
+
+    def accept(dialog):
+        dialog.accept()
+        return dialog.result()
+
+    dialogs.expect("dialog", accept)
+    dialogs.expect("information")
+    window.project_settings_dialog()
+    new_window = window._replacement_window
+    try:
+        assert load_project(example_project).xpath_queries == tuple(queries)
+    finally:
+        if new_window is not None:
+            new_window._force_close = True
+            new_window.close()

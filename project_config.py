@@ -105,6 +105,14 @@ class DocumentConfig:
         return self.label or self.path.name
 
 
+@dataclass(frozen=True)
+class XPathQuery:
+    """Requête XPath nommée, enregistrée dans le projet (« Débugger
+    l'apparat » ▸ Mes requêtes)."""
+    name: str
+    expression: str
+
+
 def has_line_synchronization(witness: WitnessConfig) -> bool:
     """Vrai si une *ressource* JSON de synchronisation explicite existe.
 
@@ -147,6 +155,8 @@ class ProjectConfig:
     # Documents XML auxiliaires, dans l'ordre de <documents>. Vide pour un
     # projet qui n'en déclare pas.
     documents: tuple[DocumentConfig, ...] = ()
+    # Requêtes XPath nommées, dans l'ordre de <xpathQueries>.
+    xpath_queries: tuple[XPathQuery, ...] = ()
 
     @property
     def root_dir(self) -> Path:
@@ -238,6 +248,23 @@ def _parse_documents(root: ET.Element, root_dir: Path, edition: Path) -> tuple[D
             schema = _resolve(root_dir, raw_schema, raw_schema)
         documents.append(DocumentConfig(path, (document_el.get("label") or "").strip(), mode, schema))
     return tuple(documents)
+
+
+def _parse_xpath_queries(root: ET.Element) -> tuple[XPathQuery, ...]:
+    """Lit <xpathQueries><query name="…">expression</query></xpathQueries>.
+
+    Une requête sans nom ou sans expression est ignorée ; à nom égal, la
+    première est gardée."""
+    queries_el = root.find("xpathQueries")
+    if queries_el is None:
+        return ()
+    queries = {}
+    for query_el in queries_el.findall("query"):
+        name = (query_el.get("name") or "").strip()
+        expression = (query_el.text or "").strip()
+        if name and expression and name not in queries:
+            queries[name] = XPathQuery(name, expression)
+    return tuple(queries.values())
 
 
 def load_project(path: str | Path) -> ProjectConfig:
@@ -449,6 +476,7 @@ def load_project(path: str | Path) -> ProjectConfig:
         schema=schema,
         schema_type=schema_type,
         documents=_parse_documents(root, root_dir, edition),
+        xpath_queries=_parse_xpath_queries(root),
     )
 
 

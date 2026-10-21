@@ -260,15 +260,20 @@ class MainMenusMixin:
         self.action_software_help = self._make_action(
             _t("help.software"), "F1", lambda: _show_software_help(self)
         )
+        self.action_debug_apparatus = self._make_action(
+            _t("apparatus.menu"), "", self.debug_apparatus, _t("apparatus.menu.tip")
+        )
         self.action_about = self._make_action(
             _t("help.about"), "", lambda: _show_about(self)
         )
-        # Les ressources en ligne sont volontairement placées en premier.
+        # « Débugger l'apparat » en tête, puis les ressources en ligne ;
+        # l'aide du logiciel reste en bas, juste au-dessus de « À propos ».
+        menu.addAction(self.action_debug_apparatus)
+        menu.addSeparator()
         menu.addAction(self.action_enigma)
         menu.addAction(self.action_latin_dictionary)
         menu.addSeparator()
         menu.addAction(self.action_software_help)
-        menu.addSeparator()
         menu.addAction(self.action_about)
         self.addAction(self.action_latin_dictionary)
         self.addAction(self.action_software_help)
@@ -338,6 +343,8 @@ class MainMenusMixin:
         self.action_enigma.setText(_t("help.enigma"))
         self.action_latin_dictionary.setText(_t("help.latin_dictionary"))
         self.action_software_help.setText(_t("help.software"))
+        self.action_debug_apparatus.setText(_t("apparatus.menu"))
+        self.action_debug_apparatus.setToolTip(_t("apparatus.menu.tip"))
         self.action_about.setText(_t("help.about"))
         self.action_new_project.setText(_t("menu.new_project"))
         self.action_open_project.setText(_t("menu.open_project"))
