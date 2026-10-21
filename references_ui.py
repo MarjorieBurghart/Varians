@@ -106,6 +106,12 @@ class ReferencesMixin:
                     entries.append((explicit_pointer(current.path, session.path, ident),
                                     target.label or target.element, target.element))
         own_values = {value for value, _label, _element in own}
+        if group:
+            # Édition assemblée : un identifiant déjà proposé sous la forme
+            # « #id » (sigles communs à la collection) ne l'est pas une seconde
+            # fois sous la forme « fichier.xml#id ».
+            short = own_values | set(grouped)
+            entries = [entry for entry in entries if "#" + entry[0].rsplit("#", 1)[1] not in short]
         return entries + [entry for value, entry in grouped.items() if value not in own_values] + own
 
     def _reference_groups(self):

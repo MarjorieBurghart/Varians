@@ -53,6 +53,9 @@ def test_ids_of_the_other_parts_are_proposed_as_short_pointers(open_window, serm
     # de s03, hors de l'édition assemblée : forme explicite.
     witnesses = [value for value, _d, _e in window._reference_id_entries(frozenset({"witness"}))]
     assert "#A" in witnesses and "s03.xml#E" in witnesses and "#E" not in witnesses
+    # Sigles communs : un témoin déjà proposé sous la forme courte (#A, #B…)
+    # ne l'est pas une seconde fois d'après l'en-tête d'un autre sermon.
+    assert witnesses == ["s03.xml#E", "#A", "#B", "#C", "#D"]
     assert len(values) == len(set(values))
 
 
