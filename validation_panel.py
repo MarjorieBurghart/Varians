@@ -6,6 +6,13 @@ la validation automatique (ouverture, changement de document, modification)
 n'attend pas sa réponse, la fenêtre reste utilisable pendant la compilation
 d'un gros schéma ; la validation demandée (F8, enregistrement) l'attend en
 laissant la fenêtre se redessiner.
+
+Édition assemblée par XInclude (V0.9.0.0) : l'édition et chacune de ses
+parties font valider l'édition assemblée, avec le schéma de l'édition et le
+texte non enregistré des parties ouvertes. Le résultat est rangé sur
+l'édition et sur ses parties ; une colonne Document indique le fichier de
+chaque erreur, et l'onglet de chaque partie prend la couleur de ses propres
+erreurs.
 """
 from __future__ import annotations
 
@@ -17,10 +24,15 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QFrame, QHBoxLayout, QHeaderView, QLabel, QMessageBox, QTableWidget,
     QTableWidgetItem, QToolButton, QVBoxLayout,
 )
-from app_context import tr as _t
+from app_context import call_later, tr as _t
 from relaxng_validation import lxml_available, relaxng_schema_token
 from schema_resolution import detect_xml_models, resolve_schema
 from validation_worker import worker_client
+from xml_assembly import path_key
+
+# Colonne Document du panneau : affichée seulement pour une édition qui a
+# des parties.
+_DOCUMENT_COLUMN = 4
 
 
 class ValidationPanelMixin:
@@ -54,16 +66,18 @@ class ValidationPanelMixin:
         head.addWidget(self.validation_close)
         root.addLayout(head)
 
-        self.validation_table = QTableWidget(0, 4, panel)
+        self.validation_table = QTableWidget(0, 5, panel)
         self.validation_table.setHorizontalHeaderLabels([
             _t("rng.column.level"), _t("rng.column.line"),
-            _t("rng.column.column"), _t("rng.column.message"),
+            _t("rng.column.column"), _t("rng.column.message"), _t("rng.column.document"),
         ])
         header = self.validation_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(_DOCUMENT_COLUMN, QHeaderView.ResizeMode.ResizeToContents)
+        self.validation_table.setColumnHidden(_DOCUMENT_COLUMN, True)
         self.validation_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.validation_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.validation_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -114,6 +128,8 @@ class ValidationPanelMixin:
 
     def _populate_validation_issues(self, issues, *, jump_to_xml=True):
         self._clear_validation_table()
+        assembled = self._assembly_context() is not None
+        self.validation_table.setColumnHidden(_DOCUMENT_COLUMN, not assembled)
         for issue in issues:
             row = self.validation_table.rowCount()
             self.validation_table.insertRow(row)
@@ -122,7 +138,8 @@ class ValidationPanelMixin:
                 level_text,
                 str(issue.line or ""),
                 str(issue.column or ""),
-                issue.message,
+                self._issue_message(issue),
+                self._issue_document_name(issue) if assembled else "",
             ]
             for col, value in enumerate(values):
                 item = QTableWidgetItem(value)
@@ -130,18 +147,52 @@ class ValidationPanelMixin:
             # La donnée est attachée à la première cellule pour le double-clic.
             self.validation_table.item(row, 0).setData(
                 Qt.ItemDataRole.UserRole,
-                (int(issue.line or 0), int(issue.column or 0), bool(jump_to_xml)),
+                (int(issue.line or 0), int(issue.column or 0), bool(jump_to_xml), issue.file),
             )
 
+    @staticmethod
+    def _issue_message(issue):
+        """Message d'une erreur ; un problème d'inclusion est mis en forme
+        dans la langue de l'interface (voir validate_assembled)."""
+        if issue.domain == "XINCLUDE":
+            return _t(f"rng.xinclude.{issue.type_name}", detail=issue.message)
+        return issue.message
+
+    def _issue_session(self, file):
+        """Document d'une erreur de l'édition assemblée : l'édition pour un
+        fichier vide, sinon la partie de ce chemin (None si inconnue)."""
+        if not file:
+            return self.edition_session
+        key = path_key(file)
+        return next((session for session in self.documents
+                     if session.path is not None and path_key(session.path) == key), None)
+
+    def _issue_document_name(self, issue):
+        session = self._issue_session(issue.file)
+        return self._document_tab_name(session) if session is not None else Path(issue.file).name
+
     def goto_validation_issue(self, row, _column=0):
-        """Double-clic sur une erreur : place le curseur à la ligne XML."""
+        """Double-clic sur une erreur : place le curseur à la ligne XML, dans
+        le document de l'erreur pour une édition assemblée."""
         item = self.validation_table.item(row, 0)
         data = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
         if not data:
             return
-        line, column, jump_to_xml = data
+        line, column, jump_to_xml, file = data
         if not jump_to_xml or line <= 0:
             return
+        target = self._issue_session(file) if self._assembly_context() is not None else self.document
+        if target is None:
+            return
+        if target is not self.document:
+            if not self.show_document(target):
+                return
+            self.show_document_tab(target)
+            # Le défilement du document affiché est restauré juste après.
+            call_later(0, self, lambda: self.document is target and self._goto_line(line, column))
+        self._goto_line(line, column)
+
+    def _goto_line(self, line, column):
         self.left_tabs.setCurrentIndex(0)
         block = self.editor.document().findBlockByNumber(max(0, line - 1))
         if not block.isValid():
@@ -154,6 +205,74 @@ class ValidationPanelMixin:
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
+
+    # --- Édition assemblée ----------------------------------------------------
+
+    def _assembly_context(self):
+        """L'édition, si le document affiché en fait partie (l'édition ou
+        l'une de ses parties) et qu'elle a des parties : la validation porte
+        alors sur l'édition assemblée. Sinon None."""
+        if self.document.in_edition and self._edition_has_parts():
+            return self.edition_session
+        return None
+
+    def _assembly_texts(self, displayed_text):
+        """Texte de l'édition et ``{chemin: texte}`` des parties à valider
+        autrement que sur le disque : le document affiché (``displayed_text``,
+        instantané) et les parties modifiées."""
+        def text_of(session):
+            return displayed_text if session is self.document else session.text_document.toPlainText()
+
+        parts = {str(session.path): text_of(session) for session in self.documents
+                 if session.is_part and session.text_document is not None
+                 and (session is self.document or session.modified)}
+        return text_of(self.edition_session), parts
+
+    def _rng_invalid_for(self, session, result):
+        """True si ``result`` signale une erreur dans ``session`` : toute
+        erreur hors d'une édition assemblée, sinon celles de son fichier."""
+        if result is None or result.valid:
+            return False
+        if not (session.in_edition and self._edition_has_parts()):
+            return True
+        return any(self._issue_session(issue.file) is session for issue in result.issues)
+
+    def _share_assembled_result(self, result):
+        """Résultat de l'édition assemblée, obtenu pour le document affiché :
+        rangé aussi sur l'édition et sur ses parties chargées, avec l'état RNG
+        affiché ; l'onglet de chacune prend la couleur de ses propres erreurs."""
+        rng = (self.rng_status.text(), self.rng_status.styleSheet(), self.validation_summary.text())
+        for session in self.documents:
+            if session is self.document or not session.in_edition:
+                continue
+            if session.text_document is not None:
+                session.last_rng_result = result
+                session.last_rng_revision = session.text_document.revision()
+                session.last_rng_schema_token = self._last_rng_schema_token
+                status = (session.view_state or {}).get("status")
+                if status:
+                    xml_text, xml_style, _text, _style, schematron, schematron_tip, _summary = status
+                    session.view_state["status"] = (xml_text, xml_style, rng[0], rng[1],
+                                                    schematron, schematron_tip, rng[2])
+            if session.health != "malformed":
+                session.health = "rng_invalid" if self._rng_invalid_for(session, result) else "normal"
+            self._refresh_document_tab(session)
+
+    def _assembly_changed(self):
+        """Le document affiché, édition ou partie, vient de changer : le
+        résultat partagé de l'édition assemblée n'est plus valable pour les
+        autres documents ; ils seront validés à nouveau à leur affichage."""
+        if getattr(self, "_loading_editor_document", False) or self._assembly_context() is None:
+            return
+        for session in self.documents:
+            if session is self.document or not session.in_edition or session.last_rng_result is None:
+                continue
+            session.invalidate_rng()
+            if session.view_state:
+                session.view_state["status"] = None
+            if session.health == "rng_invalid":
+                session.health = "normal"
+                self._refresh_document_tab(session)
 
     def _auto_refresh_rng(self):
         """A01: revalide l'état courant, même après masquage du panneau.
@@ -225,14 +344,21 @@ class ValidationPanelMixin:
         """
         text = self.editor.toPlainText() if xml_text is None else xml_text
         revision = self.editor.document().revision() if document_revision is None else int(document_revision)
-        key = self._schema_resolution_cache_key(text)
+        # Édition assemblée : le schéma est celui de l'édition, même quand une
+        # partie est affichée.
+        edition = self._assembly_context()
+        schema_text, schema_xml_path = text, self.current_path or self.project.edition
+        if edition is not None and edition is not self.document:
+            schema_text = edition.text_document.toPlainText()
+            schema_xml_path = edition.path or self.project.edition
+        key = self._schema_resolution_cache_key(schema_text)
         if not refresh_schema and self._completion_resolution_key == key and self._completion_resolution is not None:
             resolution = self._completion_resolution
         else:
             resolution = resolve_schema(
                 mode=self._schema_mode,
-                xml_text=text,
-                xml_path=self.current_path or self.project.edition,
+                xml_text=schema_text,
+                xml_path=schema_xml_path,
                 project_schema=self._schema_file,
                 force_refresh=refresh_schema,
             )
@@ -247,7 +373,7 @@ class ValidationPanelMixin:
         # La validation explicite vient de faire le travail de résolution : la
         # complétion peut réutiliser exactement ce résultat tant que xml-model
         # n'est pas modifié.
-        self._completion_resolution_key = self._schema_resolution_cache_key(text)
+        self._completion_resolution_key = self._schema_resolution_cache_key(schema_text)
         self._completion_resolution = resolution
         self._update_schematron_status(resolution)
 
@@ -305,16 +431,20 @@ class ValidationPanelMixin:
 
         schema = resolution.schema_path
         base_url = self.current_path or self.project.edition
+        parts = None
+        if edition is not None:
+            text, parts = self._assembly_texts(text)
+            base_url = edition.path or self.project.edition
         options = dict(revision=revision, schema=schema, resolution=resolution, show_panel=show_panel,
                        show_success_message=show_success_message, automatic=automatic)
         self.rng_status.setText(_t("rng.status.running"))
         self.rng_status.setStyleSheet("color:#777")
         if background:
-            self._validate_in_background(text, schema, base_url, options)
+            self._validate_in_background(text, schema, base_url, options, parts)
             return None
-        return self._apply_rng_result(worker_client().validate(text, schema, base_url), **options)
+        return self._apply_rng_result(worker_client().validate(text, schema, base_url, parts=parts), **options)
 
-    def _validate_in_background(self, text, schema, base_url, options):
+    def _validate_in_background(self, text, schema, base_url, options, parts=None):
         """Validation automatique : la fenêtre reste utilisable. Le résultat est
         affiché à son arrivée s'il concerne encore le document affiché ; un
         document quitté entre-temps sera validé à nouveau à son retour."""
@@ -332,7 +462,7 @@ class ValidationPanelMixin:
                 session.view_state["status"] = None
 
         pending.add(key)
-        worker_client().validate_async(text, schema, base_url, self, arrived)
+        worker_client().validate_async(text, schema, base_url, self, arrived, parts=parts)
 
     def _rng_busy_changed(self, busy):
         """Lueur de la barre d'état pendant une validation en cours."""
@@ -375,7 +505,11 @@ class ValidationPanelMixin:
             self.validation_summary.setText(_t("rng.panel.xml_invalid"))
             self.rng_status.setText(_t("rng.status.xml_invalid"))
             self.rng_status.setStyleSheet("color:#a13d32;font-weight:600")
-            self._set_document_health("malformed")
+            if self._assembly_context() in (None, self.document):
+                self._set_document_health("malformed")
+            else:                                           # l'édition est mal formée, pas la partie
+                self.edition_session.health = "malformed"
+                self._refresh_document_tab(self.edition_session)
             if show_panel:
                 self.show_validation_panel()
             return result
@@ -386,6 +520,8 @@ class ValidationPanelMixin:
             self.rng_status.setText(_t("rng.status.valid"))
             self.rng_status.setStyleSheet("color:#376b3c")
             self._set_document_health("normal")
+            if self._assembly_context() is not None:
+                self._share_assembled_result(result)
             if show_panel:
                 self.show_validation_panel()
             if show_success_message:
@@ -397,7 +533,10 @@ class ValidationPanelMixin:
         self.validation_summary.setText(_t("rng.panel.invalid", count=count, schema=schema_name))
         self.rng_status.setText(_t("rng.status.invalid", count=count))
         self.rng_status.setStyleSheet("color:#a06a20;font-weight:600")
-        self._set_document_health("rng_invalid")
+        # Édition assemblée : chaque document prend la couleur de ses erreurs.
+        self._set_document_health("rng_invalid" if self._rng_invalid_for(self.document, result) else "normal")
+        if self._assembly_context() is not None:
+            self._share_assembled_result(result)
         if not automatic:
             self.show_validation_panel()
         return result

@@ -686,6 +686,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         # Le garde de révision dans _text_changed évite un double traitement.
         self.editor.textChanged.connect(self._text_changed)
         self.editor.document().contentsChanged.connect(self._text_changed)
+        # Édition assemblée : un changement invalide le résultat partagé.
+        self.editor.document().contentsChanged.connect(self._assembly_changed)
         self.open_path(self.project.edition)
         remember_open_project(self.project.path)
 
@@ -926,7 +928,12 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         if not self.document.is_edition:
             return  # l'état de structure est celui de l'édition
         n = len(self.document.lb.spans)
-        if self.expected_base_lines is None:
+        self.structure_status.setToolTip("")
+        if self._witness_sync_suspended():
+            self.structure_status.setText(_t("status.structure.suspended", base=self.base_id))
+            self.structure_status.setToolTip(_t("status.structure.suspended.tip"))
+            self.structure_status.setStyleSheet("color:#746b61")
+        elif self.expected_base_lines is None:
             self.structure_status.setText(_t("status.structure.free", base=self.base_id, count=n))
             self.structure_status.setStyleSheet("color:#746b61")
         elif n == self.expected_base_lines:
@@ -1172,7 +1179,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
             self._last_rng_revision == current_revision
             and self._last_rng_result is not None
             and self._last_rng_result.well_formed
-            and not self._last_rng_result.valid
+            and self._rng_invalid_for(self.document, self._last_rng_result)
         ):
             self._set_document_health("rng_invalid")
         else:

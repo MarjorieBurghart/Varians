@@ -112,9 +112,23 @@ class DocumentTabsMixin:
                           + [s for s in others if not s.is_part])
         self._update_document_tabs()
         self._save_document_tabs()
+        # La synchronisation peut avoir été suspendue ou rétablie.
+        if self.document.is_edition:
+            self._rebuild_lb_cache()
 
     def _edition_displayed(self):
         return self.document.is_edition
+
+    def _edition_has_parts(self):
+        """L'édition inclut des parties (XInclude) : elle est validée
+        assemblée."""
+        return any(session.is_part for session in self.documents)
+
+    def _witness_sync_suspended(self):
+        """Synchronisation des témoins suspendue (V0.9.0.0) : l'édition a des
+        parties, et la synchronisation à travers les parties n'est pas encore
+        réalisée. Les témoins restent consultables en navigation libre."""
+        return self._edition_has_parts()
 
     def _build_document_area(self, views):
         """Rangée d'onglets des documents au-dessus de ``views`` (source et
@@ -286,7 +300,8 @@ class DocumentTabsMixin:
         self._remember_document_view(previous)
         old = previous.text_document
         for signal, slot in ((old.contentsChange, self._source_contents_changed),
-                             (old.contentsChanged, self._text_changed)):
+                             (old.contentsChanged, self._text_changed),
+                             (old.contentsChanged, self._assembly_changed)):
             try:
                 signal.disconnect(slot)
             except (RuntimeError, TypeError):
@@ -297,6 +312,7 @@ class DocumentTabsMixin:
         self.editor.set_text_document(session.text_document)
         session.text_document.contentsChange.connect(self._source_contents_changed)
         session.text_document.contentsChanged.connect(self._text_changed)
+        session.text_document.contentsChanged.connect(self._assembly_changed)
         # Les numéros de révision sont propres à chaque document.
         self._folio_revision = None
         self.xpath_table.setRowCount(0)

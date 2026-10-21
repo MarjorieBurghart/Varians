@@ -252,6 +252,62 @@ def sermons_project(tmp_path):
     return root / "project.xml"
 
 
+# Petite collection : une édition qui inclut trois courts sermons. Schéma
+# explicite : libxml2 signale une erreur à l'élément fautif, sans erreurs en
+# cascade sur ses ancêtres (comme avec TEI_ALL).
+COLLECTION_RNG = """<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" ns="http://www.tei-c.org/ns/1.0">
+  <start>
+    <element name="TEI">
+      <element name="text"><element name="body"><oneOrMore><ref name="div"/></oneOrMore></element></element>
+    </element>
+  </start>
+  <define name="div">
+    <element name="div">
+      <optional><attribute name="xml:id" ns="http://www.w3.org/XML/1998/namespace"/></optional>
+      <optional><attribute name="xml:base" ns="http://www.w3.org/XML/1998/namespace"/></optional>
+      <optional><element name="head"><text/></element></optional>
+      <zeroOrMore><element name="p"><mixed><zeroOrMore><element name="hi"><text/></element></zeroOrMore></mixed></element></zeroOrMore>
+    </element>
+  </define>
+</grammar>
+"""
+COLLECTION_EDITION = """<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="collection.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <text>
+    <body>
+      <div xml:id="intro"><p>Introductio</p></div>
+      <xi:include href="sermons/s01.xml"/>
+      <xi:include href="sermons/s02.xml"/>
+      <xi:include href="sermons/s03.xml"/>
+    </body>
+  </text>
+</TEI>
+"""
+
+
+def _collection_part(number):
+    """Texte d'un sermon de la collection ; son paragraphe, « Sermo
+    <hi>breuis</hi>. », est à la ligne 3."""
+    return (f'<div xmlns="http://www.tei-c.org/ns/1.0" xml:id="s0{number}">\n'
+            f'  <head>Sermo {number}</head>\n'
+            '  <p>Sermo <hi>breuis</hi>.</p>\n'
+            '</div>\n')
+
+
+@pytest.fixture
+def collection_project(sermons_project):
+    """Le projet « sermons » réduit à une édition qui inclut trois courts
+    sermons (fragments s01 à s03), validée par COLLECTION_RNG."""
+    xml = sermons_project.parent / "xml"
+    (xml / "collection.rng").write_text(COLLECTION_RNG, encoding="utf-8")
+    (xml / "edition.xml").write_text(COLLECTION_EDITION, encoding="utf-8")
+    for number in (1, 2, 3):
+        (xml / "sermons" / f"s0{number}.xml").write_text(_collection_part(number), encoding="utf-8")
+    return sermons_project
+
+
 @pytest.fixture
 def editor_module(qapp):
     import editeur_tei

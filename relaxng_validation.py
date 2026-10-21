@@ -284,20 +284,6 @@ def validate_relaxng(xml_text: str, schema_path: str | Path, *, base_url: str | 
     return ValidationResult(True, True, True, valid, issues, "")
 
 
-# Problèmes d'assemblage (xml_assembly.AssemblyProblem.code) ; le panneau
-# RELAX NG les traduit d'après ``type_name``.
-_XINCLUDE_MESSAGES = {
-    "missing": "Included file not found: {detail}",
-    "fallback": "Included file not found (xi:fallback is not supported): {detail}",
-    "circular": "Circular inclusion: {detail}",
-    "parse_text": 'parse="text" inclusions are not supported',
-    "parse_invalid": "Invalid parse value: {detail}",
-    "href_unsupported": "Unsupported href, a local file is expected: {detail}",
-    "xpointer_unsupported": "Unsupported xpointer: {detail}",
-    "xpointer_not_found": "No element matches the xpointer: {detail}",
-}
-
-
 def validate_assembled(master_text: str, schema_path: str | Path, master_path: str | Path,
                        parts: dict | None = None) -> ValidationResult:
     """Valide l'édition *master_text* assemblée avec ses parties (XInclude).
@@ -306,6 +292,12 @@ def validate_assembled(master_text: str, schema_path: str | Path, master_path: s
     fichiers. Les erreurs d'une partie portent son chemin (``file``) et sa
     ligne ; celles de l'édition, ``file`` vide. Une édition mal formée donne
     le même résultat que ``validate_relaxng``.
+
+    Un problème d'assemblage (partie absente, mal formée…) est une erreur du
+    domaine ``XINCLUDE`` : ``type_name`` est son code
+    (``xml_assembly.AssemblyProblem``), ``message`` son détail (chemin,
+    xpointer, erreur de syntaxe) ; le panneau RELAX NG le met en forme dans
+    la langue de l'interface.
     """
     if etree is None:
         return ValidationResult(False, False, False, False, (), "lxml is not installed")
@@ -323,9 +315,7 @@ def validate_assembled(master_text: str, schema_path: str | Path, master_path: s
         return "" if path == assembly.master else str(path)
 
     problems = tuple(ValidationIssue(
-        line=problem.line, column=0, level="ERROR",
-        message=problem.detail if problem.code == "malformed" else
-        _XINCLUDE_MESSAGES.get(problem.code, problem.code).format(detail=problem.detail),
+        line=problem.line, column=0, level="ERROR", message=problem.detail,
         domain="XINCLUDE", type_name=problem.code, file=file_name(problem.file),
     ) for problem in assembly.problems)
 

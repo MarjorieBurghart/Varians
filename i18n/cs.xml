@@ -778,4 +778,17 @@ Soubor se nesmaže: zůstane na disku.</string>
 {hrefs}
 
 Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo edici uložte do její současné složky.</string>
+  <string key="rng.column.document">Dokument</string>
+  <string key="rng.xinclude.malformed">Část není správně formovaná: {detail}</string>
+  <string key="rng.xinclude.missing">Vložený soubor nebyl nalezen: {detail}</string>
+  <string key="rng.xinclude.fallback">Vložený soubor nebyl nalezen (xi:fallback není podporován): {detail}</string>
+  <string key="rng.xinclude.circular">Kruhové vložení: {detail}</string>
+  <string key="rng.xinclude.parse_text">Vložení textu (parse="text") není podporováno</string>
+  <string key="rng.xinclude.parse_invalid">Neplatná hodnota parse: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">Nepodporovaný href, očekává se místní soubor: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">Nepodporovaný xpointer: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">Xpointeru neodpovídá žádný prvek: {detail}</string>
+  <string key="status.structure.suspended">{base}: synchronizace pozastavena (edice v částech)</string>
+  <string key="status.structure.suspended.tip">Edice vkládá své části pomocí XInclude: synchronizace textových svědků napříč částmi přijde v některé z příštích verzí. Svědky lze nadále volně procházet. Viz nápověda, „Sestavené edice (XInclude)“.</string>
+  <string key="diagnostics.sync_suspended">Synchronizace pozastavena: edice vkládá části (XInclude). Svědky lze nadále volně procházet; synchronizace napříč částmi přijde v některé z příštích verzí.</string>
 </translations>

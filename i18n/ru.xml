@@ -778,4 +778,17 @@
 {hrefs}
 
 При сохранении в другую папку оно их больше не найдёт. Скопируйте и части или сохраните издание в его текущей папке.</string>
+  <string key="rng.column.document">Документ</string>
+  <string key="rng.xinclude.malformed">Часть не является правильно сформированной: {detail}</string>
+  <string key="rng.xinclude.missing">Включаемый файл не найден: {detail}</string>
+  <string key="rng.xinclude.fallback">Включаемый файл не найден (xi:fallback не поддерживается): {detail}</string>
+  <string key="rng.xinclude.circular">Циклическое включение: {detail}</string>
+  <string key="rng.xinclude.parse_text">Включение текста (parse="text") не поддерживается</string>
+  <string key="rng.xinclude.parse_invalid">Неверное значение parse: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">Неподдерживаемый href, ожидается локальный файл: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">Неподдерживаемый xpointer: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">Ни один элемент не соответствует xpointer: {detail}</string>
+  <string key="status.structure.suspended">{base}: синхронизация приостановлена (издание из частей)</string>
+  <string key="status.structure.suspended.tip">Издание включает свои части через XInclude: синхронизация свидетелей между частями появится в одной из следующих версий. Свидетелей можно свободно просматривать. См. справку, «Собранные издания (XInclude)».</string>
+  <string key="diagnostics.sync_suspended">Синхронизация приостановлена: издание включает части (XInclude). Свидетелей можно свободно просматривать; синхронизация между частями появится в одной из следующих версий.</string>
 </translations>

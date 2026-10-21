@@ -764,4 +764,17 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
 {hrefs}
 
 Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi les parties, ou enregistrez l’édition dans son dossier actuel.</string>
+  <string key="rng.column.document">Document</string>
+  <string key="rng.xinclude.malformed">Partie mal formée : {detail}</string>
+  <string key="rng.xinclude.missing">Fichier inclus introuvable : {detail}</string>
+  <string key="rng.xinclude.fallback">Fichier inclus introuvable (xi:fallback n’est pas pris en charge) : {detail}</string>
+  <string key="rng.xinclude.circular">Inclusion circulaire : {detail}</string>
+  <string key="rng.xinclude.parse_text">L’inclusion de texte (parse="text") n’est pas prise en charge</string>
+  <string key="rng.xinclude.parse_invalid">Valeur de parse incorrecte : {detail}</string>
+  <string key="rng.xinclude.href_unsupported">href non pris en charge, un fichier local est attendu : {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">xpointer non pris en charge : {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">Aucun élément ne correspond au xpointer : {detail}</string>
+  <string key="status.structure.suspended">{base} : synchronisation suspendue (édition en parties)</string>
+  <string key="status.structure.suspended.tip">L’édition inclut ses parties par XInclude : la synchronisation des témoins à travers les parties viendra dans une prochaine version. Les témoins restent consultables en navigation libre. Voir l’aide, « Éditions assemblées (XInclude) ».</string>
+  <string key="diagnostics.sync_suspended">Synchronisation suspendue : l’édition inclut des parties (XInclude). Les témoins restent consultables en navigation libre ; la synchronisation à travers les parties viendra dans une prochaine version.</string>
 </translations>

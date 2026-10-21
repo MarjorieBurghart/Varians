@@ -764,4 +764,17 @@ The file is not deleted: it stays on disk.</string>
 {hrefs}
 
 Saved in another folder, it would no longer find them. Copy the parts as well, or save the edition in its current folder.</string>
+  <string key="rng.column.document">Document</string>
+  <string key="rng.xinclude.malformed">Malformed part: {detail}</string>
+  <string key="rng.xinclude.missing">Included file not found: {detail}</string>
+  <string key="rng.xinclude.fallback">Included file not found (xi:fallback is not supported): {detail}</string>
+  <string key="rng.xinclude.circular">Circular inclusion: {detail}</string>
+  <string key="rng.xinclude.parse_text">Text inclusion (parse="text") is not supported</string>
+  <string key="rng.xinclude.parse_invalid">Invalid parse value: {detail}</string>
+  <string key="rng.xinclude.href_unsupported">Unsupported href, a local file is expected: {detail}</string>
+  <string key="rng.xinclude.xpointer_unsupported">Unsupported xpointer: {detail}</string>
+  <string key="rng.xinclude.xpointer_not_found">No element matches the xpointer: {detail}</string>
+  <string key="status.structure.suspended">{base}: synchronization suspended (edition in parts)</string>
+  <string key="status.structure.suspended.tip">The edition includes its parts through XInclude: witness synchronization across the parts will come in a later version. The witnesses can still be browsed freely. See the help, “Assembled editions (XInclude)”.</string>
+  <string key="diagnostics.sync_suspended">Synchronization suspended: the edition includes parts (XInclude). The witnesses can still be browsed freely; synchronization across the parts will come in a later version.</string>
 </translations>
