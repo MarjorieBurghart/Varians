@@ -291,6 +291,29 @@ class WitnessDiagnosticDialog(QDialog):
             QTimer.singleShot(0, main.show_witness_diagnostics)
 
 
+def _patch_text_document(document, old_text, new_text):
+    """Remplace ``old_text`` par ``new_text`` dans ``document`` en ne
+    réécrivant que la portion qui diffère, en un seul pas d'annulation.
+    Renvoie le curseur, placé à la fin du texte inséré."""
+    prefix = 0
+    limit = min(len(old_text), len(new_text))
+    while prefix < limit and old_text[prefix] == new_text[prefix]:
+        prefix += 1
+    suffix = 0
+    max_suffix = min(len(old_text) - prefix, len(new_text) - prefix)
+    while suffix < max_suffix and old_text[len(old_text)-1-suffix] == new_text[len(new_text)-1-suffix]:
+        suffix += 1
+    old_end = len(old_text) - suffix
+    new_end = len(new_text) - suffix
+    c = QTextCursor(document)
+    c.beginEditBlock()
+    c.setPosition(prefix)
+    c.setPosition(old_end, QTextCursor.MoveMode.KeepAnchor)
+    c.insertText(new_text[prefix:new_end])
+    c.endEditBlock()
+    return c
+
+
 class WitnessSyncMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
@@ -369,26 +392,38 @@ class WitnessSyncMixin:
         if matched:
             self._last_synced_surface = signature
 
+    def _edition_text(self):
+        """Texte de l'édition, où se trouve le <facsimile>, même quand l'une
+        de ses parties est affichée."""
+        if self._edition_displayed():
+            return self.editor.toPlainText()
+        return self.edition_session.text_document.toPlainText()
+
+    def _write_edition_text(self, old_text, new_text):
+        """Remplace ``old_text`` par ``new_text`` dans l'édition. Quand l'une de
+        ses parties est affichée (V0.9.1.0), l'édition est modifiée sans être
+        affichée : son onglet porte « * », son index des <lb/> est à refaire et
+        la validation de l'édition assemblée repart."""
+        if self._edition_displayed():
+            self._replace_editor_text_minimally(old_text, new_text)
+            return
+        if old_text == new_text:
+            return
+        edition = self.edition_session
+        _patch_text_document(edition.text_document, old_text, new_text)
+        edition.modified = True
+        edition.lb.invalidate()
+        self._refresh_document_tab(edition)
+        self._assembly_changed()
+        self.document.invalidate_rng()
+        if self._rng_watch_enabled and self._schema_mode != 'none':
+            self.rng_refresh_timer.start()
+
     def _replace_editor_text_minimally(self, old_text, new_text, target_position=None):
         """Applique un patch textuel minimal afin de conserver Undo et le contexte."""
         if old_text == new_text:
             return
-        prefix = 0
-        limit = min(len(old_text), len(new_text))
-        while prefix < limit and old_text[prefix] == new_text[prefix]:
-            prefix += 1
-        suffix = 0
-        max_suffix = min(len(old_text) - prefix, len(new_text) - prefix)
-        while suffix < max_suffix and old_text[len(old_text)-1-suffix] == new_text[len(new_text)-1-suffix]:
-            suffix += 1
-        old_end = len(old_text) - suffix
-        new_end = len(new_text) - suffix
-        c = QTextCursor(self.editor.document())
-        c.beginEditBlock()
-        c.setPosition(prefix)
-        c.setPosition(old_end, QTextCursor.MoveMode.KeepAnchor)
-        c.insertText(new_text[prefix:new_end])
-        c.endEditBlock()
+        c = _patch_text_document(self.editor.document(), old_text, new_text)
         if target_position is not None:
             c.setPosition(max(0, min(self.editor.document().characterCount()-1, int(target_position))))
         self.editor.setTextCursor(c)
@@ -408,9 +443,10 @@ class WitnessSyncMixin:
         if current is None:
             QMessageBox.warning(self, _t('folio.split.title'), _t('folio.split.page_not_found'))
             return
-        # Vérifier l'existence de la surface dans le XML de l'éditeur AVANT
-        # d'ouvrir un dialogue que l'utilisateur remplirait pour rien.
-        old = self.editor.toPlainText()
+        # Vérifier l'existence de la surface dans le XML de l'édition AVANT
+        # d'ouvrir un dialogue que l'utilisateur remplirait pour rien. Le
+        # <facsimile> est celui de l'édition, même si une partie est affichée.
+        old = self._edition_text()
         try:
             tei_root = ET.fromstring(old)
         except ET.ParseError as exc:
@@ -474,7 +510,7 @@ class WitnessSyncMixin:
         # Le texte ne doit pas être réécrit avant acceptation. En mode
         # synchronisé, ne pas changer le centre du panneau : seules les zones
         # de folio TEI sont créées, les base_keys restent prépondérants.
-        old = self.editor.toPlainText()
+        old = self._edition_text()
         try:
             updated, (lref, rref) = configure_surface_parts(
                 old, surface_id, left.text(), right.text(), int(iw), int(ih),
@@ -482,7 +518,7 @@ class WitnessSyncMixin:
         except ValueError as exc:
             QMessageBox.warning(self, _t('folio.split.title'), str(exc))
             return
-        self._replace_editor_text_minimally(old, updated)
+        self._write_edition_text(old, updated)
         self._refresh_folio_navigation(updated, force=True)
         if not panel.sync_enabled and existing is None:
             panel.set_folio(lref)
@@ -495,7 +531,10 @@ class WitnessSyncMixin:
 
     @Slot(str, str, str)
     def _mark_page_in_tei(self, witness_id, surface_id, label):
-        """Crée/complète le facsimile puis insère un <pb n facs> en position sûre."""
+        """Crée/complète le facsimile puis insère un <pb n facs> en position sûre.
+
+        Dans une partie de l'édition (V0.9.1.0), le pb est inséré dans la
+        partie et le facsimile complété dans l'édition, même non affichée."""
         old = self.editor.toPlainText()
         original_pos = self.editor.textCursor().position()
         # Règle conservatrice : « Marquer la page » n'édite jamais une balise
@@ -504,12 +543,15 @@ class WitnessSyncMixin:
         if position_inside_xml_markup(old, original_pos):
             self.statusBar().showMessage(_t("manuscript.mark_page.inside_tag"), 3200)
             return
+        # Le <facsimile> est celui de l'édition.
+        in_part = not self._edition_displayed()
+        edition = self._edition_text() if in_part else old
         # When marking one region of a spread, validate the target BEFORE
         # changing the source, even if an older in-memory list is stale.
         panel = self.panels.get(witness_id)
         if panel is not None and surface_id not in getattr(panel, '_surface_indices', {}):
             ids = list(getattr(panel, '_surface_indices', {}).keys())
-            actual = folios_for_witness(old, witness_id, ids)
+            actual = folios_for_witness(edition, witness_id, ids)
             target = next((f for f in actual if f.ref == surface_id and f.region is not None), None)
             if target is None:
                 QMessageBox.warning(self, _t('folio.mark.choose_title'), _t('folio.mark.stale_target'))
@@ -520,7 +562,7 @@ class WitnessSyncMixin:
         # Avant de créer un pointeur, garantir que sa cible existe. La fusion est
         # incrémentale : aucune surface ou zone existante n'est supprimée.
         pages = project_facsimile_pages(self.witness_configs, self.project.root_dir, self.project.edition)
-        with_facsimile, report = sync_facsimile_text(old, pages, previous_surface_labels(self.witness_configs))
+        with_facsimile, report = sync_facsimile_text(edition, pages, previous_surface_labels(self.witness_configs))
         fatal_conflicts = [
             c for c in report.conflicts
             if c.startswith("XML non bien formé") or c.startswith(f"{surface_id}:")
@@ -532,7 +574,7 @@ class WitnessSyncMixin:
         # Le curseur d'origine doit être translaté si <facsimile> vient d'être
         # inséré avant <text>. Rechercher la portion commune permet de conserver
         # approximativement le même point dans la transcription.
-        if with_facsimile != old:
+        if not in_part and with_facsimile != old:
             text_marker = old[:original_pos]
             if text_marker:
                 # La fin du préfixe original se retrouve normalement telle quelle.
@@ -543,13 +585,15 @@ class WitnessSyncMixin:
                 else:
                     original_pos += max(0, len(with_facsimile) - len(old))
         updated, new_pos, mode = upsert_pb_at_position(
-            with_facsimile, original_pos, label, surface_id, witness_id=witness_id
+            old if in_part else with_facsimile, original_pos, label, surface_id, witness_id=witness_id
         )
         if mode == "blocked":
             # Double garde-fou : ne devrait pas arriver après le test ci-dessus,
             # sauf si une future transformation déplace le curseur dans du markup.
             self.statusBar().showMessage(_t("manuscript.mark_page.inside_tag"), 3200)
             return
+        if in_part:
+            self._write_edition_text(edition, with_facsimile)
         self._replace_editor_text_minimally(old, updated, new_pos)
         self._last_synced_surface = None
         self._sync_page_panels_to_cursor(True)

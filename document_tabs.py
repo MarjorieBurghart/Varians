@@ -624,11 +624,13 @@ class DocumentTabsMixin:
     # --- Garde-fous : commandes réservées à l'édition -------------------------
 
     def _edition_write(self, method):
-        """Commande d'un panneau de témoin qui écrit dans l'édition : refusée,
-        avec un message, si un autre document est affiché (elle s'appliquerait
-        à un endroit que l'utilisateur ne voit pas)."""
+        """Commande d'un panneau de témoin qui écrit dans l'édition : acceptée
+        pour l'édition et ses parties (V0.9.1.0 : le pb va dans la partie, le
+        facsimile dans l'édition) ; refusée, avec un message, pour un document
+        auxiliaire (elle s'appliquerait à un endroit que l'utilisateur ne voit
+        pas)."""
         def guarded(*args):
-            if not self._edition_displayed():
+            if not self.document.in_edition:
                 QMessageBox.information(
                     self, _t("documents.edition_required.title"),
                     _t("documents.edition_required.text", name=self.edition_session.path.name))

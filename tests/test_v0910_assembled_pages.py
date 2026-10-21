@@ -13,6 +13,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from folio_navigation import Folio, folio_at_position, folios_for_witness
+from tei_facsimile import position_inside_xml_markup, upsert_pb_at_position
 from image_sources import page_label as image_page_label
 from pivot_lines import include_spans, pivot_lines
 from tei_facsimile import facsimile_ref_at_position
@@ -129,3 +130,65 @@ def test_the_folios_are_read_in_the_facsimile_of_the_edition_when_a_part_is_disp
         [("A-12v", "12v")]]
     window._refresh_folio_navigation()                   # même révision de l'édition
     assert len(window.panels["A"].folio_calls) == 1
+
+
+# --- « Marquer la page » depuis une partie ----------------------------------------
+
+EDITION_XML = ('<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader/><facsimile/>'
+               '<text><body/></text></TEI>')
+PART_XML = '<div xmlns="http://www.tei-c.org/ns/1.0"><p>alpha beta</p></div>'
+
+
+def _mark_host(position, displayed_edition=False):
+    writes, outputs = [], []
+    text = EDITION_XML if displayed_edition else PART_XML
+    host = SimpleNamespace(
+        editor=SimpleNamespace(toPlainText=lambda: text,
+                               textCursor=lambda: SimpleNamespace(position=lambda: position)),
+        panels={}, witness_configs=[],
+        project=SimpleNamespace(root_dir=DATA.parent, edition=DATA / "edition.xml"),
+        _edition_displayed=lambda: displayed_edition, _edition_text=lambda: EDITION_XML,
+        _write_edition_text=lambda old, new: writes.append((old, new)),
+        _replace_editor_text_minimally=lambda old, new, pos: outputs.append((old, new, pos)),
+        _sync_page_panels_to_cursor=lambda force=False: None,
+        statusBar=lambda: SimpleNamespace(showMessage=lambda *args: None),
+        _last_synced_surface="cached")
+    return host, writes, outputs
+
+
+def _mark_method():
+    namespace = {
+        "position_inside_xml_markup": position_inside_xml_markup, "folios_for_witness": folios_for_witness,
+        "QMessageBox": None, "_t": lambda key, **kw: key, "project_facsimile_pages": lambda *args: [],
+        "previous_surface_labels": lambda *args: {}, "upsert_pb_at_position": upsert_pb_at_position,
+        # Le facsimile reçoit la surface de la page marquée.
+        "sync_facsimile_text": lambda old, *args: (
+            old.replace("<facsimile/>", '<facsimile><surface xml:id="A-13v" n="13v"/></facsimile>'),
+            SimpleNamespace(conflicts=[])),
+    }
+    exec(textwrap.dedent(method_source("MainWindow", "_mark_page_in_tei")), namespace)
+    return namespace["_mark_page_in_tei"]
+
+
+def test_marking_a_page_in_a_part_puts_the_pb_in_the_part_and_the_facsimile_in_the_edition():
+    host, writes, outputs = _mark_host(PART_XML.index("beta"))
+    _mark_method()(host, "A", "A-13v", "13v")
+    assert writes == [(EDITION_XML, EDITION_XML.replace(
+        "<facsimile/>", '<facsimile><surface xml:id="A-13v" n="13v"/></facsimile>'))]
+    ((old, new, _position),) = outputs
+    assert old == PART_XML
+    assert new == PART_XML.replace("beta", '<pb n="13v" edRef="#A" facs="#A-13v"/>beta')
+
+
+def test_marking_a_page_inside_a_tag_of_a_part_writes_nothing():
+    host, writes, outputs = _mark_host(PART_XML.index("<p>") + 1)
+    _mark_method()(host, "A", "A-13v", "13v")
+    assert writes == [] and outputs == []
+
+
+def test_marking_a_page_in_the_edition_is_unchanged():
+    host, writes, outputs = _mark_host(EDITION_XML.index("<body/>"), displayed_edition=True)
+    _mark_method()(host, "A", "A-13v", "13v")
+    assert writes == []                                     # un seul correctif, dans l'éditeur
+    ((old, new, _position),) = outputs
+    assert old == EDITION_XML and '<surface xml:id="A-13v"' in new and 'facs="#A-13v"' in new
