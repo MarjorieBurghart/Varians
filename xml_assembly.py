@@ -81,12 +81,13 @@ class Assembly:
     première inclusion ; ``problems`` : voir ``AssemblyProblem``.
     """
 
-    def __init__(self, master, root, parts, problems, origins):
+    def __init__(self, master, root, parts, problems, origins, sites=None):
         self.master = master
         self.root = root
         self.parts = tuple(parts)
         self.problems = tuple(problems)
         self._origins = origins
+        self._sites = sites or {}
 
     def origin(self, element) -> Path:
         """Fichier d'où vient ``element`` (l'édition, ou l'une des parties)."""
@@ -97,6 +98,11 @@ class Assembly:
                 return path
             node = node.getparent()
         return self.master
+
+    def site(self, element):
+        """Ligne du ``xi:include`` qu'a remplacé ``element``, dans le fichier
+        qui l'inclut ; None si ``element`` n'est pas la copie d'une partie."""
+        return self._sites.get(element)
 
     def visible_ids(self) -> dict:
         """``{fichier: identifiants}`` des éléments du document assemblé,
@@ -232,6 +238,7 @@ class _Assembler:
         self.parts = []
         self.problems = []
         self.origins = {}
+        self.sites = {}
 
     def _load(self, path):
         """Racine de la partie ``path`` (lue une fois) ; ``None`` si elle est mal
@@ -288,6 +295,7 @@ class _Assembler:
         piece = copy.deepcopy(selected)
         piece.tail = None
         self.origins[piece] = target
+        self.sites[piece] = include.line
         self.expand(piece, target, chain | {key})
         if os.path.dirname(key) != os.path.dirname(path_key(path)) and piece.get(_XML_BASE) is None:
             piece.set(_XML_BASE, include.href)
@@ -308,4 +316,4 @@ def assemble(master_text, master_path, texts=None) -> Assembly:
         problem = AssemblyProblem(master, int(exc.lineno or 0), "malformed", str(exc))
         return Assembly(master, None, (), (problem,), {})
     assembler.expand(root, master, frozenset({path_key(master)}))
-    return Assembly(master, root, assembler.parts, assembler.problems, assembler.origins)
+    return Assembly(master, root, assembler.parts, assembler.problems, assembler.origins, assembler.sites)
