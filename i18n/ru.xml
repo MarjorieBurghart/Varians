@@ -788,9 +788,6 @@
   <string key="rng.xinclude.href_unsupported">Неподдерживаемый href, ожидается локальный файл: {detail}</string>
   <string key="rng.xinclude.xpointer_unsupported">Неподдерживаемый xpointer: {detail}</string>
   <string key="rng.xinclude.xpointer_not_found">Ни один элемент не соответствует xpointer: {detail}</string>
-  <string key="status.structure.suspended">{base}: синхронизация приостановлена (издание из частей)</string>
-  <string key="status.structure.suspended.tip">Издание включает свои части через XInclude: синхронизация свидетелей между частями появится в одной из следующих версий. Свидетелей можно свободно просматривать. См. справку, «Собранные издания (XInclude)».</string>
-  <string key="diagnostics.sync_suspended">Синхронизация приостановлена: издание включает части (XInclude). Свидетелей можно свободно просматривать; синхронизация между частями появится в одной из следующих версий.</string>
   <string key="apparatus.witnesses.part">Свидетели этой части (её &lt;listWit&gt;): {ids}</string>
   <string key="apparatus.witnesses.locus">Свидетели этой части (&lt;locus target&gt; издания): {ids}</string>
   <string key="apparatus.witnesses.wit">Свидетели, указанные в @wit этой части: {ids}</string>
@@ -800,4 +797,5 @@
 Всё равно экспортировать?</string>
   <string key="parts.webgen.continue">Всё равно экспортировать</string>
   <string key="preview.assembled.read_only">Предпросмотр собранного издания, включая части, только для чтения: редактирование фрагментов для издания из частей пока недоступно.</string>
+  <string key="status.structure.assembled.tip">Строки опорного свидетеля считаются в собранном издании вместе с частями (XInclude), в порядке собранного документа.</string>
 </translations>

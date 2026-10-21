@@ -411,9 +411,12 @@ fichier par sermon, par exemple) selon la norme XInclude :
   l’édition sous » dans un autre dossier le signale avant d’écrire.
 - Le schéma d’une partie est celui de l’édition (validation de l’édition
   assemblée, complétion).
-- La synchronisation des témoins est suspendue pour une édition qui a des
-  parties (voir `docs/DECISIONS_ASSEMBLAGE.md` pour les versions suivantes,
-  où le pivot d’un texte pourra être déclaré par exception dans
-  `project.xml`).
+- Synchronisation des témoins (V0.9.1.0) : les lignes du pivot sont
+  comptées dans l’ordre de l’édition assemblée, d’une partie à l’autre ; les
+  JSON d’alignement restent un par témoin pour toute l’édition, et le pivot
+  doit contenir les textes dans l’ordre de l’édition. Rien n’est à déclarer.
+  Un corpus aux témoins variables (un JSON par texte, pivot d’un texte
+  déclaré par exception dans `project.xml`) est prévu pour la V0.9.2.0 :
+  voir `docs/DECISIONS_ASSEMBLAGE.md`.
 
 Un projet sans `xi:include` est inchangé.

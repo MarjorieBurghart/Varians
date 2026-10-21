@@ -18,11 +18,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Version attendue de l'application (app_context.APP_VERSION). À changer ici,
 # en même temps que APP_VERSION, à chaque nouvelle version.
-CURRENT_VERSION = "0.9.0.0"
+CURRENT_VERSION = "0.9.1.0"
 
 # Nombre de messages de chaque catalogue i18n (i18n/*.xml, identique dans les
 # sept langues). À changer ici à chaque ajout ou retrait de message.
-CATALOG_SIZE = 751
+CATALOG_SIZE = 749
 
 # Ordre de concaténation : editeur_tei.py d'abord (les recherches de texte
 # par position, comme source.index(...), y trouvent leurs repères en premier).

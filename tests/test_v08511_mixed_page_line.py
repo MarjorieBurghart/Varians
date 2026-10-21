@@ -100,9 +100,9 @@ class StubWindow:
     _sync_page_panels_to_cursor = _editor_method('_sync_page_panels_to_cursor')
     sync_panels_to_cursor = _editor_method('sync_panels_to_cursor')
 
-    # Édition en parties (V0.9.0.0) : aucune ici.
-    def _witness_sync_suspended(self):
-        return False
+    # Édition en parties (V0.9.1.0) : aucune ici.
+    def _pivot_lines(self):
+        return None
     def __init__(self, text):
         self.editor = StubEditor(text, text.index('C opening'))
         self.project = SimpleNamespace(root_dir=Path('/tmp'))
@@ -118,7 +118,7 @@ class StubWindow:
         self._last_synced_ordinal = None
         self.ordinal = 0
         self.base_id = 'Mu'
-    def ordinal_at_cursor(self):
+    def _base_ordinal_at_cursor(self):
         return self.ordinal
     def statusBar(self):
         return SimpleNamespace(showMessage=lambda *args: None)

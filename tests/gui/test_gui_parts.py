@@ -6,6 +6,7 @@ Projet d'essai « sermons » (tests/data/sermons)."""
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
@@ -69,14 +70,18 @@ def test_a_part_is_edited_and_saved_on_its_own(open_window, sermons_project, qtb
     assert not window.edition_session.text_document.isUndoAvailable()
 
 
-def test_a_part_hides_the_witnesses_and_the_preview_like_an_auxiliary_document(open_window, sermons_project):
+def test_a_part_keeps_the_witnesses_but_not_the_preview(open_window, sermons_project):
     window = open_window(sermons_project)
     preview = window.left_tabs.indexOf(window.formatted_view)
     witnesses_hidden = window.witness_scroll.isHidden()        # témoins sans image : déjà masqués
     window.show_document(_doc(window, "s03.xml"))
-    assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
+    # V0.9.1.0 : témoins et état de structure, comme sur l'édition.
+    assert window.witness_scroll.isHidden() is witnesses_hidden
+    assert not window.structure_status.isHidden()
     assert not window.left_tabs.isTabEnabled(preview)
-    assert not window.action_save_as.isEnabled()
+    assert not window.action_save_as.isEnabled() and not window.action_preview.isEnabled()
+    window.show_document(_doc(window, "personnes.xml"))
+    assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
     window.show_document(window.edition_session)
     assert window.witness_scroll.isHidden() is witnesses_hidden
     assert window.left_tabs.isTabEnabled(preview) and window.action_save_as.isEnabled()
@@ -268,3 +273,63 @@ def test_the_preview_of_a_simple_edition_stays_editable(open_window, project_wit
     view = _preview(window)
     assert "tei-edit:" in view.preview.toHtml()
     assert view.info.text() != tr("preview.assembled.read_only")
+
+
+# --- « Marquer la page » et « Couper le folio » depuis une partie (V0.9.1.0) ---
+
+def test_the_edition_can_be_written_while_a_part_is_displayed(open_window, sermons_project):
+    window = open_window(sermons_project)
+    part = _doc(window, "s01.xml")
+    window.show_document(part)
+    edition = window.edition_session
+    old = window._edition_text()
+    assert old == edition.text_document.toPlainText() and "<facsimile" not in old
+    new = old.replace("</teiHeader>", '</teiHeader>\n  <facsimile><surface xml:id="A-13v" n="13v"/></facsimile>', 1)
+    window._write_edition_text(old, new)
+    assert window.document is part                            # la partie reste affichée
+    assert edition.text_document.toPlainText() == new and window._edition_text() == new
+    assert edition.modified and edition.lb.dirty
+    assert _tabs(window)[0] == _edition_tab() + " *"
+    assert edition.text_document.isUndoAvailable()           # dans l'historique de l'édition
+    assert not part.modified
+
+
+def test_marking_a_page_from_a_part(open_window, sermons_project, monkeypatch):
+    import witness_sync
+
+    def with_surface(old, *_args):
+        return (old.replace("</teiHeader>", '</teiHeader>\n  <facsimile><surface xml:id="A-13v" n="13v"/>'
+                            '</facsimile>', 1), SimpleNamespace(conflicts=[]))
+
+    monkeypatch.setattr(witness_sync, "sync_facsimile_text", with_surface)
+    window = open_window(sermons_project)
+    part = _doc(window, "s01.xml")
+    window.show_document(part)
+    if "A" in window.panels:
+        window.panels["A"]._surface_indices = {"A-13v": 0}
+    text = window.editor.toPlainText()
+    cursor = window.editor.textCursor()
+    cursor.setPosition(text.index("nostri. Triplex"))
+    window.editor.setTextCursor(cursor)
+    window._edition_write(window._mark_page_in_tei)("A", "A-13v", "13v")
+    assert '<pb n="13v" edRef="#A" facs="#A-13v"/>nostri. Triplex' in window.editor.toPlainText()
+    assert '<surface xml:id="A-13v" n="13v"/>' in window.edition_session.text_document.toPlainText()
+    assert part.modified and window.edition_session.modified
+    # Annuler dans la partie retire le pb ; le facsimile reste dans l'édition.
+    window.editor.undo()
+    assert window.editor.toPlainText() == text
+    assert '<surface xml:id="A-13v"' in window.edition_session.text_document.toPlainText()
+
+
+def test_witness_commands_writing_the_edition_are_refused_on_an_auxiliary_document(open_window, sermons_project,
+                                                                                   dialogs):
+    window = open_window(sermons_project)
+    calls = []
+    command = window._edition_write(lambda *args: calls.append(args))
+    window.show_document(_doc(window, "s01.xml"))
+    command("A", "A-13v", "13v")
+    assert calls == [("A", "A-13v", "13v")]
+    window.show_document(_doc(window, "personnes.xml"))
+    dialogs.expect("information")
+    command("A", "A-13v", "13v")
+    assert len(calls) == 1

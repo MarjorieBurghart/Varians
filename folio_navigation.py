@@ -80,6 +80,47 @@ def folios_for_witness(xml_text: str, witness_id: str, surface_ids,
     return out
 
 
+def folio_lookup(folios: list[Folio]):
+    """Tables de ``pb_folio`` pour les folios d'un témoin."""
+    id_map = {f.ref: f for f in folios}
+    by_name = {}
+    for f in folios:
+        by_name.setdefault(f.label.strip().casefold(), []).append(f)
+    return id_map, by_name
+
+
+def pb_folio(facs, ed_ref, n, witness_id: str, lookup) -> Folio | None:
+    """Folio que désigne, pour le témoin, un pb de valeurs @facs, @edRef et
+    @n ; None s'il ne le concerne pas ou reste ambigu.
+
+    Si pb/@facs désigne la surface entière et pb/@n un de ses folios,
+    choisir sa zone.
+    """
+    wid = str(witness_id).lstrip('#')
+    id_map, by_name = lookup
+    refs = _pointer_tokens(facs)
+    edrefs = _pointer_tokens(ed_ref)
+    if edrefs and wid not in edrefs:
+        return None
+    label = (n or '').strip().casefold()
+    if not edrefs and not any(ref in id_map for ref in refs):
+        return None
+    direct = next((id_map[r] for r in refs if r in id_map), None)
+    if direct:
+        # If @facs identifies the physical surface, @n may identify one
+        # of its subdivisions, but ONLY within this very surface.
+        if direct.region is None and label:
+            children = [f for f in by_name.get(label, []) if f.surface == direct.surface and f.region]
+            if len(children) == 1:
+                direct = children[0]
+        return direct
+    if edrefs and not refs and label:
+        matches = by_name.get(label, [])
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
 def folio_at_position(xml_text: str, position: int, witness_id: str,
                       folios: list[Folio]) -> Folio | None:
     """Résout le dernier pb correspondant dans la TEI, sans index global @n.
@@ -88,11 +129,15 @@ def folio_at_position(xml_text: str, position: int, witness_id: str,
     choisir sa zone. Les balises placées dans les commentaires/CDATA et les
     pb de l'en-tête facsimilé ne doivent pas provoquer de navigation.
     """
-    wid = str(witness_id).lstrip('#')
-    id_map = {f.ref: f for f in folios}
-    by_name = {}
-    for f in folios:
-        by_name.setdefault(f.label.strip().casefold(), []).append(f)
+    found = last_folio_mark(xml_text, position, witness_id, folios)
+    return found[0] if found else None
+
+
+def last_folio_mark(xml_text: str, position: int, witness_id: str,
+                    folios: list[Folio]) -> tuple[Folio, int] | None:
+    """Comme ``folio_at_position``, avec la fin du pb trouvé :
+    ``(folio, fin)``, ou None."""
+    lookup = folio_lookup(folios)
     text = str(xml_text or '')
     position = max(0, min(int(position), len(text)))
     current = None
@@ -109,26 +154,9 @@ def folio_at_position(xml_text: str, position: int, witness_id: str,
         if any(a <= m.start() < b for a, b in ignored):
             continue
         tag = m.group()
-        refs = _pointer_tokens(_attr(tag,'facs'))
-        edrefs = _pointer_tokens(_attr(tag,'edRef'))
-        if edrefs and wid not in edrefs:
-            continue
-        label = (_attr(tag,'n') or '').strip().casefold()
-        if not edrefs and not any(ref in id_map for ref in refs):
-            continue
-        direct = next((id_map[r] for r in refs if r in id_map), None)
-        if direct:
-            # If @facs identifies the physical surface, @n may identify one
-            # of its subdivisions, but ONLY within this very surface.
-            if direct.region is None and label:
-                children = [f for f in by_name.get(label, []) if f.surface == direct.surface and f.region]
-                if len(children) == 1:
-                    direct = children[0]
-            current = direct
-        elif edrefs and not refs and label:
-            matches = by_name.get(label, [])
-            if len(matches) == 1:
-                current = matches[0]
+        folio = pb_folio(_attr(tag, 'facs'), _attr(tag, 'edRef'), _attr(tag, 'n'), witness_id, lookup)
+        if folio is not None:
+            current = (folio, m.end())
     return current
 
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.9.0.0.
+"""Varians — éditeur TEI/manuscrits générique — V0.9.1.0.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -38,7 +38,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -69,6 +69,7 @@ from app_context import (
     forget_open_project,
 )
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
+from pivot_lines import pivot_lb_pattern
 from formatted_view import (
     _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget, paragraph_spans,
 )
@@ -319,11 +320,7 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.base_id = self.project.base_witness
         self.witness_configs = list(self.project.witnesses)
         self.witness_labels = {w.id: w.label for w in self.witness_configs}
-        escaped_base = re.escape(self.base_id)
-        self.lb_base_re = re.compile(
-            rf"<(?:[A-Za-z_][\w.-]*:)?lb\b(?=[^>]*\bedRef\s*=\s*(['\"])#{escaped_base}\1)[^>]*?/?>",
-            re.IGNORECASE | re.DOTALL,
-        )
+        self.lb_base_re = pivot_lb_pattern(self.base_id)
 
         self.setWindowTitle(_t("app.window.project", title=self.project.title))
         self.resize(1650, 980)
@@ -925,15 +922,12 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _set_lb_spans(self, spans):
         self.document.lb.set(spans)
-        if not self.document.is_edition:
+        if not self.document.in_edition:
             return  # l'état de structure est celui de l'édition
-        n = len(self.document.lb.spans)
-        self.structure_status.setToolTip("")
-        if self._witness_sync_suspended():
-            self.structure_status.setText(_t("status.structure.suspended", base=self.base_id))
-            self.structure_status.setToolTip(_t("status.structure.suspended.tip"))
-            self.structure_status.setStyleSheet("color:#746b61")
-        elif self.expected_base_lines is None:
+        # Édition en parties : lignes comptées dans l'édition assemblée.
+        n = self._base_line_count()
+        self.structure_status.setToolTip(_t("status.structure.assembled.tip") if self._edition_has_parts() else "")
+        if self.expected_base_lines is None:
             self.structure_status.setText(_t("status.structure.free", base=self.base_id, count=n))
             self.structure_status.setStyleSheet("color:#746b61")
         elif n == self.expected_base_lines:
@@ -1062,8 +1056,8 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
 
     def _cursor_changed(self):
         c=self.editor.textCursor(); self.cursor_status.setText(_t("status.cursor", line=c.blockNumber()+1, column=c.positionInBlock()+1))
-        # Les témoins ne suivent que le curseur de l'édition.
-        if not self._sync_from_panel and self._edition_displayed(): self.sync_timer.start()
+        # Les témoins suivent le curseur de l'édition et de ses parties.
+        if not self._sync_from_panel and self.document.in_edition: self.sync_timer.start()
 
     def _text_changed(self):
         """Invalide tout diagnostic antérieur, quel que soit le panneau actif.

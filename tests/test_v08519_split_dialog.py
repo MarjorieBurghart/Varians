@@ -132,9 +132,12 @@ def make_context(xml=XML, sync=True, sid='L-p0008', page_id='L-p0008'):
     img={'tei_surface_id':page_id,'alto_width':3924,'alto_height':2704}
     panel=SimpleNamespace(items=[{'p':img}],sync_enabled=sync,
               set_folio=lambda ref:folio_moves.append(ref))
+    # Le <facsimile> est lu et écrit dans l'édition (_edition_text,
+    # _write_edition_text), même si une partie est affichée (V0.9.1.0).
     obj=SimpleNamespace(panels={'L':panel}, project=SimpleNamespace(root_dir=ROOT),
-                        editor=SimpleNamespace(toPlainText=lambda:xml),
-                        _replace_editor_text_minimally=lambda old,new:edits.append(new),
+                        editor=SimpleNamespace(toPlainText=lambda:'<div>partie affichée</div>'),
+                        _edition_text=lambda:xml,
+                        _write_edition_text=lambda old,new:edits.append(new),
                         _refresh_folio_navigation=lambda new,force=False:refreshed.append((new,force)),
                         _last_synced_surface=('original',))
     ns={'QMessageBox':Messages,'_t':lambda key,**kw:key.format(**kw),

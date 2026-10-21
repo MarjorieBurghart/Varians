@@ -788,9 +788,6 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="rng.xinclude.href_unsupported">Nicht unterstütztes href, eine lokale Datei wird erwartet: {detail}</string>
   <string key="rng.xinclude.xpointer_unsupported">Nicht unterstützter xpointer: {detail}</string>
   <string key="rng.xinclude.xpointer_not_found">Kein Element entspricht dem xpointer: {detail}</string>
-  <string key="status.structure.suspended">{base}: Synchronisierung ausgesetzt (Edition in Teilen)</string>
-  <string key="status.structure.suspended.tip">Die Edition bindet ihre Teile per XInclude ein: Die Synchronisierung der Textzeugen über die Teile hinweg folgt in einer späteren Version. Die Textzeugen bleiben frei durchblätterbar. Siehe die Hilfe, „Zusammengesetzte Editionen (XInclude)“.</string>
-  <string key="diagnostics.sync_suspended">Synchronisierung ausgesetzt: Die Edition bindet Teile ein (XInclude). Die Textzeugen bleiben frei durchblätterbar; die Synchronisierung über die Teile hinweg folgt in einer späteren Version.</string>
   <string key="apparatus.witnesses.part">Textzeugen dieses Teils (sein &lt;listWit&gt;): {ids}</string>
   <string key="apparatus.witnesses.locus">Textzeugen dieses Teils (&lt;locus target&gt; der Edition): {ids}</string>
   <string key="apparatus.witnesses.wit">In den @wit dieses Teils genannte Textzeugen: {ids}</string>
@@ -800,4 +797,5 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
 Trotzdem exportieren?</string>
   <string key="parts.webgen.continue">Trotzdem exportieren</string>
   <string key="preview.assembled.read_only">Vorschau der zusammengesetzten Edition, Teile eingeschlossen, schreibgeschützt: Die Bearbeitung von Fragmenten ist für eine Edition in Teilen noch nicht möglich.</string>
+  <string key="status.structure.assembled.tip">Zeilen des Pivot-Textzeugen in der zusammengesetzten Edition gezählt, Teile eingeschlossen (XInclude), in der Reihenfolge des zusammengesetzten Dokuments.</string>
 </translations>

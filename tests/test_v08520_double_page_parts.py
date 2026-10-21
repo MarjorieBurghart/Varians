@@ -229,6 +229,7 @@ def test_actual_marker_controller_inserts_zone_pb_not_canvas_pb():
                            textCursor=lambda:SimpleNamespace(position=lambda:cursor_pos))
     panel=SimpleNamespace(_surface_indices={'L-p0008':0})
     host=SimpleNamespace(editor=editor,panels={'L':panel},witness_configs=[],
+           _edition_displayed=lambda:True,_edition_text=lambda:editor_text,
            project=SimpleNamespace(root_dir=ROOT,edition=ROOT/'edition.xml'),
            _replace_editor_text_minimally=lambda old,new,pos:outputs.append((old,new,pos)),
            _sync_page_panels_to_cursor=lambda force=False:None,
@@ -260,6 +261,7 @@ def test_marker_controller_rejects_removed_zone_without_edit():
                            textCursor=lambda:SimpleNamespace(position=lambda:XML.index('texte') if 'texte' in XML else XML.index('fin du passage')))
     panel=SimpleNamespace(_surface_indices={'L-p0008':0})
     host=SimpleNamespace(editor=editor,panels={'L':panel},
+                         _edition_displayed=lambda:True,_edition_text=lambda:XML,
                          _replace_editor_text_minimally=lambda *args:outputs.append(args))
     Messages.warnings=[]
     callback=ui_method('MainWindow','_mark_page_in_tei',{

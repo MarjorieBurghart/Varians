@@ -5,8 +5,9 @@ auxiliaires déclarés dans <documents> (fichier d'autorités, notes…).
 
 Un seul document est affiché à la fois dans l'éditeur. Chacun possède sa
 session (``DocumentSession``) : texte et historique d'annulation, état
-« modifié », coloration, validation, position du curseur. Les témoins, la
-synchronisation et l'aperçu ne concernent que l'édition.
+« modifié », coloration, validation, position du curseur. Les témoins et
+leur synchronisation concernent l'édition et ses parties (V0.9.1.0 : lignes
+du pivot comptées dans l'édition assemblée) ; l'aperçu, l'édition seule.
 
 Les parties se déduisent des xi:include de l'édition enregistrée, sans
 déclaration dans project.xml ; la liste est relue après chaque
@@ -24,6 +25,7 @@ from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout, QTabBar, QV
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
+from pivot_lines import include_spans, pivot_lines
 from project_management import update_project_documents
 from lxml import etree
 from xml_assembly import assemble, path_key
@@ -113,8 +115,8 @@ class DocumentTabsMixin:
                           + [s for s in others if not s.is_part])
         self._update_document_tabs()
         self._save_document_tabs()
-        # La synchronisation peut avoir été suspendue ou rétablie.
-        if self.document.is_edition:
+        # La numérotation des lignes du pivot suit les parties.
+        if self.document.in_edition:
             self._rebuild_lb_cache()
 
     def _edition_displayed(self):
@@ -140,11 +142,111 @@ class DocumentTabsMixin:
             return None
         return etree.tostring(assembly.root, encoding="unicode")
 
-    def _witness_sync_suspended(self):
-        """Synchronisation des témoins suspendue (V0.9.0.0) : l'édition a des
-        parties, et la synchronisation à travers les parties n'est pas encore
-        réalisée. Les témoins restent consultables en navigation libre."""
-        return self._edition_has_parts()
+    # --- Lignes du pivot dans l'édition assemblée (V0.9.1.0) -------------------
+
+    def _pivot_lines(self):
+        """Lignes du pivot dans l'édition assemblée (``PivotLines``) ; None
+        pour une édition sans parties, ou jamais assemblée (mal formée).
+
+        Le résultat est gardé tant que les documents de l'édition ne changent
+        pas, et pendant la saisie tant que le document affiché garde le même
+        nombre de <lb/> du pivot et de xi:include : les positions viennent de
+        son index, tenu à jour. Une partie (ou l'édition) devenue mal formée
+        laisse la numérotation précédente."""
+        if not self._edition_has_parts():
+            return None
+        sessions = [s for s in self.documents if s.in_edition]
+        revisions = {s: (s.text_document.revision() if s.text_document is not None else None) for s in sessions}
+        cache = self.__dict__.get("_pivot_lines_cache")
+        if cache is not None:
+            known, lines, malformed = cache
+            if known == revisions:
+                return lines
+            changed = [s for s in sessions if known.get(s, -1) != revisions[s]]
+            if (lines is not None and known.keys() == revisions.keys() and changed == [self.document]
+                    and lines.matches(self.document.path, len(self.lb_spans()),
+                                      len(include_spans(self.editor.toPlainText())))):
+                self._pivot_lines_cache = (revisions, lines, malformed)
+                return lines
+        edition = self.edition_session
+        texts = {s.path: s.text_document.toPlainText() for s in sessions
+                 if not s.is_edition and s.text_document is not None}
+        lines = pivot_lines(edition.text_document.toPlainText(), edition.path or self.project.edition,
+                            texts, self.base_id, self.lb_base_re)
+        malformed = (None if lines is None else
+                     frozenset(path_key(p.file) for p in lines.problems if p.code == "malformed"))
+        if cache is not None and cache[1] is not None and (lines is None or not malformed <= cache[2]):
+            lines, malformed = cache[1], cache[2]
+        self._pivot_lines_cache = (revisions, lines, malformed)
+        return lines
+
+    def _base_ordinal_at(self, position):
+        """Rang de la ligne du pivot à ``position`` dans le document affiché,
+        compté dans l'édition assemblée si elle a des parties ; None hors de
+        l'édition ou sans <lb/> du pivot."""
+        if not self._edition_has_parts():
+            return self.ordinal_at_position(position)
+        lines = self._pivot_lines()
+        if lines is None:
+            return None
+        return lines.ordinal_at(self.document.path, position, self.lb_spans(),
+                                include_spans(self.editor.toPlainText()))
+
+    def _base_ordinal_at_cursor(self):
+        return self._base_ordinal_at(self.editor.textCursor().position())
+
+    def _base_line_count(self):
+        """Nombre de <lb/> du pivot : dans l'édition assemblée si elle a des
+        parties, sinon dans le document affiché."""
+        if not self._edition_has_parts():
+            return len(self.lb_spans())
+        lines = self._pivot_lines()
+        return lines.count if lines is not None else 0
+
+    def _show_base_ordinal(self, ordinal):
+        """Place le curseur à la fin du <lb/> du pivot de rang ``ordinal``
+        (borné), au centre de l'éditeur. Dans une édition en parties, le
+        document qui le contient est affiché ; son onglet réapparaît s'il était
+        masqué. Renvoie le rang atteint, ou None."""
+        lines = self._pivot_lines()
+        switched = None
+        if lines is None:
+            if self._edition_has_parts():
+                return None
+            spans = self.lb_spans()
+            if not spans:
+                return None
+            ordinal = max(0, min(len(spans) - 1, int(ordinal)))
+            position = spans[ordinal][1]
+        else:
+            if not lines.count:
+                return None
+            ordinal = max(0, min(lines.count - 1, int(ordinal)))
+            location = lines.location(ordinal)
+            if location is None:
+                return None
+            path, index = location
+            session = next((s for s in self.documents
+                            if s.in_edition and path_key(s.path) == path_key(path)), None)
+            if session is None:
+                return None
+            if session is not self.document:
+                if not self.show_document(session):
+                    return None
+                switched = session
+            self.show_document_tab(session)
+            spans = self.lb_spans()
+            if index >= len(spans):
+                return None
+            position = spans[index][1]
+        cursor = self.editor.textCursor()
+        cursor.setPosition(position)
+        self.editor.setTextCursor(cursor)
+        self.editor.centerCursor()
+        if switched is not None:
+            # Le défilement du document affiché est restauré juste après.
+            call_later(0, self, lambda: self.document is switched and self.editor.centerCursor())
+        return ordinal
 
     def _build_document_area(self, views):
         """Rangée d'onglets des documents au-dessus de ``views`` (source et
@@ -463,30 +565,46 @@ class DocumentTabsMixin:
     # --- Interface réservée à l'édition ---------------------------------------
 
     def _edition_only_actions(self):
-        return [self.action_preview, self.action_save_as, self.action_reload_images,
-                self.action_choose_witnesses, self.workspace_layout_menu.menuAction(),
-                self.action_diagnose_witnesses, self.action_refresh_synchronizations]
+        return [self.action_preview, self.action_save_as]
+
+    def _witness_actions(self):
+        return [self.action_reload_images, self.action_choose_witnesses,
+                self.workspace_layout_menu.menuAction(), self.action_diagnose_witnesses,
+                self.action_refresh_synchronizations]
 
     def _apply_edition_ui(self):
-        """Aperçu, témoins (y compris détachés), état de structure et commandes
-        associées : masqués quand un document auxiliaire est affiché, puis
-        rétablis à l'identique au retour sur l'édition."""
+        """Aperçu et « Enregistrer l'édition sous… » : réservés à l'édition.
+        Témoins (y compris détachés), état de structure et commandes des
+        témoins : pour l'édition et ses parties (V0.9.1.0). Masqués quand un
+        autre document est affiché, puis rétablis à l'identique."""
         edition = self._edition_displayed()
         hidden = getattr(self, "_edition_ui_hidden", None)
         preview = self.left_tabs.indexOf(self.formatted_view)
         if edition and hidden is not None:
             self._edition_ui_hidden = None
-            for action, enabled in hidden["actions"]:
+            for action, enabled in hidden:
                 action.setEnabled(enabled)
             self.left_tabs.setTabEnabled(preview, True)
+        elif not edition and hidden is None:
+            self._edition_ui_hidden = hidden = [(action, action.isEnabled())
+                                                for action in self._edition_only_actions()]
+            for action, _enabled in hidden:
+                action.setEnabled(False)
+            self.left_tabs.setTabEnabled(preview, False)
+        witnesses = self.document.in_edition
+        hidden = getattr(self, "_witness_ui_hidden", None)
+        if witnesses and hidden is not None:
+            self._witness_ui_hidden = None
+            for action, enabled in hidden["actions"]:
+                action.setEnabled(enabled)
             self.structure_status.setVisible(hidden["structure"])
             self.witness_scroll.setVisible(hidden["witnesses"])
             self.main_splitter.setSizes(hidden["sizes"])
             for window in hidden["detached"]:
                 window.show()
-        elif not edition and hidden is None:
-            self._edition_ui_hidden = hidden = {
-                "actions": [(action, action.isEnabled()) for action in self._edition_only_actions()],
+        elif not witnesses and hidden is None:
+            self._witness_ui_hidden = hidden = {
+                "actions": [(action, action.isEnabled()) for action in self._witness_actions()],
                 "structure": not self.structure_status.isHidden(),
                 "witnesses": not self.witness_scroll.isHidden(),
                 "sizes": self.main_splitter.sizes(),
@@ -495,7 +613,6 @@ class DocumentTabsMixin:
             }
             for action, _enabled in hidden["actions"]:
                 action.setEnabled(False)
-            self.left_tabs.setTabEnabled(preview, False)
             self.structure_status.hide()
             self.witness_scroll.hide()
             for window in hidden["detached"]:
@@ -507,11 +624,13 @@ class DocumentTabsMixin:
     # --- Garde-fous : commandes réservées à l'édition -------------------------
 
     def _edition_write(self, method):
-        """Commande d'un panneau de témoin qui écrit dans l'édition : refusée,
-        avec un message, si un autre document est affiché (elle s'appliquerait
-        à un endroit que l'utilisateur ne voit pas)."""
+        """Commande d'un panneau de témoin qui écrit dans l'édition : acceptée
+        pour l'édition et ses parties (V0.9.1.0 : le pb va dans la partie, le
+        facsimile dans l'édition) ; refusée, avec un message, pour un document
+        auxiliaire (elle s'appliquerait à un endroit que l'utilisateur ne voit
+        pas)."""
         def guarded(*args):
-            if not self._edition_displayed():
+            if not self.document.in_edition:
                 QMessageBox.information(
                     self, _t("documents.edition_required.title"),
                     _t("documents.edition_required.text", name=self.edition_session.path.name))
@@ -520,9 +639,10 @@ class DocumentTabsMixin:
         return guarded
 
     def _edition_navigation(self, method):
-        """Navigation depuis un témoin : sans effet hors de l'édition."""
+        """Navigation depuis un témoin : sans effet hors de l'édition et de
+        ses parties."""
         def guarded(*args):
-            if self._edition_displayed():
+            if self.document.in_edition:
                 return method(*args)
             return None
         return guarded
