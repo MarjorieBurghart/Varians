@@ -798,4 +798,16 @@ Trotzdem exportieren?</string>
   <string key="parts.webgen.continue">Trotzdem exportieren</string>
   <string key="preview.assembled.read_only">Vorschau der zusammengesetzten Edition, Teile eingeschlossen, schreibgeschützt: Die Bearbeitung von Fragmenten ist für eine Edition in Teilen noch nicht möglich.</string>
   <string key="status.structure.assembled.tip">Zeilen des Pivot-Textzeugen in der zusammengesetzten Edition gezählt, Teile eingeschlossen (XInclude), in der Reihenfolge des zusammengesetzten Dokuments.</string>
+  <string key="manuscript.text_absent">Kein Alignment dieses Textzeugen für diesen Text.</string>
+  <string key="status.structure.text.tip">Zeilen von {base} im Text {name}, separat mit eigenen Alignments synchronisiert (Ordner alignments/{name}/).</string>
+  <string key="text_sync.error">Alignments des Textes {name} nicht lesbar: {error}</string>
+  <string key="diagnostics.scope.edition">Bereich: die Edition, Pivot {base}.</string>
+  <string key="diagnostics.scope.text">Bereich: der Text {name}, separat synchronisiert (alignments/{name}/), Pivot {base}.</string>
+  <string key="diagnostics.texts">Separat synchronisierte Texte: {texts}.</string>
+  <string key="diagnostics.text_item">{name} (Pivot {base}; Textzeugen {witnesses})</string>
+  <string key="text_sync.problem.unknown_witness">{name}: JSON eines in project.xml nicht deklarierten Textzeugen ({detail}); es wird ignoriert.</string>
+  <string key="text_sync.problem.unknown_base">{name}: &lt;parts&gt; nennt einen unbekannten Pivot ({detail}); der Pivot des Projekts wird verwendet.</string>
+  <string key="text_sync.problem.no_base_alignment">{name}: kein JSON für den Pivot {detail} in seinem Ordner; dieser Text wird nicht synchronisiert.</string>
+  <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; bezeichnet keinen Text der Edition.</string>
+  <string key="text_sync.problem.duplicate_name">{name}: zwei Texte tragen diesen Namen; der Ordner alignments/{name}/ gehört zum ersten, nicht zu {detail}.</string>
 </translations>

@@ -234,6 +234,9 @@ class ManuscriptPanel(QFrame):
         super().__init__(parent)
         self.siglum = siglum; self.label = label; self.items = items; self.map_base = map_base or {}; self.is_base = bool(is_base); self.base_label = base_label; self.project_root = Path(project_root).resolve() if project_root else None
         self.sync_enabled = bool(sync_enabled)
+        # Clé du message affiché quand le témoin n'a pas de données pour le
+        # texte en cours (V0.9.1.1, textes synchronisés à part) ; voir set_absent.
+        self.absent_key = None
         self.folios = []
         self._active_folio = None
         self._updating_folios = False
@@ -364,7 +367,7 @@ class ManuscriptPanel(QFrame):
         self.set_compact_toolbar(getattr(self, '_compact_toolbar', False))
         # Update labels/status without refetching IIIF images.
         if not self.items:
-            self.status.setText(_t("manuscript.no_line"))
+            self._show_empty()
             return
         if not self.is_base and self.primary_key is not None and not self.match_indices:
             self.status.setText(_t("manuscript.no_direct"))
@@ -447,6 +450,27 @@ class ManuscriptPanel(QFrame):
     def go_home(self):
         if self.is_base: return
         self.center_index = self.origin_center_index; self.reload()
+
+    def set_base(self, is_base, base_label):
+        """Le pivot change avec le texte affiché (V0.9.1.1) : ce panneau est-il
+        celui du pivot, et comment s'appelle le pivot."""
+        self.is_base = bool(is_base)
+        self.base_label = base_label
+        self.home_btn.setVisible(not self.is_base)
+
+    def set_absent(self, key):
+        """Le témoin n'a pas de données pour le texte affiché : le panneau
+        reste à sa place, vide, avec le message ``key`` (catalogue i18n)."""
+        self.absent_key = key
+        self.items = []
+        self.map_base = {}
+        self.sync_enabled = False
+        self._surface_indices = {}
+        self.center_index = self.origin_center_index = 0
+        self.match_indices = set()
+        self.primary_key = None
+        self.sync_issue.hide()
+        self.reload()
 
     def current_item(self):
         if not self.items: return None
@@ -580,13 +604,22 @@ class ManuscriptPanel(QFrame):
     def _window_indices(self):
         return display_window_indices(self.items, self.center_index, 1)
 
+    def _show_empty(self):
+        """Panneau sans ligne : le message d'absence du texte, s'il y a lieu."""
+        if self.absent_key:
+            self.status.setText(_t(self.absent_key))
+            self.message.setText(_t(self.absent_key))
+            self.message.show()
+        else:
+            self.status.setText(_t("manuscript.no_line"))
+
     def reload(self):
         self.load_token += 1; token = self.load_token
         self.loaded_groups = {}; self.group_specs = []
         self.view.scene().clear(); self.message.hide(); self.message.setText("")
         inds = self._window_indices()
         if not inds:
-            self.status.setText(_t("manuscript.no_line")); return
+            self._show_empty(); return
         groups = []
         for i in inds:
             item = self.items[i]

@@ -798,4 +798,16 @@
   <string key="parts.webgen.continue">それでも書き出す</string>
   <string key="preview.assembled.read_only">組み立てられた版（部分を含む）のプレビュー、読み取り専用：部分に分かれた版では、断片の編集はまだできません。</string>
   <string key="status.structure.assembled.tip">ピボット伝本の行は、部分を含めて組み立てた版（XInclude）で、組み立てた文書の順に数えています。</string>
+  <string key="manuscript.text_absent">この伝本には、このテキストの整列がありません。</string>
+  <string key="status.structure.text.tip">テキスト {name} の {base} の行。このテキストは独自の整列（フォルダー alignments/{name}/）で別に同期されています。</string>
+  <string key="text_sync.error">テキスト {name} の整列を読み込めません：{error}</string>
+  <string key="diagnostics.scope.edition">対象：版（ピボット {base}）。</string>
+  <string key="diagnostics.scope.text">対象：別に同期されるテキスト {name}（alignments/{name}/）、ピボット {base}。</string>
+  <string key="diagnostics.texts">別に同期されるテキスト：{texts}。</string>
+  <string key="diagnostics.text_item">{name}（ピボット {base}、伝本 {witnesses}）</string>
+  <string key="text_sync.problem.unknown_witness">{name}：project.xml に宣言されていない伝本の JSON（{detail}）。無視されます。</string>
+  <string key="text_sync.problem.unknown_base">{name}：&lt;parts&gt; に未知のピボット（{detail}）が指定されています。プロジェクトのピボットを使います。</string>
+  <string key="text_sync.problem.no_base_alignment">{name}：フォルダーにピボット {detail} の JSON がありません。このテキストは同期されません。</string>
+  <string key="text_sync.problem.unknown_part">{name}：&lt;part name="{name}"&gt; は版のどのテキストも指していません。</string>
+  <string key="text_sync.problem.duplicate_name">{name}：同じ名前のテキストが 2 つあります。フォルダー alignments/{name}/ は最初のテキストに使われ、{detail} には使われません。</string>
 </translations>

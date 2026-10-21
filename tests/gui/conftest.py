@@ -32,6 +32,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+# Jeux de données partagés avec les tests sans Qt (corpus_data…).
+if str(ROOT / "tests") not in sys.path:
+    sys.path.append(str(ROOT / "tests"))
 
 PySide6 = pytest.importorskip("PySide6")
 from PySide6.QtCore import QThreadPool  # noqa: E402
@@ -230,6 +233,45 @@ def project_with_documents(example_project):
     return example_project
 
 
+@pytest.fixture
+def example_with_part(example_project):
+    """Projet exemple dont le sermon RLS_185 est passé dans une partie,
+    xml/rls185.xml, incluse par l'édition."""
+    edition = example_project.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    start = text.index('<div xml:id="RLS_185">')
+    end = text.index('<div xml:id="RLS_186">')
+    part = text[start:end].rstrip()
+    assert part.endswith("</div>")
+    part = part.replace('<div xml:id="RLS_185">', '<div xmlns="http://www.tei-c.org/ns/1.0" xml:id="RLS_185">', 1)
+    (edition.parent / "rls185.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + part + "\n",
+                                               encoding="utf-8")
+    text = text[:start] + '<xi:include href="rls185.xml"/>\n' + text[end:]
+    text = re.sub(r"<TEI\b", '<TEI xmlns:xi="http://www.w3.org/2001/XInclude"', text, count=1)
+    edition.write_text(text, encoding="utf-8")
+    return example_project
+
+
+@pytest.fixture
+def example_with_text(example_with_part):
+    """Projet exemple dont RLS_185, passé dans une partie, est synchronisé à
+    part (V0.9.1.1) : ses lignes de T1 et de T2 passent des JSON globaux à
+    alignments/rls185/T1.json et T2.json ; P, sans JSON pour ce texte, n'y a
+    plus de lignes."""
+    from corpus_data import split_alignments
+    split_alignments(example_with_part.parent, "rls185", "T1", 116, 165, ("T2",))
+    return example_with_part
+
+
+@pytest.fixture
+def corpus_project(tmp_path):
+    """Jeu « corpus » (tests/corpus_data.py), avec le petit schéma local."""
+    from corpus_data import make_corpus
+    project = make_corpus(tmp_path / "corpus")
+    _use_local_schema(project.parent)
+    return project
+
+
 SERMONS_DATA = ROOT / "tests" / "data" / "sermons"
 
 
@@ -241,6 +283,12 @@ def sermons_project(tmp_path):
     les numéros de ligne des fichiers ne changent pas."""
     root = tmp_path / "sermons"
     shutil.copytree(SERMONS_DATA, root)
+    _use_local_schema(root)
+    return root / "project.xml"
+
+
+def _use_local_schema(root):
+    """Petit schéma local à la place de TEI_ALL dans un projet « sermons »."""
     (root / "web_output").mkdir(exist_ok=True)
     (root / "xml" / "test.rng").write_text(TEST_RNG, encoding="utf-8")
     for path in (root / "xml").rglob("*.xml"):
@@ -249,7 +297,6 @@ def sermons_project(tmp_path):
         local_model = (f'<?xml-model href="{href}" type="application/xml" '
                        'schematypens="http://relaxng.org/ns/structure/1.0"?>')
         path.write_text(_XML_MODEL_RE.sub(local_model, text, count=1), encoding="utf-8")
-    return root / "project.xml"
 
 
 # Petite collection : une édition qui inclut trois courts sermons. Schéma

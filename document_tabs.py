@@ -25,7 +25,7 @@ from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout, QTabBar, QV
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
-from pivot_lines import include_spans, pivot_lines
+from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
 from project_management import update_project_documents
 from lxml import etree
 from xml_assembly import assemble, path_key
@@ -115,8 +115,11 @@ class DocumentTabsMixin:
                           + [s for s in others if not s.is_part])
         self._update_document_tabs()
         self._save_document_tabs()
-        # La numérotation des lignes du pivot suit les parties.
+        # Les textes synchronisés à part et la numérotation des lignes du
+        # pivot suivent les parties.
+        self._forget_text_syncs()
         if self.document.in_edition:
+            self._update_segment()
             self._rebuild_lb_cache()
 
     def _edition_displayed(self):
@@ -171,8 +174,9 @@ class DocumentTabsMixin:
         edition = self.edition_session
         texts = {s.path: s.text_document.toPlainText() for s in sessions
                  if not s.is_edition and s.text_document is not None}
+        base = self.project.base_witness
         lines = pivot_lines(edition.text_document.toPlainText(), edition.path or self.project.edition,
-                            texts, self.base_id, self.lb_base_re)
+                            texts, base, pivot_lb_pattern(base), text_bases=self._text_bases())
         malformed = (None if lines is None else
                      frozenset(path_key(p.file) for p in lines.problems if p.code == "malformed"))
         if cache is not None and cache[1] is not None and (lines is None or not malformed <= cache[2]):
@@ -201,7 +205,7 @@ class DocumentTabsMixin:
         if not self._edition_has_parts():
             return len(self.lb_spans())
         lines = self._pivot_lines()
-        return lines.count if lines is not None else 0
+        return lines.segment_count(self._active_segment) if lines is not None else 0
 
     def _show_base_ordinal(self, ordinal):
         """Place le curseur à la fin du <lb/> du pivot de rang ``ordinal``
@@ -219,10 +223,13 @@ class DocumentTabsMixin:
             ordinal = max(0, min(len(spans) - 1, int(ordinal)))
             position = spans[ordinal][1]
         else:
-            if not lines.count:
+            # Les lignes du segment affiché : l'édition, ou le texte
+            # synchronisé à part.
+            count = lines.segment_count(self._active_segment)
+            if not count:
                 return None
-            ordinal = max(0, min(lines.count - 1, int(ordinal)))
-            location = lines.location(ordinal)
+            ordinal = max(0, min(count - 1, int(ordinal)))
+            location = lines.location(ordinal, self._active_segment)
             if location is None:
                 return None
             path, index = location
@@ -437,6 +444,9 @@ class DocumentTabsMixin:
         self.xpath_summary.setText("")
         self._set_title()
         self._select_document_tab()
+        # Données des témoins du segment de ce document (V0.9.1.1), avant
+        # l'index de ses <lb/> : le pivot peut changer.
+        self._update_segment()
         self._apply_edition_ui()
         self._restore_document_view(session)
 

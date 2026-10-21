@@ -113,6 +113,15 @@ class XPathQuery:
     expression: str
 
 
+@dataclass(frozen=True)
+class PartConfig:
+    """Pivot propre à un texte d'une édition en parties (V0.9.1.1) :
+    ``<part name="s02" base="B"/>``. ``name`` est le nom du fichier du texte,
+    sans extension, comme son dossier d'alignements (``alignments/s02/``)."""
+    name: str
+    base: str
+
+
 def has_line_synchronization(witness: WitnessConfig) -> bool:
     """Vrai si une *ressource* JSON de synchronisation explicite existe.
 
@@ -157,6 +166,8 @@ class ProjectConfig:
     documents: tuple[DocumentConfig, ...] = ()
     # Requêtes XPath nommées, dans l'ordre de <xpathQueries>.
     xpath_queries: tuple[XPathQuery, ...] = ()
+    # Pivots propres à certains textes, dans l'ordre de <parts>.
+    parts: tuple[PartConfig, ...] = ()
 
     @property
     def root_dir(self) -> Path:
@@ -265,6 +276,24 @@ def _parse_xpath_queries(root: ET.Element) -> tuple[XPathQuery, ...]:
         if name and expression and name not in queries:
             queries[name] = XPathQuery(name, expression)
     return tuple(queries.values())
+
+
+def _parse_parts(root: ET.Element) -> tuple[PartConfig, ...]:
+    """Lit <parts><part name="s02" base="B"/></parts>.
+
+    Une déclaration sans nom ou sans pivot est ignorée ; à nom égal, la
+    première est gardée. Un pivot inconnu n'empêche pas d'ouvrir le projet :
+    le diagnostic des témoins le signale."""
+    parts_el = root.find("parts")
+    if parts_el is None:
+        return ()
+    parts = {}
+    for part_el in parts_el.findall("part"):
+        name = (part_el.get("name") or "").strip()
+        base = (part_el.get("base") or "").strip()
+        if name and base and name not in parts:
+            parts[name] = PartConfig(name, base)
+    return tuple(parts.values())
 
 
 def load_project(path: str | Path) -> ProjectConfig:
@@ -477,6 +506,7 @@ def load_project(path: str | Path) -> ProjectConfig:
         schema_type=schema_type,
         documents=_parse_documents(root, root_dir, edition),
         xpath_queries=_parse_xpath_queries(root),
+        parts=_parse_parts(root),
     )
 
 

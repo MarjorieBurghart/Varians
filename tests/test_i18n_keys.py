@@ -132,3 +132,29 @@ def test_each_help_explains_the_synchronization_across_parts():
             assert text in section, (language, text)
         version = page[page.index('<section id="v0910">'):]
         assert 'href="#xinclude"' in version[:version.index("</section>")], language
+
+
+def test_each_help_has_a_guide_for_editions_in_parts():
+    """Mode d'emploi d'un projet avec XInclude (V0.9.1.1, demandé à la
+    préparation de cette version), et textes synchronisés à part."""
+    labels = ("menu.project_settings", "diagnostics.menu", "diagnostics.refresh", "documents.tab.hide")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        guide = page[page.index('<section id="xinclude-guide">'):]
+        guide = guide[:guide.index("</section>")]
+        for key in labels:
+            assert catalog[key] in guide, (language, key)
+        ok = catalog["status.structure.ok"].format(base="B", count=8)
+        for text in ('xmlns:xi="http://www.w3.org/2001/XInclude"', 'xpointer="s02"', "alignments/s02/B.json",
+                     "&lt;parts&gt;", '&lt;part name="s02" base="B"/&gt;', "xmllint --xinclude",
+                     "<kbd>Ctrl+S</kbd>", 'href="#xinclude"', ok):
+            assert text in guide, (language, text)
+        section = page[page.index('<section id="xinclude">'):]
+        section = section[:section.index("</section>")]
+        assert 'href="#xinclude-guide"' in section, language
+        for text in (catalog["manuscript.text_absent"], "alignments/s02/", '&lt;part name="s02" base="B"/&gt;'):
+            assert text in section, (language, text)
+        version = page[page.index('<section id="v0911">'):]
+        assert 'href="#xinclude-guide"' in version[:version.index("</section>")], language

@@ -18,6 +18,11 @@ dans un commentaire ou hors de l'élément inclus d'une partie ne compte pas.
 
 Le même parcours relève les ``<pb>`` : la page d'un témoin tient compte de ce
 qui précède dans les autres fichiers (page à la jonction de deux textes).
+
+Textes synchronisés à part (V0.9.1.1, ``text_alignments``) : chacun forme un
+*segment*, numéroté pour lui seul avec son propre pivot, inclusions
+imbriquées comprises ; le segment de l'édition (clé None) ne compte pas leurs
+lignes. Un fichier appartient à un seul segment.
 """
 from __future__ import annotations
 
@@ -95,11 +100,14 @@ class FileLines:
     texte, ou None s'il n'entre pas dans l'édition. ``includes`` : pour chacun
     de ses ``xi:include``, ``(dernier numéro, nombre de <pb>)`` à la fin de
     son contenu, ou None s'il n'a rien inclus. ``entry`` : la même paire avant
-    le contenu du fichier (−1 : aucune ligne avant).
+    le contenu du fichier (−1 : aucune ligne avant). Les numéros sont ceux du
+    ``segment`` du fichier : None pour l'édition, sinon la clé (``path_key``)
+    du texte synchronisé à part qui le contient.
     """
     ordinals: tuple
     includes: tuple
     entry: tuple
+    segment: str | None = None
 
 
 class PivotLines:
@@ -107,14 +115,19 @@ class PivotLines:
 
     def __init__(self, files, locations, pbs, problems):
         self._files = files
-        self._locations = tuple(locations)
+        # {segment: ((fichier, rang), …)} ; voir location().
+        self._locations = {segment: tuple(found) for segment, found in locations.items()}
         self._pbs = tuple(pbs)
         self.problems = tuple(problems)
 
     @property
     def count(self):
-        """Nombre de lignes du pivot dans l'édition assemblée."""
-        return len(self._locations)
+        """Nombre de lignes du pivot dans le segment de l'édition."""
+        return self.segment_count(None)
+
+    def segment_count(self, segment):
+        """Nombre de lignes du pivot du segment ``segment``."""
+        return len(self._locations.get(segment, ()))
 
     def file(self, path):
         return self._files.get(path_key(path))
@@ -136,7 +149,7 @@ class PivotLines:
         fichier n'est pas dans l'édition ou si elle n'a aucune ligne.
         """
         lines = self.file(path)
-        if lines is None or not self._locations:
+        if lines is None or not self.segment_count(lines.segment):
             return None
         best = lines.entry[0]
         index = bisect.bisect_right([start for start, _end in spans], int(position)) - 1
@@ -147,14 +160,15 @@ class PivotLines:
         for (_start, end), value in zip(includes, lines.includes):
             if end <= position and value is not None:
                 best = max(best, value[0])
-        return max(0, min(best, self.count - 1))
+        return max(0, min(best, self.segment_count(lines.segment) - 1))
 
-    def location(self, ordinal):
+    def location(self, ordinal, segment=None):
         """``(fichier, rang du <lb/> dans ce fichier)`` de la ligne
-        ``ordinal`` ; None hors des limites."""
-        if not 0 <= ordinal < len(self._locations):
+        ``ordinal`` du segment ; None hors des limites."""
+        found = self._locations.get(segment, ())
+        if not 0 <= ordinal < len(found):
             return None
-        return self._locations[ordinal]
+        return found[ordinal]
 
     def page_at(self, path, position, text, includes, witness_id, folios):
         """Folio du témoin ``witness_id`` à ``position`` dans ``path`` (texte
@@ -185,29 +199,33 @@ def _read(path):
         return ""
 
 
-def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None):
+def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None, text_bases=None):
     """Lignes du pivot ``base_id`` dans l'édition assemblée.
 
     ``texts`` : ``{chemin: texte}`` des parties ouvertes, prioritaire sur les
-    fichiers. None si l'édition est mal formée. Une partie mal formée
-    n'apporte aucune ligne (``problems``).
+    fichiers. ``text_bases`` : ``{fichier d'un texte synchronisé à part: son
+    pivot}`` ; chacun de ces textes forme son propre segment. None si
+    l'édition est mal formée. Une partie mal formée n'apporte aucune ligne
+    (``problems``).
     """
     texts = dict(texts or {})
     assembly = assemble(edition_text, edition_path, texts)
     if assembly.root is None:
         return None
-    pattern = pattern or pivot_lb_pattern(base_id)
-    target = f"#{base_id}"
+    apart = {path_key(path): base for path, base in (text_bases or {}).items()}
+    bases = {None: base_id}
+    patterns = {base_id: pattern or pivot_lb_pattern(base_id)}
     master = path_key(assembly.master)
     paths = {master: assembly.master}
     entries = {master: (-1, 0)}
+    segments = {master: None}        # fichier -> segment
+    counts = defaultdict(lambda: -1)  # segment -> dernier numéro
     lbs = defaultdict(list)          # fichier -> [(ligne, numéro)]
     ends = defaultdict(list)         # fichier -> [(ligne du xi:include, (numéro, pb))]
     pbs = []
-    count = -1
-    # Fichier courant ; le contenu d'un fichier inclus une seconde fois est
-    # compté, mais rattaché à sa première inclusion seulement.
-    stack = [(master, True)]
+    # Fichier courant et son segment ; le contenu d'un fichier inclus une
+    # seconde fois est compté, mais rattaché à sa première inclusion seulement.
+    stack = [(master, True, None)]
     for event, element in etree.iterwalk(assembly.root, events=("start", "end")):
         if not isinstance(element.tag, str):
             continue
@@ -215,38 +233,46 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
         if event == "end":
             if site is not None:
                 stack.pop()
-                key, first = stack[-1]
+                key, first, segment = stack[-1]
                 if first:
-                    ends[key].append((site, (count, len(pbs))))
+                    ends[key].append((site, (counts[segment], len(pbs))))
             continue
         if site is not None:
             path = assembly.origin(element)
             key = path_key(path)
+            segment = key if key in apart else stack[-1][2]
+            if key in apart:
+                bases.setdefault(segment, apart[key])
             first = key not in entries
             if first:
                 paths[key] = path
-                entries[key] = (count, len(pbs))
-            stack.append((key, first))
+                segments[key] = segment
+                entries[key] = (counts[segment], len(pbs))
+            stack.append((key, first, segment))
         name = etree.QName(element).localname
-        if name == "lb" and element.get("edRef") == target:
-            count += 1
-            key, first = stack[-1]
+        key, first, segment = stack[-1]
+        if name == "lb" and element.get("edRef") == f"#{bases[segment]}":
+            counts[segment] += 1
             if first:
-                lbs[key].append((element.sourceline, count))
+                lbs[key].append((element.sourceline, counts[segment]))
         elif name == "pb":
             pbs.append((element.get("facs"), element.get("edRef"), element.get("n")))
     by_key = {path_key(path): text for path, text in texts.items()}
     by_key[master] = str(edition_text or "")
     files = {}
-    locations = [None] * (count + 1)
+    locations = {segment: [None] * (counts[segment] + 1) for segment in bases}
     for key, path in paths.items():
+        segment = segments[key]
+        base = bases[segment]
+        if base not in patterns:
+            patterns[base] = pivot_lb_pattern(base)
         text = by_key[key] if key in by_key else _read(path)
-        spans = LbIndex.scan(text, pattern)
+        spans = LbIndex.scan(text, patterns[base])
         ordinals = _match_by_line(text, [end - 1 for _start, end in spans], lbs[key])
         for index, ordinal in enumerate(ordinals):
             if ordinal is not None:
-                locations[ordinal] = (path, index)
+                locations[segment][ordinal] = (path, index)
         tags = _include_tags(text)
         includes = _match_by_line(text, [tag_end - 1 for _s, _e, tag_end in tags], ends[key])
-        files[key] = FileLines(ordinals, includes, entries[key])
+        files[key] = FileLines(ordinals, includes, entries[key], segment)
     return PivotLines(files, locations, pbs, assembly.problems)

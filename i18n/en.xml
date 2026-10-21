@@ -784,4 +784,16 @@ Export anyway?</string>
   <string key="parts.webgen.continue">Export anyway</string>
   <string key="preview.assembled.read_only">Preview of the assembled edition, parts included, read-only: fragment editing is not yet available for an edition in parts.</string>
   <string key="status.structure.assembled.tip">Pivot-witness lines counted in the assembled edition, parts included (XInclude), in the order of the assembled document.</string>
+  <string key="manuscript.text_absent">No alignment of this witness for this text.</string>
+  <string key="status.structure.text.tip">{base} lines in the text {name}, synchronized separately with its own alignments (folder alignments/{name}/).</string>
+  <string key="text_sync.error">Unreadable alignments for the text {name}: {error}</string>
+  <string key="diagnostics.scope.edition">Scope: the edition, pivot {base}.</string>
+  <string key="diagnostics.scope.text">Scope: the text {name}, synchronized separately (alignments/{name}/), pivot {base}.</string>
+  <string key="diagnostics.texts">Texts synchronized separately: {texts}.</string>
+  <string key="diagnostics.text_item">{name} (pivot {base}; witnesses {witnesses})</string>
+  <string key="text_sync.problem.unknown_witness">{name}: JSON of a witness not declared in project.xml ({detail}); it is ignored.</string>
+  <string key="text_sync.problem.unknown_base">{name}: &lt;parts&gt; names an unknown pivot ({detail}); the project pivot is used.</string>
+  <string key="text_sync.problem.no_base_alignment">{name}: no JSON for the pivot {detail} in its folder; this text is not synchronized.</string>
+  <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; does not name any text of the edition.</string>
+  <string key="text_sync.problem.duplicate_name">{name}: two texts have this name; the folder alignments/{name}/ goes to the first one, not to {detail}.</string>
 </translations>

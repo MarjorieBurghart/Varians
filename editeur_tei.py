@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.9.1.0.
+"""Varians — éditeur TEI/manuscrits générique — V0.9.1.1.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -38,7 +38,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -87,6 +87,7 @@ from completion_ui import CompletionMixin
 from validation_panel import ValidationPanelMixin
 from xpath_panel import XPathPanelMixin
 from document_tabs import DocumentTabsMixin
+from text_segments import TextSegmentsMixin
 from document_display import DocumentDisplayMixin
 from document_dialogs import DocumentDialogsMixin
 from references_ui import ReferencesMixin
@@ -274,7 +275,7 @@ def _document_attribute(path):
     )
 
 
-class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, QMainWindow):
+class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, QMainWindow):
     # --- État du document ouvert (voir document_session.DocumentSession) ---
     current_path = _document_attribute("path")
     modified = _document_attribute("modified")
@@ -321,6 +322,9 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.witness_configs = list(self.project.witnesses)
         self.witness_labels = {w.id: w.label for w in self.witness_configs}
         self.lb_base_re = pivot_lb_pattern(self.base_id)
+        # Segment des données des témoins : None pour l'édition, sinon un
+        # texte synchronisé à part (V0.9.1.1, voir text_segments).
+        self._active_segment = None
 
         self.setWindowTitle(_t("app.window.project", title=self.project.title))
         self.resize(1650, 980)
@@ -575,10 +579,12 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
                 message = _t('manuscript.iiif_unassociated_layout.tip', count=unmatched_layout)
                 panel.header.setToolTip(message)
                 panel.status.setToolTip(message)
+            # Un témoin qui n'a de JSON que pour des textes synchronisés à
+            # part (V0.9.1.1) garde son panneau, sauf s'il est déclaré sans image.
             self._witness_image_available[w.id] = any(
                 page_image_source(page, self.project.root_dir).available
                 for page in (cache.get("pages", []) or [])
-            )
+            ) or (w.id in self._text_witness_ids() and getattr(w, "image_source_type", "auto") != "none")
             self.witness_splitter.addWidget(panel)
             # Ces commandes écrivent dans l'édition : refusées si un autre
             # document est affiché.
@@ -586,9 +592,10 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
             panel.splitFolioRequested.connect(self._edition_write(self._split_double_folio))
             panel.maximizeRequested.connect(self._toggle_witness_panel_maximize)
             panel.detachRequested.connect(self._toggle_detached_witness)
-            if w.is_base:
-                # Connect once, even if synchronization becomes active later.
-                panel.primaryNavigate.connect(self._edition_navigation(self._primary_panel_navigate))
+            # Connect once, even if synchronization becomes active later. Le
+            # pivot peut changer avec le texte affiché : seul le panneau du
+            # pivot du moment émet ce signal.
+            panel.primaryNavigate.connect(self._edition_navigation(self._primary_panel_navigate))
             if panel.items and not panel.sync_enabled:
                 QTimer.singleShot(0, panel.reload)
         self.base_panel = self.panels[self.base_id]
@@ -924,9 +931,15 @@ class MainWindow(WitnessSyncMixin, ProjectActionsMixin, MainMenusMixin, WitnessW
         self.document.lb.set(spans)
         if not self.document.in_edition:
             return  # l'état de structure est celui de l'édition
-        # Édition en parties : lignes comptées dans l'édition assemblée.
+        # Édition en parties : lignes comptées dans l'édition assemblée, ou
+        # dans le texte synchronisé à part qui est affiché.
         n = self._base_line_count()
-        self.structure_status.setToolTip(_t("status.structure.assembled.tip") if self._edition_has_parts() else "")
+        sync = self._text_sync_of(self._active_segment) if self._active_segment is not None else None
+        if sync is not None:
+            tip = _t("status.structure.text.tip", base=self.base_id, name=sync.name)
+        else:
+            tip = _t("status.structure.assembled.tip") if self._edition_has_parts() else ""
+        self.structure_status.setToolTip(tip)
         if self.expected_base_lines is None:
             self.structure_status.setText(_t("status.structure.free", base=self.base_id, count=n))
             self.structure_status.setStyleSheet("color:#746b61")

@@ -6,35 +6,13 @@ le total, 3790, est celui de T1.json. RLS_185 occupe les lignes 116 à 280,
 comme dans l'édition en un seul fichier."""
 from __future__ import annotations
 
-import re
-
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
 import document_tabs
 from app_context import tr
 
-XI = "http://www.w3.org/2001/XInclude"
 LB = '<lb edRef="#T1"/>'
-
-
-@pytest.fixture
-def example_with_part(example_project):
-    """Projet exemple dont le sermon RLS_185 est passé dans une partie,
-    xml/rls185.xml, incluse par l'édition."""
-    edition = example_project.parent / "xml" / "edition.xml"
-    text = edition.read_text(encoding="utf-8")
-    start = text.index('<div xml:id="RLS_185">')
-    end = text.index('<div xml:id="RLS_186">')
-    part = text[start:end].rstrip()
-    assert part.endswith("</div>")
-    part = part.replace('<div xml:id="RLS_185">', '<div xmlns="http://www.tei-c.org/ns/1.0" xml:id="RLS_185">', 1)
-    (edition.parent / "rls185.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + part + "\n",
-                                               encoding="utf-8")
-    text = text[:start] + '<xi:include href="rls185.xml"/>\n' + text[end:]
-    text = re.sub(r"<TEI\b", f'<TEI xmlns:xi="{XI}"', text, count=1)
-    edition.write_text(text, encoding="utf-8")
-    return example_project
 
 
 def _part(window):

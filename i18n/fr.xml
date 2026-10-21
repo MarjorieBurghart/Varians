@@ -784,4 +784,16 @@ Exporter quand même ?</string>
   <string key="parts.webgen.continue">Exporter quand même</string>
   <string key="preview.assembled.read_only">Aperçu de l’édition assemblée, parties comprises, en lecture seule : l’édition par fragment n’est pas encore possible pour une édition en parties.</string>
   <string key="status.structure.assembled.tip">Lignes du témoin pivot comptées dans l’édition assemblée, parties comprises (XInclude), dans l’ordre du document assemblé.</string>
+  <string key="manuscript.text_absent">Pas d’alignement de ce témoin pour ce texte.</string>
+  <string key="status.structure.text.tip">Lignes de {base} dans le texte {name}, synchronisé à part avec ses propres alignements (dossier alignments/{name}/).</string>
+  <string key="text_sync.error">Alignements du texte {name} illisibles : {error}</string>
+  <string key="diagnostics.scope.edition">Portée : l’édition, pivot {base}.</string>
+  <string key="diagnostics.scope.text">Portée : le texte {name}, synchronisé à part (alignments/{name}/), pivot {base}.</string>
+  <string key="diagnostics.texts">Textes synchronisés à part : {texts}.</string>
+  <string key="diagnostics.text_item">{name} (pivot {base} ; témoins {witnesses})</string>
+  <string key="text_sync.problem.unknown_witness">{name} : JSON d’un témoin que project.xml ne déclare pas ({detail}) ; il est ignoré.</string>
+  <string key="text_sync.problem.unknown_base">{name} : &lt;parts&gt; désigne un pivot inconnu ({detail}) ; le pivot du projet est pris.</string>
+  <string key="text_sync.problem.no_base_alignment">{name} : pas de JSON pour le pivot {detail} dans son dossier ; ce texte n’est pas synchronisé.</string>
+  <string key="text_sync.problem.unknown_part">{name} : &lt;part name="{name}"&gt; ne désigne aucun texte de l’édition.</string>
+  <string key="text_sync.problem.duplicate_name">{name} : deux textes portent ce nom ; le dossier alignments/{name}/ va au premier, pas à {detail}.</string>
 </translations>

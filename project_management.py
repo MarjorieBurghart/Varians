@@ -85,6 +85,7 @@ class ProjectDraft:
     schema_type: str = "relaxng"
     documents: list[DocumentConfig] = field(default_factory=list)
     xpath_queries: list = field(default_factory=list)
+    parts: list = field(default_factory=list)
 
 
 
@@ -315,6 +316,9 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
     queries_el = xpath_queries_element(draft.xpath_queries)
     if queries_el is not None:
         root.append(queries_el)
+    parts_el = parts_element(draft.parts)
+    if parts_el is not None:
+        root.append(parts_el)
 
     tree = ET.ElementTree(root)
     ET.indent(tree, space="  ")
@@ -355,6 +359,17 @@ def xpath_queries_element(queries) -> ET.Element | None:
     for query in queries:
         ET.SubElement(queries_el, "query", {"name": query.name}).text = query.expression
     return queries_el
+
+
+def parts_element(parts) -> ET.Element | None:
+    """Élément <parts> des pivots propres à certains textes, ou None s'il n'y
+    en a pas (un projet sans exception reste inchangé)."""
+    if not parts:
+        return None
+    parts_el = ET.Element("parts")
+    for part in parts:
+        ET.SubElement(parts_el, "part", {"name": part.name, "base": part.base})
+    return parts_el
 
 
 def update_project_documents(path: str | Path, documents) -> Path:
