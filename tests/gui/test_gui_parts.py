@@ -188,3 +188,34 @@ def test_an_edition_without_inclusion_has_no_part(open_window, project_with_docu
     window = open_window(project_with_documents)
     assert [s.role for s in window.documents] == ["edition", "auxiliary"]
     assert not any(s.is_part for s in window.documents)
+
+
+def test_the_web_export_warns_that_the_parts_are_not_exported_yet(open_window, sermons_project, dialogs,
+                                                                   monkeypatch, tmp_path):
+    import web_viewer.generator
+    calls = []
+
+    def generate(project_path, **kwargs):
+        calls.append(project_path)
+        return tmp_path / "viewer.html", [], {"witnesses": [], "meta": {"lines": 0}}
+
+    monkeypatch.setattr(web_viewer.generator, "generate", generate)
+    window = open_window(sermons_project)
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # annuler
+    window.generate_web_viewer()
+    assert calls == [] and dialogs.seen[-1][1] == tr("parts.webgen.title")
+    dialogs.expect("box", QMessageBox.ButtonRole.AcceptRole)            # exporter quand même
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # fermer le compte rendu
+    window.generate_web_viewer()
+    assert calls == [sermons_project]
+
+
+def test_the_web_export_of_a_simple_project_does_not_warn(open_window, project_with_documents, dialogs,
+                                                           monkeypatch, tmp_path):
+    import web_viewer.generator
+    monkeypatch.setattr(web_viewer.generator, "generate",
+                        lambda project_path, **kwargs: (tmp_path / "viewer.html", [], {}))
+    window = open_window(project_with_documents)
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # compte rendu seulement
+    window.generate_web_viewer()
+    assert dialogs.seen[-1][1] == tr("webgen.done.title")

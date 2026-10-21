@@ -794,4 +794,9 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="apparatus.witnesses.part">Svědkové této části (její &lt;listWit&gt;): {ids}</string>
   <string key="apparatus.witnesses.locus">Svědkové této části (&lt;locus target&gt; edice): {ids}</string>
   <string key="apparatus.witnesses.wit">Svědkové uvedení v @wit této části: {ids}</string>
+  <string key="parts.webgen.title">Edice v částech</string>
+  <string key="parts.webgen.text">Edice vkládá své části pomocí XInclude. Webový prohlížeč je zatím neobsahuje: exportuje se jen text souboru edice, bez částí.
+
+Přesto exportovat?</string>
+  <string key="parts.webgen.continue">Přesto exportovat</string>
 </translations>

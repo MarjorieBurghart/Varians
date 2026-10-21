@@ -780,4 +780,9 @@ Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi le
   <string key="apparatus.witnesses.part">Témoins de cette partie (son &lt;listWit&gt;) : {ids}</string>
   <string key="apparatus.witnesses.locus">Témoins de cette partie (&lt;locus target&gt; de l’édition) : {ids}</string>
   <string key="apparatus.witnesses.wit">Témoins cités dans les @wit de cette partie : {ids}</string>
+  <string key="parts.webgen.title">Édition en parties</string>
+  <string key="parts.webgen.text">L’édition inclut ses parties par XInclude. Le viewer web ne les contient pas encore : seul le texte du fichier de l’édition sera exporté, sans celui des parties.
+
+Exporter quand même ?</string>
+  <string key="parts.webgen.continue">Exporter quand même</string>
 </translations>

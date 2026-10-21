@@ -794,4 +794,9 @@
   <string key="apparatus.witnesses.part">この部分の伝本（その &lt;listWit&gt;）：{ids}</string>
   <string key="apparatus.witnesses.locus">この部分の伝本（版の &lt;locus target&gt;）：{ids}</string>
   <string key="apparatus.witnesses.wit">この部分の @wit に挙げられた伝本：{ids}</string>
+  <string key="parts.webgen.title">部分に分かれた版</string>
+  <string key="parts.webgen.text">この版は XInclude で部分を取り込んでいます。Web ビューアーはまだ部分を含みません。版のファイルの本文だけが書き出され、部分は含まれません。
+
+それでも書き出しますか？</string>
+  <string key="parts.webgen.continue">それでも書き出す</string>
 </translations>
