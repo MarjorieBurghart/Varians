@@ -14,6 +14,9 @@ descripteur 1 :
 
 - ``{"id": 1, "op": "validate", "xml": "…", "schema": "chemin.rng",
   "base_url": "chemin.xml"}`` → ``{"id": 1, "result": {…}, "compilations": n}`` ;
+  avec ``"parts": {"chemin": "texte"}`` (même vide), l'édition est validée
+  assemblée par XInclude, le texte des parties ouvertes remplaçant celui des
+  fichiers (``relaxng_validation.validate_document``) ;
 - ``{"id": 2, "op": "ping"}`` → ``{"id": 2, "ok": true, "pid": …,
   "qt_loaded": false}`` ;
 - une requête incorrecte → ``{"id": …, "error": "…"}``.
@@ -28,7 +31,7 @@ import os
 import sys
 from dataclasses import asdict
 
-from relaxng_validation import ValidationIssue, ValidationResult, relaxng_cache_info, validate_relaxng
+from relaxng_validation import ValidationIssue, ValidationResult, relaxng_cache_info, validate_document
 
 
 def result_to_dict(result):
@@ -57,7 +60,11 @@ def handle_request(request):
         xml_text, schema = request.get("xml"), request.get("schema")
         if not isinstance(xml_text, str) or not isinstance(schema, str) or not schema:
             return {"id": request_id, "error": "validate needs 'xml' and 'schema'"}
-        result = validate_relaxng(xml_text, schema, base_url=request.get("base_url") or None)
+        parts = request.get("parts")
+        if parts is not None and not (isinstance(parts, dict) and all(
+                isinstance(path, str) and isinstance(text, str) for path, text in parts.items())):
+            return {"id": request_id, "error": "'parts' must map paths to texts"}
+        result = validate_document(xml_text, schema, request.get("base_url") or None, parts)
         return {"id": request_id, "result": result_to_dict(result),
                 "compilations": relaxng_cache_info()["compilations"]}
     return {"id": request_id, "error": f"unknown op: {op!r}"}
