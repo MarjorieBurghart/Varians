@@ -83,3 +83,28 @@ def test_project_settings_keep_saved_xpath_queries(open_window, example_project,
         if new_window is not None:
             new_window._force_close = True
             new_window.close()
+
+
+def test_project_settings_keep_the_pivot_of_each_text(open_window, example_project, dialogs, qtbot):
+    # <parts> s'écrit à la main (V0.9.1.1) : la réécriture de project.xml le garde.
+    from project_config import PartConfig, load_project
+
+    text = example_project.read_text(encoding="utf-8").replace(
+        "</teiManuscriptProject>", '  <parts><part name="rls185" base="T2"/></parts>\n</teiManuscriptProject>')
+    example_project.write_text(text, encoding="utf-8")
+    window = open_window(example_project)
+
+    def accept(dialog):
+        dialog.accept()
+        return dialog.result()
+
+    dialogs.expect("dialog", accept)
+    dialogs.expect("information")
+    window.project_settings_dialog()
+    new_window = window._replacement_window
+    try:
+        assert load_project(example_project).parts == (PartConfig("rls185", "T2"),)
+    finally:
+        if new_window is not None:
+            new_window._force_close = True
+            new_window.close()
