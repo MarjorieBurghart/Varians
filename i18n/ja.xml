@@ -773,4 +773,9 @@
   <string key="rng.worker.fallback">RELAX NG の検証を Varians 内で行います（検証プロセスを利用できません：{reason}）。大きなスキーマのコンパイル中はウィンドウが応答しなくなることがあります。</string>
   <string key="rng.status.running">RNG：検証中…</string>
   <string key="rng.status.running.tip">RELAX NG の検証を別プロセスで実行中です。ウィンドウはそのまま使えます。TEI_ALL のような大きなスキーマでは、最初の検証に 10 秒ほどかかることがあります。</string>
+  <string key="parts.save_as.title">版の部分</string>
+  <string key="parts.save_as.text">この版は相対パスで部分を取り込んでいます：
+{hrefs}
+
+別のフォルダーに保存すると、部分が見つからなくなります。部分もコピーするか、版を現在のフォルダーに保存してください。</string>
 </translations>

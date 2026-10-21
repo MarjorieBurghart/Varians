@@ -773,4 +773,9 @@
   <string key="rng.worker.fallback">Проверка RELAX NG выполняется внутри Varians (процесс проверки недоступен: {reason}): во время компиляции большой схемы окно может зависнуть.</string>
   <string key="rng.status.running">RNG: идёт проверка…</string>
   <string key="rng.status.running.tip">Проверка RELAX NG выполняется в отдельном процессе: окном можно пользоваться. Первая проверка по большой схеме, например TEI_ALL, может занять около десяти секунд.</string>
+  <string key="parts.save_as.title">Части издания</string>
+  <string key="parts.save_as.text">Издание включает свои части по относительным путям:
+{hrefs}
+
+При сохранении в другую папку оно их больше не найдёт. Скопируйте и части или сохраните издание в его текущей папке.</string>
 </translations>

@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app_context import call_later, HERE, tr as _t
 from relaxng_validation import relaxng_schema_token
 from save_io import atomic_write_text_with_backup
+from xml_assembly import find_includes
 
 
 class DocumentIOMixin:
@@ -119,6 +120,9 @@ class DocumentIOMixin:
         # l'état visuel calculé ci-dessus reste en place.
         if well_formed and rng_result is None and self._last_schema_resolution is None:
             self.validate_relaxng_document(show_panel=False, show_success_message=False, xml_text=text, document_revision=revision)
+        # Les parties suivent les xi:include enregistrés.
+        if self.document.in_edition:
+            self._refresh_parts()
         return True
 
     def save_contextual(self):
@@ -142,7 +146,22 @@ class DocumentIOMixin:
     def save_as(self):
         start=str(self.current_path if self.current_path else HERE/"xml"/"edition.xml"); fn,_=QFileDialog.getSaveFileName(self,_t("file.save_as.title"),start,"XML (*.xml)")
         if not fn: return False
+        if not self._confirm_parts_kept(Path(fn)): return False
         return self._write_to(Path(fn))
+
+    def _confirm_parts_kept(self, target):
+        """Avant d'enregistrer une édition qui a des parties dans un autre
+        dossier : ses xi:include, relatifs, ne les trouveraient plus."""
+        if not self.document.is_edition or self.current_path is None:
+            return True
+        if Path(target).resolve().parent == Path(self.current_path).resolve().parent:
+            return True
+        hrefs = [include.href for include in find_includes(self.editor.toPlainText()) if include.href]
+        if not hrefs:
+            return True
+        return self._confirm_save_warning(
+            _t("parts.save_as.title"),
+            _t("parts.save_as.text", hrefs="\n".join("• " + href for href in hrefs)))
 
     def maybe_save(self):
         unsaved = self._unsaved_sessions()

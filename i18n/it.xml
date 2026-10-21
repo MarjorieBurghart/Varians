@@ -773,4 +773,9 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="rng.worker.fallback">Validazione RELAX NG eseguita in Varians (processo di validazione non disponibile: {reason}): la finestra può bloccarsi durante la compilazione di uno schema grande.</string>
   <string key="rng.status.running">RNG: validazione in corso…</string>
   <string key="rng.status.running.tip">Validazione RELAX NG in corso in un processo separato: la finestra resta utilizzabile. La prima validazione con uno schema grande come TEI_ALL può richiedere una decina di secondi.</string>
+  <string key="parts.save_as.title">Parti dell’edizione</string>
+  <string key="parts.save_as.text">L’edizione include le sue parti tramite percorsi relativi:
+{hrefs}
+
+Salvata in un’altra cartella, non le troverebbe più. Copiate anche le parti, oppure salvate l’edizione nella sua cartella attuale.</string>
 </translations>

@@ -759,4 +759,9 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="rng.worker.fallback">Validation RELAX NG faite dans Varians (processus de validation indisponible : {reason}) : la fenêtre peut se figer pendant la compilation d’un gros schéma.</string>
   <string key="rng.status.running">RNG : validation en cours…</string>
   <string key="rng.status.running.tip">Validation RELAX NG en cours dans un processus séparé : la fenêtre reste utilisable. La première validation d’un gros schéma comme TEI_ALL peut prendre une dizaine de secondes.</string>
+  <string key="parts.save_as.title">Parties de l’édition</string>
+  <string key="parts.save_as.text">L’édition inclut ses parties par des chemins relatifs :
+{hrefs}
+
+Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi les parties, ou enregistrez l’édition dans son dossier actuel.</string>
 </translations>

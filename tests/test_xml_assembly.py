@@ -196,3 +196,10 @@ def test_a_document_without_inclusion_is_unchanged(tmp_path):
     assembly = _assemble(master)
     assert assembly.parts == () and assembly.problems == ()
     assert etree.tostring(assembly.root) == etree.tostring(etree.parse(str(master)).getroot())
+
+
+def test_an_edition_including_itself_is_not_its_own_part(tmp_path):
+    master = _master(tmp_path, '<xi:include href="edition.xml"/>')
+    assembly = _assemble(master)
+    assert _codes(assembly) == [("edition.xml", 2, "circular")]
+    assert assembly.parts == ()

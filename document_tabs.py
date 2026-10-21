@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Documents XML du projet dans la fenêtre principale : l'édition et les
-documents auxiliaires déclarés dans <documents> (fichier d'autorités, notes…).
+"""Documents XML du projet dans la fenêtre principale : l'édition, ses
+parties (V0.9.0.0 : fichiers inclus par ses xi:include) et les documents
+auxiliaires déclarés dans <documents> (fichier d'autorités, notes…).
 
 Un seul document est affiché à la fois dans l'éditeur. Chacun possède sa
 session (``DocumentSession``) : texte et historique d'annulation, état
 « modifié », coloration, validation, position du curseur. Les témoins, la
 synchronisation et l'aperçu ne concernent que l'édition.
+
+Les parties se déduisent des xi:include de l'édition enregistrée, sans
+déclaration dans project.xml ; la liste est relue après chaque
+enregistrement de l'édition ou d'une partie. Un fichier à la fois inclus et
+déclaré dans <documents> est une partie : une seule session par fichier.
 """
 from __future__ import annotations
 
@@ -19,6 +25,7 @@ from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
 from project_management import update_project_documents
+from xml_assembly import assemble, path_key
 
 
 # Couleur du nom d'un document selon sa bonne formation (cf. _set_document_health).
@@ -29,12 +36,82 @@ class DocumentTabsMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
     def _init_documents(self):
-        """Registre des documents, une fois l'édition chargée."""
+        """Registre des documents, une fois le projet lu, avant le chargement
+        du texte de l'édition : l'édition, ses parties dans l'ordre
+        d'inclusion, puis les documents auxiliaires."""
         self.edition_session = self.document
-        self.documents = [self.edition_session] + [
+        parts = self._edition_part_paths() or []
+        included = {path_key(path) for path in parts}
+        self.documents = [self.edition_session] + [self._new_part(path) for path in parts] + [
             DocumentSession.auxiliary(config) for config in self.project.documents
+            if path_key(config.path) not in included
         ]
         self._load_document_tabs()
+
+    def _new_part(self, path):
+        """Session d'une partie ; son schéma est celui de l'édition."""
+        return DocumentSession.part(path, self.project.schema_mode, self.project.schema)
+
+    def _edition_part_paths(self):
+        """Parties de l'édition enregistrée, dans l'ordre d'inclusion ; None
+        si elle ne peut pas être lue ou si elle est mal formée."""
+        path = self.edition_session.path or self.project.edition
+        try:
+            text = Path(path).read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            return None
+        assembly = assemble(text, path)
+        return None if assembly.root is None else list(assembly.parts)
+
+    def _refresh_parts(self):
+        """Après l'enregistrement de l'édition ou d'une partie : les parties
+        suivent les xi:include enregistrés. Une partie qui n'est plus incluse
+        perd son onglet, sauf si elle a des modifications non enregistrées
+        (elle le garde jusqu'à leur enregistrement) ; déclarée dans
+        <documents>, elle redevient un document auxiliaire."""
+        paths = self._edition_part_paths()
+        if paths is None:
+            return
+        wanted = {path_key(path): path for path in paths}
+        declared = {path_key(config.path): config for config in self.project.documents}
+        sessions = {path_key(session.path): session for session in self.documents[1:]}
+        changed = False
+        for key, session in sessions.items():
+            if not session.is_part or key in wanted or session.modified:
+                continue
+            changed = True
+            config = declared.get(key)
+            if config is not None:
+                session.role, session.label = "auxiliary", config.display_label
+                session.schema_mode, session.schema_file = config.schema_mode, config.schema
+                continue
+            if session is self.document:
+                self.show_document(self.edition_session)
+            self.documents.remove(session)
+            self._hidden_documents.discard(session)
+            if session.text_document is not None:
+                session.text_document.deleteLater()
+        for key, path in wanted.items():
+            session = sessions.get(key)
+            if session is not None and session.is_part:
+                continue
+            changed = True
+            if session is not None:                          # document auxiliaire désormais inclus
+                session.role, session.label = "part", Path(path).name
+                session.schema_mode, session.schema_file = self.project.schema_mode, self.project.schema
+            else:
+                self.documents.append(self._new_part(path))
+        if not changed:
+            return
+        position = {key: index for index, key in enumerate(wanted)}
+        others = self.documents[1:]
+        self.documents = ([self.edition_session]
+                          + sorted((s for s in others if s.is_part and path_key(s.path) in position),
+                                   key=lambda s: position[path_key(s.path)])
+                          + [s for s in others if s.is_part and path_key(s.path) not in position]
+                          + [s for s in others if not s.is_part])
+        self._update_document_tabs()
+        self._save_document_tabs()
 
     def _edition_displayed(self):
         return self.document.is_edition
@@ -320,7 +397,8 @@ class DocumentTabsMixin:
             if self.document is session:
                 self.show_document_tab(session)
             return False
-        self.show_document(previous)
+        # L'enregistrement a pu retirer une partie qui n'est plus incluse.
+        self.show_document(previous if previous in self.documents else self.edition_session)
         return True
 
     def _confirm_unsaved_documents(self, sessions, *, quitting=False):
@@ -391,7 +469,8 @@ class DocumentTabsMixin:
             for window in hidden["detached"]:
                 window.hide()
         self.action_save.setText(_t("menu.save_edition" if edition else "menu.save_document"))
-        self.action_remove_document.setEnabled(not edition)
+        # Retirer un document réécrit <documents> : une partie n'y figure pas.
+        self.action_remove_document.setEnabled(self.document.is_auxiliary)
 
     # --- Garde-fous : commandes réservées à l'édition -------------------------
 

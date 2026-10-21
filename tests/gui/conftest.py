@@ -230,6 +230,28 @@ def project_with_documents(example_project):
     return example_project
 
 
+SERMONS_DATA = ROOT / "tests" / "data" / "sermons"
+
+
+@pytest.fixture
+def sermons_project(tmp_path):
+    """Copie du projet d'essai « sermons » : une édition qui inclut ses
+    sermons par XInclude (tests/data/sermons), avec le petit schéma local à
+    la place de TEI_ALL. Le <?xml-model?> remplacé tient sur la même ligne :
+    les numéros de ligne des fichiers ne changent pas."""
+    root = tmp_path / "sermons"
+    shutil.copytree(SERMONS_DATA, root)
+    (root / "web_output").mkdir(exist_ok=True)
+    (root / "xml" / "test.rng").write_text(TEST_RNG, encoding="utf-8")
+    for path in (root / "xml").rglob("*.xml"):
+        text = path.read_text(encoding="utf-8")
+        href = "test.rng" if path.parent.name == "xml" else "../test.rng"
+        local_model = (f'<?xml-model href="{href}" type="application/xml" '
+                       'schematypens="http://relaxng.org/ns/structure/1.0"?>')
+        path.write_text(_XML_MODEL_RE.sub(local_model, text, count=1), encoding="utf-8")
+    return root / "project.xml"
+
+
 @pytest.fixture
 def editor_module(qapp):
     import editeur_tei

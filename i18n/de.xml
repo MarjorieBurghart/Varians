@@ -773,4 +773,9 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="rng.worker.fallback">RELAX-NG-Validierung innerhalb von Varians (Validierungsprozess nicht verfügbar: {reason}): Das Fenster kann einfrieren, während ein großes Schema kompiliert wird.</string>
   <string key="rng.status.running">RNG: wird validiert…</string>
   <string key="rng.status.running.tip">RELAX-NG-Validierung läuft in einem eigenen Prozess: Das Fenster bleibt benutzbar. Die erste Validierung mit einem großen Schema wie TEI_ALL kann etwa zehn Sekunden dauern.</string>
+  <string key="parts.save_as.title">Teile der Edition</string>
+  <string key="parts.save_as.text">Die Edition bindet ihre Teile über relative Pfade ein:
+{hrefs}
+
+In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren Sie auch die Teile oder speichern Sie die Edition in ihrem aktuellen Ordner.</string>
 </translations>

@@ -260,14 +260,14 @@ class _Assembler:
         target = _href_path(include.href, path)
         if target is None:
             return problem("href_unsupported", include.href)
+        key = path_key(target)
+        if key in chain:                             # avant la lecture : l'édition n'est pas sa propre partie
+            return problem("circular", str(target))
         root = self._load(target)
         if root is _MISSING:
             return problem("fallback" if include.has_fallback else "missing", str(target))
         if root is None:
             return None                              # mal formée : signalé dans son fichier
-        key = path_key(target)
-        if key in chain:
-            return problem("circular", str(target))
         selected = _select(root, include.xpointer)
         if isinstance(selected, str):
             return problem(selected, include.xpointer)
