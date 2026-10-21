@@ -61,7 +61,7 @@ d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
 | `witness_sync.py` | synchronisation XML ↔ témoins, folios, ressources |
 | `main_menus.py` | barre d'outils, menus, projets récents, langue |
 | `project_actions.py` | export web, ouverture/création/réglages de projet |
-| `document_tabs.py` | documents du projet affichés : édition et documents auxiliaires |
+| `document_tabs.py` | documents du projet affichés : édition, ses parties (XInclude) et documents auxiliaires |
 | `document_display.py` | onglets affichés et leur ordre (préférence locale du projet), fenêtre « Documents affichés », clic droit sur un onglet |
 | `document_dialogs.py` | ajouter, créer, retirer un document XML auxiliaire |
 | `references_ui.py` | références entre documents : identifiants proposés, F12 / Alt+←, commande « Références » |
@@ -149,6 +149,40 @@ Règles :
   (`_show_bottom_panel`, `_hide_bottom_panel`) ;
 - la vérification des références n'est qu'une aide : elle n'empêche jamais
   d'enregistrer et ne modifie aucun fichier.
+
+## Éditions assemblées (XInclude)
+
+Depuis V0.9.0.0, l'édition peut inclure ses parties par `xi:include` (voir
+`docs/DECISIONS_ASSEMBLAGE.md`). Le calcul est sans Qt :
+`xml_assembly.assemble` (copie de chaque élément inclus, fichier d'origine
+de chaque copie, `visible_ids`), `relaxng_validation.validate_assembled`
+(erreurs ramenées à leur fichier, `ValidationIssue.file`),
+`ReferenceResolver(documents, groups)` et `apparatus_xpath.part_witnesses`.
+
+Règles :
+
+- une partie est une `DocumentSession` de rôle `part` (`is_part`,
+  `in_edition`) ; la liste des parties suit les `xi:include` de l'édition
+  enregistrée (`_init_documents`, `_refresh_parts` après chaque
+  enregistrement de l'édition ou d'une partie) ;
+- `_assembly_context()` vaut l'édition si le document affiché en fait partie
+  et qu'elle a des parties : la validation porte alors sur l'édition
+  assemblée, avec le schéma de l'édition. Le résultat est rangé sur
+  l'édition et ses parties (`_share_assembled_result`) ; `_assembly_changed`
+  (relié à `contentsChanged`, comme `_text_changed`) le rend périmé pour
+  les autres documents ;
+- `_witness_sync_suspended()` garde les points d'entrée de la
+  synchronisation (`witness_sync.py`) tant que la synchronisation à travers
+  les parties n'est pas réalisée ;
+- des tests anciens exécutent le corps de certaines méthodes avec des objets
+  factices (`_text_changed`, `_auto_refresh_rng`, `show_validation_panel`,
+  `_validate_relaxng_document_impl`, `sync_panels_to_cursor`…) : une
+  nouvelle méthode appelée par ces corps doit être ajoutée à ces objets ;
+- jeu de données : `tests/data/sermons` (copie du projet d'essai « Essai
+  sermons Varians »), copié dans `tmp_path` par les fixtures
+  `sermons_project` et `collection_project` de `tests/gui/conftest.py`. La
+  seconde réduit l'édition à trois courts sermons, avec un schéma explicite
+  qui situe chaque erreur sans erreurs en cascade.
 
 ## Transformations XSLT de l'aperçu
 

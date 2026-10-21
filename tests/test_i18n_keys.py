@@ -99,3 +99,21 @@ def test_each_help_explains_background_validation():
         section = section[:section.index("</section>")]
         for text in (catalog["rng.status.running"], catalog["toolbar.validate_rng"], "<kbd>F8</kbd>", "TEI_ALL"):
             assert text in section, (language, text)
+
+
+def test_each_help_explains_assembled_editions():
+    labels = ("rng.column.document", "references.action", "apparatus.menu", "parts.webgen.continue",
+              "documents.tab.rename", "documents.remove.menu")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="xinclude">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("xi:include", 'xpointer="s02"', "element(/1/2/1/1)", "&lt;locus", "@wit",
+                     "&lt;teiHeader&gt;", "<kbd>F12</kbd>", "<kbd>Ctrl+S</kbd>", "xi:fallback"):
+            assert text in section, (language, text)
+        version = page[page.index('<section id="v0900">'):]
+        assert 'href="#xinclude"' in version[:version.index("</section>")], language

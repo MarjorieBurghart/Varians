@@ -116,3 +116,8 @@ def test_the_incomplete_check_of_a_part_uses_its_own_witnesses():
     root = etree.fromstring(text.encode("utf-8"))
     found = root.xpath(incomplete_app_xpath(ids), namespaces={"tei": "http://www.tei-c.org/ns/1.0"})
     assert [app.findtext("{http://www.tei-c.org/ns/1.0}lem") for app in found] == ["vigilantes"]
+
+
+def test_the_locus_of_the_test_project_tells_the_witnesses_of_sermon_4():
+    assert part_witnesses((SERMONS / "s04.xml").read_text(encoding="utf-8"),
+                          EDITION.read_text(encoding="utf-8")) == (["A", "C"], "locus")

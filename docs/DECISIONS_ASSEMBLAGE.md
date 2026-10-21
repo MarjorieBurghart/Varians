@@ -58,8 +58,8 @@ vingtaine de fichiers, un par sermon.
      exclu.
 3. **Tout calcul porte sur le document assemblé**, comme dans les autres
    outils :
-   - synchronisation des témoins : les `<lb edRef="#pivot"/>` sont comptés
-     dans l'ordre du document assemblé (décalage par partie) ;
+   - synchronisation des témoins : voir « Synchronisation des collections »
+     ci-dessous (décision du 21 octobre 2026, qui précise celle-ci) ;
    - références : après inclusion, toutes les parties forment un seul
      document, donc `#id` d'une partie à l'autre est correct ;
    - validation : chaque erreur est indiquée dans le bon fichier, à la bonne
@@ -126,19 +126,110 @@ XInclude.
 ## Ordre de réalisation prévu
 
 1. Choix des onglets affichés — réalisé en V0.8.9.0.
-2. XInclude, références et validation : identifiants des parties comptés dans
-   le document maître ; validation du document assemblé, erreurs ramenées au
-   bon fichier ; les deux formes de parties (`xpointer` par identifiant et
-   `element()`).
-3. Vue XSLT / CSS et export web à partir du document assemblé, modifications
-   par fragment réécrites dans le bon fichier.
-4. Synchronisation des `<lb/>` à travers les parties.
-5. Cas avancés : `parse="text"`, `<xi:fallback>`, autres schémas `xpointer`.
+2. XInclude, références et validation — réalisé en V0.9.0.0 (voir
+   ci-dessous) : parties en onglets, validation du document assemblé avec
+   les erreurs ramenées au bon fichier, références d'une partie à l'autre,
+   les deux formes de parties (`xpointer` par identifiant et `element()`).
+   La synchronisation des témoins y est suspendue pour une édition qui a
+   des parties.
+3. Synchronisation des collections, cas 1 (numérotation continue) —
+   V0.9.1.0.
+4. Synchronisation des collections, cas 2 (un JSON par texte) — V0.9.2.0.
+5. Vue XSLT / CSS et export web à partir du document assemblé,
+   modifications par fragment réécrites dans le bon fichier, avec les mêmes
+   continuités de synchronisation sur le site.
+6. Cas avancés : `parse="text"`, `<xi:fallback>`, autres schémas `xpointer`.
+
+## Réalisé en V0.9.0.0
+
+- **Onglets des parties** : le nom du fichier. Ordre : l'édition, ses
+  parties dans l'ordre d'inclusion (une partie imbriquée après celle qui
+  l'inclut), puis les documents auxiliaires. Une partie nouvelle se place
+  après les parties déjà présentes, même si un ordre a été mémorisé.
+- **Une partie** est un fichier inclus qui existe, même mal formé (pour
+  pouvoir le corriger). Un fichier à la fois inclus et déclaré dans
+  `<documents>` est une partie : une seule session par fichier.
+- **La liste des parties** est relue après chaque enregistrement de
+  l'édition ou d'une partie (fichiers enregistrés, non le texte en cours).
+  Une partie qui n'est plus incluse garde son onglet tant qu'elle a des
+  modifications non enregistrées ; déclarée dans `<documents>`, elle
+  redevient un document auxiliaire.
+- **Renommer l'onglet et Retirer le document** ne concernent que les
+  documents auxiliaires (les deux réécrivent `<documents>`).
+- **« Enregistrer l'édition sous »** dans un autre dossier avertit que les
+  `xi:include`, relatifs, ne trouveraient plus les parties.
+- **Validation** : l'édition et chaque partie font valider l'édition
+  assemblée, avec le schéma de l'édition et le texte non enregistré des
+  parties modifiées. Le résultat est rangé sur l'édition et ses parties ;
+  une modification de l'une le rend périmé pour toutes. Colonne Document
+  (seulement pour une édition qui a des parties), double-clic vers la
+  bonne partie ; l'onglet de chaque partie prend la couleur de ses propres
+  erreurs. Les problèmes d'assemblage sont des erreurs du domaine
+  `XINCLUDE`, traduites dans la langue de l'interface.
+- **Références** : un `#id` se cherche d'abord dans son propre fichier
+  (en-tête compris), puis parmi les identifiants que les autres fichiers
+  apportent à l'édition assemblée. Un identifiant défini dans deux parties
+  n'est ambigu que pour une référence qui ne le trouve pas dans son propre
+  fichier. Un témoin déclaré seulement dans le `<teiHeader>` d'une partie
+  incluse par `xpointer` est trouvé dans cette partie, mais il manque au
+  document assemblé : un outil qui ne lit que celui-ci ne le voit pas.
+- **Témoins d'une partie** (« Débugger l'apparat », complétion de
+  `@wit`) : son `<listWit>` ; sinon les témoins de l'édition dont un
+  `<locus target="#…">` vise un élément de la partie ; sinon les témoins
+  cités dans ses `@wit`. Les trois pratiques de déclaration sont acceptées :
+  `<listWit>` dans chaque texte, dans l'édition seule, ou les deux. Un même
+  manuscrit garde le même sigle dans toute la collection.
+- **Folios d'un texte dans un témoin** : notés soit par `<locus from to>`
+  dans un en-tête (forme structurée, lisible par Varians), soit seulement
+  par les `<pb/>` de l'édition ; les deux pratiques existent.
+
+## Synchronisation des collections (décision du 21 octobre 2026)
+
+Constat : dans une collection, les témoins n'ont pas toujours les mêmes
+textes, ni dans le même ordre ; le pivot peut changer d'un texte à l'autre ;
+un texte peut être incomplet dans un témoin. Un texte en plusieurs morceaux
+dans un manuscrit est remembré par l'éditeur ; deux copies d'un texte dans un
+même manuscrit font deux témoins.
+
+Deux cas, réunis par une seule règle : **un texte qui a son dossier
+d'alignements est synchronisé à part ; les autres suivent la numérotation
+continue.** Un projet simple n'a rien à choisir, et les deux cas peuvent se
+mêler.
+
+1. **Cas 1 (V0.9.1.0) : une collection découpée par commodité.** Les textes
+   se suivent de la même façon dans la plupart des manuscrits ; un fichier
+   par texte sert seulement à manier de plus petites unités. Les
+   `<lb edRef="#pivot"/>` sont comptés dans l'ordre du document assemblé
+   (décalage par partie) ; les JSON sont ceux d'aujourd'hui, un par témoin
+   pour toute l'édition. Condition : le pivot contient ces textes, dans
+   l'ordre de l'édition. Les autres témoins peuvent avoir un autre ordre ou
+   ne pas avoir un texte : leurs lignes désignent déjà des lignes du pivot.
+2. **Cas 2 (V0.9.2.0) : un corpus aux témoins variables.** Un JSON par texte
+   et par témoin, au format actuel (VariansSynchro ne change pas), rangé
+   selon une convention, sans déclaration : `alignments/s02/B.json`, le
+   dossier portant le nom du fichier du texte. Les témoins affichés pour un
+   texte sont ceux qui ont un JSON pour lui. Le pivot est celui du projet,
+   sauf exception déclarée dans `project.xml` (par exemple
+   `<part name="s02" base="B"/>`) : le pivot est une notion propre à
+   Varians, sans encodage TEI évident. Page de départ d'un texte dans un
+   témoin : le `<locus from>` d'un en-tête, sinon la page qui précède le
+   premier `<pb>` du témoin dans le texte, dans l'ordre des pages du
+   témoin. Lacune d'un témoin : « lacune » (`<lacunaStart/>` …
+   `<lacunaEnd/>`) ; une lacune du pivot arrête la synchronisation le temps
+   du passage.
+
+Continuités voulues : suivre l'édition (chaque témoin saute à l'endroit où il
+a le texte suivant, ou indique qu'il ne l'a pas) ; suivre un manuscrit dans
+son propre ordre, l'édition ouvrant la bonne partie ; garder affichée et
+synchronisée une page qui porte la fin d'un texte et le début d'un autre ;
+parcourir d'un seul tenant un pivot commun à plusieurs textes. L'export web
+devra offrir les mêmes continuités. Dans le cas 2, suivre un manuscrit d'un
+texte à l'autre suppose de déduire l'ordre des textes dans ce manuscrit à
+partir de ses pages : c'est la partie la plus délicate, qui peut venir en
+second temps.
 
 ## Restent à décider
 
-- Le nom des onglets des parties : nom du fichier, `@n`, ou `<head>` du
-  sermon.
 - La création d'une nouvelle partie depuis Varians (fichier et `xi:include`
   ajoutés au document maître).
 - Le schéma d'un document auxiliaire et l'ordre des `<document>` dans

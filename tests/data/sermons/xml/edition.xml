@@ -11,9 +11,9 @@
       </publicationStmt>
       <sourceDesc>
         <listWit>
-          <witness xml:id="A">Manuscrit fictif A : sermons 1 (f. 12r-13r), 4 (f. 13r-14r) et 3 (f. 14v-15v), dans cet ordre ; le sermon 2 manque.</witness>
+          <witness xml:id="A">Manuscrit fictif A : sermons 1 (f. 12r-13r), <locus from="13r" to="14r" target="#s04">4 (f. 13r-14r)</locus> et 3 (f. 14v-15v), dans cet ordre ; le sermon 2 manque.</witness>
           <witness xml:id="B">Manuscrit fictif B : sermons 2 (f. 30r-31r) et 1 (f. 31r-32r), dans cet ordre.</witness>
-          <witness xml:id="C">Manuscrit fictif C : sermons 1 (f. 2r-3r), 4 (f. 3r-3v) et 3 (f. 4r-5r), dans cet ordre.</witness>
+          <witness xml:id="C">Manuscrit fictif C : sermons 1 (f. 2r-3r), <locus from="3r" to="3v" target="#s04">4 (f. 3r-3v)</locus> et 3 (f. 4r-5r), dans cet ordre.</witness>
           <witness xml:id="D">Manuscrit fictif D : sermons 2 (f. 101r-102r) et 3 (f. 102r-103r), dans cet ordre.</witness>
         </listWit>
       </sourceDesc>
