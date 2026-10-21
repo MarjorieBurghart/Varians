@@ -801,4 +801,13 @@
   <string key="manuscript.text_absent">Для этого текста нет выравнивания этого свидетеля.</string>
   <string key="status.structure.text.tip">Строки {base} в тексте {name}, синхронизируемом отдельно, со своими выравниваниями (папка alignments/{name}/).</string>
   <string key="text_sync.error">Не удаётся прочитать выравнивания текста {name}: {error}</string>
+  <string key="diagnostics.scope.edition">Охват: издание, опорный свидетель {base}.</string>
+  <string key="diagnostics.scope.text">Охват: текст {name}, синхронизируемый отдельно (alignments/{name}/), опорный свидетель {base}.</string>
+  <string key="diagnostics.texts">Тексты, синхронизируемые отдельно: {texts}.</string>
+  <string key="diagnostics.text_item">{name} (опорный {base}; свидетели {witnesses})</string>
+  <string key="text_sync.problem.unknown_witness">{name}: JSON свидетеля, не объявленного в project.xml ({detail}); он игнорируется.</string>
+  <string key="text_sync.problem.unknown_base">{name}: в &lt;parts&gt; указан неизвестный опорный свидетель ({detail}); используется опорный свидетель проекта.</string>
+  <string key="text_sync.problem.no_base_alignment">{name}: в папке нет JSON для опорного свидетеля {detail}; этот текст не синхронизируется.</string>
+  <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; не указывает ни на один текст издания.</string>
+  <string key="text_sync.problem.duplicate_name">{name}: два текста носят это имя; папка alignments/{name}/ относится к первому, а не к {detail}.</string>
 </translations>

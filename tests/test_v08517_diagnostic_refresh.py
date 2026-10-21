@@ -298,6 +298,10 @@ def _controller_for_project(proj):
         base_id=proj.base_witness,
         witness_labels={w.id:w.id for w in proj.witnesses},
         _text_witness_ids=lambda:set(),
+        # Segment affiché (V0.9.1.1) : l'édition.
+        _segment_project=lambda:proj,
+        _refreshed_segment_project=lambda:proj,
+        _store_segment_state=lambda state,project:None,
     )
     fake._apply_runtime_state=lambda state,project,images=None:_APPLY[0](fake,state,project,images)
     fake._witness_resource_snapshot=lambda: __import__('witness_resource_refresh').RuntimeState(

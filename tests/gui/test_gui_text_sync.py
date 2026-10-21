@@ -10,6 +10,8 @@ segment, avec son pivot.
 - Jeu « corpus » (tests/corpus_data.py) : s02 a B pour pivot."""
 from __future__ import annotations
 
+from PySide6.QtWidgets import QMessageBox
+
 from app_context import tr
 
 LB = '<lb edRef="#T1"/>'
@@ -107,3 +109,76 @@ def test_a_nested_part_belongs_to_the_segment_of_its_text(open_window, corpus_pr
     window.show_document(_doc(window, "s04_exemplum.xml"))
     assert window._active_segment == segment
     assert window._base_line_count() == 8                  # 5 dans s04, 3 dans l'exemplum
+
+
+# --- Diagnostic, actualisation, enregistrement (T.4) ---------------------------
+
+def _diagnostics(window, dialogs):
+    found = []
+    dialogs.expect("dialog", lambda dialog: found.append(
+        (dialog.scope.text(), dialog.notes.text(), [r.id for r in dialog._rows])) or 0)
+    window.show_witness_diagnostics()
+    return found[0]
+
+
+def test_the_diagnostics_tell_the_scope_and_the_texts(open_window, corpus_project, dialogs):
+    window = open_window(corpus_project)
+    scope, notes, rows = _diagnostics(window, dialogs)
+    assert scope == tr("diagnostics.scope.edition", base="A")
+    texts = "; ".join((tr("diagnostics.text_item", name="s02", base="B", witnesses="B, D"),
+                       tr("diagnostics.text_item", name="s04", base="A", witnesses="A, C")))
+    assert notes == tr("diagnostics.texts", texts=texts)
+    assert rows == ["A", "B", "C", "D", "E"]
+    window.show_document(_doc(window, "s02.xml"))
+    scope, _notes, rows = _diagnostics(window, dialogs)
+    assert scope == tr("diagnostics.scope.text", name="s02", base="B")
+    assert rows == ["B", "D"]
+
+
+def test_the_problems_of_the_text_folders_are_listed(open_window, corpus_project, dialogs):
+    from corpus_data import alignment, write_json
+    write_json(corpus_project.parent / "alignments" / "s02" / "X.json", alignment("X", "B", "X-1r", 8))
+    window = open_window(corpus_project)
+    _scope, notes, _rows = _diagnostics(window, dialogs)
+    assert tr("text_sync.problem.unknown_witness", name="s02", detail="X") in notes
+
+
+def test_refreshing_in_a_text_reloads_its_folder(open_window, example_with_text, dialogs):
+    import json
+    window = open_window(example_with_text)
+    window.show_document(_doc(window, "rls185.xml"))
+    path = example_with_text.parent / "alignments" / "rls185" / "T2.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["pages"][0]["lines"] = data["pages"][0]["lines"][1:]
+    path.write_text(json.dumps(data), encoding="utf-8")
+    before = sum(len(v) for v in window.base_maps["T2"].values())
+    dialogs.expect("question", QMessageBox.StandardButton.Yes)
+    assert window.refresh_witness_synchronizations()
+    assert window._active_segment is not None and len(window.base_items) == 165
+    assert sum(len(v) for v in window.base_maps["T2"].values()) < before
+    window.show_document(window.edition_session)
+    assert len(window.base_items) == 3625                   # l'état de l'édition est gardé
+
+
+def test_a_new_text_folder_is_found_by_refresh(open_window, example_with_part, dialogs):
+    from corpus_data import split_alignments
+    window = open_window(example_with_part)
+    window.show_document(_doc(window, "rls185.xml"))
+    assert window._active_segment is None
+    split_alignments(example_with_part.parent, "rls185", "T1", 116, 165, ("T2",))
+    dialogs.expect("question", QMessageBox.StandardButton.Yes)
+    assert window.refresh_witness_synchronizations()
+    assert window._active_segment is not None and len(window.base_items) == 165
+    assert window.panels["P"].absent_key == "manuscript.text_absent"
+
+
+def test_saving_a_text_checks_its_own_lines(open_window, example_with_text, dialogs):
+    window = open_window(example_with_text)
+    window.show_document(_doc(window, "rls185.xml"))
+    cursor = window.editor.textCursor()
+    cursor.setPosition(window.editor.toPlainText().index(LB))
+    cursor.insertText(LB)
+    window._rebuild_lb_cache()
+    dialogs.expect("warning", QMessageBox.StandardButton.Cancel)
+    assert not window.save()
+    assert dialogs.seen[-1][2] == tr("file.structure.text", count=166, base="T1", expected=165)

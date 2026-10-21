@@ -801,4 +801,13 @@ Esportare comunque?</string>
   <string key="manuscript.text_absent">Nessun allineamento di questo testimone per questo testo.</string>
   <string key="status.structure.text.tip">Righe di {base} nel testo {name}, sincronizzato a parte con i propri allineamenti (cartella alignments/{name}/).</string>
   <string key="text_sync.error">Allineamenti del testo {name} illeggibili: {error}</string>
+  <string key="diagnostics.scope.edition">Ambito: l’edizione, pivot {base}.</string>
+  <string key="diagnostics.scope.text">Ambito: il testo {name}, sincronizzato a parte (alignments/{name}/), pivot {base}.</string>
+  <string key="diagnostics.texts">Testi sincronizzati a parte: {texts}.</string>
+  <string key="diagnostics.text_item">{name} (pivot {base}; testimoni {witnesses})</string>
+  <string key="text_sync.problem.unknown_witness">{name}: JSON di un testimone non dichiarato in project.xml ({detail}); viene ignorato.</string>
+  <string key="text_sync.problem.unknown_base">{name}: &lt;parts&gt; indica un pivot sconosciuto ({detail}); si usa il pivot del progetto.</string>
+  <string key="text_sync.problem.no_base_alignment">{name}: nessun JSON per il pivot {detail} nella sua cartella; questo testo non è sincronizzato.</string>
+  <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; non designa alcun testo dell’edizione.</string>
+  <string key="text_sync.problem.duplicate_name">{name}: due testi hanno questo nome; la cartella alignments/{name}/ va al primo, non a {detail}.</string>
 </translations>

@@ -218,15 +218,25 @@ def load_split_thumbnail(widget, page, project_root):
 class WitnessDiagnosticDialog(QDialog):
     """Read-only audit of witness resources (no OCR or TEI text is exposed)."""
 
-    def __init__(self, rows, parent=None):
+    def __init__(self, rows, parent=None, scope='', notes=''):
+        """``scope`` : l'édition ou le texte synchronisé à part (V0.9.1.1) ;
+        ``notes`` : textes synchronisés à part et problèmes de leurs dossiers."""
         super().__init__(parent)
         self.setWindowTitle(_t('diagnostics.title'))
         self.resize(1040, 520)
         self._rows = tuple(rows)
+        self._scope, self._notes = scope, notes
         root = QVBoxLayout(self)
         self.intro = QLabel(_t('diagnostics.intro'))
         self.intro.setWordWrap(True)
         root.addWidget(self.intro)
+        self.scope = QLabel(scope)
+        self.scope.setVisible(bool(scope))
+        root.addWidget(self.scope)
+        self.notes = QLabel(notes)
+        self.notes.setWordWrap(True)
+        self.notes.setVisible(bool(notes))
+        root.addWidget(self.notes)
         self.table = QTableWidget(len(rows), 7, self)
         self.table.setHorizontalHeaderLabels([
             _t('diagnostics.column.witness'), _t('diagnostics.column.mode'),
@@ -274,7 +284,7 @@ class WitnessDiagnosticDialog(QDialog):
         return '; '.join(_t('diagnostics.issue.' + code) for code in row.issue_codes)
 
     def copy_report(self):
-        lines = [_t('diagnostics.title')]
+        lines = [_t('diagnostics.title')] + [text for text in (self._scope, self._notes) if text]
         for row in self._rows:
             lines.append(f'{row.id} — {row.label}: '
                          f'{row.pages} {_t("diagnostics.column.pages")}; '
@@ -698,8 +708,9 @@ class WitnessSyncMixin:
         )
 
     def show_witness_diagnostics(self):
-        rows = diagnostic_rows(self.project, self._witness_resource_snapshot())
-        WitnessDiagnosticDialog(rows, self).exec()
+        # Témoins du segment affiché : l'édition, ou le texte synchronisé à part.
+        rows = diagnostic_rows(self._segment_project(), self._witness_resource_snapshot())
+        WitnessDiagnosticDialog(rows, self, self._diagnostic_scope(), self._diagnostic_notes()).exec()
 
     def refresh_witness_synchronizations(self):
         """Reload the alignments and OCR without replacing the editor widget.
@@ -709,11 +720,14 @@ class WitnessSyncMixin:
         scientific line keys (even if the line counts happen to be equal).
         No modifications to TEI, project.xml, image sources or external files.
         """
-        old_rows = diagnostic_rows(self.project, self._witness_resource_snapshot())
+        old_rows = diagnostic_rows(self._segment_project(), self._witness_resource_snapshot())
+        # Segment du document affiché (V0.9.1.1) : l'édition, ou un texte
+        # synchronisé à part ; les dossiers des textes sont relus.
+        project = self._refreshed_segment_project()
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            staged = assemble_resources(self.project)
-            new_rows = diagnostic_rows(self.project, staged)
+            staged = assemble_resources(project)
+            new_rows = diagnostic_rows(project, staged)
         except Exception as exc:
             refresh_error = str(exc)
         else:
@@ -750,8 +764,9 @@ class WitnessSyncMixin:
                 return False
         # Commit; from this point on, all expensive and error-prone disk reads
         # have completed. Preserve each existing panel, zoom and frame toggle.
-        self._apply_runtime_state(staged, self.project, images=staged.images_available)
-        self.__dict__.setdefault('_segment_states', {})[None] = (staged, self.project)
+        self._apply_runtime_state(staged, project,
+                                  images=staged.images_available if project is self.project else None)
+        self._store_segment_state(staged, project)
         self._last_synced_ordinal = None
         self._last_synced_surface = None
         self._folio_revision = None

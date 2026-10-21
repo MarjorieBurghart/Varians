@@ -98,6 +98,43 @@ class TextSegmentsMixin:
         # État de structure du segment (lignes de son pivot, attendues).
         self._set_lb_spans(self.lb_spans())
 
+    def _refreshed_segment_project(self):
+        """« Actualiser les synchronisations » : relit les dossiers des textes
+        (les états des autres textes seront relus à leur prochaine visite) et
+        renvoie le projet du segment du document affiché."""
+        self._forget_text_syncs()
+        segment = self._document_segment() if self.document.in_edition else self._active_segment
+        sync = self._text_sync_of(segment) if segment is not None else None
+        self._refreshing_segment = None if sync is None else segment
+        return self.project if sync is None else text_project(self.project, sync)
+
+    def _store_segment_state(self, state, project):
+        """Fin de l'actualisation : ``state`` devient l'état du segment."""
+        segment = getattr(self, "_refreshing_segment", None)
+        self._active_segment = segment
+        self.__dict__.setdefault("_segment_states", {})[segment] = (state, project)
+
+    def _diagnostic_scope(self):
+        """Portée du diagnostic des témoins : l'édition, ou le texte affiché."""
+        sync = self._text_sync_of(self._active_segment) if self._active_segment is not None else None
+        if sync is None:
+            return _t("diagnostics.scope.edition", base=self.base_id)
+        return _t("diagnostics.scope.text", name=sync.name, base=sync.base)
+
+    def _diagnostic_notes(self):
+        """Textes synchronisés à part (pivot, témoins) et problèmes de leurs
+        dossiers ; vide pour un projet qui n'en a pas."""
+        syncs, problems = self._text_syncs()
+        notes = []
+        if syncs:
+            items = [_t("diagnostics.text_item", name=sync.name, base=sync.base,
+                        witnesses=", ".join(w.id for w in self.witness_configs if w.id in sync.alignments))
+                     for sync in syncs]
+            notes.append(_t("diagnostics.texts", texts="; ".join(items)))
+        notes.extend(_t("text_sync.problem." + problem.code, name=problem.name, detail=problem.detail)
+                     for problem in problems)
+        return "\n".join(notes)
+
     def _segment_project(self):
         """Projet du segment affiché : le projet, ou celui réduit au texte."""
         return self._segment_state(getattr(self, "_active_segment", None))[1]

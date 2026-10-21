@@ -801,4 +801,13 @@ Přesto exportovat?</string>
   <string key="manuscript.text_absent">Pro tento text nemá tento svědek žádné zarovnání.</string>
   <string key="status.structure.text.tip">Řádky {base} v textu {name}, synchronizovaném zvlášť s vlastními zarovnáními (složka alignments/{name}/).</string>
   <string key="text_sync.error">Zarovnání textu {name} nelze přečíst: {error}</string>
+  <string key="diagnostics.scope.edition">Rozsah: edice, pivot {base}.</string>
+  <string key="diagnostics.scope.text">Rozsah: text {name}, synchronizovaný zvlášť (alignments/{name}/), pivot {base}.</string>
+  <string key="diagnostics.texts">Texty synchronizované zvlášť: {texts}.</string>
+  <string key="diagnostics.text_item">{name} (pivot {base}; svědkové {witnesses})</string>
+  <string key="text_sync.problem.unknown_witness">{name}: JSON svědka, kterého project.xml nedeklaruje ({detail}); je ignorován.</string>
+  <string key="text_sync.problem.unknown_base">{name}: &lt;parts&gt; uvádí neznámý pivot ({detail}); použije se pivot projektu.</string>
+  <string key="text_sync.problem.no_base_alignment">{name}: ve složce chybí JSON pro pivot {detail}; tento text není synchronizován.</string>
+  <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; neoznačuje žádný text edice.</string>
+  <string key="text_sync.problem.duplicate_name">{name}: dva texty mají tento název; složka alignments/{name}/ patří prvnímu, ne {detail}.</string>
 </translations>
