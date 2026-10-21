@@ -74,6 +74,9 @@ Composants autonomes utilisés par la fenêtre :
 | `document_session.py` | état d'un document ouvert (`DocumentSession`, `LbIndex`) |
 | `xml_references.py` | pointeurs `#id` et identifiants des documents, sans Qt (`ReferenceResolver`) |
 | `apparatus_xpath.py` | requêtes XPath 1.0 de contrôle de l'apparat (parallel segmentation), sans Qt |
+| `relaxng_worker.py` | processus de validation RELAX NG séparé (Varians relancé avec `--relaxng-worker`), sans Qt |
+| `validation_worker.py` | client de ce processus : requêtes, attente sans figer la fenêtre, repli |
+| `busy_indicator.py` | lueur animée de la barre d'état pendant une validation |
 | `code_editor.py` | éditeur de la source XML (`CodeEditor`) |
 | `formatted_view.py` | aperçu XSLT/CSS et édition par fragments |
 | `manuscript_panel.py` | panneau d'un témoin manuscrit |
