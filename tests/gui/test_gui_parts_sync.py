@@ -129,6 +129,44 @@ def test_typing_in_a_part_keeps_the_numbering_until_a_line_is_added(open_window,
     assert dialogs.seen[-1][2] == tr("file.structure.text", count=3791, base="T1", expected=3790)
 
 
+def _witness_actions(window):
+    return [window.action_reload_images, window.action_choose_witnesses,
+            window.workspace_layout_menu.menuAction(), window.action_diagnose_witnesses,
+            window.action_refresh_synchronizations]
+
+
+def test_the_witnesses_stay_on_a_part_and_leave_on_an_auxiliary_document(open_window, example_with_part,
+                                                                         project_with_documents):
+    window = open_window(example_with_part)
+    preview = window.left_tabs.indexOf(window.formatted_view)
+    witness = window._visible_witness_ids[0]
+    assert window._detach_witness(witness)
+    detached = window._detached_windows[witness]
+    sizes = window.main_splitter.sizes()
+    enabled = [action.isEnabled() for action in _witness_actions(window)]
+    assert any(enabled)
+
+    def witnesses_shown():
+        return (not window.witness_scroll.isHidden() and not window.structure_status.isHidden()
+                and detached.isVisible() and [a.isEnabled() for a in _witness_actions(window)] == enabled)
+
+    window.show_document(_part(window))
+    assert witnesses_shown()
+    assert not window.left_tabs.isTabEnabled(preview)
+    assert not window.action_preview.isEnabled() and not window.action_save_as.isEnabled()
+    aux = next(s for s in window.documents if s.is_auxiliary)
+    window.show_document(aux)
+    assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
+    assert not detached.isVisible()
+    assert not any(action.isEnabled() for action in _witness_actions(window))
+    window.show_document(_part(window))
+    assert witnesses_shown() and window.main_splitter.sizes() == sizes
+    window.show_document(window.edition_session)
+    assert witnesses_shown()
+    assert window.left_tabs.isTabEnabled(preview)
+    assert window.action_preview.isEnabled() and window.action_save_as.isEnabled()
+
+
 def test_an_edition_without_parts_keeps_its_synchronization(open_window, example_project):
     window = open_window(example_project)
     assert window._pivot_lines() is None

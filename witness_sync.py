@@ -26,6 +26,7 @@ from image_sources import (
     image_only_items, page_image_dimensions, page_image_request as generic_image_request,
     page_image_source, page_label as image_page_label, page_navigation_items,
 )
+from pivot_lines import include_spans
 from tei_facsimile import (
     facsimile_ref_at_position, position_inside_xml_markup, previous_surface_labels,
     project_facsimile_pages, sync_facsimile_text, upsert_pb_at_position,
@@ -296,9 +297,12 @@ class WitnessSyncMixin:
     def _refresh_folio_navigation(self, text=None, force=False):
         if not hasattr(self, 'panels'):
             return
-        if text is None:
-            text = self.editor.toPlainText()
-        revision = self.editor.document().revision()
+        # Les folios sont décrits dans le <facsimile> de l'édition, même quand
+        # l'une de ses parties est affichée (V0.9.1.0).
+        document = self.edition_session.text_document
+        if text is None or self.document is not self.edition_session:
+            text = document.toPlainText()
+        revision = document.revision()
         if not force and getattr(self, '_folio_revision', None) == revision:
             return
         for wid, panel in self.panels.items():
@@ -323,6 +327,10 @@ class WitnessSyncMixin:
         pos = cursor.position()
         if hasattr(self, '_refresh_folio_navigation'):
             self._refresh_folio_navigation(text)
+        # Édition en parties (V0.9.1.0) : le dernier pb précédent est cherché
+        # dans l'ordre du document assemblé, d'une partie à l'autre.
+        lines = self._pivot_lines()
+        includes = include_spans(text) if lines is not None else ()
         refs = {}
         for witness_id, panel in self.panels.items():
             # V0.8.5.11 : le choix page/ligne est propre à chaque témoin.
@@ -331,7 +339,10 @@ class WitnessSyncMixin:
             if panel.sync_enabled:
                 continue
             if hasattr(panel, 'folios') and panel.folios:
-                target = folio_at_position(text, pos, witness_id, panel.folios)
+                if lines is not None:
+                    target = lines.page_at(self.document.path, pos, text, includes, witness_id, panel.folios)
+                else:
+                    target = folio_at_position(text, pos, witness_id, panel.folios)
                 if target:
                     refs[witness_id] = target.ref
             else:

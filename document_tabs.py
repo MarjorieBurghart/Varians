@@ -565,30 +565,46 @@ class DocumentTabsMixin:
     # --- Interface réservée à l'édition ---------------------------------------
 
     def _edition_only_actions(self):
-        return [self.action_preview, self.action_save_as, self.action_reload_images,
-                self.action_choose_witnesses, self.workspace_layout_menu.menuAction(),
-                self.action_diagnose_witnesses, self.action_refresh_synchronizations]
+        return [self.action_preview, self.action_save_as]
+
+    def _witness_actions(self):
+        return [self.action_reload_images, self.action_choose_witnesses,
+                self.workspace_layout_menu.menuAction(), self.action_diagnose_witnesses,
+                self.action_refresh_synchronizations]
 
     def _apply_edition_ui(self):
-        """Aperçu, témoins (y compris détachés), état de structure et commandes
-        associées : masqués quand un document auxiliaire est affiché, puis
-        rétablis à l'identique au retour sur l'édition."""
+        """Aperçu et « Enregistrer l'édition sous… » : réservés à l'édition.
+        Témoins (y compris détachés), état de structure et commandes des
+        témoins : pour l'édition et ses parties (V0.9.1.0). Masqués quand un
+        autre document est affiché, puis rétablis à l'identique."""
         edition = self._edition_displayed()
         hidden = getattr(self, "_edition_ui_hidden", None)
         preview = self.left_tabs.indexOf(self.formatted_view)
         if edition and hidden is not None:
             self._edition_ui_hidden = None
-            for action, enabled in hidden["actions"]:
+            for action, enabled in hidden:
                 action.setEnabled(enabled)
             self.left_tabs.setTabEnabled(preview, True)
+        elif not edition and hidden is None:
+            self._edition_ui_hidden = hidden = [(action, action.isEnabled())
+                                                for action in self._edition_only_actions()]
+            for action, _enabled in hidden:
+                action.setEnabled(False)
+            self.left_tabs.setTabEnabled(preview, False)
+        witnesses = self.document.in_edition
+        hidden = getattr(self, "_witness_ui_hidden", None)
+        if witnesses and hidden is not None:
+            self._witness_ui_hidden = None
+            for action, enabled in hidden["actions"]:
+                action.setEnabled(enabled)
             self.structure_status.setVisible(hidden["structure"])
             self.witness_scroll.setVisible(hidden["witnesses"])
             self.main_splitter.setSizes(hidden["sizes"])
             for window in hidden["detached"]:
                 window.show()
-        elif not edition and hidden is None:
-            self._edition_ui_hidden = hidden = {
-                "actions": [(action, action.isEnabled()) for action in self._edition_only_actions()],
+        elif not witnesses and hidden is None:
+            self._witness_ui_hidden = hidden = {
+                "actions": [(action, action.isEnabled()) for action in self._witness_actions()],
                 "structure": not self.structure_status.isHidden(),
                 "witnesses": not self.witness_scroll.isHidden(),
                 "sizes": self.main_splitter.sizes(),
@@ -597,7 +613,6 @@ class DocumentTabsMixin:
             }
             for action, _enabled in hidden["actions"]:
                 action.setEnabled(False)
-            self.left_tabs.setTabEnabled(preview, False)
             self.structure_status.hide()
             self.witness_scroll.hide()
             for window in hidden["detached"]:

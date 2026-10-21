@@ -69,14 +69,18 @@ def test_a_part_is_edited_and_saved_on_its_own(open_window, sermons_project, qtb
     assert not window.edition_session.text_document.isUndoAvailable()
 
 
-def test_a_part_hides_the_witnesses_and_the_preview_like_an_auxiliary_document(open_window, sermons_project):
+def test_a_part_keeps_the_witnesses_but_not_the_preview(open_window, sermons_project):
     window = open_window(sermons_project)
     preview = window.left_tabs.indexOf(window.formatted_view)
     witnesses_hidden = window.witness_scroll.isHidden()        # témoins sans image : déjà masqués
     window.show_document(_doc(window, "s03.xml"))
-    assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
+    # V0.9.1.0 : témoins et état de structure, comme sur l'édition.
+    assert window.witness_scroll.isHidden() is witnesses_hidden
+    assert not window.structure_status.isHidden()
     assert not window.left_tabs.isTabEnabled(preview)
-    assert not window.action_save_as.isEnabled()
+    assert not window.action_save_as.isEnabled() and not window.action_preview.isEnabled()
+    window.show_document(_doc(window, "personnes.xml"))
+    assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
     window.show_document(window.edition_session)
     assert window.witness_scroll.isHidden() is witnesses_hidden
     assert window.left_tabs.isTabEnabled(preview) and window.action_save_as.isEnabled()
