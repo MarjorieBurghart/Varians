@@ -415,8 +415,21 @@ fichier par sermon, par exemple) selon la norme XInclude :
   comptées dans l’ordre de l’édition assemblée, d’une partie à l’autre ; les
   JSON d’alignement restent un par témoin pour toute l’édition, et le pivot
   doit contenir les textes dans l’ordre de l’édition. Rien n’est à déclarer.
-  Un corpus aux témoins variables (un JSON par texte, pivot d’un texte
-  déclaré par exception dans `project.xml`) est prévu pour la V0.9.2.0 :
-  voir `docs/DECISIONS_ASSEMBLAGE.md`.
+- Textes synchronisés à part (V0.9.1.1) : un texte qui a son dossier
+  `alignments/<nom du fichier du texte>/` (un JSON par témoin, au format
+  habituel) est synchronisé à part, sans déclaration. Son pivot est celui
+  du projet, sauf exception déclarée à la main :
+
+  ```xml
+  <parts>
+    <part name="s02" base="B"/>
+  </parts>
+  ```
+
+  `name` est le nom du fichier du texte, sans extension ; `base`, le sigle
+  du pivot. Une déclaration incomplète ou répétée est ignorée ; un pivot
+  inconnu n’empêche pas d’ouvrir le projet et est signalé par « État des
+  témoins… ». La fenêtre des paramètres du projet conserve `<parts>`. Mode
+  d’emploi : aide, « Mettre en place une édition en parties (XInclude) ».
 
 Un projet sans `xi:include` est inchangé.

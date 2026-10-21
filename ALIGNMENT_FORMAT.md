@@ -102,3 +102,14 @@ Le JSON décrit ici n'est plus requis pour déclarer un témoin. Il peut être a
 à un témoin existant ultérieurement. Lorsqu'il est présent, `project.xml` le
 référence par l'attribut `alignment` du `<witness>`. L'absence de cet attribut
 signifie simplement que le témoin n'est pas encore synchronisé avec la base.
+
+## V0.9.1.1 — un JSON par texte
+
+Pour un texte synchronisé à part d'une édition en parties, les JSON sont
+rangés dans `alignments/<nom du fichier du texte>/<témoin>.json`, au même
+format : le JSON du pivot du texte (celui du projet, ou celui de
+`<part name base>`) donne ses lignes de référence, `page_id::line`, qui
+correspondent aux `<lb edRef="#pivot"/>` du texte seul ; les `base_keys` des
+autres témoins désignent ces lignes. VariansSynchro les produit sur le
+fichier du texte. Le nom du fichier JSON est le sigle déclaré dans
+`project.xml` ; un JSON d'un témoin non déclaré est ignoré et signalé.

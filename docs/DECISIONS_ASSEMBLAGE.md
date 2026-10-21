@@ -134,7 +134,14 @@ XInclude.
    des parties.
 3. Synchronisation des collections, cas 1 (numérotation continue) —
    réalisé en V0.9.1.0 (voir ci-dessous).
-4. Synchronisation des collections, cas 2 (un JSON par texte) — V0.9.2.0.
+4. Synchronisation des collections, cas 2 (un JSON par texte), en deux
+   versions (décision du 22 octobre 2026) :
+   - V0.9.1.1, réalisée (voir ci-dessous) : un JSON par texte et par
+     témoin, pivot propre à un texte, synchronisation par lignes texte par
+     texte ;
+   - V0.9.1.2 : lacunes, témoins synchronisés par pages dans un texte
+     synchronisé à part (page de départ par `<locus from>` ou par le premier
+     `<pb>`), parcours d'un manuscrit dans son propre ordre.
 5. Vue XSLT / CSS et export web à partir du document assemblé,
    modifications par fragment réécrites dans le bon fichier, avec les mêmes
    continuités de synchronisation sur le site.
@@ -268,6 +275,41 @@ second temps.
 - **Mesure** : projet exemple découpé en 22 parties (3790 lignes du pivot),
   environ 45 ms pour un assemblage complet ; aucun assemblage pendant la
   saisie de texte ordinaire.
+
+## Numéros de version (décision du 22 octobre 2026)
+
+On avance moins vite dans les numéros : pas de V1.0 avant que les scénarios
+de transformation XSLT soient réalisés. Le cas 2 devient V0.9.1.1 et
+V0.9.1.2 (et non V0.9.2.0).
+
+## Réalisé en V0.9.1.1 (cas 2, première partie)
+
+- **Dossiers par texte** (`text_alignments.py`) : un texte de l'édition dont
+  le dossier `alignments/<nom du fichier>/` contient au moins un JSON est
+  synchronisé à part ; seuls les JSON des témoins déclarés dans
+  `project.xml` sont pris. Problèmes signalés par « État des témoins… » :
+  JSON d'un témoin non déclaré, pivot inconnu (celui du projet est pris),
+  pas de JSON pour le pivot, `<part>` qui ne nomme aucun texte, deux textes
+  de même nom.
+- **Pivot propre à un texte** : `<parts><part name base/></parts>`, écrit à
+  la main (décidé le 22 octobre 2026), lu par `load_project` et conservé
+  par la fenêtre des paramètres du projet.
+- **Segments** (`pivot_lines`) : chaque texte synchronisé à part est
+  numéroté pour lui seul, avec son pivot, inclusions imbriquées comprises ;
+  le segment de l'édition ne compte plus ses lignes. Un fichier appartient
+  à un seul segment : le segment change avec le document affiché.
+- **Fenêtre** (`text_segments.py`) : à chaque changement de segment, les
+  panneaux reçoivent les données du segment et son pivot, sans être
+  recréés ; la disposition et les fenêtres détachées ne changent pas.
+  L'état d'un texte est lu à sa première visite, puis gardé (environ
+  20 ms, puis 10 ms, sur le projet d'essai).
+- **Témoin absent d'un texte** (décidé le 22 octobre 2026) : son panneau
+  reste en place, vide, avec « Pas d'alignement de ce témoin pour ce
+  texte ».
+- **Actualiser et diagnostiquer** portent sur le segment affiché ;
+  l'actualisation relit les dossiers.
+- **Documentation utilisateur** : mode d'emploi « Mettre en place une
+  édition en parties (XInclude) » dans l'aide (demandé le 22 octobre 2026).
 
 ## Restent à décider
 

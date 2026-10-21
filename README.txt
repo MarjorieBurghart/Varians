@@ -1,3 +1,30 @@
+VARIANS V0.9.1.1 — TEXTES SYNCHRONISÉS À PART, MODE D'EMPLOI XINCLUDE
+
+• Corpus dont les textes ne sont pas transmis par les mêmes témoins : dans
+  une édition en parties, un texte qui a son dossier d'alignements est
+  synchronisé à part. Un JSON par témoin et par texte, au format habituel :
+  alignments/s02/B.json pour xml/sermons/s02.xml (le dossier porte le nom du
+  fichier du texte, sans extension). Rien à déclarer ; les autres textes
+  suivent la numérotation continue (V0.9.1.0).
+• Pivot propre à un texte : <parts><part name="s02" base="B"/></parts>
+  dans project.xml, écrit à la main ; Varians le garde quand on enregistre
+  les paramètres du projet.
+• Quand un tel texte est affiché, les panneaux des témoins prennent ses
+  alignements et son pivot ; disposition, zoom et fenêtres détachées ne
+  changent pas. Un témoin sans JSON pour le texte garde son panneau, avec
+  « Pas d'alignement de ce témoin pour ce texte ». L'état de structure
+  compte les lignes du texte ; un clic dans le pivot reste dans le texte.
+• « État des témoins… » et « Actualiser les synchronisations… » portent
+  sur le texte affiché ; le diagnostic liste les textes synchronisés à
+  part, leur pivot, leurs témoins et les problèmes de leurs dossiers.
+• Aide : nouveau mode d'emploi « Mettre en place une édition en parties
+  (XInclude) » : organiser les fichiers, écrire les xi:include, déclarer
+  les témoins, choisir la synchronisation de chaque texte, vérifier.
+• Viendront en V0.9.1.2 : les lacunes, les témoins synchronisés par pages
+  dans un texte synchronisé à part, le parcours d'un manuscrit dans son
+  propre ordre. La V1.0 attendra les scénarios de transformation XSLT.
+• Un projet sans dossier par texte est inchangé.
+
 VARIANS V0.9.1.0 — SYNCHRONISATION DES TÉMOINS À TRAVERS LES PARTIES
 
 • Pour une édition assemblée par XInclude (V0.9.0.0), les témoins se

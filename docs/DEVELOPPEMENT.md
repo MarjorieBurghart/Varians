@@ -195,13 +195,30 @@ Règles :
 - `_apply_edition_ui` distingue deux groupes : l'aperçu et « Enregistrer
   l'édition sous… » (édition seule) ; les témoins, l'état de structure et
   leurs commandes (édition et parties, `document.in_edition`) ;
+- textes synchronisés à part (V0.9.1.1, cas 2) : `text_alignments.text_syncs`
+  trouve les parties qui ont leur dossier `alignments/<nom>/` (pivot :
+  `ProjectConfig.parts`, sinon celui du projet) ; `text_project` réduit le
+  projet à un texte pour `assemble_resources`. `pivot_lines(...,
+  text_bases=...)` fait de chacun un segment (`FileLines.segment`,
+  `segment_count`, `location(ordinal, segment)`). Côté fenêtre, le mixin
+  `text_segments.TextSegmentsMixin` : `_document_segment`, `_switch_segment`
+  (appelé par `_attach_document` via `_update_segment`), `_segment_state`
+  (état d'un texte lu à sa première visite), `_apply_runtime_state`
+  (commun avec « Actualiser les synchronisations » : pivot, panneaux,
+  `ManuscriptPanel.set_base` et `set_absent`). `base_id`, `lb_base_re` et
+  `base_panel` suivent donc le segment affiché ; `_pivot_lines` compte
+  toujours avec le pivot du projet et `pivot_lb_pattern` ;
 - des tests anciens exécutent le corps de certaines méthodes avec des objets
   factices (`_text_changed`, `_auto_refresh_rng`, `show_validation_panel`,
   `_validate_relaxng_document_impl`, `sync_panels_to_cursor`,
   `_sync_page_panels_to_cursor`, `_mark_page_in_tei`,
-  `_split_double_folio`…) : une nouvelle méthode appelée par ces corps doit
+  `_split_double_folio`, `refresh_witness_synchronizations` et
+  `_apply_runtime_state`…) : une nouvelle méthode appelée par ces corps doit
   être ajoutée à ces objets ;
-- jeu de données : `tests/data/sermons` (copie du projet d'essai « Essai
+- jeux de données : `tests/corpus_data.py` (le jeu sermons avec des
+  alignements fabriqués, et `split_alignments`, qui découpe les vrais JSON
+  du projet exemple pour un texte : fixtures `corpus_project` et
+  `example_with_text`) ; `tests/data/sermons` (copie du projet d'essai « Essai
   sermons Varians »), copié dans `tmp_path` par les fixtures
   `sermons_project` et `collection_project` de `tests/gui/conftest.py`. La
   seconde réduit l'édition à trois courts sermons, avec un schéma explicite

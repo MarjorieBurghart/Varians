@@ -72,3 +72,21 @@ pas (un par témoin pour toute l'édition) ; le pivot doit contenir les textes
 dans l'ordre de l'édition. Le curseur d'une partie fait suivre les témoins,
 et un clic dans le pivot affiche la partie qui contient la ligne. Voir
 `docs/DECISIONS_ASSEMBLAGE.md`.
+
+## V0.9.1.1 — Textes synchronisés à part
+
+Dans un corpus dont les textes ne sont pas transmis par les mêmes témoins,
+un texte de l'édition (une partie incluse par `xi:include`) peut avoir ses
+propres alignements : un JSON par témoin, au format habituel, rangé dans
+`alignments/<nom du fichier du texte>/` (`alignments/s02/B.json` pour
+`xml/sermons/s02.xml`). Un texte qui a son dossier est synchronisé à part ;
+les autres suivent la numérotation continue, et les JSON globaux ne
+contiennent que leurs lignes. Le pivot d'un texte est celui du projet, sauf
+`<parts><part name="s02" base="B"/></parts>` dans `project.xml`.
+
+Quand un tel texte est affiché, les panneaux prennent ses JSON et son pivot
+(lus à la première visite, puis gardés) ; un témoin sans JSON pour le texte
+garde son panneau, avec un message. « Actualiser les synchronisations » et
+« État des témoins » portent sur le texte affiché. Les lacunes, les témoins
+synchronisés par pages dans un texte à part et le parcours d'un manuscrit
+dans son propre ordre viennent en V0.9.1.2.
