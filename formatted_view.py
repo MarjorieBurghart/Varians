@@ -18,7 +18,7 @@ from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QColor, QKeySequence, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QInputDialog, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QSplitter, QTextBrowser, QTextEdit, QVBoxLayout,
+    QLineEdit, QMessageBox, QPushButton, QSizePolicy, QSplitter, QTextBrowser, QTextEdit, QVBoxLayout,
     QWidget,
 )
 from app_context import _settings, call_later, tr as _t
@@ -278,7 +278,7 @@ def inject_edit_markers(html_text, max_paragraphs):
 
 LINE_MARKER_RE = re.compile(
     r'(<a\b(?=[^>]*\bclass=["\'][^"\']*\btei-line-marker\b[^"\']*["\'])'
-    r'(?=[^>]*\bhref=["\']tei-line://base/(\d+)["\'])[^>]*>)\s*</a>',
+    r'(?=[^>]*\bhref=["\']tei-line://base/(\d+)["\'])[^>]*>)(?:\s|\u2060|&#8288;)*</a>',
     re.IGNORECASE,
 )
 
@@ -805,8 +805,11 @@ class FormattedEditionWidget(QWidget):
         self.reload_btn.setEnabled(False)
         frag_head.addWidget(self.frag_label)
         frag_head.addSpacing(12)
-        frag_head.addWidget(self.fragment_visual_wrap)
-        frag_head.addStretch(1)
+        # Faute de place, la case cède la sienne : l'étiquette du fragment
+        # (paragraphe, fichier d'une partie) reste lisible en entier.
+        self.fragment_visual_wrap.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        self.fragment_visual_wrap.setMinimumWidth(24)
+        frag_head.addWidget(self.fragment_visual_wrap, 1)
         frag_head.addWidget(self.reload_btn)
         frag_head.addWidget(self.apply_btn)
         frag_head.addWidget(self.close_fragment_btn)
@@ -938,6 +941,7 @@ class FormattedEditionWidget(QWidget):
         self.fragment_find_close_btn.setToolTip(_t("fragment.search.close.tip"))
         self.fragment_editor.setPlaceholderText(_t("fragment.placeholder"))
         self.fragment_visual_wrap.setText(_t("source.visual_wrap"))
+        self.fragment_visual_wrap.setToolTip(_t("source.visual_wrap"))
         self.wrap_element_action.setText(_t("fragment.wrap"))
         self.fragment_completion_action.setText(_t("completion.action"))
         self._update_fragment_label()
