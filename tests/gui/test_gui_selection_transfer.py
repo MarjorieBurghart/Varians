@@ -26,6 +26,7 @@ def _show_preview(window, qtbot):
     view = window.formatted_view
     window.left_tabs.setCurrentWidget(view)
     qtbot.waitUntil(lambda: len(view.preview.toPlainText()) > 1000, timeout=15000)
+    qtbot.wait(50)                  # repositionnement différé après un rendu
     return view
 
 
@@ -240,3 +241,61 @@ def test_a_modified_fragment_is_searched_in_its_current_text(open_window, exampl
     assert expected[0] > _source_occurrences(window, "premium", 2)[2][0] - paragraph_spans(
         window.editor.toPlainText())[2][0]
     assert _selection(view.fragment_editor) == expected
+
+
+# --- Éditeur de fragment -> aperçu -------------------------------------------
+
+def _focus_fragment(qtbot, view):
+    view.fragment_editor.setFocus()
+    qtbot.waitUntil(view.fragment_editor.hasFocus, timeout=3000)
+
+
+def test_a_fragment_selection_is_selected_in_the_preview(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    _focus_fragment(qtbot, view)
+    _select(view.fragment_editor, *_fragment_occurrences(view, "premium")[2])
+    qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=3000)
+    assert _selection(view.preview) == _preview_occurrences(view, "premium", 2)[2]
+    assert view.fragment_editor.hasFocus()                # on continue à taper
+
+
+def test_a_cut_word_of_the_fragment_is_selected_in_the_preview(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    _focus_fragment(qtbot, view)
+    first = _fragment_occurrences(view, "premium")[0]
+    assert 'break="no"' in view.fragment_editor.toPlainText()[slice(*first)]
+    _select(view.fragment_editor, *first)
+    qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=3000)
+    assert _selection(view.preview) == _preview_occurrences(view, "premium", 2)[0]
+
+
+def test_a_selection_from_the_preview_does_not_come_back(open_window, example_project, qtbot, monkeypatch):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    calls = []
+    original = view.preview.select_visible_text_in_paragraph
+    monkeypatch.setattr(view.preview, "select_visible_text_in_paragraph",
+                        lambda *args, **kwargs: calls.append(args) or original(*args, **kwargs))
+    _double_click(qtbot, view, _preview_occurrences(view, "premium", 2)[1][0])
+    qtbot.waitUntil(lambda: view.fragment_editor.textCursor().hasSelection(), timeout=3000)
+    qtbot.wait(400)
+    assert calls == []
+    assert _selection(view.preview) == _preview_occurrences(view, "premium", 2)[1]
+
+
+def test_markup_or_a_simple_cursor_move_changes_nothing(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    _focus_fragment(qtbot, view)
+    text = view.fragment_editor.toPlainText()
+    start = text.index("<app>")
+    _select(view.fragment_editor, start, start + len("<app>"))       # balise seule
+    qtbot.wait(400)
+    assert not view.preview.textCursor().hasSelection()
+    cursor = view.fragment_editor.textCursor()
+    cursor.setPosition(_fragment_occurrences(view, "premium")[2][0])
+    view.fragment_editor.setTextCursor(cursor)                        # sans sélection
+    qtbot.wait(400)
+    assert not view.preview.textCursor().hasSelection()

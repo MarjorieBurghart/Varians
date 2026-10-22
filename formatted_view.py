@@ -451,7 +451,10 @@ class ClickablePreview(QTextBrowser):
         rel = max(0, int(selection_start) - int(bounds[0])) if bounds else None
         return {"paragraph": pidx, "occurrence": occ, "relative": rel}
 
-    def select_visible_text_in_paragraph(self, text, descriptor):
+    def select_visible_text_in_paragraph(self, text, descriptor, focus=True):
+        """Sélectionne ``text`` dans un paragraphe de l'aperçu, à l'occurrence
+        décrite par ``descriptor``. ``focus=False`` : le focus reste où il est
+        (sélection venue de l'éditeur de fragment)."""
         if not descriptor:
             return False
         pidx = descriptor.get("paragraph")
@@ -470,7 +473,8 @@ class ClickablePreview(QTextBrowser):
         cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
         self.setTextCursor(cursor)
         self.ensureCursorVisible()
-        self.setFocus()
+        if focus:
+            self.setFocus()
         line = self.line_for_position(a)
         if line is not None:
             self.active_line_ordinal = line
@@ -859,6 +863,14 @@ class FormattedEditionWidget(QWidget):
             lambda: self.main.show_rng_completion(self.fragment_editor)
         )
         self.fragment_editor.addAction(self.fragment_completion_action)
+
+        # Une sélection faite dans le fragment est aussi sélectionnée dans
+        # l'aperçu, après une courte pause (pas à chaque pas d'un glisser).
+        self._fragment_selection_timer = QTimer(self)
+        self._fragment_selection_timer.setSingleShot(True)
+        self._fragment_selection_timer.setInterval(150)
+        self._fragment_selection_timer.timeout.connect(self._fragment_selection_to_preview)
+        self.fragment_editor.selectionChanged.connect(self._fragment_selection_timer.start)
 
         frag_layout.addWidget(self.fragment_editor)
 
@@ -1543,9 +1555,28 @@ class FormattedEditionWidget(QWidget):
         selection.setPosition(chosen[0])
         selection.setPosition(chosen[1], QTextCursor.MoveMode.KeepAnchor)
         self.fragment_editor.setTextCursor(selection)
+        # La sélection vient de l'aperçu : elle n'y est pas renvoyée.
+        self._fragment_selection_timer.stop()
         self.fragment_editor.centerCursor()
         self.fragment_editor.setFocus()
         return True
+
+    def _fragment_selection_to_preview(self):
+        """Une sélection faite dans l'éditeur de fragment est aussi
+        sélectionnée dans l'aperçu, qui défile jusqu'à elle ; le focus reste
+        dans le fragment. Une sélection faite seulement de balises, ou un
+        texte absent de l'aperçu (tapé, pas encore appliqué), n'y change rien."""
+        if self.current_paragraph is None or self.frag_box.isHidden():
+            return False
+        cursor = self.fragment_editor.textCursor()
+        if not cursor.hasSelection():
+            return False
+        text = _selection_xml_to_visible_text(cursor.selectedText())
+        if not text:
+            return False
+        descriptor = xml_selection_descriptor(self.fragment_editor.toPlainText(), text, cursor.selectionStart())
+        descriptor["paragraph"] = self.current_paragraph
+        return self.preview.select_visible_text_in_paragraph(text, descriptor, focus=False)
 
     def close_fragment_editor(self):
         """Ferme l’éditeur de fragment sans perdre silencieusement une correction."""
