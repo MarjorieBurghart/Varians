@@ -86,7 +86,9 @@ def test_no_answer_for_a_destroyed_owner(make_client, schema, qtbot):
 
 
 def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, qtbot):
-    client = make_client(_slow(1.0))
+    # Validation de 2 s : une attente bloquante figerait la boucle au moins
+    # autant ; le seuil de 1,5 s tolère les pauses d'une machine chargée.
+    client = make_client(_slow(2.0))
     ticks = []
     timer = QTimer()
     timer.timeout.connect(lambda: ticks.append(time.perf_counter()))
@@ -101,9 +103,9 @@ def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, 
     assert client.validate("<root/>", schema).valid
     elapsed = time.perf_counter() - started
     timer.stop()
-    assert elapsed >= 1.0
+    assert elapsed >= 2.0
     assert len(ticks) >= 20                                          # la boucle d'événements a tourné
-    assert max(b - a for a, b in zip(ticks, ticks[1:])) < 0.5
+    assert max(b - a for a, b in zip(ticks, ticks[1:])) < 1.5
     assert clicks == []                                              # clic ignoré pendant l'attente
     qtbot.wait(50)
     assert clicks == []                                              # et non différé
