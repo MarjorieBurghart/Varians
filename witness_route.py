@@ -25,8 +25,12 @@ ligne reliée qui la précède dans le texte.
 """
 from __future__ import annotations
 
+import heapq
 import re
+from collections import Counter
 from dataclasses import dataclass, field, replace
+
+from witness_resource_refresh import flatten_primary, flatten_secondary
 
 _FOLIO_RE = re.compile(r"(\d+)\s*([rRvV])(?![A-Za-z])")
 
@@ -103,21 +107,22 @@ def _line_number(line, index):
 
 def _line_stops(source):
     """Arrêts d'un JSON : (identité de page, numéro de ligne, Stop), dans
-    l'ordre du JSON, avec la ligne du pivot de chacun."""
+    l'ordre des éléments du panneau (``flatten_primary`` ou
+    ``flatten_secondary``), avec la ligne du pivot de chacun."""
+    cache = source.cache or {"pages": []}
+    items = (flatten_primary if source.is_base else flatten_secondary)(cache)[0]
     out = []
-    for page in (source.cache or {}).get("pages", []) or []:
+    for index, item in enumerate(items):
+        page, line = item["p"], item["l"]
+        if source.is_base:
+            # Le pivot du segment : le rang de la ligne dans son JSON.
+            ordinal = index
+        else:
+            ranks = [source.base_by_key[str(k)] for k in (line.get("base_keys") or line.get("keys816") or [])
+                     if str(k) in source.base_by_key]
+            ordinal = min(ranks) if ranks else None
         identity = page_identity(page)
-        for index, line in enumerate(page.get("lines", []) or []):
-            if source.is_base:
-                # Le pivot du segment : le rang de la ligne dans son JSON.
-                key = f"{page['id']}::{line.get('line')}"
-                ordinal = len(out)
-            else:
-                key = f"{page['id']}::{line.get('alto_id') or line.get('line')}"
-                ranks = [source.base_by_key[str(k)] for k in (line.get("base_keys") or line.get("keys816") or [])
-                         if str(k) in source.base_by_key]
-                ordinal = min(ranks) if ranks else None
-            out.append((identity, _line_number(line, index), Stop(source.segment, key, identity, ordinal)))
+        out.append((identity, _line_number(line, index), Stop(source.segment, item["key"], identity, ordinal)))
     return out
 
 
@@ -245,16 +250,18 @@ def witness_route(witness, sources, declared=None) -> WitnessRoute:
         ranks, pending = dict(declared), []
     else:
         ranks, pending = _merge(lists, labels, [s.locus for s in sources])
-    placed = []
-    order = 0
-    for i, stops in enumerate(entries):
-        if i in pending:
-            continue
+    # Chaque source garde son ordre (celui du panneau) ; les sources sont
+    # entrelacées par rang de page, et, sur une page partagée par plusieurs
+    # textes, par numéro de ligne.
+    shared = {p for p, n in Counter(p for pages in lists for p in pages).items() if n > 1}
+
+    def keyed(stops):
         for identity, number, stop in stops:
-            placed.append(((ranks[identity], number, order), stop))
-            order += 1
-    placed.sort(key=lambda item: item[0])
-    route = [stop for _key, stop in placed]
+            yield (ranks[identity], number if identity in shared else 0), stop
+
+    merged = heapq.merge(*(keyed(stops) for i, stops in enumerate(entries) if i not in pending),
+                         key=lambda item: item[0])
+    route = [stop for _key, stop in merged]
     # Sources qui n'ont pu être placées : dans l'ordre de l'édition, après le
     # dernier arrêt placé qui les précède dans l'édition.
     anchors = {s.segment: s.anchor for s in sources}

@@ -28,6 +28,13 @@ def page(pid, lines, *, label=None, canvas=None):
 
 
 def cache(*pages):
+    """JSON : ``order`` des lignes secondaires court sur tout le fichier."""
+    order = 0
+    for data in pages:
+        for line in data["lines"]:
+            if "order" in line:
+                order += 1
+                line["order"] = order
     return {"meta": {}, "pages": list(pages)}
 
 
@@ -73,6 +80,17 @@ def test_a_secondary_line_leads_to_the_pivot_line_it_designates():
     # ligne non reliée, à la ligne reliée qui la précède.
     assert [stop.ordinal for stop in route.stops] == [0, 1, 1, 3]
     assert [stop.linked for stop in route.stops] == [True, True, False, True]
+
+
+def test_within_one_json_the_route_keeps_the_order_of_the_panel():
+    """Les lignes d'un même JSON gardent l'ordre des éléments du panneau
+    (``flatten_secondary`` : par ``order``), même s'il diffère des numéros."""
+    data = cache(page("C-1", [(1, ["A-1::1"]), (2, ["A-1::2"])]), page("C-2", [(1, ["A-1::3"])]))
+    data["pages"][0]["lines"][0]["order"] = 2
+    data["pages"][0]["lines"][1]["order"] = 1
+    data["pages"][1]["lines"][0]["order"] = 3
+    route = witness_route("C", [Source(None, data, base_by_key=pivot_keys("A-1", 3))])
+    assert keys(route) == [(None, "C-1::2"), (None, "C-1::1"), (None, "C-2::1")]
 
 
 # --- Plusieurs textes ----------------------------------------------------------------
