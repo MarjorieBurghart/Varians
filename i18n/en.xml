@@ -803,4 +803,5 @@ Export anyway?</string>
   <string key="status.witness_start">Beginning of manuscript {witness}.</string>
   <string key="status.witness_end">End of manuscript {witness}.</string>
   <string key="status.witness_unlinked">Line of {witness} not linked to the pivot: the edition stays at line {line}.</string>
+  <string key="status.page_unmarked">Page {folio} of {witness}: no &lt;pb&gt; or &lt;locus&gt; places it in the edition, which does not move.</string>
 </translations>

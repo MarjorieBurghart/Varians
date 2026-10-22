@@ -817,4 +817,5 @@
   <string key="status.witness_start">Начало рукописи {witness}.</string>
   <string key="status.witness_end">Конец рукописи {witness}.</string>
   <string key="status.witness_unlinked">Строка {witness} не связана с опорным свидетелем: издание остаётся на строке {line}.</string>
+  <string key="status.page_unmarked">Страница {folio} свидетеля {witness}: ни &lt;pb&gt;, ни &lt;locus&gt; не указывают её место в издании, оно не сдвигается.</string>
 </translations>

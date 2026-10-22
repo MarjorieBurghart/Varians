@@ -528,6 +528,8 @@ class ManuscriptPanel(QFrame):
         if self._updating_folios or self.sync_enabled or index < 0 or index >= len(self.folios):
             return
         self.set_folio(self.folios[index].ref)
+        # Le folio choisi mène l'édition, comme les flèches (V0.9.1.4).
+        self.witnessNavigate.emit(self.siglum, 0)
 
     def _request_split_folio(self):
         """Ouvre la définition des folios, même si ce témoin suit les lignes.

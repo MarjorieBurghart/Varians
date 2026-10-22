@@ -817,4 +817,5 @@ Trotzdem exportieren?</string>
   <string key="status.witness_start">Anfang der Handschrift {witness}.</string>
   <string key="status.witness_end">Ende der Handschrift {witness}.</string>
   <string key="status.witness_unlinked">Zeile von {witness} nicht mit dem Pivot-Textzeugen verknüpft: Die Edition bleibt bei Zeile {line}.</string>
+  <string key="status.page_unmarked">Seite {folio} von {witness}: Kein &lt;pb&gt; und kein &lt;locus&gt; verortet sie in der Edition, die unverändert bleibt.</string>
 </translations>

@@ -817,4 +817,5 @@ Přesto exportovat?</string>
   <string key="status.witness_start">Začátek rukopisu {witness}.</string>
   <string key="status.witness_end">Konec rukopisu {witness}.</string>
   <string key="status.witness_unlinked">Řádek svědka {witness} není propojen s pivotem: edice zůstává na řádku {line}.</string>
+  <string key="status.page_unmarked">Stránka {folio} svědka {witness}: žádný &lt;pb&gt; ani &lt;locus&gt; ji v edici neumisťuje, edice se nepohne.</string>
 </translations>

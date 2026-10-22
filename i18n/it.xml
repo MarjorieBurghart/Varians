@@ -817,4 +817,5 @@ Esportare comunque?</string>
   <string key="status.witness_start">Inizio del manoscritto {witness}.</string>
   <string key="status.witness_end">Fine del manoscritto {witness}.</string>
   <string key="status.witness_unlinked">Riga di {witness} non collegata al pivot: l’edizione resta alla riga {line}.</string>
+  <string key="status.page_unmarked">Pagina {folio} di {witness}: nessun &lt;pb&gt; né &lt;locus&gt; la colloca nell’edizione, che non si sposta.</string>
 </translations>

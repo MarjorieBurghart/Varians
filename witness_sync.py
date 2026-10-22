@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 from app_context import call_later, tr as _t
 from folio_navigation import (
-    configure_surface_parts, folio_at_position, folios_for_witness,
+    configure_surface_parts, folio_at_position, folio_marks, folios_for_witness,
     inspect_surface_part_split,
 )
 from iiif_local import apply_working_copy
@@ -35,7 +35,8 @@ from tei_facsimile import (
 from witness_resource_refresh import (
     assemble_resources, changed_witnesses, diagnostic_rows, RuntimeState,
 )
-from witness_route import Stop
+from witness_route import Stop, page_identity
+from xml_assembly import path_key
 
 
 def flatten_primary(cache):
@@ -898,8 +899,28 @@ class WitnessSyncMixin:
         panel = self.panels.get(wid)
         if panel is None:
             return
-        if not self.document.in_edition or not panel.sync_enabled or not panel.items:
+        if not self.document.in_edition:
             panel.browse(step)
+            return
+        if panel.absent_key is not None or not panel.items:
+            # Le témoin n'a pas le texte affiché : texte suivant ou précédent
+            # qui l'a, dans l'ordre de l'édition.
+            stop = self._present_stop(wid, step)
+            if stop is None:
+                self._show_witness_end(wid, step)
+            else:
+                self._go_to_witness_stop(wid, stop)
+            return
+        if not panel.sync_enabled:
+            if not panel.folios:
+                panel.browse(step)
+                return
+            before = (panel.center_index, panel._active_folio)
+            panel.browse(step)
+            if step and (panel.center_index, panel._active_folio) == before:
+                self._show_witness_end(wid, step)
+                return
+            self._lead_to_page(wid, panel)
             return
         segment = getattr(self, "_active_segment", None)
         key = panel.current_item()["key"]
@@ -909,10 +930,110 @@ class WitnessSyncMixin:
         else:
             stop = self._panel_stop(wid, panel, panel.center_index + step)
         if stop is None:
-            self.statusBar().showMessage(
-                _t("status.witness_end" if step > 0 else "status.witness_start", witness=wid), 4000)
+            self._show_witness_end(wid, step)
             return
         self._go_to_witness_stop(wid, stop)
+
+    def _show_witness_end(self, wid, step):
+        self.statusBar().showMessage(
+            _t("status.witness_end" if step > 0 else "status.witness_start", witness=wid), 4000)
+
+    def _lead_to_page(self, wid, panel):
+        """Témoin par pages : l'édition va à la page affichée par ``panel`` :
+        à sa première ligne dans un JSON du témoin, sinon à son ``<pb>``,
+        sinon au début du texte dont le ``<locus from>`` est cette page."""
+        folio = panel._current_folio()
+        if folio is None:
+            return
+        route = self._witness_route(wid)
+        item = panel.current_item()
+        stop = route.on_page(page_identity(item["p"])) if item is not None else None
+        if stop is None or (stop.location is None and stop.ordinal is None):
+            surface = {f.ref for f in panel.folios if f.surface == folio.surface}
+            stop = route.on_page(f"folio:{folio.ref}") or next(
+                (s for s in route.stops if s.location is not None and s.key in surface), None)
+        if stop is not None:
+            self._go_to_witness_stop(wid, stop)
+            panel = self.panels[wid]
+            if not panel.sync_enabled and panel.folios:
+                panel.set_folio(folio.ref)
+            return
+        segment = self._locus_text(wid, folio)
+        if segment is None:
+            self.statusBar().showMessage(_t("status.page_unmarked", witness=wid, folio=folio.label), 5000)
+            return
+        self._sync_from_panel = True
+        try:
+            if self._show_segment_ordinal(segment, 0) is not None:
+                self.sync_panels_to_cursor(True)
+                self.panels[wid].set_folio(folio.ref)
+        finally:
+            call_later(90, self, self._release_panel_sync)
+
+    def _locus_text(self, wid, folio):
+        """Texte synchronisé à part dont le ``<locus from>`` du témoin est
+        ``folio``, ou None."""
+        label = folio.label.strip().casefold()
+        for sync in self._text_syncs()[0] if self._edition_has_parts() else ():
+            segment = path_key(sync.path)
+            ids = self._segment_ids(segment)
+            if any(locus.start and locus.start.strip().casefold() == label and locus.targets & ids
+                   for locus in self._text_loci(segment).get(wid, ())):
+                return segment
+        return None
+
+    def _present_stop(self, wid, step):
+        """Premier arrêt du témoin dans le texte suivant (``step`` > 0) ou
+        dernier dans le texte précédent où il est présent, dans l'ordre de
+        l'édition ; None s'il n'y en a pas."""
+        lines = self._pivot_lines()
+        if lines is None:
+            return None
+        syncs = [path_key(sync.path) for sync in self._text_syncs()[0]]
+        after = len(syncs) + 1
+
+        def place(segment, ordinal=None):
+            if segment is None:
+                return (ordinal if ordinal is not None else -1, after)
+            return (lines.anchor(segment), syncs.index(segment) if segment in syncs else after)
+
+        segment = getattr(self, "_active_segment", None)
+        here = place(segment, self._base_ordinal_at_cursor() or 0)
+        route = self._witness_route(wid)
+        found = None
+        for stop in route.stops:
+            key = place(stop.segment, stop.ordinal)
+            if (key > here if step > 0 else key < here) and (
+                    found is None or (key < found[0] if step > 0 else key >= found[0])):
+                found = (key, stop)
+        if found is None:
+            return None
+        stop = found[1]
+        if stop.segment is not None:
+            stop = route.first(stop.segment) if step > 0 else route.last(stop.segment)
+        return stop
+
+    def _show_witness_mark(self, wid, stop):
+        """Place le curseur à la fin du ``<pb>`` de ``stop`` (folio
+        ``stop.key``), dans son fichier, affiché au besoin. La position est
+        relue dans le texte affiché, qui a pu changer depuis la
+        numérotation."""
+        path, position = stop.location
+        session = next((s for s in self.documents if s.in_edition and path_key(s.path) == path_key(path)), None)
+        if session is None:
+            return False
+        if session is not self.document and not self.show_document(session):
+            return False
+        self.show_document_tab(session)
+        text = self.editor.toPlainText()
+        ends = [end for folio, end in folio_marks(text, wid, self.panels[wid].folios) if folio.ref == stop.key]
+        if ends:
+            position = min(ends, key=lambda end: abs(end - position))
+        cursor = self.editor.textCursor()
+        cursor.setPosition(max(0, min(int(position), len(text))))
+        self.editor.setTextCursor(cursor)
+        self.editor.centerCursor()
+        return True
 
     def _panel_stop(self, wid, panel, index):
         """Arrêt de rang ``index`` dans le panneau (élément hors du parcours) :
@@ -936,9 +1057,20 @@ class WitnessSyncMixin:
         return min(ranks) if ranks else None
 
     def _go_to_witness_stop(self, wid, stop):
-        """L'édition va à la ligne du pivot de ``stop`` (dans son texte) ; le
-        panneau ``wid`` se place sur l'élément de ``stop`` ; les autres
-        suivent le pivot."""
+        """L'édition va à la ligne du pivot de ``stop`` (dans son texte), ou à
+        son ``<pb>`` ; le panneau ``wid`` se place sur l'élément de ``stop`` ;
+        les autres suivent le pivot."""
+        if stop.location is not None:
+            self._sync_from_panel = True
+            try:
+                if self._show_witness_mark(wid, stop):
+                    self.sync_panels_to_cursor(True)
+                    panel = self.panels[wid]
+                    if not panel.sync_enabled and panel.folios:
+                        panel.set_folio(stop.key)
+            finally:
+                call_later(90, self, self._release_panel_sync)
+            return
         if stop.ordinal is None:
             return
         self._sync_from_panel = True

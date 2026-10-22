@@ -23,7 +23,7 @@ import re
 from dataclasses import replace
 
 from app_context import tr as _t
-from folio_navigation import text_start_folio, witness_loci
+from folio_navigation import folio_marks, text_start_folio, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
@@ -86,13 +86,24 @@ class TextSegmentsMixin:
         lines = self._pivot_lines()
         if lines is None:
             return []
-        return [session for session in self.documents if session.in_edition and session.text_document is not None
+        return [session for session in self.documents if session.in_edition
                 and lines.file(session.path) is not None and lines.file(session.path).segment == segment]
+
+    @staticmethod
+    def _session_text(session):
+        """Texte d'une session ; celui de son fichier si elle n'a pas encore
+        été affichée."""
+        if session.text_document is not None:
+            return session.text_document.toPlainText()
+        try:
+            return session.path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            return ""
 
     def _segment_ids(self, segment):
         """``xml:id`` des fichiers du segment ``segment``."""
         return {match.group(2) for session in self._segment_files(segment)
-                for match in _XML_ID_RE.finditer(session.text_document.toPlainText())}
+                for match in _XML_ID_RE.finditer(self._session_text(session))}
 
     def _text_loci(self, segment):
         """``{témoin: (Locus, …)}`` qui valent pour le texte ``segment`` : ceux
@@ -101,7 +112,7 @@ class TextSegmentsMixin:
         loci = {wid: tuple(found) for wid, found in self._witness_loci().items()}
         for session in self._segment_files(segment):
             if path_key(session.path) == segment:
-                for wid, found in witness_loci(session.text_document.toPlainText()).items():
+                for wid, found in witness_loci(self._session_text(session)).items():
                     loci[wid] = loci.get(wid, ()) + found
         return loci
 
@@ -187,10 +198,15 @@ class TextSegmentsMixin:
             return Source(segment, cache, wid == sync.base, base_by_key, anchor)
         return Source(segment, marks=self._route_marks(wid, segment, lines, folios), anchor=anchor)
 
-    @staticmethod
-    def _route_marks(wid, segment, lines, folios):
-        if lines is None or not folios:
+    def _route_marks(self, wid, segment, lines, folios):
+        """``<pb>`` du témoin dans le segment : ceux de l'édition assemblée,
+        ou, dans une édition en un fichier, ceux de son texte."""
+        if not folios:
             return ()
+        if lines is None:
+            path = self.edition_session.path or self.project.edition
+            return tuple(PageMark(folio.ref, folio.label, (path, end), 0)
+                         for folio, end in folio_marks(self._edition_text(), wid, list(folios)))
         return tuple(PageMark(mark.folio.ref, mark.folio.label, (mark.path, mark.position), mark.ordinal)
                      for mark in lines.pb_marks(wid, list(folios), segment))
 

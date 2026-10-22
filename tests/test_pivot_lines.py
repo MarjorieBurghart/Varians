@@ -14,7 +14,7 @@ import pytest
 from lxml import etree
 
 from document_session import LbIndex
-from folio_navigation import Folio, folio_at_position, last_folio_mark
+from folio_navigation import Folio, folio_at_position, folio_marks, last_folio_mark
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
 from xml_assembly import assemble, path_key
 
@@ -232,6 +232,14 @@ def test_the_pb_of_a_text_synchronized_apart_and_its_anchor_in_the_edition():
     assert [mark.folio.label for mark in lines.pb_marks("D", folios, segment=None)] == ["102v"]
     # s02 vient après les 10 lignes de s01 dans l'édition.
     assert lines.anchor(s02) == 10 and lines.anchor(None) == 0
+
+
+def test_folio_marks_gives_each_pb_of_a_witness_outside_comments():
+    text = _read(S01).replace("<p>", '<p><!-- <pb edRef="#A" n="13r"/> -->', 1)
+    marks = folio_marks(text, "A", FOLIOS_A)
+    assert [folio.label for folio, _end in marks] == ["12v", "13r"]
+    assert all(text[:end].endswith(f'n="{folio.label}"/>') for folio, end in marks)
+    assert folio_marks(text, "A", FOLIOS_A, stop=marks[0][1]) == marks[:1]
 
 
 def test_last_folio_mark_gives_the_end_of_the_pb():
