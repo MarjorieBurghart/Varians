@@ -1,3 +1,26 @@
+VARIANS V0.9.1.2 — SÉLECTIONS PARTAGÉES ENTRE L'APERÇU ET L'ÉDITEUR DE FRAGMENT
+
+• Vue XSLT / CSS : le crayon ✎ ouvre un paragraphe dans l'éditeur de
+  fragment sans déplacer les images des témoins ; un clic sur le texte de
+  l'aperçu les synchronise toujours.
+• L'éditeur de fragment ouvert, une chaîne sélectionnée dans ce paragraphe
+  de l'aperçu (glisser, double-clic) est aussi sélectionnée dans l'éditeur
+  de fragment, qui prend le focus : le passage à corriger est trouvé tout
+  de suite. Une sélection dans un autre paragraphe ne change rien ; on
+  ouvre ce paragraphe par son crayon.
+• Inversement, une sélection faite dans l'éditeur de fragment est
+  sélectionnée dans l'aperçu, qui défile jusqu'à elle ; le focus reste dans
+  l'éditeur. Même occurrence d'un mot répété, y compris d'un mot coupé par
+  un <lb break="no"/>.
+• Le report d'une sélection entre les onglets Source et XSLT / CSS est
+  inchangé, et désormais vérifié par des tests qui l'exécutent. Pour une
+  édition en parties, l'aperçu reste en lecture seule : ce report et
+  l'éditeur de fragment y viendront avec l'édition par fragment de
+  l'édition assemblée.
+• Viendront en V0.9.1.3 : les lacunes, les témoins synchronisés par pages
+  dans un texte synchronisé à part, le parcours d'un manuscrit dans son
+  propre ordre.
+
 VARIANS V0.9.1.1 — TEXTES SYNCHRONISÉS À PART, MODE D'EMPLOI XINCLUDE
 
 • Corpus dont les textes ne sont pas transmis par les mêmes témoins : dans
@@ -20,7 +43,7 @@ VARIANS V0.9.1.1 — TEXTES SYNCHRONISÉS À PART, MODE D'EMPLOI XINCLUDE
 • Aide : nouveau mode d'emploi « Mettre en place une édition en parties
   (XInclude) » : organiser les fichiers, écrire les xi:include, déclarer
   les témoins, choisir la synchronisation de chaque texte, vérifier.
-• Viendront en V0.9.1.2 : les lacunes, les témoins synchronisés par pages
+• Viendront en V0.9.1.3 : les lacunes, les témoins synchronisés par pages
   dans un texte synchronisé à part, le parcours d'un manuscrit dans son
   propre ordre. La V1.0 attendra les scénarios de transformation XSLT.
 • Un projet sans dossier par texte est inchangé.

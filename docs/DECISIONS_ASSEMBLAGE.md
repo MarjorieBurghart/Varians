@@ -139,7 +139,7 @@ XInclude.
    - V0.9.1.1, réalisée (voir ci-dessous) : un JSON par texte et par
      témoin, pivot propre à un texte, synchronisation par lignes texte par
      texte ;
-   - V0.9.1.2 : lacunes, témoins synchronisés par pages dans un texte
+   - V0.9.1.3 : lacunes, témoins synchronisés par pages dans un texte
      synchronisé à part (page de départ par `<locus from>` ou par le premier
      `<pb>`), parcours d'un manuscrit dans son propre ordre.
 5. Vue XSLT / CSS et export web à partir du document assemblé,
@@ -218,7 +218,7 @@ mêler.
    pour toute l'édition. Condition : le pivot contient ces textes, dans
    l'ordre de l'édition. Les autres témoins peuvent avoir un autre ordre ou
    ne pas avoir un texte : leurs lignes désignent déjà des lignes du pivot.
-2. **Cas 2 (V0.9.2.0) : un corpus aux témoins variables.** Un JSON par texte
+2. **Cas 2 (V0.9.1.1 et V0.9.1.3) : un corpus aux témoins variables.** Un JSON par texte
    et par témoin, au format actuel (VariansSynchro ne change pas), rangé
    selon une convention, sans déclaration : `alignments/s02/B.json`, le
    dossier portant le nom du fichier du texte. Les témoins affichés pour un
@@ -282,6 +282,10 @@ On avance moins vite dans les numéros : pas de V1.0 avant que les scénarios
 de transformation XSLT soient réalisés. Le cas 2 devient V0.9.1.1 et
 V0.9.1.2 (et non V0.9.2.0).
 
+La V0.9.1.2 s'intercale ensuite (décision du 22 octobre 2026, après la
+publication de la V0.9.1.1) : sélections partagées entre l'aperçu XSLT / CSS
+et l'éditeur de fragment. La fin du cas 2 devient la V0.9.1.3.
+
 ## Réalisé en V0.9.1.1 (cas 2, première partie)
 
 - **Dossiers par texte** (`text_alignments.py`) : un texte de l'édition dont
@@ -310,6 +314,33 @@ V0.9.1.2 (et non V0.9.2.0).
   l'actualisation relit les dossiers.
 - **Documentation utilisateur** : mode d'emploi « Mettre en place une
   édition en parties (XInclude) » dans l'aide (demandé le 22 octobre 2026).
+
+## Réalisé en V0.9.1.2 (Vue XSLT / CSS, éditeur de fragment)
+
+Demandé après la V0.9.1.1 ; ne concerne que l'édition sans parties, seule à
+avoir un éditeur de fragment.
+
+- **Le crayon ✎** ouvre seulement le paragraphe dans l'éditeur de
+  fragment : la source et les témoins ne bougent plus (ils allaient sur la
+  première ligne du paragraphe). Un clic sur le texte de l'aperçu les
+  synchronise toujours.
+- **Aperçu → fragment** : une chaîne sélectionnée à la souris dans le
+  paragraphe ouvert est sélectionnée dans l'éditeur de fragment, qui prend
+  le focus. Une sélection dans un autre paragraphe ne change rien (décidé
+  le 22 octobre 2026) : on change de paragraphe par le crayon, avec la
+  question habituelle si le fragment a des modifications non appliquées.
+- **Fragment → aperçu** : une sélection faite dans l'éditeur de fragment
+  est sélectionnée dans l'aperçu, qui défile jusqu'à elle ; le focus reste
+  dans l'éditeur.
+- **Même occurrence** : rang de l'occurrence dans le paragraphe, sinon
+  position, comme pour le report entre Source et XSLT / CSS (fonctions
+  communes `xml_occurrences`, `xml_selection_descriptor`,
+  `pick_xml_occurrence`).
+- **Report entre Source et XSLT / CSS** : inchangé, et désormais vérifié
+  par des tests qui l'exécutent. Pour une édition en parties, il est coupé
+  depuis la V0.9.0.0 (aperçu assemblé en lecture seule) ; il reviendra à
+  l'étape 5, avec l'édition par fragment de l'édition assemblée (décidé le
+  22 octobre 2026).
 
 ## Restent à décider
 

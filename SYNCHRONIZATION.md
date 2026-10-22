@@ -89,4 +89,4 @@ Quand un tel texte est affiché, les panneaux prennent ses JSON et son pivot
 garde son panneau, avec un message. « Actualiser les synchronisations » et
 « État des témoins » portent sur le texte affiché. Les lacunes, les témoins
 synchronisés par pages dans un texte à part et le parcours d'un manuscrit
-dans son propre ordre viennent en V0.9.1.2.
+dans son propre ordre viennent en V0.9.1.3.
