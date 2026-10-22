@@ -181,7 +181,8 @@ def test_visibility_applies_new_order_with_hidden_witnesses_intact():
     win._main_splitter_last_visible_sizes = [760, 530]
     win.main_splitter = SimpleNamespace(sizes=lambda: [760, 530], setSizes=lambda sizes: None)
     timer = SimpleNamespace(singleShot=lambda _delay, callback: callback())
-    method('MainWindow', '_apply_witness_visibility', {'QTimer': timer})(win, initial=True)
+    method('MainWindow', '_apply_witness_visibility',
+           {'QTimer': timer, 'call_later': lambda _delay, _owner, callback: callback()})(win, initial=True)
     assert [p.ident for p in win.witness_splitter.widgets] == ['L', 'Mu', 'A', 'F']
     assert [k for k, v in win.panels.items() if v.visible] == ['Mu', 'A']
     assert win._visible_witness_ids == ['Mu', 'A']

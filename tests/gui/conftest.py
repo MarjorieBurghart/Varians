@@ -18,6 +18,7 @@ Garanties apportées par les fixtures ci-dessous :
 """
 from __future__ import annotations
 
+import gc
 import os
 import re
 import shutil
@@ -37,7 +38,7 @@ if str(ROOT / "tests") not in sys.path:
     sys.path.append(str(ROOT / "tests"))
 
 PySide6 = pytest.importorskip("PySide6")
-from PySide6.QtCore import QThreadPool  # noqa: E402
+from PySide6.QtCore import QEvent, QThreadPool  # noqa: E402
 from PySide6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
 
 
@@ -389,5 +390,12 @@ def open_window(qtbot, editor_module, dialogs):
     for window in windows:
         window._force_close = True
         window.close()
+        # Fermer ne suffit pas : la fenêtre (son édition, ses témoins, ses
+        # images) resterait en mémoire jusqu'à la fin de la session de tests,
+        # et la mémoire des serveurs de CI s'épuiserait.
+        window.deleteLater()
     QThreadPool.globalInstance().waitForDone(5000)
     QApplication.processEvents()
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    windows.clear()
+    gc.collect()

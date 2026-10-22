@@ -234,6 +234,19 @@ Règles :
   `TextSegmentsMixin._text_page_witnesses` (relu à chaque visite d'un
   texte) et `_text_start_folio`. Les objets factices des tests historiques
   fournissent `_lacunae_at_cursor` et `set_lacuna` ;
+- parcours d'un témoin dans son propre ordre (V0.9.1.4) : `witness_route`
+  (sans Qt : `Source`, `PageMark`, `Stop`, `WitnessRoute.step`, `on_page`,
+  `first`, `last` ; rangs des pages par `declared`, fusion des listes de
+  pages, `<locus from>` ou foliotation, sinon ordre de l'édition),
+  `PivotLines.pb_marks` et `anchor`, `folio_navigation.folio_marks`. Côté
+  fenêtre : `ManuscriptPanel.navigate` émet `witnessNavigate` (`browse`
+  feuillette) ; `_witness_panel_navigate`, `_go_to_witness_stop`,
+  `_lead_to_page`, `_present_stop` (`witness_sync`) ;
+  `_show_segment_ordinal` (`document_tabs`) ; `_witness_route`,
+  `_route_sources`, `_route_runs` (`text_segments`, parcours gardé tant que
+  la numérotation et les états des textes ne changent pas). Tests :
+  `tests/test_witness_route.py`, `tests/gui/test_gui_witness_route.py`,
+  `tests/gui/test_gui_witness_pages_route.py` ;
 - des tests anciens exécutent le corps de certaines méthodes avec des objets
   factices (`_text_changed`, `_auto_refresh_rng`, `show_validation_panel`,
   `_validate_relaxng_document_impl`, `sync_panels_to_cursor`,

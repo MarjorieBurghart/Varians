@@ -21,17 +21,20 @@ from __future__ import annotations
 
 import re
 from dataclasses import replace
+from pathlib import Path
 
 from app_context import tr as _t
-from folio_navigation import text_start_folio, witness_loci
+from folio_navigation import folio_marks, text_start_folio, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
-from witness_resource_refresh import RuntimeState, assemble_resources
+from witness_resource_refresh import RuntimeState, assemble_resources, flatten_primary, read_alignment_json
+from witness_route import PageMark, Source, page_identity, witness_route
 from xml_assembly import path_key
 
 TEXT_ABSENT = "manuscript.text_absent"
 _XML_ID_RE = re.compile(r"(?<![\w:.-])xml:id\s*=\s*(['\"])(.*?)\1", re.S)
+_SURFACE_NUMBER_RE = re.compile(r"-p(\d+)$")
 
 
 class TextSegmentsMixin:
@@ -84,13 +87,24 @@ class TextSegmentsMixin:
         lines = self._pivot_lines()
         if lines is None:
             return []
-        return [session for session in self.documents if session.in_edition and session.text_document is not None
+        return [session for session in self.documents if session.in_edition
                 and lines.file(session.path) is not None and lines.file(session.path).segment == segment]
+
+    @staticmethod
+    def _session_text(session):
+        """Texte d'une session ; celui de son fichier si elle n'a pas encore
+        été affichée."""
+        if session.text_document is not None:
+            return session.text_document.toPlainText()
+        try:
+            return session.path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            return ""
 
     def _segment_ids(self, segment):
         """``xml:id`` des fichiers du segment ``segment``."""
         return {match.group(2) for session in self._segment_files(segment)
-                for match in _XML_ID_RE.finditer(session.text_document.toPlainText())}
+                for match in _XML_ID_RE.finditer(self._session_text(session))}
 
     def _text_loci(self, segment):
         """``{témoin: (Locus, …)}`` qui valent pour le texte ``segment`` : ceux
@@ -99,7 +113,7 @@ class TextSegmentsMixin:
         loci = {wid: tuple(found) for wid, found in self._witness_loci().items()}
         for session in self._segment_files(segment):
             if path_key(session.path) == segment:
-                for wid, found in witness_loci(session.text_document.toPlainText()).items():
+                for wid, found in witness_loci(self._session_text(session)).items():
                     loci[wid] = loci.get(wid, ()) + found
         return loci
 
@@ -125,6 +139,93 @@ class TextSegmentsMixin:
                 found.add(wid)
         declared = {w.id for w in self.witness_configs}
         return {wid for wid in found if wid in declared}
+
+    # --- Parcours d'un témoin dans son propre ordre (V0.9.1.4) -----------------
+
+    def _witness_route(self, wid):
+        """``WitnessRoute`` du témoin dans tous les textes de l'édition, gardé
+        tant que la numérotation, les textes à part et leurs états ne
+        changent pas."""
+        lines = self._pivot_lines() if self._edition_has_parts() else None
+        syncs = tuple(self._text_syncs()[0]) if lines is not None else ()
+        edition = self._segment_state(None)
+        states = self.__dict__.get("_segment_states") or {}
+        folios = tuple(self.panels[wid].folios)
+        signature = (lines, syncs, tuple((key, id(value[0])) for key, value in states.items()),
+                     id(edition[0]), folios)
+        routes = self.__dict__.setdefault("_witness_routes", {})
+        found = routes.get(wid)
+        if found is None or found[0] != signature:
+            found = routes[wid] = (signature, witness_route(
+                wid, self._route_sources(wid, lines, syncs, states, edition, folios),
+                self._declared_page_ranks(wid, states, edition, folios)))
+        return found[1]
+
+    def _route_sources(self, wid, lines, syncs, states, edition, folios):
+        """``Source`` du témoin pour l'édition, puis pour chaque texte à part,
+        dans l'ordre de l'édition : ses lignes (état du segment s'il a été
+        lu, sinon ses JSON), ou ses ``<pb>`` dans ce texte."""
+        sources = [self._state_source(None, wid, *edition, lines, folios)]
+        for sync in syncs:
+            segment = path_key(sync.path)
+            if segment in states:
+                source = self._state_source(segment, wid, *states[segment], lines, folios)
+            else:
+                source = self._json_source(segment, wid, sync, lines, folios)
+            if source.cache is not None or source.marks:
+                ids = self._segment_ids(segment)
+                locus = next((locus.start for locus in self._text_loci(segment).get(wid, ())
+                              if locus.start and locus.targets & ids), None)
+                sources.append(replace(source, locus=locus))
+        return sources
+
+    def _state_source(self, segment, wid, state, project, lines, folios):
+        anchor = lines.anchor(segment) if lines is not None else 0
+        is_base = wid == project.base_witness
+        if wid in project.witness_by_id and state.base_active and (
+                is_base or state.secondary_links.get(wid, 0) > 0):
+            return Source(segment, state.caches.get(wid), is_base, state.base_by_key, anchor)
+        return Source(segment, marks=self._route_marks(wid, segment, lines, folios), anchor=anchor)
+
+    def _json_source(self, segment, wid, sync, lines, folios):
+        """Source d'un texte pas encore visité : ses JSON, lus sans images."""
+        anchor = lines.anchor(segment)
+        if wid in sync.alignments and sync.base in sync.alignments:
+            try:
+                cache = read_alignment_json(sync.alignments[wid])
+                base_by_key = flatten_primary(read_alignment_json(sync.alignments[sync.base]))[1]
+            except (OSError, ValueError):
+                return Source(segment, anchor=anchor)
+            return Source(segment, cache, wid == sync.base, base_by_key, anchor)
+        return Source(segment, marks=self._route_marks(wid, segment, lines, folios), anchor=anchor)
+
+    def _route_marks(self, wid, segment, lines, folios):
+        """``<pb>`` du témoin dans le segment : ceux de l'édition assemblée,
+        ou, dans une édition en un fichier, ceux de son texte."""
+        if not folios:
+            return ()
+        if lines is None:
+            path = self.edition_session.path or self.project.edition
+            return tuple(PageMark(folio.ref, folio.label, (path, end), 0)
+                         for folio, end in folio_marks(self._edition_text(), wid, list(folios)))
+        return tuple(PageMark(mark.folio.ref, mark.folio.label, (mark.path, mark.position), mark.ordinal)
+                     for mark in lines.pb_marks(wid, list(folios), segment))
+
+    @staticmethod
+    def _declared_page_ranks(wid, states, edition, folios):
+        """Rang des pages du témoin tiré de ses images déclarées : le numéro
+        de ``tei_surface_id``, sa place dans le manifeste ou les fichiers."""
+        ranks, surfaces = {}, {}
+        for state, _project in [edition, *states.values()]:
+            for page in (state.caches.get(wid) or {}).get("pages", []) or []:
+                sid = str(page.get("tei_surface_id") or "")
+                match = _SURFACE_NUMBER_RE.search(sid)
+                if match:
+                    ranks[page_identity(page)] = surfaces[sid] = int(match.group(1))
+        for folio in folios:
+            if folio.surface in surfaces:
+                ranks[f"folio:{folio.ref}"] = surfaces[folio.surface]
+        return ranks
 
     # --- Segment du document affiché ----------------------------------------
 
@@ -201,9 +302,42 @@ class TextSegmentsMixin:
                                 witnesses=witnesses, pages=pages) if pages else
                              _t("diagnostics.text_item", name=sync.name, base=sync.base, witnesses=witnesses))
             notes.append(_t("diagnostics.texts", texts="; ".join(items)))
+            # Ordre des textes dans chaque manuscrit (V0.9.1.4).
+            for w in self.witness_configs:
+                route = self._witness_route(w.id)
+                runs = self._route_runs(route)
+                if len(runs) > 1:
+                    uncertain = ", ".join(self._segment_name(segment) for segment in route.uncertain)
+                    notes.append(_t("diagnostics.route.uncertain", witness=w.id, runs=" → ".join(runs),
+                                    texts=uncertain) if uncertain else
+                                 _t("diagnostics.route", witness=w.id, runs=" → ".join(runs)))
         notes.extend(_t("text_sync.problem." + problem.code, name=problem.name, detail=problem.detail)
                      for problem in problems)
         return "\n".join(notes)
+
+    def _segment_name(self, segment):
+        sync = self._text_sync_of(segment)
+        return sync.name if sync is not None else str(segment)
+
+    def _route_runs(self, route):
+        """Les textes du parcours d'un témoin, dans son ordre : le fichier de
+        chaque ligne de l'édition (« édition » pour le document maître), le
+        nom d'un texte synchronisé à part ; deux arrêts voisins du même
+        texte n'en font qu'un."""
+        lines = self._pivot_lines() if self._edition_has_parts() else None
+        master = path_key(self.edition_session.path or self.project.edition)
+        labels = []
+        for stop in route.stops:
+            if stop.segment is not None:
+                label = self._segment_name(stop.segment)
+            elif lines is None or stop.ordinal is None or lines.location(stop.ordinal, None) is None:
+                continue
+            else:
+                path = lines.location(stop.ordinal, None)[0]
+                label = _t("diagnostics.route.edition") if path_key(path) == master else Path(path).stem
+            if not labels or labels[-1] != label:
+                labels.append(label)
+        return labels
 
     def _segment_project(self):
         """Projet du segment affiché : le projet, ou celui réduit au texte."""

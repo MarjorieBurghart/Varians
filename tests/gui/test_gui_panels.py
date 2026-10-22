@@ -3,7 +3,8 @@
 des témoins et aperçu XSLT. Tests de caractérisation (V0.8.5.26.2)."""
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
+from PySide6.QtWidgets import QApplication
 
 
 def _insert_after(window, marker, text):
@@ -147,6 +148,23 @@ def test_preview_follows_source_changes(open_window, example_project, qtbot):
 
     window.left_tabs.setCurrentWidget(window.formatted_view)
     qtbot.waitUntil(lambda: marker in window.formatted_view.preview.toPlainText(), timeout=15000)
+
+
+def test_a_deferred_scroll_of_the_preview_does_not_outlive_its_window(editor_module, example_project, dialogs, qtbot):
+    """Le défilement différé de l'aperçu ne s'exécute pas si la fenêtre a été
+    détruite entre-temps."""
+    import validation_worker
+    window = editor_module.MainWindow(example_project)
+    window.show()
+    qtbot.waitExposed(window)
+    qtbot.wait(250)
+    qtbot.waitUntil(lambda: not validation_worker.worker_client().busy, timeout=60000)
+    window.formatted_view.scroll_to_t1_line(3)
+    window._force_close = True
+    window.close()
+    window.deleteLater()
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    qtbot.wait(20)                  # une erreur ici échouerait le test
 
 
 def test_xpath_panel_selection_role_data(open_window, example_project):

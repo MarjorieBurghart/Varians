@@ -814,4 +814,12 @@ Přesto exportovat?</string>
   <string key="manuscript.lacuna.pivot">Lakuna pivotního svědka: řádky se v tomto úseku nesynchronizují.</string>
   <string key="status.base_lacuna">Lakuna pivotu {base}: synchronizace řádků je pozastavena až do konce lakuny.</string>
   <string key="diagnostics.text_item.pages">{name} (pivot {base}; svědkové {witnesses}; po stránkách: {pages})</string>
+  <string key="status.witness_start">Začátek rukopisu {witness}.</string>
+  <string key="status.witness_end">Konec rukopisu {witness}.</string>
+  <string key="status.witness_unlinked">Řádek svědka {witness} není propojen s pivotem: edice zůstává na řádku {line}.</string>
+  <string key="status.page_unmarked">Stránka {folio} svědka {witness}: žádný &lt;pb&gt; ani &lt;locus&gt; ji v edici neumisťuje, edice se nepohne.</string>
+  <string key="diagnostics.route">Pořadí textů ve svědkovi {witness}: {runs}.</string>
+  <string key="diagnostics.route.uncertain">Pořadí textů ve svědkovi {witness}: {runs}; nejisté místo textů {texts}, ponechaných v pořadí edice.</string>
+  <string key="diagnostics.route.edition">edice</string>
+  <string key="status.route_uncertain">Nejisté místo textu {text} ve svědkovi {witness}: pořadí edice.</string>
 </translations>

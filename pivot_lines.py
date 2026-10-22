@@ -17,7 +17,9 @@ autres outils (XSLT, viewer web, ``xmllint --xinclude``), un ``<lb/>`` placé
 dans un commentaire ou hors de l'élément inclus d'une partie ne compte pas.
 
 Le même parcours relève les ``<pb>`` : la page d'un témoin tient compte de ce
-qui précède dans les autres fichiers (page à la jonction de deux textes). Il
+qui précède dans les autres fichiers (page à la jonction de deux textes) ;
+chaque ``<pb>`` garde sa place dans son fichier (V0.9.1.4, ``pb_marks``),
+pour qu'un témoin suivi par pages mène l'édition. Il
 relève aussi les lacunes des témoins (V0.9.1.3, ``lacunae``), qui peuvent
 passer d'une partie à l'autre.
 
@@ -38,8 +40,9 @@ from pathlib import Path
 from lxml import etree
 
 from document_session import LbIndex
-from folio_navigation import folio_lookup, last_folio_mark, pb_folio
+from folio_navigation import Folio, folio_lookup, last_folio_mark, pb_folio
 from lacunae import Lacuna, apply_events, lacuna_events, witness_tokens
+from tei_facsimile import _PB_RE
 from xml_assembly import assemble, path_key
 
 # Balise ouvrante d'un xi:include (le préfixe est libre) ; un élément non vide
@@ -115,10 +118,25 @@ class FileLines:
     segment: str | None = None
 
 
+@dataclass(frozen=True)
+class PbMark:
+    """``<pb>`` d'un témoin : son folio, sa place (fichier, fin de la balise),
+    son segment et la ligne du pivot du segment à cet endroit (V0.9.1.4)."""
+    folio: Folio
+    path: object
+    position: int
+    segment: str | None
+    ordinal: int
+
+
+_ALL = object()
+
+
 class PivotLines:
     """Résultat de ``pivot_lines``."""
 
-    def __init__(self, files, locations, pbs, problems, lacunae=(), starts=None, page_witnesses=None):
+    def __init__(self, files, locations, pbs, problems, lacunae=(), starts=None, page_witnesses=None,
+                 pb_places=None, anchors=None):
         self._files = files
         # {segment: ((fichier, rang), …)} ; voir location().
         self._locations = {segment: tuple(found) for segment, found in locations.items()}
@@ -129,6 +147,10 @@ class PivotLines:
         # Texte à part : (nombre de <pb>, nombre d'événements) à son début.
         self._starts = dict(starts or {})
         self._page_witnesses = {segment: frozenset(ids) for segment, ids in (page_witnesses or {}).items()}
+        # Rang d'un <pb> -> (fichier, fin de la balise, numéro de ligne).
+        self._pb_places = dict(pb_places or {})
+        # Texte à part -> nombre de lignes du pivot de l'édition avant lui.
+        self._anchors = dict(anchors or {})
         self.problems = tuple(problems)
 
     @property
@@ -250,6 +272,25 @@ class PivotLines:
         """Témoins dont un ``<pb edRef>`` est dans le segment ``segment``."""
         return self._page_witnesses.get(segment, frozenset())
 
+    def pb_marks(self, witness_id, folios, segment=_ALL):
+        """``PbMark`` des ``<pb>`` du témoin, dans l'ordre du document
+        assemblé ; ceux du segment ``segment`` seulement, s'il est donné."""
+        lookup = folio_lookup(folios)
+        marks = []
+        for index, (facs, ed_ref, n, pb_segment) in enumerate(self._pbs):
+            if segment is not _ALL and pb_segment != segment:
+                continue
+            place = self._pb_places.get(index)
+            folio = pb_folio(facs, ed_ref, n, witness_id, lookup) if place is not None else None
+            if folio is not None:
+                marks.append(PbMark(folio, place[0], place[1], pb_segment, place[2]))
+        return marks
+
+    def anchor(self, segment):
+        """Nombre de lignes du pivot de l'édition avant le texte à part
+        ``segment`` (0 pour l'édition)."""
+        return self._anchors.get(segment, 0)
+
 
 def _read(path):
     try:
@@ -282,6 +323,9 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
     lbs = defaultdict(list)          # fichier -> [(ligne, numéro)]
     ends = defaultdict(list)         # fichier -> [(ligne du xi:include, (numéro, pb, lacunes))]
     pbs = []
+    pb_lines = defaultdict(list)     # fichier -> [(ligne, rang du <pb>)]
+    pb_ordinals = []                 # numéro de ligne à chaque <pb>
+    anchors = {}                     # texte à part -> lignes de l'édition avant lui
     lacunae = []
     starts = {}                      # texte à part -> (pb, lacunes) à son début
     page_witnesses = defaultdict(set)
@@ -306,6 +350,7 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
             if key in apart:
                 bases.setdefault(segment, apart[key])
                 starts.setdefault(segment, (len(pbs), len(lacunae)))
+                anchors.setdefault(segment, counts[None] + 1)
             first = key not in entries
             if first:
                 paths[key] = path
@@ -319,6 +364,9 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
             if first:
                 lbs[key].append((element.sourceline, counts[segment]))
         elif name == "pb":
+            if first:
+                pb_lines[key].append((element.sourceline, len(pbs)))
+            pb_ordinals.append(max(0, counts[segment]))
             pbs.append((element.get("facs"), element.get("edRef"), element.get("n"), segment))
             page_witnesses[segment].update(witness_tokens(element.get("edRef")))
         elif name in ("lacunaStart", "lacunaEnd"):
@@ -328,6 +376,7 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
     by_key = {path_key(path): text for path, text in texts.items()}
     by_key[master] = str(edition_text or "")
     files = {}
+    pb_places = {}
     locations = {segment: [None] * (counts[segment] + 1) for segment in bases}
     for key, path in paths.items():
         segment = segments[key]
@@ -343,7 +392,13 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
         tags = _include_tags(text)
         includes = _match_by_line(text, [tag_end - 1 for _s, _e, tag_end in tags], ends[key])
         files[key] = FileLines(ordinals, includes, entries[key], segment)
-    return PivotLines(files, locations, pbs, assembly.problems, lacunae, starts, page_witnesses)
+        if pb_lines[key]:
+            pb_ends = [match.end() for match in _PB_RE.finditer(text)]
+            for end, index in zip(pb_ends, _match_by_line(text, [end - 1 for end in pb_ends], pb_lines[key])):
+                if index is not None:
+                    pb_places[index] = (path, end, pb_ordinals[index])
+    return PivotLines(files, locations, pbs, assembly.problems, lacunae, starts, page_witnesses,
+                      pb_places, anchors)
 
 
 def _lacuna_witnesses(element):

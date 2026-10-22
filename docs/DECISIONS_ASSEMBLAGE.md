@@ -142,9 +142,9 @@ XInclude.
    - V0.9.1.3, réalisée (voir ci-dessous) : lacunes, témoins synchronisés
      par pages dans un texte synchronisé à part (page de départ par
      `<locus from>` ou par le premier `<pb>`) ;
-   - V0.9.1.4 : parcours d'un manuscrit dans son propre ordre (décidé le
-     22 octobre 2026 : une navigation nouvelle, des panneaux vers
-     l'édition, qui mérite sa version).
+   - V0.9.1.4, réalisée (voir ci-dessous) : parcours d'un manuscrit dans
+     son propre ordre (décidé le 22 octobre 2026 : une navigation nouvelle,
+     des panneaux vers l'édition, qui mérite sa version).
 5. Vue XSLT / CSS et export web à partir du document assemblé,
    modifications par fragment réécrites dans le bon fichier, avec les mêmes
    continuités de synchronisation sur le site.
@@ -372,6 +372,23 @@ avoir un éditeur de fragment.
 - **Limites** : l'export web ne montre ni les lacunes ni les parties ; une
   requête de l'apparat lancée dans une partie ne voit que les lacunes de
   cette partie.
+
+## Réalisé en V0.9.1.4 (cas 2, fin)
+
+- **Les flèches de tout panneau mènent l'édition** (décidé le 22 octobre
+  2026 : « toujours », et non un bouton à enfoncer) : le témoin est suivi
+  dans son propre ordre, d'une partie ou d'un texte à l'autre ; les autres
+  témoins suivent le pivot. Feuilleter un témoin sans bouger l'édition ne
+  reste possible qu'avec un document auxiliaire affiché.
+- **Ordre des textes dans un manuscrit** (décidé le 22 octobre 2026 :
+  déduit des pages) : rang des images déclarées, sinon pages communes aux
+  JSON du témoin, sinon `<locus from>` ou foliotation, sinon ordre de
+  l'édition, signalé (« État des témoins… », barre d'état).
+- **Portée** : témoins par lignes, témoins par pages (flèches et liste des
+  folios : ligne d'un JSON, `<pb>`, `<locus from>`), pivot d'un texte à
+  l'autre ; le panneau d'un témoin absent mène au texte suivant ou
+  précédent qui l'a.
+- **Limites** : l'export web ne contient pas encore les parties.
 
 ## Restent à décider
 

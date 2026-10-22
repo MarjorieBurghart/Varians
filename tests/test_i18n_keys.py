@@ -198,8 +198,31 @@ def test_each_help_explains_the_lacunae_and_the_page_witnesses_of_a_text():
         parts = page[page.index('<section id="xinclude">'):]
         parts = parts[:parts.index("</section>")]
         for text in ('&lt;locus from="13r" to="14r" target="#s04"&gt;', "&lt;pb edRef=\"#C\"/&gt;",
-                     html.escape(catalog["manuscript.mark_page"], quote=False), "0.9.1.4"):
+                     html.escape(catalog["manuscript.mark_page"], quote=False)):
             assert text in parts, (language, text)
-        assert "0.9.1.3" not in parts, language                      # plus rien d'annoncé pour elle
         version = page[page.index('<section id="v0913">'):]
         assert 'href="#lacunae"' in version[:version.index("</section>")], language
+
+
+def test_each_help_explains_how_to_follow_a_manuscript_in_its_own_order():
+    """Suivre un manuscrit dans son propre ordre (V0.9.1.4)."""
+    import html
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="witness-route">'):]
+        section = section[:section.index("</section>")]
+        for text in ("⤺", '&lt;pb edRef="#M" n="45v"/&gt;', '&lt;locus from="80r" target="#s04"&gt;',
+                     html.escape(catalog["manuscript.text_absent"], quote=False),
+                     html.escape(catalog["project.settings.title"], quote=False)):
+            assert text in section, (language, text)
+        assert page.index('<section id="witness-route">') < page.index('<section id="xinclude">'), language
+        # Plus rien d'annoncé pour la 0.9.1.4 dans les éditions assemblées ;
+        # leurs limites et le mode d'emploi renvoient au parcours.
+        parts = page[page.index('<section id="xinclude">'):page.index('<section id="v0900">')]
+        assert "0.9.1.4" not in parts, language
+        assert parts.count('href="#witness-route"') == 2, language
+        version = page[page.index('<section id="v0914">'):]
+        assert 'href="#witness-route"' in version[:version.index("</section>")], language
+        assert page.index('<section id="v0913">') < page.index('<section id="v0914">'), language

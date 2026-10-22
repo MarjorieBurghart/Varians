@@ -14,7 +14,7 @@ import pytest
 from lxml import etree
 
 from document_session import LbIndex
-from folio_navigation import Folio, folio_at_position, last_folio_mark
+from folio_navigation import Folio, folio_at_position, folio_marks, last_folio_mark
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
 from xml_assembly import assemble, path_key
 
@@ -198,6 +198,48 @@ def test_the_page_in_a_text_synchronized_apart_comes_from_that_text_only():
     assert _page(lines, S03, "<head>") == "13r"            # l'édition continue comme avant
     assert lines.page_witnesses(path_key(S02)) == {"B", "D"}
     assert lines.page_witnesses(None) >= {"A", "B", "C", "E"}
+
+
+def test_each_pb_of_a_witness_has_its_file_its_place_and_its_line():
+    """V0.9.1.4 : un <pb> mène à sa place dans son fichier (pour suivre un
+    témoin par pages)."""
+    lines = _lines()
+    marks = lines.pb_marks("A", FOLIOS_A)
+    assert [(mark.folio.label, Path(mark.path).name) for mark in marks] == [
+        ("12v", "s01.xml"), ("13r", "s01.xml"), ("14v", "s03.xml"), ("15r", "s03.xml"),
+        ("15v", "s03.xml"), ("13v", "s04.xml"), ("14r", "s04_exemplum.xml")]
+    for mark in marks:
+        text = _read(Path(mark.path))
+        assert text[:mark.position].endswith(f'n="{mark.folio.label}"/>')
+        assert mark.segment is None
+        assert mark.ordinal == _at(lines, Path(mark.path), f'n="{mark.folio.label}"/>', after=True)
+    assert lines.pb_marks("Z", FOLIOS_A) == []
+
+
+def test_the_place_of_a_pb_follows_the_text_being_edited():
+    s01 = _read(S01).replace("<p>", "<p>Additum. ", 1)
+    marks = _lines(s01=s01).pb_marks("A", FOLIOS_A)
+    assert s01[:marks[0].position].endswith('n="12v"/>')
+
+
+def test_the_pb_of_a_text_synchronized_apart_and_its_anchor_in_the_edition():
+    folios = [Folio(f"D{n}", f"D{n}", n) for n in ("100v", "101r", "101v", "102r", "102v")]
+    lines = pivot_lines(_read(EDITION), EDITION, {}, "A", text_bases={S02: "B"})
+    s02 = path_key(S02)
+    marks = lines.pb_marks("D", folios, segment=s02)
+    assert [mark.folio.label for mark in marks] == ["101r", "101v", "102r"]
+    assert all(mark.segment == s02 for mark in marks)
+    assert [mark.folio.label for mark in lines.pb_marks("D", folios, segment=None)] == ["102v"]
+    # s02 vient après les 10 lignes de s01 dans l'édition.
+    assert lines.anchor(s02) == 10 and lines.anchor(None) == 0
+
+
+def test_folio_marks_gives_each_pb_of_a_witness_outside_comments():
+    text = _read(S01).replace("<p>", '<p><!-- <pb edRef="#A" n="13r"/> -->', 1)
+    marks = folio_marks(text, "A", FOLIOS_A)
+    assert [folio.label for folio, _end in marks] == ["12v", "13r"]
+    assert all(text[:end].endswith(f'n="{folio.label}"/>') for folio, end in marks)
+    assert folio_marks(text, "A", FOLIOS_A, stop=marks[0][1]) == marks[:1]
 
 
 def test_last_folio_mark_gives_the_end_of_the_pb():

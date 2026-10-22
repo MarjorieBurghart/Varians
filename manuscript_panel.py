@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import (
-    QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt, QThreadPool, QTimer, QUrl, Signal,
+    QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt, QThreadPool, QUrl, Signal,
     Slot,
 )
 from PySide6.QtGui import (
@@ -223,6 +223,7 @@ class WitnessHeader(QWidget):
 
 class ManuscriptPanel(QFrame):
     primaryNavigate = Signal(int)   # nouveau centre du témoin de base
+    witnessNavigate = Signal(str, int)  # témoin, pas des flèches (V0.9.1.4)
     markPageRequested = Signal(str, str, str)  # témoin, surface/zone xml:id, @n
     splitFolioRequested = Signal(str, str)  # témoin, surface xml:id
     maximizeRequested = Signal(str)
@@ -437,6 +438,12 @@ class ManuscriptPanel(QFrame):
         self.reload()
 
     def navigate(self, step):
+        """Flèches du panneau (V0.9.1.4) : la fenêtre fait mener l'édition
+        par le témoin, dans son propre ordre, ou le feuillette (``browse``)."""
+        self.witnessNavigate.emit(self.siglum, int(step))
+
+    def browse(self, step):
+        """Feuillette le témoin, sans toucher à l'édition."""
         if not self.items: return
         if not self.sync_enabled and self.folios:
             # Only logical folios, not the full-image previews, count as
@@ -453,10 +460,7 @@ class ManuscriptPanel(QFrame):
         new = max(0, min(len(self.items)-1, self.center_index + step))
         if new == self.center_index: return
         self.center_index = new
-        if self.is_base and self.sync_enabled:
-            self.primaryNavigate.emit(new)
-        else:
-            self.reload()
+        self.reload()
 
     def go_home(self):
         if self.is_base: return
@@ -524,6 +528,8 @@ class ManuscriptPanel(QFrame):
         if self._updating_folios or self.sync_enabled or index < 0 or index >= len(self.folios):
             return
         self.set_folio(self.folios[index].ref)
+        # Le folio choisi mène l'édition, comme les flèches (V0.9.1.4).
+        self.witnessNavigate.emit(self.siglum, 0)
 
     def _request_split_folio(self):
         """Ouvre la définition des folios, même si ce témoin suit les lignes.
@@ -695,7 +701,7 @@ class ManuscriptPanel(QFrame):
             url = spec["url"]
             if not url: continue
             if url in self._memory_cache:
-                QTimer.singleShot(0, lambda s=spec, d=self._memory_cache[url], t=token: self._fetch_finished(t, s["key"], d, "", "crop"))
+                call_later(0, self, lambda s=spec, d=self._memory_cache[url], t=token: self._fetch_finished(t, s["key"], d, "", "crop"))
             else:
                 w = FetchWorker(token, spec["key"], url, spec.get("fallback_url"))
                 w.signals.finished.connect(self._fetch_finished)

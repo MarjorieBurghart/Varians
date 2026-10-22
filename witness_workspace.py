@@ -7,12 +7,12 @@ import json
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView, QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout, QLabel,
     QListWidget, QListWidgetItem, QPushButton, QSplitter, QVBoxLayout, QWidget,
 )
-from app_context import _settings, tr as _t
+from app_context import _settings, call_later, tr as _t
 
 
 class DetachedWitnessWindow(QWidget):
@@ -273,7 +273,7 @@ class WitnessWorkspaceMixin:
             self._changing_workspace = False
         if persist:
             _settings().setValue(self._view_settings_key('workspaceMode'), mode)
-        QTimer.singleShot(0, self._restore_workspace_sizes)
+        call_later(0, self, self._restore_workspace_sizes)
 
     def _remember_workspace_sizes(self, *_args):
         if getattr(self, '_changing_workspace', False) or getattr(self, '_reordering_witness_panels', False):
@@ -397,7 +397,7 @@ class WitnessWorkspaceMixin:
             self._save_detached_witness_ids()
         self._apply_witness_panel_order()
         self._refresh_workspace_visibility()
-        QTimer.singleShot(0, self._restore_workspace_sizes)
+        call_later(0, self, self._restore_workspace_sizes)
         self._refresh_detach_actions()
         return True
 
@@ -418,7 +418,7 @@ class WitnessWorkspaceMixin:
         if not from_window:
             win.close()
         win.deleteLater()
-        QTimer.singleShot(0, self._restore_workspace_sizes)
+        call_later(0, self, self._restore_workspace_sizes)
         return True
 
     def _save_detached_witness_ids(self):
@@ -588,7 +588,7 @@ class WitnessWorkspaceMixin:
             if has_visible:
                 if initial or not was_explicitly_visible:
                     self.main_splitter.setSizes(list(self._main_splitter_last_visible_sizes))
-                QTimer.singleShot(0, self._restore_workspace_sizes)
+                call_later(0, self, self._restore_workspace_sizes)
             else:
                 self.main_splitter.setSizes([1650, 0])
         if not initial:

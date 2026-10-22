@@ -1,3 +1,30 @@
+VARIANS V0.9.1.4 — SUIVRE UN MANUSCRIT DANS SON PROPRE ORDRE
+
+• Les flèches de tout panneau de témoin mènent l'édition, et non plus
+  seulement celles du pivot : le témoin avance dans son propre ordre, et le
+  curseur de l'édition va au passage correspondant, dans la bonne partie ou
+  le bon texte ; les autres témoins suivent le pivot. Une ligne non reliée
+  au pivot laisse l'édition sur la ligne reliée qui la précède. Avec un
+  document auxiliaire affiché, les flèches feuillettent seulement le
+  témoin.
+• D'un texte à l'autre : au bout d'un texte, les flèches passent au texte
+  suivant dans le manuscrit, numérotation continue ou texte synchronisé à
+  part. Le pivot fait de même : un pivot commun à plusieurs textes se
+  parcourt d'un seul tenant.
+• Témoins par pages : les flèches et la liste des folios mènent l'édition à
+  la page choisie (sa première ligne dans un JSON du témoin, sinon son <pb>,
+  sinon le début du texte dont le <locus from> est cette page ; sans repère,
+  l'édition reste et un message le dit).
+• Panneau d'un témoin absent du texte affiché : ses flèches mènent au texte
+  suivant ou précédent qui a ce témoin.
+• Ordre des textes dans un manuscrit : déduit de ses pages (images déclarées,
+  sinon pages communes à ses JSON, sinon <locus from> ou foliotation) ; un
+  texte qui ne s'y rattache pas garde sa place dans l'ordre de l'édition.
+  « Affichage → État des témoins… » donne cet ordre pour chaque manuscrit et
+  signale une place incertaine.
+• L'export web ne contient pas encore les parties ni les lacunes (étape
+  suivante : Vue XSLT / CSS et export web de l'édition assemblée).
+
 VARIANS V0.9.1.3 — LACUNES DES TÉMOINS, TÉMOINS PAR PAGES DANS UN TEXTE À PART
 
 • Lacunes : le passage qu'un témoin n'a pas s'encadre par <lacunaStart/> et
@@ -22,8 +49,7 @@ VARIANS V0.9.1.3 — LACUNES DES TÉMOINS, TÉMOINS PAR PAGES DANS UN TEXTE À P
   pages. « Marquer la page » y fonctionne aussi.
 • Tests : deux tests de délai de la validation, trop sensibles à la
   vitesse des machines GitHub, ont été rendus plus robustes.
-• Viendra en V0.9.1.4 : le parcours d'un manuscrit dans son propre ordre.
-  L'export web ne montre pas encore les lacunes ni les parties.
+• L'export web ne montre pas encore les lacunes ni les parties.
 
 VARIANS V0.9.1.2 — SÉLECTIONS PARTAGÉES ENTRE L'APERÇU ET L'ÉDITEUR DE FRAGMENT
 

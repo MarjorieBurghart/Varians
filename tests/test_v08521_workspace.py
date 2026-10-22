@@ -97,6 +97,9 @@ class Timer:
     def singleShot(delay, callback): callback()
 
 
+def call_later(delay, owner, callback): callback()
+
+
 def make_workspace():
     ids=['Mu','F','L','A','N']
     panels={x:Panel(x) for x in ids}
@@ -130,11 +133,11 @@ def make_workspace():
     )
     win._apply_witness_panel_order=lambda:method('MainWindow','_apply_witness_panel_order',{'QSplitter':Splitter,'Qt':Qt})(win)
     win._set_workspace_mode=lambda mode,persist=True:method('MainWindow','_set_workspace_mode',{
-        'QTimer':Timer,'_settings':lambda:saved})(win,mode,persist=persist)
+        'QTimer':Timer,'call_later':call_later,'_settings':lambda:saved})(win,mode,persist=persist)
     win._detach_witness=lambda wid,persist=True:method('MainWindow','_detach_witness',{
-        'QTimer':Timer,'_settings':lambda:saved,'DetachedWitnessWindow':FloatWindow})(win,wid,persist=persist)
+        'QTimer':Timer,'call_later':call_later,'_settings':lambda:saved,'DetachedWitnessWindow':FloatWindow})(win,wid,persist=persist)
     win._dock_witness=lambda wid,from_window=False:method('MainWindow','_dock_witness',{
-        'QTimer':Timer})(win,wid,from_window=from_window)
+        'QTimer':Timer,'call_later':call_later})(win,wid,from_window=from_window)
     return win,saved
 
 

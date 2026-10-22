@@ -212,6 +212,12 @@ class DocumentTabsMixin:
         (borné), au centre de l'éditeur. Dans une édition en parties, le
         document qui le contient est affiché ; son onglet réapparaît s'il était
         masqué. Renvoie le rang atteint, ou None."""
+        return self._show_segment_ordinal(getattr(self, "_active_segment", None), ordinal)
+
+    def _show_segment_ordinal(self, segment, ordinal):
+        """``_show_base_ordinal`` dans le segment ``segment`` : l'édition
+        (None) ou un texte synchronisé à part, affiché au besoin
+        (V0.9.1.4, un témoin suivi d'un texte à l'autre)."""
         lines = self._pivot_lines()
         switched = None
         if lines is None:
@@ -223,13 +229,12 @@ class DocumentTabsMixin:
             ordinal = max(0, min(len(spans) - 1, int(ordinal)))
             position = spans[ordinal][1]
         else:
-            # Les lignes du segment affiché : l'édition, ou le texte
-            # synchronisé à part.
-            count = lines.segment_count(self._active_segment)
+            # Les lignes du segment : l'édition, ou le texte synchronisé à part.
+            count = lines.segment_count(segment)
             if not count:
                 return None
             ordinal = max(0, min(count - 1, int(ordinal)))
-            location = lines.location(ordinal, self._active_segment)
+            location = lines.location(ordinal, segment)
             if location is None:
                 return None
             path, index = location

@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QMessageBox, QPushButton, QSplitter, QTextBrowser, QTextEdit, QVBoxLayout,
     QWidget,
 )
-from app_context import _settings, tr as _t
+from app_context import _settings, call_later, tr as _t
 from code_editor import CodeEditor, find_in_plain_editor
 from completion_ui import CompletionDialog
 from custom_completion import load_custom_completion
@@ -1010,7 +1010,7 @@ class FormattedEditionWidget(QWidget):
             return
         if self.dirty_preview:
             self.refresh_preview()
-        QTimer.singleShot(0, lambda n=int(ordinal): self.preview.scroll_to_line(n, center=True))
+        call_later(0, self, lambda n=int(ordinal): self.preview.scroll_to_line(n, center=True))
 
     def focus_is_in_fragment(self):
         focus = QApplication.focusWidget()
@@ -1266,14 +1266,14 @@ class FormattedEditionWidget(QWidget):
         self.preview_zoom_steps = max(-6, min(12, self.preview_zoom_steps + delta))
         self._apply_preview_zoom_state()
         if anchor_line is not None:
-            QTimer.singleShot(0, lambda n=int(anchor_line): self.preview.scroll_to_line(n, center=True))
+            call_later(0, self, lambda n=int(anchor_line): self.preview.scroll_to_line(n, center=True))
 
     def _reset_preview_zoom(self):
         anchor_line = self.current_preview_line()
         self.preview_zoom_steps = 0
         self._apply_preview_zoom_state()
         if anchor_line is not None:
-            QTimer.singleShot(0, lambda n=int(anchor_line): self.preview.scroll_to_line(n, center=True))
+            call_later(0, self, lambda n=int(anchor_line): self.preview.scroll_to_line(n, center=True))
 
     def _reapply_preview_zoom(self):
         self._apply_preview_zoom_state()
@@ -1396,7 +1396,7 @@ class FormattedEditionWidget(QWidget):
                 if bar.maximum() > 0:
                     bar.setValue(int(round(ratio * bar.maximum())))
 
-            QTimer.singleShot(0, restore_preview_position)
+            call_later(0, self, restore_preview_position)
             self.dirty_preview = False
             self._last_preview_key = preview_key
             self._last_preview_engine = engine
@@ -1441,7 +1441,7 @@ class FormattedEditionWidget(QWidget):
                 if line is not None:
                     self.preview.active_line_ordinal = int(line)
                     self.main.navigate_to_base_ordinal(int(line), move_xml_cursor=False)
-            QTimer.singleShot(0, sync_after_toc)
+            call_later(0, self, sync_after_toc)
             return
         if url.scheme() != "tei-edit":
             return

@@ -200,10 +200,17 @@ def last_folio_mark(xml_text: str, position: int, witness_id: str,
                     folios: list[Folio]) -> tuple[Folio, int] | None:
     """Comme ``folio_at_position``, avec la fin du pb trouvé :
     ``(folio, fin)``, ou None."""
+    marks = folio_marks(xml_text, witness_id, folios, stop=position)
+    return marks[-1] if marks else None
+
+
+def folio_marks(xml_text: str, witness_id: str, folios: list[Folio],
+                stop: int | None = None) -> list[tuple[Folio, int]]:
+    """``(folio, fin)`` de chaque pb du témoin dans ``xml_text``, dans
+    l'ordre ; ceux qui finissent après ``stop`` sont ignorés."""
     lookup = folio_lookup(folios)
     text = str(xml_text or '')
-    position = max(0, min(int(position), len(text)))
-    current = None
+    stop = len(text) if stop is None else max(0, min(int(stop), len(text)))
     # Position des commentaires / CDATA / instructions XML, pour ne pas
     # interpréter un exemple textuel comme un vrai pb.
     ignored = [(m.start(), m.end()) for rx in (
@@ -211,16 +218,17 @@ def last_folio_mark(xml_text: str, position: int, witness_id: str,
         re.compile(r'<!\[CDATA\[.*?(?:\]\]>|$)', re.S),
         re.compile(r'<\?.*?(?:\?>|$)', re.S),
     ) for m in rx.finditer(text)]
+    marks = []
     for m in _PB_RE.finditer(text):
-        if m.end() > position:
+        if m.end() > stop:
             break
         if any(a <= m.start() < b for a, b in ignored):
             continue
         tag = m.group()
         folio = pb_folio(_attr(tag, 'facs'), _attr(tag, 'edRef'), _attr(tag, 'n'), witness_id, lookup)
         if folio is not None:
-            current = (folio, m.end())
-    return current
+            marks.append((folio, m.end()))
+    return marks
 
 
 def split_surface_into_folios(xml_text: str, surface_id: str, left: str, right: str,
