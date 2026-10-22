@@ -600,7 +600,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # Les flèches de tout panneau mènent l'édition (V0.9.1.4).
             panel.witnessNavigate.connect(self._witness_panel_navigate)
             if panel.items and not panel.sync_enabled:
-                QTimer.singleShot(0, panel.reload)
+                call_later(0, panel, panel.reload)
         self.base_panel = self.panels[self.base_id]
         self.witness_splitter.splitterMoved.connect(self._remember_witness_splitter_sizes)
         self._witness_maximized_id = None
@@ -653,8 +653,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self._main_splitter_last_visible_sizes = [780, 870]
         self.setCentralWidget(splitter)
         self._apply_witness_visibility(initial=True)
-        QTimer.singleShot(0, self._restore_main_splitter_ratio)
-        QTimer.singleShot(0, self._restore_detached_witnesses)
+        call_later(0, self, self._restore_main_splitter_ratio)
+        call_later(0, self, self._restore_detached_witnesses)
 
         self._build_toolbar()
         self.xml_status = QLabel(_t("status.xml.initial")); self.cursor_status = QLabel(_t("status.cursor", line=1, column=1))
@@ -1136,7 +1136,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                     return
                 self.editor.setFocus()
 
-            QTimer.singleShot(0, restore_xml_context)
+            call_later(0, self, restore_xml_context)
 
     def _apply_xml_health_result(self, well_formed, line=0, column=0, error="", spans=None, show_message=False):
         if not well_formed:

@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 
 from PySide6.QtCore import (
-    QObject, QPointF, QRectF, QSize, Qt, QThreadPool, QTimer, Signal, Slot,
+    QObject, QPointF, QRectF, QSize, Qt, QThreadPool, Signal, Slot,
 )
 from PySide6.QtGui import QColor, QImageReader, QPainter, QPen, QPixmap, QTextCursor
 from PySide6.QtWidgets import (
@@ -301,7 +301,7 @@ class WitnessDiagnosticDialog(QDialog):
         main = self.parent()
         self.accept()
         if main is not None and main.refresh_witness_synchronizations():
-            QTimer.singleShot(0, main.show_witness_diagnostics)
+            call_later(0, main, main.show_witness_diagnostics)
 
 
 def _patch_text_document(document, old_text, new_text):

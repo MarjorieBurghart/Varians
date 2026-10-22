@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import (
-    QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt, QThreadPool, QTimer, QUrl, Signal,
+    QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt, QThreadPool, QUrl, Signal,
     Slot,
 )
 from PySide6.QtGui import (
@@ -701,7 +701,7 @@ class ManuscriptPanel(QFrame):
             url = spec["url"]
             if not url: continue
             if url in self._memory_cache:
-                QTimer.singleShot(0, lambda s=spec, d=self._memory_cache[url], t=token: self._fetch_finished(t, s["key"], d, "", "crop"))
+                call_later(0, self, lambda s=spec, d=self._memory_cache[url], t=token: self._fetch_finished(t, s["key"], d, "", "crop"))
             else:
                 w = FetchWorker(token, spec["key"], url, spec.get("fallback_url"))
                 w.signals.finished.connect(self._fetch_finished)
