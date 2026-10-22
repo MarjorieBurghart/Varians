@@ -131,7 +131,7 @@ def test_the_diagnostics_tell_the_scope_and_the_texts(open_window, corpus_projec
     assert lines[0] == tr("diagnostics.texts", texts=texts)
     # Puis l'ordre des textes dans chaque manuscrit (V0.9.1.4) : les pages de
     # s04 ne se rattachent pas à celles de l'édition.
-    runs = " → ".join((tr("diagnostics.route.edition", first=1, last=19), "s04"))
+    runs = " → ".join(("s01", "s03", "s04"))
     assert lines[1:] == [tr("diagnostics.route.uncertain", witness=wid, runs=runs, texts="s04") for wid in ("A", "C")]
     assert rows == ["A", "B", "C", "D", "E"]
     window.show_document(_doc(window, "s02.xml"))

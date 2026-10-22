@@ -820,6 +820,6 @@ Esportare comunque?</string>
   <string key="status.page_unmarked">Pagina {folio} di {witness}: nessun &lt;pb&gt; né &lt;locus&gt; la colloca nell’edizione, che non si sposta.</string>
   <string key="diagnostics.route">Ordine dei testi in {witness}: {runs}.</string>
   <string key="diagnostics.route.uncertain">Ordine dei testi in {witness}: {runs}; posizione incerta di {texts}, lasciati nell’ordine dell’edizione.</string>
-  <string key="diagnostics.route.edition">edizione (r. {first}–{last})</string>
+  <string key="diagnostics.route.edition">edizione</string>
   <string key="status.route_uncertain">Posizione incerta di {text} in {witness}: ordine dell’edizione.</string>
 </translations>

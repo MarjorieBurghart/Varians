@@ -112,5 +112,32 @@ texte, mais qui a ce texte (un `<pb edRef>` dans le texte, ou un
 `<locus target>` dans son `<witness>`), y suit ses pages ; sa page vient des
 seuls `<pb>` du texte. Avant son premier `<pb>`, sa page de départ est le
 `@from` de son `<locus>` pour ce texte, sinon la page qui précède celle de
-ce premier `<pb>` dans l'ordre de ses pages. Le parcours d'un manuscrit
-dans son propre ordre vient en V0.9.1.4.
+ce premier `<pb>` dans l'ordre de ses pages.
+
+## V0.9.1.4 — Suivre un manuscrit dans son propre ordre
+
+**Les flèches de tout panneau mènent l'édition** (`ManuscriptPanel.navigate`
+émet `witnessNavigate` ; `_witness_panel_navigate`). Le témoin est suivi
+dans son *parcours* (`witness_route.py`) : la suite de ses arrêts dans tous
+les textes — lignes de ses JSON (global et par texte), `<pb>` d'un témoin
+par pages (`PivotLines.pb_marks`) — dans l'ordre du manuscrit. L'édition va
+à la ligne du pivot que désigne la ligne atteinte (la première dans l'ordre
+du pivot ; pour une ligne non reliée, la ligne reliée qui la précède), dans
+le bon texte (`_show_segment_ordinal`) ; le panneau garde sa ligne, les
+autres suivent le pivot. Le pivot traverse ainsi les textes synchronisés à
+part. Hors de l'édition, les flèches feuillettent le témoin (`browse`).
+
+**Ordre des pages, et donc des textes** : rang déclaré (numéro de
+`tei_surface_id`, images IIIF ou fichiers), sinon fusion des listes de
+pages des JSON (identité : canevas IIIF, `image_name`, `id`), sinon
+`<locus from>` ou foliotation (un numéro suivi de r ou v), sinon ordre de
+l'édition (place « incertaine », signalée). Dans un même JSON, l'ordre est
+celui des éléments du panneau (`flatten_primary` / `flatten_secondary`) ;
+sur une page partagée par deux textes, le numéro de ligne.
+
+**Témoin par pages** : la page choisie (flèches ou liste des folios) mène à
+sa première ligne dans un JSON du témoin, sinon à son `<pb>` (place relue
+dans le texte affiché), sinon au début du texte dont le `<locus from>` est
+cette page ; sinon l'édition reste, avec un message. **Panneau absent** :
+ses flèches mènent au texte suivant ou précédent qui a le témoin, dans
+l'ordre de l'édition (`PivotLines.anchor`).

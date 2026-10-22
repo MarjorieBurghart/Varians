@@ -820,6 +820,6 @@
   <string key="status.page_unmarked">Страница {folio} свидетеля {witness}: ни &lt;pb&gt;, ни &lt;locus&gt; не указывают её место в издании, оно не сдвигается.</string>
   <string key="diagnostics.route">Порядок текстов в {witness}: {runs}.</string>
   <string key="diagnostics.route.uncertain">Порядок текстов в {witness}: {runs}; место {texts} не установлено, оставлено в порядке издания.</string>
-  <string key="diagnostics.route.edition">издание (стр. {first}–{last})</string>
+  <string key="diagnostics.route.edition">издание</string>
   <string key="status.route_uncertain">Место {text} в {witness} не установлено: порядок издания.</string>
 </translations>

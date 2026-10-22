@@ -820,6 +820,6 @@ Přesto exportovat?</string>
   <string key="status.page_unmarked">Stránka {folio} svědka {witness}: žádný &lt;pb&gt; ani &lt;locus&gt; ji v edici neumisťuje, edice se nepohne.</string>
   <string key="diagnostics.route">Pořadí textů ve svědkovi {witness}: {runs}.</string>
   <string key="diagnostics.route.uncertain">Pořadí textů ve svědkovi {witness}: {runs}; nejisté místo textů {texts}, ponechaných v pořadí edice.</string>
-  <string key="diagnostics.route.edition">edice (ř. {first}–{last})</string>
+  <string key="diagnostics.route.edition">edice</string>
   <string key="status.route_uncertain">Nejisté místo textu {text} ve svědkovi {witness}: pořadí edice.</string>
 </translations>

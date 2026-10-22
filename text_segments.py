@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import replace
+from pathlib import Path
 
 from app_context import tr as _t
 from folio_navigation import folio_marks, text_start_folio, witness_loci
@@ -319,22 +320,23 @@ class TextSegmentsMixin:
         return sync.name if sync is not None else str(segment)
 
     def _route_runs(self, route):
-        """Le parcours d'un témoin, texte par texte : le nom d'un texte à part,
-        ou les lignes de l'édition parcourues d'un seul tenant."""
-        runs = []
-        for stop in route.stops:
-            if runs and runs[-1][0] == stop.segment:
-                runs[-1][1].append(stop.ordinal)
-            else:
-                runs.append((stop.segment, [stop.ordinal]))
+        """Les textes du parcours d'un témoin, dans son ordre : le fichier de
+        chaque ligne de l'édition (« édition » pour le document maître), le
+        nom d'un texte synchronisé à part ; deux arrêts voisins du même
+        texte n'en font qu'un."""
+        lines = self._pivot_lines() if self._edition_has_parts() else None
+        master = path_key(self.edition_session.path or self.project.edition)
         labels = []
-        for segment, ordinals in runs:
-            if segment is not None:
-                labels.append(self._segment_name(segment))
+        for stop in route.stops:
+            if stop.segment is not None:
+                label = self._segment_name(stop.segment)
+            elif lines is None or stop.ordinal is None or lines.location(stop.ordinal, None) is None:
                 continue
-            ordinals = [ordinal for ordinal in ordinals if ordinal is not None]
-            if ordinals:
-                labels.append(_t("diagnostics.route.edition", first=min(ordinals) + 1, last=max(ordinals) + 1))
+            else:
+                path = lines.location(stop.ordinal, None)[0]
+                label = _t("diagnostics.route.edition") if path_key(path) == master else Path(path).stem
+            if not labels or labels[-1] != label:
+                labels.append(label)
         return labels
 
     def _segment_project(self):

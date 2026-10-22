@@ -103,3 +103,13 @@ Un témoin par pages en lacune (`<rdg wit="#C"><lacunaStart/></rdg>`)
 garde la page de son dernier `<pb>`, avec le bandeau « Lacune » ; pendant
 une lacune du pivot, les témoins par pages continuent de suivre leurs
 `<pb>`.
+
+## V0.9.1.4 — Un témoin par pages mène l'édition
+
+Les flèches d'un panneau en mode page et le choix d'un folio dans sa liste
+mènent l'édition (`_lead_to_page`) : à la première ligne du témoin sur la
+page dans un de ses JSON (`WitnessRoute.on_page`), sinon à la fin de son
+`<pb>` (`PivotLines.pb_marks`, place relue par `folio_marks` dans le texte
+affiché), sinon au début du texte dont le `<locus from>` du témoin est la
+page. Le panneau garde la page choisie ; les autres panneaux suivent le
+curseur. Sans repère, l'édition ne bouge pas (`status.page_unmarked`).

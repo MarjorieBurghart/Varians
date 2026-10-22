@@ -169,8 +169,9 @@ def _notes(window, dialogs):
 def test_the_diagnostics_give_the_order_of_the_texts_in_each_manuscript(open_window, example_with_text, dialogs):
     window = open_window(example_with_text)
     notes = _notes(window, dialogs)
-    runs = " → ".join((tr("diagnostics.route.edition", first=1, last=116), "rls185",
-                       tr("diagnostics.route.edition", first=117, last=3625)))
+    # Dans T1, RLS_185 (xml/rls185.xml) est entre deux passages du fichier
+    # maître de l'édition.
+    runs = " → ".join((tr("diagnostics.route.edition"), "rls185", tr("diagnostics.route.edition")))
     expected = tr("diagnostics.route", witness="T1", runs=runs)
     assert expected != "diagnostics.route" and expected in notes
     # P n'est que dans l'édition : rien à dire de son ordre.
