@@ -208,6 +208,19 @@ Règles :
   `ManuscriptPanel.set_base` et `set_absent`). `base_id`, `lb_base_re` et
   `base_panel` suivent donc le segment affiché ; `_pivot_lines` compte
   toujours avec le pivot du projet et `pivot_lb_pattern` ;
+- sélections partagées de la Vue XSLT / CSS (V0.9.1.2) :
+  `formatted_view.xml_occurrences`, `xml_selection_descriptor` et
+  `pick_xml_occurrence` retrouvent dans un texte XML (la source ou le
+  fragment ouvert) l'occurrence d'un texte visible de l'aperçu, par son rang
+  dans le paragraphe, sinon par sa position ; les méthodes de `MainWindow`
+  qui reportent la sélection entre Source et XSLT / CSS les utilisent.
+  `ClickablePreview.textSelected` (relâchement de la souris sur une
+  sélection, hors liens) mène à `_preview_selection_to_fragment` ;
+  `fragment_editor.selectionChanged`, après 150 ms, à
+  `_fragment_selection_to_preview`, qui appelle
+  `select_visible_text_in_paragraph(..., focus=False)`. Le crayon ✎ appelle
+  `load_fragment(idx)` sans toucher à la source ni aux témoins. Tests :
+  `tests/gui/test_gui_selection_transfer.py` ;
 - des tests anciens exécutent le corps de certaines méthodes avec des objets
   factices (`_text_changed`, `_auto_refresh_rng`, `show_validation_panel`,
   `_validate_relaxng_document_impl`, `sync_panels_to_cursor`,

@@ -26,6 +26,7 @@ from code_editor import CodeEditor, find_in_plain_editor
 from completion_ui import CompletionDialog
 from custom_completion import load_custom_completion
 from selection_sync import choose_occurrence, occurrence_index_for_position
+from tei_facsimile import position_inside_xml_markup
 
 
 def find_in_rich_editor(editor, query, backwards=False):
@@ -172,6 +173,54 @@ def _xml_selection_pattern(text):
     return "".join(parts)
 
 
+def xml_occurrences(xml_text, visible, start=0, end=None):
+    """Plages où le texte visible ``visible`` apparaît dans ``xml_text[start:end]``.
+
+    Sert à la source XML comme au fragment ouvert. Une occurrence visible
+    seulement dans un nom de balise ou une valeur d'attribut est écartée ; une
+    sélection traversant un lb break=no reste admise, car son premier
+    caractère est du texte.
+    """
+    pattern = _xml_selection_pattern(visible)
+    if not pattern:
+        return []
+    end = len(xml_text) if end is None else int(end)
+    try:
+        matches = list(re.finditer(pattern, xml_text[start:end], flags=re.DOTALL))
+    except re.error:
+        return []
+    return [(start + m.start(), start + m.end()) for m in matches
+            if not position_inside_xml_markup(xml_text, start + m.start())]
+
+
+def xml_selection_descriptor(xml_text, visible, selection_start, start=0, end=None):
+    """Rang de la sélection parmi les occurrences de ``visible`` dans
+    ``xml_text[start:end]``, et longueur du texte visible qui la précède
+    depuis ``start``. Ce décalage approximatif sert seulement de repli si la
+    transformation XSLT a modifié le nombre d'occurrences."""
+    occurrences = xml_occurrences(xml_text, visible, start, end)
+    return {
+        "occurrence": occurrence_index_for_position(occurrences, selection_start),
+        "relative": len(_selection_xml_to_visible_text(xml_text[start:int(selection_start)])),
+    }
+
+
+def pick_xml_occurrence(xml_text, visible, descriptor, start=0, end=None):
+    """Occurrence de ``visible`` décrite par ``descriptor`` (rang, sinon
+    décalage visible depuis ``start``), ou None."""
+    occurrences = xml_occurrences(xml_text, visible, start, end)
+    target = None
+    # Pour le repli positionnel, on approxime l'offset visible en balayant
+    # les occurrences candidates ; l'index d'occurrence reste prioritaire.
+    if descriptor.get("relative") is not None and occurrences:
+        wanted = int(descriptor.get("relative") or 0)
+        target = min(
+            occurrences,
+            key=lambda ab: abs(len(_selection_xml_to_visible_text(xml_text[start:ab[0]])) - wanted),
+        )[0]
+    return choose_occurrence(occurrences, descriptor.get("occurrence"), target)
+
+
 P_ELEMENT_RE = re.compile(
     r"<(?:[A-Za-z_][\w.-]*:)?p\b[^>]*>.*?</(?:[A-Za-z_][\w.-]*:)?p\s*>",
     re.IGNORECASE | re.DOTALL,
@@ -273,6 +322,8 @@ class ClickablePreview(QTextBrowser):
     """Aperçu HTML dont le texte est cliquable sans être rendu comme un hyperlien."""
 
     lineActivated = Signal(int)
+    # Sélection faite à la souris (glisser, double-clic), hors des liens.
+    textSelected = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -400,7 +451,10 @@ class ClickablePreview(QTextBrowser):
         rel = max(0, int(selection_start) - int(bounds[0])) if bounds else None
         return {"paragraph": pidx, "occurrence": occ, "relative": rel}
 
-    def select_visible_text_in_paragraph(self, text, descriptor):
+    def select_visible_text_in_paragraph(self, text, descriptor, focus=True):
+        """Sélectionne ``text`` dans un paragraphe de l'aperçu, à l'occurrence
+        décrite par ``descriptor``. ``focus=False`` : le focus reste où il est
+        (sélection venue de l'éditeur de fragment)."""
         if not descriptor:
             return False
         pidx = descriptor.get("paragraph")
@@ -419,7 +473,8 @@ class ClickablePreview(QTextBrowser):
         cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
         self.setTextCursor(cursor)
         self.ensureCursorVisible()
-        self.setFocus()
+        if focus:
+            self.setFocus()
         line = self.line_for_position(a)
         if line is not None:
             self.active_line_ordinal = line
@@ -505,13 +560,14 @@ class ClickablePreview(QTextBrowser):
         super().mouseReleaseEvent(event)
         if href:
             return
-        if not self._marker_positions:
-            return
-        char_pos = self.cursorForPosition(pos).position()
-        line = self.line_for_position(char_pos)
-        if line is not None:
-            self.active_line_ordinal = line
-            self.lineActivated.emit(line)
+        if self._marker_positions:
+            char_pos = self.cursorForPosition(pos).position()
+            line = self.line_for_position(char_pos)
+            if line is not None:
+                self.active_line_ordinal = line
+                self.lineActivated.emit(line)
+        if self.textCursor().hasSelection():
+            self.textSelected.emit()
 
 
 _LXML_TRANSFORM_CACHE = {}
@@ -719,6 +775,7 @@ class FormattedEditionWidget(QWidget):
         self.preview.setMinimumHeight(300)
         self.preview.anchorClicked.connect(self._anchor_clicked)
         self.preview.lineActivated.connect(self._line_clicked)
+        self.preview.textSelected.connect(self._preview_selection_to_fragment)
 
         frag_box = QWidget()
         self.frag_box = frag_box
@@ -806,6 +863,14 @@ class FormattedEditionWidget(QWidget):
             lambda: self.main.show_rng_completion(self.fragment_editor)
         )
         self.fragment_editor.addAction(self.fragment_completion_action)
+
+        # Une sélection faite dans le fragment est aussi sélectionnée dans
+        # l'aperçu, après une courte pause (pas à chaque pas d'un glisser).
+        self._fragment_selection_timer = QTimer(self)
+        self._fragment_selection_timer.setSingleShot(True)
+        self._fragment_selection_timer.setInterval(150)
+        self._fragment_selection_timer.timeout.connect(self._fragment_selection_to_preview)
+        self.fragment_editor.selectionChanged.connect(self._fragment_selection_timer.start)
 
         frag_layout.addWidget(self.fragment_editor)
 
@@ -1384,7 +1449,9 @@ class FormattedEditionWidget(QWidget):
             idx = int(url.path().strip("/"))
         except Exception:
             return
-        self.load_fragment(idx, move_source=True)
+        # Le crayon ouvre seulement le paragraphe : la source et les témoins
+        # restent où ils sont (seul un clic sur le texte les déplace).
+        self.load_fragment(idx)
 
     def _confirm_fragment_switch(self, new_idx):
         """Protège un fragment modifié avant d'en ouvrir un autre.
@@ -1426,7 +1493,7 @@ class FormattedEditionWidget(QWidget):
             return True
         return False
 
-    def load_fragment(self, idx, move_source=False):
+    def load_fragment(self, idx):
         # Édition en parties : aperçu en lecture seule (voir refresh_preview).
         if self.main._edition_has_parts():
             return False
@@ -1455,22 +1522,61 @@ class FormattedEditionWidget(QWidget):
         self.frag_label.setText(_t("fragment.label", index=idx+1, total=len(spans)))
         self.apply_btn.setEnabled(True)
         self.reload_btn.setEnabled(True)
-        if move_source:
-            c = self.main.editor.textCursor()
-            c.setPosition(start)
-            self.main.editor.setTextCursor(c)
-            self.main.sync_panels_to_cursor(True)
         return True
 
     def reload_fragment(self):
         if self.current_paragraph is not None:
-            self.load_fragment(self.current_paragraph, move_source=False)
+            self.load_fragment(self.current_paragraph)
 
     def fragment_has_unapplied_changes(self):
         return (
             self.current_paragraph is not None
             and self.fragment_editor.toPlainText() != self.fragment_original
         )
+
+    def _preview_selection_to_fragment(self):
+        """Une sélection faite dans l'aperçu est aussi sélectionnée dans
+        l'éditeur de fragment, qui prend le focus, si elle commence dans le
+        paragraphe ouvert. La même occurrence est cherchée dans le texte
+        actuel du fragment, même modifié."""
+        if self.current_paragraph is None or self.frag_box.isHidden():
+            return False
+        cursor = self.preview.textCursor()
+        text = cursor.selectedText().replace("⁠", "")
+        if not text.strip():
+            return False
+        descriptor = self.preview.selection_descriptor(text, cursor.selectionStart())
+        if not descriptor or descriptor.get("paragraph") != self.current_paragraph:
+            return False
+        chosen = pick_xml_occurrence(self.fragment_editor.toPlainText(), text, descriptor)
+        if not chosen:
+            return False
+        selection = QTextCursor(self.fragment_editor.document())
+        selection.setPosition(chosen[0])
+        selection.setPosition(chosen[1], QTextCursor.MoveMode.KeepAnchor)
+        self.fragment_editor.setTextCursor(selection)
+        # La sélection vient de l'aperçu : elle n'y est pas renvoyée.
+        self._fragment_selection_timer.stop()
+        self.fragment_editor.centerCursor()
+        self.fragment_editor.setFocus()
+        return True
+
+    def _fragment_selection_to_preview(self):
+        """Une sélection faite dans l'éditeur de fragment est aussi
+        sélectionnée dans l'aperçu, qui défile jusqu'à elle ; le focus reste
+        dans le fragment. Une sélection faite seulement de balises, ou un
+        texte absent de l'aperçu (tapé, pas encore appliqué), n'y change rien."""
+        if self.current_paragraph is None or self.frag_box.isHidden():
+            return False
+        cursor = self.fragment_editor.textCursor()
+        if not cursor.hasSelection():
+            return False
+        text = _selection_xml_to_visible_text(cursor.selectedText())
+        if not text:
+            return False
+        descriptor = xml_selection_descriptor(self.fragment_editor.toPlainText(), text, cursor.selectionStart())
+        descriptor["paragraph"] = self.current_paragraph
+        return self.preview.select_visible_text_in_paragraph(text, descriptor, focus=False)
 
     def close_fragment_editor(self):
         """Ferme l’éditeur de fragment sans perdre silencieusement une correction."""
@@ -1519,7 +1625,7 @@ class FormattedEditionWidget(QWidget):
                 QMessageBox.StandardButton.No,
             )
             if r != QMessageBox.StandardButton.Yes:
-                self.load_fragment(idx, move_source=False)
+                self.load_fragment(idx)
                 return False
         frag = self.fragment_editor.toPlainText()
 
@@ -1544,6 +1650,6 @@ class FormattedEditionWidget(QWidget):
         self.dirty_preview = True
         self.refresh_preview()
         # Les plages ont pu changer ; recharge le même numéro ordinal si possible.
-        self.load_fragment(min(idx, max(0, len(paragraph_spans(self.main.editor.toPlainText()))-1)), move_source=False)
+        self.load_fragment(min(idx, max(0, len(paragraph_spans(self.main.editor.toPlainText()))-1)))
         return True
 

@@ -158,3 +158,21 @@ def test_each_help_has_a_guide_for_editions_in_parts():
             assert text in section, (language, text)
         version = page[page.index('<section id="v0911">'):]
         assert 'href="#xinclude-guide"' in version[:version.index("</section>")], language
+
+
+def test_each_help_explains_the_selections_shared_with_the_fragment_editor():
+    """Sélections partagées entre l'aperçu XSLT / CSS et l'éditeur de
+    fragment, crayon ✎ sans synchronisation des témoins (V0.9.1.2)."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        heading = re.search(r'<h2 id="(edition|editing)">', page)
+        section = page[heading.start():page.index("<h2", heading.end())]
+        for text in ("✎", '&lt;lb break="no"/&gt;', catalog["fragment.apply_xml"]):
+            assert text in section, (language, text)
+        version = page[page.index('<section id="v0912">'):]
+        version = version[:version.index("</section>")]
+        assert f'href="#{heading.group(1)}"' in version and "0.9.1.3" in version, language
+        parts = page[page.index('<section id="xinclude">'):]
+        assert "0.9.1.3" in parts[:parts.index("</section>")], language

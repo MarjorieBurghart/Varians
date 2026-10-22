@@ -48,7 +48,7 @@ def test_toolbar_and_display_menu_are_reorganized():
 def test_selection_transfer_has_paragraph_occurrence_descriptor():
     source = application_source()
     assert 'def selection_descriptor(self, text, selection_start):' in source
-    assert 'def select_visible_text_in_paragraph(self, text, descriptor):' in source
+    assert 'def select_visible_text_in_paragraph(self, text, descriptor, focus=True):' in source
     assert 'def _source_selection_descriptor(self, text, selection_start):' in source
     assert 'def _select_xml_text_in_paragraph(self, text, descriptor):' in source
     assert 'preview.select_visible_text_in_paragraph(selected, desc)' in source

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.9.1.1.
+"""Varians — éditeur TEI/manuscrits générique — V0.9.1.2.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -72,6 +72,7 @@ from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 from pivot_lines import pivot_lb_pattern
 from formatted_view import (
     _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget, paragraph_spans,
+    pick_xml_occurrence, xml_selection_descriptor,
 )
 from manuscript_panel import ManuscriptPanel
 from code_editor import CodeEditor, find_in_plain_editor, XMLHighlighter
@@ -100,9 +101,8 @@ from image_sources import (
 )
 from alto_import import apply_witness_alto_policy
 from iiif_local import apply_working_copy
-from tei_facsimile import position_inside_xml_markup
 from tei_formatter import format_tei_xml
-from selection_sync import containing_span_index, occurrence_index_for_position, choose_occurrence
+from selection_sync import containing_span_index
 
 try:
     from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot, QRunnable, QThreadPool, QEvent
@@ -965,66 +965,24 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
     def ordinal_at_cursor(self):
         return self.ordinal_at_position(self.editor.textCursor().position())
 
-    def _xml_occurrences_in_paragraph(self, text, paragraph_index):
-        pattern = _xml_selection_pattern(text)
-        if not pattern:
-            return []
-        source = self.editor.toPlainText()
-        spans = paragraph_spans(source)
-        try:
-            start, end = spans[int(paragraph_index)]
-        except (IndexError, TypeError, ValueError):
-            return []
-        try:
-            matches = list(re.finditer(pattern, source[start:end], flags=re.DOTALL))
-        except re.error:
-            return []
-        result = []
-        for match in matches:
-            a, b = start + match.start(), start + match.end()
-            # Écarter les occurrences qui ne sont visibles que dans un nom de
-            # balise ou une valeur d'attribut. Une sélection traversant un lb
-            # break=no reste admise car son premier caractère est du texte.
-            if position_inside_xml_markup(source, a):
-                continue
-            result.append((a, b))
-        return result
-
     def _source_selection_descriptor(self, text, selection_start):
         source = self.editor.toPlainText()
         spans = paragraph_spans(source)
         pidx = containing_span_index(spans, selection_start)
         if pidx is None:
             return None
-        occurrences = self._xml_occurrences_in_paragraph(text, pidx)
-        occ = occurrence_index_for_position(occurrences, selection_start)
-        start, _end = spans[pidx]
-        # Offset visible approximatif, utilisé uniquement comme repli si la
-        # transformation XSLT a modifié le nombre d'occurrences.
-        rel = len(_selection_xml_to_visible_text(source[start:int(selection_start)]))
-        return {"paragraph": pidx, "occurrence": occ, "relative": rel}
+        start, end = spans[pidx]
+        return {"paragraph": pidx, **xml_selection_descriptor(source, text, selection_start, start, end)}
 
     def _select_xml_text_in_paragraph(self, text, descriptor):
         if not descriptor:
             return False
-        pidx = descriptor.get("paragraph")
-        occurrences = self._xml_occurrences_in_paragraph(text, pidx)
         source = self.editor.toPlainText()
-        spans = paragraph_spans(source)
-        target = None
         try:
-            pstart, pend = spans[int(pidx)]
+            pstart, pend = paragraph_spans(source)[int(descriptor.get("paragraph"))]
         except (IndexError, TypeError, ValueError):
             return False
-        # Pour le repli positionnel, on approxime l'offset visible en balayant
-        # les occurrences candidates ; l'index d'occurrence reste prioritaire.
-        if descriptor.get("relative") is not None and occurrences:
-            wanted = int(descriptor.get("relative") or 0)
-            target = min(
-                occurrences,
-                key=lambda ab: abs(len(_selection_xml_to_visible_text(source[pstart:ab[0]])) - wanted),
-            )[0]
-        chosen = choose_occurrence(occurrences, descriptor.get("occurrence"), target)
+        chosen = pick_xml_occurrence(source, text, descriptor, pstart, pend)
         if not chosen:
             return False
         a, b = chosen
