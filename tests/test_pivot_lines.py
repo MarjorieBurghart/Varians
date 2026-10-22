@@ -16,7 +16,7 @@ from lxml import etree
 from document_session import LbIndex
 from folio_navigation import Folio, folio_at_position, last_folio_mark
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
-from xml_assembly import assemble
+from xml_assembly import assemble, path_key
 
 DATA = Path(__file__).resolve().parent / "data" / "sermons" / "xml"
 EDITION = DATA / "edition.xml"
@@ -186,6 +186,18 @@ def test_the_page_of_another_witness_follows_the_edition_order():
     lines = _lines()
     # Dans B, le sermon 2 précède le sermon 1 ; l'édition suit l'ordre inverse.
     assert _page(lines, S02, "<head>", witness="B", folios=folios) == "32r"
+
+
+def test_the_page_in_a_text_synchronized_apart_comes_from_that_text_only():
+    """V0.9.1.3 : dans un texte à part, l'ordre de l'édition ne dit rien des
+    pages d'un témoin ; seul compte ce texte."""
+    folios = [Folio(f"B{n}", f"B{n}", n) for n in ("30r", "30v", "31r", "31v", "32r")]
+    lines = pivot_lines(_read(EDITION), EDITION, {}, "A", text_bases={S02: "B"})
+    assert _page(lines, S02, "<head>", witness="B", folios=folios) is None
+    assert _page(lines, S02, "Puer natus", witness="B", folios=folios) == "30r"
+    assert _page(lines, S03, "<head>") == "13r"            # l'édition continue comme avant
+    assert lines.page_witnesses(path_key(S02)) == {"B", "D"}
+    assert lines.page_witnesses(None) >= {"A", "B", "C", "E"}
 
 
 def test_last_folio_mark_gives_the_end_of_the_pb():

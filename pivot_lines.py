@@ -17,12 +17,15 @@ autres outils (XSLT, viewer web, ``xmllint --xinclude``), un ``<lb/>`` placé
 dans un commentaire ou hors de l'élément inclus d'une partie ne compte pas.
 
 Le même parcours relève les ``<pb>`` : la page d'un témoin tient compte de ce
-qui précède dans les autres fichiers (page à la jonction de deux textes).
+qui précède dans les autres fichiers (page à la jonction de deux textes). Il
+relève aussi les lacunes des témoins (V0.9.1.3, ``lacunae``), qui peuvent
+passer d'une partie à l'autre.
 
 Textes synchronisés à part (V0.9.1.1, ``text_alignments``) : chacun forme un
 *segment*, numéroté pour lui seul avec son propre pivot, inclusions
 imbriquées comprises ; le segment de l'édition (clé None) ne compte pas leurs
-lignes. Un fichier appartient à un seul segment.
+lignes. Un fichier appartient à un seul segment. Dans un texte à part, la
+page d'un témoin et ses lacunes ne dépendent que de ce texte (V0.9.1.3).
 """
 from __future__ import annotations
 
@@ -36,6 +39,7 @@ from lxml import etree
 
 from document_session import LbIndex
 from folio_navigation import folio_lookup, last_folio_mark, pb_folio
+from lacunae import Lacuna, apply_events, lacuna_events, witness_tokens
 from xml_assembly import assemble, path_key
 
 # Balise ouvrante d'un xi:include (le préfixe est libre) ; un élément non vide
@@ -98,9 +102,10 @@ class FileLines:
 
     ``ordinals`` : numéro de chacun de ses ``<lb/>`` du pivot, dans l'ordre du
     texte, ou None s'il n'entre pas dans l'édition. ``includes`` : pour chacun
-    de ses ``xi:include``, ``(dernier numéro, nombre de <pb>)`` à la fin de
-    son contenu, ou None s'il n'a rien inclus. ``entry`` : la même paire avant
-    le contenu du fichier (−1 : aucune ligne avant). Les numéros sont ceux du
+    de ses ``xi:include``, ``(dernier numéro, nombre de <pb>, nombre
+    d'événements de lacune)`` à la fin de son contenu, ou None s'il n'a rien
+    inclus. ``entry`` : le même triplet avant le contenu du fichier (−1 :
+    aucune ligne avant). Les numéros sont ceux du
     ``segment`` du fichier : None pour l'édition, sinon la clé (``path_key``)
     du texte synchronisé à part qui le contient.
     """
@@ -113,11 +118,17 @@ class FileLines:
 class PivotLines:
     """Résultat de ``pivot_lines``."""
 
-    def __init__(self, files, locations, pbs, problems):
+    def __init__(self, files, locations, pbs, problems, lacunae=(), starts=None, page_witnesses=None):
         self._files = files
         # {segment: ((fichier, rang), …)} ; voir location().
         self._locations = {segment: tuple(found) for segment, found in locations.items()}
+        # <pb> et événements de lacune du document assemblé, dans l'ordre :
+        # (facs, edRef, n, segment) et (segment, début, témoins, numéro).
         self._pbs = tuple(pbs)
+        self._lacunae = tuple(lacunae)
+        # Texte à part : (nombre de <pb>, nombre d'événements) à son début.
+        self._starts = dict(starts or {})
+        self._page_witnesses = {segment: frozenset(ids) for segment, ids in (page_witnesses or {}).items()}
         self.problems = tuple(problems)
 
     @property
@@ -170,26 +181,63 @@ class PivotLines:
             return None
         return found[ordinal]
 
+    def _counts_at(self, lines, position, includes, index):
+        """Nombre de <pb> (``index`` 1) ou d'événements de lacune (2) du
+        document assemblé avant ``position``, et fin du dernier xi:include
+        qui la précède (−1 : aucun)."""
+        count, after = lines.entry[index], -1
+        for (_start, end), value in zip(includes, lines.includes):
+            if end <= position and value is not None:
+                count, after = value[index], end
+        return count, after
+
     def page_at(self, path, position, text, includes, witness_id, folios):
         """Folio du témoin ``witness_id`` à ``position`` dans ``path`` (texte
         ``text``) : le dernier ``<pb>`` qui le concerne avant cette position,
-        dans l'ordre du document assemblé."""
+        dans l'ordre du document assemblé ; dans un texte synchronisé à part,
+        dans ce texte seulement."""
         lines = self.file(path)
         if lines is None:
             return None
-        count, after = lines.entry[1], -1
-        for (_start, end), value in zip(includes, lines.includes):
-            if end <= position and value is not None:
-                count, after = value[1], end
+        count, after = self._counts_at(lines, position, includes, 1)
         local = last_folio_mark(text, position, witness_id, folios)
         if local is not None and local[1] > after:
             return local[0]
+        begin = self._starts.get(lines.segment, (0, 0))[0] if lines.segment is not None else 0
         lookup = folio_lookup(folios)
-        for facs, ed_ref, n in reversed(self._pbs[:count]):
+        for facs, ed_ref, n, _segment in reversed(self._pbs[begin:count]):
             folio = pb_folio(facs, ed_ref, n, witness_id, lookup)
             if folio is not None:
                 return folio
         return None
+
+    def lacunae_at(self, path, position, text, includes, events=None):
+        """``{témoin: Lacuna}`` des témoins en lacune à ``position`` dans
+        ``path`` (texte ``text``, ``events`` : ses ``lacuna_events`` s'ils
+        sont connus). Une lacune commencée dans un autre fichier a pour
+        ``ordinal`` la ligne du pivot où elle commence. Dans un texte
+        synchronisé à part, seules comptent les lacunes de ce texte."""
+        lines = self.file(path)
+        if lines is None:
+            return {}
+        count, after = self._counts_at(lines, position, includes, 2)
+        segment = lines.segment
+        begin = self._starts.get(segment, (0, 0))[1] if segment is not None else 0
+        state = {}
+        for event_segment, start, witnesses, ordinal in self._lacunae[begin:count]:
+            if event_segment != segment:
+                continue
+            for witness in witnesses:
+                if start:
+                    state.setdefault(witness, Lacuna(witness, ordinal=ordinal))
+                else:
+                    state.pop(witness, None)
+        events = lacuna_events(text) if events is None else events
+        return apply_events(state, events, int(position), start=after)
+
+    def page_witnesses(self, segment):
+        """Témoins dont un ``<pb edRef>`` est dans le segment ``segment``."""
+        return self._page_witnesses.get(segment, frozenset())
 
 
 def _read(path):
@@ -217,12 +265,15 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
     patterns = {base_id: pattern or pivot_lb_pattern(base_id)}
     master = path_key(assembly.master)
     paths = {master: assembly.master}
-    entries = {master: (-1, 0)}
+    entries = {master: (-1, 0, 0)}
     segments = {master: None}        # fichier -> segment
     counts = defaultdict(lambda: -1)  # segment -> dernier numéro
     lbs = defaultdict(list)          # fichier -> [(ligne, numéro)]
-    ends = defaultdict(list)         # fichier -> [(ligne du xi:include, (numéro, pb))]
+    ends = defaultdict(list)         # fichier -> [(ligne du xi:include, (numéro, pb, lacunes))]
     pbs = []
+    lacunae = []
+    starts = {}                      # texte à part -> (pb, lacunes) à son début
+    page_witnesses = defaultdict(set)
     # Fichier courant et son segment ; le contenu d'un fichier inclus une
     # seconde fois est compté, mais rattaché à sa première inclusion seulement.
     stack = [(master, True, None)]
@@ -235,7 +286,7 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
                 stack.pop()
                 key, first, segment = stack[-1]
                 if first:
-                    ends[key].append((site, (counts[segment], len(pbs))))
+                    ends[key].append((site, (counts[segment], len(pbs), len(lacunae))))
             continue
         if site is not None:
             path = assembly.origin(element)
@@ -243,11 +294,12 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
             segment = key if key in apart else stack[-1][2]
             if key in apart:
                 bases.setdefault(segment, apart[key])
+                starts.setdefault(segment, (len(pbs), len(lacunae)))
             first = key not in entries
             if first:
                 paths[key] = path
                 segments[key] = segment
-                entries[key] = (counts[segment], len(pbs))
+                entries[key] = (counts[segment], len(pbs), len(lacunae))
             stack.append((key, first, segment))
         name = etree.QName(element).localname
         key, first, segment = stack[-1]
@@ -256,7 +308,12 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
             if first:
                 lbs[key].append((element.sourceline, counts[segment]))
         elif name == "pb":
-            pbs.append((element.get("facs"), element.get("edRef"), element.get("n")))
+            pbs.append((element.get("facs"), element.get("edRef"), element.get("n"), segment))
+            page_witnesses[segment].update(witness_tokens(element.get("edRef")))
+        elif name in ("lacunaStart", "lacunaEnd"):
+            witnesses = _lacuna_witnesses(element)
+            if witnesses:
+                lacunae.append((segment, name == "lacunaStart", witnesses, max(0, counts[segment])))
     by_key = {path_key(path): text for path, text in texts.items()}
     by_key[master] = str(edition_text or "")
     files = {}
@@ -275,4 +332,15 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
         tags = _include_tags(text)
         includes = _match_by_line(text, [tag_end - 1 for _s, _e, tag_end in tags], ends[key])
         files[key] = FileLines(ordinals, includes, entries[key], segment)
-    return PivotLines(files, locations, pbs, assembly.problems)
+    return PivotLines(files, locations, pbs, assembly.problems, lacunae, starts, page_witnesses)
+
+
+def _lacuna_witnesses(element):
+    """Témoins d'un ``<lacunaStart/>`` ou ``<lacunaEnd/>`` : son ``@wit``,
+    sinon celui de la leçon (``<rdg>``, ``<lem>``) qui le contient."""
+    if element.get("wit") is not None:
+        return witness_tokens(element.get("wit"))
+    for ancestor in element.iterancestors():
+        if isinstance(ancestor.tag, str) and etree.QName(ancestor).localname in ("rdg", "lem"):
+            return witness_tokens(ancestor.get("wit"))
+    return frozenset()
