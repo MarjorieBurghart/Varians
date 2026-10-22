@@ -969,22 +969,42 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return self.ordinal_at_position(self.editor.textCursor().position())
 
     def _source_selection_descriptor(self, text, selection_start):
+        """Paragraphe de l'aperçu qui contient la sélection, et rang de
+        l'occurrence dans ce paragraphe. Pour une édition en parties
+        (V0.9.1.5), le paragraphe est celui de l'aperçu de toute l'édition."""
         source = self.editor.toPlainText()
-        spans = paragraph_spans(source)
-        pidx = containing_span_index(spans, selection_start)
-        if pidx is None:
-            return None
-        start, end = spans[pidx]
+        sources = self._assembled_preview_sources()
+        if sources is not None:
+            pidx = sources.paragraph_at(self.document.path, selection_start)
+            if pidx is None:
+                return None
+            start, end = sources.paragraphs[pidx].start, sources.paragraphs[pidx].end
+        else:
+            spans = paragraph_spans(source)
+            pidx = containing_span_index(spans, selection_start)
+            if pidx is None:
+                return None
+            start, end = spans[pidx]
         return {"paragraph": pidx, **xml_selection_descriptor(source, text, selection_start, start, end)}
 
     def _select_xml_text_in_paragraph(self, text, descriptor):
+        """Sélectionne dans la source l'occurrence décrite par ``descriptor``.
+        Pour une édition en parties (V0.9.1.5), le fichier qui contient ce
+        paragraphe de l'aperçu est d'abord affiché."""
         if not descriptor:
             return False
-        source = self.editor.toPlainText()
+        sources = self._assembled_preview_sources()
         try:
-            pstart, pend = paragraph_spans(source)[int(descriptor.get("paragraph"))]
+            if sources is not None:
+                span = sources.paragraphs[int(descriptor.get("paragraph"))]
+                if span is None or not self._show_file_position(span.path, span.start):
+                    return False
+                pstart, pend = span.start, span.end
+            else:
+                pstart, pend = paragraph_spans(self.editor.toPlainText())[int(descriptor.get("paragraph"))]
         except (IndexError, TypeError, ValueError):
             return False
+        source = self.editor.toPlainText()
         chosen = pick_xml_occurrence(source, text, descriptor, pstart, pend)
         if not chosen:
             return False
@@ -1070,14 +1090,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             return
         previous = getattr(self, "_previous_left_tab_index", 0)
         self._previous_left_tab_index = index
-
-        # Édition en parties : l'aperçu montre l'édition assemblée ; ses
-        # paragraphes ne correspondent pas à ceux de la source (pas de report
-        # de la position d'une vue à l'autre).
-        if self._edition_has_parts():
-            if self.left_tabs.widget(index) is self.formatted_view:
-                self.formatted_view.became_visible()
-            return
+        # Édition en parties (V0.9.1.5) : l'aperçu montre toute l'édition ; ses
+        # repères de ligne et ses paragraphes renvoient chacun à son fichier.
+        parts = self._edition_has_parts()
 
         if self.left_tabs.widget(index) is self.formatted_view:
             # XML -> XSLT : la chaîne seule ne suffit pas ("qui" peut apparaître
@@ -1085,7 +1100,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # l'occurrence à l'intérieur de ce paragraphe.
             source_cursor = self.editor.textCursor()
             source_pos = source_cursor.selectionStart() if source_cursor.hasSelection() else source_cursor.position()
-            ordinal = self.ordinal_at_position(source_pos)
+            if parts:
+                sources = self._assembled_preview_sources()
+                ordinal = sources.line_before(self.document.path, source_pos) if sources is not None else None
+            else:
+                ordinal = self.ordinal_at_position(source_pos)
             selected_visible = (
                 _selection_xml_to_visible_text(source_cursor.selectedText())
                 if source_cursor.hasSelection() else ""
@@ -1124,7 +1143,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 ordinal = self.formatted_view.preview.line_for_position(preview_cursor.selectionStart())
             if ordinal is None:
                 ordinal = self.formatted_view.current_preview_line()
-            if ordinal is not None:
+            if ordinal is not None and parts:
+                # Le repère de l'aperçu mène au fichier qui contient la ligne.
+                self.navigate_to_preview_line(ordinal)
+                ordinal = None          # la sélection est cherchée près du curseur
+            elif ordinal is not None:
                 self.navigate_to_base_ordinal(ordinal, move_xml_cursor=True)
 
             def restore_xml_context(selected=selected_visible, n=ordinal, desc=descriptor, shown=self.document):
