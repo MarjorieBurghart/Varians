@@ -108,8 +108,6 @@ def test_an_edition_in_parts_does_not_carry_the_selection(open_window, example_w
     view = _show_preview(window, qtbot)
     qtbot.wait(150)
     assert not view.preview.textCursor().hasSelection()
-    word = _preview_occurrences(view, "premium", 2) if view.preview.paragraph_bounds(2) else []
-    assert word == []                                     # pas de repères de paragraphe
     plain = view.preview.toPlainText()
     start = plain.index("premium")
     _select(view.preview, start, start + len("premium"))

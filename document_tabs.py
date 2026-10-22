@@ -26,6 +26,7 @@ from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
+from preview_sources import preview_sources
 from project_management import update_project_documents
 from lxml import etree
 from xml_assembly import assemble, path_key
@@ -130,20 +131,50 @@ class DocumentTabsMixin:
         assemblée."""
         return any(session.is_part for session in self.documents)
 
-    def _assembled_preview_text(self, edition_text):
-        """Texte de l'édition assemblée, parties comprises (texte non enregistré
-        des parties modifiées), pour la Vue XSLT / CSS ; None si l'édition
-        n'est pas affichée, n'a pas de parties ou est mal formée. L'aperçu est
-        alors en lecture seule : ses paragraphes ne sont plus ceux de la
-        source."""
-        if not self.document.is_edition or not self._edition_has_parts():
+    def _assembled_preview_sources(self):
+        """Sources de l'aperçu de l'édition assemblée (``preview_sources``),
+        parties comprises (texte non enregistré des parties modifiées), quel
+        que soit le document affiché ; None pour une édition sans parties,
+        ou mal formée."""
+        if not self._edition_has_parts():
             return None
-        parts = {str(s.path): s.text_document.toPlainText() for s in self.documents
+        edition = self.edition_session
+        parts = {s.path: s.text_document.toPlainText() for s in self.documents
                  if s.is_part and s.text_document is not None and s.modified}
-        assembly = assemble(edition_text, self.edition_session.path or self.project.edition, parts)
-        if assembly.root is None:
-            return None
-        return etree.tostring(assembly.root, encoding="unicode")
+        base = self.project.base_witness
+        return preview_sources(edition.text_document.toPlainText(), edition.path or self.project.edition,
+                               parts, base, pivot_lb_pattern(base))
+
+    def _show_file_position(self, path, position):
+        """Place le curseur à ``position`` dans le fichier ``path`` de
+        l'édition, affiché au besoin (l'aperçu reste à l'écran)."""
+        session = next((s for s in self.documents if s.in_edition and path_key(s.path) == path_key(path)), None)
+        if session is None or not self.show_document(session):
+            return False
+        self.show_document_tab(session)
+        text_length = self.editor.document().characterCount() - 1
+        cursor = self.editor.textCursor()
+        cursor.setPosition(max(0, min(int(position), text_length)))
+        self.editor.setTextCursor(cursor)
+        self.editor.centerCursor()
+        return True
+
+    def navigate_to_preview_line(self, index):
+        """Repère de ligne ``index`` de l'aperçu d'une édition assemblée
+        (V0.9.1.5) : le curseur va à ce ``<lb/>`` dans son fichier ; les
+        témoins suivent, avec la numérotation du texte qui le contient."""
+        sources = self.formatted_view.sources
+        if sources is None or not 0 <= int(index) < len(sources.lines) or sources.lines[int(index)] is None:
+            return False
+        path, end = sources.lines[int(index)]
+        self._sync_from_panel = True
+        try:
+            if not self._show_file_position(path, end):
+                return False
+            self.sync_panels_to_cursor(True)
+        finally:
+            call_later(90, self, self._release_panel_sync)
+        return True
 
     # --- Lignes du pivot dans l'édition assemblée (V0.9.1.0) -------------------
 
@@ -389,7 +420,9 @@ class DocumentTabsMixin:
             except Exception as exc:
                 QMessageBox.critical(self, _t("file.open.error.title"), str(exc))
                 return False
-        if self._edition_displayed() and not self._leave_edition_view():
+        # L'aperçu montre l'édition assemblée : passer d'une partie à l'autre
+        # ne le quitte pas (V0.9.1.5) ; un document auxiliaire, si.
+        if self.document.in_edition and not session.in_edition and not self._leave_edition_view():
             return False
         if text is not None:
             self._load_session_text(session, text)
@@ -580,7 +613,7 @@ class DocumentTabsMixin:
     # --- Interface réservée à l'édition ---------------------------------------
 
     def _edition_only_actions(self):
-        return [self.action_preview, self.action_save_as]
+        return [self.action_save_as]
 
     def _witness_actions(self):
         return [self.action_reload_images, self.action_choose_witnesses,
@@ -594,19 +627,28 @@ class DocumentTabsMixin:
         autre document est affiché, puis rétablis à l'identique."""
         edition = self._edition_displayed()
         hidden = getattr(self, "_edition_ui_hidden", None)
-        preview = self.left_tabs.indexOf(self.formatted_view)
         if edition and hidden is not None:
             self._edition_ui_hidden = None
             for action, enabled in hidden:
                 action.setEnabled(enabled)
-            self.left_tabs.setTabEnabled(preview, True)
         elif not edition and hidden is None:
             self._edition_ui_hidden = hidden = [(action, action.isEnabled())
                                                 for action in self._edition_only_actions()]
             for action, _enabled in hidden:
                 action.setEnabled(False)
-            self.left_tabs.setTabEnabled(preview, False)
+        # L'aperçu (l'édition assemblée) : pour l'édition et ses parties
+        # (V0.9.1.5).
         witnesses = self.document.in_edition
+        preview = self.left_tabs.indexOf(self.formatted_view)
+        hidden = getattr(self, "_preview_ui_hidden", None)
+        if witnesses and hidden is not None:
+            self._preview_ui_hidden = None
+            self.action_preview.setEnabled(hidden)
+            self.left_tabs.setTabEnabled(preview, True)
+        elif not witnesses and hidden is None:
+            self._preview_ui_hidden = self.action_preview.isEnabled()
+            self.action_preview.setEnabled(False)
+            self.left_tabs.setTabEnabled(preview, False)
         hidden = getattr(self, "_witness_ui_hidden", None)
         if witnesses and hidden is not None:
             self._witness_ui_hidden = None

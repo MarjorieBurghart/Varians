@@ -692,6 +692,9 @@ class FormattedEditionWidget(QWidget):
         self.fragment_original = ""
         self.dirty_preview = True
         self._last_preview_key = None
+        # Édition en parties (V0.9.1.5) : fichier et place de chaque
+        # paragraphe et repère de ligne de l'aperçu (preview_sources).
+        self.sources = None
         self._cached_css_key = None
         self._cached_css_text = None
         self._last_preview_engine = None
@@ -982,7 +985,7 @@ class FormattedEditionWidget(QWidget):
             if line is not None:
                 self.preview.active_line_ordinal = line
                 # Rester dans l'onglet XSLT tout en synchronisant XML et images.
-                self.main.navigate_to_base_ordinal(line, move_xml_cursor=True)
+                self._activate_line(line, move_xml_cursor=True)
             self.info.setText(_t("preview.search.found", n=n, total=total, query=q))
             self.info.setStyleSheet("color:#376b3c")
         else:
@@ -1329,12 +1332,16 @@ class FormattedEditionWidget(QWidget):
         return self._cached_css_text
 
     def refresh_preview(self, force=False):
-        xml_text = self.main.editor.toPlainText()
         # Édition en parties (XInclude) : l'aperçu montre l'édition assemblée,
-        # en lecture seule (ses paragraphes ne sont plus ceux de la source).
-        assembled = self.main._assembled_preview_text(xml_text)
-        if assembled is not None:
-            xml_text = assembled
+        # quel que soit le document affiché ; ses paragraphes et ses lignes
+        # restent rattachés à leur fichier (V0.9.1.5).
+        if self.main._edition_has_parts():
+            self.sources = self.main._assembled_preview_sources()
+            xml_text = (self.sources.text if self.sources is not None
+                        else self.main.edition_session.text_document.toPlainText())
+        else:
+            self.sources = None
+            xml_text = self.main.editor.toPlainText()
         if not self.xsl_path.exists() or not self.css_path.exists():
             self.info.setText(_t("preview.files_missing"))
             self.info.setStyleSheet("color:#a14b2f")
@@ -1347,12 +1354,8 @@ class FormattedEditionWidget(QWidget):
         if not force and preview_key == self._last_preview_key:
             self.dirty_preview = False
             engine = self._last_preview_engine or "cache"
-            if assembled is not None:
-                self.info.setText(_t("preview.assembled.read_only"))
-                self.info.setStyleSheet("color:#9a6a2f")
-            else:
-                self.info.setText(_t("preview.up_to_date", engine=engine))
-                self.info.setStyleSheet("color:#376b3c")
+            self.info.setText(_t("preview.up_to_date", engine=engine))
+            self.info.setStyleSheet("color:#376b3c")
             return
 
         try:
@@ -1373,10 +1376,9 @@ class FormattedEditionWidget(QWidget):
         t0 = time.perf_counter()
         try:
             html_text, engine = transform_with_xslt(xml_text, self.xsl_path, {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc")})
-            if assembled is None:
-                spans = paragraph_spans(xml_text)
-                html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
-                html_text, marked = inject_edit_markers(html_text, len(spans))
+            spans = self.sources.paragraphs if self.sources is not None else paragraph_spans(xml_text)
+            html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
+            html_text, marked = inject_edit_markers(html_text, len(spans))
             css = self._resolved_css_cached()
 
             # setHtml() et zoomIn()/zoomOut() n’ont pas des sémantiques identiques
@@ -1401,10 +1403,7 @@ class FormattedEditionWidget(QWidget):
             self._last_preview_key = preview_key
             self._last_preview_engine = engine
             elapsed = time.perf_counter() - t0
-            if assembled is not None:
-                self.info.setText(_t("preview.assembled.read_only"))
-                self.info.setStyleSheet("color:#9a6a2f")
-            elif clickable_lines:
+            if clickable_lines:
                 self.info.setText(_t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans), lines=clickable_lines))
                 self.info.setStyleSheet("color:#376b3c")
             else:
@@ -1414,9 +1413,19 @@ class FormattedEditionWidget(QWidget):
             self.info.setText(_t("preview.transform_error", error=exc))
             self.info.setStyleSheet("color:#a13d32")
 
+    def _activate_line(self, idx, move_xml_cursor=True):
+        """Repère de ligne ``idx`` de l'aperçu : le curseur de la source et les
+        témoins y vont. Dans une édition assemblée, par la place de ce
+        repère dans son fichier (V0.9.1.5) : la numérotation des textes
+        synchronisés à part est ainsi respectée."""
+        if self.sources is not None:
+            self.main.navigate_to_preview_line(int(idx))
+        else:
+            self.main.navigate_to_base_ordinal(idx, move_xml_cursor=move_xml_cursor)
+
     def _line_clicked(self, idx):
         self.preview.active_line_ordinal = int(idx)
-        self.main.navigate_to_base_ordinal(idx, move_xml_cursor=True)
+        self._activate_line(idx, move_xml_cursor=True)
         self.info.setText(_t("preview.base_selected", line=idx+1))
         self.info.setStyleSheet("color:#376b3c")
 
@@ -1440,7 +1449,7 @@ class FormattedEditionWidget(QWidget):
                 line = self.preview.line_at_viewport_center()
                 if line is not None:
                     self.preview.active_line_ordinal = int(line)
-                    self.main.navigate_to_base_ordinal(int(line), move_xml_cursor=False)
+                    self._activate_line(int(line), move_xml_cursor=False)
             call_later(0, self, sync_after_toc)
             return
         if url.scheme() != "tei-edit":
@@ -1494,7 +1503,7 @@ class FormattedEditionWidget(QWidget):
         return False
 
     def load_fragment(self, idx):
-        # Édition en parties : aperçu en lecture seule (voir refresh_preview).
+        # Édition en parties : le fragment viendra du fichier du paragraphe.
         if self.main._edition_has_parts():
             return False
         # Ne jamais remplacer silencieusement un fragment modifié par un
