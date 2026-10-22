@@ -23,6 +23,14 @@ VARIANS V0.9.1.5 — VUE XSLT / CSS D'UNE ÉDITION ASSEMBLÉE
 • Limites : un paragraphe qui contient lui-même un xi:include s'édite dans
   le fichier de sa balise ; l'export web ne contient pas encore les
   parties (prochaine étape).
+• Sous l'aperçu, le nombre de lignes du témoin pivot cliquables est de
+  nouveau donné : les versions précédentes disaient, à tort, que la XSLT ne
+  produisait pas de marqueurs de ligne (ses repères portent un caractère
+  invisible que le décompte n'acceptait pas ; les repères, eux,
+  fonctionnaient).
+• Éditeur de fragment : si la place manque, la case « Retour automatique à
+  la ligne » se raccourcit (son texte reste dans sa bulle d'aide), et
+  l'étiquette du fragment reste lisible en entier.
 • Tests GUI : les fenêtres de test sont détruites après chaque test (la
   mémoire des serveurs GitHub s'épuisait) ; les appels différés de la
   fenêtre (call_later) ne s'exécutent plus après sa destruction.
