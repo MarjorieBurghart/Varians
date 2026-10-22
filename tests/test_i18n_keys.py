@@ -174,5 +174,32 @@ def test_each_help_explains_the_selections_shared_with_the_fragment_editor():
         version = page[page.index('<section id="v0912">'):]
         version = version[:version.index("</section>")]
         assert f'href="#{heading.group(1)}"' in version and "0.9.1.3" in version, language
+        # Les limites de l'édition en parties annoncent la version suivante :
+        # voir le test de la V0.9.1.3.
+
+
+def test_each_help_explains_the_lacunae_and_the_page_witnesses_of_a_text():
+    """Lacunes des témoins et témoins par pages dans un texte synchronisé à
+    part (V0.9.1.3)."""
+    import html
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="lacunae">'):]
+        section = section[:section.index("</section>")]
+        for key in ("manuscript.lacuna", "manuscript.lacuna.pivot", "apparatus.check.incomplete"):
+            assert html.escape(catalog[key], quote=False) in section, (language, key)
+        # Encodage TEI : dans une leçon (model.rdgPart n'est admis que dans
+        # <rdg> et <lem>), le témoin de la leçon ou celui du @wit de la balise.
+        for text in ("&lt;rdg wit=\"#T2\"&gt;&lt;lacunaStart/&gt;", "&lt;lacunaEnd/&gt;",
+                     "&lt;rdg wit=\"#T2 #P\"&gt;… &lt;lacunaStart wit=\"#P\"/&gt;&lt;/rdg&gt;"):
+            assert text in section, (language, text)
         parts = page[page.index('<section id="xinclude">'):]
-        assert "0.9.1.3" in parts[:parts.index("</section>")], language
+        parts = parts[:parts.index("</section>")]
+        for text in ('&lt;locus from="13r" to="14r" target="#s04"&gt;', "&lt;pb edRef=\"#C\"/&gt;",
+                     html.escape(catalog["manuscript.mark_page"], quote=False), "0.9.1.4"):
+            assert text in parts, (language, text)
+        assert "0.9.1.3" not in parts, language                      # plus rien d'annoncé pour elle
+        version = page[page.index('<section id="v0913">'):]
+        assert 'href="#lacunae"' in version[:version.index("</section>")], language

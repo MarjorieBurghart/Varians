@@ -810,4 +810,8 @@
   <string key="text_sync.problem.no_base_alignment">{name}: в папке нет JSON для опорного свидетеля {detail}; этот текст не синхронизируется.</string>
   <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; не указывает ни на один текст издания.</string>
   <string key="text_sync.problem.duplicate_name">{name}: два текста носят это имя; папка alignments/{name}/ относится к первому, а не к {detail}.</string>
+  <string key="manuscript.lacuna">Лакуна этого свидетеля: его текст здесь обрывается.</string>
+  <string key="manuscript.lacuna.pivot">Лакуна опорного свидетеля: в этом отрывке строки не синхронизируются.</string>
+  <string key="status.base_lacuna">Лакуна опорного свидетеля {base}: синхронизация строк приостановлена до конца лакуны.</string>
+  <string key="diagnostics.text_item.pages">{name} (опорный {base}; свидетели {witnesses}; по страницам: {pages})</string>
 </translations>

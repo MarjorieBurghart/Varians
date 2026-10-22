@@ -810,4 +810,8 @@ Trotzdem exportieren?</string>
   <string key="text_sync.problem.no_base_alignment">{name}: kein JSON für den Pivot {detail} in seinem Ordner; dieser Text wird nicht synchronisiert.</string>
   <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; bezeichnet keinen Text der Edition.</string>
   <string key="text_sync.problem.duplicate_name">{name}: zwei Texte tragen diesen Namen; der Ordner alignments/{name}/ gehört zum ersten, nicht zu {detail}.</string>
+  <string key="manuscript.lacuna">Lücke in diesem Textzeugen: Sein Text bricht hier ab.</string>
+  <string key="manuscript.lacuna.pivot">Lücke im Pivot-Textzeugen: Die Zeilen werden in dieser Passage nicht synchronisiert.</string>
+  <string key="status.base_lacuna">Lücke im Pivot-Textzeugen {base}: Zeilensynchronisierung bis zum Ende der Lücke ausgesetzt.</string>
+  <string key="diagnostics.text_item.pages">{name} (Pivot {base}; Textzeugen {witnesses}; seitenweise: {pages})</string>
 </translations>

@@ -1,3 +1,30 @@
+VARIANS V0.9.1.3 — LACUNES DES TÉMOINS, TÉMOINS PAR PAGES DANS UN TEXTE À PART
+
+• Lacunes : le passage qu'un témoin n'a pas s'encadre par <lacunaStart/> et
+  <lacunaEnd/>, placés, comme le veut la TEI, dans une leçon : le témoin est
+  celui du <rdg> ou du <lem> qui les contient
+  (<app><lem wit="#T1"/><rdg wit="#T2"><lacunaStart/></rdg></app>), ou,
+  dans une leçon de plusieurs témoins, celui de leur propre @wit
+  (<rdg wit="#T2 #P">… <lacunaStart wit="#P"/></rdg>). Hors d'une leçon,
+  <lacunaStart wit="#T2"/> est reconnu aussi, mais la validation TEI le
+  signale comme une erreur.
+  Dans une lacune, le panneau du témoin garde la ligne (ou la page) où son
+  texte s'interrompt, avec un bandeau « Lacune ». Pendant une lacune du
+  pivot, les témoins par lignes restent sur sa dernière ligne, avec un
+  message ; les témoins par pages continuent de suivre leurs <pb>.
+• « Débugger l'apparat » : « <app> incomplets » n'attend plus de leçon d'un
+  témoin dans sa lacune (XPath 1.0 ordinaire, comme avant).
+• Textes synchronisés à part : un témoin sans JSON pour un texte, mais qui
+  a ce texte (un <pb edRef> dans le texte, ou un <locus target> dans son
+  <witness>), y suit ses pages au lieu du message d'absence. Avant son
+  premier <pb> dans le texte : sa page de départ, le @from de son <locus>,
+  sinon la page qui précède celle de ce premier <pb>, dans l'ordre de ses
+  pages. « Marquer la page » y fonctionne aussi.
+• Tests : deux tests de délai de la validation, trop sensibles à la
+  vitesse des machines GitHub, ont été rendus plus robustes.
+• Viendra en V0.9.1.4 : le parcours d'un manuscrit dans son propre ordre.
+  L'export web ne montre pas encore les lacunes ni les parties.
+
 VARIANS V0.9.1.2 — SÉLECTIONS PARTAGÉES ENTRE L'APERÇU ET L'ÉDITEUR DE FRAGMENT
 
 • Vue XSLT / CSS : le crayon ✎ ouvre un paragraphe dans l'éditeur de
@@ -17,9 +44,9 @@ VARIANS V0.9.1.2 — SÉLECTIONS PARTAGÉES ENTRE L'APERÇU ET L'ÉDITEUR DE FRA
   édition en parties, l'aperçu reste en lecture seule : ce report et
   l'éditeur de fragment y viendront avec l'édition par fragment de
   l'édition assemblée.
-• Viendront en V0.9.1.3 : les lacunes, les témoins synchronisés par pages
-  dans un texte synchronisé à part, le parcours d'un manuscrit dans son
-  propre ordre.
+• Réalisé en V0.9.1.3 : les lacunes et les témoins par pages dans un texte
+  synchronisé à part ; le parcours d'un manuscrit dans son propre ordre
+  vient en V0.9.1.4.
 
 VARIANS V0.9.1.1 — TEXTES SYNCHRONISÉS À PART, MODE D'EMPLOI XINCLUDE
 

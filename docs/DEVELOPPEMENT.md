@@ -221,6 +221,19 @@ Règles :
   `select_visible_text_in_paragraph(..., focus=False)`. Le crayon ✎ appelle
   `load_fragment(idx)` sans toucher à la source ni aux témoins. Tests :
   `tests/gui/test_gui_selection_transfer.py` ;
+- lacunes et témoins par pages des textes à part (V0.9.1.3) :
+  `lacunae.lacuna_events` / `lacunae_at` (relevé lexical, sans Qt) ;
+  `pivot_lines` relève aussi les lacunes et les `<pb>` par segment
+  (`PivotLines.lacunae_at`, `page_witnesses`, `first_page` ; `page_at` ne
+  remonte, dans un texte à part, qu'aux `<pb>` de ce texte). Côté fenêtre :
+  `_lacunae_at_cursor` (relevé gardé par révision), `_follow_base_line`
+  (commun au curseur, à l'aperçu et aux flèches du pivot ; l'état des
+  lacunes entre dans le test « rien n'a changé »), `ManuscriptPanel.
+  set_lacuna` (bandeau). `folio_navigation.witness_loci`, `page_folios`,
+  `text_start_folio` ; `text_alignments.text_project(..., page_witnesses)` ;
+  `TextSegmentsMixin._text_page_witnesses` (relu à chaque visite d'un
+  texte) et `_text_start_folio`. Les objets factices des tests historiques
+  fournissent `_lacunae_at_cursor` et `set_lacuna` ;
 - des tests anciens exécutent le corps de certaines méthodes avec des objets
   factices (`_text_changed`, `_auto_refresh_rng`, `show_validation_panel`,
   `_validate_relaxng_document_impl`, `sync_panels_to_cursor`,

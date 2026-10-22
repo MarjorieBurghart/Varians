@@ -177,6 +177,7 @@ class DocumentSession:
         # Dernière position synchronisée avec les témoins.
         self.last_synced_ordinal: Optional[int] = None   # _last_synced_ordinal
         self.last_synced_surface = None                  # _last_synced_surface
+        self.last_synced_lacunae = frozenset()           # _last_synced_lacunae (V0.9.1.3)
 
     @classmethod
     def auxiliary(cls, config, text_document: Any = None) -> "DocumentSession":
@@ -233,6 +234,7 @@ class DocumentSession:
         self.completion_context_cache.clear()
         self.last_synced_ordinal = None
         self.last_synced_surface = None
+        self.last_synced_lacunae = frozenset()
 
     def mark_saved(self, path: Path) -> None:
         """Le contenu courant vient d'être écrit dans ``path``."""

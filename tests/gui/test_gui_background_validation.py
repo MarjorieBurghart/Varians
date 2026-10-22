@@ -43,7 +43,10 @@ def _insert_after(window, needle, text):
 
 
 def test_the_window_keeps_working_during_the_opening_validation(open_window, example_project, slow_worker, qtbot):
-    client = slow_worker(1.5)
+    # La validation dure 2,5 s : une fenêtre bloquée pendant l'attente
+    # s'arrêterait au moins autant. Une machine chargée (tests GitHub) peut
+    # marquer de courtes pauses, d'où le seuil de 1,5 s.
+    client = slow_worker(2.5)
     ticks = []
     timer = QTimer()
     timer.timeout.connect(lambda: ticks.append(time.perf_counter()))
@@ -52,7 +55,7 @@ def test_the_window_keeps_working_during_the_opening_validation(open_window, exa
     assert client.busy                                              # validation partie
     qtbot.waitUntil(lambda: not client.busy, timeout=30000)
     timer.stop()
-    assert max(b - a for a, b in zip(ticks, ticks[1:])) < 0.5      # jamais figée
+    assert max(b - a for a, b in zip(ticks, ticks[1:])) < 1.5      # jamais figée
     assert window.rng_status.text() == tr("rng.status.valid")
     assert window._last_rng_result is not None and window._last_rng_result.valid
 

@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 from app_context import tr as _t
 from apparatus_xpath import incomplete_app_xpath, part_witnesses, repeated_witness_xpath, witness_ids, witness_xpath
+from lacunae import lacuna_events
 from project_config import XPathQuery
 from project_management import update_project_xpath_queries
 from xpath_search import TEI_NS, XML_NS
@@ -94,14 +95,16 @@ class ApparatusDebugDialog(QDialog):
     _WITNESS_SOURCES = {"document": "apparatus.witnesses", "part": "apparatus.witnesses.part",
                         "locus": "apparatus.witnesses.locus", "wit": "apparatus.witnesses.wit"}
 
-    def __init__(self, ids, queries, proposed_expression, save, parent=None, source="document"):
+    def __init__(self, ids, queries, proposed_expression, save, parent=None, source="document", lacunose=()):
         """``source`` : d'où vient la liste ``ids`` (« document » : le
         ``<listWit>`` du document affiché ; pour une partie d'une édition
-        assemblée, voir ``part_witnesses``)."""
+        assemblée, voir ``part_witnesses``). ``lacunose`` : témoins qui ont
+        des lacunes dans le document (V0.9.1.3)."""
         super().__init__(parent)
         self.setWindowTitle(_t("apparatus.title"))
         self.resize(640, 520)
         self._ids = list(ids)
+        self._lacunose = tuple(lacunose)
         self._queries = list(queries)
         self._proposed = proposed_expression
         self._save = save
@@ -178,7 +181,7 @@ class ApparatusDebugDialog(QDialog):
         if self.repeated_radio.isChecked():
             return repeated_witness_xpath(self._ids)
         if self.incomplete_radio.isChecked():
-            return incomplete_app_xpath(self._ids)
+            return incomplete_app_xpath(self._ids, self._lacunose)
         return witness_xpath(self.witness_combo.currentText(), present=self.presence_combo.currentIndex() == 0,
                              rdg_only=self.scope_combo.currentIndex() == 1)
 
@@ -256,8 +259,10 @@ class ApparatusDebugMixin:
             ids, source = part_witnesses(text, self.edition_session.text_document.toPlainText())
         else:
             ids, source = witness_ids(text), "document"
+        # Un témoin en lacune n'a pas de leçon dans le passage (V0.9.1.3).
+        lacunose = sorted({w for event in lacuna_events(text) for w in event.witnesses} & set(ids))
         dialog = ApparatusDebugDialog(ids, self.project.xpath_queries, self.xpath_query.text().strip(),
-                                      self._save_xpath_queries, self, source=source)
+                                      self._save_xpath_queries, self, source=source, lacunose=lacunose)
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return False
         expression = dialog.selected_expression()

@@ -112,3 +112,55 @@ def test_unusual_identifiers_are_quoted_safely():
     assert "' #A.1-b '" in expression
     with pytest.raises(ValueError):
         witness_xpath("A'B", present=True, rdg_only=False)
+
+
+# --- Lacunes (V0.9.1.3) ----------------------------------------------------------
+# Un témoin en lacune n'a pas de leçon dans le passage : ses <app> ne sont pas
+# incomplets pour lui. Les deux encodages de att.rdgPart.
+
+LACUNA_TEI = """<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+<teiHeader><fileDesc><titleStmt><title>Essai</title></titleStmt>
+<publicationStmt><p>Essai</p></publicationStmt>
+<sourceDesc><listWit>
+  <witness xml:id="A">Manuscrit A</witness>
+  <witness xml:id="B">Manuscrit B</witness>
+  <witness xml:id="C">Manuscrit C</witness>
+</listWit></sourceDesc></fileDesc></teiHeader>
+<text><body><p>
+<app n="avant"><lem wit="#A">a</lem><rdg wit="#B">b</rdg></app>
+<lacunaStart wit="#C"/>
+<app n="lacune-c"><lem wit="#A">a</lem><rdg wit="#B">b</rdg></app>
+<app n="lacune-c-sans-b"><lem wit="#A">a</lem></app>
+<lacunaEnd wit="#C"/>
+<app n="apres"><lem wit="#A">a</lem><rdg wit="#B">b</rdg></app>
+<app n="debut-b"><lem wit="#A #C">a</lem><rdg wit="#B"><lacunaStart/></rdg></app>
+<app n="lacune-b"><lem wit="#A #C">a</lem></app>
+<app n="fin-b"><lem wit="#A #C">a</lem><rdg wit="#B"><lacunaEnd/></rdg></app>
+<app n="apres-b"><lem wit="#A #C">a</lem></app>
+</p></body></text>
+</TEI>
+"""
+
+LACUNA_LINES = {number: match.group(1)
+                for number, line in enumerate(LACUNA_TEI.splitlines(), 1)
+                for match in [re.search(r'<app n="([^"]+)"', line)] if match}
+
+
+def _found_in(text, lines, expression):
+    return [lines[match.line] for match in search_xpath(text, expression).matches]
+
+
+def test_an_app_in_a_lacuna_of_a_witness_is_not_incomplete_for_it():
+    expression = incomplete_app_xpath(["A", "B", "C"], lacunose=["B", "C"])
+    assert _found_in(LACUNA_TEI, LACUNA_LINES, expression) == ["avant", "lacune-c-sans-b", "apres", "apres-b"]
+    # Sans le relevé des lacunes, tous les <app> du passage sont signalés.
+    assert "lacune-c" in _found_in(LACUNA_TEI, LACUNA_LINES, incomplete_app_xpath(["A", "B", "C"]))
+
+
+def test_the_lacuna_condition_is_only_added_for_lacunose_witnesses():
+    assert incomplete_app_xpath(["A", "B"]) == incomplete_app_xpath(["A", "B"], lacunose=())
+    assert "lacunaStart" not in incomplete_app_xpath(["A", "B"])
+    with_c = incomplete_app_xpath(["A", "B", "C"], lacunose=["C"])
+    assert with_c.count("lacunaStart") == 1 and "#C" in with_c
+    etree.XPath(with_c, namespaces={"tei": "http://www.tei-c.org/ns/1.0"})   # XPath 1.0 valide

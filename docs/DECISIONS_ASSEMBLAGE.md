@@ -139,9 +139,12 @@ XInclude.
    - V0.9.1.1, réalisée (voir ci-dessous) : un JSON par texte et par
      témoin, pivot propre à un texte, synchronisation par lignes texte par
      texte ;
-   - V0.9.1.3 : lacunes, témoins synchronisés par pages dans un texte
-     synchronisé à part (page de départ par `<locus from>` ou par le premier
-     `<pb>`), parcours d'un manuscrit dans son propre ordre.
+   - V0.9.1.3, réalisée (voir ci-dessous) : lacunes, témoins synchronisés
+     par pages dans un texte synchronisé à part (page de départ par
+     `<locus from>` ou par le premier `<pb>`) ;
+   - V0.9.1.4 : parcours d'un manuscrit dans son propre ordre (décidé le
+     22 octobre 2026 : une navigation nouvelle, des panneaux vers
+     l'édition, qui mérite sa version).
 5. Vue XSLT / CSS et export web à partir du document assemblé,
    modifications par fragment réécrites dans le bon fichier, avec les mêmes
    continuités de synchronisation sur le site.
@@ -218,7 +221,7 @@ mêler.
    pour toute l'édition. Condition : le pivot contient ces textes, dans
    l'ordre de l'édition. Les autres témoins peuvent avoir un autre ordre ou
    ne pas avoir un texte : leurs lignes désignent déjà des lignes du pivot.
-2. **Cas 2 (V0.9.1.1 et V0.9.1.3) : un corpus aux témoins variables.** Un JSON par texte
+2. **Cas 2 (V0.9.1.1, V0.9.1.3 et V0.9.1.4) : un corpus aux témoins variables.** Un JSON par texte
    et par témoin, au format actuel (VariansSynchro ne change pas), rangé
    selon une convention, sans déclaration : `alignments/s02/B.json`, le
    dossier portant le nom du fichier du texte. Les témoins affichés pour un
@@ -341,6 +344,34 @@ avoir un éditeur de fragment.
   depuis la V0.9.0.0 (aperçu assemblé en lecture seule) ; il reviendra à
   l'étape 5, avec l'édition par fragment de l'édition assemblée (décidé le
   22 octobre 2026).
+
+## Réalisé en V0.9.1.3 (cas 2, suite)
+
+- **Lacunes** (`lacunae.py`) : `<lacunaStart/>` … `<lacunaEnd/>`, le témoin
+  par la leçon (`<rdg>`/`<lem>`) qui contient la balise, ou par son `@wit`
+  (`att.rdgPart`) dans une leçon de plusieurs témoins. La TEI n'admet ces
+  balises que dans `<rdg>` et `<lem>` ; la forme isolée avec `@wit` est
+  reconnue aussi, mais la validation TEI la signale. Une lacune sans fin court jusqu'à la fin du texte ; une
+  fin sans début est ignorée. Dans l'édition assemblée, une lacune passe
+  d'une partie à l'autre (numérotation continue) ; dans un texte à part,
+  l'état repart de zéro au début du texte.
+- **Panneaux** (décidé le 22 octobre 2026) : un témoin en lacune garde la
+  ligne ou la page où son texte s'interrompt, avec un bandeau « Lacune ».
+  Pendant une lacune du pivot, les témoins par lignes restent sur sa
+  dernière ligne, avec un bandeau et un message ; les témoins par pages
+  continuent de suivre leurs `<pb>`.
+- **« Débugger l'apparat »** : « `<app>` incomplets » n'attend pas de
+  leçon d'un témoin dans sa lacune ; la condition (XPath 1.0) n'est ajoutée
+  que pour les témoins qui ont des lacunes dans le document.
+- **Témoins par pages dans un texte à part** (décidé le 22 octobre 2026) :
+  seulement les témoins qui ont le texte (un `<pb edRef>` dans le texte, ou
+  un `<locus target>` vers lui dans leur `<witness>`) ; les autres gardent
+  le message d'absence. Leur page vient des seuls `<pb>` du texte ; page de
+  départ : `<locus from>`, sinon la page qui précède celle du premier
+  `<pb>`, dans l'ordre des pages du témoin.
+- **Limites** : l'export web ne montre ni les lacunes ni les parties ; une
+  requête de l'apparat lancée dans une partie ne voit que les lacunes de
+  cette partie.
 
 ## Restent à décider
 

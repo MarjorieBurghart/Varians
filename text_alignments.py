@@ -14,8 +14,9 @@ numérotation continue** (V0.9.1.0). Le pivot d'un texte est celui du projet,
 sauf exception déclarée dans project.xml : ``<part name="s02" base="B"/>``.
 
 ``text_syncs`` trouve ces textes ; ``text_project`` réduit le projet à l'un
-d'eux, pour ``witness_resource_refresh.assemble_resources`` : seuls les
-témoins qui ont un JSON pour ce texte, avec ce JSON comme alignement.
+d'eux, pour ``witness_resource_refresh.assemble_resources`` : les témoins qui
+ont un JSON pour ce texte, avec ce JSON comme alignement, et ceux qui y sont
+suivis par leurs pages (V0.9.1.3).
 """
 from __future__ import annotations
 
@@ -93,13 +94,15 @@ def text_syncs(project, part_paths):
     return tuple(syncs), tuple(problems)
 
 
-def text_project(project, sync):
-    """Projet réduit au texte ``sync`` : ses témoins (ceux qui ont un JSON pour
-    lui, dans l'ordre de project.xml), ce JSON comme alignement, et son
-    pivot. Les règles des images et des ALTO de chaque témoin restent les
-    siennes."""
+def text_project(project, sync, page_witnesses=()):
+    """Projet réduit au texte ``sync`` : ses témoins, dans l'ordre de
+    project.xml, et son pivot. Un témoin qui a un JSON pour le texte le
+    prend comme alignement ; un témoin de ``page_witnesses`` (sans JSON pour
+    lui, mais qui a le texte : V0.9.1.3) n'en a pas et suit ses pages. Les
+    règles des images et des ALTO de chaque témoin restent les siennes."""
+    pages = frozenset(w for w in page_witnesses if w not in sync.alignments and w != sync.base)
     witnesses = tuple(
-        replace(w, alignment=sync.alignments[w.id], role="base" if w.id == sync.base else "secondary")
-        for w in project.witnesses if w.id in sync.alignments)
+        replace(w, alignment=sync.alignments.get(w.id), role="base" if w.id == sync.base else "secondary")
+        for w in project.witnesses if w.id in sync.alignments or w.id in pages)
     return SimpleNamespace(base_witness=sync.base, witnesses=witnesses, root_dir=project.root_dir,
-                           witness_by_id={w.id: w for w in witnesses})
+                           witness_by_id={w.id: w for w in witnesses}, page_witnesses=pages)

@@ -80,6 +80,23 @@ def test_incomplete_check_lists_the_apps_and_a_click_selects_one(open_window, ex
     assert window.editor.textCursor().selectedText().startswith("<app>")
 
 
+def test_a_witness_in_lacuna_is_not_expected_in_its_apps(open_window, example_project, dialogs):
+    """V0.9.1.3 : P, en lacune dans le sermon RLS_184, n'y est plus attendu ;
+    les <app> de ce sermon ne sont plus incomplets."""
+    import re
+    edition = example_project.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    sermon = text[text.index('<div xml:id="RLS_184">'):text.index('<div xml:id="RLS_185">')]
+    edition.write_text(text.replace('<div xml:id="RLS_184">', '<lacunaStart wit="#P"/><div xml:id="RLS_184">', 1)
+                       .replace('<div xml:id="RLS_185">', '<lacunaEnd wit="#P"/><div xml:id="RLS_185">', 1),
+                       encoding="utf-8")
+    window = open_window(example_project)
+    dialogs.expect("dialog", _choose(lambda dialog: dialog.incomplete_radio.setChecked(True)))
+    assert window.debug_apparatus()
+    assert window.xpath_query.text() == incomplete_app_xpath(WITNESSES, ["P"])
+    assert window.xpath_table.rowCount() == 184 - len(re.findall(r"<app\b", sermon))
+
+
 def test_witness_check_uses_the_chosen_witness_and_options(open_window, example_project, dialogs):
     window = open_window(example_project)
     seen = {}

@@ -796,4 +796,8 @@ Exporter quand même ?</string>
   <string key="text_sync.problem.no_base_alignment">{name} : pas de JSON pour le pivot {detail} dans son dossier ; ce texte n’est pas synchronisé.</string>
   <string key="text_sync.problem.unknown_part">{name} : &lt;part name="{name}"&gt; ne désigne aucun texte de l’édition.</string>
   <string key="text_sync.problem.duplicate_name">{name} : deux textes portent ce nom ; le dossier alignments/{name}/ va au premier, pas à {detail}.</string>
+  <string key="manuscript.lacuna">Lacune de ce témoin : son texte s’interrompt ici.</string>
+  <string key="manuscript.lacuna.pivot">Lacune du témoin pivot : les lignes ne sont plus synchronisées dans ce passage.</string>
+  <string key="status.base_lacuna">Lacune du pivot {base} : synchronisation des lignes suspendue jusqu’à la fin de la lacune.</string>
+  <string key="diagnostics.text_item.pages">{name} (pivot {base} ; témoins {witnesses} ; par pages : {pages})</string>
 </translations>

@@ -84,6 +84,8 @@ class StubPanel:
         return True
     def set_primary(self, ordinal, key):
         self.primary_calls.append((ordinal, key))
+    def set_lacuna(self, key):
+        self.lacuna_key = key
 
 
 class StubEditor:
@@ -99,6 +101,13 @@ class StubEditor:
 class StubWindow:
     _sync_page_panels_to_cursor = _editor_method('_sync_page_panels_to_cursor')
     sync_panels_to_cursor = _editor_method('sync_panels_to_cursor')
+    # V0.9.1.3 : lignes suivies avec les lacunes (aucune ici).
+    _follow_base_line = _editor_method('_follow_base_line')
+    _show_base_line_status = _editor_method('_show_base_line_status')
+    _last_synced_lacunae = frozenset()
+
+    def _lacunae_at_cursor(self):
+        return {}
 
     # Édition en parties (V0.9.1.0) : aucune ici.
     def _pivot_lines(self):
@@ -195,8 +204,10 @@ def test_three_witness_project_exposes_witness_local_line_sync_mode():
 def test_navigation_entrypoints_and_browser_lines_update_independent_pages():
     editor=application_source()
     browser=(ROOT/'web_viewer'/'generator.py').read_text(encoding='utf-8')
-    assert 'if panel.sync_enabled:\n                panel.set_primary' in editor
-    assert 'self._sync_page_panels_to_cursor(force=True)' in editor
+    # V0.9.1.3 : les témoins par lignes suivent par _follow_base_line, et les
+    # navigations transmettent les lacunes aux témoins par pages.
+    assert 'if not panel.sync_enabled or wid == skip:\n                continue' in editor
+    assert 'self._sync_page_panels_to_cursor(force=True, lacunae=lacunae)' in editor
     assert 'if not self.base_alignment_available:\n            return' in editor
     assert 'if(Number.isFinite(docPos))syncPagesToDocPosition(docPos);' in browser
     assert 'syncAll(true);return true' in browser

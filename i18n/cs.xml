@@ -810,4 +810,8 @@ Přesto exportovat?</string>
   <string key="text_sync.problem.no_base_alignment">{name}: ve složce chybí JSON pro pivot {detail}; tento text není synchronizován.</string>
   <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; neoznačuje žádný text edice.</string>
   <string key="text_sync.problem.duplicate_name">{name}: dva texty mají tento název; složka alignments/{name}/ patří prvnímu, ne {detail}.</string>
+  <string key="manuscript.lacuna">Lakuna tohoto svědka: jeho text se zde přerušuje.</string>
+  <string key="manuscript.lacuna.pivot">Lakuna pivotního svědka: řádky se v tomto úseku nesynchronizují.</string>
+  <string key="status.base_lacuna">Lakuna pivotu {base}: synchronizace řádků je pozastavena až do konce lakuny.</string>
+  <string key="diagnostics.text_item.pages">{name} (pivot {base}; svědkové {witnesses}; po stránkách: {pages})</string>
 </translations>
