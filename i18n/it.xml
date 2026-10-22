@@ -822,4 +822,5 @@ Esportare comunque?</string>
   <string key="diagnostics.route.uncertain">Ordine dei testi in {witness}: {runs}; posizione incerta di {texts}, lasciati nell’ordine dell’edizione.</string>
   <string key="diagnostics.route.edition">edizione</string>
   <string key="status.route_uncertain">Posizione incerta di {text} in {witness}: ordine dell’edizione.</string>
+  <string key="fragment.label.file">Frammento TEI · paragrafo {index}/{total} · {file}</string>
 </translations>

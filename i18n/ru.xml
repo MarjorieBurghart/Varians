@@ -822,4 +822,5 @@
   <string key="diagnostics.route.uncertain">Порядок текстов в {witness}: {runs}; место {texts} не установлено, оставлено в порядке издания.</string>
   <string key="diagnostics.route.edition">издание</string>
   <string key="status.route_uncertain">Место {text} в {witness} не установлено: порядок издания.</string>
+  <string key="fragment.label.file">Фрагмент TEI · абзац {index}/{total} · {file}</string>
 </translations>

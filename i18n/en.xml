@@ -808,4 +808,5 @@ Export anyway?</string>
   <string key="diagnostics.route.uncertain">Order of the texts in {witness}: {runs}; uncertain place of {texts}, left in the order of the edition.</string>
   <string key="diagnostics.route.edition">edition</string>
   <string key="status.route_uncertain">Uncertain place of {text} in {witness}: order of the edition.</string>
+  <string key="fragment.label.file">TEI fragment · paragraph {index}/{total} · {file}</string>
 </translations>

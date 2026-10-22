@@ -690,6 +690,10 @@ class FormattedEditionWidget(QWidget):
         self.css_path = self.main.project.css
         self.current_paragraph = None
         self.fragment_original = ""
+        # Document (édition ou partie) dont vient le fragment ouvert, et
+        # nombre de paragraphes de l'aperçu à son ouverture.
+        self.fragment_session = None
+        self._fragment_total = 0
         self.dirty_preview = True
         self._last_preview_key = None
         # Édition en parties (V0.9.1.5) : fichier et place de chaque
@@ -936,11 +940,7 @@ class FormattedEditionWidget(QWidget):
         self.fragment_visual_wrap.setText(_t("source.visual_wrap"))
         self.wrap_element_action.setText(_t("fragment.wrap"))
         self.fragment_completion_action.setText(_t("completion.action"))
-        if self.current_paragraph is None:
-            self.frag_label.setText(_t("fragment.initial"))
-        else:
-            spans = paragraph_spans(self.main.editor.toPlainText())
-            self.frag_label.setText(_t("fragment.label", index=self.current_paragraph + 1, total=len(spans)))
+        self._update_fragment_label()
         self.info.setText(_t("preview.info.default"))
         # The transformed preview contains localized XSLT chrome (e.g. Contents).
         self.dirty_preview = True
@@ -1502,10 +1502,40 @@ class FormattedEditionWidget(QWidget):
             return True
         return False
 
+    def _fragment_source(self, idx):
+        """Le ``<p>`` de rang ``idx`` de l'aperçu dans son fichier :
+        ``(session, texte, début, fin, nombre de paragraphes)``, ou None.
+
+        Pour une édition en parties (V0.9.1.5), le fichier est celui qui
+        contient le paragraphe, édition ou partie, lu au besoin sans être
+        affiché ; sinon, c'est le document affiché."""
+        main = self.main
+        if not main._edition_has_parts():
+            text = main.editor.toPlainText()
+            spans = paragraph_spans(text)
+            if not 0 <= idx < len(spans):
+                return None
+            return (main.document, text, *spans[idx], len(spans))
+        sources = main._assembled_preview_sources()
+        if sources is None or not 0 <= idx < len(sources.paragraphs) or sources.paragraphs[idx] is None:
+            return None
+        span = sources.paragraphs[idx]
+        session = main._edition_file_session(span.path, load=True)
+        if session is None:
+            return None
+        return (session, session.text_document.toPlainText(), span.start, span.end, len(sources.paragraphs))
+
+    def _update_fragment_label(self):
+        if self.current_paragraph is None:
+            self.frag_label.setText(_t("fragment.initial"))
+        elif self.main._edition_has_parts() and self.fragment_session is not None:
+            self.frag_label.setText(_t("fragment.label.file", index=self.current_paragraph + 1,
+                                       total=self._fragment_total, file=Path(self.fragment_session.path).name))
+        else:
+            self.frag_label.setText(_t("fragment.label", index=self.current_paragraph + 1,
+                                       total=self._fragment_total))
+
     def load_fragment(self, idx):
-        # Édition en parties : le fragment viendra du fichier du paragraphe.
-        if self.main._edition_has_parts():
-            return False
         # Ne jamais remplacer silencieusement un fragment modifié par un
         # autre paragraphe. Le choix est explicite : appliquer, ignorer ou
         # annuler.
@@ -1514,21 +1544,22 @@ class FormattedEditionWidget(QWidget):
 
         # Recalculer les plages après une éventuelle application du fragment
         # courant : sa longueur a pu changer.
-        text = self.main.editor.toPlainText()
-        spans = paragraph_spans(text)
-        if not (0 <= idx < len(spans)):
+        source = self._fragment_source(idx)
+        if source is None:
             return False
-        start, end = spans[idx]
+        session, text, start, end, total = source
         frag = text[start:end]
         self.current_paragraph = idx
         self.fragment_original = frag
+        self.fragment_session = session
+        self._fragment_total = total
         self.frag_box.setVisible(True)
         self.fragment_editor.blockSignals(True)
         self.fragment_editor.setPlainText(frag)
         self.fragment_editor.blockSignals(False)
         if hasattr(self, "fragment_find_status"):
             self.fragment_find_status.setText("")
-        self.frag_label.setText(_t("fragment.label", index=idx+1, total=len(spans)))
+        self._update_fragment_label()
         self.apply_btn.setEnabled(True)
         self.reload_btn.setEnabled(True)
         return True
@@ -1616,16 +1647,17 @@ class FormattedEditionWidget(QWidget):
         return True
 
     def apply_fragment(self):
-        """Réinjecte le fragment dans le XML source. Retourne True en cas de succès."""
+        """Réinjecte le fragment dans le XML source : le fichier qui contient
+        le paragraphe, affiché ou non. Retourne True en cas de succès."""
         if self.current_paragraph is None:
             return False
-        text = self.main.editor.toPlainText()
-        spans = paragraph_spans(text)
         idx = self.current_paragraph
-        if not (0 <= idx < len(spans)):
+        source = self._fragment_source(idx)
+        # Le paragraphe de ce rang est désormais dans un autre fichier.
+        if source is None or source[0] is not self.fragment_session:
             QMessageBox.warning(self, _t("fragment.moved.title"), _t("fragment.moved.text"))
             return False
-        start, end = spans[idx]
+        session, text, start, end, _total = source
         if text[start:end] != self.fragment_original:
             r = QMessageBox.question(
                 self, _t("fragment.source_changed.title"),
@@ -1649,16 +1681,30 @@ class FormattedEditionWidget(QWidget):
         except ET.ParseError as exc:
             QMessageBox.warning(self, _t("fragment.invalid.title"), _t("fragment.invalid.text", error=exc))
             return False
-        c = QTextCursor(self.main.editor.document())
-        c.setPosition(start)
-        c.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
-        c.insertText(frag)
+        if session is self.main.document:
+            c = QTextCursor(self.main.editor.document())
+            c.setPosition(start)
+            c.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            c.insertText(frag)
+            self.main.editor.setTextCursor(c)
+            self.main.sync_panels_to_cursor(True)
+        else:
+            # Une partie, ou l'édition, non affichée : une seule étape
+            # d'annulation, dans son propre document.
+            self.main._write_session_text(session, text, candidate)
         self.fragment_original = frag
-        self.main.editor.setTextCursor(c)
-        self.main.sync_panels_to_cursor(True)
         self.dirty_preview = True
         self.refresh_preview()
         # Les plages ont pu changer ; recharge le même numéro ordinal si possible.
-        self.load_fragment(min(idx, max(0, len(paragraph_spans(self.main.editor.toPlainText()))-1)))
+        total = (len(self.sources.paragraphs) if self.sources is not None
+                 else len(paragraph_spans(self.main.editor.toPlainText())))
+        self.load_fragment(min(idx, max(0, total - 1)))
         return True
+
+    def dirty_fragment_session(self):
+        """Le document dont vient le fragment ouvert, s'il est modifié et pas
+        encore appliqué ; sinon None."""
+        if self.frag_box.isVisible() and self.fragment_has_unapplied_changes():
+            return self.fragment_session
+        return None
 

@@ -437,13 +437,19 @@ class WitnessSyncMixin:
         if self._edition_displayed():
             self._replace_editor_text_minimally(old_text, new_text)
             return
+        self._write_session_text(self.edition_session, old_text, new_text)
+
+    def _write_session_text(self, session, old_text, new_text):
+        """Remplace ``old_text`` par ``new_text`` dans ``session``, document de
+        l'édition (l'édition ou une partie) chargé mais non affiché, en une
+        seule étape d'annulation : son onglet porte « * », son index des
+        <lb/> est à refaire et la validation de l'édition assemblée repart."""
         if old_text == new_text:
             return
-        edition = self.edition_session
-        _patch_text_document(edition.text_document, old_text, new_text)
-        edition.modified = True
-        edition.lb.invalidate()
-        self._refresh_document_tab(edition)
+        _patch_text_document(session.text_document, old_text, new_text)
+        session.modified = True
+        session.lb.invalidate()
+        self._refresh_document_tab(session)
         self._assembly_changed()
         self.document.invalidate_rng()
         if self._rng_watch_enabled and self._schema_mode != 'none':

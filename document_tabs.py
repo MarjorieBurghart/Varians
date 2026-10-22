@@ -133,22 +133,35 @@ class DocumentTabsMixin:
 
     def _assembled_preview_sources(self):
         """Sources de l'aperçu de l'édition assemblée (``preview_sources``),
-        parties comprises (texte non enregistré des parties modifiées), quel
-        que soit le document affiché ; None pour une édition sans parties,
-        ou mal formée."""
+        parties comprises (texte en mémoire des parties ouvertes), quel que
+        soit le document affiché ; None pour une édition sans parties, ou mal
+        formée."""
         if not self._edition_has_parts():
             return None
         edition = self.edition_session
         parts = {s.path: s.text_document.toPlainText() for s in self.documents
-                 if s.is_part and s.text_document is not None and s.modified}
+                 if s.is_part and s.text_document is not None}
         base = self.project.base_witness
         return preview_sources(edition.text_document.toPlainText(), edition.path or self.project.edition,
                                parts, base, pivot_lb_pattern(base))
 
+    def _edition_file_session(self, path, load=False):
+        """Document du fichier ``path`` de l'édition (l'édition ou l'une de ses
+        parties), ou None. Avec ``load``, son texte est lu s'il ne l'a jamais
+        été, sans qu'il soit affiché (None si le fichier est illisible)."""
+        session = next((s for s in self.documents if s.in_edition and path_key(s.path) == path_key(path)), None)
+        if session is not None and load and session.text_document is None:
+            try:
+                text = Path(session.path).read_text(encoding="utf-8")
+            except (OSError, UnicodeError):
+                return None
+            self._load_session_text(session, text)
+        return session
+
     def _show_file_position(self, path, position):
         """Place le curseur à ``position`` dans le fichier ``path`` de
         l'édition, affiché au besoin (l'aperçu reste à l'écran)."""
-        session = next((s for s in self.documents if s.in_edition and path_key(s.path) == path_key(path)), None)
+        session = self._edition_file_session(path)
         if session is None or not self.show_document(session):
             return False
         self.show_document_tab(session)
@@ -560,10 +573,12 @@ class DocumentTabsMixin:
     # --- Enregistrement de plusieurs documents --------------------------------
 
     def _unsaved_sessions(self):
-        """Documents dont des modifications ne sont pas enregistrées. Pour le
-        document affiché, un fragment modifié dans l'aperçu compte aussi."""
+        """Documents dont des modifications ne sont pas enregistrées. Un
+        fragment modifié dans l'aperçu compte pour le document dont il vient
+        (V0.9.1.5 : une partie de l'édition, affichée ou non)."""
+        fragment = self.formatted_view.dirty_fragment_session() if hasattr(self, "formatted_view") else None
         return [session for session in self.documents
-                if (self._has_unsaved_work() if session is self.document else session.modified)]
+                if (self.modified if session is self.document else session.modified) or session is fragment]
 
     def _document_display_name(self, session):
         return f"{self._document_tab_name(session)} ({Path(session.path).name})"
@@ -605,8 +620,7 @@ class DocumentTabsMixin:
         if clicked is not save_btn:
             return False
         view = self.formatted_view
-        if (self._edition_displayed() and view.frag_box.isVisible()
-                and view.fragment_has_unapplied_changes() and not view.apply_fragment()):
+        if view.dirty_fragment_session() is not None and not view.apply_fragment():
             return False
         return all(self._save_session(session) for session in sessions)
 

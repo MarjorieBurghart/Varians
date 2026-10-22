@@ -822,4 +822,5 @@ Přesto exportovat?</string>
   <string key="diagnostics.route.uncertain">Pořadí textů ve svědkovi {witness}: {runs}; nejisté místo textů {texts}, ponechaných v pořadí edice.</string>
   <string key="diagnostics.route.edition">edice</string>
   <string key="status.route_uncertain">Nejisté místo textu {text} ve svědkovi {witness}: pořadí edice.</string>
+  <string key="fragment.label.file">Fragment TEI · odstavec {index}/{total} · {file}</string>
 </translations>
