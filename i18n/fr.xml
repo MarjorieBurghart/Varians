@@ -799,4 +799,5 @@ Exporter quand même ?</string>
   <string key="manuscript.lacuna">Lacune de ce témoin : son texte s’interrompt ici.</string>
   <string key="manuscript.lacuna.pivot">Lacune du témoin pivot : les lignes ne sont plus synchronisées dans ce passage.</string>
   <string key="status.base_lacuna">Lacune du pivot {base} : synchronisation des lignes suspendue jusqu’à la fin de la lacune.</string>
+  <string key="diagnostics.text_item.pages">{name} (pivot {base} ; témoins {witnesses} ; par pages : {pages})</string>
 </translations>

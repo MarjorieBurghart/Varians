@@ -11,14 +11,19 @@ Un fichier appartient à un seul segment (``pivot_lines``) : le segment change
 donc seulement avec le document affiché. Les panneaux des témoins reçoivent
 alors les données du nouveau segment, sans être recréés : zoom, cadres,
 disposition et fenêtres détachées restent en place. Un témoin sans JSON pour
-le texte garde son panneau, vide, avec un message. L'état d'un texte est lu à
-sa première visite, puis gardé.
+le texte, mais qui a ce texte (un ``<pb edRef>`` dans le texte, ou un
+``<locus target>`` dans son ``<witness>``), y suit ses pages (V0.9.1.3) ; les
+autres gardent leur panneau, vide, avec un message. L'état d'un texte est lu
+à sa première visite, puis gardé tant que ses témoins par pages ne changent
+pas.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import replace
 
 from app_context import tr as _t
+from folio_navigation import text_start_folio, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
@@ -26,6 +31,7 @@ from witness_resource_refresh import RuntimeState, assemble_resources
 from xml_assembly import path_key
 
 TEXT_ABSENT = "manuscript.text_absent"
+_XML_ID_RE = re.compile(r"(?<![\w:.-])xml:id\s*=\s*(['\"])(.*?)\1", re.S)
 
 
 class TextSegmentsMixin:
@@ -60,6 +66,65 @@ class TextSegmentsMixin:
 
     def _text_sync_of(self, segment):
         return next((sync for sync in self._text_syncs()[0] if path_key(sync.path) == segment), None)
+
+    # --- Témoins par pages d'un texte (V0.9.1.3) ------------------------------
+
+    def _witness_loci(self):
+        """``witness_loci`` du ``<listWit>`` de l'édition, gardé tant qu'elle
+        ne change pas."""
+        revision = self.edition_session.text_document.revision()
+        cache = self.__dict__.get("_witness_loci_cache")
+        if cache is None or cache[0] != revision:
+            cache = self._witness_loci_cache = (revision, witness_loci(self._edition_text()))
+        return cache[1]
+
+    def _segment_files(self, segment):
+        """Sessions des fichiers du segment ``segment`` : un texte
+        synchronisé à part et les parties qu'il inclut."""
+        lines = self._pivot_lines()
+        if lines is None:
+            return []
+        return [session for session in self.documents if session.in_edition and session.text_document is not None
+                and lines.file(session.path) is not None and lines.file(session.path).segment == segment]
+
+    def _segment_ids(self, segment):
+        """``xml:id`` des fichiers du segment ``segment``."""
+        return {match.group(2) for session in self._segment_files(segment)
+                for match in _XML_ID_RE.finditer(session.text_document.toPlainText())}
+
+    def _text_loci(self, segment):
+        """``{témoin: (Locus, …)}`` qui valent pour le texte ``segment`` : ceux
+        du ``<listWit>`` de l'édition, et ceux de l'en-tête du texte (document
+        TEI complet inclus par ``xpointer``)."""
+        loci = {wid: tuple(found) for wid, found in self._witness_loci().items()}
+        for session in self._segment_files(segment):
+            if path_key(session.path) == segment:
+                for wid, found in witness_loci(session.text_document.toPlainText()).items():
+                    loci[wid] = loci.get(wid, ()) + found
+        return loci
+
+    def _text_start_folio(self, witness_id, folios):
+        """Page de départ du témoin dans le texte affiché, synchronisé à part,
+        avant son premier ``<pb>`` dans ce texte (``text_start_folio``)."""
+        segment = self._active_segment
+        lines = self._pivot_lines()
+        first = lines.first_page(segment, witness_id, folios) if lines is not None else None
+        return text_start_folio(witness_id, folios, self._text_loci(segment).get(witness_id, ()),
+                                self._segment_ids(segment), first)
+
+    def _text_page_witnesses(self, sync):
+        """Témoins qui ont le texte ``sync`` sans y avoir de JSON : un ``<pb
+        edRef>`` dans le texte, ou un ``<locus target>`` vers l'un de ses
+        éléments. Ils y suivent leurs pages."""
+        segment = path_key(sync.path)
+        lines = self._pivot_lines()
+        found = set(lines.page_witnesses(segment)) if lines is not None else set()
+        ids = self._segment_ids(segment)
+        for wid, loci in self._text_loci(segment).items():
+            if any(locus.targets & ids for locus in loci):
+                found.add(wid)
+        declared = {w.id for w in self.witness_configs}
+        return {wid for wid in found if wid in declared}
 
     # --- Segment du document affiché ----------------------------------------
 
@@ -106,7 +171,7 @@ class TextSegmentsMixin:
         segment = self._document_segment() if self.document.in_edition else self._active_segment
         sync = self._text_sync_of(segment) if segment is not None else None
         self._refreshing_segment = None if sync is None else segment
-        return self.project if sync is None else text_project(self.project, sync)
+        return self.project if sync is None else text_project(self.project, sync, self._text_page_witnesses(sync))
 
     def _store_segment_state(self, state, project):
         """Fin de l'actualisation : ``state`` devient l'état du segment."""
@@ -127,9 +192,14 @@ class TextSegmentsMixin:
         syncs, problems = self._text_syncs()
         notes = []
         if syncs:
-            items = [_t("diagnostics.text_item", name=sync.name, base=sync.base,
-                        witnesses=", ".join(w.id for w in self.witness_configs if w.id in sync.alignments))
-                     for sync in syncs]
+            items = []
+            for sync in syncs:
+                witnesses = ", ".join(w.id for w in self.witness_configs if w.id in sync.alignments)
+                pages = text_project(self.project, sync, self._text_page_witnesses(sync)).page_witnesses
+                pages = ", ".join(w.id for w in self.witness_configs if w.id in pages)
+                items.append(_t("diagnostics.text_item.pages", name=sync.name, base=sync.base,
+                                witnesses=witnesses, pages=pages) if pages else
+                             _t("diagnostics.text_item", name=sync.name, base=sync.base, witnesses=witnesses))
             notes.append(_t("diagnostics.texts", texts="; ".join(items)))
         notes.extend(_t("text_sync.problem." + problem.code, name=problem.name, detail=problem.detail)
                      for problem in problems)
@@ -144,12 +214,18 @@ class TextSegmentsMixin:
         sa première visite. Un JSON illisible laisse le texte sans données,
         avec un message dans la barre d'état."""
         states = self.__dict__.setdefault("_segment_states", {})
+        if segment is not None and segment in states:
+            # Un <pb> ou un <locus> ajouté depuis la dernière visite (V0.9.1.3).
+            sync = self._text_sync_of(segment)
+            if states[segment][1].page_witnesses != text_project(
+                    self.project, sync, self._text_page_witnesses(sync)).page_witnesses:
+                del states[segment]
         if segment not in states:
             if segment is None:
                 states[None] = (self._witness_resource_snapshot(), self.project)
             else:
                 sync = self._text_sync_of(segment)
-                project = text_project(self.project, sync)
+                project = text_project(self.project, sync, self._text_page_witnesses(sync))
                 try:
                     state = assemble_resources(project)
                 except Exception as exc:
@@ -200,7 +276,9 @@ class TextSegmentsMixin:
         for w in self.witness_configs:
             panel = self.panels[w.id]
             panel.set_base(w.id == base, base_label)
-            if w.id not in witnesses:
+            # Un témoin par pages sans aucune image (V0.9.1.3) n'a rien à montrer.
+            if w.id not in witnesses or (w.id in getattr(project, "page_witnesses", ())
+                                         and not state.display_items.get(w.id)):
                 panel.set_absent(TEXT_ABSENT)
                 continue
             panel.absent_key = None

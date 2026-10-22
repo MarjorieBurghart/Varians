@@ -813,4 +813,5 @@ Trotzdem exportieren?</string>
   <string key="manuscript.lacuna">Lücke in diesem Textzeugen: Sein Text bricht hier ab.</string>
   <string key="manuscript.lacuna.pivot">Lücke im Pivot-Textzeugen: Die Zeilen werden in dieser Passage nicht synchronisiert.</string>
   <string key="status.base_lacuna">Lücke im Pivot-Textzeugen {base}: Zeilensynchronisierung bis zum Ende der Lücke ausgesetzt.</string>
+  <string key="diagnostics.text_item.pages">{name} (Pivot {base}; Textzeugen {witnesses}; seitenweise: {pages})</string>
 </translations>

@@ -813,4 +813,5 @@
   <string key="manuscript.lacuna">Лакуна этого свидетеля: его текст здесь обрывается.</string>
   <string key="manuscript.lacuna.pivot">Лакуна опорного свидетеля: в этом отрывке строки не синхронизируются.</string>
   <string key="status.base_lacuna">Лакуна опорного свидетеля {base}: синхронизация строк приостановлена до конца лакуны.</string>
+  <string key="diagnostics.text_item.pages">{name} (опорный {base}; свидетели {witnesses}; по страницам: {pages})</string>
 </translations>

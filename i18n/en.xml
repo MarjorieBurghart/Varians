@@ -799,4 +799,5 @@ Export anyway?</string>
   <string key="manuscript.lacuna">Lacuna in this witness: its text breaks off here.</string>
   <string key="manuscript.lacuna.pivot">Lacuna in the pivot witness: lines are not synchronized in this passage.</string>
   <string key="status.base_lacuna">Lacuna in the pivot {base}: line synchronization suspended until the end of the lacuna.</string>
+  <string key="diagnostics.text_item.pages">{name} (pivot {base}; witnesses {witnesses}; by pages: {pages})</string>
 </translations>

@@ -80,6 +80,69 @@ def folios_for_witness(xml_text: str, witness_id: str, surface_ids,
     return out
 
 
+def page_folios(folios: list[Folio]) -> list[Folio]:
+    """Pages d'un témoin, dans son ordre : les folios d'une surface divisée
+    (ses zones), sinon la surface entière. C'est le parcours des flèches
+    d'un panneau en mode page."""
+    return [f for f in folios if f.region is not None or not any(
+        x.region is not None and x.surface == f.surface for x in folios)]
+
+
+@dataclass(frozen=True)
+class Locus:
+    """``<locus from to target>`` d'un ``<witness>`` : folios, dans ce
+    témoin, du texte que vise ``@target`` (V0.9.1.3). ``targets`` : les
+    identifiants visés, sans « # »."""
+    witness: str
+    start: str | None
+    end: str | None
+    targets: frozenset
+
+
+def witness_loci(xml_text: str) -> dict:
+    """``{témoin: (Locus, …)}`` des ``<locus @target>`` placés dans les
+    ``<witness xml:id>`` d'un ``<listWit>`` ; {} si le XML est mal formé."""
+    try:
+        from lxml import etree
+        parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=True)
+        root = etree.fromstring(str(xml_text or "").encode("utf-8"), parser)
+    except Exception:
+        return {}
+    namespaces = {"tei": "http://www.tei-c.org/ns/1.0"}
+    found = {}
+    for witness in root.xpath("//tei:listWit//tei:witness[@xml:id]", namespaces=namespaces):
+        wid = witness.get("{http://www.w3.org/XML/1998/namespace}id")
+        loci = tuple(Locus(wid, locus.get("from"), locus.get("to"), frozenset(_pointer_tokens(locus.get("target"))))
+                     for locus in witness.xpath(".//tei:locus[@target]", namespaces=namespaces))
+        if loci:
+            found[wid] = loci
+    return found
+
+
+def text_start_folio(witness_id: str, folios: list[Folio], loci=(), text_ids=(), first: Folio | None = None):
+    """Page de départ d'un texte dans un témoin (V0.9.1.3), avant son
+    premier ``<pb>`` dans ce texte : le ``@from`` d'un ``<locus>`` du témoin
+    qui vise un des ``text_ids`` (rapproché des folios comme ``pb/@n``),
+    sinon la page qui précède ``first`` (le folio de ce premier ``<pb>``)
+    dans l'ordre des pages du témoin ; None sans l'un ni l'autre."""
+    lookup = folio_lookup(folios)
+    text_ids = set(text_ids)
+    for locus in loci:
+        if locus.start and locus.targets & text_ids:
+            folio = pb_folio(None, f"#{witness_id}", locus.start, witness_id, lookup)
+            if folio is not None:
+                return folio
+    if first is None:
+        return None
+    pages = page_folios(folios)
+    index = next((i for i, f in enumerate(pages) if f.ref == first.ref), None)
+    if index is None:
+        index = next((i for i, f in enumerate(pages) if f.surface == first.surface), None)
+    if index is None:
+        return first
+    return pages[max(0, index - 1)]
+
+
 def folio_lookup(folios: list[Folio]):
     """Tables de ``pb_folio`` pour les folios d'un témoin."""
     id_map = {f.ref: f for f in folios}

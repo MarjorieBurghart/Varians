@@ -235,6 +235,17 @@ class PivotLines:
         events = lacuna_events(text) if events is None else events
         return apply_events(state, events, int(position), start=after)
 
+    def first_page(self, segment, witness_id, folios):
+        """Folio du premier ``<pb>`` du témoin dans le segment ``segment``
+        (un texte synchronisé à part), ou None."""
+        lookup = folio_lookup(folios)
+        for facs, ed_ref, n, pb_segment in self._pbs:
+            if pb_segment == segment:
+                folio = pb_folio(facs, ed_ref, n, witness_id, lookup)
+                if folio is not None:
+                    return folio
+        return None
+
     def page_witnesses(self, segment):
         """Témoins dont un ``<pb edRef>`` est dans le segment ``segment``."""
         return self._page_witnesses.get(segment, frozenset())
