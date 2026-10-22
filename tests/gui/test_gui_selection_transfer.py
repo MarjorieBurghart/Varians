@@ -161,3 +161,82 @@ def test_a_click_on_the_text_still_moves_the_witnesses(open_window, example_proj
     qtbot.mouseClick(preview.viewport(), Qt.MouseButton.LeftButton, pos=point)
     qtbot.waitUntil(lambda: window._last_synced_ordinal == line, timeout=3000)
     assert window.base_panel.center_index == line
+
+
+# --- Aperçu -> éditeur de fragment -------------------------------------------
+
+def _open_fragment(window, qtbot, paragraph):
+    view = _show_preview(window, qtbot)
+    assert view.load_fragment(paragraph)
+    return view
+
+
+def _double_click(qtbot, view, position, dx=3):
+    """Double-clic réel : QTest.mouseDClick n'envoie que l'événement du
+    double-clic, sans le relâchement qui le suit."""
+    preview, point = _click(view, position, dx=dx)
+    left = Qt.MouseButton.LeftButton
+    qtbot.mousePress(preview.viewport(), left, pos=point)
+    qtbot.mouseRelease(preview.viewport(), left, pos=point)
+    qtbot.mouseDClick(preview.viewport(), left, pos=point)
+    qtbot.mouseRelease(preview.viewport(), left, pos=point)
+
+
+def _fragment_occurrences(view, word):
+    pattern = r"(?:\s*<lb\b[^>]*/>\s*)?".join(re.escape(ch) for ch in word)
+    return [m.span() for m in re.finditer(pattern, view.fragment_editor.toPlainText())]
+
+
+def test_a_preview_selection_is_selected_in_the_open_fragment(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    _double_click(qtbot, view, _preview_occurrences(view, "premium", 2)[2][0])
+    assert view.preview.textCursor().selectedText().replace(WJ, "") == "premium"
+    qtbot.waitUntil(lambda: view.fragment_editor.textCursor().hasSelection(), timeout=3000)
+    assert _selection(view.fragment_editor) == _fragment_occurrences(view, "premium")[2]
+    assert view.fragment_editor.hasFocus()
+
+
+def test_a_word_cut_by_a_line_break_is_selected_in_the_fragment(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    _select(view.preview, *_preview_occurrences(view, "premium", 2)[0])
+    view.preview.textSelected.emit()
+    first = _fragment_occurrences(view, "premium")[0]
+    assert _selection(view.fragment_editor) == first
+    assert 'break="no"' in view.fragment_editor.textCursor().selectedText()
+
+
+def test_a_selection_in_another_paragraph_leaves_the_fragment(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    _double_click(qtbot, view, _preview_occurrences(view, "auaritia", 3)[0][0])
+    assert view.preview.textCursor().hasSelection()
+    qtbot.wait(100)
+    assert not view.fragment_editor.textCursor().hasSelection()
+    assert view.current_paragraph == 2 and not view.fragment_editor.hasFocus()
+
+
+def test_the_pencil_is_not_a_selection(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    marker, _content, paragraph = view.preview._paragraph_markers[2]
+    _double_click(qtbot, view, marker, dx=4)
+    qtbot.wait(100)
+    assert view.current_paragraph == paragraph == 2
+    assert not view.fragment_editor.textCursor().hasSelection()
+
+
+def test_a_modified_fragment_is_searched_in_its_current_text(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _open_fragment(window, qtbot, 2)
+    cursor = view.fragment_editor.textCursor()
+    cursor.setPosition(len("<p>"))
+    cursor.insertText("uerbum nouum ")                    # pas encore appliqué
+    _select(view.preview, *_preview_occurrences(view, "premium", 2)[2])
+    view.preview.textSelected.emit()
+    # Même rang, à sa nouvelle place dans le texte du fragment.
+    expected = _fragment_occurrences(view, "premium")[2]
+    assert expected[0] > _source_occurrences(window, "premium", 2)[2][0] - paragraph_spans(
+        window.editor.toPlainText())[2][0]
+    assert _selection(view.fragment_editor) == expected

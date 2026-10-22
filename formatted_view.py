@@ -26,6 +26,7 @@ from code_editor import CodeEditor, find_in_plain_editor
 from completion_ui import CompletionDialog
 from custom_completion import load_custom_completion
 from selection_sync import choose_occurrence, occurrence_index_for_position
+from tei_facsimile import position_inside_xml_markup
 
 
 def find_in_rich_editor(editor, query, backwards=False):
@@ -172,6 +173,54 @@ def _xml_selection_pattern(text):
     return "".join(parts)
 
 
+def xml_occurrences(xml_text, visible, start=0, end=None):
+    """Plages où le texte visible ``visible`` apparaît dans ``xml_text[start:end]``.
+
+    Sert à la source XML comme au fragment ouvert. Une occurrence visible
+    seulement dans un nom de balise ou une valeur d'attribut est écartée ; une
+    sélection traversant un lb break=no reste admise, car son premier
+    caractère est du texte.
+    """
+    pattern = _xml_selection_pattern(visible)
+    if not pattern:
+        return []
+    end = len(xml_text) if end is None else int(end)
+    try:
+        matches = list(re.finditer(pattern, xml_text[start:end], flags=re.DOTALL))
+    except re.error:
+        return []
+    return [(start + m.start(), start + m.end()) for m in matches
+            if not position_inside_xml_markup(xml_text, start + m.start())]
+
+
+def xml_selection_descriptor(xml_text, visible, selection_start, start=0, end=None):
+    """Rang de la sélection parmi les occurrences de ``visible`` dans
+    ``xml_text[start:end]``, et longueur du texte visible qui la précède
+    depuis ``start``. Ce décalage approximatif sert seulement de repli si la
+    transformation XSLT a modifié le nombre d'occurrences."""
+    occurrences = xml_occurrences(xml_text, visible, start, end)
+    return {
+        "occurrence": occurrence_index_for_position(occurrences, selection_start),
+        "relative": len(_selection_xml_to_visible_text(xml_text[start:int(selection_start)])),
+    }
+
+
+def pick_xml_occurrence(xml_text, visible, descriptor, start=0, end=None):
+    """Occurrence de ``visible`` décrite par ``descriptor`` (rang, sinon
+    décalage visible depuis ``start``), ou None."""
+    occurrences = xml_occurrences(xml_text, visible, start, end)
+    target = None
+    # Pour le repli positionnel, on approxime l'offset visible en balayant
+    # les occurrences candidates ; l'index d'occurrence reste prioritaire.
+    if descriptor.get("relative") is not None and occurrences:
+        wanted = int(descriptor.get("relative") or 0)
+        target = min(
+            occurrences,
+            key=lambda ab: abs(len(_selection_xml_to_visible_text(xml_text[start:ab[0]])) - wanted),
+        )[0]
+    return choose_occurrence(occurrences, descriptor.get("occurrence"), target)
+
+
 P_ELEMENT_RE = re.compile(
     r"<(?:[A-Za-z_][\w.-]*:)?p\b[^>]*>.*?</(?:[A-Za-z_][\w.-]*:)?p\s*>",
     re.IGNORECASE | re.DOTALL,
@@ -273,6 +322,8 @@ class ClickablePreview(QTextBrowser):
     """Aperçu HTML dont le texte est cliquable sans être rendu comme un hyperlien."""
 
     lineActivated = Signal(int)
+    # Sélection faite à la souris (glisser, double-clic), hors des liens.
+    textSelected = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -505,13 +556,14 @@ class ClickablePreview(QTextBrowser):
         super().mouseReleaseEvent(event)
         if href:
             return
-        if not self._marker_positions:
-            return
-        char_pos = self.cursorForPosition(pos).position()
-        line = self.line_for_position(char_pos)
-        if line is not None:
-            self.active_line_ordinal = line
-            self.lineActivated.emit(line)
+        if self._marker_positions:
+            char_pos = self.cursorForPosition(pos).position()
+            line = self.line_for_position(char_pos)
+            if line is not None:
+                self.active_line_ordinal = line
+                self.lineActivated.emit(line)
+        if self.textCursor().hasSelection():
+            self.textSelected.emit()
 
 
 _LXML_TRANSFORM_CACHE = {}
@@ -719,6 +771,7 @@ class FormattedEditionWidget(QWidget):
         self.preview.setMinimumHeight(300)
         self.preview.anchorClicked.connect(self._anchor_clicked)
         self.preview.lineActivated.connect(self._line_clicked)
+        self.preview.textSelected.connect(self._preview_selection_to_fragment)
 
         frag_box = QWidget()
         self.frag_box = frag_box
@@ -1468,6 +1521,31 @@ class FormattedEditionWidget(QWidget):
             self.current_paragraph is not None
             and self.fragment_editor.toPlainText() != self.fragment_original
         )
+
+    def _preview_selection_to_fragment(self):
+        """Une sélection faite dans l'aperçu est aussi sélectionnée dans
+        l'éditeur de fragment, qui prend le focus, si elle commence dans le
+        paragraphe ouvert. La même occurrence est cherchée dans le texte
+        actuel du fragment, même modifié."""
+        if self.current_paragraph is None or self.frag_box.isHidden():
+            return False
+        cursor = self.preview.textCursor()
+        text = cursor.selectedText().replace("⁠", "")
+        if not text.strip():
+            return False
+        descriptor = self.preview.selection_descriptor(text, cursor.selectionStart())
+        if not descriptor or descriptor.get("paragraph") != self.current_paragraph:
+            return False
+        chosen = pick_xml_occurrence(self.fragment_editor.toPlainText(), text, descriptor)
+        if not chosen:
+            return False
+        selection = QTextCursor(self.fragment_editor.document())
+        selection.setPosition(chosen[0])
+        selection.setPosition(chosen[1], QTextCursor.MoveMode.KeepAnchor)
+        self.fragment_editor.setTextCursor(selection)
+        self.fragment_editor.centerCursor()
+        self.fragment_editor.setFocus()
+        return True
 
     def close_fragment_editor(self):
         """Ferme l’éditeur de fragment sans perdre silencieusement une correction."""
