@@ -81,3 +81,25 @@ témoin**. Le viewer web a le même contrat via `pbWitnessIds()` et les
 `labelIndex` privés de `states.get(witness_id)`. L'identifiant `@facs` reste
 prioritaire. Une répétition *dans un même témoin* sans `@facs` n'est pas
 attribuée arbitrairement ; aucune identification par ordre d'images.
+
+## V0.9.1.3 — Mode page dans un texte synchronisé à part, lacunes
+
+Dans un texte synchronisé à part (V0.9.1.1), un témoin sans JSON pour ce
+texte mais qui a le texte (un `<pb edRef>` dans le texte, ou un
+`<locus target>` vers l'un de ses éléments dans son `<witness>` du
+`<listWit>`) est un témoin par pages. Sa page vient des seuls `<pb>` de ce
+texte : l'ordre de l'édition ne dit rien de l'ordre d'un manuscrit. Avant
+son premier `<pb>` dans le texte, il montre sa page de départ :
+
+1. le `@from` de son `<locus from to target>` pour ce texte, rapproché des
+   folios comme un `pb/@n` (même règle que `pb_folio`) ;
+2. sinon la page qui précède, dans l'ordre de ses pages (zones d'une
+   surface divisée comprises), celle de ce premier `<pb>`.
+
+Dans le segment de l'édition (numérotation continue), rien ne change : la
+page continue d'une partie à l'autre, dans l'ordre de l'édition.
+
+Un témoin par pages en lacune (`<rdg wit="#C"><lacunaStart/></rdg>`)
+garde la page de son dernier `<pb>`, avec le bandeau « Lacune » ; pendant
+une lacune du pivot, les témoins par pages continuent de suivre leurs
+`<pb>`.

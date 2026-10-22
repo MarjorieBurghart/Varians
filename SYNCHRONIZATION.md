@@ -87,6 +87,30 @@ contiennent que leurs lignes. Le pivot d'un texte est celui du projet, sauf
 Quand un tel texte est affiché, les panneaux prennent ses JSON et son pivot
 (lus à la première visite, puis gardés) ; un témoin sans JSON pour le texte
 garde son panneau, avec un message. « Actualiser les synchronisations » et
-« État des témoins » portent sur le texte affiché. Les lacunes, les témoins
-synchronisés par pages dans un texte à part et le parcours d'un manuscrit
-dans son propre ordre viennent en V0.9.1.3.
+« État des témoins » portent sur le texte affiché.
+
+## V0.9.1.3 — Lacunes, témoins par pages dans un texte à part
+
+**Lacunes.** Le passage qu'un témoin n'a pas s'encadre par `<lacunaStart/>`
+et `<lacunaEnd/>`, placés, comme le veut la TEI, dans une leçon : le témoin
+est celui du `<rdg>`/`<lem>` qui contient la balise
+(`<app><lem wit="#T1"/><rdg wit="#T2"><lacunaStart/></rdg></app>`), ou celui
+du `@wit` de la balise dans une leçon de plusieurs témoins. Varians reconnaît
+aussi la balise hors d'une leçon, avec `@wit`, mais la validation TEI l'y
+signale. Un témoin par lignes en lacune garde la ligne où
+son texte s'interrompt : sa ligne reliée à la dernière ligne du pivot avant
+le début de la lacune (ou à la plus proche avant elle), avec un bandeau.
+Un témoin par pages garde la page de son dernier `<pb>`. Pendant une lacune
+du pivot, les témoins par lignes restent sur sa dernière ligne (le pivot
+n'a pas de `<lb/>` dans sa lacune), avec un bandeau et un message ; les
+témoins par pages continuent. Dans une édition en parties, une lacune peut
+passer d'une partie à l'autre ; dans un texte à part, seules comptent ses
+propres lacunes (module `lacunae.py`, `PivotLines.lacunae_at`).
+
+**Témoins par pages dans un texte à part.** Un témoin sans JSON pour le
+texte, mais qui a ce texte (un `<pb edRef>` dans le texte, ou un
+`<locus target>` dans son `<witness>`), y suit ses pages ; sa page vient des
+seuls `<pb>` du texte. Avant son premier `<pb>`, sa page de départ est le
+`@from` de son `<locus>` pour ce texte, sinon la page qui précède celle de
+ce premier `<pb>` dans l'ordre de ses pages. Le parcours d'un manuscrit
+dans son propre ordre vient en V0.9.1.4.

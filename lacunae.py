@@ -2,11 +2,16 @@
 """Lacunes des témoins (V0.9.1.3), sans Qt.
 
 En TEI (*parallel segmentation*), le passage qu'un témoin n'a pas est encadré
-par ``<lacunaStart/>`` et ``<lacunaEnd/>`` (classe ``att.rdgPart``). Le
-témoin est donné de deux façons, toutes deux reconnues :
+par ``<lacunaStart/>`` et ``<lacunaEnd/>`` (``model.rdgPart``), que la TEI
+n'admet que dans ``<rdg>`` et ``<lem>``. Le témoin est celui de la leçon qui
+contient la balise, ou, dans une leçon de plusieurs témoins, celui du ``@wit``
+de la balise (``att.rdgPart``) :
 
-    <lacunaStart wit="#B"/> … <lacunaEnd wit="#B"/>
-    <app><rdg wit="#B"><lacunaStart/></rdg>…</app> … <app><rdg wit="#B"><lacunaEnd/></rdg>…</app>
+    <app><lem wit="#A"/><rdg wit="#B"><lacunaStart/></rdg></app> … <app><lem wit="#A"/><rdg wit="#B"><lacunaEnd/></rdg></app>
+    <rdg wit="#B #C">… <lacunaStart wit="#C"/></rdg>
+
+La balise isolée avec ``@wit`` (``<lacunaStart wit="#B"/>`` hors d'une leçon)
+est reconnue aussi, bien que la validation TEI la signale.
 
 ``lacuna_events`` relève les débuts et fins d'un texte, ``lacunae_at`` donne
 les témoins en lacune à une position. Une lacune sans fin court jusqu'à la fin
