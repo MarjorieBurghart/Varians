@@ -23,8 +23,8 @@ from folio_navigation import (
 from iiif_local import apply_working_copy
 from image_fetch import FetchWorker
 from image_sources import (
-    image_only_items, page_image_dimensions, page_image_request as generic_image_request,
-    page_image_source, page_label as image_page_label, page_navigation_items,
+    image_only_items, matched_line_center, page_image_dimensions, page_image_request as generic_image_request,
+    page_image_source, page_label as image_page_label, page_navigation_items, valid_matched_indices,
 )
 from lacunae import lacuna_events, lacunae_at
 from pivot_lines import include_spans
@@ -35,6 +35,7 @@ from tei_facsimile import (
 from witness_resource_refresh import (
     assemble_resources, changed_witnesses, diagnostic_rows, RuntimeState,
 )
+from witness_route import Stop
 
 
 def flatten_primary(cache):
@@ -877,7 +878,7 @@ class WitnessSyncMixin:
             lacunae = self._lacunae_at_cursor()
             self._last_synced_lacunae = frozenset(lacunae)
             # Le témoin de base vient déjà de naviguer ; on actualise tous les panneaux.
-            self.base_panel.match_indices={ordinal}; self.base_panel.origin_center_index=ordinal; self.base_panel.reload()
+            self.base_panel.match_indices={ordinal}; self.base_panel.center_index=self.base_panel.origin_center_index=ordinal; self.base_panel.reload()
             self.base_panel.set_lacuna(LACUNA if self.base_id in lacunae else None)
             self._follow_base_line(ordinal, lacunae, skip=self.base_id)
             self._sync_page_panels_to_cursor(force=True, lacunae=lacunae)
@@ -885,6 +886,95 @@ class WitnessSyncMixin:
             call_later(90, self, self._release_panel_sync)
 
     def _release_panel_sync(self): self._sync_from_panel=False
+
+    # --- Les flèches d'un panneau mènent l'édition (V0.9.1.4) -----------------
+
+    @Slot(str, int)
+    def _witness_panel_navigate(self, wid, step):
+        """Flèches du panneau ``wid`` : le témoin mène l'édition dans son
+        propre ordre, d'une partie ou d'un texte à l'autre ; les autres
+        témoins suivent le pivot. Hors de l'édition, ou sans lignes reliées
+        au pivot, le témoin est seulement feuilleté."""
+        panel = self.panels.get(wid)
+        if panel is None:
+            return
+        if not self.document.in_edition or not panel.sync_enabled or not panel.items:
+            panel.browse(step)
+            return
+        segment = getattr(self, "_active_segment", None)
+        key = panel.current_item()["key"]
+        route = self._witness_route(wid)
+        if route.index(segment, key) is not None:
+            stop = route.step(segment, key, step)
+        else:
+            stop = self._panel_stop(wid, panel, panel.center_index + step)
+        if stop is None:
+            self.statusBar().showMessage(
+                _t("status.witness_end" if step > 0 else "status.witness_start", witness=wid), 4000)
+            return
+        self._go_to_witness_stop(wid, stop)
+
+    def _panel_stop(self, wid, panel, index):
+        """Arrêt de rang ``index`` dans le panneau (élément hors du parcours) :
+        sa ligne du pivot, ou celle de la ligne reliée qui la précède."""
+        if not 0 <= index < len(panel.items):
+            return None
+        ordinal = None
+        for candidate in range(index, -1, -1):
+            ordinal = self._item_base_ordinal(wid, panel.items[candidate])
+            if ordinal is not None:
+                break
+        linked = self._item_base_ordinal(wid, panel.items[index]) is not None
+        return Stop(getattr(self, "_active_segment", None), panel.items[index]["key"], "", ordinal, linked)
+
+    def _item_base_ordinal(self, wid, item):
+        """Ligne du pivot que désigne l'élément ``item`` du panneau ``wid``."""
+        if wid == self.base_id:
+            return self.base_by_key.get(item["key"])
+        ranks = [self.base_by_key[str(k)] for k in (item["l"].get("base_keys") or item["l"].get("keys816") or [])
+                 if str(k) in self.base_by_key]
+        return min(ranks) if ranks else None
+
+    def _go_to_witness_stop(self, wid, stop):
+        """L'édition va à la ligne du pivot de ``stop`` (dans son texte) ; le
+        panneau ``wid`` se place sur l'élément de ``stop`` ; les autres
+        suivent le pivot."""
+        if stop.ordinal is None:
+            return
+        self._sync_from_panel = True
+        try:
+            reached = self._show_segment_ordinal(stop.segment, stop.ordinal)
+            if reached is None:
+                return
+            panel = self.panels[wid]
+            lacunae = self._lacunae_at_cursor()
+            self._last_synced_ordinal = reached
+            self._last_synced_lacunae = frozenset(lacunae)
+            key = self.base_items[reached]["key"]
+            index = next((i for i, item in enumerate(panel.items) if item["key"] == stop.key), None)
+            if index is not None:
+                panel.primary_key = key
+                if panel.is_base:
+                    panel.match_indices = {index}
+                    panel.origin_center_index = index
+                else:
+                    matches = valid_matched_indices(panel.map_base.get(key, []), len(panel.items))
+                    panel.match_indices = matches
+                    center = matched_line_center(sorted(matches), index, len(panel.items))
+                    panel.origin_center_index = center if center is not None else index
+                panel.center_index = index
+                panel.reload()
+            pivot_gap = self.base_id in lacunae
+            panel.set_lacuna(LACUNA if wid in lacunae else
+                             PIVOT_LACUNA if pivot_gap and wid != self.base_id else None)
+            self._follow_base_line(reached, lacunae, skip=wid)
+            self._sync_page_panels_to_cursor(force=True, lacunae=lacunae)
+            if stop.linked:
+                self._show_base_line_status(reached, lacunae)
+            else:
+                self.statusBar().showMessage(_t("status.witness_unlinked", witness=wid, line=reached + 1), 4000)
+        finally:
+            call_later(90, self, self._release_panel_sync)
 
     def goto_xml_from_base(self):
         if not self.document.in_edition: return

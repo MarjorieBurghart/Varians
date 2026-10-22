@@ -814,4 +814,7 @@ Esportare comunque?</string>
   <string key="manuscript.lacuna.pivot">Lacuna del testimone pivot: in questo passo le righe non sono sincronizzate.</string>
   <string key="status.base_lacuna">Lacuna del pivot {base}: sincronizzazione delle righe sospesa fino alla fine della lacuna.</string>
   <string key="diagnostics.text_item.pages">{name} (pivot {base}; testimoni {witnesses}; per pagine: {pages})</string>
+  <string key="status.witness_start">Inizio del manoscritto {witness}.</string>
+  <string key="status.witness_end">Fine del manoscritto {witness}.</string>
+  <string key="status.witness_unlinked">Riga di {witness} non collegata al pivot: l’edizione resta alla riga {line}.</string>
 </translations>

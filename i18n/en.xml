@@ -800,4 +800,7 @@ Export anyway?</string>
   <string key="manuscript.lacuna.pivot">Lacuna in the pivot witness: lines are not synchronized in this passage.</string>
   <string key="status.base_lacuna">Lacuna in the pivot {base}: line synchronization suspended until the end of the lacuna.</string>
   <string key="diagnostics.text_item.pages">{name} (pivot {base}; witnesses {witnesses}; by pages: {pages})</string>
+  <string key="status.witness_start">Beginning of manuscript {witness}.</string>
+  <string key="status.witness_end">End of manuscript {witness}.</string>
+  <string key="status.witness_unlinked">Line of {witness} not linked to the pivot: the edition stays at line {line}.</string>
 </translations>

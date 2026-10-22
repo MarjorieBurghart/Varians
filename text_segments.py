@@ -27,11 +27,13 @@ from folio_navigation import text_start_folio, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
-from witness_resource_refresh import RuntimeState, assemble_resources
+from witness_resource_refresh import RuntimeState, assemble_resources, flatten_primary, read_alignment_json
+from witness_route import PageMark, Source, page_identity, witness_route
 from xml_assembly import path_key
 
 TEXT_ABSENT = "manuscript.text_absent"
 _XML_ID_RE = re.compile(r"(?<![\w:.-])xml:id\s*=\s*(['\"])(.*?)\1", re.S)
+_SURFACE_NUMBER_RE = re.compile(r"-p(\d+)$")
 
 
 class TextSegmentsMixin:
@@ -125,6 +127,88 @@ class TextSegmentsMixin:
                 found.add(wid)
         declared = {w.id for w in self.witness_configs}
         return {wid for wid in found if wid in declared}
+
+    # --- Parcours d'un témoin dans son propre ordre (V0.9.1.4) -----------------
+
+    def _witness_route(self, wid):
+        """``WitnessRoute`` du témoin dans tous les textes de l'édition, gardé
+        tant que la numérotation, les textes à part et leurs états ne
+        changent pas."""
+        lines = self._pivot_lines() if self._edition_has_parts() else None
+        syncs = tuple(self._text_syncs()[0]) if lines is not None else ()
+        edition = self._segment_state(None)
+        states = self.__dict__.get("_segment_states") or {}
+        folios = tuple(self.panels[wid].folios)
+        signature = (lines, syncs, tuple((key, id(value[0])) for key, value in states.items()),
+                     id(edition[0]), folios)
+        routes = self.__dict__.setdefault("_witness_routes", {})
+        found = routes.get(wid)
+        if found is None or found[0] != signature:
+            found = routes[wid] = (signature, witness_route(
+                wid, self._route_sources(wid, lines, syncs, states, edition, folios),
+                self._declared_page_ranks(wid, states, edition, folios)))
+        return found[1]
+
+    def _route_sources(self, wid, lines, syncs, states, edition, folios):
+        """``Source`` du témoin pour l'édition, puis pour chaque texte à part,
+        dans l'ordre de l'édition : ses lignes (état du segment s'il a été
+        lu, sinon ses JSON), ou ses ``<pb>`` dans ce texte."""
+        sources = [self._state_source(None, wid, *edition, lines, folios)]
+        for sync in syncs:
+            segment = path_key(sync.path)
+            if segment in states:
+                source = self._state_source(segment, wid, *states[segment], lines, folios)
+            else:
+                source = self._json_source(segment, wid, sync, lines, folios)
+            if source.cache is not None or source.marks:
+                ids = self._segment_ids(segment)
+                locus = next((locus.start for locus in self._text_loci(segment).get(wid, ())
+                              if locus.start and locus.targets & ids), None)
+                sources.append(replace(source, locus=locus))
+        return sources
+
+    def _state_source(self, segment, wid, state, project, lines, folios):
+        anchor = lines.anchor(segment) if lines is not None else 0
+        is_base = wid == project.base_witness
+        if wid in project.witness_by_id and state.base_active and (
+                is_base or state.secondary_links.get(wid, 0) > 0):
+            return Source(segment, state.caches.get(wid), is_base, state.base_by_key, anchor)
+        return Source(segment, marks=self._route_marks(wid, segment, lines, folios), anchor=anchor)
+
+    def _json_source(self, segment, wid, sync, lines, folios):
+        """Source d'un texte pas encore visité : ses JSON, lus sans images."""
+        anchor = lines.anchor(segment)
+        if wid in sync.alignments and sync.base in sync.alignments:
+            try:
+                cache = read_alignment_json(sync.alignments[wid])
+                base_by_key = flatten_primary(read_alignment_json(sync.alignments[sync.base]))[1]
+            except (OSError, ValueError):
+                return Source(segment, anchor=anchor)
+            return Source(segment, cache, wid == sync.base, base_by_key, anchor)
+        return Source(segment, marks=self._route_marks(wid, segment, lines, folios), anchor=anchor)
+
+    @staticmethod
+    def _route_marks(wid, segment, lines, folios):
+        if lines is None or not folios:
+            return ()
+        return tuple(PageMark(mark.folio.ref, mark.folio.label, (mark.path, mark.position), mark.ordinal)
+                     for mark in lines.pb_marks(wid, list(folios), segment))
+
+    @staticmethod
+    def _declared_page_ranks(wid, states, edition, folios):
+        """Rang des pages du témoin tiré de ses images déclarées : le numéro
+        de ``tei_surface_id``, sa place dans le manifeste ou les fichiers."""
+        ranks, surfaces = {}, {}
+        for state, _project in [edition, *states.values()]:
+            for page in (state.caches.get(wid) or {}).get("pages", []) or []:
+                sid = str(page.get("tei_surface_id") or "")
+                match = _SURFACE_NUMBER_RE.search(sid)
+                if match:
+                    ranks[page_identity(page)] = surfaces[sid] = int(match.group(1))
+        for folio in folios:
+            if folio.surface in surfaces:
+                ranks[f"folio:{folio.ref}"] = surfaces[folio.surface]
+        return ranks
 
     # --- Segment du document affiché ----------------------------------------
 
