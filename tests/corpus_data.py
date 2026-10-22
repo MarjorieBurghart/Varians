@@ -97,3 +97,25 @@ def split_alignments(root: Path, text: str, pivot: str, first: int, count: int, 
         write_json(path, rest)
         if path.stem in witnesses:
             write_json(alignments / text / path.name, part)
+
+
+# PNG d'un pixel, pour les images locales des témoins par pages.
+TINY_PNG = bytes.fromhex(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+    "0000000d49444154789c6360000000020001e221bc330000000049454e44ae426082")
+
+
+def add_page_witness(project_xml: Path, witness: str, labels) -> None:
+    """Ajoute au projet un témoin par pages (V0.9.1.3) : des images locales,
+    sans JSON ; ses folios portent les ``labels``, dans cet ordre (surfaces
+    ``<witness>-p0001``…)."""
+    folder = project_xml.parent / "images" / witness
+    folder.mkdir(parents=True, exist_ok=True)
+    images = []
+    for index, label in enumerate(labels, 1):
+        (folder / f"{index:04d}.png").write_bytes(TINY_PNG)
+        images.append(f'<image file="images/{witness}/{index:04d}.png" label="{label}"/>')
+    declaration = (f'<witness id="{witness}" label="{witness} · par pages">'
+                   f'<images type="files">{"".join(images)}</images></witness>\n  ')
+    text = project_xml.read_text(encoding="utf-8")
+    project_xml.write_text(text.replace("</witnesses>", declaration + "</witnesses>", 1), encoding="utf-8")

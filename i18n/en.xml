@@ -796,4 +796,7 @@ Export anyway?</string>
   <string key="text_sync.problem.no_base_alignment">{name}: no JSON for the pivot {detail} in its folder; this text is not synchronized.</string>
   <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; does not name any text of the edition.</string>
   <string key="text_sync.problem.duplicate_name">{name}: two texts have this name; the folder alignments/{name}/ goes to the first one, not to {detail}.</string>
+  <string key="manuscript.lacuna">Lacuna in this witness: its text breaks off here.</string>
+  <string key="manuscript.lacuna.pivot">Lacuna in the pivot witness: lines are not synchronized in this passage.</string>
+  <string key="status.base_lacuna">Lacuna in the pivot {base}: line synchronization suspended until the end of the lacuna.</string>
 </translations>

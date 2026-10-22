@@ -810,4 +810,7 @@ Esportare comunque?</string>
   <string key="text_sync.problem.no_base_alignment">{name}: nessun JSON per il pivot {detail} nella sua cartella; questo testo non è sincronizzato.</string>
   <string key="text_sync.problem.unknown_part">{name}: &lt;part name="{name}"&gt; non designa alcun testo dell’edizione.</string>
   <string key="text_sync.problem.duplicate_name">{name}: due testi hanno questo nome; la cartella alignments/{name}/ va al primo, non a {detail}.</string>
+  <string key="manuscript.lacuna">Lacuna di questo testimone: il suo testo si interrompe qui.</string>
+  <string key="manuscript.lacuna.pivot">Lacuna del testimone pivot: in questo passo le righe non sono sincronizzate.</string>
+  <string key="status.base_lacuna">Lacuna del pivot {base}: sincronizzazione delle righe sospesa fino alla fine della lacuna.</string>
 </translations>

@@ -297,6 +297,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
     _source_completion_context_cache = _document_attribute("completion_context_cache")
     _last_synced_ordinal = _document_attribute("last_synced_ordinal")
     _last_synced_surface = _document_attribute("last_synced_surface")
+    _last_synced_lacunae = _document_attribute("last_synced_lacunae")
     highlighter = _document_attribute("highlighter")
     # Schéma du document affiché (celui du projet pour l'édition).
     _schema_mode = _document_attribute("schema_mode")

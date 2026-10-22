@@ -61,7 +61,7 @@ def witness_tokens(value):
 def lacuna_events(text):
     """Débuts et fins de lacune de ``text``, dans l'ordre."""
     text = str(text or "")
-    if "lacuna" not in text:
+    if "lacunaStart" not in text and "lacunaEnd" not in text:
         return ()
     ignored = [match.span() for rx in _IGNORED_RE for match in rx.finditer(text)]
     readings = []        # leçons ouvertes : (nom, témoins)

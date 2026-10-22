@@ -237,6 +237,8 @@ class ManuscriptPanel(QFrame):
         # Clé du message affiché quand le témoin n'a pas de données pour le
         # texte en cours (V0.9.1.1, textes synchronisés à part) ; voir set_absent.
         self.absent_key = None
+        # Clé du bandeau « Lacune » (V0.9.1.3) ; voir set_lacuna.
+        self.lacuna_key = None
         self.folios = []
         self._active_folio = None
         self._updating_folios = False
@@ -300,6 +302,13 @@ class ManuscriptPanel(QFrame):
         self.sync_issue.setStyleSheet("color:#94512f;border:0;font-size:11px")
         self.sync_issue.hide()
         root.addWidget(self.sync_issue)
+        self.lacuna_label = QLabel("")
+        self.lacuna_label.setWordWrap(True)
+        self.lacuna_label.setStyleSheet(
+            "color:#6b4a1f;background:#f6e7c9;border:1px solid #d9b77a;border-radius:4px;"
+            "padding:2px 6px;font-size:11px;font-weight:bold")
+        self.lacuna_label.hide()
+        root.addWidget(self.lacuna_label)
         self.view = ImageSceneView(self); root.addWidget(self.view, 1)
         self.message = QLabel(""); self.message.setWordWrap(True); self.message.setStyleSheet("color:#9b4636;border:0;font-size:11px")
         self.message.hide(); root.addWidget(self.message)
@@ -365,6 +374,8 @@ class ManuscriptPanel(QFrame):
         self.split_folio_btn.setText(_t('folio.split.button'))
         self.split_folio_btn.setToolTip(_t('folio.split.tip'))
         self.set_compact_toolbar(getattr(self, '_compact_toolbar', False))
+        if self.lacuna_key:
+            self.lacuna_label.setText(_t(self.lacuna_key))
         # Update labels/status without refetching IIIF images.
         if not self.items:
             self._show_empty()
@@ -470,7 +481,18 @@ class ManuscriptPanel(QFrame):
         self.match_indices = set()
         self.primary_key = None
         self.sync_issue.hide()
+        self.set_lacuna(None)
         self.reload()
+
+    def set_lacuna(self, key):
+        """Bandeau au-dessus de l'image (V0.9.1.3) : le témoin, ou le pivot,
+        est en lacune à cet endroit du texte. ``key`` : message du catalogue
+        i18n, ou None pour retirer le bandeau."""
+        if key == self.lacuna_key:
+            return
+        self.lacuna_key = key
+        self.lacuna_label.setText(_t(key) if key else "")
+        self.lacuna_label.setVisible(bool(key))
 
     def current_item(self):
         if not self.items: return None

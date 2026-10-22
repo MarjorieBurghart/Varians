@@ -72,6 +72,9 @@ class PageWindow:
     """Fenêtre réduite à la synchronisation des pages ; ``path`` affiché."""
     _sync_page_panels_to_cursor = _method("_sync_page_panels_to_cursor")
 
+    def _lacunae_at_cursor(self):                   # V0.9.1.3 : aucune lacune ici
+        return {}
+
     def __init__(self, path, needle):
         text = path.read_text(encoding="utf-8")
         self.document = SimpleNamespace(path=path)

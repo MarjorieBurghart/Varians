@@ -26,6 +26,7 @@ from image_sources import (
     image_only_items, page_image_dimensions, page_image_request as generic_image_request,
     page_image_source, page_label as image_page_label, page_navigation_items,
 )
+from lacunae import lacuna_events, lacunae_at
 from pivot_lines import include_spans
 from tei_facsimile import (
     facsimile_ref_at_position, position_inside_xml_markup, previous_surface_labels,
@@ -324,6 +325,12 @@ def _patch_text_document(document, old_text, new_text):
     return c
 
 
+# Bandeaux des panneaux pendant une lacune (V0.9.1.3) : le témoin est en
+# lacune ; le pivot est en lacune (témoins synchronisés par lignes).
+LACUNA = "manuscript.lacuna"
+PIVOT_LACUNA = "manuscript.lacuna.pivot"
+
+
 class WitnessSyncMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
@@ -345,16 +352,23 @@ class WitnessSyncMixin:
             panel.set_folios(folios_for_witness(text, wid, ids, labels))
         self._folio_revision = revision
 
-    def _sync_page_panels_to_cursor(self, force=False):
+    def _sync_page_panels_to_cursor(self, force=False, lacunae=None):
         """Synchronise chaque témoin avec son dernier ``pb/@edRef`` précédent.
 
         Depuis V0.8.3, une position de texte peut correspondre à des pages
         différentes selon le témoin. Les anciens ``pb`` sans ``@edRef`` restent
         reconnus lorsque leur ``@facs`` pointe sans ambiguïté vers une surface
-        connue du panneau concerné.
+        connue du panneau concerné. Un témoin en lacune (V0.9.1.3, ``lacunae``
+        : ``{témoin: Lacuna}`` au curseur) garde la page de son dernier ``pb``,
+        où son texte s'interrompt, avec le bandeau « Lacune ».
         """
         if not self.has_any_images:
             return
+        if lacunae is None:
+            lacunae = self._lacunae_at_cursor()
+        for witness_id, panel in self.panels.items():
+            if not panel.sync_enabled and panel.items:
+                panel.set_lacuna(LACUNA if witness_id in lacunae else None)
         cursor = self.editor.textCursor()
         text = self.editor.toPlainText()
         pos = cursor.position()
@@ -613,23 +627,83 @@ class WitnessSyncMixin:
         )
 
     def sync_panels_to_cursor(self, force=False):
+        # Témoins en lacune au curseur (V0.9.1.3).
+        lacunae = self._lacunae_at_cursor()
         # En mode mixte, mettre à jour les folios indépendants sur la foi des
         # pb/edRef/facs, même si le pivot possède une synchronisation de lignes.
-        self._sync_page_panels_to_cursor(force)
+        self._sync_page_panels_to_cursor(force, lacunae)
         if not self.base_alignment_available:
             return
         # Édition en parties (V0.9.1.0) : ligne comptée dans l'édition assemblée.
         ordinal=self._base_ordinal_at_cursor()
         if ordinal is None or not self.base_items: return
         ordinal=max(0,min(len(self.base_items)-1,ordinal))
-        if not force and ordinal == self._last_synced_ordinal:
+        # Entrer dans une lacune au milieu d'une ligne change aussi l'affichage.
+        state = frozenset(lacunae)
+        if not force and ordinal == self._last_synced_ordinal and state == self._last_synced_lacunae:
             return
         self._last_synced_ordinal = ordinal
-        key=self.base_items[ordinal]["key"]
-        for panel in self.panels.values():
-            if panel.sync_enabled:
+        self._last_synced_lacunae = state
+        self._follow_base_line(ordinal, lacunae)
+        self._show_base_line_status(ordinal, lacunae)
+
+    def _lacunae_at_cursor(self):
+        """``{témoin: Lacuna}`` des témoins en lacune au curseur (V0.9.1.3),
+        d'une partie à l'autre dans une édition assemblée. Le relevé du texte
+        affiché est gardé tant qu'il ne change pas."""
+        text = self.editor.toPlainText()
+        revision = self.editor.document().revision()
+        cache = self.__dict__.get("_lacuna_events_cache")
+        if cache is None or cache[0] is not self.document or cache[1] != revision:
+            cache = self._lacuna_events_cache = (self.document, revision, lacuna_events(text))
+        position = self.editor.textCursor().position()
+        lines = self._pivot_lines()
+        if lines is not None:
+            return lines.lacunae_at(self.document.path, position, text, include_spans(text), cache[2])
+        return lacunae_at(text, position, cache[2])
+
+    def _follow_base_line(self, ordinal, lacunae, skip=None):
+        """Les témoins synchronisés par lignes (sauf ``skip``) suivent la ligne
+        ``ordinal`` du pivot. Un témoin en lacune montre la ligne où son texte
+        s'interrompt, avec le bandeau « Lacune » ; pendant une lacune du
+        pivot, les autres restent sur sa dernière ligne, avec un bandeau
+        (V0.9.1.3)."""
+        key = self.base_items[ordinal]["key"]
+        pivot_gap = self.base_id in lacunae
+        for wid, panel in self.panels.items():
+            if not panel.sync_enabled or wid == skip:
+                continue
+            lacuna = lacunae.get(wid) if wid != self.base_id else None
+            if lacuna is not None:
+                panel.set_primary(*self._last_linked_line(panel, self._lacuna_ordinal(lacuna)))
+                panel.set_lacuna(LACUNA)
+            else:
                 panel.set_primary(ordinal, key)
-        self.statusBar().showMessage(_t("status.base_line", base=self.base_id, line=ordinal+1, total=len(self.base_items)),1500)
+                panel.set_lacuna(None if not pivot_gap else LACUNA if wid == self.base_id else PIVOT_LACUNA)
+
+    def _lacuna_ordinal(self, lacuna):
+        """Ligne du pivot où commence ``lacuna``."""
+        if lacuna.ordinal is not None:
+            return lacuna.ordinal
+        return self._base_ordinal_at(lacuna.position) or 0
+
+    def _last_linked_line(self, panel, ordinal):
+        """``(ligne, clé)`` du pivot la plus proche de ``ordinal``, en
+        remontant, à laquelle ``panel`` a une ligne reliée : la dernière ligne
+        du témoin avant sa lacune."""
+        ordinal = max(0, min(len(self.base_items) - 1, int(ordinal)))
+        for candidate in range(ordinal, -1, -1):
+            key = self.base_items[candidate]["key"]
+            if panel.map_base.get(key):
+                return candidate, key
+        return ordinal, self.base_items[ordinal]["key"]
+
+    def _show_base_line_status(self, ordinal, lacunae):
+        if self.base_id in lacunae:
+            self.statusBar().showMessage(_t("status.base_lacuna", base=self.base_id), 4000)
+        else:
+            self.statusBar().showMessage(_t("status.base_line", base=self.base_id, line=ordinal+1,
+                                            total=len(self.base_items)), 1500)
 
     def navigate_to_base_ordinal(self, ordinal, move_xml_cursor=True):
         """Synchronise tous les témoins sur un segment cliqué dans la vue mise en forme."""
@@ -645,14 +719,14 @@ class WitnessSyncMixin:
             finally:
                 call_later(90, self, self._release_panel_sync)
         self._last_synced_ordinal = ordinal
-        key = self.base_items[ordinal]["key"]
-        for panel in self.panels.values():
-            if panel.sync_enabled:
-                panel.set_primary(ordinal, key)
+        # Le curseur n'a pas bougé (table des matières) : pas de lacune.
+        lacunae = self._lacunae_at_cursor() if move_xml_cursor else {}
+        self._last_synced_lacunae = frozenset(lacunae)
+        self._follow_base_line(ordinal, lacunae)
         # Le déplacement dans la vue mise en forme peut inhiber temporairement
         # le timer du curseur : actualiser également les témoins en mode page.
-        self._sync_page_panels_to_cursor(force=True)
-        self.statusBar().showMessage(_t("status.base_line", base=self.base_id, line=ordinal+1, total=len(self.base_items)), 1500)
+        self._sync_page_panels_to_cursor(force=True, lacunae=lacunae)
+        self._show_base_line_status(ordinal, lacunae)
 
     def refresh_local_iiif_cache(self):
         """Make newly downloaded full-canvas copies usable without reopening TEI.
@@ -796,13 +870,13 @@ class WitnessSyncMixin:
             ordinal=self._show_base_ordinal(min(len(self.base_items)-1, int(ordinal)))
             if ordinal is None: return
             self._last_synced_ordinal = ordinal
-            key=self.base_items[ordinal]["key"]
+            lacunae = self._lacunae_at_cursor()
+            self._last_synced_lacunae = frozenset(lacunae)
             # Le témoin de base vient déjà de naviguer ; on actualise tous les panneaux.
             self.base_panel.match_indices={ordinal}; self.base_panel.origin_center_index=ordinal; self.base_panel.reload()
-            for wid, panel in self.panels.items():
-                if wid != self.base_id and panel.sync_enabled:
-                    panel.set_primary(ordinal, key)
-            self._sync_page_panels_to_cursor(force=True)
+            self.base_panel.set_lacuna(LACUNA if self.base_id in lacunae else None)
+            self._follow_base_line(ordinal, lacunae, skip=self.base_id)
+            self._sync_page_panels_to_cursor(force=True, lacunae=lacunae)
         finally:
             call_later(90, self, self._release_panel_sync)
 

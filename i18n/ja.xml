@@ -810,4 +810,7 @@
   <string key="text_sync.problem.no_base_alignment">{name}：フォルダーにピボット {detail} の JSON がありません。このテキストは同期されません。</string>
   <string key="text_sync.problem.unknown_part">{name}：&lt;part name="{name}"&gt; は版のどのテキストも指していません。</string>
   <string key="text_sync.problem.duplicate_name">{name}：同じ名前のテキストが 2 つあります。フォルダー alignments/{name}/ は最初のテキストに使われ、{detail} には使われません。</string>
+  <string key="manuscript.lacuna">この伝本の欠落部：本文はここで途切れています。</string>
+  <string key="manuscript.lacuna.pivot">ピボット伝本の欠落部：この箇所では行は同期されません。</string>
+  <string key="status.base_lacuna">ピボット伝本 {base} の欠落部：欠落部の終わりまで行の同期を停止します。</string>
 </translations>
