@@ -102,7 +102,7 @@ def split_alignments(root: Path, text: str, pivot: str, first: int, count: int, 
 # PNG d'un pixel, pour les images locales des témoins par pages.
 TINY_PNG = bytes.fromhex(
     "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
-    "0000000d49444154789c6360000000020001e221bc330000000049454e44ae426082")
+    "0000000d4944415478da6378ffe4fc7f00090a03a24c369af90000000049454e44ae426082")
 
 
 def add_page_witness(project_xml: Path, witness: str, labels) -> None:
