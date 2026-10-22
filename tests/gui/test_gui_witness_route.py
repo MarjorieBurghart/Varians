@@ -155,3 +155,48 @@ def test_a_secondary_witness_crosses_into_the_text_in_its_own_order(open_window,
     assert window.document is _doc(window, "rls185.xml")
     assert t2.current_item()["key"] in {item["key"] for item in window.witness_display_items["T2"]}
     assert window.panels["P"].absent_key == "manuscript.text_absent"
+
+
+# --- Diagnostic et ordre incertain (M.5) ----------------------------------------------
+
+def _notes(window, dialogs):
+    found = []
+    dialogs.expect("dialog", lambda dialog: found.append(dialog.notes.text()) or 0)
+    window.show_witness_diagnostics()
+    return found[0]
+
+
+def test_the_diagnostics_give_the_order_of_the_texts_in_each_manuscript(open_window, example_with_text, dialogs):
+    window = open_window(example_with_text)
+    notes = _notes(window, dialogs)
+    runs = " → ".join((tr("diagnostics.route.edition", first=1, last=116), "rls185",
+                       tr("diagnostics.route.edition", first=117, last=3625)))
+    expected = tr("diagnostics.route", witness="T1", runs=runs)
+    assert expected != "diagnostics.route" and expected in notes
+    # P n'est que dans l'édition : rien à dire de son ordre.
+    prefix = tr("diagnostics.route", witness="P", runs="§").split("§")[0]
+    assert prefix not in notes
+
+
+def test_an_uncertain_place_is_said(open_window, example_with_text, dialogs):
+    """Les pages de T2 dans rls185 ne se rattachent pas aux autres (ni page
+    commune, ni foliotation) : rls185 garde sa place dans l'ordre de
+    l'édition, et la fenêtre le dit."""
+    path = example_with_text.parent / "alignments" / "rls185" / "T2.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for index, page in enumerate(data["pages"]):
+        page["id"] = f"autre-{index}"
+        for field in ("iiif", "image", "image_name", "label"):
+            page.pop(field, None)
+    path.write_text(json.dumps(data), encoding="utf-8")
+    window = open_window(example_with_text)
+    head, tail = tr("diagnostics.route.uncertain", witness="T2", runs="§", texts="rls185").split("§")
+    line = next(line for line in _notes(window, dialogs).splitlines() if line.startswith(head))
+    assert line.endswith(tail)
+    _at_line(window, 115)
+    t2 = window.panels["T2"]
+    while (_linked(window, t2.items[t2.center_index + 1]) or 0) <= 115:
+        t2.navigate(1)
+    t2.navigate(1)
+    assert window.document is _doc(window, "rls185.xml")
+    assert window.statusBar().currentMessage() == tr("status.route_uncertain", witness="T2", text="rls185")

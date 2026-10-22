@@ -933,6 +933,9 @@ class WitnessSyncMixin:
             self._show_witness_end(wid, step)
             return
         self._go_to_witness_stop(wid, stop)
+        if stop.segment != segment and stop.segment in route.uncertain:
+            self.statusBar().showMessage(
+                _t("status.route_uncertain", witness=wid, text=self._segment_name(stop.segment)), 6000)
 
     def _show_witness_end(self, wid, step):
         self.statusBar().showMessage(

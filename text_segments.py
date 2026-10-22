@@ -301,9 +301,41 @@ class TextSegmentsMixin:
                                 witnesses=witnesses, pages=pages) if pages else
                              _t("diagnostics.text_item", name=sync.name, base=sync.base, witnesses=witnesses))
             notes.append(_t("diagnostics.texts", texts="; ".join(items)))
+            # Ordre des textes dans chaque manuscrit (V0.9.1.4).
+            for w in self.witness_configs:
+                route = self._witness_route(w.id)
+                runs = self._route_runs(route)
+                if len(runs) > 1:
+                    uncertain = ", ".join(self._segment_name(segment) for segment in route.uncertain)
+                    notes.append(_t("diagnostics.route.uncertain", witness=w.id, runs=" → ".join(runs),
+                                    texts=uncertain) if uncertain else
+                                 _t("diagnostics.route", witness=w.id, runs=" → ".join(runs)))
         notes.extend(_t("text_sync.problem." + problem.code, name=problem.name, detail=problem.detail)
                      for problem in problems)
         return "\n".join(notes)
+
+    def _segment_name(self, segment):
+        sync = self._text_sync_of(segment)
+        return sync.name if sync is not None else str(segment)
+
+    def _route_runs(self, route):
+        """Le parcours d'un témoin, texte par texte : le nom d'un texte à part,
+        ou les lignes de l'édition parcourues d'un seul tenant."""
+        runs = []
+        for stop in route.stops:
+            if runs and runs[-1][0] == stop.segment:
+                runs[-1][1].append(stop.ordinal)
+            else:
+                runs.append((stop.segment, [stop.ordinal]))
+        labels = []
+        for segment, ordinals in runs:
+            if segment is not None:
+                labels.append(self._segment_name(segment))
+                continue
+            ordinals = [ordinal for ordinal in ordinals if ordinal is not None]
+            if ordinals:
+                labels.append(_t("diagnostics.route.edition", first=min(ordinals) + 1, last=max(ordinals) + 1))
+        return labels
 
     def _segment_project(self):
         """Projet du segment affiché : le projet, ou celui réduit au texte."""

@@ -818,4 +818,8 @@ Trotzdem exportieren?</string>
   <string key="status.witness_end">Ende der Handschrift {witness}.</string>
   <string key="status.witness_unlinked">Zeile von {witness} nicht mit dem Pivot-Textzeugen verknüpft: Die Edition bleibt bei Zeile {line}.</string>
   <string key="status.page_unmarked">Seite {folio} von {witness}: Kein &lt;pb&gt; und kein &lt;locus&gt; verortet sie in der Edition, die unverändert bleibt.</string>
+  <string key="diagnostics.route">Reihenfolge der Texte in {witness}: {runs}.</string>
+  <string key="diagnostics.route.uncertain">Reihenfolge der Texte in {witness}: {runs}; unsichere Stelle von {texts}, in der Reihenfolge der Edition belassen.</string>
+  <string key="diagnostics.route.edition">Edition (Z. {first}–{last})</string>
+  <string key="status.route_uncertain">Unsichere Stelle von {text} in {witness}: Reihenfolge der Edition.</string>
 </translations>

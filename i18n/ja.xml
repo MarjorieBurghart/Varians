@@ -818,4 +818,8 @@
   <string key="status.witness_end">写本 {witness} の終わりです。</string>
   <string key="status.witness_unlinked">{witness} の行はピボット伝本に結び付けられていません：校訂版は {line} 行目にとどまります。</string>
   <string key="status.page_unmarked">{witness} のページ {folio}：校訂版の中にこのページを示す &lt;pb&gt; も &lt;locus&gt; もないため、校訂版は移動しません。</string>
+  <string key="diagnostics.route">{witness} におけるテキストの順序：{runs}。</string>
+  <string key="diagnostics.route.uncertain">{witness} におけるテキストの順序：{runs}。{texts} の位置は不確かなため、校訂版の順序のままです。</string>
+  <string key="diagnostics.route.edition">校訂版（{first}〜{last} 行）</string>
+  <string key="status.route_uncertain">{witness} における {text} の位置は不確かです：校訂版の順序に従います。</string>
 </translations>

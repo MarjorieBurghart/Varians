@@ -804,4 +804,8 @@ Export anyway?</string>
   <string key="status.witness_end">End of manuscript {witness}.</string>
   <string key="status.witness_unlinked">Line of {witness} not linked to the pivot: the edition stays at line {line}.</string>
   <string key="status.page_unmarked">Page {folio} of {witness}: no &lt;pb&gt; or &lt;locus&gt; places it in the edition, which does not move.</string>
+  <string key="diagnostics.route">Order of the texts in {witness}: {runs}.</string>
+  <string key="diagnostics.route.uncertain">Order of the texts in {witness}: {runs}; uncertain place of {texts}, left in the order of the edition.</string>
+  <string key="diagnostics.route.edition">edition (l. {first}–{last})</string>
+  <string key="status.route_uncertain">Uncertain place of {text} in {witness}: order of the edition.</string>
 </translations>
