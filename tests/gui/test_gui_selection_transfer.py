@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import re
 
+from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QTextCursor
 
 from formatted_view import paragraph_spans
@@ -114,3 +115,49 @@ def test_an_edition_in_parts_does_not_carry_the_selection(open_window, example_w
     window.left_tabs.setCurrentIndex(0)
     qtbot.wait(150)
     assert _selection(window.editor) == _source_occurrences(window, "premium", 2)[1]
+
+
+# --- Le crayon ✎ ouvre le paragraphe sans entraîner les témoins --------------
+
+def _click(view, position, dx=0):
+    """Clic de souris réel dans l'aperçu, sur le caractère ``position``."""
+    preview = view.preview
+    cursor = QTextCursor(preview.document())
+    cursor.setPosition(position)
+    preview.setTextCursor(cursor)
+    preview.ensureCursorVisible()
+    rect = preview.cursorRect(cursor)
+    return preview, QPoint(rect.left() + dx, rect.center().y())
+
+
+def _witness_state(window):
+    return (window._last_synced_ordinal, window.editor.textCursor().position(),
+            {wid: (panel.center_index, panel.primary_key) for wid, panel in window.panels.items()})
+
+
+def test_the_pencil_opens_the_paragraph_without_moving_the_witnesses(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _show_preview(window, qtbot)
+    qtbot.wait(150)
+    before = _witness_state(window)
+    marker, _content, paragraph = view.preview._paragraph_markers[5]
+    preview, point = _click(view, marker, dx=4)
+    assert preview.anchorAt(point) == f"tei-edit://p/{paragraph}"
+    qtbot.mouseClick(preview.viewport(), Qt.MouseButton.LeftButton, pos=point)
+    qtbot.waitUntil(lambda: view.current_paragraph == paragraph, timeout=3000)
+    assert not view.frag_box.isHidden()
+    qtbot.wait(300)                                       # minuterie de synchronisation
+    assert _witness_state(window) == before
+
+
+def test_a_click_on_the_text_still_moves_the_witnesses(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    view = _show_preview(window, qtbot)
+    qtbot.wait(150)
+    start, _end = _preview_occurrences(view, "premium", 2)[2]
+    line = view.preview.line_for_position(start)
+    assert line and line != window._last_synced_ordinal
+    preview, point = _click(view, start, dx=2)
+    qtbot.mouseClick(preview.viewport(), Qt.MouseButton.LeftButton, pos=point)
+    qtbot.waitUntil(lambda: window._last_synced_ordinal == line, timeout=3000)
+    assert window.base_panel.center_index == line

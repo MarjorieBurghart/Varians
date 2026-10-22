@@ -1384,7 +1384,9 @@ class FormattedEditionWidget(QWidget):
             idx = int(url.path().strip("/"))
         except Exception:
             return
-        self.load_fragment(idx, move_source=True)
+        # Le crayon ouvre seulement le paragraphe : la source et les témoins
+        # restent où ils sont (seul un clic sur le texte les déplace).
+        self.load_fragment(idx)
 
     def _confirm_fragment_switch(self, new_idx):
         """Protège un fragment modifié avant d'en ouvrir un autre.
@@ -1426,7 +1428,7 @@ class FormattedEditionWidget(QWidget):
             return True
         return False
 
-    def load_fragment(self, idx, move_source=False):
+    def load_fragment(self, idx):
         # Édition en parties : aperçu en lecture seule (voir refresh_preview).
         if self.main._edition_has_parts():
             return False
@@ -1455,16 +1457,11 @@ class FormattedEditionWidget(QWidget):
         self.frag_label.setText(_t("fragment.label", index=idx+1, total=len(spans)))
         self.apply_btn.setEnabled(True)
         self.reload_btn.setEnabled(True)
-        if move_source:
-            c = self.main.editor.textCursor()
-            c.setPosition(start)
-            self.main.editor.setTextCursor(c)
-            self.main.sync_panels_to_cursor(True)
         return True
 
     def reload_fragment(self):
         if self.current_paragraph is not None:
-            self.load_fragment(self.current_paragraph, move_source=False)
+            self.load_fragment(self.current_paragraph)
 
     def fragment_has_unapplied_changes(self):
         return (
@@ -1519,7 +1516,7 @@ class FormattedEditionWidget(QWidget):
                 QMessageBox.StandardButton.No,
             )
             if r != QMessageBox.StandardButton.Yes:
-                self.load_fragment(idx, move_source=False)
+                self.load_fragment(idx)
                 return False
         frag = self.fragment_editor.toPlainText()
 
@@ -1544,6 +1541,6 @@ class FormattedEditionWidget(QWidget):
         self.dirty_preview = True
         self.refresh_preview()
         # Les plages ont pu changer ; recharge le même numéro ordinal si possible.
-        self.load_fragment(min(idx, max(0, len(paragraph_spans(self.main.editor.toPlainText()))-1)), move_source=False)
+        self.load_fragment(min(idx, max(0, len(paragraph_spans(self.main.editor.toPlainText()))-1)))
         return True
 
