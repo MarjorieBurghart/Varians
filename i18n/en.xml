@@ -782,7 +782,6 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
 
 Export anyway?</string>
   <string key="parts.webgen.continue">Export anyway</string>
-  <string key="preview.assembled.read_only">Preview of the assembled edition, parts included, read-only: fragment editing is not yet available for an edition in parts.</string>
   <string key="status.structure.assembled.tip">Pivot-witness lines counted in the assembled edition, parts included (XInclude), in the order of the assembled document.</string>
   <string key="manuscript.text_absent">No alignment of this witness for this text.</string>
   <string key="status.structure.text.tip">{base} lines in the text {name}, synchronized separately with its own alignments (folder alignments/{name}/).</string>

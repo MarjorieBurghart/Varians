@@ -247,6 +247,24 @@ Règles :
   la numérotation et les états des textes ne changent pas). Tests :
   `tests/test_witness_route.py`, `tests/gui/test_gui_witness_route.py`,
   `tests/gui/test_gui_witness_pages_route.py` ;
+- Vue XSLT / CSS d'une édition assemblée (V0.9.1.5) : `preview_sources`
+  (sans Qt : `PreviewSources.paragraphs`, `lines`, `paragraph_at`,
+  `line_before`) ; `_assembled_preview_sources`, `_edition_file_session`,
+  `_show_file_position`, `navigate_to_preview_line` (`document_tabs`) ;
+  `FormattedEditionWidget.sources` (calculées à chaque rendu),
+  `_activate_line`, `_fragment_source`, `fragment_session`,
+  `dirty_fragment_session` ; `_write_session_text` (`witness_sync`,
+  écriture dans un document non affiché) ; dans `_left_tab_changed`, le
+  report passe par `navigate_to_preview_line` et par les paragraphes des
+  sources. Une édition sans parties garde le chemin d'avant
+  (`paragraph_spans`, rang des `<lb/>`). Tests :
+  `tests/test_preview_sources.py`, `tests/gui/test_gui_assembled_preview.py`,
+  `tests/gui/test_gui_assembled_fragment.py`,
+  `tests/gui/test_gui_assembled_selection.py` ;
+- minuteries : un appel différé qui touche la fenêtre ou l'un de ses
+  widgets passe par `app_context.call_later(msec, objet, ...)`, jamais par
+  un `QTimer.singleShot` nu : les tests GUI détruisent leurs fenêtres, et
+  un appel qui survit à la sienne échoue au démontage du test ;
 - des tests anciens exécutent le corps de certaines méthodes avec des objets
   factices (`_text_changed`, `_auto_refresh_rng`, `show_validation_panel`,
   `_validate_relaxng_document_impl`, `sync_panels_to_cursor`,

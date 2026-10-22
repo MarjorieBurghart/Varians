@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app_context import tr
-
 
 def _doc(window, name):
     return next(s for s in window.documents if s.path.name == name)
@@ -35,7 +33,6 @@ def test_the_assembled_preview_has_its_pencils_and_line_markers(open_window, ser
     html = view.preview.toHtml()
     assert html.count("tei-edit://p/") == len(view.sources.paragraphs) == 12
     assert len(view.preview._marker_lines) == len(view.sources.lines) == 27
-    assert view.info.text() != tr("preview.assembled.read_only")
 
 
 def test_the_preview_stays_available_and_shown_with_a_part(open_window, sermons_project):
