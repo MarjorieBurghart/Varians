@@ -12,7 +12,8 @@ sont longues (une condition par témoin), XPath 1.0 ne sachant pas découper
 ``@wit`` en jetons.
 
 Un ``<lem>`` sans ``@wit`` est réputé couvrir les témoins absents des
-``<rdg>`` de son ``<app>``.
+``<rdg>`` de son ``<app>``. Un témoin en lacune (``<lacunaStart/>`` …
+``<lacunaEnd/>``, V0.9.1.3) n'a pas de leçon dans le passage.
 """
 from __future__ import annotations
 
@@ -119,14 +120,35 @@ def repeated_witness_xpath(ids):
     return "//tei:app[" + " or ".join(conditions) + "]"
 
 
-def incomplete_app_xpath(ids):
+def _lacuna_marks(name, witness_id):
+    """``<lacunaStart/>`` ou ``<lacunaEnd/>`` (``name``) qui précèdent le nœud
+    courant et concernent ``witness_id`` : par leur ``@wit``, ou par la leçon
+    (``<rdg>``, ``<lem>``) qui les contient."""
+    return (f"preceding::tei:{name}[{_cites(witness_id)} or (not(@wit) and "
+            f"ancestor::*[self::tei:rdg or self::tei:lem][1][{_cites(witness_id)}])]")
+
+
+def _in_lacuna(witness_id):
+    """Le nœud courant est dans une lacune de ``witness_id`` : plus de débuts
+    que de fins de lacune le précèdent."""
+    return (f"count({_lacuna_marks('lacunaStart', witness_id)}) > "
+            f"count({_lacuna_marks('lacunaEnd', witness_id)})")
+
+
+def incomplete_app_xpath(ids, lacunose=()):
     """``<app>`` où un témoin attendu n'a pas de leçon.
 
     Les témoins attendus sont ceux du ``<listWit>`` pour un ``<app>`` de
     premier niveau, ceux de la leçon englobante pour un ``<app>`` imbriqué.
     Un ``<app>`` dont un ``<lem>`` n'a pas de ``@wit`` n'est pas signalé ; un
-    ``<app>`` imbriqué dans une leçon sans ``@wit`` n'est pas contrôlé."""
-    missing = [f"((not({_ENCLOSING}) or {_ENCLOSING}[{_cites(w)}]) and not({_READINGS}[{_cites(w)}]))"
+    ``<app>`` imbriqué dans une leçon sans ``@wit`` n'est pas contrôlé.
+
+    ``lacunose`` : témoins qui ont des lacunes dans le document (V0.9.1.3) ;
+    un ``<app>`` placé dans l'une d'elles n'attend pas de leçon de ce témoin.
+    La condition, coûteuse (axe ``preceding``), n'est ajoutée que pour eux."""
+    lacunose = set(lacunose)
+    missing = [f"((not({_ENCLOSING}) or {_ENCLOSING}[{_cites(w)}]) and not({_READINGS}[{_cites(w)}])"
+               + (f" and not({_in_lacuna(w)})" if w in lacunose else "") + ")"
                for w in ids]
     return (f"//tei:app[not({_LEMS_WITHOUT_WIT}) and not({_ENCLOSING}[not(@wit)])"
             " and (" + " or ".join(missing) + ")]")
