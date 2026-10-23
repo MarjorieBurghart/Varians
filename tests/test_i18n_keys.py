@@ -355,6 +355,39 @@ def test_each_help_announces_stylesheet_editing_in_version_0921():
         assert page.index('<section id="v0920">') < page.index('<section id="v0921">'), language
 
 
+def test_each_help_explains_the_tei_stylesheets():
+    """Scénarios TEI, personnalisation, mises à jour et licence (V0.9.2.2)."""
+    labels = ("tei_stylesheets.menu", "tei_stylesheets.check", "tei_stylesheets.install", "tei_stylesheets.later",
+              "tei_stylesheets.show_licence", "transform.predefined.tei-html", "transform.predefined.tei-txt",
+              "transform.predefined.tei-markdown", "transform.predefined.tei-latex", "transform.open_stylesheet",
+              "transform.open_stylesheet.create", "transform.duplicate", "menu.transform_scenarios")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="tei-stylesheets">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("github.com/TEIC/Stylesheets", "${tei}/", "<code>publications/tei/</code>", "<code>xslt/</code>",
+                     "<code>xslt/tei-html.xsl</code>", "http://www.tei-c.org/release/xml/tei/stylesheet/",
+                     "xsl:import", 'xmlns="http://www.w3.org/1999/xhtml"', "numberHeadings", "documentationLanguage",
+                     "BSD", "CC BY-SA 3.0", "<code>LICENCE</code>", "<kbd>F8</kbd>", "Oxygen", "xelatex",
+                     'href="#transformations"', 'href="#xslt-editing"'):
+            assert text in section, (language, text)
+        assert page.index('<section id="xslt-editing">') < page.index('<section id="tei-stylesheets">') \
+            < page.index('<section id="v0900">'), language
+
+
+def test_each_help_announces_the_tei_stylesheets_in_version_0922():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0922">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#tei-stylesheets"' in version and "<code>publications/tei/</code>" in version, language
+        assert page.index('<section id="v0921">') < page.index('<section id="v0922">'), language
+
+
 def test_the_documents_menu_names_xml_and_xslt():
     root = ET.parse(ROOT / "i18n" / "fr.xml").getroot()
     catalog = {string.get("key"): string.text for string in root.findall("string")}

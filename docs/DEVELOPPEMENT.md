@@ -342,6 +342,28 @@ non installé avec Varians) : la marche à suivre pour le refaire est dans
 `resources/schemas/xslt30/LISEZMOI.md`. Une version autonome devra embarquer
 le dossier `resources/schemas`.
 
+## TEI Stylesheets
+
+Depuis V0.9.2.2, Varians livre les TEI Stylesheets du TEI Consortium
+(`resources/tei-stylesheets/tei-xsl-7.61.0.zip`) et les installe dans le
+dossier de données de l'utilisateur (`tei_stylesheets.library_dir`) ; voir
+`XSLT_SCENARIOS.md`. Pour livrer une nouvelle version, suivre
+`resources/tei-stylesheets/LISEZMOI.md` : télécharger l'archive publiée, ne
+garder que `xml/tei/stylesheet/` et `doc/tei-xsl/LICENCE` (script donné),
+remplacer l'archive du dossier (il n'en contient qu'une), mettre à jour le
+LISEZMOI, puis lancer les tests : `tests/test_tei_stylesheets.py` contrôle
+l'archive livrée, `tests/test_tei_scenarios_saxon.py` les quatre scénarios
+et la feuille de personnalisation.
+
+Pendant les tests, la bibliothèque est un dossier temporaire commun à la
+session (variable `VARIANS_TEI_STYLESHEETS`, posée par `tests/conftest.py`
+et `tests/gui/conftest.py`) : rien n'est écrit dans le dossier de
+l'utilisateur. Le réseau est bloqué dans les tests de l'interface
+(`_no_network` couvre `tei_stylesheets.urlopen`) ; les tests de
+`tei_stylesheets` emploient un petit serveur http local, et ceux de la
+fenêtre un faux TEI-C (`FakeTeiC`). Une version autonome devra embarquer le
+dossier `resources/tei-stylesheets`.
+
 ## Historique et versions
 
 Depuis V0.8.6.0, l'historique est porté par Git. Les rapports de test et

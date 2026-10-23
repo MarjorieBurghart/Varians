@@ -469,7 +469,8 @@ dans le projet, pour être rejoués à l’identique et partagés avec lui :
 - `xslt`, `css` (facultative, copiée à côté du résultat), `output` (le
   résultat, remplacé à chaque exécution) : chemins relatifs au projet ; un
   chemin qui commence par `${varians}/` désigne une feuille fournie avec
-  Varians (dossier `rendering` de l’application) ;
+  Varians (dossier `rendering` de l’application), un chemin qui commence
+  par `${tei}/` un fichier des TEI Stylesheets installées (V0.9.2.2) ;
 - `<param name="…" value="…"/>` : paramètres de la feuille, passés comme
   chaînes ; à nom égal, le premier est gardé.
 
