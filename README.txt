@@ -1,7 +1,8 @@
 VARIANS V0.9.2.1 — ÉDITER LES FEUILLES XSLT
 
-• Une feuille XSLT s'ouvre comme un document du projet. Documents XML du
-  projet ▸ « Ajouter un document XML ou XSLT… » accepte .xsl et .xslt ;
+• Une feuille XSLT s'ouvre comme un document du projet. Fichier ▸
+  « Documents XML / XSLT du projet… », désormais juste sous « Paramètres du
+  projet… », ▸ « Ajouter un document XML ou XSLT… » accepte .xsl et .xslt ;
   une feuille venue d'ailleurs est copiée dans le dossier xslt/ du projet
   (au même niveau que xml/), sans jamais remplacer un fichier.
   « Nouvelle feuille XSLT… » crée une feuille minimale 1.0 (lxml) ou 3.0

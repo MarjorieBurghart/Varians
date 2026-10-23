@@ -303,3 +303,12 @@ def test_cancelling_the_new_stylesheet_creates_nothing(open_window, example_proj
     assert not window.new_stylesheet_dialog()
     assert not target.exists()
     assert _declared(example_project) == []
+
+
+def test_the_documents_menu_follows_the_project_settings(open_window, example_project):
+    # V0.9.2.1 : « Documents XML / XSLT du projet… », sous « Paramètres du projet… ».
+    window = open_window(example_project)
+    actions = window.file_menu.actions()
+    position = actions.index(window.action_project_settings)
+    assert actions[position + 1] is window.documents_menu.menuAction()
+    assert window.documents_menu.title() == tr("documents.menu")

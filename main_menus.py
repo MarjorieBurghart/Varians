@@ -139,12 +139,7 @@ class MainMenusMixin:
         menu.insertAction(self.recent_menu.menuAction(), self.action_new_project)
         menu.insertAction(self.recent_menu.menuAction(), self.action_open_project)
         menu.addAction(self.action_project_settings)
-        self.action_iiif_manager = self._make_action(_t('iiif.manager.menu'), '', self.open_iiif_download_manager)
-        menu.addAction(self.action_iiif_manager)
-        menu.addAction(self.action_close_project)
-        menu.addSeparator()
-        menu.addAction(self.action_save)
-        menu.addAction(self.action_save_as)
+        # « Documents XML / XSLT du projet… », sous « Paramètres du projet… » (V0.9.2.1).
         self.documents_menu = menu.addMenu(_t("documents.menu"))
         self.action_add_document = self._make_action(_t("documents.add.menu"), "", self.add_document_dialog)
         self.action_new_document = self._make_action(_t("documents.new.menu"), "", self.new_document_dialog)
@@ -156,6 +151,12 @@ class MainMenusMixin:
         for action in (self.action_add_document, self.action_new_document, self.action_new_stylesheet,
                        self.action_remove_document):
             self.documents_menu.addAction(action)
+        self.action_iiif_manager = self._make_action(_t('iiif.manager.menu'), '', self.open_iiif_download_manager)
+        menu.addAction(self.action_iiif_manager)
+        menu.addAction(self.action_close_project)
+        menu.addSeparator()
+        menu.addAction(self.action_save)
+        menu.addAction(self.action_save_as)
         menu.addSeparator()
         menu.addAction(self.action_ctrl_e_config)
         menu.addSeparator()

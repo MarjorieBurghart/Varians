@@ -663,7 +663,7 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="documents.edition_tab">Édition</string>
   <string key="documents.unsaved.text">Les documents suivants contiennent des modifications non enregistrées :</string>
   <string key="documents.save_all">Tout enregistrer</string>
-  <string key="documents.menu">Documents XML du projet</string>
+  <string key="documents.menu">Documents XML / XSLT du projet…</string>
   <string key="documents.add.menu">Ajouter un document XML ou XSLT…</string>
   <string key="documents.add.title">Ajouter un document XML ou une feuille XSLT au projet</string>
   <string key="documents.new_stylesheet.menu">Nouvelle feuille XSLT…</string>

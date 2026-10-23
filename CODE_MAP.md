@@ -210,7 +210,7 @@ Fonctionnement, format et sécurité : `XSLT_SCENARIOS.md`.
 
 Fonctionnement : `XSLT_SCENARIOS.md` (« Feuilles éditées dans Varians »).
 
-- `document_dialogs.py` : `document_target_path` (feuille hors du projet → `xslt/`), `free_path`, `new_stylesheet_text`, `new_stylesheet_dialog` (Documents ▸ « Nouvelle feuille XSLT… ») ; `project_management.create_portable_project` crée `xslt/`.
+- `document_dialogs.py` : `document_target_path` (feuille hors du projet → `xslt/`), `free_path`, `new_stylesheet_text`, `new_stylesheet_dialog` (« Nouvelle feuille XSLT… ») ; `project_management.create_portable_project` crée `xslt/`. `main_menus.py` : le sous-menu Fichier ▸ « Documents XML / XSLT du projet… » (`documents_menu`) suit « Paramètres du projet… ».
 - `transform_ui.py` : « Ouvrir la feuille » (`ScenarioListDialog.open_stylesheet`, `ScenarioDialog._accept_and_open`, `TransformScenariosMixin.open_scenario_stylesheet`, `_show_stylesheet`).
 - `xslt_scenarios.py` : `stylesheet_info` (`StylesheetInfo` : préfixe XSLT, version), `check_engines`.
 - `xslt_engines.py` : `check` (`_check_lxml`, `_lxml_issues`, `_check_saxon`, `_saxon_issue`), `TransformResult.issues` ; `transform_worker` : `op: "check"`.

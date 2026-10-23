@@ -677,7 +677,7 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
   <string key="documents.edition_tab">Edizione</string>
   <string key="documents.unsaved.text">I documenti seguenti contengono modifiche non salvate:</string>
   <string key="documents.save_all">Salva tutto</string>
-  <string key="documents.menu">Documenti XML del progetto</string>
+  <string key="documents.menu">Documenti XML / XSLT del progetto…</string>
   <string key="documents.add.menu">Aggiungi un documento XML o XSLT…</string>
   <string key="documents.add.title">Aggiungi al progetto un documento XML o un foglio XSLT</string>
   <string key="documents.new_stylesheet.menu">Nuovo foglio XSLT…</string>

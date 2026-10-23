@@ -677,7 +677,7 @@
   <string key="documents.edition_tab">校訂本文</string>
   <string key="documents.unsaved.text">次の文書には保存されていない変更があります：</string>
   <string key="documents.save_all">すべて保存</string>
-  <string key="documents.menu">プロジェクトのXML文書</string>
+  <string key="documents.menu">プロジェクトのXML／XSLT文書…</string>
   <string key="documents.add.menu">XML文書またはXSLTを追加…</string>
   <string key="documents.add.title">プロジェクトにXML文書またはXSLTスタイルシートを追加</string>
   <string key="documents.new_stylesheet.menu">新しいXSLTスタイルシート…</string>

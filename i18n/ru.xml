@@ -677,7 +677,7 @@
   <string key="documents.edition_tab">Издание</string>
   <string key="documents.unsaved.text">В следующих документах есть несохранённые изменения:</string>
   <string key="documents.save_all">Сохранить все</string>
-  <string key="documents.menu">XML-документы проекта</string>
+  <string key="documents.menu">XML-/XSLT-документы проекта…</string>
   <string key="documents.add.menu">Добавить XML- или XSLT-документ…</string>
   <string key="documents.add.title">Добавить в проект XML-документ или таблицу стилей XSLT</string>
   <string key="documents.new_stylesheet.menu">Новая таблица стилей XSLT…</string>

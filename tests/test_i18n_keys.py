@@ -353,3 +353,13 @@ def test_each_help_announces_stylesheet_editing_in_version_0921():
         version = version[:version.index("</section>")]
         assert 'href="#xslt-editing"' in version and "<code>xslt/</code>" in version, language
         assert page.index('<section id="v0920">') < page.index('<section id="v0921">'), language
+
+
+def test_the_documents_menu_names_xml_and_xslt():
+    root = ET.parse(ROOT / "i18n" / "fr.xml").getroot()
+    catalog = {string.get("key"): string.text for string in root.findall("string")}
+    assert catalog["documents.menu"] == "Documents XML / XSLT du projet…"
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        label = next(string.text for string in root.findall("string") if string.get("key") == "documents.menu")
+        assert "XSLT" in label, language
