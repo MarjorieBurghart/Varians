@@ -25,6 +25,9 @@ VARIANS V0.9.2.1 — ÉDITER LES FEUILLES XSLT
   images, CSS, JS) sont à placer soi-même dans xslt/.
 • Dans tout document, Ctrl+Espace complète un nom d'élément tapé juste
   devant une autre balise (<h devant </p>).
+• Un projet qui garde une copie des traductions (dossier i18n/) y garde les
+  anciens noms du sous-menu et de « Ajouter un document XML… » : remplacer
+  ces fichiers par ceux du dossier i18n/ de Varians.
 • Le format de project.xml ne change pas. Voir XSLT_SCENARIOS.md.
 
 VARIANS V0.9.2.0 — SCÉNARIOS DE TRANSFORMATION XSLT
