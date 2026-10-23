@@ -130,10 +130,12 @@ def test_the_witnesses_stay_on_a_part_and_leave_on_an_auxiliary_document(open_wi
 
     window.show_document(_part(window))
     assert witnesses_shown()
-    assert not window.left_tabs.isTabEnabled(preview)
-    assert not window.action_preview.isEnabled() and not window.action_save_as.isEnabled()
+    # L'aperçu de l'édition assemblée reste disponible (V0.9.1.5).
+    assert window.left_tabs.isTabEnabled(preview) and window.action_preview.isEnabled()
+    assert not window.action_save_as.isEnabled()
     aux = next(s for s in window.documents if s.is_auxiliary)
     window.show_document(aux)
+    assert not window.left_tabs.isTabEnabled(preview) and not window.action_preview.isEnabled()
     assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
     assert not detached.isVisible()
     assert not any(action.isEnabled() for action in _witness_actions(window))

@@ -226,3 +226,25 @@ def test_each_help_explains_how_to_follow_a_manuscript_in_its_own_order():
         version = page[page.index('<section id="v0914">'):]
         assert 'href="#witness-route"' in version[:version.index("</section>")], language
         assert page.index('<section id="v0913">') < page.index('<section id="v0914">'), language
+
+
+def test_each_help_explains_the_preview_of_an_assembled_edition():
+    """La Vue XSLT / CSS d'une édition assemblée (V0.9.1.5) : ✎ dans le
+    fichier du paragraphe, clic, reports ; plus de lecture seule."""
+    import html
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        assert "preview.assembled.read_only" not in catalog, language
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        parts = page[page.index('<section id="xinclude">'):page.index('<section id="v0900">')]
+        section = parts[parts.index('<h3 id="xinclude-preview">'):]
+        section = section[:section.index("<h3", 1)]
+        label = catalog["fragment.label.file"].format(index=7, total=12, file="s03.xml")
+        for text in ("✎", html.escape(label, quote=False), "<kbd>Ctrl+S</kbd>", "xi:include"):
+            assert text in section, (language, text)
+        # Les parties et le mode d'emploi renvoient à cette sous-section.
+        assert parts.count('href="#xinclude-preview"') == 2, language
+        version = page[page.index('<section id="v0915">'):]
+        assert 'href="#xinclude-preview"' in version[:version.index("</section>")], language
+        assert page.index('<section id="v0914">') < page.index('<section id="v0915">'), language

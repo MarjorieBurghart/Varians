@@ -1,3 +1,40 @@
+VARIANS V0.9.1.5 — VUE XSLT / CSS D'UNE ÉDITION ASSEMBLÉE
+
+• Dans une édition en parties (XInclude), la Vue XSLT / CSS n'est plus en
+  lecture seule ; elle s'utilise comme pour une édition en un seul fichier
+  et montre toujours toute l'édition. Elle reste ouverte quand une partie
+  est affichée ; seul un document auxiliaire la referme.
+• Édition par fragment : le crayon ✎ ouvre un paragraphe tel qu'il est
+  écrit dans le fichier qui le contient (l'étiquette nomme ce fichier,
+  « Fragment TEI · paragraphe 7/12 · s03.xml »). Le fragment appliqué est
+  écrit dans ce fichier, même s'il n'est pas affiché ou n'a jamais été
+  ouvert : « * » sur son onglet, une seule annulation dans la partie. Le
+  fichier doit rester bien formé. Ctrl+S dans le fragment enregistre ce
+  fichier, puis le document affiché s'il est modifié.
+• Un clic sur une ligne de l'aperçu place le curseur dans le fichier qui la
+  contient, dont l'onglet s'ouvre ; les témoins suivent, avec la
+  numérotation propre d'un texte synchronisé à part. Table des matières et
+  recherche dans l'aperçu : de même.
+• Sélections : une chaîne sélectionnée dans l'aperçu est sélectionnée, de
+  retour dans l'onglet XML source, dans la partie qui contient le texte, à
+  la même occurrence du même paragraphe ; sans sélection, le curseur va à
+  la ligne affichée. Inversement depuis une partie ou l'édition. Entre
+  l'aperçu et l'éditeur de fragment, comme pour un seul fichier.
+• Limites : un paragraphe qui contient lui-même un xi:include s'édite dans
+  le fichier de sa balise ; l'export web ne contient pas encore les
+  parties (prochaine étape).
+• Sous l'aperçu, le nombre de lignes du témoin pivot cliquables est de
+  nouveau donné : les versions précédentes disaient, à tort, que la XSLT ne
+  produisait pas de marqueurs de ligne (ses repères portent un caractère
+  invisible que le décompte n'acceptait pas ; les repères, eux,
+  fonctionnaient).
+• Éditeur de fragment : si la place manque, la case « Retour automatique à
+  la ligne » se raccourcit (son texte reste dans sa bulle d'aide), et
+  l'étiquette du fragment reste lisible en entier.
+• Tests GUI : les fenêtres de test sont détruites après chaque test (la
+  mémoire des serveurs GitHub s'épuisait) ; les appels différés de la
+  fenêtre (call_later) ne s'exécutent plus après sa destruction.
+
 VARIANS V0.9.1.4 — SUIVRE UN MANUSCRIT DANS SON PROPRE ORDRE
 
 • Les flèches de tout panneau de témoin mènent l'édition, et non plus

@@ -70,18 +70,20 @@ def test_a_part_is_edited_and_saved_on_its_own(open_window, sermons_project, qtb
     assert not window.edition_session.text_document.isUndoAvailable()
 
 
-def test_a_part_keeps_the_witnesses_but_not_the_preview(open_window, sermons_project):
+def test_a_part_keeps_the_witnesses_and_the_preview(open_window, sermons_project):
     window = open_window(sermons_project)
     preview = window.left_tabs.indexOf(window.formatted_view)
     witnesses_hidden = window.witness_scroll.isHidden()        # témoins sans image : déjà masqués
     window.show_document(_doc(window, "s03.xml"))
-    # V0.9.1.0 : témoins et état de structure, comme sur l'édition.
+    # V0.9.1.0 : témoins et état de structure, comme sur l'édition ; V0.9.1.5 :
+    # l'aperçu de l'édition assemblée aussi.
     assert window.witness_scroll.isHidden() is witnesses_hidden
     assert not window.structure_status.isHidden()
-    assert not window.left_tabs.isTabEnabled(preview)
-    assert not window.action_save_as.isEnabled() and not window.action_preview.isEnabled()
+    assert window.left_tabs.isTabEnabled(preview) and window.action_preview.isEnabled()
+    assert not window.action_save_as.isEnabled()
     window.show_document(_doc(window, "personnes.xml"))
     assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
+    assert not window.left_tabs.isTabEnabled(preview) and not window.action_preview.isEnabled()
     window.show_document(window.edition_session)
     assert window.witness_scroll.isHidden() is witnesses_hidden
     assert window.left_tabs.isTabEnabled(preview) and window.action_save_as.isEnabled()
@@ -235,17 +237,15 @@ def _preview(window):
     return view
 
 
-def test_the_preview_shows_the_assembled_edition_read_only(open_window, sermons_project):
+def test_the_preview_shows_the_assembled_edition(open_window, sermons_project):
     window = open_window(sermons_project)
     view = _preview(window)
     text = view.preview.toPlainText()
     for included in ("Sermo in adventu Domini", "Puer natus est nobis", "Surrexit Dominus vere",
                      "Veni, Sancte Spiritus", "Narrat"):                 # s01 à s04 et l'exemplum
         assert included in text, included
-    assert view.info.text() == tr("preview.assembled.read_only")
-    # Pas d'édition par fragment : aucun marqueur, et aucun fragment ouvert.
-    assert "tei-edit:" not in view.preview.toHtml()
-    assert view.load_fragment(0) is False and view.frag_box.isHidden()
+    # Ses paragraphes ont leur ✎ (V0.9.1.5 ; voir test_gui_assembled_preview).
+    assert "tei-edit:" in view.preview.toHtml()
 
 
 def test_the_preview_shows_the_unsaved_text_of_a_part(open_window, sermons_project):
@@ -263,16 +263,14 @@ def test_the_preview_shows_the_unsaved_text_of_a_part(open_window, sermons_proje
     # Retour sur l'aperçu, sans actualisation forcée : la partie a changé.
     window.left_tabs.setCurrentIndex(window.left_tabs.indexOf(view))
     assert "Sermo non enregistré" in view.preview.toPlainText()
-    assert view.info.text() == tr("preview.assembled.read_only")
     view.refresh_preview()                                              # déjà à jour
-    assert view.info.text() == tr("preview.assembled.read_only")
+    assert view.info.text() == tr("preview.up_to_date", engine=view._last_preview_engine)
 
 
 def test_the_preview_of_a_simple_edition_stays_editable(open_window, project_with_documents):
     window = open_window(project_with_documents)
     view = _preview(window)
     assert "tei-edit:" in view.preview.toHtml()
-    assert view.info.text() != tr("preview.assembled.read_only")
 
 
 # --- « Marquer la page » et « Couper le folio » depuis une partie (V0.9.1.0) ---

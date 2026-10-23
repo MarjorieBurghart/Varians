@@ -796,7 +796,6 @@
 
 それでも書き出しますか？</string>
   <string key="parts.webgen.continue">それでも書き出す</string>
-  <string key="preview.assembled.read_only">組み立てられた版（部分を含む）のプレビュー、読み取り専用：部分に分かれた版では、断片の編集はまだできません。</string>
   <string key="status.structure.assembled.tip">ピボット伝本の行は、部分を含めて組み立てた版（XInclude）で、組み立てた文書の順に数えています。</string>
   <string key="manuscript.text_absent">この伝本には、このテキストの整列がありません。</string>
   <string key="status.structure.text.tip">テキスト {name} の {base} の行。このテキストは独自の整列（フォルダー alignments/{name}/）で別に同期されています。</string>
@@ -822,4 +821,5 @@
   <string key="diagnostics.route.uncertain">{witness} におけるテキストの順序：{runs}。{texts} の位置は不確かなため、校訂版の順序のままです。</string>
   <string key="diagnostics.route.edition">校訂版</string>
   <string key="status.route_uncertain">{witness} における {text} の位置は不確かです：校訂版の順序に従います。</string>
+  <string key="fragment.label.file">TEI断片 · 段落 {index}/{total} · {file}</string>
 </translations>

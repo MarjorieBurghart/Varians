@@ -796,7 +796,6 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
 
 Přesto exportovat?</string>
   <string key="parts.webgen.continue">Přesto exportovat</string>
-  <string key="preview.assembled.read_only">Náhled sestavené edice včetně částí, jen pro čtení: úprava fragmentů zatím u edice v částech není možná.</string>
   <string key="status.structure.assembled.tip">Řádky pivotního svědka se počítají v sestavené edici včetně částí (XInclude), v pořadí sestaveného dokumentu.</string>
   <string key="manuscript.text_absent">Pro tento text nemá tento svědek žádné zarovnání.</string>
   <string key="status.structure.text.tip">Řádky {base} v textu {name}, synchronizovaném zvlášť s vlastními zarovnáními (složka alignments/{name}/).</string>
@@ -822,4 +821,5 @@ Přesto exportovat?</string>
   <string key="diagnostics.route.uncertain">Pořadí textů ve svědkovi {witness}: {runs}; nejisté místo textů {texts}, ponechaných v pořadí edice.</string>
   <string key="diagnostics.route.edition">edice</string>
   <string key="status.route_uncertain">Nejisté místo textu {text} ve svědkovi {witness}: pořadí edice.</string>
+  <string key="fragment.label.file">Fragment TEI · odstavec {index}/{total} · {file}</string>
 </translations>

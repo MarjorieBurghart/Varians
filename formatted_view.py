@@ -18,7 +18,7 @@ from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QColor, QKeySequence, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QInputDialog, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QSplitter, QTextBrowser, QTextEdit, QVBoxLayout,
+    QLineEdit, QMessageBox, QPushButton, QSizePolicy, QSplitter, QTextBrowser, QTextEdit, QVBoxLayout,
     QWidget,
 )
 from app_context import _settings, call_later, tr as _t
@@ -278,7 +278,7 @@ def inject_edit_markers(html_text, max_paragraphs):
 
 LINE_MARKER_RE = re.compile(
     r'(<a\b(?=[^>]*\bclass=["\'][^"\']*\btei-line-marker\b[^"\']*["\'])'
-    r'(?=[^>]*\bhref=["\']tei-line://base/(\d+)["\'])[^>]*>)\s*</a>',
+    r'(?=[^>]*\bhref=["\']tei-line://base/(\d+)["\'])[^>]*>)(?:\s|\u2060|&#8288;)*</a>',
     re.IGNORECASE,
 )
 
@@ -690,8 +690,15 @@ class FormattedEditionWidget(QWidget):
         self.css_path = self.main.project.css
         self.current_paragraph = None
         self.fragment_original = ""
+        # Document (édition ou partie) dont vient le fragment ouvert, et
+        # nombre de paragraphes de l'aperçu à son ouverture.
+        self.fragment_session = None
+        self._fragment_total = 0
         self.dirty_preview = True
         self._last_preview_key = None
+        # Édition en parties (V0.9.1.5) : fichier et place de chaque
+        # paragraphe et repère de ligne de l'aperçu (preview_sources).
+        self.sources = None
         self._cached_css_key = None
         self._cached_css_text = None
         self._last_preview_engine = None
@@ -798,8 +805,11 @@ class FormattedEditionWidget(QWidget):
         self.reload_btn.setEnabled(False)
         frag_head.addWidget(self.frag_label)
         frag_head.addSpacing(12)
-        frag_head.addWidget(self.fragment_visual_wrap)
-        frag_head.addStretch(1)
+        # Faute de place, la case cède la sienne : l'étiquette du fragment
+        # (paragraphe, fichier d'une partie) reste lisible en entier.
+        self.fragment_visual_wrap.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
+        self.fragment_visual_wrap.setMinimumWidth(24)
+        frag_head.addWidget(self.fragment_visual_wrap, 1)
         frag_head.addWidget(self.reload_btn)
         frag_head.addWidget(self.apply_btn)
         frag_head.addWidget(self.close_fragment_btn)
@@ -931,13 +941,10 @@ class FormattedEditionWidget(QWidget):
         self.fragment_find_close_btn.setToolTip(_t("fragment.search.close.tip"))
         self.fragment_editor.setPlaceholderText(_t("fragment.placeholder"))
         self.fragment_visual_wrap.setText(_t("source.visual_wrap"))
+        self.fragment_visual_wrap.setToolTip(_t("source.visual_wrap"))
         self.wrap_element_action.setText(_t("fragment.wrap"))
         self.fragment_completion_action.setText(_t("completion.action"))
-        if self.current_paragraph is None:
-            self.frag_label.setText(_t("fragment.initial"))
-        else:
-            spans = paragraph_spans(self.main.editor.toPlainText())
-            self.frag_label.setText(_t("fragment.label", index=self.current_paragraph + 1, total=len(spans)))
+        self._update_fragment_label()
         self.info.setText(_t("preview.info.default"))
         # The transformed preview contains localized XSLT chrome (e.g. Contents).
         self.dirty_preview = True
@@ -982,7 +989,7 @@ class FormattedEditionWidget(QWidget):
             if line is not None:
                 self.preview.active_line_ordinal = line
                 # Rester dans l'onglet XSLT tout en synchronisant XML et images.
-                self.main.navigate_to_base_ordinal(line, move_xml_cursor=True)
+                self._activate_line(line, move_xml_cursor=True)
             self.info.setText(_t("preview.search.found", n=n, total=total, query=q))
             self.info.setStyleSheet("color:#376b3c")
         else:
@@ -1329,12 +1336,16 @@ class FormattedEditionWidget(QWidget):
         return self._cached_css_text
 
     def refresh_preview(self, force=False):
-        xml_text = self.main.editor.toPlainText()
         # Édition en parties (XInclude) : l'aperçu montre l'édition assemblée,
-        # en lecture seule (ses paragraphes ne sont plus ceux de la source).
-        assembled = self.main._assembled_preview_text(xml_text)
-        if assembled is not None:
-            xml_text = assembled
+        # quel que soit le document affiché ; ses paragraphes et ses lignes
+        # restent rattachés à leur fichier (V0.9.1.5).
+        if self.main._edition_has_parts():
+            self.sources = self.main._assembled_preview_sources()
+            xml_text = (self.sources.text if self.sources is not None
+                        else self.main.edition_session.text_document.toPlainText())
+        else:
+            self.sources = None
+            xml_text = self.main.editor.toPlainText()
         if not self.xsl_path.exists() or not self.css_path.exists():
             self.info.setText(_t("preview.files_missing"))
             self.info.setStyleSheet("color:#a14b2f")
@@ -1347,12 +1358,8 @@ class FormattedEditionWidget(QWidget):
         if not force and preview_key == self._last_preview_key:
             self.dirty_preview = False
             engine = self._last_preview_engine or "cache"
-            if assembled is not None:
-                self.info.setText(_t("preview.assembled.read_only"))
-                self.info.setStyleSheet("color:#9a6a2f")
-            else:
-                self.info.setText(_t("preview.up_to_date", engine=engine))
-                self.info.setStyleSheet("color:#376b3c")
+            self.info.setText(_t("preview.up_to_date", engine=engine))
+            self.info.setStyleSheet("color:#376b3c")
             return
 
         try:
@@ -1373,10 +1380,9 @@ class FormattedEditionWidget(QWidget):
         t0 = time.perf_counter()
         try:
             html_text, engine = transform_with_xslt(xml_text, self.xsl_path, {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc")})
-            if assembled is None:
-                spans = paragraph_spans(xml_text)
-                html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
-                html_text, marked = inject_edit_markers(html_text, len(spans))
+            spans = self.sources.paragraphs if self.sources is not None else paragraph_spans(xml_text)
+            html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
+            html_text, marked = inject_edit_markers(html_text, len(spans))
             css = self._resolved_css_cached()
 
             # setHtml() et zoomIn()/zoomOut() n’ont pas des sémantiques identiques
@@ -1401,10 +1407,7 @@ class FormattedEditionWidget(QWidget):
             self._last_preview_key = preview_key
             self._last_preview_engine = engine
             elapsed = time.perf_counter() - t0
-            if assembled is not None:
-                self.info.setText(_t("preview.assembled.read_only"))
-                self.info.setStyleSheet("color:#9a6a2f")
-            elif clickable_lines:
+            if clickable_lines:
                 self.info.setText(_t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans), lines=clickable_lines))
                 self.info.setStyleSheet("color:#376b3c")
             else:
@@ -1414,9 +1417,19 @@ class FormattedEditionWidget(QWidget):
             self.info.setText(_t("preview.transform_error", error=exc))
             self.info.setStyleSheet("color:#a13d32")
 
+    def _activate_line(self, idx, move_xml_cursor=True):
+        """Repère de ligne ``idx`` de l'aperçu : le curseur de la source et les
+        témoins y vont. Dans une édition assemblée, par la place de ce
+        repère dans son fichier (V0.9.1.5) : la numérotation des textes
+        synchronisés à part est ainsi respectée."""
+        if self.sources is not None:
+            self.main.navigate_to_preview_line(int(idx))
+        else:
+            self.main.navigate_to_base_ordinal(idx, move_xml_cursor=move_xml_cursor)
+
     def _line_clicked(self, idx):
         self.preview.active_line_ordinal = int(idx)
-        self.main.navigate_to_base_ordinal(idx, move_xml_cursor=True)
+        self._activate_line(idx, move_xml_cursor=True)
         self.info.setText(_t("preview.base_selected", line=idx+1))
         self.info.setStyleSheet("color:#376b3c")
 
@@ -1440,7 +1453,7 @@ class FormattedEditionWidget(QWidget):
                 line = self.preview.line_at_viewport_center()
                 if line is not None:
                     self.preview.active_line_ordinal = int(line)
-                    self.main.navigate_to_base_ordinal(int(line), move_xml_cursor=False)
+                    self._activate_line(int(line), move_xml_cursor=False)
             call_later(0, self, sync_after_toc)
             return
         if url.scheme() != "tei-edit":
@@ -1493,10 +1506,40 @@ class FormattedEditionWidget(QWidget):
             return True
         return False
 
+    def _fragment_source(self, idx):
+        """Le ``<p>`` de rang ``idx`` de l'aperçu dans son fichier :
+        ``(session, texte, début, fin, nombre de paragraphes)``, ou None.
+
+        Pour une édition en parties (V0.9.1.5), le fichier est celui qui
+        contient le paragraphe, édition ou partie, lu au besoin sans être
+        affiché ; sinon, c'est le document affiché."""
+        main = self.main
+        if not main._edition_has_parts():
+            text = main.editor.toPlainText()
+            spans = paragraph_spans(text)
+            if not 0 <= idx < len(spans):
+                return None
+            return (main.document, text, *spans[idx], len(spans))
+        sources = main._assembled_preview_sources()
+        if sources is None or not 0 <= idx < len(sources.paragraphs) or sources.paragraphs[idx] is None:
+            return None
+        span = sources.paragraphs[idx]
+        session = main._edition_file_session(span.path, load=True)
+        if session is None:
+            return None
+        return (session, session.text_document.toPlainText(), span.start, span.end, len(sources.paragraphs))
+
+    def _update_fragment_label(self):
+        if self.current_paragraph is None:
+            self.frag_label.setText(_t("fragment.initial"))
+        elif self.main._edition_has_parts() and self.fragment_session is not None:
+            self.frag_label.setText(_t("fragment.label.file", index=self.current_paragraph + 1,
+                                       total=self._fragment_total, file=Path(self.fragment_session.path).name))
+        else:
+            self.frag_label.setText(_t("fragment.label", index=self.current_paragraph + 1,
+                                       total=self._fragment_total))
+
     def load_fragment(self, idx):
-        # Édition en parties : aperçu en lecture seule (voir refresh_preview).
-        if self.main._edition_has_parts():
-            return False
         # Ne jamais remplacer silencieusement un fragment modifié par un
         # autre paragraphe. Le choix est explicite : appliquer, ignorer ou
         # annuler.
@@ -1505,21 +1548,22 @@ class FormattedEditionWidget(QWidget):
 
         # Recalculer les plages après une éventuelle application du fragment
         # courant : sa longueur a pu changer.
-        text = self.main.editor.toPlainText()
-        spans = paragraph_spans(text)
-        if not (0 <= idx < len(spans)):
+        source = self._fragment_source(idx)
+        if source is None:
             return False
-        start, end = spans[idx]
+        session, text, start, end, total = source
         frag = text[start:end]
         self.current_paragraph = idx
         self.fragment_original = frag
+        self.fragment_session = session
+        self._fragment_total = total
         self.frag_box.setVisible(True)
         self.fragment_editor.blockSignals(True)
         self.fragment_editor.setPlainText(frag)
         self.fragment_editor.blockSignals(False)
         if hasattr(self, "fragment_find_status"):
             self.fragment_find_status.setText("")
-        self.frag_label.setText(_t("fragment.label", index=idx+1, total=len(spans)))
+        self._update_fragment_label()
         self.apply_btn.setEnabled(True)
         self.reload_btn.setEnabled(True)
         return True
@@ -1607,16 +1651,17 @@ class FormattedEditionWidget(QWidget):
         return True
 
     def apply_fragment(self):
-        """Réinjecte le fragment dans le XML source. Retourne True en cas de succès."""
+        """Réinjecte le fragment dans le XML source : le fichier qui contient
+        le paragraphe, affiché ou non. Retourne True en cas de succès."""
         if self.current_paragraph is None:
             return False
-        text = self.main.editor.toPlainText()
-        spans = paragraph_spans(text)
         idx = self.current_paragraph
-        if not (0 <= idx < len(spans)):
+        source = self._fragment_source(idx)
+        # Le paragraphe de ce rang est désormais dans un autre fichier.
+        if source is None or source[0] is not self.fragment_session:
             QMessageBox.warning(self, _t("fragment.moved.title"), _t("fragment.moved.text"))
             return False
-        start, end = spans[idx]
+        session, text, start, end, _total = source
         if text[start:end] != self.fragment_original:
             r = QMessageBox.question(
                 self, _t("fragment.source_changed.title"),
@@ -1640,16 +1685,30 @@ class FormattedEditionWidget(QWidget):
         except ET.ParseError as exc:
             QMessageBox.warning(self, _t("fragment.invalid.title"), _t("fragment.invalid.text", error=exc))
             return False
-        c = QTextCursor(self.main.editor.document())
-        c.setPosition(start)
-        c.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
-        c.insertText(frag)
+        if session is self.main.document:
+            c = QTextCursor(self.main.editor.document())
+            c.setPosition(start)
+            c.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            c.insertText(frag)
+            self.main.editor.setTextCursor(c)
+            self.main.sync_panels_to_cursor(True)
+        else:
+            # Une partie, ou l'édition, non affichée : une seule étape
+            # d'annulation, dans son propre document.
+            self.main._write_session_text(session, text, candidate)
         self.fragment_original = frag
-        self.main.editor.setTextCursor(c)
-        self.main.sync_panels_to_cursor(True)
         self.dirty_preview = True
         self.refresh_preview()
         # Les plages ont pu changer ; recharge le même numéro ordinal si possible.
-        self.load_fragment(min(idx, max(0, len(paragraph_spans(self.main.editor.toPlainText()))-1)))
+        total = (len(self.sources.paragraphs) if self.sources is not None
+                 else len(paragraph_spans(self.main.editor.toPlainText())))
+        self.load_fragment(min(idx, max(0, total - 1)))
         return True
+
+    def dirty_fragment_session(self):
+        """Le document dont vient le fragment ouvert, s'il est modifié et pas
+        encore appliqué ; sinon None."""
+        if self.frag_box.isVisible() and self.fragment_has_unapplied_changes():
+            return self.fragment_session
+        return None
 

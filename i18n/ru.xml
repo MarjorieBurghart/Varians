@@ -796,7 +796,6 @@
 
 Всё равно экспортировать?</string>
   <string key="parts.webgen.continue">Всё равно экспортировать</string>
-  <string key="preview.assembled.read_only">Предпросмотр собранного издания, включая части, только для чтения: редактирование фрагментов для издания из частей пока недоступно.</string>
   <string key="status.structure.assembled.tip">Строки опорного свидетеля считаются в собранном издании вместе с частями (XInclude), в порядке собранного документа.</string>
   <string key="manuscript.text_absent">Для этого текста нет выравнивания этого свидетеля.</string>
   <string key="status.structure.text.tip">Строки {base} в тексте {name}, синхронизируемом отдельно, со своими выравниваниями (папка alignments/{name}/).</string>
@@ -822,4 +821,5 @@
   <string key="diagnostics.route.uncertain">Порядок текстов в {witness}: {runs}; место {texts} не установлено, оставлено в порядке издания.</string>
   <string key="diagnostics.route.edition">издание</string>
   <string key="status.route_uncertain">Место {text} в {witness} не установлено: порядок издания.</string>
+  <string key="fragment.label.file">Фрагмент TEI · абзац {index}/{total} · {file}</string>
 </translations>

@@ -35,6 +35,7 @@ class DocumentIOMixin:
         if hasattr(self, "formatted_view"):
             self.formatted_view.current_paragraph = None
             self.formatted_view.fragment_original = ""
+            self.formatted_view.fragment_session = None
             self.formatted_view.preview.active_line_ordinal = None
             self.formatted_view.preview_find_bar.setVisible(False)
             self.formatted_view.preview_find_status.setText("")
@@ -128,7 +129,11 @@ class DocumentIOMixin:
         return True
 
     def save_contextual(self):
-        """Ctrl+S / Enregistrer : applique d’abord le fragment actif, puis écrit le fichier."""
+        """Ctrl+S / Enregistrer : applique d’abord le fragment actif, puis écrit le fichier.
+
+        Le fragment d'une partie de l'édition qui n'est pas affichée
+        (V0.9.1.5) : le fichier de cette partie est enregistré, puis le
+        document affiché s'il est modifié."""
         if (
             hasattr(self, "formatted_view")
             and self.formatted_view.frag_box.isVisible()
@@ -139,6 +144,12 @@ class DocumentIOMixin:
         ):
             if not self.formatted_view.apply_fragment():
                 return False
+            session = self.formatted_view.fragment_session
+            if session is not None and session is not self.document and session in self.documents:
+                if session.modified and not self._save_session(session):
+                    return False
+                if not self.modified:
+                    return True
         return self.save()
 
     def save(self):

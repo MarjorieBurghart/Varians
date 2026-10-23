@@ -782,7 +782,6 @@ Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi le
 
 Exporter quand même ?</string>
   <string key="parts.webgen.continue">Exporter quand même</string>
-  <string key="preview.assembled.read_only">Aperçu de l’édition assemblée, parties comprises, en lecture seule : l’édition par fragment n’est pas encore possible pour une édition en parties.</string>
   <string key="status.structure.assembled.tip">Lignes du témoin pivot comptées dans l’édition assemblée, parties comprises (XInclude), dans l’ordre du document assemblé.</string>
   <string key="manuscript.text_absent">Pas d’alignement de ce témoin pour ce texte.</string>
   <string key="status.structure.text.tip">Lignes de {base} dans le texte {name}, synchronisé à part avec ses propres alignements (dossier alignments/{name}/).</string>
@@ -808,4 +807,5 @@ Exporter quand même ?</string>
   <string key="diagnostics.route.uncertain">Ordre des textes dans {witness} : {runs} ; place incertaine de {texts}, laissés dans l’ordre de l’édition.</string>
   <string key="diagnostics.route.edition">édition</string>
   <string key="status.route_uncertain">Place de {text} dans {witness} incertaine : ordre de l’édition.</string>
+  <string key="fragment.label.file">Fragment TEI · paragraphe {index}/{total} · {file}</string>
 </translations>

@@ -147,7 +147,11 @@ XInclude.
      des panneaux vers l'édition, qui mérite sa version).
 5. Vue XSLT / CSS et export web à partir du document assemblé,
    modifications par fragment réécrites dans le bon fichier, avec les mêmes
-   continuités de synchronisation sur le site.
+   continuités de synchronisation sur le site :
+   - V0.9.1.5, réalisée (voir ci-dessous) : la Vue XSLT / CSS de l'édition
+     assemblée, comme pour une édition en un seul fichier (décidé le
+     22 octobre 2026 : toutes ses fonctions, plus celles des parties) ;
+   - l'export web avec les parties, ensuite, à part.
 6. Cas avancés : `parse="text"`, `<xi:fallback>`, autres schémas `xpointer`.
 
 ## Réalisé en V0.9.0.0
@@ -194,7 +198,7 @@ XInclude.
   modifiées), en **lecture seule** : ses paragraphes ne sont plus ceux de la
   source, donc pas d'édition par fragment ni de report de position entre
   la source et l'aperçu. L'édition par fragment réécrite dans le bon
-  fichier reste pour l'étape 5. L'export web, lui, ne contient pas encore
+  fichier reste pour l'étape 5 (réalisée en V0.9.1.5). L'export web, lui, ne contient pas encore
   les parties (message avant l'export).
 - **Folios d'un texte dans un témoin** : notés soit par `<locus from to>`
   dans un en-tête (forme structurée, lisible par Varians), soit seulement
@@ -343,7 +347,7 @@ avoir un éditeur de fragment.
   par des tests qui l'exécutent. Pour une édition en parties, il est coupé
   depuis la V0.9.0.0 (aperçu assemblé en lecture seule) ; il reviendra à
   l'étape 5, avec l'édition par fragment de l'édition assemblée (décidé le
-  22 octobre 2026).
+  22 octobre 2026 ; rétabli en V0.9.1.5).
 
 ## Réalisé en V0.9.1.3 (cas 2, suite)
 
@@ -389,6 +393,36 @@ avoir un éditeur de fragment.
   l'autre ; le panneau d'un témoin absent mène au texte suivant ou
   précédent qui l'a.
 - **Limites** : l'export web ne contient pas encore les parties.
+
+## Réalisé en V0.9.1.5 (étape 5, première partie)
+
+- **Sources de l'aperçu** (`preview_sources.py`, sans Qt) : chaque `<p>`
+  du `<body>` assemblé (l'ordre des ✎) et chaque `<lb>` du pivot du
+  projet (l'ordre des repères de ligne) est rattaché à son fichier
+  (`Assembly.origin`) et à sa place dans ce fichier, par sa ligne et son
+  rang dans la ligne (`_match_by_line`), comme les `<lb/>` du pivot. Les
+  textes sont ceux des parties ouvertes, sinon le disque.
+- **L'aperçu reste ouvert** quand une partie est affichée (il montre
+  toujours toute l'édition) ; afficher un document auxiliaire le referme.
+- **Clic, table des matières, recherche** : par position, et non par rang
+  (`navigate_to_preview_line`) : le curseur va dans le fichier du repère,
+  et les témoins suivent avec la numérotation de ce fichier, qui reste
+  juste dans un texte synchronisé à part.
+- **Fragment** : ouvert dans le fichier de son paragraphe (lu au besoin
+  sans être affiché), écrit dans ce fichier, en une seule étape
+  d'annulation, par l'éditeur s'il est affiché, sinon dans son propre
+  document (`_write_session_text`). Ctrl+S dans le fragment enregistre ce
+  fichier, puis le document affiché s'il est modifié ; un fragment non
+  appliqué compte pour son fichier dans les demandes d'enregistrement.
+- **Reports** (précision du 22 octobre 2026 : vers le fichier inclus qui
+  contient le texte, non vers l'édition maîtresse) : de l'aperçu à la
+  source, la ligne ouvre son fichier, puis la même occurrence est
+  sélectionnée dans le paragraphe, dans son fichier ; dans l'autre sens,
+  `paragraph_at` et `line_before`.
+- **Limites** : un `<p>` qui contient un `xi:include` s'édite dans le
+  fichier de sa balise ; un élément que la XSLT ne rend pas décale les ✎
+  et les repères (comme pour un seul fichier) ; l'export web ne contient
+  pas encore les parties.
 
 ## Restent à décider
 

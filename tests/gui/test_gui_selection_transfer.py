@@ -4,8 +4,8 @@ fragment (V0.9.1.2).
 
 Report entre les onglets Source et XSLT / CSS : une chaîne sélectionnée dans
 une vue l'est dans l'autre, à la même occurrence du même paragraphe, y compris
-à travers un ``<lb break="no"/>``. Pour une édition en parties, l'aperçu
-montre l'édition assemblée en lecture seule : rien n'est reporté (étape 5).
+à travers un ``<lb break="no"/>``. Pour une édition en parties, voir
+test_gui_assembled_selection.py (V0.9.1.5).
 
 Projet exemple : le paragraphe 1 (RLS_184) contient « me<lb break="no"/>cum »,
 le paragraphe 2 trois fois « premium » (la première fois « premi<lb
@@ -100,22 +100,6 @@ def test_a_word_cut_by_a_line_break_is_selected_in_both_views(open_window, examp
     qtbot.waitUntil(lambda: window.editor.textCursor().hasSelection(), timeout=5000)
     assert _selection(window.editor) == source[0]
     assert _visible(window.editor.textCursor().selectedText()) == "mecum"
-
-
-def test_an_edition_in_parts_does_not_carry_the_selection(open_window, example_with_part, qtbot):
-    window = open_window(example_with_part)
-    _select(window.editor, *_source_occurrences(window, "premium", 2)[1])
-    view = _show_preview(window, qtbot)
-    qtbot.wait(150)
-    assert not view.preview.textCursor().hasSelection()
-    word = _preview_occurrences(view, "premium", 2) if view.preview.paragraph_bounds(2) else []
-    assert word == []                                     # pas de repères de paragraphe
-    plain = view.preview.toPlainText()
-    start = plain.index("premium")
-    _select(view.preview, start, start + len("premium"))
-    window.left_tabs.setCurrentIndex(0)
-    qtbot.wait(150)
-    assert _selection(window.editor) == _source_occurrences(window, "premium", 2)[1]
 
 
 # --- Le crayon ✎ ouvre le paragraphe sans entraîner les témoins --------------

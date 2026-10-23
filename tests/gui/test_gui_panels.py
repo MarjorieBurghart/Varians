@@ -150,6 +150,20 @@ def test_preview_follows_source_changes(open_window, example_project, qtbot):
     qtbot.waitUntil(lambda: marker in window.formatted_view.preview.toPlainText(), timeout=15000)
 
 
+
+def test_the_preview_counts_its_line_markers(open_window, example_project, qtbot):
+    """La XSLT écrit ses repères de ligne avec un WORD JOINER : ils sont
+    comptés, et l'aperçu ne dit pas qu'il n'y en a pas."""
+    from app_context import tr
+    window = open_window(example_project)
+    view = window.formatted_view
+    window.left_tabs.setCurrentWidget(view)
+    view.refresh_preview(force=True)
+    lines = len(view.preview._marker_lines)
+    assert lines > 1000
+    tail = tr("preview.updated.timed.lines", elapsed="", engine="", marked="", paragraphs="§", lines=lines).split("§")[1]
+    assert view.info.text().endswith(tail)
+
 def test_a_deferred_scroll_of_the_preview_does_not_outlive_its_window(editor_module, example_project, dialogs, qtbot):
     """Le défilement différé de l'aperçu ne s'exécute pas si la fenêtre a été
     détruite entre-temps."""
