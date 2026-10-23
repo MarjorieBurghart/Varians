@@ -49,8 +49,10 @@ def test_paths_are_relative_to_the_project_or_to_the_stylesheets_of_varians(proj
 def test_the_predefined_scenario_publishes_the_edition_with_the_stylesheet_of_varians(project):
     (scenario,) = predefined_scenarios()
     assert scenario == TransformScenario("varians-html", "${varians}/tei-to-html.xsl", "publications/edition.html",
-                                         css="${varians}/tei.css")
-    assert predefined_scenarios(lambda key: key.upper())[0].name == "VARIANS-HTML"
+                                         css="${varians}/tei.css", params=(("tocTitle", "Contents"),))
+    # Le nom et le titre du sommaire, dans la langue de l'interface.
+    (named,) = predefined_scenarios(lambda key: {"varians-html": "Édition", "toc": "Sommaire"}[key])
+    assert (named.name, named.params) == ("Édition", (("tocTitle", "Sommaire"),))
     assert stylesheet_path(scenario, project).is_file()
     assert scenario_problems(scenario, project) == []
 

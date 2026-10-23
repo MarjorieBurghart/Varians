@@ -87,11 +87,14 @@ def stylesheet_path(scenario, project) -> Path | None:
 
 
 def predefined_scenarios(translate=None) -> tuple[TransformScenario, ...]:
-    """Scénarios fournis par Varians, non écrits dans project.xml. ``translate``
-    donne le nom affiché d'après la clé du scénario (sinon, la clé)."""
+    """Scénarios fournis par Varians, non écrits dans project.xml.
+    ``translate`` donne, dans la langue de l'interface, le nom d'après la clé
+    du scénario, et le titre du sommaire d'après la clé ``toc`` (sinon : la
+    clé, et « Contents » comme la feuille de Varians)."""
     key = "varians-html"
     return (TransformScenario(translate(key) if translate else key, VARIANS_PREFIX + "tei-to-html.xsl",
-                              "publications/edition.html", css=VARIANS_PREFIX + "tei.css"),)
+                              "publications/edition.html", css=VARIANS_PREFIX + "tei.css",
+                              params=(("tocTitle", translate("toc") if translate else "Contents"),)),)
 
 
 def project_sources(project) -> list[Path]:

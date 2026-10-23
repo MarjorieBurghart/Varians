@@ -57,8 +57,9 @@ def source_label(scenario):
 
 
 def predefined():
-    """Scénarios prédéfinis, avec leur nom dans la langue de l'interface."""
-    return predefined_scenarios(lambda key: _t(f"transform.predefined.{key}"))
+    """Scénarios prédéfinis, dans la langue de l'interface : leur nom, et le
+    titre du sommaire de l'aperçu."""
+    return predefined_scenarios(lambda key: _t("preview.toc") if key == "toc" else _t(f"transform.predefined.{key}"))
 
 
 class _PathField(QWidget):

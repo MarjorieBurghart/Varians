@@ -132,7 +132,7 @@ def test_a_predefined_scenario_is_duplicated_into_the_project(open_window, sermo
     (scenario,) = load_project(sermons_project).transformations
     assert scenario == TransformScenario(tr("transform.predefined.varians-html"), "${varians}/tei-to-html.xsl",
                                          "publications/edition.html", css="${varians}/tei.css",
-                                         params=(("css", "edition.css"),))
+                                         params=(("tocTitle", tr("preview.toc")), ("css", "edition.css")))
 
     # Une seconde copie prend un autre nom.
     dialogs.expect("dialog", _in_list(duplicate))
