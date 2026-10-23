@@ -226,6 +226,32 @@ def notes_inside(el: ET.Element):
     return out
 
 
+LACUNA_TAGS = ("lacunaStart", "lacunaEnd")
+
+
+def lacuna_witnesses(root: ET.Element) -> dict:
+    """``{id(élément): témoins}`` des ``<lacunaStart/>`` et ``<lacunaEnd/>``
+    de ``root`` : leur ``@wit``, sinon celui de la leçon (``<rdg>``,
+    ``<lem>``) qui les contient, comme sur le bureau (``pivot_lines``)."""
+    found = {}
+
+    def visit(node, reading_wit):
+        tag = lname(node.tag)
+        if tag in LACUNA_TAGS:
+            wit = node.attrib.get("wit")
+            tokens = wit_tokens(wit if wit is not None else reading_wit)
+            if tokens:
+                found[id(node)] = sorted(set(tokens))
+            return
+        if tag in ("rdg", "lem"):
+            reading_wit = node.attrib.get("wit")
+        for child in node:
+            visit(child, reading_wit)
+
+    visit(root, None)
+    return found
+
+
 def _reading_options(path, target, base_line_keys, root, line_anchors, segment_of, target_of):
     """Arbre, ``{id(lb): clé}``, texte et pivot de chaque nœud. Sans options,
     un fichier unique et un seul pivot, comme avant ; pour une édition
@@ -1124,6 +1150,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     body = next((e for e in root.iter() if lname(e.tag) == "body"), None)
     if body is None:
         raise ValueError(f"Aucun <body> TEI trouvé dans {path}")
+    # Lacunes (V0.9.1.6) : un repère invisible par balise, à sa place.
+    lacunae = lacuna_witnesses(body)
 
     blocks = []
     annotations = {}
@@ -1234,6 +1262,26 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             "foreign": bool(foreign),
         }))
 
+    def add_lacuna(node):
+        """Repère invisible d'un ``<lacunaStart/>`` ou ``<lacunaEnd/>``."""
+        witnesses = lacunae.get(id(node))
+        if not witnesses:
+            return
+        enter(node)
+        block = ensure_block()
+        block["segments"].append(tagged({
+            "kind": "lacuna",
+            "start": lname(node.tag) == "lacunaStart",
+            "wit": list(witnesses),
+        }))
+
+    def add_lacunae_in(node):
+        """Repères des lacunes contenues dans ``node``, qui n'est pas rendu
+        (leçon non retenue, note, référence)."""
+        for element in node.iter():
+            if lname(element.tag) in LACUNA_TAGS:
+                add_lacuna(element)
+
     def add_editorial_ref(text):
         """Ajoute une identification éditoriale de citation, hors texte manuscrit."""
         text = clean_text(text)
@@ -1336,7 +1384,12 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             trim_last_visible_right()
             state["pending_lb_sep"] = "\u2060" if node.attrib.get("break") == "no" else " "
             return
+        if tag in LACUNA_TAGS:
+            add_lacuna(node)
+            return
         if tag == "note":
+            add_lacunae_in(node)
+            enter(node)
             txt = flatten_editorial_text(node, include_notes=True, include_refs=True)
             if txt:
                 aid = new_ann_id("n")
@@ -1350,6 +1403,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if tag == "ref":
             # Dans cette édition, <cit>/<ref> est une identification éditoriale
             # de la source de la citation : elle ne fait pas partie du manuscrit.
+            add_lacunae_in(node)
+            enter(node)
             add_editorial_ref(flatten_editorial_text(node, include_notes=True, include_refs=True))
             return
         if tag == "app":
@@ -1363,7 +1418,13 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 "target": target_of(node).lstrip("#"), "readings": describe_app(node),
             }
             annotations[aid] = ann
+            readings = list(node)
+            chosen = readings.index(selected)
+            for other in readings[:chosen]:
+                add_lacunae_in(other)
             walk(selected, styles=styles, variant_id=aid)
+            for other in readings[chosen + 1:]:
+                add_lacunae_in(other)
             enter(node)
             add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
             return
@@ -1380,6 +1441,9 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     def walk_container(node):
         tag = lname(node.tag)
         enter(node)
+        if tag in LACUNA_TAGS:
+            add_lacuna(node)
+            return
         if tag == "div":
             # Chaque div portant xml:id correspond ici à un sermon distinct.
             # On insère un bloc structurel autonome : il ne modifie pas le texte
@@ -1424,6 +1488,24 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     for child in list(body):
         walk_container(child)
         enter(body)
+
+    # Les blocs autres que « p » ne sont pas rendus : leurs repères de lacune
+    # passent au début du bloc « p » suivant (sinon à la fin du précédent).
+    pending = []
+    last_p = None
+    for b in blocks:
+        if b.get("type") == "p":
+            if pending:
+                b["segments"][0:0] = pending
+                pending = []
+            last_p = b
+        elif b.get("segments"):
+            moved = [seg for seg in b["segments"] if seg.get("kind") == "lacuna"]
+            if moved:
+                b["segments"] = [seg for seg in b["segments"] if seg.get("kind") != "lacuna"]
+                pending.extend(moved)
+    if pending and last_p is not None:
+        last_p["segments"].extend(pending)
 
     # Élimine les blocs ne contenant que du blanc / un marqueur de page isolé sans texte utile.
     cleaned = []
