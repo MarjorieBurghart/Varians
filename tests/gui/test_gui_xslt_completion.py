@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import pytest
 
+from app_context import tr
 from project_config import DocumentConfig, load_project
 from project_management import update_project_documents
 
@@ -66,8 +67,14 @@ def test_ctrl_space_proposes_xslt_instructions_with_the_prefix(stylesheet_window
 
 
 def test_a_literal_result_element_receives_instructions(stylesheet_window, dialogs):
+    from PySide6.QtCore import Qt
     window = stylesheet_window('<xsl:template match="/"><div>\n</div></xsl:template>\n')
     _cursor_after(window, "<div>")
+    labels = []
+    dialogs.expect("dialog", lambda dialog: (labels.append((dialog.label.text(), dialog.label.textFormat())), 0)[1])
+    window.show_rng_completion(window.editor)
+    # Le nom du parent, entre chevrons, se lit tel quel (et non comme du HTML).
+    assert labels == [(tr("completion.elements.label", parent="div"), Qt.TextFormat.PlainText)]
     proposed = _proposals(dialogs, window)
     assert {"xsl:value-of", "xsl:apply-templates"} <= set(proposed)
     assert "xsl:template" not in proposed and "xsl:param" not in proposed

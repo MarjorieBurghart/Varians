@@ -62,6 +62,8 @@ class CompletionDialog(QDialog):
         root.setContentsMargins(8, 8, 8, 8)
         root.setSpacing(6)
         self.label = QLabel(label)
+        # « <body> », « <xsl:template> » : du texte, non du HTML (V0.9.2.1).
+        self.label.setTextFormat(Qt.TextFormat.PlainText)
         self.label.setWordWrap(True)
         root.addWidget(self.label)
         self.filter_box = QLineEdit()
