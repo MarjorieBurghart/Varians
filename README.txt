@@ -1,4 +1,4 @@
-PROCHAINE VERSION (EN PRÉPARATION)
+VARIANS V0.9.1.7 — ONGLETS DES DOCUMENTS
 
 • Onglets des documents : l'onglet du document affiché se distingue
   nettement (fond blanc, filet bleu en haut, nom en gras) ; les autres sont

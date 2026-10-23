@@ -282,3 +282,13 @@ def test_each_help_explains_the_web_export_of_an_assembled_edition():
         version = version[:version.index("</section>")]
         assert 'href="#xinclude-web"' in version and 'href="#viewer"' in version, language
         assert page.index('<section id="v0915">') < page.index('<section id="v0916">'), language
+
+
+def test_each_help_announces_the_tabs_of_version_0917():
+    """Onglet du document affiché bien distinct (V0.9.1.7)."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0917">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#auxiliary-documents"' in version, language
+        assert page.index('<section id="v0916">') < page.index('<section id="v0917">'), language
