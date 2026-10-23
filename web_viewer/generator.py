@@ -702,7 +702,13 @@ def package_local_images(data: dict, project, output_dir: str | Path) -> None:
         wid = _safe_web_name(raw_id)
         if safe_ids.count(wid) > 1:
             wid += "_" + hashlib.sha256(raw_id.encode('utf-8')).hexdigest()[:8]
-        for i, page in enumerate(witness.get("pages", []) or [], 1):
+        # Les pages des vues par texte (V0.9.1.6) suivent celles de
+        # l'édition ; une image déjà copiée pour ce témoin n'est pas recopiée.
+        pages = list(witness.get("pages", []) or [])
+        for view in (witness.get("views") or {}).values():
+            pages.extend(view.get("pages", []) or [])
+        copied = {}
+        for i, page in enumerate(pages, 1):
             image = page.get("image") if isinstance(page.get("image"), dict) else None
             if not image or image.get("type") != "file" or not image.get("path"):
                 continue
@@ -713,6 +719,9 @@ def package_local_images(data: dict, project, output_dir: str | Path) -> None:
                 src = src.resolve()
             except OSError:
                 src = src.absolute()
+            if src in copied:
+                image["path"] = copied[src]
+                continue
             if not src.is_file():
                 warnings.append({"witness": raw_id, "page": str(page.get("id") or ""),
                                  "problem": "local_image_missing", "filename": src.name})
@@ -725,7 +734,15 @@ def package_local_images(data: dict, project, output_dir: str | Path) -> None:
             dest = dest_dir / f"{i:04d}_{_safe_web_name(src.name)}"
             if src != dest.resolve():
                 shutil.copy2(src, dest)
-            image["path"] = dest.relative_to(out).as_posix()
+            image["path"] = copied[src] = dest.relative_to(out).as_posix()
+
+
+def _all_pages(witness):
+    """Pages d'un témoin : celles de l'édition, puis celles de ses vues par
+    texte (V0.9.1.6)."""
+    yield from witness.get('pages', []) or []
+    for view in (witness.get('views') or {}).values():
+        yield from view.get('pages', []) or []
 
 
 def make_html(data):
@@ -757,9 +774,9 @@ def generate(project_path: str | Path, output: str | Path | None = None,
         or (img.get('type') == 'iiif' and bool(img.get('service') or img.get('image')))
         for witness in data.get('witnesses', [])
         if witness.get('id') in data['meta']['display_witnesses']
-        for page in witness.get('pages', []))
+        for page in _all_pages(witness))
     data['meta']['external_iiif_images'] = sum(
-        1 for witness in data.get('witnesses', []) for page in witness.get('pages', [])
+        1 for witness in data.get('witnesses', []) for page in _all_pages(witness)
         if (page.get('image') or {}).get('type') == 'iiif')
     output.write_text(make_html(data), encoding="utf-8")
     return output, missing, data

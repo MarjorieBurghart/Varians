@@ -107,3 +107,26 @@ def test_the_images_of_a_text_are_copied_once(text_apart):
     paths = {(page.get("image") or {}).get("path") for page in x["pages"]}
     assert paths and all(path and not path.startswith("/") for path in paths)
     assert str(text_apart.parent) not in json.dumps(data, ensure_ascii=False)
+
+
+def test_the_local_images_of_the_views_are_packaged_once(tmp_path):
+    from types import SimpleNamespace
+
+    from corpus_data import TINY_PNG
+    from web_viewer.generator import package_local_images
+    root = tmp_path / "projet"
+    (root / "img").mkdir(parents=True)
+    for name in ("1.png", "2.png"):
+        (root / "img" / name).write_bytes(TINY_PNG)
+    data = {"meta": {}, "witnesses": [{"id": "T", "pages": [{"id": "a", "image": {"type": "file", "path": "img/1.png"}}],
+                                       "views": {"1": {"pages": [
+                                           {"id": "~1~a", "image": {"type": "file", "path": "img/1.png"}},
+                                           {"id": "~1~b", "image": {"type": "file", "path": "img/2.png"}}]}}}]}
+    out = tmp_path / "web"
+    package_local_images(data, SimpleNamespace(root_dir=root), out)
+    witness = data["witnesses"][0]
+    view = witness["views"]["1"]["pages"]
+    assert witness["pages"][0]["image"]["path"] == view[0]["image"]["path"]
+    assert view[1]["image"]["path"] != view[0]["image"]["path"]
+    assert all((out / page["image"]["path"]).is_file() for page in view)
+    assert len(list((out / "images").rglob("*.png"))) == 2
