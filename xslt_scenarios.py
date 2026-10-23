@@ -34,6 +34,9 @@ VARIANS_STYLESHEETS = DEFAULT_APPLICATION_XSLT.parent
 VARIANS_PREFIX = "${varians}/"
 SOURCES = ("edition", "current", "file")
 ENGINES = ("lxml", "saxon")
+PROBLEM_CODES = ("unknown_source", "no_file", "file_missing", "no_current", "unknown_engine", "saxon_missing",
+                 "no_xslt", "xslt_missing", "css_missing", "no_output", "output_is_folder", "output_is_source",
+                 "css_overwrites_source")
 
 
 @dataclass(frozen=True)
@@ -64,6 +67,18 @@ def resolve_path(project, raw) -> Path | None:
         return (VARIANS_STYLESHEETS / raw[len(VARIANS_PREFIX):]).resolve()
     path = Path(raw).expanduser()
     return path.resolve() if path.is_absolute() else (project.root_dir / path).resolve()
+
+
+def scenario_path(project, path) -> str:
+    """Chemin à écrire dans un scénario pour le fichier ``path`` : relatif au
+    projet, sinon ``${varians}/…`` pour une feuille de Varians, sinon absolu."""
+    path = Path(path).expanduser().resolve()
+    for folder, prefix in ((project.root_dir, ""), (VARIANS_STYLESHEETS, VARIANS_PREFIX)):
+        try:
+            return prefix + path.relative_to(Path(folder).resolve()).as_posix()
+        except ValueError:
+            continue
+    return path.as_posix()
 
 
 def stylesheet_path(scenario, project) -> Path | None:

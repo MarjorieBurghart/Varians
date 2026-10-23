@@ -161,3 +161,22 @@ def test_the_request_holds_absolute_paths_and_the_parameters(project):
 def test_the_preview_writes_in_another_folder(project, tmp_path):
     request = scenario_request(BASE, project, output_dir=tmp_path / "apercu")
     assert request["output"] == str(tmp_path / "apercu" / "personnes.html")
+
+
+# --- Chemins écrits par la boîte d'un scénario ------------------------------------------------
+
+def test_a_chosen_path_is_written_relative_to_the_project_or_to_the_stylesheets_of_varians(project, tmp_path):
+    from xslt_scenarios import scenario_path
+    assert scenario_path(project, project.root_dir / "rendering" / "a.xsl") == "rendering/a.xsl"
+    assert scenario_path(project, DEFAULT_APPLICATION_XSLT) == "${varians}/tei-to-html.xsl"
+    assert scenario_path(project, tmp_path / "ailleurs.xsl") == (tmp_path / "ailleurs.xsl").as_posix()
+
+
+def test_each_problem_has_a_message_in_the_seven_catalogs():
+    import xml.etree.ElementTree as ET
+    from xslt_scenarios import PROBLEM_CODES
+    assert "output_is_source" in PROBLEM_CODES and len(PROBLEM_CODES) == 13
+    for language in ("fr", "en", "de", "ja", "cs", "it", "ru"):
+        root = ET.parse(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key") for string in root.findall("string")}
+        assert {f"transform.problem.{code}" for code in PROBLEM_CODES} <= catalog, language
