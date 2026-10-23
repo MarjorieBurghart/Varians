@@ -226,7 +226,21 @@ def notes_inside(el: ET.Element):
     return out
 
 
-def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_line_keys=None):
+def _reading_options(path, target, base_line_keys, root, line_anchors, segment_of, target_of):
+    """Arbre, ``{id(lb): clé}``, texte et pivot de chaque nœud. Sans options,
+    un fichier unique et un seul pivot, comme avant ; pour une édition
+    assemblée (V0.9.1.6), l'arbre de ``assembled_document``, l'index de
+    ``build_segment_lb_index``, et le texte et le pivot de chaque nœud."""
+    if root is None:
+        root = ET.parse(path).getroot()
+    if line_anchors is None and base_line_keys is not None:
+        line_anchors = build_pivot_lb_index(root, target, base_line_keys)[0]
+    return (root, line_anchors, segment_of or (lambda node: 0),
+            target_of or (lambda node: target))
+
+
+def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_line_keys=None, *,
+                            root=None, line_anchors=None, segment_of=None, target_of=None):
     """
     Extrait les lignes physiques de la TEI corrigée.
 
@@ -235,18 +249,31 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
       - runs : fragments pour rendu HTML (texte / variante / note)
       - annotations : notices structurées des variantes et notes
     Les <lb> à l'intérieur des <note> sont ignorés.
+
+    Édition assemblée (V0.9.1.6) : ``root``, ``line_anchors``, ``segment_of``
+    et ``target_of`` (voir ``_reading_options``) ; dans un texte
+    synchronisé à part, les lignes, les leçons et les pages sont celles de
+    son pivot, et une ligne ne se poursuit pas d'un texte à l'autre.
     """
-    tree = ET.parse(path)
-    root = tree.getroot()
+    root, lb_anchor_lookup, segment_of, target_of = _reading_options(
+        path, target, base_line_keys, root, line_anchors, segment_of, target_of)
     witness_labels = extract_witness_labels(root)
-    lb_anchor_lookup = (build_pivot_lb_index(root, target, base_line_keys)[0]
-                        if base_line_keys is not None else None)
     body = next((e for e in root.iter() if lname(e.tag) == "body"), None)
     if body is None:
         raise ValueError(f"Aucun <body> TEI trouvé dans {path}")
 
     pages = OrderedDict()
-    state = {"page": None, "current": None, "ann": 0}
+    state = {"page": None, "current": None, "ann": 0, "seg": 0, "current_by_seg": {}}
+
+    def enter(node):
+        """Le texte de ``node`` devient le texte courant : sa ligne courante
+        est reprise là où ce texte l'avait laissée."""
+        index = segment_of(node)
+        if index != state["seg"]:
+            state["current_by_seg"][state["seg"]] = state["current"]
+            state["seg"] = index
+            state["current"] = state["current_by_seg"].get(index)
+        return index
 
     def new_annotation_id(prefix):
         state["ann"] += 1
@@ -312,7 +339,7 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
     def choose_app_reading(node):
         choices = [c for c in list(node) if lname(c.tag) in {"lem", "rdg", "wit"}]
         for c in choices:
-            if witness_matches(c.attrib.get("wit"), target):
+            if witness_matches(c.attrib.get("wit"), target_of(node)):
                 return c
         lem = next((c for c in choices if lname(c.tag) == "lem"), None)
         return lem if lem is not None else (choices[0] if choices else None)
@@ -321,6 +348,7 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
         tag = lname(node.tag)
         if tag == "teiHeader":
             return
+        enter(node)
         if tag == "note":
             add_note(node)
             return
@@ -329,7 +357,7 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
             return
         if tag == "pb":
             edref = node.attrib.get("edRef")
-            if edref and not witness_matches(edref, target):
+            if edref and not witness_matches(edref, target_of(node)):
                 return
             page = page_resolver.resolve(node) if page_resolver is not None else node.attrib.get("n")
             state["page"] = page
@@ -339,7 +367,7 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
             return
         if tag == "lb":
             edref = node.attrib.get("edRef")
-            if edref and not witness_matches(edref, target):
+            if edref and not witness_matches(edref, target_of(node)):
                 return
             if lb_anchor_lookup is not None:
                 canonical_key = lb_anchor_lookup.get(id(node))
@@ -375,7 +403,7 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
                 "id": aid,
                 "kind": "variant",
                 "selected": selected_text,
-                "target": target.lstrip("#"),
+                "target": target_of(node).lstrip("#"),
                 "readings": describe_app(node, selected),
             }
             if state["current"] is not None:
@@ -393,6 +421,7 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
 
         for child in list(node):
             walk(child, active_variant=active_variant)
+            enter(node)           # la suite (tail) est dans le texte de ``node``
             if child.tail:
                 if active_variant:
                     aid, ann = active_variant
@@ -1072,25 +1101,30 @@ def build_secondary_alignment(corrected: Path, alto_archive: Path, manifest_path
 # Vue de lecture continue de la TEI corrigée
 # =============================================================================
 
-def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks: bool = False, page_resolver=None, base_line_keys=None):
+def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks: bool = False, page_resolver=None, base_line_keys=None, *,
+                             root=None, line_anchors=None, segment_of=None, target_of=None):
     """Construit une vue de lecture par blocs (paragraphes/titres) sans matérialiser les <lb>.
 
     Les <lb> restent uniquement des ancres vers les lignes physiques. Chaque segment
     de texte porte donc une clé ``page::index`` qui permet au HTML d'ouvrir l'image
     de la ligne correspondante au clic.
+
+    Édition assemblée (V0.9.1.6) : ``root``, ``line_anchors``, ``segment_of``
+    et ``target_of`` (voir ``_reading_options``). Dans un texte synchronisé
+    à part, les segments portent ``seg`` (son numéro) ; ses lignes, ses
+    leçons et ses pages sont celles de son pivot ; la ligne courante est
+    propre à chaque texte.
     """
-    tree = ET.parse(path)
-    root = tree.getroot()
+    # The very same ordinal-to-JSON association that drives desktop cursor
+    # navigation. PageResolver remains relevant for page-only witnesses, but
+    # cannot be used to renumber line keys in a synchronised pivot.
+    root, lb_anchor_lookup, segment_of, target_of = _reading_options(
+        path, target, base_line_keys, root, line_anchors, segment_of, target_of)
     witness_labels = extract_witness_labels(root)
     body = next((e for e in root.iter() if lname(e.tag) == "body"), None)
     if body is None:
         raise ValueError(f"Aucun <body> TEI trouvé dans {path}")
 
-    # The very same ordinal-to-JSON association that drives desktop cursor
-    # navigation. PageResolver remains relevant for page-only witnesses, but
-    # cannot be used to renumber line keys in a synchronised pivot.
-    lb_anchor_lookup = (build_pivot_lb_index(root, target, base_line_keys)[0]
-                        if base_line_keys is not None else None)
     blocks = []
     annotations = {}
     state = {
@@ -1101,7 +1135,24 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         "block": None,
         "ann": 0,
         "pending_lb_sep": None,
+        "seg": 0,
+        "line_key_by_seg": {},
     }
+
+    def enter(node):
+        """Le texte de ``node`` devient le texte courant : sa ligne courante
+        est reprise là où ce texte l'avait laissée."""
+        index = segment_of(node)
+        if index != state["seg"]:
+            state["line_key_by_seg"][state["seg"]] = state["line_key"]
+            state["seg"] = index
+            state["line_key"] = state["line_key_by_seg"].get(index)
+        return index
+
+    def tagged(seg):
+        if state["seg"]:
+            seg["seg"] = state["seg"]
+        return seg
 
     def new_ann_id(prefix):
         state["ann"] += 1
@@ -1142,12 +1193,12 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             state["pending_lb_sep"] = None
         if not text:
             return
-        seg = {
+        seg = tagged({
             "kind": "text",
             "text": text,
             "line_key": current_line_key(),
             "styles": list(styles or []),
-        }
+        })
         if variant_id:
             seg["variant_id"] = variant_id
         if extra_classes:
@@ -1157,30 +1208,31 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             prev.get("line_key") == seg.get("line_key") and
             prev.get("styles") == seg.get("styles") and
             prev.get("variant_id") == seg.get("variant_id") and
-            prev.get("classes") == seg.get("classes")):
+            prev.get("classes") == seg.get("classes") and
+            prev.get("seg") == seg.get("seg")):
             prev["text"] += text
         else:
             block["segments"].append(seg)
 
     def add_marker(kind, ann_id, tooltip=""):
         block = ensure_block()
-        block["segments"].append({
+        block["segments"].append(tagged({
             "kind": kind,
             "ann_id": ann_id,
             "tooltip": tooltip,
             "line_key": current_line_key(),
-        })
+        }))
 
     def add_pagebreak(label, facs="", edref="", foreign=False):
         block = ensure_block()
-        block["segments"].append({
+        block["segments"].append(tagged({
             "kind": "pb",
             "label": label or "",
             "page": label or "",
             "facs": facs or "",
             "edref": edref or "",
             "foreign": bool(foreign),
-        })
+        }))
 
     def add_editorial_ref(text):
         """Ajoute une identification éditoriale de citation, hors texte manuscrit."""
@@ -1188,16 +1240,16 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if not text:
             return
         block = ensure_block()
-        block["segments"].append({
+        block["segments"].append(tagged({
             "kind": "editorial-ref",
             "text": text,
             "line_key": current_line_key(),
-        })
+        }))
 
     def choose_app_reading(node):
         choices = [c for c in list(node) if lname(c.tag) in {"lem", "rdg", "wit"}]
         for c in choices:
-            if witness_matches(c.attrib.get("wit"), target):
+            if witness_matches(c.attrib.get("wit"), target_of(node)):
                 return c
         lem = next((c for c in choices if lname(c.tag) == "lem"), None)
         return lem if lem is not None else (choices[0] if choices else None)
@@ -1241,11 +1293,12 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         tag = lname(node.tag)
         if tag == "teiHeader":
             return
+        enter(node)
         if tag == "pb":
             edref = node.attrib.get("edRef") or ""
             page = node.attrib.get("n")
             facs = node.attrib.get("facs") or ""
-            if edref and not witness_matches(edref, target):
+            if edref and not witness_matches(edref, target_of(node)):
                 # V0.8.2 : le texte de lecture reste celui du témoin cible, mais
                 # les changements de page des autres témoins peuvent être gardés
                 # comme ancres invisibles par le viewer générique. Ils ne doivent
@@ -1269,7 +1322,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             return
         if tag == "lb":
             edref = node.attrib.get("edRef")
-            if edref and not witness_matches(edref, target):
+            if edref and not witness_matches(edref, target_of(node)):
                 # Les <lb> de l'autre témoin sont des ancres invisibles et ne
                 # doivent surtout pas casser la lecture continue de Troyes 816.
                 return
@@ -1307,10 +1360,11 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             ann = {
                 "id": aid, "kind": "variant",
                 "selected": flatten_editorial_text(selected, include_notes=False, include_refs=False),
-                "target": target.lstrip("#"), "readings": describe_app(node),
+                "target": target_of(node).lstrip("#"), "readings": describe_app(node),
             }
             annotations[aid] = ann
             walk(selected, styles=styles, variant_id=aid)
+            enter(node)
             add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
             return
 
@@ -1319,11 +1373,13 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             add_text(node.text, new_styles, variant_id=variant_id)
         for child in list(node):
             walk(child, styles=new_styles, variant_id=variant_id)
+            enter(node)           # la suite (tail) est dans le texte de ``node``
             if child.tail:
                 add_text(child.tail, new_styles, variant_id=variant_id)
 
     def walk_container(node):
         tag = lname(node.tag)
+        enter(node)
         if tag == "div":
             # Chaque div portant xml:id correspond ici à un sermon distinct.
             # On insère un bloc structurel autonome : il ne modifie pas le texte
@@ -1343,6 +1399,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 add_text(node.text, [])
             for child in list(node):
                 walk_container(child)
+                enter(node)
                 if child.tail and child.tail.strip():
                     add_text(child.tail, [])
             return
@@ -1360,11 +1417,13 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             add_text(node.text, [])
         for child in list(node):
             walk_container(child)
+            enter(node)
             if child.tail and child.tail.strip():
                 add_text(child.tail, [])
 
     for child in list(body):
         walk_container(child)
+        enter(body)
 
     # Élimine les blocs ne contenant que du blanc / un marqueur de page isolé sans texte utile.
     cleaned = []
