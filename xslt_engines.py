@@ -1,0 +1,289 @@
+# -*- coding: utf-8 -*-
+"""Moteurs des scénarios de transformation XSLT (V0.9.2.0), sans Qt.
+
+``run(request)`` exécute la requête préparée par
+``xslt_scenarios.scenario_request`` et rend un ``TransformResult`` : c'est
+ce que fait, dans un processus à part, ``transform_worker``. Les moteurs
+suivent un même contrat :
+
+- **moteur** : ``lxml`` (XSLT 1.0) ;
+- **entrée** : le fichier source lu avec son URI de base, ou l'édition
+  assemblée par XInclude (``xml_assembly``), chaque partie gardant la
+  sienne ; les entités externes ne sont pas résolues ;
+- **paramètres** : des chaînes ;
+- **lecture** : tout fichier local, et ``http``/``https`` par un résolveur
+  de Varians (délai ``NETWORK_TIMEOUT``, journal ``network_read``) ; une
+  lecture réseau impossible arrête l'exécution ;
+- **écriture** : le résultat, seulement si la transformation réussit, de
+  façon atomique (un échec laisse le précédent intact), puis la CSS copiée
+  à côté de lui ; jamais un fichier protégé (``request["protected"]`` : les
+  sources du projet et du scénario). lxml refuse ``exsl:document``.
+
+Journal : liste de ``[code, détail]`` (messages ``transform.journal.<code>``) :
+``message`` (``xsl:message``), ``warning``, ``network_read``,
+``css_copied``, ``write_refused``, ``assembly`` (problème d'assemblage).
+Échec : ``error_code`` (message ``transform.error.<code>``) et ``error``,
+le texte du moteur au format « fichier:ligne: message ».
+"""
+from __future__ import annotations
+
+import contextlib
+import os
+import shutil
+import tempfile
+import time
+import urllib.request
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+
+NETWORK_TIMEOUT = 30
+
+
+@dataclass
+class TransformResult:
+    """Compte rendu d'une exécution : fichiers écrits (le résultat d'abord),
+    journal, erreur éventuelle, moteur et sa version, durée en secondes."""
+    ok: bool
+    outputs: list = field(default_factory=list)
+    journal: list = field(default_factory=list)
+    error_code: str = ""
+    error: str = ""
+    engine: str = ""
+    version: str = ""
+    seconds: float = 0.0
+
+    def to_dict(self):
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(bool(data["ok"]), [str(path) for path in data.get("outputs", ())],
+                   [[str(code), str(detail)] for code, detail in data.get("journal", ())],
+                   str(data.get("error_code", "")), str(data.get("error", "")), str(data.get("engine", "")),
+                   str(data.get("version", "")), float(data.get("seconds", 0.0)))
+
+
+class TransformError(Exception):
+    """Échec d'une exécution : ``code`` et texte du moteur."""
+
+    def __init__(self, code, detail=""):
+        super().__init__(detail)
+        self.code = code
+        self.detail = detail
+
+
+def xslt_error_text(exc, xsl_path, log=()):
+    """Message d'erreur lxml au format « fichier:ligne: message »."""
+    default_name = Path(xsl_path).name
+    parts = [f"{default_name}: {str(exc).strip() or type(exc).__name__}"]
+    for entry in list(log or [])[:3]:
+        filename = str(entry.filename or "")
+        name = Path(filename).name if filename and not filename.startswith("<") else default_name
+        detail = f"{name}:{entry.line}: {entry.message}" if entry.line else f"{name}: {entry.message}"
+        if entry.message and detail not in parts and entry.message not in parts[0]:
+            parts.append(detail)
+    return " ; ".join(parts)
+
+
+def run(request) -> TransformResult:
+    """Exécute une requête de ``xslt_scenarios.scenario_request``."""
+    start = time.perf_counter()
+    engine = request.get("engine")
+    result = TransformResult(False, engine=str(engine))
+    try:
+        if engine not in _ENGINES:
+            raise TransformError("unknown_engine", str(engine))
+        version, transform = _ENGINES[engine]
+        result.version = version()
+        data, extra = transform(request, result.journal)
+        result.outputs = _write_outputs(request, data, extra, result.journal)
+        result.ok = True
+    except TransformError as exc:
+        result.error_code, result.error = exc.code, exc.detail
+    except Exception as exc:                      # le processus répond toujours
+        result.error_code, result.error = "internal", f"{type(exc).__name__}: {exc}"
+    result.seconds = round(time.perf_counter() - start, 3)
+    return result
+
+
+# --- Écriture -------------------------------------------------------------------------------
+
+def _path_key(path):
+    return os.path.normcase(os.path.abspath(os.fspath(path)))
+
+
+def _inside(path, folder):
+    path, folder = _path_key(path), _path_key(folder)
+    return path.startswith(folder.rstrip(os.sep) + os.sep)
+
+
+def _write_atomically(path, data):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(data)
+        os.replace(temp, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(temp)
+        raise
+
+
+def _write_outputs(request, data, extra, journal):
+    """Écrit le résultat, les autres fichiers du moteur (dans le dossier du
+    résultat seulement) et la copie de la CSS ; rend les chemins écrits."""
+    protected = {_path_key(path) for path in request.get("protected", ())}
+    output = Path(request["output"])
+    if _path_key(output) in protected:
+        raise TransformError("write_refused", str(output))
+    written = []
+    try:
+        _write_atomically(output, data)
+        written.append(str(output))
+        for path, content in extra:
+            path = Path(path)
+            if not _inside(path, output.parent) or _path_key(path) in protected:
+                journal.append(["write_refused", str(path)])
+                continue
+            _write_atomically(path, content)
+            written.append(str(path))
+        css = Path(request["css"]) if request.get("css") else None
+        if css is not None:
+            copy = output.parent / css.name
+            if _path_key(copy) in protected and _path_key(copy) != _path_key(css):
+                journal.append(["write_refused", str(copy)])
+            elif _path_key(copy) != _path_key(css):
+                _write_atomically(copy, css.read_bytes())
+                written.append(str(copy))
+                journal.append(["css_copied", str(copy)])
+    except OSError as exc:
+        raise TransformError("output_failed", f"{exc.filename or output}: {exc.strerror or exc}") from exc
+    return written
+
+
+# --- lxml (XSLT 1.0) ------------------------------------------------------------------------
+
+def _lxml_version():
+    from lxml import etree
+    lxml = ".".join(map(str, etree.LXML_VERSION[:3]))
+    return f"lxml {lxml} (libxslt {'.'.join(map(str, etree.LIBXSLT_VERSION))})"
+
+
+class _NetworkReadError(Exception):
+    pass
+
+
+def _network_resolver(journal, failures):
+    """Résolveur lxml des URL http(s) : lecture notée au journal ; un échec
+    est gardé dans ``failures`` et arrête l'exécution."""
+    from lxml import etree
+
+    class NetworkResolver(etree.Resolver):
+        def resolve(self, url, pubid, context):
+            if not url.lower().startswith(("http://", "https://")):
+                return None
+            journal.append(["network_read", url])
+            try:
+                with urllib.request.urlopen(url, timeout=NETWORK_TIMEOUT) as response:
+                    data = response.read()
+            except Exception as exc:
+                failures.append(f"{url}: {getattr(exc, 'reason', None) or exc}")
+                raise _NetworkReadError(url) from exc
+            return self.resolve_string(data, context, base_url=url)
+
+    return NetworkResolver()
+
+
+def _syntax_text(exc, path):
+    name = Path(exc.filename or path).name
+    return f"{name}:{exc.lineno}: {exc.msg}" if exc.lineno else f"{name}: {exc.msg}"
+
+
+def _lxml_source(request, parser, journal):
+    from lxml import etree
+    path = request["source"]
+    if request.get("assemble"):
+        from xml_assembly import assemble
+        try:
+            text = Path(path).read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError) as exc:
+            raise TransformError("source_missing", f"{path}: {exc}") from exc
+        assembly = assemble(text, path)
+        problems = [f"{Path(p.file).name}:{p.line}: {p.code}" + (f" ({p.detail})" if p.detail else "")
+                    for p in assembly.problems]
+        if assembly.root is None:
+            raise TransformError("source_malformed", " ; ".join(problems))
+        journal.extend(["assembly", problem] for problem in problems)
+        return assembly.root.getroottree()
+    try:
+        return etree.parse(path, parser)
+    except etree.XMLSyntaxError as exc:
+        raise TransformError("source_malformed", _syntax_text(exc, path)) from exc
+    except OSError as exc:
+        raise TransformError("source_missing", f"{path}: {exc}") from exc
+
+
+def _located(entry):
+    """Vrai pour une entrée du journal lxml qui nomme un fichier et une ligne
+    (erreur ou avertissement) ; un ``xsl:message`` n'en nomme pas."""
+    return bool(entry.filename and not entry.filename.startswith("<") and entry.line)
+
+
+def _journal_log(log, journal, skip=""):
+    """``xsl:message`` et avertissements d'une exécution lxml ; ``skip`` :
+    le message de l'erreur, déjà dans son texte."""
+    for entry in log:
+        if not entry.message or entry.message.strip() == skip:
+            continue
+        if _located(entry):
+            journal.append(["warning", f"{Path(entry.filename).name}:{entry.line}: {entry.message}"])
+        else:
+            journal.append(["message", entry.message])
+
+
+def _run_lxml(request, journal):
+    from lxml import etree
+    failures = []
+    parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=True)
+    parser.resolvers.add(_network_resolver(journal, failures))
+    xslt = request["xslt"]
+    try:
+        source = _lxml_source(request, parser, journal)
+        try:
+            stylesheet = etree.parse(xslt, parser)
+        except etree.XMLSyntaxError as exc:
+            raise TransformError("xslt_invalid", _syntax_text(exc, xslt)) from exc
+        except OSError as exc:
+            raise TransformError("xslt_missing", f"{xslt}: {exc}") from exc
+        # Lire partout, réseau compris (par le résolveur) ; n'écrire nulle part.
+        access = etree.XSLTAccessControl(read_file=True, write_file=False, create_dir=False,
+                                         read_network=True, write_network=False)
+        try:
+            transform = etree.XSLT(stylesheet, access_control=access)
+        except etree.XSLTParseError as exc:
+            raise TransformError("xslt_invalid", xslt_error_text(exc, xslt, exc.error_log)) from exc
+        params = {str(name): etree.XSLT.strparam(str(value)) for name, value in request.get("params", ())}
+        try:
+            result = transform(source, **params)
+        except etree.XSLTApplyError as exc:
+            # Le texte de l'erreur garde ses lieux (fichier:ligne) ; les
+            # xsl:message qui l'ont précédée vont au journal.
+            located = [entry for entry in exc.error_log if _located(entry)]
+            _journal_log([entry for entry in exc.error_log if not _located(entry)], journal, str(exc).strip())
+            text = xslt_error_text(exc, xslt, located)
+            refused = "write rights" in str(exc) or any("refused" in (e.message or "") for e in exc.error_log)
+            raise TransformError("write_refused" if refused else "transform_failed", text) from exc
+        _journal_log(transform.error_log, journal)
+        return bytes(result), []
+    except TransformError:
+        if failures:
+            raise TransformError("network_failed", failures[0]) from None
+        raise
+    except Exception:
+        if failures:
+            raise TransformError("network_failed", failures[0]) from None
+        raise
+
+
+_ENGINES = {"lxml": (_lxml_version, _run_lxml)}

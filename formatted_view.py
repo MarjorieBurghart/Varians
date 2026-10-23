@@ -27,6 +27,7 @@ from completion_ui import CompletionDialog
 from custom_completion import load_custom_completion
 from selection_sync import choose_occurrence, occurrence_index_for_position
 from tei_facsimile import position_inside_xml_markup
+from xslt_engines import xslt_error_text as _xslt_error_text
 
 
 def find_in_rich_editor(editor, query, backwards=False):
@@ -623,19 +624,6 @@ def transform_with_xslt(xml_text, xsl_path, params=None):
         # erreurs antérieures.
         log = exc.error_log if isinstance(exc, LET.XSLTError) else ()
         raise RuntimeError(_xslt_error_text(exc, xsl_path, log)) from exc
-
-
-def _xslt_error_text(exc, xsl_path, log=()):
-    """Message d'erreur lxml au format « fichier:ligne: message »."""
-    default_name = Path(xsl_path).name
-    parts = [f"{default_name}: {str(exc).strip() or type(exc).__name__}"]
-    for entry in list(log or [])[:3]:
-        filename = str(entry.filename or "")
-        name = Path(filename).name if filename and not filename.startswith("<") else default_name
-        detail = f"{name}:{entry.line}: {entry.message}" if entry.line else f"{name}: {entry.message}"
-        if entry.message and detail not in parts and entry.message not in parts[0]:
-            parts.append(detail)
-    return " ; ".join(parts)
 
 
 def _transform_without_lxml(xml_text, xsl_path, params, first_error):

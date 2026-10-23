@@ -7,6 +7,8 @@
   <!-- Fourni par l’éditeur depuis project.xml. -->
   <xsl:param name="baseWitness" select="''"/>
   <xsl:param name="tocTitle" select="'Contents'"/>
+  <!-- Scénarios de transformation (V0.9.2.0) : nom de la CSS copiée à côté du résultat. -->
+  <xsl:param name="css" select="'tei.css'"/>
 
   <xsl:output method="html" encoding="UTF-8" indent="yes" doctype-system="about:legacy-compat"/>
 
@@ -17,7 +19,7 @@
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title><xsl:value-of select="//tei:titleStmt/tei:title"/></title>
-        <link rel="stylesheet" href="tei.css"/>
+        <link rel="stylesheet" href="{$css}"/>
       </head>
       <body>
         <header>
