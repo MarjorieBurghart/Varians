@@ -678,8 +678,11 @@
   <string key="documents.unsaved.text">В следующих документах есть несохранённые изменения:</string>
   <string key="documents.save_all">Сохранить все</string>
   <string key="documents.menu">XML-документы проекта</string>
-  <string key="documents.add.menu">Добавить XML-документ…</string>
-  <string key="documents.add.title">Добавить XML-документ в проект</string>
+  <string key="documents.add.menu">Добавить XML- или XSLT-документ…</string>
+  <string key="documents.add.title">Добавить в проект XML-документ или таблицу стилей XSLT</string>
+  <string key="documents.new_stylesheet.menu">Новая таблица стилей XSLT…</string>
+  <string key="documents.new_stylesheet.title">Новая таблица стилей XSLT</string>
+  <string key="documents.new_stylesheet.version">Версия XSLT таблицы стилей:</string>
   <string key="documents.add.already">«{name}» уже входит в проект.</string>
   <string key="documents.add.copied">Документ скопирован в проект: {path}</string>
   <string key="documents.new.menu">Новый XML-документ…</string>

@@ -664,8 +664,11 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="documents.unsaved.text">The following documents have unsaved changes:</string>
   <string key="documents.save_all">Save all</string>
   <string key="documents.menu">Project XML documents</string>
-  <string key="documents.add.menu">Add an XML document…</string>
-  <string key="documents.add.title">Add an XML document to the project</string>
+  <string key="documents.add.menu">Add an XML or XSLT document…</string>
+  <string key="documents.add.title">Add an XML document or an XSLT stylesheet to the project</string>
+  <string key="documents.new_stylesheet.menu">New XSLT stylesheet…</string>
+  <string key="documents.new_stylesheet.title">New XSLT stylesheet</string>
+  <string key="documents.new_stylesheet.version">XSLT version of the stylesheet:</string>
   <string key="documents.add.already">“{name}” is already part of the project.</string>
   <string key="documents.add.copied">Document copied into the project: {path}</string>
   <string key="documents.new.menu">New XML document…</string>

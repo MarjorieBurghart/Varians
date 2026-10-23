@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Menu Fichier ▸ Documents XML du projet : ajouter, créer, retirer."""
+"""Menu Fichier ▸ Documents XML du projet : ajouter, créer, retirer ; feuilles
+XSLT (V0.9.2.1)."""
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 import pytest
 from PySide6.QtWidgets import QFileDialog, QInputDialog, QMessageBox
@@ -21,6 +23,35 @@ def choose_file(monkeypatch):
         answer = (str(path), "") if path else ("", "")
         monkeypatch.setattr(QFileDialog, "getOpenFileName", staticmethod(lambda *a, **k: answer))
         monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: answer))
+    return _set
+
+
+@pytest.fixture
+def file_dialog_calls(monkeypatch):
+    """Arguments reçus par les boîtes de choix de fichier, et leur réponse."""
+    calls = []
+
+    def _set(path):
+        def answer(*args, **kwargs):
+            calls.append(args)
+            return (str(path), "") if path else ("", "")
+        monkeypatch.setattr(QFileDialog, "getOpenFileName", staticmethod(answer))
+        monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(answer))
+        return calls
+    return _set
+
+
+@pytest.fixture
+def stylesheet_version(monkeypatch):
+    """Réponse programmée au choix de la version d'une nouvelle feuille."""
+    asked = []
+
+    def _set(index, ok=True):
+        def answer(parent, title, label, items, current=0, editable=True, *rest, **kwargs):
+            asked.append(list(items))
+            return (items[index], ok)
+        monkeypatch.setattr(QInputDialog, "getItem", staticmethod(answer))
+        return asked
     return _set
 
 
@@ -184,3 +215,91 @@ def test_declining_the_removal_keeps_the_document(open_window, project_with_docu
     assert not window.remove_document_from_project()
     assert len(window.documents) == 2
     assert len(_declared(project_with_documents)) == 1
+
+
+
+# --- Feuilles XSLT (V0.9.2.1) ------------------------------------------------------------------
+
+XSL = "{http://www.w3.org/1999/XSL/Transform}"
+
+
+def test_the_add_dialog_offers_stylesheets(open_window, example_project, file_dialog_calls):
+    window = open_window(example_project)
+    calls = file_dialog_calls(None)
+    assert window.action_add_document.text() == tr("documents.add.menu")
+    assert not window.add_document_dialog()
+    (parent, title, folder, filters), = calls
+    assert filters.split(";;")[0] == "XML, XSLT (*.xml *.xsl *.xslt)"
+    assert "XSLT (*.xsl *.xslt)" in filters.split(";;")
+
+
+def test_adding_an_outside_stylesheet_copies_it_into_xslt(open_window, example_project, choose_file, tmp_path):
+    outside = tmp_path / "ailleurs" / "index.xsl"
+    outside.parent.mkdir()
+    outside.write_text('<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>',
+                       encoding="utf-8")
+    window = open_window(example_project)
+    choose_file(outside)
+    assert window.add_document_dialog()
+    copy = example_project.parent / "xslt" / "index.xsl"
+    assert copy.read_text(encoding="utf-8") == outside.read_text(encoding="utf-8")
+    assert _declared(example_project) == [copy]
+    assert window.document.path == copy
+    assert window.statusBar().currentMessage() == tr("documents.add.copied", path=copy)
+
+
+def test_new_stylesheet_is_created_in_xslt_declared_and_displayed(open_window, example_project,
+                                                                  file_dialog_calls, stylesheet_version):
+    window = open_window(example_project)
+    assert window.action_new_stylesheet.text() == tr("documents.new_stylesheet.menu")
+    assert window.action_new_stylesheet in window.documents_menu.actions()
+    target = example_project.parent / "xslt" / "personnes.xsl"
+    calls = file_dialog_calls(target)
+    asked = stylesheet_version(1)
+    assert window.new_stylesheet_dialog()
+    (parent, title, proposed, filters), = calls
+    assert title == tr("documents.new_stylesheet.title")
+    assert Path(proposed) == example_project.parent / "xslt" / "nouvelle.xsl"
+    assert filters == "XSLT (*.xsl *.xslt)"
+    assert asked == [[tr("transform.engine.lxml"), tr("transform.engine.saxon")]]
+    root = ET.parse(target).getroot()
+    assert root.tag == XSL + "stylesheet" and root.get("version") == "3.0"
+    assert _declared(example_project) == [target]
+    assert window.document.path == target and not window.document.modified
+
+
+def test_new_stylesheet_receives_the_xsl_suffix(open_window, example_project, choose_file, stylesheet_version):
+    window = open_window(example_project)
+    choose_file(example_project.parent / "xslt" / "index")
+    stylesheet_version(0)
+    assert window.new_stylesheet_dialog()
+    target = example_project.parent / "xslt" / "index.xsl"
+    assert ET.parse(target).getroot().get("version") == "1.0"
+    assert _declared(example_project) == [target]
+
+
+def test_new_stylesheet_never_overwrites_a_file(open_window, example_project, choose_file, stylesheet_version,
+                                                dialogs):
+    existing = example_project.parent / "xslt" / "index.xsl"
+    existing.parent.mkdir()
+    existing.write_text("<existant/>", encoding="utf-8")
+    window = open_window(example_project)
+    choose_file(existing)
+    stylesheet_version(0)
+    dialogs.expect("warning")
+    assert not window.new_stylesheet_dialog()
+    assert existing.read_text(encoding="utf-8") == "<existant/>"
+    assert _declared(example_project) == []
+
+
+def test_cancelling_the_new_stylesheet_creates_nothing(open_window, example_project, choose_file,
+                                                       stylesheet_version):
+    window = open_window(example_project)
+    choose_file(None)
+    assert not window.new_stylesheet_dialog()
+    target = example_project.parent / "xslt" / "index.xsl"
+    choose_file(target)
+    stylesheet_version(0, ok=False)
+    assert not window.new_stylesheet_dialog()
+    assert not target.exists()
+    assert _declared(example_project) == []

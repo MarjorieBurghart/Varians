@@ -678,8 +678,11 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="documents.unsaved.text">Die folgenden Dokumente enthalten nicht gespeicherte Änderungen:</string>
   <string key="documents.save_all">Alle speichern</string>
   <string key="documents.menu">XML-Dokumente des Projekts</string>
-  <string key="documents.add.menu">XML-Dokument hinzufügen…</string>
-  <string key="documents.add.title">XML-Dokument zum Projekt hinzufügen</string>
+  <string key="documents.add.menu">XML- oder XSLT-Dokument hinzufügen…</string>
+  <string key="documents.add.title">XML-Dokument oder XSLT-Stylesheet zum Projekt hinzufügen</string>
+  <string key="documents.new_stylesheet.menu">Neues XSLT-Stylesheet…</string>
+  <string key="documents.new_stylesheet.title">Neues XSLT-Stylesheet</string>
+  <string key="documents.new_stylesheet.version">XSLT-Version des Stylesheets:</string>
   <string key="documents.add.already">„{name}“ gehört bereits zum Projekt.</string>
   <string key="documents.add.copied">Dokument in das Projekt kopiert: {path}</string>
   <string key="documents.new.menu">Neues XML-Dokument…</string>

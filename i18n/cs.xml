@@ -678,8 +678,11 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="documents.unsaved.text">Následující dokumenty obsahují neuložené změny:</string>
   <string key="documents.save_all">Uložit vše</string>
   <string key="documents.menu">Dokumenty XML projektu</string>
-  <string key="documents.add.menu">Přidat dokument XML…</string>
-  <string key="documents.add.title">Přidat do projektu dokument XML</string>
+  <string key="documents.add.menu">Přidat dokument XML nebo XSLT…</string>
+  <string key="documents.add.title">Přidat do projektu dokument XML nebo šablonu XSLT</string>
+  <string key="documents.new_stylesheet.menu">Nová šablona XSLT…</string>
+  <string key="documents.new_stylesheet.title">Nová šablona XSLT</string>
+  <string key="documents.new_stylesheet.version">Verze XSLT šablony:</string>
   <string key="documents.add.already">„{name}“ už je součástí projektu.</string>
   <string key="documents.add.copied">Dokument byl zkopírován do projektu: {path}</string>
   <string key="documents.new.menu">Nový dokument XML…</string>
