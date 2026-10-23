@@ -12,31 +12,12 @@ from __future__ import annotations
 import pytest
 
 from app_context import tr
-from corpus_data import add_page_witness
-from pivot_lines import pivot_lb_pattern
-
-PB_12V = '<pb edRef="#X" n="12v"/>'
-PB_13R = '<pb edRef="#X" n="13r"/>'
-
-
-def _insert(text, inserts):
-    for position, value in sorted(inserts, reverse=True):
-        text = text[:position] + value + text[position:]
-    return text
+from corpus_data import PB_12V, PB_13R, add_text_pages
 
 
 @pytest.fixture
 def text_with_pages(example_with_text):
-    add_page_witness(example_with_text, "X", ("12r", "12v", "13r", "13v"))
-    add_page_witness(example_with_text, "Y", ("1r", "1v"))
-    part = example_with_text.parent / "xml" / "rls185.xml"
-    text = part.read_text(encoding="utf-8")
-    lbs = [match.span() for match in pivot_lb_pattern("T1").finditer(text)]
-    part.write_text(_insert(text, [(lbs[3][1], PB_12V), (lbs[20][1], PB_13R)]), encoding="utf-8")
-    edition = example_with_text.parent / "xml" / "edition.xml"
-    text = edition.read_text(encoding="utf-8")
-    edition.write_text(text.replace("</listWit>", '<witness xml:id="Y">Y <locus from="1v" target="#RLS_185"/>'
-                                                  '</witness></listWit>', 1), encoding="utf-8")
+    add_text_pages(example_with_text, y_locus=True)
     return example_with_text
 
 

@@ -14,10 +14,13 @@ Les JSON n'ont pas d'image (témoins déclarés <images type="none"/>).
 from __future__ import annotations
 
 import json
+import re
 import shutil
 from pathlib import Path
 
+REPO = Path(__file__).resolve().parents[1]
 SERMONS = Path(__file__).resolve().parent / "data" / "sermons"
+EXAMPLE_ITEMS = ("project.xml", "xml", "alignments", "rendering", "i18n", "resources")
 
 
 def alignment(witness, base, page, count, *, secondary_of=None):
@@ -119,3 +122,95 @@ def add_page_witness(project_xml: Path, witness: str, labels) -> None:
                    f'<images type="files">{"".join(images)}</images></witness>\n  ')
     text = project_xml.read_text(encoding="utf-8")
     project_xml.write_text(text.replace("</witnesses>", declaration + "</witnesses>", 1), encoding="utf-8")
+
+
+# --- Projet exemple et ses variantes (tests GUI et tests de l'export web) ------
+
+def insert_at(text, inserts):
+    """Insère chaque ``(position, texte)`` de ``inserts`` dans ``text``."""
+    for position, value in sorted(inserts, reverse=True):
+        text = text[:position] + value + text[position:]
+    return text
+
+
+def copy_example(root: Path) -> Path:
+    """Copie le projet exemple de Varians dans ``root`` ; renvoie le chemin
+    de project.xml."""
+    root.mkdir(parents=True, exist_ok=True)
+    for name in EXAMPLE_ITEMS:
+        source = REPO / name
+        if source.is_dir():
+            shutil.copytree(source, root / name)
+        else:
+            shutil.copy2(source, root / name)
+    (root / "web_output").mkdir(exist_ok=True)
+    return root / "project.xml"
+
+
+def move_to_part(project_xml: Path, first="RLS_185", following="RLS_186", name="rls185.xml") -> Path:
+    """Passe le sermon ``first`` (jusqu'à ``following``) de l'édition dans
+    une partie, xml/``name``, incluse par ``xi:include`` ; renvoie le fichier
+    de la partie."""
+    edition = project_xml.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    start = text.index(f'<div xml:id="{first}">')
+    end = text.index(f'<div xml:id="{following}">')
+    part = text[start:end].rstrip()
+    assert part.endswith("</div>")
+    part = part.replace(f'<div xml:id="{first}">',
+                        f'<div xmlns="http://www.tei-c.org/ns/1.0" xml:id="{first}">', 1)
+    path = edition.parent / name
+    path.write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + part + "\n", encoding="utf-8")
+    text = text[:start] + f'<xi:include href="{name}"/>\n' + text[end:]
+    text = re.sub(r"<TEI\b", '<TEI xmlns:xi="http://www.w3.org/2001/XInclude"', text, count=1)
+    edition.write_text(text, encoding="utf-8")
+    return path
+
+
+def _pivot_lb_spans(text, base="T1"):
+    from pivot_lines import pivot_lb_pattern
+    return [match.span() for match in pivot_lb_pattern(base).finditer(text)]
+
+
+# Lacunes du projet exemple (V0.9.1.3) : T2 en lacune de la ligne 20 du pivot
+# (après son <lb/>) à la ligne 25 ; un passage absent de T1 avant la ligne 41 ;
+# X, témoin par pages (1r, 1v), a son <pb n="1r"/> au début du <body> et son
+# <pb n="1v"/> dans le passage absent de T1.
+T2_START, T2_END, PIVOT_GAP = 20, 25, 41
+LACUNA_GAP = '<lacunaStart wit="#T1"/>PASSAGE <pb edRef="#X" n="1v"/>ABSENS<lacunaEnd wit="#T1"/>'
+
+
+def add_example_lacunae(project_xml: Path) -> None:
+    add_page_witness(project_xml, "X", ("1r", "1v"))
+    edition = project_xml.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    lbs = _pivot_lb_spans(text)
+    body = text.index("<body>") + len("<body>")
+    edition.write_text(insert_at(text, [
+        (body, '<pb edRef="#X" n="1r"/>'),
+        (lbs[T2_START][1], '<lacunaStart wit="#T2"/>'),
+        (lbs[T2_END][1], '<lacunaEnd wit="#T2"/>'),
+        (lbs[PIVOT_GAP][0], LACUNA_GAP),
+    ]), encoding="utf-8")
+
+
+# Témoins par pages dans rls185 synchronisé à part (V0.9.1.3, V0.9.1.4) :
+# X (12r, 12v, 13r, 13v) a ses <pb> dans rls185, 12v après la ligne 4 du pivot
+# (rang 3), 13r après la ligne 21 (rang 20) ; 13v n'a pas de <pb>. Y (1r, 1v)
+# n'a pas de <pb> ; avec ``y_locus``, son <locus from="1v" target="#RLS_185">.
+PB_12V = '<pb edRef="#X" n="12v"/>'
+PB_13R = '<pb edRef="#X" n="13r"/>'
+
+
+def add_text_pages(project_xml: Path, *, y_locus=False) -> None:
+    add_page_witness(project_xml, "X", ("12r", "12v", "13r", "13v"))
+    add_page_witness(project_xml, "Y", ("1r", "1v"))
+    part = project_xml.parent / "xml" / "rls185.xml"
+    text = part.read_text(encoding="utf-8")
+    lbs = _pivot_lb_spans(text)
+    part.write_text(insert_at(text, [(lbs[3][1], PB_12V), (lbs[20][1], PB_13R)]), encoding="utf-8")
+    if y_locus:
+        edition = project_xml.parent / "xml" / "edition.xml"
+        text = edition.read_text(encoding="utf-8")
+        edition.write_text(text.replace("</listWit>", '<witness xml:id="Y">Y <locus from="1v" target="#RLS_185"/>'
+                                                      '</witness></listWit>', 1), encoding="utf-8")

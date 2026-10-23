@@ -72,7 +72,6 @@ TEST_RNG = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 _XML_MODEL_RE = re.compile(r"<\?xml-model\b.*?\?>", re.S)
-_EXAMPLE_ITEMS = ("project.xml", "xml", "alignments", "rendering", "i18n", "resources")
 
 
 class UnexpectedDialog(AssertionError):
@@ -193,15 +192,8 @@ def dialogs(monkeypatch):
 @pytest.fixture
 def example_project(tmp_path):
     """Copie du projet exemple, avec un petit schéma RELAX NG local."""
-    root = tmp_path / "exemple"
-    root.mkdir()
-    for name in _EXAMPLE_ITEMS:
-        src = ROOT / name
-        if src.is_dir():
-            shutil.copytree(src, root / name)
-        else:
-            shutil.copy2(src, root / name)
-    (root / "web_output").mkdir(exist_ok=True)
+    from corpus_data import copy_example
+    root = copy_example(tmp_path / "exemple").parent
     (root / "xml" / "test.rng").write_text(TEST_RNG, encoding="utf-8")
     edition = root / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")
@@ -238,18 +230,8 @@ def project_with_documents(example_project):
 def example_with_part(example_project):
     """Projet exemple dont le sermon RLS_185 est passé dans une partie,
     xml/rls185.xml, incluse par l'édition."""
-    edition = example_project.parent / "xml" / "edition.xml"
-    text = edition.read_text(encoding="utf-8")
-    start = text.index('<div xml:id="RLS_185">')
-    end = text.index('<div xml:id="RLS_186">')
-    part = text[start:end].rstrip()
-    assert part.endswith("</div>")
-    part = part.replace('<div xml:id="RLS_185">', '<div xmlns="http://www.tei-c.org/ns/1.0" xml:id="RLS_185">', 1)
-    (edition.parent / "rls185.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + part + "\n",
-                                               encoding="utf-8")
-    text = text[:start] + '<xi:include href="rls185.xml"/>\n' + text[end:]
-    text = re.sub(r"<TEI\b", '<TEI xmlns:xi="http://www.w3.org/2001/XInclude"', text, count=1)
-    edition.write_text(text, encoding="utf-8")
+    from corpus_data import move_to_part
+    move_to_part(example_project)
     return example_project
 
 

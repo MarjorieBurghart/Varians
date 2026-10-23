@@ -12,27 +12,16 @@ from __future__ import annotations
 import pytest
 
 from app_context import tr
-from corpus_data import add_page_witness
+from corpus_data import add_text_pages
+from corpus_data import insert_at as _insert
 from pivot_lines import pivot_lb_pattern
 
 TEXT_ABSENT = "manuscript.text_absent"
 
 
-def _insert(text, inserts):
-    for position, value in sorted(inserts, reverse=True):
-        text = text[:position] + value + text[position:]
-    return text
-
-
 @pytest.fixture
 def text_with_pages(example_with_text):
-    add_page_witness(example_with_text, "X", ("12r", "12v", "13r", "13v"))
-    add_page_witness(example_with_text, "Y", ("1r", "1v"))
-    part = example_with_text.parent / "xml" / "rls185.xml"
-    text = part.read_text(encoding="utf-8")
-    lbs = [match.span() for match in pivot_lb_pattern("T1").finditer(text)]
-    part.write_text(_insert(text, [(lbs[3][1], '<pb edRef="#X" n="12v"/>'),
-                                   (lbs[20][1], '<pb edRef="#X" n="13r"/>')]), encoding="utf-8")
+    add_text_pages(example_with_text)
     return example_with_text
 
 
