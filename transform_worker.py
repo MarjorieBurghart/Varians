@@ -16,14 +16,77 @@ requête incorrecte reçoit aussi un compte rendu (``error_code`` internal).
 
 Les descripteurs sont lus directement : ``sys.stdin`` et ``sys.stdout``
 peuvent être absents dans une application Windows sans console.
+
+La sortie d'erreur du processus est un fichier, donné dès sa création, dont
+le chemin est dans la requête (``stderr_log``) : Saxon y écrit ses erreurs
+avec leur lieu, et c'est la seule façon sûre de les lire sous Windows.
+``run_in_process`` fait ainsi sans Qt ; ``transform_runner`` de même, avec
+QProcess.
 """
 from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
+import tempfile
+from pathlib import Path
 
 from xslt_engines import TransformResult, run
+
+_APPLICATION_DIR = Path(__file__).resolve().parent
+
+
+def worker_command():
+    """Commande qui relance Varians en processus de transformation."""
+    if getattr(sys, "frozen", False) or "__compiled__" in globals():     # PyInstaller…, Nuitka
+        return [sys.executable, "--transform-worker"]
+    return [sys.executable, str(_APPLICATION_DIR / "editeur_tei.py"), "--transform-worker"]
+
+
+def new_stderr_log():
+    """Fichier vide qui recevra la sortie d'erreur d'un processus."""
+    handle, path = tempfile.mkstemp(prefix="varians-transform-", suffix=".log")
+    os.close(handle)
+    return path
+
+
+def failed_worker(detail):
+    return TransformResult(False, error_code="worker_failed", error=detail)
+
+
+def read_answer(output, stderr_log):
+    """Compte rendu d'après la réponse du processus (``worker_failed``, avec
+    la fin de sa sortie d'erreur, s'il n'a pas répondu)."""
+    try:
+        return TransformResult.from_dict(json.loads(output.decode("utf-8")))
+    except (ValueError, KeyError, TypeError, AttributeError):
+        try:
+            errors = Path(stderr_log).read_text(encoding="utf-8", errors="replace").strip()
+        except OSError:
+            errors = ""
+        return failed_worker(errors[-2000:] or "no answer")
+
+
+def run_in_process(request, command=None, timeout=None):
+    """Exécute ``request`` dans un processus de transformation et rend son
+    compte rendu (sans Qt ; Varians passe par ``transform_runner``)."""
+    stderr_log = new_stderr_log()
+    try:
+        with open(stderr_log, "wb") as errors:
+            try:
+                completed = subprocess.run(
+                    command or worker_command(), input=json.dumps(dict(request, stderr_log=stderr_log)).encode("utf-8"),
+                    stdout=subprocess.PIPE, stderr=errors, timeout=timeout,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                return failed_worker(str(exc))
+        return read_answer(completed.stdout, stderr_log)
+    finally:
+        try:
+            os.unlink(stderr_log)
+        except OSError:
+            pass
 
 
 def serve(input_fd=0, output_fd=1):

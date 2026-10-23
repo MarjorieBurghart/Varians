@@ -49,12 +49,11 @@ _BLOCKED_EVENTS = frozenset({
 })
 
 
-def default_worker_command(option="--relaxng-worker"):
-    """Commande qui relance Varians en processus de validation (ou, selon
-    ``option``, de transformation : ``--transform-worker``)."""
+def default_worker_command():
+    """Commande qui relance Varians en processus de validation."""
     if getattr(sys, "frozen", False) or "__compiled__" in globals():     # PyInstaller…, Nuitka
-        return [sys.executable, option]
-    return [sys.executable, str(_APPLICATION_DIR / "editeur_tei.py"), option]
+        return [sys.executable, "--relaxng-worker"]
+    return [sys.executable, str(_APPLICATION_DIR / "editeur_tei.py"), "--relaxng-worker"]
 
 
 @dataclass

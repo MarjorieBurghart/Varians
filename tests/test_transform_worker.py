@@ -43,3 +43,17 @@ def test_a_bad_request_gets_an_answer():
     for data in (b"pas du JSON", b"[1, 2]"):
         result = TransformResult.from_dict(_worker(data))
         assert not result.ok and result.error_code == "internal"
+
+
+def test_run_in_process_gives_the_answer_of_the_worker(tmp_path):
+    from transform_worker import run_in_process, worker_command
+    assert worker_command()[-1] == "--transform-worker"
+    root = tmp_path / "sermons"
+    shutil.copytree(DATA, root)
+    request = scenario_request(TransformScenario("Édition", "${varians}/tei-to-html.xsl", "publications/edition.html"),
+                               load_project(root / "project.xml"))
+    result = run_in_process(request)
+    assert result.ok, result.error
+    assert (root / "publications" / "edition.html").is_file()
+    failed = run_in_process(request, command=[sys.executable, "-c", "import sys; sys.stderr.write('panne'); sys.exit(3)"])
+    assert not failed.ok and failed.error_code == "worker_failed" and "panne" in failed.error

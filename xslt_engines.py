@@ -30,7 +30,6 @@ from __future__ import annotations
 import contextlib
 import os
 import re
-import sys
 import tempfile
 import time
 import urllib.parse
@@ -305,8 +304,11 @@ def _run_lxml(request, journal):
 #
 # Saxon lit lui-même le réseau (sans journal des URL lues) ; les entités
 # externes et la DTD externe ne sont pas lues. Il écrit ses messages d'erreur,
-# avec leur lieu, sur la sortie d'erreur du processus : elle est recueillie
-# pendant l'exécution.
+# avec leur lieu, sur la sortie d'erreur du processus : le processus de
+# transformation la reçoit dans un fichier dès sa création
+# (``request["stderr_log"]``, voir transform_worker), seule façon sûre de la
+# lire sous Windows. Sans ce fichier, l'erreur garde le message de Saxon, sans
+# son lieu.
 #
 # Les fichiers supplémentaires (xsl:result-document) : un premier passage les
 # garde en mémoire, sans rien écrire, pour connaître leurs chemins. S'ils sont
@@ -342,20 +344,6 @@ def _saxon_processor():
 
 def _saxon_version():
     return _saxon_processor().version.replace(" from Saxonica", "")
-
-
-@contextlib.contextmanager
-def _stderr_to(path):
-    """Sortie d'erreur du processus (descripteur 2) détournée vers ``path``."""
-    sys.stderr.flush()
-    saved = os.dup(2)
-    with open(path, "wb") as stream:
-        os.dup2(stream.fileno(), 2)
-    try:
-        yield
-    finally:
-        os.dup2(saved, 2)
-        os.close(saved)
 
 
 def _saxon_blocks(text):
@@ -415,82 +403,88 @@ def _run_saxon(request, journal):
     from saxonche import PySaxonApiError
     processor = _saxon_processor()
     xslt, output = request["xslt"], Path(request["output"])
+    log = Path(request["stderr_log"]) if request.get("stderr_log") else None
+    start = log.stat().st_size if log is not None and log.exists() else 0
+
+    def stderr():
+        """Ce que Saxon a écrit sur la sortie d'erreur depuis le début de l'exécution."""
+        if log is None or not log.exists():
+            return ""
+        with open(log, "rb") as stream:
+            stream.seek(start)
+            return stream.read().decode("utf-8", errors="replace")
+
     with tempfile.TemporaryDirectory(prefix="varians-saxon-") as temp:
         temp = Path(temp)
-        log = temp / "stderr.txt"
 
-        def stderr():
-            return log.read_text(encoding="utf-8", errors="replace")
-
-        with _stderr_to(log):
-            def compiled():
-                # Une feuille compilée par passage : SaxonC plante si l'on
-                # réutilise pour le second celle qui a gardé les fichiers.
-                try:
-                    executable = processor.new_xslt30_processor().compile_stylesheet(stylesheet_file=str(xslt))
-                except PySaxonApiError as exc:
-                    raise _saxon_failure(exc, stderr(), xslt, "xslt_invalid") from exc
-                for name, value in request.get("params", ()):
-                    executable.set_parameter(str(name), processor.make_string_value(str(value)))
-                executable.set_save_xsl_message(True)
-                return executable
-
-            def transform(executable, written, capture, base):
-                executable.set_capture_result_documents(capture)
-                executable.set_base_output_uri(base.as_uri())
-                written.parent.mkdir(exist_ok=True)
-                try:
-                    executable.transform_to_file(xdm_node=source, output_file=str(written))
-                except PySaxonApiError as exc:
-                    _saxon_journal(executable, "", journal, xslt)
-                    raise _saxon_failure(exc, stderr(), xslt, "transform_failed") from exc
-
-            first = compiled()
-            builder = processor.new_document_builder()
-            builder.set_line_numbering(True)
+        def compiled():
+            # Une feuille compilée par passage : SaxonC plante si l'on
+            # réutilise pour le second celle qui a gardé les fichiers.
             try:
-                if request.get("assemble"):
-                    from lxml import etree
-                    tree = _assembled_tree(request["source"], journal)
-                    builder.set_base_uri(Path(request["source"]).as_uri())
-                    source = builder.parse_xml(xml_text=etree.tostring(tree, encoding="unicode"))
-                else:
-                    source = builder.parse_xml(xml_file_name=str(request["source"]))
+                executable = processor.new_xslt30_processor().compile_stylesheet(stylesheet_file=str(xslt))
             except PySaxonApiError as exc:
-                raise _saxon_failure(exc, stderr(), request["source"], "source_malformed") from exc
+                raise _saxon_failure(exc, stderr(), xslt, "xslt_invalid") from exc
+            for name, value in request.get("params", ()):
+                executable.set_parameter(str(name), processor.make_string_value(str(value)))
+            executable.set_save_xsl_message(True)
+            return executable
 
-            # 1er passage : les autres fichiers sont gardés en mémoire, avec
-            # leurs chemins dans le dossier du résultat ; rien n'est écrit là.
-            main = temp / "premier" / output.name
-            transform(first, main, True, output)
-            uris = list(first.get_result_documents() or {})
-            _saxon_journal(first, stderr(), journal, xslt)
-            if not uris:
-                return main.read_bytes(), []
-            wanted, refused = {}, []
-            for uri in uris:
-                path = _uri_path(uri)
-                if path is not None and _inside(path, output.parent):
-                    wanted[_path_key(path)] = path
+        def transform(executable, written, capture, base):
+            executable.set_capture_result_documents(capture)
+            executable.set_base_output_uri(base.as_uri())
+            written.parent.mkdir(exist_ok=True)
+            try:
+                executable.transform_to_file(xdm_node=source, output_file=str(written))
+            except PySaxonApiError as exc:
+                _saxon_journal(executable, "", journal, xslt)
+                raise _saxon_failure(exc, stderr(), xslt, "transform_failed") from exc
+
+        first = compiled()
+        builder = processor.new_document_builder()
+        builder.set_line_numbering(True)
+        try:
+            if request.get("assemble"):
+                from lxml import etree
+                tree = _assembled_tree(request["source"], journal)
+                builder.set_base_uri(Path(request["source"]).as_uri())
+                source = builder.parse_xml(xml_text=etree.tostring(tree, encoding="unicode"))
+            else:
+                source = builder.parse_xml(xml_file_name=str(request["source"]))
+        except PySaxonApiError as exc:
+            raise _saxon_failure(exc, stderr(), request["source"], "source_malformed") from exc
+
+        # 1er passage : les autres fichiers sont gardés en mémoire, avec
+        # leurs chemins dans le dossier du résultat ; rien n'est écrit là.
+        main = temp / "premier" / output.name
+        transform(first, main, True, output)
+        uris = list(first.get_result_documents() or {})
+        _saxon_journal(first, stderr(), journal, xslt)
+        if not uris:
+            return main.read_bytes(), []
+        wanted, refused = {}, []
+        for uri in uris:
+            path = _uri_path(uri)
+            if path is not None and _inside(path, output.parent):
+                wanted[_path_key(path)] = path
+            else:
+                refused.append(str(path or uri))
+        if refused:
+            raise TransformError("write_refused", " ; ".join(sorted(refused)))
+        # 2e passage : Saxon écrit les fichiers, avec leur mise en forme,
+        # dans un dossier temporaire.
+        second = temp / "second"
+        main = second / output.name
+        executable = compiled()
+        transform(executable, main, False, main)
+        executable.clear_xsl_messages()
+        extra = []
+        for path in sorted(second.rglob("*")):
+            if path.is_file() and path != main:
+                target = output.parent / path.relative_to(second)
+                if _path_key(target) in wanted:
+                    extra.append((target, path.read_bytes()))
                 else:
-                    refused.append(str(path or uri))
-            if refused:
-                raise TransformError("write_refused", " ; ".join(sorted(refused)))
-            # 2e passage : Saxon écrit les fichiers, avec leur mise en forme,
-            # dans un dossier temporaire.
-            second = temp / "second"
-            main = second / output.name
-            executable = compiled()
-            transform(executable, main, False, main)
-            executable.clear_xsl_messages()
-            extra = []
-            for path in sorted(second.rglob("*")):
-                if path.is_file() and path != main:
-                    target = output.parent / path.relative_to(second)
-                    if _path_key(target) in wanted:
-                        extra.append((target, path.read_bytes()))
-                    else:
-                        journal.append(["write_refused", str(target)])
-            return main.read_bytes(), extra
+                    journal.append(["write_refused", str(target)])
+        return main.read_bytes(), extra
 
 _ENGINES = {"lxml": (_lxml_version, _run_lxml), "saxon": (_saxon_version, _run_saxon)}

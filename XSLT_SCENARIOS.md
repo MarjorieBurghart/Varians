@@ -87,8 +87,13 @@ Saxon est signalé (`saxon_missing`). Un seul processeur par processus. Les
 entités externes, les entités paramètres et la DTD externe ne sont pas lues
 (propriétés `parserFeature` du processeur). Saxon lit lui-même le réseau :
 ses lectures ne sont pas notées au journal. Il écrit ses erreurs, avec leur
-lieu, sur la sortie d'erreur du processus : elle est recueillie pendant
-l'exécution (`_stderr_to`) pour former « fichier:ligne: CODE message ».
+lieu, sur la sortie d'erreur du processus, et non dans le message de son
+exception : le processus de transformation reçoit donc, dès sa création, un
+fichier pour sortie d'erreur, nommé dans la requête (`stderr_log`), où
+Varians lit ce qui a été écrit pendant l'exécution pour former
+« fichier:ligne: CODE message ». Détourner la sortie d'erreur une fois le
+processus lancé ne suffit pas sous Windows. Sans ce fichier (exécution dans
+Varians même), l'erreur garde le message de Saxon, sans son lieu.
 
 Fichiers supplémentaires (`xsl:result-document`) : Saxon peut les garder en
 mémoire (`set_capture_result_documents`), mais sans leur mise en forme
@@ -110,9 +115,11 @@ premier passage.
 
 Chaque exécution a son processus (`transform_worker`) : Varians reste
 réactif, « Annuler » tue le processus (`cancelled`), et un plantage de
-Saxon ou une boucle sans fin n'emporte pas Varians. La commande est celle de
-`validation_worker.default_worker_command("--transform-worker")`, valable
-depuis les sources comme dans une version autonome. Saxon garde le verrou de
+Saxon ou une boucle sans fin n'emporte pas Varians. La commande
+(`transform_worker.worker_command`) est valable depuis les sources comme dans
+une version autonome. Sa sortie d'erreur est un fichier temporaire
+(`new_stderr_log`), passé par `TransformRunner` (QProcess) ou, sans Qt, par
+`transform_worker.run_in_process`, qu'emploient les tests de Saxon. Saxon garde le verrou de
 Python pendant une transformation : dans un même processus, un serveur http
 en Python ne pourrait pas lui répondre (les tests lancent le leur à part).
 

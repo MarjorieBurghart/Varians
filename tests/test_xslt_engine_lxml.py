@@ -92,8 +92,9 @@ def test_parameters_are_passed_as_strings(project):
                                    '<xsl:template match="/"><r t="{$titre}" c="{$calcul}"/></xsl:template>',
                           params=(("titre", "L'index « A »"), ("calcul", "1 + 1")))
     assert result.ok, result.error
-    text = output.read_text(encoding="utf-8")
-    assert "L'index « A »" in text and 'c="1 + 1"' in text          # une chaîne, pas une expression
+    from lxml import etree
+    written = etree.fromstring(output.read_bytes())
+    assert (written.get("t"), written.get("c")) == ("L'index « A »", "1 + 1")          # une chaîne, pas une expression
 
 
 def test_messages_are_kept_in_the_journal(project):

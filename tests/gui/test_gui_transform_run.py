@@ -5,6 +5,7 @@ compte rendu, erreurs, annulation, aperçu."""
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import pytest
 from PySide6.QtCore import QUrl
@@ -69,7 +70,7 @@ def test_the_predefined_scenario_runs_from_the_list(open_window, sermons_project
     assert (output.parent / "tei.css").is_file()
     kind, title, text = dialogs.seen[-1]
     assert title == tr("transform.done.title") and str(output) in text
-    assert opened == [str(output)]
+    assert [Path(path) for path in opened] == [output]
 
 
 def test_the_toolbar_button_lists_the_scenarios_and_reruns_the_last_one(open_window, sermons_project, dialogs,

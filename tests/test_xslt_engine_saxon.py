@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 
 from project_config import TransformScenario, load_project
+from transform_worker import run_in_process
 from xslt_engines import run
 from xslt_scenarios import saxon_available, scenario_request
 
@@ -42,17 +43,21 @@ def _stylesheet(project, body, name="essai.xsl"):
 
 
 def _run(project, body, output="publications/essai.html", **changes):
+    # Dans le processus de transformation, comme dans Varians : sa sortie
+    # d'erreur, où Saxon écrit le lieu de ses erreurs, est un fichier.
     scenario = TransformScenario("Essai", _stylesheet(project, body), output, engine="saxon", **changes)
-    return run(scenario_request(scenario, project)), project.root_dir / output
+    return run_in_process(scenario_request(scenario, project)), project.root_dir / output
 
 
 def test_without_saxon_a_saxon_scenario_is_refused(project, monkeypatch):
     import xslt_engines
     monkeypatch.setitem(sys.modules, "saxonche", None)              # import saxonche → ImportError
     monkeypatch.setattr(xslt_engines, "_SAXON", None)
-    result, output = _run(project, '<xsl:template match="/"><r/></xsl:template>')
+    scenario = TransformScenario("Essai", _stylesheet(project, '<xsl:template match="/"><r/></xsl:template>'),
+                                 "publications/essai.html", engine="saxon")
+    result = run(scenario_request(scenario, project))                  # dans ce processus, sans Saxon
     assert not result.ok and result.error_code == "saxon_missing"
-    assert not output.exists()
+    assert not (project.root_dir / "publications").exists()
 
 
 # --- Sources ------------------------------------------------------------------------------
@@ -106,8 +111,9 @@ def test_parameters_are_passed_as_strings(project):
                                    '<xsl:template match="/"><r t="{$titre}" c="{$calcul}"/></xsl:template>',
                           params=(("titre", "L'index « A »"), ("calcul", "1 + 1")))
     assert result.ok, result.error
-    text = output.read_text(encoding="utf-8")
-    assert "L'index « A »" in text and 'c="1 + 1"' in text
+    from lxml import etree
+    written = etree.fromstring(output.read_bytes())
+    assert (written.get("t"), written.get("c")) == ("L'index « A »", "1 + 1")
 
 
 @saxon
@@ -253,7 +259,7 @@ def test_the_css_is_copied_and_named_to_the_stylesheet_of_varians(project):
     css.write_text("p { color: red }", encoding="utf-8")
     scenario = TransformScenario("Édition", "${varians}/tei-to-html.xsl", "publications/edition.html",
                                  engine="saxon", css="rendering/perso.css")
-    result = run(scenario_request(scenario, project))
+    result = run_in_process(scenario_request(scenario, project))
     assert result.ok, result.error
     folder = project.root_dir / "publications"
     assert result.outputs == [str(folder / "edition.html"), str(folder / "perso.css")]

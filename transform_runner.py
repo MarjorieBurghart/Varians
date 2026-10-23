@@ -11,15 +11,20 @@ jamais bloquée.
 - un processus qui ne démarre pas, s'arrête sans répondre ou répond mal
   donne ``worker_failed``, avec ce qu'il a écrit sur sa sortie d'erreur.
 
+La sortie d'erreur du processus est un fichier, donné dès sa création et
+nommé dans la requête (``stderr_log``) : Saxon y écrit le lieu de ses
+erreurs (voir transform_worker).
+
 ``finished`` est émis une fois par exécution, toujours dans le fil principal.
 """
 from __future__ import annotations
 
 import json
+import os
 
 from PySide6.QtCore import QObject, QProcess, Signal
 
-from validation_worker import default_worker_command
+from transform_worker import failed_worker, new_stderr_log, read_answer, worker_command
 from xslt_engines import TransformResult
 
 
@@ -30,8 +35,9 @@ class TransformRunner(QObject):
 
     def __init__(self, command=None, parent=None):
         super().__init__(parent)
-        self._command = list(command or default_worker_command("--transform-worker"))
+        self._command = list(command or worker_command())
         self._process = None
+        self._stderr_log = None
         self._cancelled = False
         self._done = True
 
@@ -50,7 +56,10 @@ class TransformRunner(QObject):
         process.errorOccurred.connect(self._on_error)
         process.setProgram(self._command[0])
         process.setArguments(self._command[1:])
+        self._stderr_log = new_stderr_log()
+        process.setStandardErrorFile(self._stderr_log)
         process.start()
+        request = dict(request, stderr_log=self._stderr_log)
         process.write(json.dumps(request, ensure_ascii=False).encode("utf-8"))
         process.closeWriteChannel()
 
@@ -63,21 +72,13 @@ class TransformRunner(QObject):
     def _on_error(self, error):
         # Un processus qui ne démarre pas n'émet pas ``finished``.
         if error == QProcess.ProcessError.FailedToStart:
-            self._deliver(TransformResult(False, error_code="worker_failed", error=self._process.errorString()))
+            self._deliver(failed_worker(self._process.errorString()))
 
     def _on_finished(self, exit_code, exit_status):
         if self._cancelled:
             self._deliver(TransformResult(False, error_code="cancelled"))
             return
-        output = bytes(self._process.readAllStandardOutput())
-        errors = bytes(self._process.readAllStandardError()).decode("utf-8", errors="replace").strip()
-        try:
-            answer = json.loads(output.decode("utf-8"))
-            result = TransformResult.from_dict(answer)
-        except (ValueError, KeyError, TypeError, AttributeError):
-            detail = errors[-2000:] or f"exit {exit_code}"
-            result = TransformResult(False, error_code="worker_failed", error=detail)
-        self._deliver(result)
+        self._deliver(read_answer(bytes(self._process.readAllStandardOutput()), self._stderr_log))
 
     def _deliver(self, result):
         if self._done:
@@ -86,4 +87,10 @@ class TransformRunner(QObject):
         process, self._process = self._process, None
         if process is not None:
             process.deleteLater()
+        if self._stderr_log is not None:
+            try:
+                os.unlink(self._stderr_log)
+            except OSError:
+                pass                          # encore ouvert par le processus (Windows) : fichier temporaire
+            self._stderr_log = None
         self.finished.emit(result)
