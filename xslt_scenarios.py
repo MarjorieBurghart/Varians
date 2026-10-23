@@ -29,6 +29,8 @@ catalogue de la bibliothèque (``catalogs``) : une feuille de
 personnalisation qui importe l'adresse officielle des feuilles
 (``tei_stylesheets.OFFICIAL_URI``) est lue sans réseau. Si la feuille
 emploie la bibliothèque, ``library`` la nomme pour le journal.
+``customization_name`` et ``customization_text`` font la feuille de
+personnalisation que crée « Ouvrir la feuille » pour un scénario TEI.
 
 Feuilles éditées dans Varians (V0.9.2.1) : ``stylesheet_info`` reconnaît une
 feuille XSLT à sa racine ; ``check_engines`` donne les moteurs qui la
@@ -38,8 +40,9 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import unicodedata
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 import tei_stylesheets
 from project_config import DEFAULT_APPLICATION_XSLT, TransformScenario
@@ -380,3 +383,88 @@ def check_request(engine, path, text=None) -> dict:
         if library is not None:
             request["catalogs"] = [str(library.catalog)]
     return request
+
+
+# --- Feuille de personnalisation des TEI Stylesheets (V0.9.2.2) --------------------------------
+
+XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
+_PARAMETER_EXAMPLE = '<xsl:param name="numberHeadings">false</xsl:param>'
+_TEMPLATE_EXAMPLES = {
+    True: '<xsl:template match="tei:persName"><b><xsl:apply-templates/></b></xsl:template>',
+    False: '<xsl:template match="tei:persName">[<xsl:apply-templates/>]</xsl:template>',
+}
+
+
+def _tei_parts(raw):
+    raw = (raw or "").strip()
+    return PurePosixPath(raw[len(TEI_PREFIX):] if raw.startswith(TEI_PREFIX) else Path(raw).name).parts
+
+
+def customization_name(raw) -> str:
+    """Nom de la feuille de personnalisation d'une feuille ``${tei}/…`` :
+    ``tei-html.xsl`` pour ``profiles/default/html/to.xsl``,
+    ``tei-<profil>-<format>.xsl`` pour un autre profil, sinon
+    ``tei-<nom>.xsl``."""
+    parts = _tei_parts(raw)
+    if len(parts) == 4 and parts[0] == "profiles" and parts[3] == "to.xsl":
+        words = parts[2:3] if parts[1] == "default" else parts[1:3]
+    else:
+        words = [PurePosixPath(*parts).stem] if parts else ["stylesheet"]
+    return "tei-" + "-".join(words) + ".xsl"
+
+
+_NO_LINE_START = "、。，．）」』：；！？"
+
+
+def _width(text) -> int:
+    return sum(2 if unicodedata.east_asian_width(char) in "WF" else 1 for char in text)
+
+
+def _wrap(paragraph, width=76, indent="  ") -> list[str]:
+    """Lignes d'au plus ``width`` colonnes (un caractère large en occupe
+    deux) : coupure aux espaces, ou entre deux caractères larges, jamais
+    avant une ponctuation comme « 。 »."""
+    tokens = []
+    for word in re.findall(r"\s+|\S+", " ".join(str(paragraph).split())):
+        tokens += re.findall(r"[^\s\u1100-\uffff]+|.", word) if any(_width(c) == 2 for c in word) else [word]
+    lines, line = [], ""
+    for token in tokens:
+        if line and not token.isspace() and _width(line + token) > width - len(indent) \
+                and token[0] not in _NO_LINE_START:
+            lines.append(line.rstrip())
+            line = ""
+        if line or not token.isspace():
+            line += token
+    if line.strip():
+        lines.append(line.rstrip())
+    return [indent + line for line in lines]
+
+
+def _html_output(parts) -> bool:
+    return "html" in parts[2:3] if len(parts) > 2 and parts[0] == "profiles" else "html" in parts[:1]
+
+
+def customization_text(raw, comment="", examples="") -> str:
+    """Texte d'une feuille de personnalisation de la feuille ``raw``
+    (``${tei}/…``) : elle importe la feuille par l'adresse officielle des TEI
+    Stylesheets, que le catalogue renvoie vers la bibliothèque installée.
+    ``comment`` (paragraphes séparés par une ligne vide) et ``examples``
+    (l'intitulé des exemples) : dans la langue de l'interface. Une sortie
+    HTML a pour espace de noms par défaut celui du XHTML, comme les TEI
+    Stylesheets : les éléments qu'on y ajoute sont du XHTML."""
+    parts = _tei_parts(raw)
+    html = _html_output(parts)
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>', "<!--"]
+    paragraphs = [p for p in str(comment or "").replace("--", "- -").split("\n\n") if p.strip()]
+    for paragraph in paragraphs:
+        lines += _wrap(paragraph)
+        lines.append("")
+    if examples:
+        lines.append("  " + " ".join(str(examples).replace("--", "- -").split()))
+    lines += ["    " + _PARAMETER_EXAMPLE, "    " + _TEMPLATE_EXAMPLES[html], "-->"]
+    namespaces = f'\n    xmlns:tei="http://www.tei-c.org/ns/1.0"' + (f' xmlns="{XHTML_NAMESPACE}"' if html else "")
+    lines += [f'<xsl:stylesheet version="3.0" xmlns:xsl="{XSL_NAMESPACE}"{namespaces}',
+              '    exclude-result-prefixes="#all">',
+              f'  <xsl:import href="{tei_stylesheets.OFFICIAL_URI}{"/".join(parts)}"/>',
+              "</xsl:stylesheet>", ""]
+    return "\n".join(lines)

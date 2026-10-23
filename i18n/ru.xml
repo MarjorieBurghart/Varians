@@ -852,6 +852,18 @@ Varians скопирует её в проект:
 Сценарий будет использовать эту копию. «Открыть без копирования» изменяет исходный файл.</string>
   <string key="transform.open_stylesheet.copy">Скопировать в проект</string>
   <string key="transform.open_stylesheet.in_place">Открыть без копирования</string>
+  <string key="transform.open_stylesheet.tei">Таблица стилей «{name}» входит в TEI Stylesheets: её не правят.
+
+Varians создаст в проекте таблицу настройки, которая её импортирует:
+{path}
+
+Её параметры и шаблоны будут иметь приоритет над параметрами и шаблонами TEI Stylesheets; всё остальное будет взято из них. Сценарий «{scenario}» будет использовать эту таблицу.</string>
+  <string key="transform.open_stylesheet.create">Создать таблицу настройки</string>
+  <string key="transform.customization.created">Таблица настройки создана: {path}</string>
+  <string key="transform.customization.comment">Таблица настройки TEI Stylesheets, созданная Varians.
+
+Она импортирует таблицу {name} консорциума TEI. Параметры (xsl:param) и шаблоны (xsl:template), записанные здесь, имеют приоритет над импортированными; всё остальное берётся из TEI Stylesheets, которые никогда не изменяются. Импортируемый адрес — официальный: Varians читает его из установленных TEI Stylesheets без сети, как и Oxygen.</string>
+  <string key="transform.customization.examples">Примеры:</string>
   <string key="xslt_check.action">Проверить таблицу стилей XSLT</string>
   <string key="xslt_check.action.tip">Скомпилировать показанную таблицу стилей XSLT, не выполняя её, движком её сценариев (F8)</string>
   <string key="xslt_check.panel.title">Проверка таблицы стилей XSLT</string>

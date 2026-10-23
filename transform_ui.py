@@ -37,8 +37,9 @@ from project_management import update_project_transformations
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
-from xslt_scenarios import (VARIANS_PREFIX, predefined_scenarios, project_sources, resolve_path, saxon_available,
-                            scenario_path, scenario_problems, scenario_request, scenario_source, stylesheet_path)
+from xslt_scenarios import (TEI_PREFIX, VARIANS_PREFIX, customization_name, customization_text, predefined_scenarios,
+                            project_sources, resolve_path, saxon_available, scenario_path, scenario_problems,
+                            scenario_request, scenario_source, stylesheet_path)
 
 # Problèmes qui empêchent d'enregistrer un scénario ; les autres (fichier
 # absent, Saxon non installé…) sont signalés, et l'enregistrement reste possible.
@@ -523,12 +524,16 @@ class TransformScenariosMixin:
         """« Ouvrir la feuille » : affiche la feuille du scénario comme un
         document du projet (inscrit au besoin). Une feuille de Varians est
         d'abord copiée dans ``xslt/`` ; une feuille hors du projet peut l'être,
-        ou s'ouvrir sur place. Après une copie, le scénario emploie la copie."""
+        ou s'ouvrir sur place. Après une copie, le scénario emploie la copie.
+        Une feuille des TEI Stylesheets n'est pas copiée : une feuille de
+        personnalisation qui l'importe est créée (``_customize``)."""
         title = _t("transform.open_stylesheet")
         path = stylesheet_path(scenario, self.project)
         if path is None or not path.is_file():
             QMessageBox.warning(self, title, _t("transform.problem.xslt_missing", detail=scenario.xslt))
             return False
+        if scenario.xslt.strip().startswith(TEI_PREFIX):
+            return self._customize(scenario)
         root = self.project.root_dir.resolve()
         varians = scenario.xslt.strip().startswith(VARIANS_PREFIX)
         if varians or not path.is_relative_to(root):
@@ -557,15 +562,52 @@ class TransformScenariosMixin:
                 except OSError as exc:
                     QMessageBox.critical(self, title, str(exc))
                     return False
-                copied = replace(scenario, xslt=scenario_path(self.project, target))
-                scenarios = [copied if s.name == scenario.name else s for s in self.project.transformations]
-                if not self._save_transformations(scenarios):
+                if not self._use_stylesheet(scenario, target):
                     return False
                 self.statusBar().showMessage(_t("documents.add.copied", path=target), 6000)
                 path = target
             elif in_place_btn is None or clicked is not in_place_btn:
                 return False
         return self._show_stylesheet(path)
+
+    def _customize(self, scenario):
+        """Crée dans ``xslt/`` la feuille de personnalisation de la feuille des
+        TEI Stylesheets du scénario (après accord), que le scénario emploie
+        ensuite, et l'affiche. Les TEI Stylesheets ne sont pas modifiées."""
+        title = _t("transform.open_stylesheet")
+        raw = scenario.xslt.strip()
+        name = raw[len(TEI_PREFIX):]
+        target = free_path(self.project.root_dir.resolve() / "xslt", customization_name(raw))
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle(title)
+        box.setText(_t("transform.open_stylesheet.tei", name=name, path=target, scenario=scenario.name))
+        create_btn = box.addButton(_t("transform.open_stylesheet.create"), QMessageBox.ButtonRole.AcceptRole)
+        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(create_btn)
+        box.setEscapeButton(cancel_btn)
+        box.exec()
+        if box.clickedButton() is not create_btn:
+            return False
+        text = customization_text(raw, _t("transform.customization.comment", name=name),
+                                  _t("transform.customization.examples"))
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with target.open("x", encoding="utf-8", newline="\n") as stream:
+                stream.write(text)
+        except OSError as exc:
+            QMessageBox.critical(self, title, str(exc))
+            return False
+        if not self._use_stylesheet(scenario, target):
+            return False
+        self.statusBar().showMessage(_t("transform.customization.created", path=target), 6000)
+        return self._show_stylesheet(target)
+
+    def _use_stylesheet(self, scenario, path):
+        """Le scénario du projet emploie désormais la feuille ``path``."""
+        changed = replace(scenario, xslt=scenario_path(self.project, path))
+        return self._save_transformations([changed if s.name == scenario.name else s
+                                           for s in self.project.transformations])
 
     def _show_stylesheet(self, path):
         """Affiche le document du projet ``path`` ; l'y inscrit d'abord s'il

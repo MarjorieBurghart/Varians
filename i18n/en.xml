@@ -838,6 +838,18 @@ Copy it into the project?
 The scenario will then use this copy. “Open without copying” edits the original file.</string>
   <string key="transform.open_stylesheet.copy">Copy into the project</string>
   <string key="transform.open_stylesheet.in_place">Open without copying</string>
+  <string key="transform.open_stylesheet.tei">The stylesheet “{name}” is part of the TEI Stylesheets: it is not edited.
+
+Varians will create in the project a customization stylesheet that imports it:
+{path}
+
+Its parameters and templates will take precedence over those of the TEI Stylesheets; everything else will come from them. The scenario “{scenario}” will use this stylesheet.</string>
+  <string key="transform.open_stylesheet.create">Create the customization stylesheet</string>
+  <string key="transform.customization.created">Customization stylesheet created: {path}</string>
+  <string key="transform.customization.comment">Customization stylesheet for the TEI Stylesheets, created by Varians.
+
+It imports the stylesheet {name} of the TEI Consortium. The parameters (xsl:param) and templates (xsl:template) written here take precedence over the imported ones; everything else comes from the TEI Stylesheets, which are never modified. The imported address is the official one: Varians reads it from the installed TEI Stylesheets, without network, as Oxygen does.</string>
+  <string key="transform.customization.examples">Examples:</string>
   <string key="xslt_check.action">Check XSLT stylesheet</string>
   <string key="xslt_check.action.tip">Compile the displayed XSLT stylesheet, without running it, with the engine of its scenarios (F8)</string>
   <string key="xslt_check.panel.title">XSLT stylesheet check</string>

@@ -852,6 +852,18 @@ In das Projekt kopieren?
 Das Szenario verwendet dann diese Kopie. „Ohne Kopieren öffnen“ bearbeitet die Originaldatei.</string>
   <string key="transform.open_stylesheet.copy">In das Projekt kopieren</string>
   <string key="transform.open_stylesheet.in_place">Ohne Kopieren öffnen</string>
+  <string key="transform.open_stylesheet.tei">Das Stylesheet „{name}“ gehört zu den TEI Stylesheets: Es wird nicht bearbeitet.
+
+Varians legt im Projekt ein Anpassungs-Stylesheet an, das es importiert:
+{path}
+
+Seine Parameter und Templates haben Vorrang vor denen der TEI Stylesheets; alles Übrige kommt von ihnen. Das Szenario „{scenario}“ verwendet dann dieses Stylesheet.</string>
+  <string key="transform.open_stylesheet.create">Anpassungs-Stylesheet anlegen</string>
+  <string key="transform.customization.created">Anpassungs-Stylesheet angelegt: {path}</string>
+  <string key="transform.customization.comment">Anpassungs-Stylesheet für die TEI Stylesheets, angelegt von Varians.
+
+Es importiert das Stylesheet {name} des TEI Consortium. Die hier geschriebenen Parameter (xsl:param) und Templates (xsl:template) haben Vorrang vor den importierten; alles Übrige kommt von den TEI Stylesheets, die nie verändert werden. Die importierte Adresse ist die offizielle: Varians liest sie aus den installierten TEI Stylesheets, ohne Netzwerk, wie Oxygen.</string>
+  <string key="transform.customization.examples">Beispiele:</string>
   <string key="xslt_check.action">XSLT-Stylesheet prüfen</string>
   <string key="xslt_check.action.tip">Das angezeigte XSLT-Stylesheet mit der Engine seiner Szenarien kompilieren, ohne es auszuführen (F8)</string>
   <string key="xslt_check.panel.title">Prüfung des XSLT-Stylesheets</string>

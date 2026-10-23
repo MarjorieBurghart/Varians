@@ -110,3 +110,24 @@ def test_the_scenario_runs_with_a_project_scenario_too(project):
     result = run(scenario_request(scenario, project))
     assert result.ok, result.error
     assert (project.root_dir / "publications" / "copie.md").is_file()
+
+
+@pytest.mark.parametrize("name", ["tei-html", "tei-txt", "tei-markdown", "tei-latex"])
+def test_the_customization_stylesheet_of_each_tei_scenario_compiles_and_runs(project, name):
+    from xslt_scenarios import customization_name, customization_text
+    scenario = _scenario(name)
+    path = project.root_dir / "xslt" / customization_name(scenario.xslt)
+    path.parent.mkdir()
+    text = customization_text(scenario.xslt, "Commentaire.", "Exemples :")
+    path.write_text(text, encoding="utf-8")
+    assert run_in_process(check_request("saxon", path, text), timeout=120).ok
+    # Sans rien d'autre que l'import, elle donne le même résultat que la feuille du TEI-C.
+    result = run(scenario_request(replace(scenario, xslt=f"xslt/{path.name}", output=scenario.output + ".perso"),
+                                  project))
+    assert result.ok, result.error
+    output = project.root_dir / scenario.output
+    run(scenario_request(scenario, project))
+    # Date, heure et identifiants générés (generate-id) changent d'une exécution à l'autre.
+    stamp = re.compile(r"\d{4}-\d\d-\d\dT[\d:.]+Z?|Generated from [^\n]*|\d{4}-\d\d-\d\d|d\d+e\d+")
+    assert stamp.sub("", Path(str(output) + ".perso").read_text(encoding="utf-8")) == \
+        stamp.sub("", output.read_text(encoding="utf-8"))

@@ -852,6 +852,18 @@ Variansがプロジェクトにコピーします：
 シナリオはこのコピーを使うようになります。「コピーせずに開く」は元のファイルを編集します。</string>
   <string key="transform.open_stylesheet.copy">プロジェクトにコピー</string>
   <string key="transform.open_stylesheet.in_place">コピーせずに開く</string>
+  <string key="transform.open_stylesheet.tei">スタイルシート「{name}」は TEI Stylesheets の一部のため、編集しません。
+
+Varians は、これをインポートするカスタマイズ用スタイルシートをプロジェクトに作成します：
+{path}
+
+そのパラメータとテンプレートは TEI Stylesheets のものより優先され、それ以外はすべて TEI Stylesheets から取られます。シナリオ「{scenario}」はこのスタイルシートを使います。</string>
+  <string key="transform.open_stylesheet.create">カスタマイズ用スタイルシートを作成</string>
+  <string key="transform.customization.created">カスタマイズ用スタイルシートを作成しました：{path}</string>
+  <string key="transform.customization.comment">Varians が作成した TEI Stylesheets のカスタマイズ用スタイルシートです。
+
+TEI Consortium のスタイルシート {name} をインポートします。ここに書いたパラメータ（xsl:param）とテンプレート（xsl:template）は、インポートしたものより優先されます。それ以外はすべて TEI Stylesheets から取られ、TEI Stylesheets は変更されません。インポートするアドレスは公式のアドレスで、Varians は Oxygen と同じく、インストール済みの TEI Stylesheets からネットワークなしで読み込みます。</string>
+  <string key="transform.customization.examples">例：</string>
   <string key="xslt_check.action">XSLTスタイルシートを検査</string>
   <string key="xslt_check.action.tip">表示中のXSLTスタイルシートを、実行せずに、そのシナリオのエンジンでコンパイルします（F8）</string>
   <string key="xslt_check.panel.title">XSLTスタイルシートの検査</string>

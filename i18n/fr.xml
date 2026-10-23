@@ -838,6 +838,18 @@ La copier dans le projet ?
 Le scénario emploiera alors cette copie. « Ouvrir sans copier » modifie le fichier d’origine.</string>
   <string key="transform.open_stylesheet.copy">Copier dans le projet</string>
   <string key="transform.open_stylesheet.in_place">Ouvrir sans copier</string>
+  <string key="transform.open_stylesheet.tei">La feuille « {name} » fait partie des TEI Stylesheets : elle ne se modifie pas.
+
+Varians va créer dans le projet une feuille de personnalisation qui l’importe :
+{path}
+
+Ses paramètres et ses règles l’emporteront sur ceux des TEI Stylesheets ; tout le reste viendra d’elles. Le scénario « {scenario} » emploiera cette feuille.</string>
+  <string key="transform.open_stylesheet.create">Créer la feuille de personnalisation</string>
+  <string key="transform.customization.created">Feuille de personnalisation créée : {path}</string>
+  <string key="transform.customization.comment">Feuille de personnalisation des TEI Stylesheets, créée par Varians.
+
+Elle importe la feuille {name} du TEI Consortium. Les paramètres (xsl:param) et les règles (xsl:template) écrits ici l’emportent sur ceux qu’elle importe ; tout le reste vient des TEI Stylesheets, qui ne sont jamais modifiées. L’adresse importée est l’adresse officielle : Varians la lit dans les TEI Stylesheets installées, sans réseau, comme Oxygen.</string>
+  <string key="transform.customization.examples">Exemples :</string>
   <string key="xslt_check.action">Vérifier la feuille XSLT</string>
   <string key="xslt_check.action.tip">Compiler la feuille XSLT affichée, sans l’exécuter, avec le moteur de ses scénarios (F8)</string>
   <string key="xslt_check.panel.title">Vérification de la feuille XSLT</string>

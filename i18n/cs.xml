@@ -852,6 +852,18 @@ Zkopírovat ji do projektu?
 Scénář pak bude používat tuto kopii. „Otevřít bez kopírování“ upravuje původní soubor.</string>
   <string key="transform.open_stylesheet.copy">Zkopírovat do projektu</string>
   <string key="transform.open_stylesheet.in_place">Otevřít bez kopírování</string>
+  <string key="transform.open_stylesheet.tei">Šablona „{name}“ je součástí TEI Stylesheets: neupravuje se.
+
+Varians vytvoří v projektu přizpůsobující šablonu, která ji importuje:
+{path}
+
+Její parametry a pravidla budou mít přednost před těmi z TEI Stylesheets; vše ostatní bude pocházet z nich. Scénář „{scenario}“ bude používat tuto šablonu.</string>
+  <string key="transform.open_stylesheet.create">Vytvořit přizpůsobující šablonu</string>
+  <string key="transform.customization.created">Přizpůsobující šablona vytvořena: {path}</string>
+  <string key="transform.customization.comment">Přizpůsobující šablona pro TEI Stylesheets, vytvořená Variansem.
+
+Importuje šablonu {name} konsorcia TEI. Parametry (xsl:param) a pravidla (xsl:template) zapsané zde mají přednost před importovanými; vše ostatní pochází z TEI Stylesheets, které se nikdy nemění. Importovaná adresa je oficiální: Varians ji čte z nainstalovaných TEI Stylesheets bez sítě, stejně jako Oxygen.</string>
+  <string key="transform.customization.examples">Příklady:</string>
   <string key="xslt_check.action">Zkontrolovat šablonu XSLT</string>
   <string key="xslt_check.action.tip">Zkompilovat zobrazenou šablonu XSLT bez spuštění, procesorem jejích scénářů (F8)</string>
   <string key="xslt_check.panel.title">Kontrola šablony XSLT</string>

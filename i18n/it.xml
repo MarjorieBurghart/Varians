@@ -852,6 +852,18 @@ Copiarlo nel progetto?
 Lo scenario userà allora questa copia. «Apri senza copiare» modifica il file originale.</string>
   <string key="transform.open_stylesheet.copy">Copia nel progetto</string>
   <string key="transform.open_stylesheet.in_place">Apri senza copiare</string>
+  <string key="transform.open_stylesheet.tei">Il foglio «{name}» fa parte dei TEI Stylesheets: non si modifica.
+
+Varians creerà nel progetto un foglio di personalizzazione che lo importa:
+{path}
+
+I suoi parametri e le sue regole prevarranno su quelli dei TEI Stylesheets; tutto il resto verrà da questi. Lo scenario «{scenario}» userà questo foglio.</string>
+  <string key="transform.open_stylesheet.create">Crea il foglio di personalizzazione</string>
+  <string key="transform.customization.created">Foglio di personalizzazione creato: {path}</string>
+  <string key="transform.customization.comment">Foglio di personalizzazione dei TEI Stylesheets, creato da Varians.
+
+Importa il foglio {name} del TEI Consortium. I parametri (xsl:param) e le regole (xsl:template) scritti qui prevalgono su quelli importati; tutto il resto viene dai TEI Stylesheets, che non vengono mai modificati. L’indirizzo importato è quello ufficiale: Varians lo legge nei TEI Stylesheets installati, senza rete, come Oxygen.</string>
+  <string key="transform.customization.examples">Esempi:</string>
   <string key="xslt_check.action">Verifica il foglio XSLT</string>
   <string key="xslt_check.action.tip">Compila il foglio XSLT visualizzato, senza eseguirlo, con il motore dei suoi scenari (F8)</string>
   <string key="xslt_check.panel.title">Verifica del foglio XSLT</string>

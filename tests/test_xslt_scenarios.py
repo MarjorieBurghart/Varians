@@ -292,3 +292,54 @@ def test_a_check_request_carries_the_catalog_for_saxon(project):
     assert check_request("saxon", path, "<x/>") == {"op": "check", "engine": "saxon", "xslt": str(path),
                                                     "text": "<x/>", "catalogs": [str(tei_library().catalog)]}
     assert check_request("lxml", path, None) == {"op": "check", "engine": "lxml", "xslt": str(path), "text": None}
+
+
+# --- Feuille de personnalisation (V0.9.2.2) ---------------------------------------------------
+
+@pytest.mark.parametrize("raw, name", [
+    ("${tei}/profiles/default/html/to.xsl", "tei-html.xsl"),
+    ("${tei}/profiles/default/latex/to.xsl", "tei-latex.xsl"),
+    ("${tei}/profiles/enrich/docx/to.xsl", "tei-enrich-docx.xsl"),
+    ("${tei}/html/html.xsl", "tei-html.xsl"),
+])
+def test_a_customization_is_named_after_the_profile(raw, name):
+    from xslt_scenarios import customization_name
+    assert customization_name(raw) == name
+
+
+def test_a_customization_imports_the_official_address_of_the_stylesheet():
+    from lxml import etree
+    from tei_stylesheets import OFFICIAL_URI
+    from xslt_scenarios import XSL_NAMESPACE, StylesheetInfo, customization_text, stylesheet_info
+    text = customization_text("${tei}/profiles/default/html/to.xsl", "Ma feuille -- à moi.\n\nSecond paragraphe.",
+                              "Exemples :")
+    root = etree.fromstring(text.encode("utf-8"))
+    assert stylesheet_info(text) == StylesheetInfo("xsl", "3.0", "xsl:stylesheet")
+    assert [i.get("href") for i in root.iter(f"{{{XSL_NAMESPACE}}}import")] == [
+        OFFICIAL_URI + "profiles/default/html/to.xsl"]
+    # Une sortie HTML : les éléments ajoutés sont du XHTML, comme ceux des TEI Stylesheets.
+    assert root.nsmap[None] == "http://www.w3.org/1999/xhtml"
+    assert len(root) == 1                                              # rien d'autre que l'import
+    comment = root.getprevious()
+    assert isinstance(comment, etree._Comment) and "--" not in comment.text
+    assert "Ma feuille" in comment.text and "Second paragraphe." in comment.text and "Exemples :" in comment.text
+    assert '<xsl:param name="numberHeadings">false</xsl:param>' in comment.text
+    assert "<b><xsl:apply-templates/></b>" in comment.text
+    latex = etree.fromstring(customization_text("${tei}/profiles/default/latex/to.xsl").encode("utf-8"))
+    assert None not in latex.nsmap and "<b>" not in latex.getprevious().text
+
+
+def test_the_comment_of_a_customization_is_wrapped_by_display_width():
+    import unicodedata
+    from xslt_scenarios import customization_text
+    japanese = "TEI Consortium のスタイルシート profiles/default/latex/to.xsl をインポートします。" * 4
+    text = customization_text("${tei}/profiles/default/latex/to.xsl", japanese, "例：")
+    lines = text.split("<!--", 1)[1].split("-->", 1)[0].splitlines()
+
+    def width(line):
+        return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in line)
+
+    assert lines[1].startswith("  TEI Consortium のスタイルシート")
+    assert all(width(line) <= 78 for line in lines if "xsl:" not in line)
+    assert not [line for line in lines if line.strip().startswith(("。", "、"))]
+    assert "".join(line.strip() for line in lines[1:-4]).replace(" ", "") == japanese.replace(" ", "")
