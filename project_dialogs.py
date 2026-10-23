@@ -1337,4 +1337,5 @@ class ProjectSettingsDialog(QDialog):
             documents=list(self.project.documents),
             xpath_queries=list(self.project.xpath_queries),
             parts=list(self.project.parts),
+            transformations=list(self.project.transformations),
         )

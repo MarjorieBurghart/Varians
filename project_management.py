@@ -86,6 +86,7 @@ class ProjectDraft:
     documents: list[DocumentConfig] = field(default_factory=list)
     xpath_queries: list = field(default_factory=list)
     parts: list = field(default_factory=list)
+    transformations: list = field(default_factory=list)
 
 
 
@@ -319,6 +320,9 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
     parts_el = parts_element(draft.parts)
     if parts_el is not None:
         root.append(parts_el)
+    transformations_el = transformations_element(draft.transformations)
+    if transformations_el is not None:
+        root.append(transformations_el)
 
     tree = ET.ElementTree(root)
     ET.indent(tree, space="  ")
@@ -372,6 +376,28 @@ def parts_element(parts) -> ET.Element | None:
     return parts_el
 
 
+def transformations_element(scenarios) -> ET.Element | None:
+    """Élément <transformations> des scénarios XSLT, ou None s'il n'y en a
+    pas (un projet sans scénario reste inchangé). Les chemins sont écrits
+    tels qu'ils sont gardés dans ``TransformScenario``."""
+    if not scenarios:
+        return None
+    transformations_el = ET.Element("transformations")
+    for scenario in scenarios:
+        attrs = {"name": scenario.name, "source": scenario.source}
+        if scenario.file:
+            attrs["file"] = scenario.file
+        attrs["engine"] = scenario.engine
+        attrs["xslt"] = scenario.xslt
+        if scenario.css:
+            attrs["css"] = scenario.css
+        attrs["output"] = scenario.output
+        scenario_el = ET.SubElement(transformations_el, "scenario", attrs)
+        for name, value in scenario.params:
+            ET.SubElement(scenario_el, "param", {"name": name, "value": value})
+    return transformations_el
+
+
 def update_project_documents(path: str | Path, documents) -> Path:
     """Remplace les documents auxiliaires déclarés dans project.xml sans
     modifier le reste du fichier ; l'ancienne version est copiée en ``.bak``."""
@@ -384,6 +410,13 @@ def update_project_xpath_queries(path: str | Path, queries) -> Path:
     ``update_project_documents``."""
     return _replace_project_element(Path(path).expanduser().resolve(), "xpathQueries",
                                     xpath_queries_element(queries))
+
+
+def update_project_transformations(path: str | Path, scenarios) -> Path:
+    """Remplace les scénarios de transformation de project.xml, comme
+    ``update_project_documents``."""
+    return _replace_project_element(Path(path).expanduser().resolve(), "transformations",
+                                    transformations_element(scenarios))
 
 
 def _replace_project_element(path: Path, tag: str, new_el: ET.Element | None) -> Path:
