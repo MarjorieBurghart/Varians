@@ -151,7 +151,10 @@ XInclude.
    - V0.9.1.5, réalisée (voir ci-dessous) : la Vue XSLT / CSS de l'édition
      assemblée, comme pour une édition en un seul fichier (décidé le
      22 octobre 2026 : toutes ses fonctions, plus celles des parties) ;
-   - l'export web avec les parties, ensuite, à part.
+   - V0.9.1.6, réalisée (voir ci-dessous) : l'export web de l'édition
+     assemblée, avec les continuités du bureau (décidé le 23 octobre 2026 :
+     une seule version pour tout ; les flèches de tout panneau du viewer
+     mènent le texte, comme sur le bureau). L'étape 5 est terminée.
 6. Cas avancés : `parse="text"`, `<xi:fallback>`, autres schémas `xpointer`.
 
 ## Réalisé en V0.9.0.0
@@ -198,8 +201,8 @@ XInclude.
   modifiées), en **lecture seule** : ses paragraphes ne sont plus ceux de la
   source, donc pas d'édition par fragment ni de report de position entre
   la source et l'aperçu. L'édition par fragment réécrite dans le bon
-  fichier reste pour l'étape 5 (réalisée en V0.9.1.5). L'export web, lui, ne contient pas encore
-  les parties (message avant l'export).
+  fichier reste pour l'étape 5 (réalisée en V0.9.1.5). L'export web, lui, ne contenait pas
+  encore les parties (message avant l'export, jusqu'à la V0.9.1.6).
 - **Folios d'un texte dans un témoin** : notés soit par `<locus from to>`
   dans un en-tête (forme structurée, lisible par Varians), soit seulement
   par les `<pb/>` de l'édition ; les deux pratiques existent.
@@ -422,7 +425,74 @@ avoir un éditeur de fragment.
 - **Limites** : un `<p>` qui contient un `xi:include` s'édite dans le
   fichier de sa balise ; un élément que la XSLT ne rend pas décale les ✎
   et les repères (comme pour un seul fichier) ; l'export web ne contient
-  pas encore les parties.
+  pas encore les parties (V0.9.1.6).
+
+## Réalisé en V0.9.1.6 (étape 5, fin : l'export web)
+
+Format des données et fonctionnement du viewer : `WEB_VIEWER_ASSEMBLED.md`.
+
+- **Règles communes au bureau et au web** (`segment_model.py`, sans Qt) :
+  témoins par pages d'un texte, page de départ, `<locus>`, rang des pages
+  déclarées, arrêt « présent », page qui mène. La fenêtre
+  (`text_segments.py`, `witness_sync.py`) et l'export les appellent ; il
+  n'y a pas de copie qui pourrait diverger.
+- **L'export lit l'édition assemblée** (`web_viewer/assembled_document.py`) :
+  chaque copie de partie est marquée de son texte par un attribut technique
+  retiré ensuite ; chaque texte compte les `<lb>` de son pivot et les relie
+  à ses JSON (`build_segment_lb_index`), comme `pivot_lines`. Dans un texte
+  au pivot B, les leçons, les lignes et les `<pb>` sont ceux de B.
+- **Une édition en un seul fichier est exportée exactement comme avant**
+  (test d'empreinte de `build_dataset`). Une édition en parties sans texte
+  à part aussi : sortir un sermon dans une partie ne change rien.
+- **Textes à part** : `meta.segments`, `meta.line_order` ; clés préfixées
+  (`~1~`…), car un JSON par texte peut reprendre les pages et les numéros du
+  JSON global ; une vue par témoin et par texte (lignes, pages, ou absent) ;
+  le pivot d'un texte non affiché est exporté sans images.
+- **Parcours** : `witness_route` sur les JSON après les règles d'images
+  (sans préfixe, pour garder l'identité des pages du bureau) ; les `<pb>`
+  d'un témoin par pages sont situés par leur position dans le texte de
+  lecture, et portent la ligne du pivot ouverte à leur place
+  (`pb_line_keys`, seulement pour une édition à textes à part).
+- **Viewer** : les décisions sans DOM sont dans `web_viewer/sync_model.js`,
+  testé avec node, avec la parité des positions (rendu, recherche, Python),
+  de `witness_route` et de `segment_model.present_stop` ; le texte suivant
+  ou précédent qui a un témoin est calculé par le viewer (il dépend de la
+  ligne affichée). Tests de comportement pilotés dans Chromium (ignorés
+  sans Playwright).
+- **Changements pour une édition en un seul fichier** (choix du 23 octobre
+  2026) : les flèches de tout panneau et la liste des folios mènent le
+  texte ; les lacunes ont leurs bandeaux. Deux corrections au passage : un
+  `<pb>` sans `@facs` trouve son folio par son nom même quand l'image et le
+  folio portent le même nom ; la position retenue est celle du fragment
+  cliqué, et non le début de sa ligne.
+- **Depuis Varians** : plus de question « Exporter quand même » ; l'édition,
+  ses parties modifiées et le fragment non appliqué d'une partie sont
+  enregistrés avant l'export (un échec l'annule) ; les problèmes
+  d'assemblage sont dans le compte rendu.
+- **Limites** : la précision des positions est celle des fragments de texte
+  affichés ; un `<pb>` ou un `<lb>` dans une leçon non retenue ou dans une
+  note n'est pas vu par le viewer ; « État des témoins… », « Actualiser les
+  synchronisations… », « Marquer la page » et « Double page… » restent
+  propres au bureau ; `parse="text"` et `xi:fallback` sont signalés.
+
+## Plusieurs éditions dans un même projet (décision du 23 octobre 2026)
+
+Les « Réflexions préparatoires » du 15 octobre envisageaient un second
+modèle : plusieurs éditions TEI autonomes (« unités éditoriales ») dans un
+même projet, chacune avec son document maître, ses témoins, son pivot et
+ses alignements, autour de ressources communes. Ce modèle est **retiré de
+la feuille de route** :
+
+- des éditions qui ne partagent presque rien (par exemple un sermon latin du
+  XIIIᵉ siècle et un poème d'Emily Dickinson) sont plus simples dans des
+  projets séparés, ce qui est déjà possible ;
+- un corpus de textes transmis par des témoins différents tient dans une
+  seule édition en parties, avec des textes synchronisés à part (V0.9.1.1),
+  chacun avec son pivot et ses JSON.
+
+Conséquence pour les scénarios de transformation XSLT : leur source est un
+fichier ou l'édition (assemblée au besoin) ; une publication portant sur
+plusieurs éditions d'un même projet n'est plus envisagée.
 
 ## Restent à décider
 

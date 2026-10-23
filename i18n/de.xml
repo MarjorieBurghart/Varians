@@ -156,6 +156,7 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="webgen.missing">
 
 Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
+  <string key="webgen.assembly_problems">\n\nProbleme beim Zusammensetzen (der betroffene Text fehlt im Viewer):\n{problems}</string>
   <string key="project.open_error">Projekt konnte nicht geöffnet werden</string>
   <string key="viewer.search.placeholder">Suchen…</string>
   <string key="viewer.prev_base">← Zeile</string>
@@ -791,11 +792,6 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="apparatus.witnesses.part">Textzeugen dieses Teils (sein &lt;listWit&gt;): {ids}</string>
   <string key="apparatus.witnesses.locus">Textzeugen dieses Teils (&lt;locus target&gt; der Edition): {ids}</string>
   <string key="apparatus.witnesses.wit">In den @wit dieses Teils genannte Textzeugen: {ids}</string>
-  <string key="parts.webgen.title">Edition in Teilen</string>
-  <string key="parts.webgen.text">Die Edition bindet ihre Teile per XInclude ein. Der Web-Viewer enthält sie noch nicht: Nur der Text der Editionsdatei wird exportiert, ohne die Teile.
-
-Trotzdem exportieren?</string>
-  <string key="parts.webgen.continue">Trotzdem exportieren</string>
   <string key="status.structure.assembled.tip">Zeilen des Pivot-Textzeugen in der zusammengesetzten Edition gezählt, Teile eingeschlossen (XInclude), in der Reihenfolge des zusammengesetzten Dokuments.</string>
   <string key="manuscript.text_absent">Kein Alignment dieses Textzeugen für diesen Text.</string>
   <string key="status.structure.text.tip">Zeilen von {base} im Text {name}, separat mit eigenen Alignments synchronisiert (Ordner alignments/{name}/).</string>

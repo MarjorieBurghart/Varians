@@ -102,7 +102,7 @@ def test_each_help_explains_background_validation():
 
 
 def test_each_help_explains_assembled_editions():
-    labels = ("rng.column.document", "references.action", "apparatus.menu", "parts.webgen.continue",
+    labels = ("rng.column.document", "references.action", "apparatus.menu",
               "documents.tab.rename", "documents.remove.menu")
     for language in LANGUAGES:
         root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
@@ -248,3 +248,37 @@ def test_each_help_explains_the_preview_of_an_assembled_edition():
         version = page[page.index('<section id="v0915">'):]
         assert 'href="#xinclude-preview"' in version[:version.index("</section>")], language
         assert page.index('<section id="v0914">') < page.index('<section id="v0915">'), language
+
+
+def test_each_help_explains_the_web_export_of_an_assembled_edition():
+    """L'export web d'une édition assemblée (V0.9.1.6) : texte des parties,
+    textes synchronisés à part, flèches, lacunes, enregistrement avant
+    l'export ; plus de question « Exporter quand même »."""
+    import html
+    old_question = {"fr": "Exporter quand même", "en": "Export anyway", "de": "Trotzdem exportieren",
+                    "it": "Esporta comunque", "cs": "Přesto exportovat", "ja": "それでも書き出す",
+                    "ru": "Всё равно экспортировать"}
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        assert not [key for key in catalog if key.startswith("parts.webgen.")], language
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        assert old_question[language] not in page, language
+        parts = page[page.index('<section id="xinclude">'):page.index('<section id="v0900">')]
+        section = parts[parts.index('<h3 id="xinclude-web">'):]
+        section = section[:section.index("<h3", 1)]
+        for text in (html.escape(catalog["toolbar.generate_web"], quote=False),
+                     html.escape(catalog["manuscript.text_absent"], quote=False),
+                     "⤺", "<code>alignments/s02/</code>", 'href="#lacunae"',
+                     '<code>parse="text"</code>', "<code>xi:fallback</code>"):
+            assert text in section, (language, text)
+        # Les limites et le mode d'emploi renvoient à cette sous-section, le
+        # viewer web aussi ; rien n'est plus annoncé pour l'export web.
+        assert parts.count('href="#xinclude-web"') == 2, language
+        viewer = page[page.index('id="viewer"'):]
+        viewer = viewer[:viewer.index("<h2", 10)]
+        assert 'href="#xinclude-web"' in viewer and "⤺" in viewer, language
+        version = page[page.index('<section id="v0916">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#xinclude-web"' in version and 'href="#viewer"' in version, language
+        assert page.index('<section id="v0915">') < page.index('<section id="v0916">'), language

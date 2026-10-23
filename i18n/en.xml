@@ -142,6 +142,7 @@
   <string key="webgen.done.title">Web viewer generated</string>
   <string key="webgen.done.text">Viewer generated:\n{output}\n\n{witnesses} witness(es), {lines} pivot-witness lines.</string>
   <string key="webgen.missing">\n\nPages missing from the pivot-witness cache: {pages}</string>
+  <string key="webgen.assembly_problems">\n\nAssembly problems (the text concerned is missing from the viewer):\n{problems}</string>
   <string key="project.open_error">Could not open project</string>
   <string key="viewer.search.placeholder">Search…</string>
   <string key="viewer.prev_base">← line</string>
@@ -777,11 +778,6 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
   <string key="apparatus.witnesses.part">Witnesses of this part (its &lt;listWit&gt;): {ids}</string>
   <string key="apparatus.witnesses.locus">Witnesses of this part (&lt;locus target&gt; of the edition): {ids}</string>
   <string key="apparatus.witnesses.wit">Witnesses cited in the @wit of this part: {ids}</string>
-  <string key="parts.webgen.title">Edition in parts</string>
-  <string key="parts.webgen.text">The edition includes its parts through XInclude. The web viewer does not contain them yet: only the text of the edition file will be exported, without the parts.
-
-Export anyway?</string>
-  <string key="parts.webgen.continue">Export anyway</string>
   <string key="status.structure.assembled.tip">Pivot-witness lines counted in the assembled edition, parts included (XInclude), in the order of the assembled document.</string>
   <string key="manuscript.text_absent">No alignment of this witness for this text.</string>
   <string key="status.structure.text.tip">{base} lines in the text {name}, synchronized separately with its own alignments (folder alignments/{name}/).</string>

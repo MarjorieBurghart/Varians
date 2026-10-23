@@ -48,6 +48,8 @@ Projet Varians
 
 La notion d’**« unité éditoriale »** est ici une **proposition de modèle interne** : elle exprime l’autonomie d’une édition logique, même lorsque ses données sont distribuées dans plusieurs fichiers. Son nom exact et sa représentation dans la configuration restent à arrêter.
 
+> **Décision du 23 octobre 2026 :** le second modèle (plusieurs éditions TEI autonomes dans un même projet) est retiré de la feuille de route. Des éditions sans rapport se placent dans des projets séparés ; un corpus de textes transmis par des témoins différents tient dans une seule édition en parties, avec des textes synchronisés à part (V0.9.1.1). Voir `docs/DECISIONS_ASSEMBLAGE.md`.
+
 ### 2.2. La simplicité des petits projets est une exigence fondamentale
 
 C’est une condition explicitement soulignée par l’utilisateur : **une personne qui veut simplement transcrire un texte à partir d’une image ne doit pas avoir à comprendre l’architecture multifichier, XInclude ou les scénarios XSLT pour commencer.**
@@ -149,6 +151,8 @@ Les éléments suivants ont été proposés pour discussion :
 - Possibilité d’un aperçu avant publication et de diagnostics d’exécution.
 
 Exemples d’usages : page HTML de personnes, édition HTML/texte, index spécifiques, sortie XML transformée, publication portant sur plusieurs éditions. Pour plusieurs éditions, la source commune devra être explicitement définie ; la transformation automatique d’une liste arbitraire de documents n’est pas présumée.
+
+> **Décision du 23 octobre 2026 :** la source d’un scénario est un fichier ou l’édition (assemblée au besoin) ; la publication portant sur plusieurs éditions d’un même projet n’est plus envisagée (voir section 2.1).
 
 ### 5.2. Coexistence avec le viewer web natif
 

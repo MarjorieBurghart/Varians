@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMessageBox, QPushButton,
     QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
+import segment_model
 from app_context import call_later, tr as _t
 from folio_navigation import (
     configure_surface_parts, folio_at_position, folio_marks, folios_for_witness,
@@ -956,11 +957,8 @@ class WitnessSyncMixin:
             return
         route = self._witness_route(wid)
         item = panel.current_item()
-        stop = route.on_page(page_identity(item["p"])) if item is not None else None
-        if stop is None or (stop.location is None and stop.ordinal is None):
-            surface = {f.ref for f in panel.folios if f.surface == folio.surface}
-            stop = route.on_page(f"folio:{folio.ref}") or next(
-                (s for s in route.stops if s.location is not None and s.key in surface), None)
+        stop = segment_model.page_stop(route, page_identity(item["p"]) if item is not None else None,
+                                       folio, panel.folios)
         if stop is not None:
             self._go_to_witness_stop(wid, stop)
             panel = self.panels[wid]
@@ -982,14 +980,9 @@ class WitnessSyncMixin:
     def _locus_text(self, wid, folio):
         """Texte synchronisé à part dont le ``<locus from>`` du témoin est
         ``folio``, ou None."""
-        label = folio.label.strip().casefold()
-        for sync in self._text_syncs()[0] if self._edition_has_parts() else ():
-            segment = path_key(sync.path)
-            ids = self._segment_ids(segment)
-            if any(locus.start and locus.start.strip().casefold() == label and locus.targets & ids
-                   for locus in self._text_loci(segment).get(wid, ())):
-                return segment
-        return None
+        segments = [path_key(sync.path) for sync in (self._text_syncs()[0] if self._edition_has_parts() else ())]
+        return segment_model.locus_segment(
+            wid, folio, ((segment, self._text_loci(segment), self._segment_ids(segment)) for segment in segments))
 
     def _present_stop(self, wid, step):
         """Premier arrêt du témoin dans le texte suivant (``step`` > 0) ou
@@ -999,28 +992,9 @@ class WitnessSyncMixin:
         if lines is None:
             return None
         syncs = [path_key(sync.path) for sync in self._text_syncs()[0]]
-        after = len(syncs) + 1
-
-        def place(segment, ordinal=None):
-            if segment is None:
-                return (ordinal if ordinal is not None else -1, after)
-            return (lines.anchor(segment), syncs.index(segment) if segment in syncs else after)
-
-        segment = getattr(self, "_active_segment", None)
-        here = place(segment, self._base_ordinal_at_cursor() or 0)
-        route = self._witness_route(wid)
-        found = None
-        for stop in route.stops:
-            key = place(stop.segment, stop.ordinal)
-            if (key > here if step > 0 else key < here) and (
-                    found is None or (key < found[0] if step > 0 else key >= found[0])):
-                found = (key, stop)
-        if found is None:
-            return None
-        stop = found[1]
-        if stop.segment is not None:
-            stop = route.first(stop.segment) if step > 0 else route.last(stop.segment)
-        return stop
+        return segment_model.present_stop(self._witness_route(wid), lines.anchor, syncs,
+                                          getattr(self, "_active_segment", None),
+                                          self._base_ordinal_at_cursor() or 0, step)
 
     def _show_witness_mark(self, wid, stop):
         """Place le curseur à la fin du ``<pb>`` de ``stop`` (folio

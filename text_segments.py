@@ -19,22 +19,20 @@ pas.
 """
 from __future__ import annotations
 
-import re
 from dataclasses import replace
 from pathlib import Path
 
+import segment_model
 from app_context import tr as _t
-from folio_navigation import folio_marks, text_start_folio, witness_loci
+from folio_navigation import folio_marks, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
 from witness_resource_refresh import RuntimeState, assemble_resources, flatten_primary, read_alignment_json
-from witness_route import PageMark, Source, page_identity, witness_route
+from witness_route import PageMark, Source, witness_route
 from xml_assembly import path_key
 
 TEXT_ABSENT = "manuscript.text_absent"
-_XML_ID_RE = re.compile(r"(?<![\w:.-])xml:id\s*=\s*(['\"])(.*?)\1", re.S)
-_SURFACE_NUMBER_RE = re.compile(r"-p(\d+)$")
 
 
 class TextSegmentsMixin:
@@ -103,42 +101,30 @@ class TextSegmentsMixin:
 
     def _segment_ids(self, segment):
         """``xml:id`` des fichiers du segment ``segment``."""
-        return {match.group(2) for session in self._segment_files(segment)
-                for match in _XML_ID_RE.finditer(self._session_text(session))}
+        return segment_model.segment_ids(self._session_text(session) for session in self._segment_files(segment))
 
     def _text_loci(self, segment):
         """``{témoin: (Locus, …)}`` qui valent pour le texte ``segment`` : ceux
         du ``<listWit>`` de l'édition, et ceux de l'en-tête du texte (document
         TEI complet inclus par ``xpointer``)."""
-        loci = {wid: tuple(found) for wid, found in self._witness_loci().items()}
-        for session in self._segment_files(segment):
-            if path_key(session.path) == segment:
-                for wid, found in witness_loci(self._session_text(session)).items():
-                    loci[wid] = loci.get(wid, ()) + found
-        return loci
+        own = next((self._session_text(session) for session in self._segment_files(segment)
+                    if path_key(session.path) == segment), None)
+        return segment_model.segment_loci(self._witness_loci(), own)
 
     def _text_start_folio(self, witness_id, folios):
         """Page de départ du témoin dans le texte affiché, synchronisé à part,
-        avant son premier ``<pb>`` dans ce texte (``text_start_folio``)."""
+        avant son premier ``<pb>`` dans ce texte (``segment_model.start_folio``)."""
         segment = self._active_segment
-        lines = self._pivot_lines()
-        first = lines.first_page(segment, witness_id, folios) if lines is not None else None
-        return text_start_folio(witness_id, folios, self._text_loci(segment).get(witness_id, ()),
-                                self._segment_ids(segment), first)
+        return segment_model.start_folio(self._pivot_lines(), segment, witness_id, folios,
+                                         self._text_loci(segment), self._segment_ids(segment))
 
     def _text_page_witnesses(self, sync):
         """Témoins qui ont le texte ``sync`` sans y avoir de JSON : un ``<pb
         edRef>`` dans le texte, ou un ``<locus target>`` vers l'un de ses
         éléments. Ils y suivent leurs pages."""
         segment = path_key(sync.path)
-        lines = self._pivot_lines()
-        found = set(lines.page_witnesses(segment)) if lines is not None else set()
-        ids = self._segment_ids(segment)
-        for wid, loci in self._text_loci(segment).items():
-            if any(locus.targets & ids for locus in loci):
-                found.add(wid)
-        declared = {w.id for w in self.witness_configs}
-        return {wid for wid in found if wid in declared}
+        return segment_model.text_page_witnesses(self._pivot_lines(), segment, self._segment_ids(segment),
+                                                 self._text_loci(segment), {w.id for w in self.witness_configs})
 
     # --- Parcours d'un témoin dans son propre ordre (V0.9.1.4) -----------------
 
@@ -173,9 +159,7 @@ class TextSegmentsMixin:
             else:
                 source = self._json_source(segment, wid, sync, lines, folios)
             if source.cache is not None or source.marks:
-                ids = self._segment_ids(segment)
-                locus = next((locus.start for locus in self._text_loci(segment).get(wid, ())
-                              if locus.start and locus.targets & ids), None)
+                locus = segment_model.locus_start(self._text_loci(segment), wid, self._segment_ids(segment))
                 sources.append(replace(source, locus=locus))
         return sources
 
@@ -215,17 +199,8 @@ class TextSegmentsMixin:
     def _declared_page_ranks(wid, states, edition, folios):
         """Rang des pages du témoin tiré de ses images déclarées : le numéro
         de ``tei_surface_id``, sa place dans le manifeste ou les fichiers."""
-        ranks, surfaces = {}, {}
-        for state, _project in [edition, *states.values()]:
-            for page in (state.caches.get(wid) or {}).get("pages", []) or []:
-                sid = str(page.get("tei_surface_id") or "")
-                match = _SURFACE_NUMBER_RE.search(sid)
-                if match:
-                    ranks[page_identity(page)] = surfaces[sid] = int(match.group(1))
-        for folio in folios:
-            if folio.surface in surfaces:
-                ranks[f"folio:{folio.ref}"] = surfaces[folio.surface]
-        return ranks
+        return segment_model.declared_page_ranks(
+            [state.caches.get(wid) for state, _project in [edition, *states.values()]], folios)
 
     # --- Segment du document affiché ----------------------------------------
 

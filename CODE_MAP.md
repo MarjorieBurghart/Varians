@@ -19,6 +19,7 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
+| Viewer web d'une édition assemblée (V0.9.1.6) | `web_viewer/assembled_document.py`, `web_viewer/segment_views.py`, `web_viewer/sync_model.js`, `segment_model.py` | `test_v0916_export_*.py`, `test_v0916_sync_model.py` (node), `test_v0916_viewer_*.py` (Chromium) |
 | Internationalisation | `i18n.py`, `i18n/*.xml` | `test_v0842_i18n_handoff.py` |
 | Sauvegarde atomique | `save_io.py` | `test_save_io.py` |
 
@@ -181,3 +182,16 @@ V0.8.5.26.1 : `web_viewer/generator.py` prend un `display_witness_ids` optionnel
 ## V0.8.5.26.2 — rafraîchissement RELAX NG
 
 Dans `editeur_tei.py`, regarder `show_validation_panel`, `_text_changed`, `_auto_refresh_rng`, `validate_relaxng_document` et `_validate_relaxng_document_impl`. Les tests de cycle isolés `tests/test_v085262_rng_panel_refresh.py` exercent les vraies méthodes Qt sans dépendre de PySide6 à la compilation. Le cache lxml reste dans `relaxng_validation.py` ; ni les schémas ni le viewer web n'ont été modifiés.
+
+## V0.9.1.6 — export web d'une édition assemblée
+
+Format des données et fonctionnement : `WEB_VIEWER_ASSEMBLED.md`.
+
+- `segment_model.py` : règles des textes à part et du parcours, sans Qt, communes à la fenêtre (`text_segments.py`, `witness_sync.py`) et à l'export.
+- `web_viewer/assembled_document.py` : `load_assembled(project)` lit l'édition assemblée (None sans `xi:include`) ; chaque élément est rattaché à son texte (`segment`, `target`).
+- `web_viewer/tei_line_anchors.py` : `build_segment_lb_index` compte les `<lb>` du pivot de chaque texte.
+- `web_viewer/legacy_v11_core.py` : extracteurs selon le texte (`root`, `line_anchors`, `segment_of`, `target_of`), repères de lacune, `pb_line_keys`.
+- `web_viewer/generator.py` : `_text_caches`, `_add_text_views`, `_add_routes` ; le gabarit (`buildState`, `activateSegment`, `updateLacunae`, `leadFrom`, `goToStop`, `leadToPage`).
+- `web_viewer/segment_views.py` : `doc_positions`, `page_marks`, `export_route`, `page_leads`, `locus_leads`.
+- `web_viewer/sync_model.js` (`VariansSync`, sans DOM) : `docIndex`, `segAt`, `lastLinked`, `segOfKey`, `lacunaStarts`, `lacunaeAt`, `lineStops`, `pageStops`, `routeIndex`, `step`, `panelStop`, `presentStop`.
+- `project_actions.py` : `_save_edition_for_export` (édition, parties modifiées, fragment non appliqué).

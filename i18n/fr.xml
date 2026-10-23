@@ -142,6 +142,7 @@
   <string key="webgen.done.title">Viewer web généré</string>
   <string key="webgen.done.text">Viewer généré :\n{output}\n\n{witnesses} témoin(s), {lines} lignes du témoin pivot.</string>
   <string key="webgen.missing">\n\nPages absentes du cache du témoin pivot : {pages}</string>
+  <string key="webgen.assembly_problems">\n\nProblèmes d’assemblage (le texte concerné manque dans le viewer) :\n{problems}</string>
   <string key="project.open_error">Impossible d’ouvrir le projet</string>
   <string key="viewer.search.placeholder">Rechercher…</string>
   <string key="viewer.prev_base">← ligne</string>
@@ -777,11 +778,6 @@ Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi le
   <string key="apparatus.witnesses.part">Témoins de cette partie (son &lt;listWit&gt;) : {ids}</string>
   <string key="apparatus.witnesses.locus">Témoins de cette partie (&lt;locus target&gt; de l’édition) : {ids}</string>
   <string key="apparatus.witnesses.wit">Témoins cités dans les @wit de cette partie : {ids}</string>
-  <string key="parts.webgen.title">Édition en parties</string>
-  <string key="parts.webgen.text">L’édition inclut ses parties par XInclude. Le viewer web ne les contient pas encore : seul le texte du fichier de l’édition sera exporté, sans celui des parties.
-
-Exporter quand même ?</string>
-  <string key="parts.webgen.continue">Exporter quand même</string>
   <string key="status.structure.assembled.tip">Lignes du témoin pivot comptées dans l’édition assemblée, parties comprises (XInclude), dans l’ordre du document assemblé.</string>
   <string key="manuscript.text_absent">Pas d’alignement de ce témoin pour ce texte.</string>
   <string key="status.structure.text.tip">Lignes de {base} dans le texte {name}, synchronisé à part avec ses propres alignements (dossier alignments/{name}/).</string>

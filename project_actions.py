@@ -32,10 +32,14 @@ class ProjectActionsMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
     def generate_web_viewer(self):
-        """Sauvegarde l'édition du projet puis lance le générateur web générique.
+        """Enregistre l'édition du projet puis lance le générateur web générique.
 
-        L'édition est enregistrée si nécessaire, même lorsqu'un document
-        auxiliaire est affiché ; les autres documents ne sont pas concernés.
+        L'export lit les fichiers enregistrés : l'édition est enregistrée si
+        nécessaire, même lorsqu'un document auxiliaire est affiché ; dans une
+        édition en parties (V0.9.1.6), le fragment non appliqué d'une partie
+        et chaque partie modifiée le sont aussi. Un échec annule l'export ;
+        les autres documents ne sont pas concernés. Les problèmes
+        d'assemblage (partie absente…) sont dans le compte rendu.
         """
         edition = self.edition_session
         if edition.path is None:
@@ -45,13 +49,7 @@ class ProjectActionsMixin:
                 self, _t("webgen.wrong_file.title"), _t("webgen.wrong_file.text")
             )
             return
-        # Édition assemblée (V0.9.0.0) : le viewer ne contient pas encore les parties.
-        if self._edition_has_parts() and not self._confirm_web_export_without_parts():
-            return
-        if edition is self.document:
-            if self._has_unsaved_work() and not self.save_contextual():
-                return
-        elif edition.modified and not self._save_session(edition):
+        if not self._save_edition_for_export():
             return
         try:
             from web_viewer.generator import generate
@@ -68,6 +66,11 @@ class ProjectActionsMixin:
         msg = _t("webgen.done.text", output=output, witnesses=len(data.get("witnesses", [])), lines=data.get("meta", {}).get("lines", 0))
         if missing:
             msg += _t("webgen.missing", pages=", ".join(missing))
+        problems = data.get("meta", {}).get("assembly_problems") or []
+        if problems:
+            msg += _t("webgen.assembly_problems", problems="\n".join(
+                f"• {p.get('file')}:{p.get('line')} — {p.get('code')}" + (f" ({p['detail']})" if p.get("detail") else "")
+                for p in problems))
         box = QMessageBox(self)
         box.setWindowTitle(_t("webgen.done.title"))
         box.setText(msg)
@@ -77,17 +80,22 @@ class ProjectActionsMixin:
         if box.clickedButton() is open_btn:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(output)))
 
-    def _confirm_web_export_without_parts(self):
-        box = QMessageBox(self)
-        box.setIcon(QMessageBox.Icon.Warning)
-        box.setWindowTitle(_t("parts.webgen.title"))
-        box.setText(_t("parts.webgen.text"))
-        export_btn = box.addButton(_t("parts.webgen.continue"), QMessageBox.ButtonRole.AcceptRole)
-        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
-        box.setDefaultButton(cancel_btn)
-        box.setEscapeButton(cancel_btn)
-        box.exec()
-        return box.clickedButton() is export_btn
+    def _save_edition_for_export(self):
+        """Fragment non appliqué, édition et parties modifiées : enregistrés
+        avant l'export ; False si l'un d'eux ne l'est pas."""
+        edition = self.edition_session
+        if not self._edition_has_parts():
+            if edition is self.document:
+                return not self._has_unsaved_work() or bool(self.save_contextual())
+            return not edition.modified or self._save_session(edition)
+        view = getattr(self, "formatted_view", None)
+        if view is not None and view.dirty_fragment_session() is not None and not view.apply_fragment():
+            return False
+        for session in [edition] + [s for s in self.documents if s.is_part]:
+            modified = self.modified if session is self.document else session.modified
+            if modified and not self._save_session(session):
+                return False
+        return True
 
     def open_project_dialog(self):
         """Sélectionne un project.xml puis recharge l'application sur ce projet."""

@@ -16,32 +16,14 @@ from __future__ import annotations
 import pytest
 
 from app_context import tr
-from corpus_data import add_page_witness
+from corpus_data import PIVOT_GAP, T2_END, T2_START, add_example_lacunae
+from corpus_data import insert_at as _insert
 from pivot_lines import pivot_lb_pattern
-
-T2_START, T2_END, PIVOT_GAP = 20, 25, 41
-GAP = '<lacunaStart wit="#T1"/>PASSAGE <pb edRef="#X" n="1v"/>ABSENS<lacunaEnd wit="#T1"/>'
-
-
-def _insert(text, inserts):
-    for position, value in sorted(inserts, reverse=True):
-        text = text[:position] + value + text[position:]
-    return text
 
 
 @pytest.fixture
 def example_with_lacunae(example_project):
-    add_page_witness(example_project, "X", ("1r", "1v"))
-    edition = example_project.parent / "xml" / "edition.xml"
-    text = edition.read_text(encoding="utf-8")
-    lbs = [match.span() for match in pivot_lb_pattern("T1").finditer(text)]
-    body = text.index("<body>") + len("<body>")
-    edition.write_text(_insert(text, [
-        (body, '<pb edRef="#X" n="1r"/>'),
-        (lbs[T2_START][1], '<lacunaStart wit="#T2"/>'),
-        (lbs[T2_END][1], '<lacunaEnd wit="#T2"/>'),
-        (lbs[PIVOT_GAP][0], GAP),
-    ]), encoding="utf-8")
+    add_example_lacunae(example_project)
     return example_project
 
 

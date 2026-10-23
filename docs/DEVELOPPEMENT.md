@@ -39,6 +39,17 @@ Ces tests ne remplacent pas une vérification à l'écran : l'affichage
 réel sous Windows, macOS ou Linux reste à contrôler à la main avant une
 livraison.
 
+**Viewer web** (V0.9.1.6) : les décisions du viewer sans DOM
+(`web_viewer/sync_model.js`, comme `geometry.js` et `fulltext_search.js`)
+sont testées avec node (`tests/test_v0916_sync_model.py`, ignoré sans
+node). Son comportement est testé dans Chromium par Playwright
+(`tests/test_v0916_viewer_*.py`) : ces tests sont ignorés sans Playwright ou
+sans navigateur, ce qui est le cas sur GitHub ; lancez-les sur un poste de
+développement (`pip install playwright`, puis `playwright install chromium`,
+ou la variable `CHROMIUM` vers un Chromium déjà installé). Les scripts
+`tests/manual_*_chromium.py` se lancent à la main et font des captures
+d'écran.
+
 ## Tests automatiques sur GitHub
 
 `.github/workflows/tests.yml` lance la suite complète sous Ubuntu et
@@ -237,7 +248,21 @@ Règles :
 - parcours d'un témoin dans son propre ordre (V0.9.1.4) : `witness_route`
   (sans Qt : `Source`, `PageMark`, `Stop`, `WitnessRoute.step`, `on_page`,
   `first`, `last` ; rangs des pages par `declared`, fusion des listes de
-  pages, `<locus from>` ou foliotation, sinon ordre de l'édition),
+  pages, `<locus from>` ou foliotation, sinon ordre de l'édition) ; côté
+  fenêtre, `TextSegmentsMixin._witness_route` et
+  `_witness_panel_navigate` ;
+- Vue XSLT / CSS de l'édition assemblée (V0.9.1.5) : `preview_sources.py`
+  (fichier et place de chaque `<p>` et de chaque `<lb>` du pivot),
+  `navigate_to_preview_line`, `_write_session_text` (fragment écrit dans
+  sa partie), `paragraph_at` et `line_before` ;
+- export web de l'édition assemblée (V0.9.1.6) : `segment_model.py` (règles
+  des textes à part et du parcours, communes à la fenêtre et à l'export),
+  `web_viewer/assembled_document.py`, `build_segment_lb_index`, les
+  extracteurs de `legacy_v11_core` selon le texte, `generator._add_text_views`
+  et `_add_routes`, `web_viewer/segment_views.py` et `web_viewer/sync_model.js`
+  (voir `WEB_VIEWER_ASSEMBLED.md`). Une édition en un seul fichier est
+  exportée comme avant : `tests/test_v0916_single_file_export.py` fige
+  l'empreinte de ses données.
   `PivotLines.pb_marks` et `anchor`, `folio_navigation.folio_marks`. Côté
   fenêtre : `ManuscriptPanel.navigate` émet `witnessNavigate` (`browse`
   feuillette) ; `_witness_panel_navigate`, `_go_to_witness_stop`,
