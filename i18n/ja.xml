@@ -875,4 +875,49 @@
   <string key="transform.problem.output_is_folder">出力がフォルダーです：{detail}</string>
   <string key="transform.problem.output_is_source">出力がプロジェクトのソースを置き換えてしまいます：{detail}</string>
   <string key="transform.problem.css_overwrites_source">CSS のコピーがプロジェクトのソースを置き換えてしまいます：{detail}</string>
+  <string key="toolbar.transform">変換</string>
+  <string key="toolbar.transform.tip">最後の変換シナリオを実行（Ctrl+Shift+T）。矢印でシナリオの一覧</string>
+  <string key="transform.run">実行</string>
+  <string key="transform.preview">プレビュー</string>
+  <string key="transform.running">変換中：{name}…</string>
+  <string key="transform.cancel">キャンセル</string>
+  <string key="transform.cancelled">変換をキャンセルしました：{name}</string>
+  <string key="transform.busy">変換はすでに実行中です。</string>
+  <string key="transform.cannot_run">シナリオ「{name}」を実行できません：
+{problems}</string>
+  <string key="transform.done.title">変換が完了しました</string>
+  <string key="transform.done.text">シナリオ「{name}」：{seconds} 秒で {count} 個のファイルを書き出しました。
+
+出力：{output}</string>
+  <string key="transform.done.refused">
+
+書き出されなかったファイル（出力フォルダーの外、またはプロジェクトのソース）：
+{files}</string>
+  <string key="transform.failed.title">変換に失敗しました</string>
+  <string key="transform.failed.text">シナリオ「{name}」は失敗しました。以前の出力は変更されていません。
+
+{error}</string>
+  <string key="transform.journal.engine">プロセッサ：{engine} — 所要時間：{seconds} 秒</string>
+  <string key="transform.journal.params">パラメータ：{params}</string>
+  <string key="transform.journal.message">メッセージ：{detail}</string>
+  <string key="transform.journal.warning">警告：{detail}</string>
+  <string key="transform.journal.network_read">ネットワークから読み込み：{detail}</string>
+  <string key="transform.journal.css_copied">CSS をコピー：{detail}</string>
+  <string key="transform.journal.write_refused">書き込み拒否：{detail}</string>
+  <string key="transform.journal.assembly">結合：{detail}</string>
+  <string key="transform.error.unknown_engine">不明なプロセッサ：{detail}</string>
+  <string key="transform.error.saxon_missing">Saxon がインストールされていません：installer_dependances.bat を実行するか、pip install saxonche。{detail}</string>
+  <string key="transform.error.source_missing">入力を読み込めません：{detail}</string>
+  <string key="transform.error.source_malformed">入力が整形式ではありません：{detail}</string>
+  <string key="transform.error.xslt_missing">XSLT スタイルシートを読み込めません：{detail}</string>
+  <string key="transform.error.xslt_invalid">XSLT スタイルシートのエラー：{detail}</string>
+  <string key="transform.error.transform_failed">変換中のエラー：{detail}</string>
+  <string key="transform.error.network_failed">ネットワークから読み込めません：{detail}</string>
+  <string key="transform.error.write_refused">書き込み拒否：{detail}
+
+スタイルシートが書き出せるのは出力だけです。Saxon では出力フォルダー内に他のファイルも書き出せます。</string>
+  <string key="transform.error.output_failed">出力を書き出せません：{detail}</string>
+  <string key="transform.error.worker_failed">変換プロセスが停止しました：{detail}</string>
+  <string key="transform.error.internal">内部エラー：{detail}</string>
+  <string key="transform.error.cancelled">変換をキャンセルしました。{detail}</string>
 </translations>

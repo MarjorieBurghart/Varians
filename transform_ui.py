@@ -2,7 +2,8 @@
 """Fichier ▸ « Scénarios de transformation… » (V0.9.2.0) : la liste des
 scénarios du projet, enregistrés dans project.xml (``<transformations>``),
 et des scénarios prédéfinis fournis par Varians, que « Dupliquer… » copie
-dans le projet pour les adapter ; la boîte d'un scénario.
+dans le projet pour les adapter ; la boîte d'un scénario ; le bouton
+« Transformer ▾ » et l'exécution d'un scénario.
 
 Les chemins d'un scénario sont écrits relatifs au projet, ou ``${varians}/…``
 pour une feuille de Varians (``xslt_scenarios.scenario_path``). Les règles
@@ -10,21 +11,27 @@ pour une feuille de Varians (``xslt_scenarios.scenario_path``). Les règles
 """
 from __future__ import annotations
 
+import json
 import re
+import tempfile
 from dataclasses import replace
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView, QButtonGroup, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout,
-    QHeaderView, QLineEdit, QMessageBox, QPushButton, QRadioButton, QTableWidget, QTableWidgetItem, QTreeWidget,
-    QTreeWidgetItem, QVBoxLayout, QWidget,
+    QHeaderView, QLineEdit, QMenu, QMessageBox, QProgressDialog, QPushButton, QRadioButton, QTableWidget,
+    QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
-from app_context import tr as _t
+from app_context import _settings, tr as _t
 from project_config import TransformScenario
 from project_management import update_project_transformations
+from transform_runner import TransformRunner
+from xml_assembly import path_key
+from xslt_engines import JOURNAL_CODES
 from xslt_scenarios import (predefined_scenarios, project_sources, resolve_path, saxon_available, scenario_path,
-                            scenario_problems)
+                            scenario_problems, scenario_request, scenario_source, stylesheet_path)
 
 # Problèmes qui empêchent d'enregistrer un scénario ; les autres (fichier
 # absent, Saxon non installé…) sont signalés, et l'enregistrement reste possible.
@@ -296,8 +303,14 @@ class ScenarioListDialog(QDialog):
         row.addStretch(1)
         root.addLayout(row)
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, parent=self)
+        self.preview_btn = self.buttons.addButton(_t("transform.preview"), QDialogButtonBox.ButtonRole.ActionRole)
+        self.run_btn = self.buttons.addButton(_t("transform.run"), QDialogButtonBox.ButtonRole.AcceptRole)
+        self.preview_btn.clicked.connect(lambda: self._choose(True))
+        self.run_btn.clicked.connect(lambda: self._choose(False))
         self.buttons.rejected.connect(self.reject)
         root.addWidget(self.buttons)
+        # Scénario à exécuter quand la liste se ferme : (scénario, aperçu).
+        self.chosen = None
         self._refresh()
 
     # --- Liste ------------------------------------------------------------------
@@ -344,7 +357,15 @@ class ScenarioListDialog(QDialog):
         own = chosen is not None and chosen[0] == "project"
         self.edit_btn.setEnabled(own)
         self.remove_btn.setEnabled(own)
-        self.duplicate_btn.setEnabled(chosen is not None)
+        for button in (self.duplicate_btn, self.preview_btn, self.run_btn):
+            button.setEnabled(chosen is not None)
+
+    def _choose(self, preview):
+        """« Aperçu » ou « Exécuter » : la liste se ferme sur ce choix."""
+        scenario = self.selected_scenario()
+        if scenario is not None:
+            self.chosen = (scenario, preview)
+            self.accept()
 
     # --- Modifications ----------------------------------------------------------
 
@@ -412,15 +433,61 @@ class ScenarioListDialog(QDialog):
         return self._store(self._scenarios[:index] + self._scenarios[index + 1:], -1)
 
 
+def _worker_command():
+    """Commande du processus de transformation (None : Varians relancé)."""
+    return None
+
+
 class TransformScenariosMixin:
-    """Méthodes de MainWindow : voir la docstring du module."""
+    """Méthodes de MainWindow : voir la docstring du module.
+
+    Une exécution (``run_transform_scenario``) : vérifier le scénario,
+    enregistrer ce qu'il lit, lancer son processus (``TransformRunner``),
+    montrer « Transformation en cours… » au-delà d'une demi-seconde, puis le
+    compte rendu (« Ouvrir », journal en détail) ou l'erreur. L'aperçu écrit
+    dans un dossier temporaire de la session et s'ouvre aussitôt."""
+
+    transform_progress = None
+    _transform_runner = None
+    _transform_running = None
+    _transform_preview_folder = None
+    _LAST_SCENARIO_SETTING = "transformLastScenario"
+
+    # --- Liste, bouton et menu ----------------------------------------------------
 
     def transform_scenarios_dialog(self):
         """Fichier ▸ « Scénarios de transformation… »."""
         dialog = ScenarioListDialog(self.project, self.project.transformations, self._save_transformations,
                                     self._transform_current_path(), self)
-        dialog.exec()
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.chosen is not None:
+            scenario, preview = dialog.chosen
+            self.run_transform_scenario(scenario, preview=preview)
         return dialog
+
+    def _build_transform_button(self):
+        """Bouton « Transformer ▾ » de la barre d'outils : un clic relance le
+        dernier scénario (Ctrl+Shift+T), la flèche donne la liste."""
+        self.transform_menu = QMenu(self)
+        self.transform_menu.aboutToShow.connect(self._fill_transform_menu)
+        self.action_transform = self._make_action(_t("toolbar.transform"), "Ctrl+Shift+T",
+                                                  self.run_last_transform_scenario, _t("toolbar.transform.tip"))
+        self.addAction(self.action_transform)
+        self.transform_button = QToolButton(self)
+        self.transform_button.setDefaultAction(self.action_transform)
+        self.transform_button.setMenu(self.transform_menu)
+        self.transform_button.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
+        return self.transform_button
+
+    def _fill_transform_menu(self):
+        menu = self.transform_menu
+        menu.clear()
+        for scenarios in (self.project.transformations, predefined()):
+            for scenario in scenarios:
+                action = menu.addAction(scenario.name)
+                action.triggered.connect(lambda _checked=False, s=scenario: self.run_transform_scenario(s))
+            if scenarios:
+                menu.addSeparator()
+        menu.addAction(self.action_transform_scenarios)
 
     def _transform_current_path(self):
         """Fichier du document affiché, ou None."""
@@ -436,3 +503,165 @@ class TransformScenariosMixin:
             return False
         self.project = replace(self.project, transformations=tuple(scenarios))
         return True
+
+    # --- Dernier scénario ------------------------------------------------------------
+
+    def _last_scenarios(self):
+        try:
+            value = json.loads(str(_settings().value(self._LAST_SCENARIO_SETTING, "{}") or "{}"))
+        except ValueError:
+            value = {}
+        return value if isinstance(value, dict) else {}
+
+    def _remember_transform_scenario(self, scenario):
+        group = "predefined" if scenario in predefined() else "project"
+        last = self._last_scenarios()
+        last[path_key(self.project.path)] = [group, scenario.name]
+        _settings().setValue(self._LAST_SCENARIO_SETTING, json.dumps(last, ensure_ascii=False))
+
+    def last_transform_scenario(self):
+        """Dernier scénario lancé dans ce projet, s'il existe encore."""
+        entry = self._last_scenarios().get(path_key(self.project.path))
+        if not isinstance(entry, list) or len(entry) != 2:
+            return None
+        group, name = entry
+        scenarios = predefined() if group == "predefined" else self.project.transformations
+        return next((scenario for scenario in scenarios if scenario.name == name), None)
+
+    def run_last_transform_scenario(self):
+        """Bouton « Transformer », Ctrl+Shift+T : sans dernier scénario, la liste."""
+        scenario = self.last_transform_scenario()
+        if scenario is None:
+            self.transform_scenarios_dialog()
+            return False
+        return self.run_transform_scenario(scenario)
+
+    # --- Exécution -------------------------------------------------------------------
+
+    def transform_runner(self):
+        if self._transform_runner is None:
+            self._transform_runner = TransformRunner(_worker_command(), self)
+            self._transform_runner.finished.connect(self._transform_finished)
+        return self._transform_runner
+
+    def run_transform_scenario(self, scenario, preview=False):
+        """Lance ``scenario`` (``preview`` : dans un dossier temporaire, ouvert
+        aussitôt). True si l'exécution a commencé ; le compte rendu vient
+        quand le processus a fini."""
+        runner = self.transform_runner()
+        if runner.running():
+            QMessageBox.information(self, _t("transform.title"), _t("transform.busy"))
+            return False
+        current = self._transform_current_path()
+        problems = scenario_problems(scenario, self.project, current)
+        if problems:
+            QMessageBox.warning(self, _t("transform.title"), _t(
+                "transform.cannot_run", name=scenario.name, problems="\n".join(problem_text(p) for p in problems)))
+            return False
+        if not self._save_for_transform(scenario, current):
+            return False
+        output_dir = self._transform_preview_dir() if preview else None
+        request = scenario_request(scenario, self.project, current, output_dir)
+        if not preview:
+            self._remember_transform_scenario(scenario)
+        self._transform_running = (scenario, preview, request)
+        runner.start(request)
+        self._show_transform_progress(scenario)
+        return True
+
+    def _save_for_transform(self, scenario, current):
+        """Enregistre ce que le scénario lit et qui est modifié : l'édition, ses
+        parties et le fragment non appliqué (comme pour l'export web), le
+        document ou le fichier source, la feuille et la CSS s'ils sont ouverts.
+        False si l'un d'eux ne l'est pas."""
+        source, assembled = scenario_source(scenario, self.project, current)
+        if assembled and not self._save_edition_for_export():
+            return False
+        read = {path_key(path) for path in (source, stylesheet_path(scenario, self.project),
+                                           resolve_path(self.project, scenario.css)) if path}
+        for session in list(self.documents):
+            if session.path is None or path_key(session.path) not in read:
+                continue
+            if session is self.document:
+                if self._has_unsaved_work() and not self.save_contextual():
+                    return False
+            elif session.modified and not self._save_session(session):
+                return False
+        return True
+
+    def _transform_preview_dir(self):
+        """Dossier temporaire des aperçus, effacé à la fin de la session."""
+        if self._transform_preview_folder is None:
+            self._transform_preview_folder = tempfile.TemporaryDirectory(prefix="varians-apercu-")
+        return Path(self._transform_preview_folder.name)
+
+    def _show_transform_progress(self, scenario):
+        progress = QProgressDialog(_t("transform.running", name=scenario.name), _t("transform.cancel"), 0, 0, self)
+        progress.setWindowTitle(_t("transform.title"))
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setMinimumDuration(10 ** 8)         # montrée par la minuterie ci-dessous
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        progress.canceled.connect(self.transform_runner().cancel)
+        self.transform_progress = progress
+
+        def show():
+            if self.transform_progress is progress:
+                progress.show()
+
+        QTimer.singleShot(500, show)
+
+    def _transform_finished(self, result):
+        progress, self.transform_progress = self.transform_progress, None
+        if progress is not None:
+            progress.canceled.disconnect()
+            progress.close()
+            progress.deleteLater()
+        if self._transform_running is None:
+            return
+        scenario, preview, request = self._transform_running
+        self._transform_running = None
+        if result.error_code == "cancelled":
+            self.statusBar().showMessage(_t("transform.cancelled", name=scenario.name), 8000)
+            return
+        journal = transform_journal(result, request)
+        if not result.ok:
+            box = QMessageBox(self)
+            box.setIcon(QMessageBox.Icon.Warning)
+            box.setWindowTitle(_t("transform.failed.title"))
+            box.setText(_t("transform.failed.text", name=scenario.name,
+                           error=_t(f"transform.error.{result.error_code}", detail=result.error)))
+            box.setDetailedText(journal)
+            box.addButton(_t("common.close"), QMessageBox.ButtonRole.RejectRole)
+            box.exec()
+            return
+        output = result.outputs[0]
+        if preview:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(output))
+            return
+        text = _t("transform.done.text", name=scenario.name, count=len(result.outputs),
+                  seconds=f"{result.seconds:.2f}", output=output)
+        refused = [detail for code, detail in result.journal if code == "write_refused"]
+        if refused:
+            text += _t("transform.done.refused", files="\n".join(refused))
+        box = QMessageBox(self)
+        box.setWindowTitle(_t("transform.done.title"))
+        box.setText(text)
+        box.setDetailedText(journal)
+        open_btn = box.addButton(_t("common.open"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(_t("common.close"), QMessageBox.ButtonRole.RejectRole)
+        box.exec()
+        if box.clickedButton() is open_btn:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(output))
+
+
+def transform_journal(result, request):
+    """Journal d'une exécution, ligne à ligne, dans la langue de l'interface."""
+    engine = engine_label(result.engine) + (f" — {result.version}" if result.version else "")
+    lines = [_t("transform.journal.engine", engine=engine, seconds=f"{result.seconds:.2f}")]
+    params = request.get("params") or []
+    if params:
+        lines.append(_t("transform.journal.params", params=" ; ".join(f"{name} = {value}" for name, value in params)))
+    for code, detail in result.journal:
+        lines.append(_t(f"transform.journal.{code}", detail=detail) if code in JOURNAL_CODES else f"{code}: {detail}")
+    return "\n".join(lines)

@@ -875,4 +875,49 @@ Přesto uložit?</string>
   <string key="transform.problem.output_is_folder">Výsledek je složka: {detail}</string>
   <string key="transform.problem.output_is_source">Výsledek by nahradil zdroj projektu: {detail}</string>
   <string key="transform.problem.css_overwrites_source">Kopie CSS by nahradila zdroj projektu: {detail}</string>
+  <string key="toolbar.transform">Transformovat</string>
+  <string key="toolbar.transform.tip">Spustit poslední scénář transformace (Ctrl+Shift+T); šipka zobrazí seznam scénářů</string>
+  <string key="transform.run">Spustit</string>
+  <string key="transform.preview">Náhled</string>
+  <string key="transform.running">Probíhá transformace: {name}…</string>
+  <string key="transform.cancel">Zrušit</string>
+  <string key="transform.cancelled">Transformace zrušena: {name}</string>
+  <string key="transform.busy">Transformace již probíhá.</string>
+  <string key="transform.cannot_run">Scénář „{name}“ nelze spustit:
+{problems}</string>
+  <string key="transform.done.title">Transformace dokončena</string>
+  <string key="transform.done.text">Scénář „{name}“: zapsáno souborů: {count} za {seconds} s.
+
+Výsledek: {output}</string>
+  <string key="transform.done.refused">
+
+Nezapsané soubory (mimo složku výsledku nebo zdroje projektu):
+{files}</string>
+  <string key="transform.failed.title">Transformace selhala</string>
+  <string key="transform.failed.text">Scénář „{name}“ selhal; předchozí výsledek zůstává beze změny.
+
+{error}</string>
+  <string key="transform.journal.engine">Procesor: {engine} — doba: {seconds} s</string>
+  <string key="transform.journal.params">Parametry: {params}</string>
+  <string key="transform.journal.message">Zpráva: {detail}</string>
+  <string key="transform.journal.warning">Upozornění: {detail}</string>
+  <string key="transform.journal.network_read">Načteno ze sítě: {detail}</string>
+  <string key="transform.journal.css_copied">CSS zkopírováno: {detail}</string>
+  <string key="transform.journal.write_refused">Zápis odmítnut: {detail}</string>
+  <string key="transform.journal.assembly">Sestavení: {detail}</string>
+  <string key="transform.error.unknown_engine">Neznámý procesor: {detail}</string>
+  <string key="transform.error.saxon_missing">Saxon není nainstalován: spusťte installer_dependances.bat nebo pip install saxonche.{detail}</string>
+  <string key="transform.error.source_missing">Zdroj nelze přečíst: {detail}</string>
+  <string key="transform.error.source_malformed">Zdroj není správně formován: {detail}</string>
+  <string key="transform.error.xslt_missing">Styl XSLT nelze přečíst: {detail}</string>
+  <string key="transform.error.xslt_invalid">Chyba ve stylu XSLT: {detail}</string>
+  <string key="transform.error.transform_failed">Chyba během transformace: {detail}</string>
+  <string key="transform.error.network_failed">Načtení ze sítě selhalo: {detail}</string>
+  <string key="transform.error.write_refused">Zápis odmítnut: {detail}
+
+Styl zapisuje jen svůj výsledek a se Saxonem i další soubory ve složce výsledku.</string>
+  <string key="transform.error.output_failed">Výsledek nelze zapsat: {detail}</string>
+  <string key="transform.error.worker_failed">Proces transformace se zastavil: {detail}</string>
+  <string key="transform.error.internal">Interní chyba: {detail}</string>
+  <string key="transform.error.cancelled">Transformace zrušena.{detail}</string>
 </translations>

@@ -861,4 +861,49 @@ L’enregistrer quand même ?</string>
   <string key="transform.problem.output_is_folder">Le résultat est un dossier : {detail}</string>
   <string key="transform.problem.output_is_source">Le résultat remplacerait une source du projet : {detail}</string>
   <string key="transform.problem.css_overwrites_source">La copie de la CSS remplacerait une source du projet : {detail}</string>
+  <string key="toolbar.transform">Transformer</string>
+  <string key="toolbar.transform.tip">Exécuter le dernier scénario de transformation (Ctrl+Maj+T) ; la flèche donne la liste des scénarios</string>
+  <string key="transform.run">Exécuter</string>
+  <string key="transform.preview">Aperçu</string>
+  <string key="transform.running">Transformation en cours : {name}…</string>
+  <string key="transform.cancel">Annuler</string>
+  <string key="transform.cancelled">Transformation annulée : {name}</string>
+  <string key="transform.busy">Une transformation est déjà en cours.</string>
+  <string key="transform.cannot_run">Le scénario « {name} » ne peut pas s’exécuter :
+{problems}</string>
+  <string key="transform.done.title">Transformation terminée</string>
+  <string key="transform.done.text">Scénario « {name} » : {count} fichier(s) écrit(s) en {seconds} s.
+
+Résultat : {output}</string>
+  <string key="transform.done.refused">
+
+Fichiers non écrits (hors du dossier du résultat, ou sources du projet) :
+{files}</string>
+  <string key="transform.failed.title">Échec de la transformation</string>
+  <string key="transform.failed.text">Le scénario « {name} » a échoué ; le résultat précédent est inchangé.
+
+{error}</string>
+  <string key="transform.journal.engine">Moteur : {engine} — durée : {seconds} s</string>
+  <string key="transform.journal.params">Paramètres : {params}</string>
+  <string key="transform.journal.message">Message : {detail}</string>
+  <string key="transform.journal.warning">Avertissement : {detail}</string>
+  <string key="transform.journal.network_read">Lu sur le réseau : {detail}</string>
+  <string key="transform.journal.css_copied">CSS copiée : {detail}</string>
+  <string key="transform.journal.write_refused">Écriture refusée : {detail}</string>
+  <string key="transform.journal.assembly">Assemblage : {detail}</string>
+  <string key="transform.error.unknown_engine">Moteur inconnu : {detail}</string>
+  <string key="transform.error.saxon_missing">Saxon n’est pas installé : lancer installer_dependances.bat, ou pip install saxonche.{detail}</string>
+  <string key="transform.error.source_missing">Source illisible : {detail}</string>
+  <string key="transform.error.source_malformed">Source mal formée : {detail}</string>
+  <string key="transform.error.xslt_missing">Feuille XSLT illisible : {detail}</string>
+  <string key="transform.error.xslt_invalid">Erreur dans la feuille XSLT : {detail}</string>
+  <string key="transform.error.transform_failed">Erreur pendant la transformation : {detail}</string>
+  <string key="transform.error.network_failed">Lecture réseau impossible : {detail}</string>
+  <string key="transform.error.write_refused">Écriture refusée : {detail}
+
+Une feuille n’écrit que son résultat, et, avec Saxon, d’autres fichiers dans le dossier du résultat.</string>
+  <string key="transform.error.output_failed">Écriture du résultat impossible : {detail}</string>
+  <string key="transform.error.worker_failed">Le processus de transformation s’est arrêté : {detail}</string>
+  <string key="transform.error.internal">Erreur interne : {detail}</string>
+  <string key="transform.error.cancelled">Transformation annulée.{detail}</string>
 </translations>

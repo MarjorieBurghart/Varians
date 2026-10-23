@@ -238,3 +238,13 @@ def test_an_unknown_engine_is_refused(project):
     request = scenario_request(TransformScenario("Essai", _stylesheet(project, ""), "publications/essai.html"), project)
     result = run(dict(request, engine="xsltproc"))
     assert not result.ok and result.error_code == "unknown_engine"
+
+
+def test_each_failure_and_journal_entry_has_a_message_in_the_seven_catalogs():
+    import xml.etree.ElementTree as ET
+    from xslt_engines import ERROR_CODES, JOURNAL_CODES
+    for language in ("fr", "en", "de", "ja", "cs", "it", "ru"):
+        root = ET.parse(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key") for string in root.findall("string")}
+        assert {f"transform.error.{code}" for code in ERROR_CODES} <= catalog, language
+        assert {f"transform.journal.{code}" for code in JOURNAL_CODES} <= catalog, language

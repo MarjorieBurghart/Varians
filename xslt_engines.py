@@ -39,6 +39,13 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 NETWORK_TIMEOUT = 30
+# Codes d'échec (``transform.error.<code>``) et du journal
+# (``transform.journal.<code>``) ; cancelled et worker_failed viennent du
+# client du processus (transform_runner).
+ERROR_CODES = ("unknown_engine", "saxon_missing", "source_missing", "source_malformed", "xslt_missing",
+               "xslt_invalid", "transform_failed", "network_failed", "write_refused", "output_failed", "internal",
+               "worker_failed", "cancelled")
+JOURNAL_CODES = ("message", "warning", "network_read", "css_copied", "write_refused", "assembly")
 
 
 @dataclass

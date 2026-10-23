@@ -120,8 +120,9 @@ def edition_parts(edition) -> list[Path]:
     return [] if assembly.root is None else list(assembly.parts)
 
 
-def _source_path(scenario, project, current):
-    """``(source, assembler)`` du scénario ; source None si elle manque."""
+def scenario_source(scenario, project, current=None):
+    """``(source, assembler)`` du scénario ; source None si elle manque.
+    ``current`` : le fichier du document affiché."""
     if scenario.source == "edition":
         return project.edition, True
     if scenario.source == "current":
@@ -132,7 +133,7 @@ def _source_path(scenario, project, current):
 
 
 def _protected(scenario, project, current, sources):
-    source, _assemble = _source_path(scenario, project, current) if scenario.source in SOURCES else (None, False)
+    source, _assemble = scenario_source(scenario, project, current) if scenario.source in SOURCES else (None, False)
     paths = list(project_sources(project) if sources is None else sources)
     paths += [source, stylesheet_path(scenario, project), resolve_path(project, scenario.css)]
     return {path_key(path): Path(path) for path in paths if path}
@@ -185,7 +186,7 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
     problème : chemins absolus, paramètres (avec ``css``, le nom de la CSS,
     sauf si le scénario le fixe), fichiers protégés. ``output_dir`` :
     dossier où écrire le résultat à la place du sien (aperçu)."""
-    source, assemble_source = _source_path(scenario, project, current)
+    source, assemble_source = scenario_source(scenario, project, current)
     css = resolve_path(project, scenario.css)
     output = resolve_path(project, scenario.output)
     if output_dir is not None:

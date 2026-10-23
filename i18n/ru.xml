@@ -875,4 +875,49 @@
   <string key="transform.problem.output_is_folder">Результат — это папка: {detail}</string>
   <string key="transform.problem.output_is_source">Результат заменил бы исходный файл проекта: {detail}</string>
   <string key="transform.problem.css_overwrites_source">Копия CSS заменила бы исходный файл проекта: {detail}</string>
+  <string key="toolbar.transform">Преобразовать</string>
+  <string key="toolbar.transform.tip">Выполнить последний сценарий преобразования (Ctrl+Shift+T); стрелка открывает список сценариев</string>
+  <string key="transform.run">Выполнить</string>
+  <string key="transform.preview">Предпросмотр</string>
+  <string key="transform.running">Выполняется преобразование: {name}…</string>
+  <string key="transform.cancel">Отменить</string>
+  <string key="transform.cancelled">Преобразование отменено: {name}</string>
+  <string key="transform.busy">Преобразование уже выполняется.</string>
+  <string key="transform.cannot_run">Сценарий «{name}» нельзя выполнить:
+{problems}</string>
+  <string key="transform.done.title">Преобразование завершено</string>
+  <string key="transform.done.text">Сценарий «{name}»: записано файлов: {count} за {seconds} с.
+
+Результат: {output}</string>
+  <string key="transform.done.refused">
+
+Не записанные файлы (вне папки результата или исходные файлы проекта):
+{files}</string>
+  <string key="transform.failed.title">Преобразование не удалось</string>
+  <string key="transform.failed.text">Сценарий «{name}» завершился ошибкой; прежний результат не изменён.
+
+{error}</string>
+  <string key="transform.journal.engine">Процессор: {engine} — длительность: {seconds} с</string>
+  <string key="transform.journal.params">Параметры: {params}</string>
+  <string key="transform.journal.message">Сообщение: {detail}</string>
+  <string key="transform.journal.warning">Предупреждение: {detail}</string>
+  <string key="transform.journal.network_read">Прочитано из сети: {detail}</string>
+  <string key="transform.journal.css_copied">CSS скопирован: {detail}</string>
+  <string key="transform.journal.write_refused">Запись отклонена: {detail}</string>
+  <string key="transform.journal.assembly">Сборка: {detail}</string>
+  <string key="transform.error.unknown_engine">Неизвестный процессор: {detail}</string>
+  <string key="transform.error.saxon_missing">Saxon не установлен: запустите installer_dependances.bat или pip install saxonche.{detail}</string>
+  <string key="transform.error.source_missing">Не удаётся прочитать источник: {detail}</string>
+  <string key="transform.error.source_malformed">Источник не является корректным XML: {detail}</string>
+  <string key="transform.error.xslt_missing">Не удаётся прочитать таблицу XSLT: {detail}</string>
+  <string key="transform.error.xslt_invalid">Ошибка в таблице XSLT: {detail}</string>
+  <string key="transform.error.transform_failed">Ошибка во время преобразования: {detail}</string>
+  <string key="transform.error.network_failed">Не удалось прочитать из сети: {detail}</string>
+  <string key="transform.error.write_refused">Запись отклонена: {detail}
+
+Таблица стилей записывает только свой результат, а с Saxon — и другие файлы в папке результата.</string>
+  <string key="transform.error.output_failed">Не удаётся записать результат: {detail}</string>
+  <string key="transform.error.worker_failed">Процесс преобразования остановился: {detail}</string>
+  <string key="transform.error.internal">Внутренняя ошибка: {detail}</string>
+  <string key="transform.error.cancelled">Преобразование отменено.{detail}</string>
 </translations>
