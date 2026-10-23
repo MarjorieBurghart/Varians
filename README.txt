@@ -1,3 +1,10 @@
+PROCHAINE VERSION (EN PRÉPARATION)
+
+• Onglets des documents : l'onglet du document affiché se distingue
+  nettement (fond blanc, filet bleu en haut, nom en gras) ; les autres sont
+  en retrait, sur un fond plus sombre. La couleur d'un document mal formé
+  (rouge) ou non valide (orange) reste visible, même sur l'onglet courant.
+
 VARIANS V0.9.1.6 — EXPORT WEB D'UNE ÉDITION ASSEMBLÉE
 
 • « Générer viewer web » exporte toute l'édition en parties (XInclude) :
