@@ -661,6 +661,7 @@ def create_portable_project(
         raise ValueError("TARGET_NOT_EMPTY")
     target_dir.mkdir(parents=True, exist_ok=True)
     (target_dir / "xml").mkdir(exist_ok=True)
+    (target_dir / "xslt").mkdir(exist_ok=True)                    # feuilles XSLT du projet
     (target_dir / "alignments").mkdir(exist_ok=True)
     (target_dir / "web_output").mkdir(exist_ok=True)
 

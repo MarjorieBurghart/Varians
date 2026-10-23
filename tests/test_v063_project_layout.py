@@ -32,6 +32,7 @@ def test_new_project_places_edition_in_xml_subdirectory():
 
         assert project_xml == target / "project.xml"
         assert (target / "xml" / "edition.xml").is_file()
+        assert (target / "xslt").is_dir()                       # feuilles XSLT du projet (V0.9.2.1)
         assert not (target / "edition.xml").exists()
         text = project_xml.read_text(encoding="utf-8")
         assert 'file="xml/edition.xml"' in text

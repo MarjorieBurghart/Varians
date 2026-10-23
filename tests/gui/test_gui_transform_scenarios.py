@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Fichier ▸ « Scénarios de transformation… » (V0.9.2.0) : liste des
 scénarios du projet et des scénarios prédéfinis, boîte d'un scénario,
-enregistrement dans project.xml."""
+enregistrement dans project.xml ; « Ouvrir la feuille » (V0.9.2.1)."""
 from __future__ import annotations
+
+from dataclasses import replace
 
 from PySide6.QtWidgets import QDialog, QMessageBox
 
@@ -211,3 +213,176 @@ def test_saxon_missing_is_shown_in_the_choice_of_engine(open_window, sermons_pro
     dialogs.expect("dialog", lambda dialog: (look(dialog), dialog.reject(), dialog.result())[-1])
     window.transform_scenarios_dialog()
     assert seen["saxon"] == tr("transform.engine.missing", engine=tr("transform.engine.saxon"))
+
+
+# --- « Ouvrir la feuille » (V0.9.2.1) -----------------------------------------------------------
+
+ROLE = QMessageBox.ButtonRole
+
+
+def _keep_open(action):
+    """Réponse à la liste : ``action(dialog)``, qui la ferme elle-même."""
+    def answer(dialog):
+        answer.dialog = dialog
+        action(dialog)
+        return dialog.result()
+    return answer
+
+
+def _open_row(group, row):
+    def action(dialog):
+        parent = dialog.project_group if group == "project" else dialog.predefined_group
+        dialog.tree.setCurrentItem(parent.child(row))
+        dialog.open_stylesheet_btn.click()
+    return action
+
+
+def _declared(project_path):
+    """Documents inscrits au projet, hors ceux du jeu d'essai (xml/personnes.xml)."""
+    return [d.path for d in load_project(project_path).documents if d.path.parent.name != "xml"]
+
+
+def test_the_stylesheet_of_a_scenario_opens_as_a_document_of_the_project(open_window, sermons_project, dialogs):
+    window = open_window(_with_scenarios(sermons_project, PERSONS))
+    stylesheet = sermons_project.parent / "rendering" / "personnes.xsl"
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    window.transform_scenarios_dialog()
+    assert window.document.path == stylesheet
+    assert _declared(sermons_project) == [stylesheet]
+    assert load_project(sermons_project).transformations == (PERSONS,)
+
+    # Une seconde fois : le document déjà inscrit est affiché.
+    window.show_document(window.edition_session)
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    window.transform_scenarios_dialog()
+    assert window.document.path == stylesheet
+    assert _declared(sermons_project) == [stylesheet]
+
+
+def test_the_open_button_needs_a_stylesheet_of_the_project(open_window, sermons_project, dialogs):
+    missing = TransformScenario("Sans feuille", "rendering/absente.xsl", "publications/a.html")
+    window = open_window(_with_scenarios(sermons_project, PERSONS, missing))
+
+    def check(dialog):
+        button = dialog.open_stylesheet_btn
+        assert button.text() == tr("transform.open_stylesheet")
+        dialog.tree.setCurrentItem(dialog.project_group.child(0))
+        assert button.isEnabled() and button.toolTip() == tr("transform.open_stylesheet.tip")
+        dialog.tree.setCurrentItem(dialog.project_group.child(1))
+        assert not button.isEnabled()
+        dialog.tree.setCurrentItem(dialog.predefined_group.child(0))
+        assert not button.isEnabled() and button.toolTip() == tr("transform.open_stylesheet.predefined")
+
+    dialogs.expect("dialog", _in_list(check))
+    window.transform_scenarios_dialog()
+
+
+def _outside(tmp_path):
+    outside = tmp_path / "ailleurs" / "index.xsl"
+    outside.parent.mkdir()
+    outside.write_text('<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>',
+                       encoding="utf-8")
+    return outside
+
+
+def test_an_outside_stylesheet_is_copied_into_xslt_and_the_scenario_uses_the_copy(open_window, sermons_project,
+                                                                                  dialogs, tmp_path):
+    outside = _outside(tmp_path)
+    scenario = TransformScenario("Index", outside.as_posix(), "publications/index.html")
+    (sermons_project.parent / "xslt").mkdir()
+    (sermons_project.parent / "xslt" / "index.xsl").write_text("<existant/>", encoding="utf-8")
+    window = open_window(_with_scenarios(sermons_project, scenario))
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    dialogs.expect("box", ROLE.AcceptRole)                           # Copier dans le projet
+    window.transform_scenarios_dialog()
+    copy = sermons_project.parent / "xslt" / "index_2.xsl"
+    assert copy.read_text(encoding="utf-8") == outside.read_text(encoding="utf-8")
+    assert (sermons_project.parent / "xslt" / "index.xsl").read_text(encoding="utf-8") == "<existant/>"
+    kind, title, text = dialogs.seen[-1]
+    assert title == tr("transform.open_stylesheet") and str(outside) in text and str(copy) in text
+    expected = (TransformScenario("Index", "xslt/index_2.xsl", "publications/index.html"),)
+    assert load_project(sermons_project).transformations == expected
+    assert window.project.transformations == expected
+    assert window.document.path == copy
+    assert _declared(sermons_project) == [copy]
+
+
+def test_an_outside_stylesheet_may_be_opened_in_place_or_left_alone(open_window, sermons_project, dialogs,
+                                                                    tmp_path):
+    outside = _outside(tmp_path)
+    scenario = TransformScenario("Index", outside.as_posix(), "publications/index.html")
+    window = open_window(_with_scenarios(sermons_project, scenario))
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    dialogs.expect("box", ROLE.RejectRole)                           # Annuler
+    window.transform_scenarios_dialog()
+    assert window.document is window.edition_session
+    assert _declared(sermons_project) == []
+
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    dialogs.expect("box", ROLE.ActionRole)                           # Ouvrir sans copier
+    window.transform_scenarios_dialog()
+    assert window.document.path == outside
+    assert _declared(sermons_project) == [outside]
+    assert load_project(sermons_project).transformations == (scenario,)
+    assert not (sermons_project.parent / "xslt").exists()
+
+
+def test_a_stylesheet_of_varians_is_copied_before_it_is_opened(open_window, sermons_project, dialogs):
+    import xslt_scenarios
+    original = TransformScenario("Édition", "${varians}/tei-to-html.xsl", "publications/edition.html",
+                                 css="${varians}/tei.css")
+    window = open_window(_with_scenarios(sermons_project, PERSONS, original))
+    dialogs.expect("dialog", _keep_open(_open_row("project", 1)))
+    dialogs.expect("box", ROLE.AcceptRole)
+    window.transform_scenarios_dialog()
+    copy = sermons_project.parent / "xslt" / "tei-to-html.xsl"
+    assert copy.read_bytes() == (xslt_scenarios.VARIANS_STYLESHEETS / "tei-to-html.xsl").read_bytes()
+    kind, title, text = dialogs.seen[-1]
+    assert tr("transform.open_stylesheet.copy") and "tei-to-html.xsl" in text and str(copy) in text
+    assert load_project(sermons_project).transformations == (
+        PERSONS, TransformScenario("Édition", "xslt/tei-to-html.xsl", "publications/edition.html",
+                                   css="${varians}/tei.css"))
+    assert window.document.path == copy
+
+
+def test_the_scenario_dialog_saves_the_scenario_then_opens_its_stylesheet(open_window, sermons_project, dialogs):
+    window = open_window(_with_scenarios(sermons_project, PERSONS))
+
+    def edit(dialog):
+        dialog.tree.setCurrentItem(dialog.project_group.child(0))
+        dialog.edit_scenario()
+
+    def change_and_open(dialog):
+        change_and_open.dialog = dialog
+        assert dialog.open_stylesheet_btn.text() == tr("transform.open_stylesheet")
+        dialog.remove_param_row(0)
+        dialog.open_stylesheet_btn.click()
+        return dialog.result()
+
+    dialogs.expect("dialog", _keep_open(edit))
+    dialogs.expect("dialog", change_and_open)
+    window.transform_scenarios_dialog()
+    assert load_project(sermons_project).transformations == (replace(PERSONS, params=()),)
+    assert window.document.path == sermons_project.parent / "rendering" / "personnes.xsl"
+
+
+def test_the_scenario_dialog_does_not_open_a_refused_scenario(open_window, sermons_project, dialogs):
+    window = open_window(_with_scenarios(sermons_project, PERSONS))
+
+    def add(dialog):
+        dialog.add_scenario()
+        dialog.reject()
+
+    def refused(dialog):
+        dialog.name_edit.setText("Personnes")                       # nom déjà pris
+        dialog.open_stylesheet_btn.click()
+        assert dialog.result() != QDialog.DialogCode.Accepted and not dialog.open_after
+        dialog.reject()
+        return dialog.result()
+
+    dialogs.expect("dialog", _keep_open(add))
+    dialogs.expect("dialog", refused)
+    dialogs.expect("warning")
+    window.transform_scenarios_dialog()
+    assert window.document is window.edition_session
+    assert load_project(sermons_project).transformations == (PERSONS,)

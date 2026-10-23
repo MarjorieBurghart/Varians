@@ -677,9 +677,12 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="documents.edition_tab">Edition</string>
   <string key="documents.unsaved.text">Die folgenden Dokumente enthalten nicht gespeicherte Änderungen:</string>
   <string key="documents.save_all">Alle speichern</string>
-  <string key="documents.menu">XML-Dokumente des Projekts</string>
-  <string key="documents.add.menu">XML-Dokument hinzufügen…</string>
-  <string key="documents.add.title">XML-Dokument zum Projekt hinzufügen</string>
+  <string key="documents.menu">XML-/XSLT-Dokumente des Projekts…</string>
+  <string key="documents.add.menu">XML- oder XSLT-Dokument hinzufügen…</string>
+  <string key="documents.add.title">XML-Dokument oder XSLT-Stylesheet zum Projekt hinzufügen</string>
+  <string key="documents.new_stylesheet.menu">Neues XSLT-Stylesheet…</string>
+  <string key="documents.new_stylesheet.title">Neues XSLT-Stylesheet</string>
+  <string key="documents.new_stylesheet.version">XSLT-Version des Stylesheets:</string>
   <string key="documents.add.already">„{name}“ gehört bereits zum Projekt.</string>
   <string key="documents.add.copied">Dokument in das Projekt kopiert: {path}</string>
   <string key="documents.new.menu">Neues XML-Dokument…</string>
@@ -831,6 +834,42 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="transform.duplicate">Duplizieren…</string>
   <string key="transform.remove">Löschen</string>
   <string key="transform.remove.question">Szenario „{name}“ aus dem Projekt löschen?</string>
+  <string key="transform.open_stylesheet">Stylesheet öffnen</string>
+  <string key="transform.open_stylesheet.tip">Das XSLT-Stylesheet des Szenarios zum Bearbeiten anzeigen; es wird zu den Dokumenten des Projekts hinzugefügt.</string>
+  <string key="transform.open_stylesheet.predefined">Duplizieren Sie dieses Szenario zuerst in das Projekt, um sein Stylesheet zu bearbeiten.</string>
+  <string key="transform.open_stylesheet.varians">Das Stylesheet „{name}“ gehört zu Varians: Es wird nicht an Ort und Stelle bearbeitet.
+
+Varians kopiert es in das Projekt:
+{path}
+
+Das Szenario „{scenario}“ verwendet dann diese Kopie.</string>
+  <string key="transform.open_stylesheet.outside">Das Stylesheet des Szenarios „{scenario}“ liegt außerhalb des Projekts:
+{path}
+
+In das Projekt kopieren?
+{target}
+
+Das Szenario verwendet dann diese Kopie. „Ohne Kopieren öffnen“ bearbeitet die Originaldatei.</string>
+  <string key="transform.open_stylesheet.copy">In das Projekt kopieren</string>
+  <string key="transform.open_stylesheet.in_place">Ohne Kopieren öffnen</string>
+  <string key="xslt_check.action">XSLT-Stylesheet prüfen</string>
+  <string key="xslt_check.action.tip">Das angezeigte XSLT-Stylesheet mit der Engine seiner Szenarien kompilieren, ohne es auszuführen (F8)</string>
+  <string key="xslt_check.panel.title">Prüfung des XSLT-Stylesheets</string>
+  <string key="xslt_check.panel.valid">XSLT-Stylesheet laut {engines} korrekt.</string>
+  <string key="xslt_check.panel.warnings">XSLT-Stylesheet laut {engines} korrekt, mit {count} Warnung(en).</string>
+  <string key="xslt_check.panel.invalid">{count} Fehler im XSLT-Stylesheet laut {engines}. Doppelklicken Sie auf einen Fehler, um zur Zeile zu springen.</string>
+  <string key="xslt_check.panel.malformed">Das Stylesheet ist kein wohlgeformtes XML. Doppelklicken Sie auf den Fehler, um zur Zeile zu springen.</string>
+  <string key="xslt_check.panel.failed">Prüfung mit {engine} nicht möglich: {error}</string>
+  <string key="xslt_check.status.running">XSLT: Prüfung läuft…</string>
+  <string key="xslt_check.status.valid">{engines}: Stylesheet korrekt ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: {count} Fehler</string>
+  <string key="xslt_check.status.malformed">XSLT: XML nicht wohlgeformt</string>
+  <string key="xslt_check.status.failed">XSLT: Prüfung nicht möglich</string>
+  <string key="xslt_check.message.valid">XSLT-Prüfung: Stylesheet korrekt.</string>
+  <string key="file.save_xslt_invalid.title">Fehlerhaftes XSLT-Stylesheet</string>
+  <string key="file.save_xslt_invalid.text">Das Stylesheet ist wohlgeformt, aber seine Kompilierung meldet {count} Fehler. Sie können es speichern und die Fehler später beheben.
+
+Trotzdem speichern?</string>
   <string key="transform.copy_name">{name} (Kopie)</string>
   <string key="transform.source.edition">Edition</string>
   <string key="transform.source.current">Angezeigtes Dokument</string>
@@ -910,6 +949,7 @@ Nicht geschriebene Dateien (außerhalb des Ergebnisordners oder Quellen des Proj
   <string key="transform.error.source_missing">Quelle nicht lesbar: {detail}</string>
   <string key="transform.error.source_malformed">Quelle nicht wohlgeformt: {detail}</string>
   <string key="transform.error.xslt_missing">XSLT-Stylesheet nicht lesbar: {detail}</string>
+  <string key="transform.error.xslt_malformed">Das XSLT-Stylesheet ist kein wohlgeformtes XML: {detail}</string>
   <string key="transform.error.xslt_invalid">Fehler im XSLT-Stylesheet: {detail}</string>
   <string key="transform.error.transform_failed">Fehler während der Transformation: {detail}</string>
   <string key="transform.error.network_failed">Lesen aus dem Netz fehlgeschlagen: {detail}</string>

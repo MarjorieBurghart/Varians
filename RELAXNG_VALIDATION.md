@@ -229,3 +229,17 @@ Dans la fenêtre : colonne **Document** (seulement pour une édition qui a des
 parties), double-clic vers la bonne partie, couleur de chaque onglet selon
 ses propres erreurs ; le résultat est partagé par l’édition et ses parties,
 et toute modification de l’une le rend périmé pour toutes.
+
+## V0.9.2.1 — feuilles XSLT
+
+Une feuille XSLT affichée n’est pas validée par RELAX NG : les mêmes
+déclencheurs (ouverture, F8 — « Vérifier la feuille XSLT » —, frappe une fois
+F8 utilisé, enregistrement) la font compiler par lxml ou Saxon
+(`xslt_check_ui`, voir `XSLT_SCENARIOS.md`). Le résultat prend la forme d’un
+`ValidationResult` et se range comme celui d’une validation RNG ; le panneau,
+la barre d’état et la couleur de l’onglet le montrent de la même façon. À
+l’enregistrement, une feuille qui a des erreurs demande « Enregistrer quand
+même ? » (titre « Feuille XSLT incorrecte »). Le panneau affiche la colonne
+Document quand une erreur est dans un autre fichier (feuille importée ou
+incluse) ; le double-clic mène à ce fichier s’il est un document du projet.
+

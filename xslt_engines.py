@@ -24,6 +24,14 @@ Journal : liste de ``[code, détail]`` (messages ``transform.journal.<code>``) :
 ``css_copied``, ``write_refused``, ``assembly`` (problème d'assemblage).
 Échec : ``error_code`` (message ``transform.error.<code>``) et ``error``,
 le texte du moteur au format « fichier:ligne: message ».
+
+``check(request)`` (V0.9.2.1, ``request["op"] == "check"``) compile la
+feuille ``xslt`` sans l'exécuter : le texte ``text`` s'il est donné (celui
+de l'éditeur, même non enregistré), lu avec l'URI de base du fichier, sinon
+le fichier. Le compte rendu donne toutes les erreurs et tous les
+avertissements dans ``issues`` : ``[fichier, ligne, niveau, message]``
+(niveau ``error`` ou ``warning``, ligne 0 si elle est inconnue) ; une
+feuille qui n'est pas un XML bien formé a le code ``xslt_malformed``.
 """
 from __future__ import annotations
 
@@ -42,8 +50,8 @@ NETWORK_TIMEOUT = 30
 # (``transform.journal.<code>``) ; cancelled et worker_failed viennent du
 # client du processus (transform_runner).
 ERROR_CODES = ("unknown_engine", "saxon_missing", "source_missing", "source_malformed", "xslt_missing",
-               "xslt_invalid", "transform_failed", "network_failed", "write_refused", "output_failed", "internal",
-               "worker_failed", "cancelled")
+               "xslt_malformed", "xslt_invalid", "transform_failed", "network_failed", "write_refused",
+               "output_failed", "internal", "worker_failed", "cancelled")
 JOURNAL_CODES = ("message", "warning", "network_read", "css_copied", "write_refused", "assembly")
 
 
@@ -59,6 +67,8 @@ class TransformResult:
     engine: str = ""
     version: str = ""
     seconds: float = 0.0
+    # Vérification d'une feuille (check) : [fichier, ligne, niveau, message].
+    issues: list = field(default_factory=list)
 
     def to_dict(self):
         return asdict(self)
@@ -68,7 +78,9 @@ class TransformResult:
         return cls(bool(data["ok"]), [str(path) for path in data.get("outputs", ())],
                    [[str(code), str(detail)] for code, detail in data.get("journal", ())],
                    str(data.get("error_code", "")), str(data.get("error", "")), str(data.get("engine", "")),
-                   str(data.get("version", "")), float(data.get("seconds", 0.0)))
+                   str(data.get("version", "")), float(data.get("seconds", 0.0)),
+                   [[str(file), int(line), str(level), str(message)]
+                    for file, line, level, message in data.get("issues", ())])
 
 
 class TransformError(Exception):
@@ -112,6 +124,48 @@ def run(request) -> TransformResult:
         result.error_code, result.error = "internal", f"{type(exc).__name__}: {exc}"
     result.seconds = round(time.perf_counter() - start, 3)
     return result
+
+
+def check(request) -> TransformResult:
+    """Compile la feuille de ``request`` sans l'exécuter (voir la docstring
+    du module)."""
+    start = time.perf_counter()
+    engine = request.get("engine")
+    result = TransformResult(False, engine=str(engine))
+    try:
+        if engine not in _CHECKS:
+            raise TransformError("unknown_engine", str(engine))
+        version, compile_only = _CHECKS[engine]
+        result.version = version()
+        compile_only(request, result.issues)
+        errors = [issue for issue in result.issues if issue[2] == "error"]
+        if errors:
+            file, line, _level, message = errors[0]
+            result.error_code = "xslt_invalid"
+            result.error = f"{Path(file).name}:{line}: {message}" if line else f"{Path(file).name}: {message}"
+        else:
+            result.ok = True
+    except TransformError as exc:                 # les erreurs déjà relevées restent
+        result.error_code, result.error = exc.code, exc.detail
+    except Exception as exc:                      # le processus répond toujours
+        result.error_code, result.error = "internal", f"{type(exc).__name__}: {exc}"
+    result.seconds = round(time.perf_counter() - start, 3)
+    return result
+
+
+def _issue(issues, file, line, level, message):
+    """Ajoute ``[fichier, ligne, niveau, message]`` à ``issues``, sauf doublon
+    (le même message sans lieu, quand il est déjà là avec le sien)."""
+    issue = [str(file), int(line or 0), level, " ".join(str(message).split())]
+    if not issue[3] or issue in issues:
+        return
+    same = [other for other in issues if other[2:] == issue[2:]]
+    if issue[1] == 0 and any(other[1] for other in same):
+        return
+    for other in same:
+        if other[1] == 0:
+            issues.remove(other)
+    issues.append(issue)
 
 
 # --- Écriture -------------------------------------------------------------------------------
@@ -298,6 +352,72 @@ def _run_lxml(request, journal):
         if failures:
             raise TransformError("network_failed", failures[0]) from None
         raise
+
+
+def _lxml_file(entry, xslt):
+    """Fichier d'une entrée du journal lxml (la feuille si elle n'en a pas)."""
+    filename = str(entry.filename or "")
+    if not filename or filename.startswith("<"):
+        return str(xslt)
+    if filename.startswith("file:"):
+        return str(_uri_path(filename) or filename)
+    return filename
+
+
+def _check_lxml(request, issues):
+    from lxml import etree
+    failures = []
+    parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=True)
+    parser.resolvers.add(_network_resolver([], failures))
+    xslt = Path(request["xslt"])
+    text = request.get("text")
+    # Le journal d'erreurs de libxslt garde celles des compilations
+    # précédentes du même fil.
+    etree.clear_error_log()
+    try:
+        if text is None:
+            tree = etree.parse(str(xslt), parser)
+        else:
+            tree = etree.fromstring(text.encode("utf-8"), parser, base_url=str(xslt)).getroottree()
+    except etree.XMLSyntaxError as exc:
+        _issue(issues, xslt, exc.lineno, "error", exc.msg)
+        raise TransformError("xslt_malformed", _syntax_text(exc, xslt)) from exc
+    except OSError as exc:
+        raise TransformError("xslt_missing", f"{xslt}: {exc}") from exc
+    access = etree.XSLTAccessControl(read_file=True, write_file=False, create_dir=False,
+                                     read_network=True, write_network=False)
+    try:
+        transform = etree.XSLT(tree, access_control=access)
+    except etree.XSLTParseError as exc:
+        _lxml_issues(exc.error_log, xslt, issues)
+        if not any(issue[2] == "error" for issue in issues):
+            _issue(issues, xslt, 0, "error", failures[0] if failures else (str(exc) or type(exc).__name__))
+        return
+    _lxml_issues(transform.error_log, xslt, issues, failed=False)
+
+
+def _lxml_issues(log, xslt, issues, failed=True):
+    """Erreurs et avertissements d'une compilation lxml. libxslt écrit pour
+    chaque erreur une entrée qui la situe (« compilation error, element
+    'value-of' », avec fichier et ligne), suivie d'entrées sans lieu qui la
+    décrivent : celles-ci forment le message. Après une compilation réussie
+    (``failed`` faux), ce ne sont que des avertissements."""
+    entries = list(log)
+    compiled = not failed
+    located = [index for index, entry in enumerate(entries) if _located(entry)]
+    for rank, index in enumerate(located):
+        entry = entries[index]
+        end = located[rank + 1] if rank + 1 < len(located) else len(entries)
+        details = [e.message.strip() for e in entries[index + 1:end]
+                   if e.domain_name == "XSLT" and (e.message or "").strip() not in ("", "error")]
+        level = "warning" if compiled or entry.level_name == "WARNING" else "error"
+        _issue(issues, _lxml_file(entry, xslt), entry.line, level, " ; ".join(details) or entry.message)
+    if not located:
+        for entry in entries:
+            message = (entry.message or "").strip()
+            if message and message != "error":
+                _issue(issues, _lxml_file(entry, xslt), 0,
+                       "warning" if compiled or entry.level_name == "WARNING" else "error", message)
 
 
 # --- Saxon (XSLT 3.0) -----------------------------------------------------------------------
@@ -487,4 +607,70 @@ def _run_saxon(request, journal):
                     journal.append(["write_refused", str(target)])
         return main.read_bytes(), extra
 
+def _check_saxon(request, issues):
+    from saxonche import PySaxonApiError
+    processor = _saxon_processor()
+    xslt = Path(request["xslt"])
+    log = Path(request["stderr_log"]) if request.get("stderr_log") else None
+    start = log.stat().st_size if log is not None and log.exists() else 0
+
+    def report(failure):
+        # Sous Windows, les erreurs et leur lieu ne sont que sur la sortie
+        # d'erreur ; ailleurs, aussi dans le message de l'exception.
+        stderr = ""
+        if log is not None and log.exists():
+            with open(log, "rb") as stream:
+                stream.seek(start)
+                stderr = stream.read().decode("utf-8", errors="replace")
+        for block in _saxon_blocks(stderr) + _saxon_blocks(failure):
+            _saxon_issue(block, xslt, issues)
+        if failure and not any(issue[2] == "error" for issue in issues):
+            _issue(issues, xslt, 0, "error", failure)
+
+    compiler = processor.new_xslt30_processor()
+    node = None
+    if request.get("text") is not None:
+        builder = processor.new_document_builder()
+        builder.set_line_numbering(True)
+        builder.set_base_uri(xslt.resolve().as_uri())
+        try:
+            node = builder.parse_xml(xml_text=request["text"])
+        except PySaxonApiError as exc:
+            report(str(exc).strip())
+            raise TransformError("xslt_malformed", issues[0][3] if issues else str(exc)) from exc
+    try:
+        if node is None:
+            compiler.compile_stylesheet(stylesheet_file=str(xslt))
+        else:
+            compiler.compile_stylesheet(stylesheet_node=node)
+        report("")
+    except PySaxonApiError as exc:
+        report(str(exc).strip())
+
+
+def _saxon_issue(block, xslt, issues):
+    """Une erreur ou un avertissement de Saxon : fichier, ligne, message."""
+    header = block[0]
+    level = "warning" if header.startswith("Warning") else "error"
+    detail = []
+    for line in block[1:]:
+        if detail and line.startswith(("In ", "at ")):
+            break
+        detail.append(line)
+    message = " ".join(detail) or header
+    match = _SAXON_LOCATION.search(header)
+    if match is None:
+        _issue(issues, xslt, 0, level, message)
+        return
+    # Saxon nomme le fichier par la fin de son URI.
+    name = match.group(2)
+    path = _uri_path(name) if name.startswith("file:") else None
+    if path is None:
+        name = name.rsplit("/", 1)[-1]
+        sibling = xslt.parent / name
+        path = xslt if name == xslt.name else (sibling if sibling.is_file() else name)
+    _issue(issues, path, int(match.group(1)), level, message)
+
+
 _ENGINES = {"lxml": (_lxml_version, _run_lxml), "saxon": (_saxon_version, _run_saxon)}
+_CHECKS = {"lxml": (_lxml_version, _check_lxml), "saxon": (_saxon_version, _check_saxon)}

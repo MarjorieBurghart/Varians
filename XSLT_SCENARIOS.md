@@ -1,4 +1,4 @@
-# Scénarios de transformation XSLT (V0.9.2.0)
+# Scénarios de transformation XSLT (V0.9.2.0) et feuilles éditées dans Varians (V0.9.2.1)
 
 Un scénario applique une feuille XSLT à l'édition, au document affiché ou à
 un fichier, et écrit le résultat dans un fichier. Les scénarios sont
@@ -15,7 +15,9 @@ Les règles de la Vue XSLT / CSS (`XSLT_POLICY.md`) ne changent pas.
 | `xslt_engines.py` | `run(request)` : moteurs lxml (XSLT 1.0) et Saxon (XSLT 3.0), même contrat ; `TransformResult` ; sans Qt |
 | `transform_worker.py` | processus d'une exécution (Varians relancé avec `--transform-worker`) ; sans Qt |
 | `transform_runner.py` | client Qt de ce processus (`TransformRunner` : `start`, `cancel`, `finished`) |
-| `transform_ui.py` | liste et boîte d'un scénario, bouton « Transformer ▾ », exécution, compte rendu (mixin de `MainWindow`) |
+| `transform_ui.py` | liste et boîte d'un scénario, bouton « Transformer ▾ », exécution, compte rendu, « Ouvrir la feuille » (mixin de `MainWindow`) |
+| `xslt_check_ui.py` | vérification de la feuille affichée « comme le RNG » (V0.9.2.1, mixin de `MainWindow`) |
+| `xslt_completion.py` | complétion d'une feuille XSLT d'après le schéma XSLT 3.0 livré (V0.9.2.1) ; sans Qt |
 
 ## Chemins et sources
 
@@ -146,6 +148,73 @@ Une version autonome (PyInstaller, Nuitka) devra embarquer `saxonche`.
 La feuille de Varians (`rendering/tei-to-html.xsl`) reçoit le paramètre
 `css` (`tei.css` par défaut) pour son `<link>` : l'aperçu est inchangé.
 
+## Feuilles éditées dans Varians (V0.9.2.1)
+
+Une feuille XSLT est un document du projet comme un autre (`<documents>`,
+voir `PROJECT_MANAGEMENT.md`) : le format de `project.xml` ne change pas.
+`xslt_scenarios.stylesheet_info` la reconnaît à sa racine (`stylesheet`,
+`transform` ou `package` de l'espace de noms XSLT, ou élément résultat
+littéral portant `xsl:version`) et donne le préfixe XSLT et la version ;
+si la racine est illisible, l'extension `.xsl`/`.xslt` suffit.
+
+**Ajout.** `document_dialogs` copie une feuille venue d'ailleurs dans le
+dossier `xslt/` du projet (créé par `create_portable_project`, ou à la
+première copie), jamais par-dessus un fichier (`free_path`) ; « Nouvelle
+feuille XSLT… » écrit une feuille minimale 1.0 ou 3.0
+(`new_stylesheet_text`). « Ouvrir la feuille » (`transform_ui`) inscrit au
+besoin la feuille d'un scénario du projet et l'affiche ; une feuille de
+Varians (`${varians}/…`) est d'abord copiée dans `xslt/`, une feuille hors
+du projet peut l'être (ou s'ouvrir sur place), et le scénario emploie la
+copie (`update_project_transformations`). Les fichiers annexes (feuilles
+importées, images, CSS, JS) ne sont pas copiés : l'utilisateur les place
+lui-même dans `xslt/`.
+
+**Vérification.** `xslt_engines.check(request)`, requête `op: "check"` du
+processus de transformation : la feuille est compilée sans être exécutée,
+depuis le texte de l'éditeur (`text`, même non enregistré) lu avec l'URI de
+base de son fichier, sinon depuis le fichier. Le compte rendu
+(`TransformResult.issues`) donne toutes les erreurs et tous les
+avertissements, `[fichier, ligne, niveau, message]` :
+
+- lxml : le journal de libxslt situe chaque erreur par une entrée « compilation
+  error, element 'x' » (fichier, ligne), suivie des entrées sans lieu qui la
+  décrivent ; le journal est vidé avant chaque compilation. Après une
+  compilation réussie, ce ne sont que des avertissements ;
+- Saxon : la feuille est lue par un `DocumentBuilder` (URI de base, numéros
+  de ligne), compilée par `compile_stylesheet(stylesheet_node=…)` ; les
+  erreurs, avec leur lieu, sont lues sur la sortie d'erreur du processus
+  (Windows) et dans le message de l'exception, sans doublon ;
+- une feuille qui n'est pas un XML bien formé a le code `xslt_malformed`.
+
+Le moteur (`xslt_scenarios.check_engines`) : celui des scénarios du projet qui
+emploient la feuille, chacun une fois ; sinon d'après `@version` (`1.0` :
+lxml, une autre : Saxon).
+
+`xslt_check_ui` branche cette vérification sur les déclencheurs de la
+validation RELAX NG (`_validate_relaxng_document_impl`) : premier affichage,
+F8 (« Vérifier la feuille XSLT »), frappe une fois F8 utilisé, enregistrement
+(« Enregistrer quand même ? » s'il y a des erreurs). Chaque moteur tourne dans
+son processus (`TransformRunner`) ; F8 et l'enregistrement attendent la
+réponse (`CHECK_TIMEOUT_MSEC`), la vérification automatique non. Le résultat
+devient un `ValidationResult` (`check_validation_result`), rangé comme celui
+d'une validation RNG (`last_rng_result`, avec le jeton `("xslt", moteurs…)`) :
+panneau de validation (colonne Document pour une erreur dans une feuille
+importée ; double-clic vers cette feuille si elle est au projet), barre
+d'état, couleur de l'onglet (`rng_invalid`, `malformed`).
+
+**Complétion.** `xslt_completion` lit le schéma XSLT 3.0 du W3C livré dans
+`resources/schemas/xslt30` (voir son `LISEZMOI.md` : origine, licence BSD,
+conversion) avec le moteur de `rng_completion`, qui ne connaît pas les espaces
+de noms : les noms proposés reçoivent le préfixe de la feuille ; un élément
+d'un autre espace de noms (reconnu à son préfixe) est un élément résultat
+littéral, qui reçoit les instructions (le contenu de `xsl:if`) et les
+attributs `xsl:*` (`LITERAL_RESULT_ATTRIBUTES`) ; une feuille `version="1.0"`
+ne reçoit que les éléments et attributs d'XSLT 1.0 (`XSLT10_ATTRIBUTES`) ; les
+attributs « fantômes » d'XSLT 3.0 (`_match`…) sont écartés.
+`StylesheetCompletionModel` offre l'interface du modèle RNG à `completion_ui`
+(Ctrl+Espace, liste automatique des attributs, Ctrl+E), sans les éléments
+personnalisés du projet.
+
 ## Limites
 
 - XSLT 1.0 (lxml) : un seul fichier de résultat.
@@ -154,6 +223,12 @@ La feuille de Varians (`rendering/tei-to-html.xsl`) reçoit le paramètre
   telles quelles, sans résoudre leurs `xi:include`.
 - La Vue XSLT / CSS garde son fonctionnement : un `document()` relatif pris
   dans le texte de l'édition n'y trouve pas ses fichiers (pas d'URI de base).
+- Feuilles (V0.9.2.1) : une feuille faite pour être importée ou incluse est
+  vérifiée seule (ses renvois à la feuille principale peuvent être signalés) ;
+  une feuille 2.0 reçoit les propositions d'XSLT 3.0 ; les valeurs finies
+  d'attributs sont celles d'XSLT 3.0 ; ni les noms déclarés dans la feuille
+  (modèles, modes, clés) ni l'XPath ne sont complétés ; une feuille qui déclare
+  un `xml-model` est vérifiée par compilation, non par ce schéma.
 
 ## Tests
 
@@ -162,4 +237,7 @@ La feuille de Varians (`rendering/tei-to-html.xsl`) reçoit le paramètre
 (ignorés sans Saxon, sauf le message « Saxon n'est pas installé »),
 `tests/test_transform_worker.py`, `tests/gui/test_gui_transform_runner.py`,
 `tests/gui/test_gui_transform_scenarios.py`,
-`tests/gui/test_gui_transform_run.py`.
+`tests/gui/test_gui_transform_run.py` ; feuilles (V0.9.2.1) :
+`tests/test_document_files.py`, `tests/test_xslt_check.py`,
+`tests/test_xslt_completion.py`, `tests/gui/test_gui_document_dialogs.py`,
+`tests/gui/test_gui_xslt_check.py`, `tests/gui/test_gui_xslt_completion.py`.

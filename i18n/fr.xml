@@ -663,9 +663,12 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="documents.edition_tab">Édition</string>
   <string key="documents.unsaved.text">Les documents suivants contiennent des modifications non enregistrées :</string>
   <string key="documents.save_all">Tout enregistrer</string>
-  <string key="documents.menu">Documents XML du projet</string>
-  <string key="documents.add.menu">Ajouter un document XML…</string>
-  <string key="documents.add.title">Ajouter un document XML au projet</string>
+  <string key="documents.menu">Documents XML / XSLT du projet…</string>
+  <string key="documents.add.menu">Ajouter un document XML ou XSLT…</string>
+  <string key="documents.add.title">Ajouter un document XML ou une feuille XSLT au projet</string>
+  <string key="documents.new_stylesheet.menu">Nouvelle feuille XSLT…</string>
+  <string key="documents.new_stylesheet.title">Nouvelle feuille XSLT</string>
+  <string key="documents.new_stylesheet.version">Version d’XSLT de la feuille :</string>
   <string key="documents.add.already">« {name} » fait déjà partie du projet.</string>
   <string key="documents.add.copied">Document copié dans le projet : {path}</string>
   <string key="documents.new.menu">Nouveau document XML…</string>
@@ -817,6 +820,42 @@ Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi le
   <string key="transform.duplicate">Dupliquer…</string>
   <string key="transform.remove">Supprimer</string>
   <string key="transform.remove.question">Supprimer le scénario « {name} » du projet ?</string>
+  <string key="transform.open_stylesheet">Ouvrir la feuille</string>
+  <string key="transform.open_stylesheet.tip">Afficher la feuille XSLT du scénario pour la modifier ; elle est ajoutée aux documents du projet.</string>
+  <string key="transform.open_stylesheet.predefined">Dupliquez d’abord ce scénario dans le projet pour modifier sa feuille.</string>
+  <string key="transform.open_stylesheet.varians">La feuille « {name} » est fournie avec Varians : elle ne se modifie pas sur place.
+
+Varians va la copier dans le projet :
+{path}
+
+Le scénario « {scenario} » emploiera cette copie.</string>
+  <string key="transform.open_stylesheet.outside">La feuille du scénario « {scenario} » est hors du projet :
+{path}
+
+La copier dans le projet ?
+{target}
+
+Le scénario emploiera alors cette copie. « Ouvrir sans copier » modifie le fichier d’origine.</string>
+  <string key="transform.open_stylesheet.copy">Copier dans le projet</string>
+  <string key="transform.open_stylesheet.in_place">Ouvrir sans copier</string>
+  <string key="xslt_check.action">Vérifier la feuille XSLT</string>
+  <string key="xslt_check.action.tip">Compiler la feuille XSLT affichée, sans l’exécuter, avec le moteur de ses scénarios (F8)</string>
+  <string key="xslt_check.panel.title">Vérification de la feuille XSLT</string>
+  <string key="xslt_check.panel.valid">Feuille XSLT correcte selon {engines}.</string>
+  <string key="xslt_check.panel.warnings">Feuille XSLT correcte selon {engines}, avec {count} avertissement(s).</string>
+  <string key="xslt_check.panel.invalid">{count} erreur(s) dans la feuille XSLT selon {engines}. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
+  <string key="xslt_check.panel.malformed">La feuille n’est pas un XML bien formé. Double-cliquez sur l’erreur pour aller à la ligne.</string>
+  <string key="xslt_check.panel.failed">Vérification impossible avec {engine} : {error}</string>
+  <string key="xslt_check.status.running">XSLT : vérification…</string>
+  <string key="xslt_check.status.valid">{engines} : feuille correcte ✓</string>
+  <string key="xslt_check.status.invalid">{engines} : {count} erreur(s)</string>
+  <string key="xslt_check.status.malformed">XSLT : XML mal formé</string>
+  <string key="xslt_check.status.failed">XSLT : vérification impossible</string>
+  <string key="xslt_check.message.valid">Vérification XSLT : feuille correcte.</string>
+  <string key="file.save_xslt_invalid.title">Feuille XSLT incorrecte</string>
+  <string key="file.save_xslt_invalid.text">La feuille est bien formée, mais sa compilation signale {count} erreur(s). Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
+
+Enregistrer quand même ?</string>
   <string key="transform.copy_name">{name} (copie)</string>
   <string key="transform.source.edition">Édition</string>
   <string key="transform.source.current">Document affiché</string>
@@ -896,6 +935,7 @@ Fichiers non écrits (hors du dossier du résultat, ou sources du projet) :
   <string key="transform.error.source_missing">Source illisible : {detail}</string>
   <string key="transform.error.source_malformed">Source mal formée : {detail}</string>
   <string key="transform.error.xslt_missing">Feuille XSLT illisible : {detail}</string>
+  <string key="transform.error.xslt_malformed">La feuille XSLT n’est pas un XML bien formé : {detail}</string>
   <string key="transform.error.xslt_invalid">Erreur dans la feuille XSLT : {detail}</string>
   <string key="transform.error.transform_failed">Erreur pendant la transformation : {detail}</string>
   <string key="transform.error.network_failed">Lecture réseau impossible : {detail}</string>

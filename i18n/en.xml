@@ -663,9 +663,12 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="documents.edition_tab">Edition</string>
   <string key="documents.unsaved.text">The following documents have unsaved changes:</string>
   <string key="documents.save_all">Save all</string>
-  <string key="documents.menu">Project XML documents</string>
-  <string key="documents.add.menu">Add an XML document…</string>
-  <string key="documents.add.title">Add an XML document to the project</string>
+  <string key="documents.menu">Project XML / XSLT documents…</string>
+  <string key="documents.add.menu">Add an XML or XSLT document…</string>
+  <string key="documents.add.title">Add an XML document or an XSLT stylesheet to the project</string>
+  <string key="documents.new_stylesheet.menu">New XSLT stylesheet…</string>
+  <string key="documents.new_stylesheet.title">New XSLT stylesheet</string>
+  <string key="documents.new_stylesheet.version">XSLT version of the stylesheet:</string>
   <string key="documents.add.already">“{name}” is already part of the project.</string>
   <string key="documents.add.copied">Document copied into the project: {path}</string>
   <string key="documents.new.menu">New XML document…</string>
@@ -817,6 +820,42 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
   <string key="transform.duplicate">Duplicate…</string>
   <string key="transform.remove">Delete</string>
   <string key="transform.remove.question">Delete the scenario “{name}” from the project?</string>
+  <string key="transform.open_stylesheet">Open stylesheet</string>
+  <string key="transform.open_stylesheet.tip">Show the scenario’s XSLT stylesheet to edit it; it is added to the project’s documents.</string>
+  <string key="transform.open_stylesheet.predefined">First duplicate this scenario into the project to edit its stylesheet.</string>
+  <string key="transform.open_stylesheet.varians">The stylesheet “{name}” comes with Varians: it is not edited in place.
+
+Varians will copy it into the project:
+{path}
+
+The scenario “{scenario}” will use this copy.</string>
+  <string key="transform.open_stylesheet.outside">The stylesheet of the scenario “{scenario}” is outside the project:
+{path}
+
+Copy it into the project?
+{target}
+
+The scenario will then use this copy. “Open without copying” edits the original file.</string>
+  <string key="transform.open_stylesheet.copy">Copy into the project</string>
+  <string key="transform.open_stylesheet.in_place">Open without copying</string>
+  <string key="xslt_check.action">Check XSLT stylesheet</string>
+  <string key="xslt_check.action.tip">Compile the displayed XSLT stylesheet, without running it, with the engine of its scenarios (F8)</string>
+  <string key="xslt_check.panel.title">XSLT stylesheet check</string>
+  <string key="xslt_check.panel.valid">XSLT stylesheet correct according to {engines}.</string>
+  <string key="xslt_check.panel.warnings">XSLT stylesheet correct according to {engines}, with {count} warning(s).</string>
+  <string key="xslt_check.panel.invalid">{count} error(s) in the XSLT stylesheet according to {engines}. Double-click an error to go to its line.</string>
+  <string key="xslt_check.panel.malformed">The stylesheet is not well-formed XML. Double-click the error to go to its line.</string>
+  <string key="xslt_check.panel.failed">Check impossible with {engine}: {error}</string>
+  <string key="xslt_check.status.running">XSLT: checking…</string>
+  <string key="xslt_check.status.valid">{engines}: stylesheet correct ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: {count} error(s)</string>
+  <string key="xslt_check.status.malformed">XSLT: malformed XML</string>
+  <string key="xslt_check.status.failed">XSLT: check impossible</string>
+  <string key="xslt_check.message.valid">XSLT check: stylesheet correct.</string>
+  <string key="file.save_xslt_invalid.title">Incorrect XSLT stylesheet</string>
+  <string key="file.save_xslt_invalid.text">The stylesheet is well-formed, but compiling it reports {count} error(s). You can save it and fix these errors later.
+
+Save anyway?</string>
   <string key="transform.copy_name">{name} (copy)</string>
   <string key="transform.source.edition">Edition</string>
   <string key="transform.source.current">Displayed document</string>
@@ -896,6 +935,7 @@ Files not written (outside the folder of the result, or sources of the project):
   <string key="transform.error.source_missing">Source cannot be read: {detail}</string>
   <string key="transform.error.source_malformed">Source not well-formed: {detail}</string>
   <string key="transform.error.xslt_missing">XSLT stylesheet cannot be read: {detail}</string>
+  <string key="transform.error.xslt_malformed">The XSLT stylesheet is not well-formed XML: {detail}</string>
   <string key="transform.error.xslt_invalid">Error in the XSLT stylesheet: {detail}</string>
   <string key="transform.error.transform_failed">Error during the transformation: {detail}</string>
   <string key="transform.error.network_failed">Network read failed: {detail}</string>

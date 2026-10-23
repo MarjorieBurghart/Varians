@@ -1,3 +1,35 @@
+VARIANS V0.9.2.1 — ÉDITER LES FEUILLES XSLT
+
+• Une feuille XSLT s'ouvre comme un document du projet. Fichier ▸
+  « Documents XML / XSLT du projet… », désormais juste sous « Paramètres du
+  projet… », ▸ « Ajouter un document XML ou XSLT… » accepte .xsl et .xslt ;
+  une feuille venue d'ailleurs est copiée dans le dossier xslt/ du projet
+  (au même niveau que xml/), sans jamais remplacer un fichier.
+  « Nouvelle feuille XSLT… » crée une feuille minimale 1.0 (lxml) ou 3.0
+  (Saxon) dans xslt/.
+• « Ouvrir la feuille », dans la liste des scénarios ou dans la boîte d'un
+  scénario : affiche la feuille du scénario. Une feuille de Varians
+  (${varians}/…) est d'abord copiée dans xslt/ ; une feuille hors du projet
+  peut l'être aussi ; le scénario emploie alors la copie.
+• Vérification « comme le RNG » : F8 devient « Vérifier la feuille XSLT » ;
+  la feuille est compilée, sans être exécutée, avec le moteur de ses
+  scénarios (sinon d'après sa version : 1.0 par lxml, une autre par Saxon),
+  à son premier affichage, pendant la frappe une fois F8 utilisé, et à
+  l'enregistrement. Erreurs avec leur ligne dans le panneau de validation
+  (double-clic), barre d'état, couleur de l'onglet.
+• Complétion (Ctrl+Espace) des éléments et attributs XSLT, avec le préfixe
+  de la feuille, d'après le schéma RELAX NG d'XSLT 3.0 du W3C fourni avec
+  Varians (resources/schemas/xslt30, licence BSD) ; XSLT 1.0 seul pour une
+  feuille version="1.0".
+• Les fichiers annexes d'une feuille (feuilles importées ou incluses,
+  images, CSS, JS) sont à placer soi-même dans xslt/.
+• Dans tout document, Ctrl+Espace complète un nom d'élément tapé juste
+  devant une autre balise (<h devant </p>).
+• Un projet qui garde une copie des traductions (dossier i18n/) y garde les
+  anciens noms du sous-menu et de « Ajouter un document XML… » : remplacer
+  ces fichiers par ceux du dossier i18n/ de Varians.
+• Le format de project.xml ne change pas. Voir XSLT_SCENARIOS.md.
+
 VARIANS V0.9.2.0 — SCÉNARIOS DE TRANSFORMATION XSLT
 
 • Fichier ▸ « Scénarios de transformation… » : des scénarios nommés,

@@ -245,3 +245,24 @@ saisie et ne modifie jamais la validité RELAX NG.
 
 ## V0.8.5.26 — Noms d’attributs pendant la frappe
 Le texte partiel d’un attribut dans une balise ouvrante déclenche une proposition filtrée issue du modèle RNG actif ; les aides personnalisées restent accessibles par Ctrl+Espace. Un attribut déjà présent est exclu ; ni valeur d’attribut ni balise fermante ne déclenchent ce menu. Entrée/Tab insère un nom suivi de guillemets ; Ctrl+Espace conserve ses dialogues antérieurs.
+
+## V0.9.2.1 — Feuilles XSLT, nom tapé devant une autre balise
+
+**Feuilles XSLT.** Pour une feuille XSLT affichée, la complétion ne suit pas
+un `xml-model` : elle lit le schéma XSLT 3.0 du W3C livré avec Varians
+(`resources/schemas/xslt30`), par `xslt_completion.StylesheetCompletionModel`,
+qui offre à `completion_ui` la même interface que le modèle RNG
+(`child_elements_at`, `allowed_attributes`, `allowed_attribute_values`). Les
+noms reçoivent le préfixe XSLT de la feuille ; un élément d’un autre espace de
+noms est un élément résultat littéral (instructions et attributs `xsl:*`) ;
+une feuille `version="1.0"` ne reçoit qu’XSLT 1.0. Les éléments personnalisés
+du projet (`custom-elements.xml`) ne sont pas proposés. Voir
+`XSLT_SCENARIOS.md`.
+
+**Nom tapé devant une autre balise.** `<h|</p>` (ou `<h|` puis, à la ligne,
+`</p>`) est un nom d’élément en cours de saisie : Ctrl+Espace propose les
+éléments qui commencent par `h`. Auparavant, le `>` de la balise suivante
+faisait prendre `h` pour un élément complet dont on cherchait les attributs.
+Le `>` situé après le curseur ne compte que s’il n’est précédé d’aucun `<`
+(`<rdg|>` reste un contexte d’attribut).
+

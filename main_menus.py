@@ -139,20 +139,24 @@ class MainMenusMixin:
         menu.insertAction(self.recent_menu.menuAction(), self.action_new_project)
         menu.insertAction(self.recent_menu.menuAction(), self.action_open_project)
         menu.addAction(self.action_project_settings)
+        # « Documents XML / XSLT du projet… », sous « Paramètres du projet… » (V0.9.2.1).
+        self.documents_menu = menu.addMenu(_t("documents.menu"))
+        self.action_add_document = self._make_action(_t("documents.add.menu"), "", self.add_document_dialog)
+        self.action_new_document = self._make_action(_t("documents.new.menu"), "", self.new_document_dialog)
+        self.action_new_stylesheet = self._make_action(
+            _t("documents.new_stylesheet.menu"), "", self.new_stylesheet_dialog)
+        self.action_remove_document = self._make_action(
+            _t("documents.remove.menu"), "", self.remove_document_from_project)
+        self.action_remove_document.setEnabled(False)       # l'édition est affichée
+        for action in (self.action_add_document, self.action_new_document, self.action_new_stylesheet,
+                       self.action_remove_document):
+            self.documents_menu.addAction(action)
         self.action_iiif_manager = self._make_action(_t('iiif.manager.menu'), '', self.open_iiif_download_manager)
         menu.addAction(self.action_iiif_manager)
         menu.addAction(self.action_close_project)
         menu.addSeparator()
         menu.addAction(self.action_save)
         menu.addAction(self.action_save_as)
-        self.documents_menu = menu.addMenu(_t("documents.menu"))
-        self.action_add_document = self._make_action(_t("documents.add.menu"), "", self.add_document_dialog)
-        self.action_new_document = self._make_action(_t("documents.new.menu"), "", self.new_document_dialog)
-        self.action_remove_document = self._make_action(
-            _t("documents.remove.menu"), "", self.remove_document_from_project)
-        self.action_remove_document.setEnabled(False)       # l'édition est affichée
-        for action in (self.action_add_document, self.action_new_document, self.action_remove_document):
-            self.documents_menu.addAction(action)
         menu.addSeparator()
         menu.addAction(self.action_ctrl_e_config)
         menu.addSeparator()
@@ -361,6 +365,7 @@ class MainMenusMixin:
         self.documents_menu.setTitle(_t("documents.menu"))
         self.action_add_document.setText(_t("documents.add.menu"))
         self.action_new_document.setText(_t("documents.new.menu"))
+        self.action_new_stylesheet.setText(_t("documents.new_stylesheet.menu"))
         self.action_remove_document.setText(_t("documents.remove.menu"))
         self.action_ctrl_e_config.setText(_t("menu.ctrl_e_config"))
         self.action_ctrl_e_config.setToolTip(_t("toolbar.ctrl_e_config.tip", path=self.project.custom_elements))
@@ -398,8 +403,7 @@ class MainMenusMixin:
             action.setText(language_labels.get(code, code))
             action.setChecked(code == I18N.language)
         self.rng_busy.setToolTip(_t("rng.status.running.tip"))
-        self.action_validate_rng.setText(_t("toolbar.validate_rng"))
-        self.action_validate_rng.setToolTip(_t("toolbar.validate_rng.tip"))
+        self._update_check_labels()
         self.action_format_xml.setText(_t("toolbar.format_xml"))
         self.action_format_xml.setToolTip(_t("toolbar.format_xml.tip"))
         self.search_source_label.setText(" " + _t("toolbar.search_source") + " ")
@@ -421,7 +425,6 @@ class MainMenusMixin:
         for session in self.documents:
             self._refresh_document_tab(session)
         self.left_tabs.setTabText(1, _t("tab.preview"))
-        self.validation_title.setText(_t("rng.panel.title"))
         self.validation_refresh.setToolTip(_t("rng.panel.refresh"))
         self.validation_close.setToolTip(_t("rng.panel.close"))
         self.validation_table.setHorizontalHeaderLabels([

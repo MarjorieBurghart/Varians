@@ -16,6 +16,7 @@ from rng_completion import (
 )
 from schema_resolution import resolve_schema
 from xml_references import REFERENCE_ATTRIBUTES, parse_pointer, target_elements
+from xslt_completion import StylesheetCompletionModel
 
 
 class CompletionDialog(QDialog):
@@ -61,6 +62,8 @@ class CompletionDialog(QDialog):
         root.setContentsMargins(8, 8, 8, 8)
         root.setSpacing(6)
         self.label = QLabel(label)
+        # « <body> », « <xsl:template> » : du texte, non du HTML (V0.9.2.1).
+        self.label.setTextFormat(Qt.TextFormat.PlainText)
         self.label.setWordWrap(True)
         root.addWidget(self.label)
         self.filter_box = QLineEdit()
@@ -148,6 +151,12 @@ class CompletionMixin:
         self._completion_resolution = resolution
         return resolution
 
+    def _stylesheet_completion(self, editor):
+        """Modèle de complétion XSLT (xslt_completion) si ``editor`` est la
+        source et que le document affiché est une feuille XSLT, sinon None."""
+        info = self._displayed_stylesheet() if editor is self.editor else None
+        return StylesheetCompletionModel(info) if info is not None else None
+
     def _completion_model_for_schema(self, schema_path):
         path = Path(schema_path).expanduser().resolve()
         stat = path.stat()
@@ -211,12 +220,16 @@ class CompletionMixin:
         if context.kind != "element":
             return ()
 
-        custom = self._custom_completion_config()
+        stylesheet = self._stylesheet_completion(editor)
+        custom = self._custom_completion_config() if stylesheet is None else None
         custom_items = custom.element_names() if custom is not None else ()
         rng_items = ()
         try:
-            resolution = self._resolve_completion_schema(source_text)
-            if (self._schema_mode != "none" and not resolution.error
+            resolution = self._resolve_completion_schema(source_text) if stylesheet is None else None
+            if stylesheet is not None:
+                rng_items = stylesheet.child_elements_at(context.parent_element, context.preceding_siblings,
+                                                         context.following_siblings)
+            elif (self._schema_mode != "none" and not resolution.error
                     and resolution.schema_path is not None):
                 model = self._completion_model_for_schema(resolution.schema_path)
                 rng_items = model.child_elements_at(
@@ -238,10 +251,11 @@ class CompletionMixin:
         context = cache.analyze(text, cursor.position())
         if context.kind != "attribute" or not context.prefix:
             return (), context
-        model = None
-        resolution = self._resolve_completion_schema(self.editor.toPlainText())
-        if self._schema_mode != "none" and not resolution.error and resolution.schema_path:
-            model = self._completion_model_for_schema(resolution.schema_path)
+        model = self._stylesheet_completion(editor)
+        if model is None:
+            resolution = self._resolve_completion_schema(self.editor.toPlainText())
+            if self._schema_mode != "none" and not resolution.error and resolution.schema_path:
+                model = self._completion_model_for_schema(resolution.schema_path)
         # La complétion automatique est strictement limitée aux noms démontrés
         # par le RELAX NG. Les suggestions libres du projet restent accessibles
         # par Ctrl+Espace et ne sont pas présentées comme autorisées par le RNG.
@@ -266,8 +280,9 @@ class CompletionMixin:
         context = cache.analyze(text, position)
         if context.kind != "attribute_value":
             return (), context
+        custom = self._custom_completion_config() if self._stylesheet_completion(editor) is None else None
         context, items, _custom_values, _mode = self._attribute_value_suggestions(
-            context, text, position, None, self._custom_completion_config())
+            context, text, position, None, custom)
         if not items or not all(parse_pointer(value) is not None for value, _source, _description in items):
             return (), context
         prefix = (context.prefix or "").casefold()
@@ -279,9 +294,10 @@ class CompletionMixin:
         if editor.show_closing_tag_completion(force=True):
             return
         source_text = self.editor.toPlainText()
-        model = None
-        resolution = self._resolve_completion_schema(source_text)
-        if self._schema_mode != "none":
+        model = self._stylesheet_completion(editor)
+        stylesheet = model is not None
+        resolution = self._resolve_completion_schema(source_text) if not stylesheet else None
+        if not stylesheet and self._schema_mode != "none":
             if resolution.error:
                 QMessageBox.warning(
                     self, _t("completion.error.title"),
@@ -296,7 +312,8 @@ class CompletionMixin:
                         _t("completion.analysis_error", error=exc)
                     )
 
-        custom = self._custom_completion_config()
+        # Les éléments personnalisés du projet (TEI) ne concernent pas une feuille.
+        custom = self._custom_completion_config() if not stylesheet else None
         text = source_text if editor is self.editor else editor.toPlainText()
         cursor = editor.textCursor()
         position = cursor.position()

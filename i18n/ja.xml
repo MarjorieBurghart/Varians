@@ -677,9 +677,12 @@
   <string key="documents.edition_tab">校訂本文</string>
   <string key="documents.unsaved.text">次の文書には保存されていない変更があります：</string>
   <string key="documents.save_all">すべて保存</string>
-  <string key="documents.menu">プロジェクトのXML文書</string>
-  <string key="documents.add.menu">XML文書を追加…</string>
-  <string key="documents.add.title">プロジェクトにXML文書を追加</string>
+  <string key="documents.menu">プロジェクトのXML／XSLT文書…</string>
+  <string key="documents.add.menu">XML文書またはXSLTを追加…</string>
+  <string key="documents.add.title">プロジェクトにXML文書またはXSLTスタイルシートを追加</string>
+  <string key="documents.new_stylesheet.menu">新しいXSLTスタイルシート…</string>
+  <string key="documents.new_stylesheet.title">新しいXSLTスタイルシート</string>
+  <string key="documents.new_stylesheet.version">スタイルシートのXSLTバージョン：</string>
   <string key="documents.add.already">「{name}」はすでにプロジェクトに含まれています。</string>
   <string key="documents.add.copied">文書をプロジェクトにコピーしました：{path}</string>
   <string key="documents.new.menu">新しいXML文書…</string>
@@ -831,6 +834,42 @@
   <string key="transform.duplicate">複製…</string>
   <string key="transform.remove">削除</string>
   <string key="transform.remove.question">シナリオ「{name}」をプロジェクトから削除しますか？</string>
+  <string key="transform.open_stylesheet">スタイルシートを開く</string>
+  <string key="transform.open_stylesheet.tip">シナリオのXSLTスタイルシートを表示して編集します。プロジェクトの文書に追加されます。</string>
+  <string key="transform.open_stylesheet.predefined">スタイルシートを編集するには、まずこのシナリオをプロジェクトに複製してください。</string>
+  <string key="transform.open_stylesheet.varians">スタイルシート「{name}」はVariansに付属しているため、その場では編集しません。
+
+Variansがプロジェクトにコピーします：
+{path}
+
+シナリオ「{scenario}」はこのコピーを使います。</string>
+  <string key="transform.open_stylesheet.outside">シナリオ「{scenario}」のスタイルシートはプロジェクトの外にあります：
+{path}
+
+プロジェクトにコピーしますか？
+{target}
+
+シナリオはこのコピーを使うようになります。「コピーせずに開く」は元のファイルを編集します。</string>
+  <string key="transform.open_stylesheet.copy">プロジェクトにコピー</string>
+  <string key="transform.open_stylesheet.in_place">コピーせずに開く</string>
+  <string key="xslt_check.action">XSLTスタイルシートを検査</string>
+  <string key="xslt_check.action.tip">表示中のXSLTスタイルシートを、実行せずに、そのシナリオのエンジンでコンパイルします（F8）</string>
+  <string key="xslt_check.panel.title">XSLTスタイルシートの検査</string>
+  <string key="xslt_check.panel.valid">{engines} によればXSLTスタイルシートは正しいです。</string>
+  <string key="xslt_check.panel.warnings">{engines} によればXSLTスタイルシートは正しいです（警告 {count} 件）。</string>
+  <string key="xslt_check.panel.invalid">{engines} によればXSLTスタイルシートに {count} 件のエラーがあります。エラーをダブルクリックすると該当行に移動します。</string>
+  <string key="xslt_check.panel.malformed">スタイルシートは整形式のXMLではありません。エラーをダブルクリックすると該当行に移動します。</string>
+  <string key="xslt_check.panel.failed">{engine} では検査できません：{error}</string>
+  <string key="xslt_check.status.running">XSLT：検査中…</string>
+  <string key="xslt_check.status.valid">{engines}：スタイルシートは正しい ✓</string>
+  <string key="xslt_check.status.invalid">{engines}：エラー {count} 件</string>
+  <string key="xslt_check.status.malformed">XSLT：XMLが整形式ではありません</string>
+  <string key="xslt_check.status.failed">XSLT：検査できません</string>
+  <string key="xslt_check.message.valid">XSLT検査：スタイルシートは正しいです。</string>
+  <string key="file.save_xslt_invalid.title">XSLTスタイルシートにエラーがあります</string>
+  <string key="file.save_xslt_invalid.text">スタイルシートは整形式ですが、コンパイルで {count} 件のエラーが報告されました。保存して、後でエラーを修正することもできます。
+
+それでも保存しますか？</string>
   <string key="transform.copy_name">{name}（コピー）</string>
   <string key="transform.source.edition">校訂本文</string>
   <string key="transform.source.current">表示中の文書</string>
@@ -910,6 +949,7 @@
   <string key="transform.error.source_missing">入力を読み込めません：{detail}</string>
   <string key="transform.error.source_malformed">入力が整形式ではありません：{detail}</string>
   <string key="transform.error.xslt_missing">XSLT スタイルシートを読み込めません：{detail}</string>
+  <string key="transform.error.xslt_malformed">XSLT スタイルシートが整形式の XML ではありません：{detail}</string>
   <string key="transform.error.xslt_invalid">XSLT スタイルシートのエラー：{detail}</string>
   <string key="transform.error.transform_failed">変換中のエラー：{detail}</string>
   <string key="transform.error.network_failed">ネットワークから読み込めません：{detail}</string>

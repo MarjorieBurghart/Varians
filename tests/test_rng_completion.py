@@ -1,6 +1,8 @@
 from pathlib import Path
 import sys
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -102,6 +104,21 @@ def test_context_cursor_after_complete_element_name_before_gt_is_attribute():
     assert ctx.current_element == 'rdg'
     assert ctx.parent_element == 'app'
     assert ctx.prefix == ''
+
+
+@pytest.mark.parametrize("text, typed", [
+    ("<TEI><p><h\n</p></TEI>", "h"),
+    ("<TEI><p><h</p></TEI>", "h"),
+    ('<xsl:template match="/"><xsl:va\n</xsl:template>', "xsl:va"),
+])
+def test_context_typed_name_before_another_tag_is_an_element(text, typed):
+    # V0.9.2.1 : le « > » d'une balise suivante (« </p> ») ne fait pas du nom
+    # tapé un élément complet dont on chercherait les attributs.
+    pos = text.index("<" + typed) + 1 + len(typed)
+    ctx = analyze_xml_context(text, pos)
+    assert ctx.kind == "element" and ctx.typed_lt
+    assert ctx.prefix == typed
+    assert text[ctx.replace_start:ctx.replace_end] == typed
 
 
 def test_context_attribute_after_space_before_gt():

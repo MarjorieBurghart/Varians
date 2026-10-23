@@ -677,9 +677,12 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="documents.edition_tab">Edice</string>
   <string key="documents.unsaved.text">Následující dokumenty obsahují neuložené změny:</string>
   <string key="documents.save_all">Uložit vše</string>
-  <string key="documents.menu">Dokumenty XML projektu</string>
-  <string key="documents.add.menu">Přidat dokument XML…</string>
-  <string key="documents.add.title">Přidat do projektu dokument XML</string>
+  <string key="documents.menu">Dokumenty XML / XSLT projektu…</string>
+  <string key="documents.add.menu">Přidat dokument XML nebo XSLT…</string>
+  <string key="documents.add.title">Přidat do projektu dokument XML nebo šablonu XSLT</string>
+  <string key="documents.new_stylesheet.menu">Nová šablona XSLT…</string>
+  <string key="documents.new_stylesheet.title">Nová šablona XSLT</string>
+  <string key="documents.new_stylesheet.version">Verze XSLT šablony:</string>
   <string key="documents.add.already">„{name}“ už je součástí projektu.</string>
   <string key="documents.add.copied">Dokument byl zkopírován do projektu: {path}</string>
   <string key="documents.new.menu">Nový dokument XML…</string>
@@ -831,6 +834,42 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="transform.duplicate">Duplikovat…</string>
   <string key="transform.remove">Odstranit</string>
   <string key="transform.remove.question">Odstranit scénář „{name}“ z projektu?</string>
+  <string key="transform.open_stylesheet">Otevřít šablonu</string>
+  <string key="transform.open_stylesheet.tip">Zobrazit šablonu XSLT scénáře k úpravám; přidá se k dokumentům projektu.</string>
+  <string key="transform.open_stylesheet.predefined">Chcete-li upravit jeho šablonu, nejprve tento scénář zduplikujte do projektu.</string>
+  <string key="transform.open_stylesheet.varians">Šablona „{name}“ je součástí Variansu: neupravuje se na místě.
+
+Varians ji zkopíruje do projektu:
+{path}
+
+Scénář „{scenario}“ bude používat tuto kopii.</string>
+  <string key="transform.open_stylesheet.outside">Šablona scénáře „{scenario}“ je mimo projekt:
+{path}
+
+Zkopírovat ji do projektu?
+{target}
+
+Scénář pak bude používat tuto kopii. „Otevřít bez kopírování“ upravuje původní soubor.</string>
+  <string key="transform.open_stylesheet.copy">Zkopírovat do projektu</string>
+  <string key="transform.open_stylesheet.in_place">Otevřít bez kopírování</string>
+  <string key="xslt_check.action">Zkontrolovat šablonu XSLT</string>
+  <string key="xslt_check.action.tip">Zkompilovat zobrazenou šablonu XSLT bez spuštění, procesorem jejích scénářů (F8)</string>
+  <string key="xslt_check.panel.title">Kontrola šablony XSLT</string>
+  <string key="xslt_check.panel.valid">Šablona XSLT je podle {engines} v pořádku.</string>
+  <string key="xslt_check.panel.warnings">Šablona XSLT je podle {engines} v pořádku, s {count} varováním(i).</string>
+  <string key="xslt_check.panel.invalid">{count} chyb(a) v šabloně XSLT podle {engines}. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="xslt_check.panel.malformed">Šablona není správně utvořený XML. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="xslt_check.panel.failed">Kontrola pomocí {engine} není možná: {error}</string>
+  <string key="xslt_check.status.running">XSLT: kontrola…</string>
+  <string key="xslt_check.status.valid">{engines}: šablona v pořádku ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: {count} chyb(a)</string>
+  <string key="xslt_check.status.malformed">XSLT: chybně utvořený XML</string>
+  <string key="xslt_check.status.failed">XSLT: kontrola není možná</string>
+  <string key="xslt_check.message.valid">Kontrola XSLT: šablona je v pořádku.</string>
+  <string key="file.save_xslt_invalid.title">Chybná šablona XSLT</string>
+  <string key="file.save_xslt_invalid.text">Šablona je správně utvořená, ale její kompilace hlásí {count} chyb(u). Můžete ji uložit a chyby opravit později.
+
+Přesto uložit?</string>
   <string key="transform.copy_name">{name} (kopie)</string>
   <string key="transform.source.edition">Edice</string>
   <string key="transform.source.current">Zobrazený dokument</string>
@@ -910,6 +949,7 @@ Nezapsané soubory (mimo složku výsledku nebo zdroje projektu):
   <string key="transform.error.source_missing">Zdroj nelze přečíst: {detail}</string>
   <string key="transform.error.source_malformed">Zdroj není správně formován: {detail}</string>
   <string key="transform.error.xslt_missing">Styl XSLT nelze přečíst: {detail}</string>
+  <string key="transform.error.xslt_malformed">Styl XSLT není správně utvořený XML: {detail}</string>
   <string key="transform.error.xslt_invalid">Chyba ve stylu XSLT: {detail}</string>
   <string key="transform.error.transform_failed">Chyba během transformace: {detail}</string>
   <string key="transform.error.network_failed">Načtení ze sítě selhalo: {detail}</string>
