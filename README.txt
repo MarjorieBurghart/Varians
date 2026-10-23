@@ -1,3 +1,45 @@
+VARIANS V0.9.1.6 — EXPORT WEB D'UNE ÉDITION ASSEMBLÉE
+
+• « Générer viewer web » exporte toute l'édition en parties (XInclude) :
+  le texte des parties est dans le viewer, et les lignes du pivot y sont
+  comptées d'une partie à l'autre, comme dans la fenêtre. Une édition en un
+  seul fichier est exportée avec les mêmes données qu'avant.
+• Textes synchronisés à part : chacun garde son pivot et ses JSON
+  (alignments/s02/). Quand la ligne choisie y passe, chaque panneau montre
+  son témoin dans ce texte (ses lignes, ses pages depuis sa page de départ,
+  ou « Pas d'alignement de ce témoin pour ce texte. ») ; le zoom et les
+  cadres restent. Les boutons de l'en-tête parcourent toutes les lignes
+  dans l'ordre de lecture, d'un texte à l'autre.
+• Les flèches ← → de tout panneau du viewer mènent le texte, comme dans la
+  fenêtre : le témoin avance dans son propre ordre, d'une partie ou d'un
+  texte à l'autre ; un témoin par pages mène par ses <pb>, sa liste de
+  folios aussi, ou par son <locus from> ; un panneau absent va au texte
+  suivant ou précédent qui a ce témoin ; ⤺ ramène sur la ligne reliée. Les
+  messages de la barre d'état (début ou fin du manuscrit, ligne non reliée,
+  page non située, place incertaine) s'affichent sous le titre du viewer.
+• Lacunes : les bandeaux de la fenêtre sont dans le viewer ; une lacune
+  continue d'une partie à l'autre, un texte à part repart sans lacune.
+• Pour une édition en un seul fichier aussi : les flèches de tout panneau
+  et la liste des folios mènent le texte (elles ne faisaient que
+  feuilleter), et les lacunes ont leurs bandeaux. Deux corrections : un
+  <pb> sans @facs trouve son folio par son nom même quand l'image porte le
+  même nom ; un clic retient la position du fragment cliqué, et non le
+  début de sa ligne. Régénérez le viewer pour en bénéficier.
+• Avant l'export, Varians enregistre l'édition, ses parties modifiées et le
+  fragment non appliqué d'une partie (un échec annule l'export) ; la
+  question « Exporter quand même » disparaît. Le compte rendu de l'export
+  liste les problèmes d'assemblage (partie introuvable…).
+• Limites : la précision des positions est celle des fragments de texte
+  affichés ; un <pb> ou un <lb> dans une leçon non retenue ou dans une note
+  n'est pas vu par le viewer ; « État des témoins… », « Actualiser les
+  synchronisations… », « Marquer la page » et « Double page… » restent
+  propres à la fenêtre. Format des données : WEB_VIEWER_ASSEMBLED.md.
+• Taille et durée de l'export : inchangées pour une édition en un seul
+  fichier (projet exemple : 0,8 s, 5,2 Mo, dont 17 Ko pour le nouveau
+  module) ; pour le jeu d'essai « corpus » (3 textes, 3785 lignes, 5
+  témoins), 1,4 s et 7,4 Mo, dont 1 Mo de texte, qui manquait, et 1,1 Mo
+  pour le parcours des témoins.
+
 VARIANS V0.9.1.5 — VUE XSLT / CSS D'UNE ÉDITION ASSEMBLÉE
 
 • Dans une édition en parties (XInclude), la Vue XSLT / CSS n'est plus en
