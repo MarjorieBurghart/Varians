@@ -62,3 +62,13 @@ L’application charge ses traductions FR/EN intégrées, puis les **surcharge**
 ## À noter
 
 Les boutons `XSLT…` / `CSS…` de la vue de rendu permettent encore un choix **temporaire pour la session** ; pour changer durablement la XSLT d’un projet, utiliser **Paramètres du projet…**.
+
+## V0.9.2.0 — scénarios de transformation
+
+Les scénarios de transformation XSLT (Fichier ▸ « Scénarios de
+transformation… ») sont distincts de la feuille de l'aperçu : chacun nomme
+sa feuille, sa CSS et son résultat, et peut employer Saxon (XSLT 3.0). Le
+scénario prédéfini « Édition HTML » emploie la feuille et la CSS de Varians
+(`${varians}/tei-to-html.xsl`), sans copie dans le projet. La feuille de
+Varians reçoit un paramètre `css` (`tei.css` par défaut) pour son
+`<link>`. Voir `XSLT_SCENARIOS.md`.

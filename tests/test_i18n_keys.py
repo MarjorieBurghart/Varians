@@ -292,3 +292,35 @@ def test_each_help_announces_the_tabs_of_version_0917():
         version = version[:version.index("</section>")]
         assert 'href="#auxiliary-documents"' in version, language
         assert page.index('<section id="v0916">') < page.index('<section id="v0917">'), language
+
+
+def test_each_help_explains_the_transformation_scenarios_with_the_command_labels():
+    """Scénarios de transformation XSLT (V0.9.2.0)."""
+    labels = ("menu.file", "menu.transform_scenarios", "toolbar.transform", "toolbar.generate_web",
+              "transform.group.project", "transform.group.predefined", "transform.add", "transform.edit",
+              "transform.duplicate", "transform.remove", "transform.run", "transform.preview",
+              "transform.predefined.varians-html", "transform.engine.lxml", "transform.engine.saxon",
+              "transform.source.edition", "transform.source.current", "transform.cancel", "common.open")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="transformations">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("&lt;transformations&gt;", "${varians}/", "installer_dependances.bat", "xsl:result-document",
+                     "<code>css</code>", "Ctrl+Shift+T", "publications/edition.html", 'href="#auxiliary-documents"'):
+            assert text in section, (language, text)
+        assert "<td>Ctrl+Shift+T</td>" in page, language
+
+
+def test_each_help_announces_the_scenarios_of_version_0920():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0920">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#transformations"' in version and "installer_dependances.bat" in version, language
+        assert page.index('<section id="v0917">') < page.index('<section id="v0920">'), language
+        assert page.index('<section id="xinclude-guide">') < page.index('<section id="transformations">') \
+            < page.index('<section id="v0900">'), language

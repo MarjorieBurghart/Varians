@@ -1,3 +1,32 @@
+VARIANS V0.9.2.0 — SCÉNARIOS DE TRANSFORMATION XSLT
+
+• Fichier ▸ « Scénarios de transformation… » : des scénarios nommés,
+  enregistrés dans project.xml (<transformations>), appliquent une feuille
+  XSLT à l'édition (assemblée si elle a des parties), au document affiché
+  ou à un fichier, et écrivent le résultat dans un fichier (édition HTML,
+  index, XML transformé…). Ajouter, Modifier, Dupliquer, Supprimer, Aperçu,
+  Exécuter. Le viewer web n'est pas touché.
+• Scénarios prédéfinis fournis par Varians : pour l'instant « Édition HTML
+  (feuille de Varians) » ; « Dupliquer… » le copie dans le projet pour
+  l'adapter. (Les scénarios des TEI Stylesheets viendront ensuite.)
+• Deux moteurs : XSLT 1.0 (lxml) et XSLT 3.0 (Saxon-HE, paquet saxonche),
+  désormais installé avec Varians : installer_dependances.bat, ou
+  pip install -r requirements.txt.
+• Un scénario : source, moteur, feuille, CSS facultative (copiée à côté du
+  résultat ; son nom est passé à la feuille par le paramètre css),
+  résultat (remplacé à chaque exécution ; jamais une source du projet),
+  paramètres (chaînes). Avec Saxon, xsl:result-document peut écrire
+  d'autres fichiers, seulement dans le dossier du résultat.
+• Bouton « Transformer ▾ » à côté de « Générer viewer web » : un clic
+  relance le dernier scénario (Ctrl+Shift+T), la flèche donne la liste.
+  Varians enregistre d'abord ce que le scénario lit ; la transformation
+  tourne dans un processus à part (Annuler). Compte rendu avec « Ouvrir »
+  et journal (moteur, paramètres, xsl:message, lectures réseau, écritures
+  refusées) ; une erreur indique son fichier et sa ligne, et laisse le
+  résultat précédent intact. L'aperçu s'ouvre depuis un dossier temporaire.
+• Une feuille peut lire tout fichier local et le réseau (http, https) ;
+  elle n'écrit que son résultat. Voir XSLT_SCENARIOS.md.
+
 VARIANS V0.9.1.7 — ONGLETS DES DOCUMENTS
 
 • Onglets des documents : l'onglet du document affiché se distingue

@@ -494,6 +494,32 @@ Conséquence pour les scénarios de transformation XSLT : leur source est un
 fichier ou l'édition (assemblée au besoin) ; une publication portant sur
 plusieurs éditions d'un même projet n'est plus envisagée.
 
+## Scénarios de transformation XSLT (décisions du 23 octobre 2026, V0.9.2.0)
+
+- Moteurs : XSLT 1.0 (lxml) et XSLT 3.0 (Saxon-HE, paquet `saxonche`),
+  Saxon étant installé avec Varians (`requirements.txt`,
+  `installer_dependances.bat`).
+- Format : `<transformations><scenario …/>` dans `project.xml`.
+- Source : l'édition (assemblée au besoin), le document affiché ou un
+  fichier.
+- Résultat : un fichier fixé dans le scénario, remplacé à chaque exécution,
+  jamais une source du projet. Avec Saxon, d'autres fichiers
+  (`xsl:result-document`) seulement dans le dossier du résultat, obtenus en
+  deux passages pour garder leur mise en forme exacte.
+- Lecture : fichiers locaux et réseau (`http`, `https`).
+- CSS copiée à côté du résultat, son nom passé à la feuille (paramètre
+  `css`) ; paramètres : valeurs fixes (chaînes).
+- Interface : Fichier ▸ « Scénarios de transformation… » et bouton
+  « Transformer ▾ » (Ctrl+Shift+T) ; scénarios prédéfinis fournis par
+  Varians, dupliqués dans le projet pour les adapter.
+- Version suivante : scénarios prédéfinis sur les TEI Stylesheets du TEI-C,
+  téléchargés hors des projets et mis à jour automatiquement, la version
+  utilisée étant notée au journal ; d'abord les sorties HTML, HTML5, texte,
+  Markdown et LaTeX, puis DOCX, ODT et EPUB. Quand vérifier les mises à jour,
+  avec quel accord, et s'il faut figer une version par projet : à décider.
+
+Réalisation : `XSLT_SCENARIOS.md`.
+
 ## Restent à décider
 
 - La création d'une nouvelle partie depuis Varians (fichier et `xi:include`
