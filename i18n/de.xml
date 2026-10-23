@@ -879,6 +879,10 @@ Trotzdem speichern?</string>
   <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
   <string key="transform.engine.missing">{engine} — nicht installiert</string>
   <string key="transform.predefined.varians-html">HTML-Edition (Varians-Stylesheet)</string>
+  <string key="transform.predefined.tei-html">TEI: HTML</string>
+  <string key="transform.predefined.tei-txt">TEI: Text</string>
+  <string key="transform.predefined.tei-markdown">TEI: Markdown</string>
+  <string key="transform.predefined.tei-latex">TEI: LaTeX</string>
   <string key="transform.scenario.title">Transformationsszenario</string>
   <string key="transform.scenario.name">Name:</string>
   <string key="transform.scenario.source">Quelle:</string>
@@ -914,6 +918,7 @@ Trotzdem speichern?</string>
   <string key="transform.problem.output_is_folder">Das Ergebnis ist ein Ordner: {detail}</string>
   <string key="transform.problem.output_is_source">Das Ergebnis würde eine Quelle des Projekts ersetzen: {detail}</string>
   <string key="transform.problem.css_overwrites_source">Die Kopie der CSS würde eine Quelle des Projekts ersetzen: {detail}</string>
+  <string key="transform.problem.tei_missing">TEI Stylesheets nicht installiert: {detail} (siehe Datei ▸ TEI Stylesheets…)</string>
   <string key="toolbar.transform">Transformieren</string>
   <string key="toolbar.transform.tip">Letztes Transformationsszenario ausführen (Strg+Umschalt+T); der Pfeil listet die Szenarien auf</string>
   <string key="transform.run">Ausführen</string>
@@ -938,6 +943,7 @@ Nicht geschriebene Dateien (außerhalb des Ergebnisordners oder Quellen des Proj
 {error}</string>
   <string key="transform.journal.engine">Prozessor: {engine} — Dauer: {seconds} s</string>
   <string key="transform.journal.params">Parameter: {params}</string>
+  <string key="transform.journal.library">Bibliothek: {detail}</string>
   <string key="transform.journal.message">Meldung: {detail}</string>
   <string key="transform.journal.warning">Warnung: {detail}</string>
   <string key="transform.journal.network_read">Aus dem Netz gelesen: {detail}</string>

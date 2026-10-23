@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
     QHeaderView, QLineEdit, QMenu, QMessageBox, QProgressDialog, QPushButton, QRadioButton, QTableWidget,
     QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
-from app_context import _settings, tr as _t
+from app_context import _settings, current_i18n, tr as _t
 from document_dialogs import free_path
 from project_config import DocumentConfig, TransformScenario
 from project_management import update_project_transformations
@@ -64,9 +64,11 @@ def source_label(scenario):
 
 
 def predefined():
-    """Scénarios prédéfinis, dans la langue de l'interface : leur nom, et le
-    titre du sommaire de l'aperçu."""
-    return predefined_scenarios(lambda key: _t("preview.toc") if key == "toc" else _t(f"transform.predefined.{key}"))
+    """Scénarios prédéfinis, dans la langue de l'interface : leur nom, le
+    titre du sommaire de l'aperçu et la langue des TEI Stylesheets."""
+    i18n = current_i18n()
+    return predefined_scenarios(lambda key: _t("preview.toc") if key == "toc" else _t(f"transform.predefined.{key}"),
+                                i18n.language if i18n is not None else None)
 
 
 class _PathField(QWidget):

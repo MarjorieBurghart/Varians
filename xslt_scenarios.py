@@ -16,9 +16,19 @@ Garde-fou : ni le résultat ni la copie de la CSS à côté de lui ne remplacent
 une source du projet (``project_sources``) ou du scénario.
 
 Les chemins qui commencent par ``${varians}/`` désignent les feuilles
-fournies avec Varians : ``stylesheet_path`` est la seule fonction qui trouve
-la feuille d'un scénario, pour qu'une bibliothèque installée hors du projet
-(les TEI Stylesheets) puisse s'y ajouter.
+fournies avec Varians ; ``stylesheet_path`` est la seule fonction qui trouve
+la feuille d'un scénario.
+
+TEI Stylesheets (V0.9.2.2) : ``${tei}/…`` désigne un fichier de la version
+active des feuilles du TEI-C (``tei_stylesheets``), installée au premier
+usage depuis l'archive livrée (``tei_library``) ; sans elle, un scénario qui
+l'emploie a le problème ``tei_missing``. Quatre scénarios prédéfinis
+« TEI : … » publient l'édition avec Saxon. La requête d'un scénario Saxon,
+comme celle de la vérification d'une feuille (``check_request``), porte le
+catalogue de la bibliothèque (``catalogs``) : une feuille de
+personnalisation qui importe l'adresse officielle des feuilles
+(``tei_stylesheets.OFFICIAL_URI``) est lue sans réseau. Si la feuille
+emploie la bibliothèque, ``library`` la nomme pour le journal.
 
 Feuilles éditées dans Varians (V0.9.2.1) : ``stylesheet_info`` reconnaît une
 feuille XSLT à sa racine ; ``check_engines`` donne les moteurs qui la
@@ -31,17 +41,19 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+import tei_stylesheets
 from project_config import DEFAULT_APPLICATION_XSLT, TransformScenario
 from project_management import portable_path
 from xml_assembly import assemble, path_key
 
 VARIANS_STYLESHEETS = DEFAULT_APPLICATION_XSLT.parent
 VARIANS_PREFIX = "${varians}/"
+TEI_PREFIX = "${tei}/"
 SOURCES = ("edition", "current", "file")
 ENGINES = ("lxml", "saxon")
 PROBLEM_CODES = ("unknown_source", "no_file", "file_missing", "no_current", "unknown_engine", "saxon_missing",
                  "no_xslt", "xslt_missing", "css_missing", "no_output", "output_is_folder", "output_is_source",
-                 "css_overwrites_source")
+                 "css_overwrites_source", "tei_missing")
 
 
 @dataclass(frozen=True)
@@ -52,8 +64,10 @@ class ScenarioProblem:
     ``no_file``, ``file_missing``, ``no_current``, ``unknown_engine``,
     ``saxon_missing``, ``no_xslt``, ``xslt_missing``, ``css_missing``,
     ``no_output``, ``output_is_folder``, ``output_is_source``,
-    ``css_overwrites_source``. ``detail`` : la valeur ou le chemin en cause,
-    tel qu'il est écrit dans le scénario ou relatif au projet."""
+    ``css_overwrites_source``, ``tei_missing`` (TEI Stylesheets non
+    installées : le dossier de la bibliothèque). ``detail`` : la valeur ou le
+    chemin en cause, tel qu'il est écrit dans le scénario ou relatif au
+    projet."""
     code: str
     detail: str = ""
 
@@ -130,26 +144,50 @@ def saxon_available() -> bool:
     return importlib.util.find_spec("saxonche") is not None
 
 
+def tei_library():
+    """La version active des TEI Stylesheets (``tei_stylesheets.Installed``),
+    installée au premier usage depuis l'archive livrée ; None si elles
+    manquent."""
+    return tei_stylesheets.ensure_installed()
+
+
+def _uses_tei(raw) -> bool:
+    return (raw or "").strip().startswith(TEI_PREFIX)
+
+
 def resolve_path(project, raw) -> Path | None:
-    """Chemin absolu d'un chemin de scénario, ou None s'il est vide."""
+    """Chemin absolu d'un chemin de scénario, ou None s'il est vide. Sans TEI
+    Stylesheets, un chemin ``${tei}/…`` désigne un fichier absent."""
     raw = (raw or "").strip()
     if not raw:
         return None
     if raw.startswith(VARIANS_PREFIX):
         return (VARIANS_STYLESHEETS / raw[len(VARIANS_PREFIX):]).resolve()
+    if raw.startswith(TEI_PREFIX):
+        library = tei_library()
+        folder = library.folder if library is not None else tei_stylesheets.library_dir()
+        return (folder / raw[len(TEI_PREFIX):]).resolve()
     path = Path(raw).expanduser()
     return path.resolve() if path.is_absolute() else (project.root_dir / path).resolve()
 
 
 def scenario_path(project, path) -> str:
     """Chemin à écrire dans un scénario pour le fichier ``path`` : relatif au
-    projet, sinon ``${varians}/…`` pour une feuille de Varians, sinon absolu."""
+    projet, sinon ``${varians}/…`` pour une feuille de Varians, ``${tei}/…``
+    pour un fichier d'une version installée des TEI Stylesheets, sinon
+    absolu."""
     path = Path(path).expanduser().resolve()
     for folder, prefix in ((project.root_dir, ""), (VARIANS_STYLESHEETS, VARIANS_PREFIX)):
         try:
             return prefix + path.relative_to(Path(folder).resolve()).as_posix()
         except ValueError:
             continue
+    try:
+        version, *rest = path.relative_to(tei_stylesheets.library_dir().resolve()).parts
+    except ValueError:
+        version, rest = "", []
+    if rest and tei_stylesheets.parse_version(version) is not None:
+        return TEI_PREFIX + "/".join(rest)
     return path.as_posix()
 
 
@@ -158,15 +196,38 @@ def stylesheet_path(scenario, project) -> Path | None:
     return resolve_path(project, scenario.xslt)
 
 
-def predefined_scenarios(translate=None) -> tuple[TransformScenario, ...]:
-    """Scénarios fournis par Varians, non écrits dans project.xml.
+# Scénarios TEI : clé, dossier du profil des TEI Stylesheets, extension du résultat.
+TEI_SCENARIOS = (("tei-html", "html", "html"), ("tei-txt", "txt", "txt"), ("tei-markdown", "markdown", "md"),
+                 ("tei-latex", "latex", "tex"))
+
+
+def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenario, ...]:
+    """Scénarios fournis par Varians, non écrits dans project.xml : l'édition
+    HTML de Varians, puis les scénarios « TEI : … » (``TEI_SCENARIOS``).
     ``translate`` donne, dans la langue de l'interface, le nom d'après la clé
     du scénario, et le titre du sommaire d'après la clé ``toc`` (sinon : la
-    clé, et « Contents » comme la feuille de Varians)."""
+    clé, et « Contents » comme la feuille de Varians). ``language`` : code
+    de la langue de l'interface, pour les textes qu'ajoutent les TEI
+    Stylesheets (paramètres ``lang`` et ``documentationLanguage``)."""
+    def name(key):
+        return translate(key) if translate else key
+
     key = "varians-html"
-    return (TransformScenario(translate(key) if translate else key, VARIANS_PREFIX + "tei-to-html.xsl",
-                              "publications/edition.html", css=VARIANS_PREFIX + "tei.css",
-                              params=(("tocTitle", translate("toc") if translate else "Contents"),)),)
+    scenarios = [TransformScenario(name(key), VARIANS_PREFIX + "tei-to-html.xsl", "publications/edition.html",
+                                   css=VARIANS_PREFIX + "tei.css",
+                                   params=(("tocTitle", translate("toc") if translate else "Contents"),))]
+    languages = (("lang", language), ("documentationLanguage", language)) if language else ()
+    for key, profile, extension in TEI_SCENARIOS:
+        css, params = "", languages
+        if profile == "html":
+            # La CSS des TEI Stylesheets, copiée à côté du résultat : aucun
+            # lien vers tei-c.org, ni vers « / » (lien « Home »).
+            css = TEI_PREFIX + "tei.css"
+            params = (("cssFile", "tei.css"), ("cssPrintFile", ""), ("homeURL", "")) + languages
+        scenarios.append(TransformScenario(name(key), f"{TEI_PREFIX}profiles/default/{profile}/to.xsl",
+                                           f"publications/tei/edition.{extension}", engine="saxon", css=css,
+                                           params=params))
+    return tuple(scenarios)
 
 
 def project_sources(project) -> list[Path]:
@@ -219,6 +280,9 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
     ``current`` : le document affiché ; ``sources`` : ``project_sources``,
     s'il est déjà connu."""
     problems = []
+    tei_missing = (_uses_tei(scenario.xslt) or _uses_tei(scenario.css)) and tei_library() is None
+    if tei_missing:
+        problems.append(ScenarioProblem("tei_missing", str(tei_stylesheets.library_dir())))
     if scenario.source not in SOURCES:
         problems.append(ScenarioProblem("unknown_source", scenario.source))
     elif scenario.source == "file":
@@ -235,10 +299,10 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
     xslt = stylesheet_path(scenario, project)
     if xslt is None:
         problems.append(ScenarioProblem("no_xslt"))
-    elif not xslt.is_file():
+    elif not xslt.is_file() and not (tei_missing and _uses_tei(scenario.xslt)):
         problems.append(ScenarioProblem("xslt_missing", scenario.xslt))
     css = resolve_path(project, scenario.css)
-    if css is not None and not css.is_file():
+    if css is not None and not css.is_file() and not (tei_missing and _uses_tei(scenario.css)):
         problems.append(ScenarioProblem("css_missing", scenario.css))
     output = resolve_path(project, scenario.output)
     if output is None:
@@ -269,14 +333,50 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
     params = [[name, value] for name, value in scenario.params]
     if css is not None and all(name != "css" for name, _value in scenario.params):
         params.append(["css", css.name])
-    return {
+    xslt = stylesheet_path(scenario, project)
+    request = {
         "name": scenario.name,
         "engine": scenario.engine,
         "source": str(source),
         "assemble": assemble_source,
-        "xslt": str(stylesheet_path(scenario, project)),
+        "xslt": str(xslt),
         "css": str(css) if css is not None else None,
         "output": str(output),
         "params": params,
         "protected": sorted(str(path) for path in _protected(scenario, project, current, sources).values()),
     }
+    if scenario.engine == "saxon":
+        library = tei_library()
+        if library is not None:
+            request["catalogs"] = [str(library.catalog)]
+            if _employs(xslt, library):
+                request["library"] = f"TEI Stylesheets {library.version}"
+    return request
+
+
+def _employs(xslt, library) -> bool:
+    """La feuille ``xslt`` est-elle une des TEI Stylesheets, ou en importe-t-elle
+    une par leur adresse officielle ?"""
+    if xslt is None:
+        return False
+    try:
+        Path(xslt).resolve().relative_to(library.folder.resolve())
+        return True
+    except ValueError:
+        pass
+    try:
+        return tei_stylesheets.OFFICIAL_URI in Path(xslt).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return False
+
+
+def check_request(engine, path, text=None) -> dict:
+    """Requête de vérification de la feuille ``path`` par ``engine``
+    (``xslt_engines.check``) ; ``text`` : son texte dans l'éditeur. Pour
+    Saxon, le catalogue des TEI Stylesheets."""
+    request = {"op": "check", "engine": engine, "xslt": str(path), "text": text}
+    if engine == "saxon":
+        library = tei_library()
+        if library is not None:
+            request["catalogs"] = [str(library.catalog)]
+    return request

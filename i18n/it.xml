@@ -879,6 +879,10 @@ Salvare comunque?</string>
   <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
   <string key="transform.engine.missing">{engine} — non installato</string>
   <string key="transform.predefined.varians-html">Edizione HTML (foglio di stile di Varians)</string>
+  <string key="transform.predefined.tei-html">TEI: HTML</string>
+  <string key="transform.predefined.tei-txt">TEI: testo</string>
+  <string key="transform.predefined.tei-markdown">TEI: Markdown</string>
+  <string key="transform.predefined.tei-latex">TEI: LaTeX</string>
   <string key="transform.scenario.title">Scenario di trasformazione</string>
   <string key="transform.scenario.name">Nome:</string>
   <string key="transform.scenario.source">Sorgente:</string>
@@ -914,6 +918,7 @@ Salvarlo comunque?</string>
   <string key="transform.problem.output_is_folder">Il risultato è una cartella: {detail}</string>
   <string key="transform.problem.output_is_source">Il risultato sostituirebbe una sorgente del progetto: {detail}</string>
   <string key="transform.problem.css_overwrites_source">La copia del CSS sostituirebbe una sorgente del progetto: {detail}</string>
+  <string key="transform.problem.tei_missing">TEI Stylesheets non installati: {detail} (vedere File ▸ TEI Stylesheets…)</string>
   <string key="toolbar.transform">Trasforma</string>
   <string key="toolbar.transform.tip">Esegui l’ultimo scenario di trasformazione (Ctrl+Maiusc+T); la freccia elenca gli scenari</string>
   <string key="transform.run">Esegui</string>
@@ -938,6 +943,7 @@ File non scritti (fuori dalla cartella del risultato, o sorgenti del progetto):
 {error}</string>
   <string key="transform.journal.engine">Motore: {engine} — durata: {seconds} s</string>
   <string key="transform.journal.params">Parametri: {params}</string>
+  <string key="transform.journal.library">Libreria: {detail}</string>
   <string key="transform.journal.message">Messaggio: {detail}</string>
   <string key="transform.journal.warning">Avviso: {detail}</string>
   <string key="transform.journal.network_read">Letto dalla rete: {detail}</string>

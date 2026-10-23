@@ -137,8 +137,15 @@ class DialogScript:
         return answer(dialog) if callable(answer) else 0
 
 
+@pytest.fixture(scope="session")
+def tei_stylesheets_folder(tmp_path_factory):
+    """Bibliothèque des TEI Stylesheets commune aux tests de la session :
+    l'archive livrée n'y est extraite qu'une fois."""
+    return tmp_path_factory.mktemp("tei-stylesheets-gui")
+
+
 @pytest.fixture(autouse=True)
-def isolated_environment(tmp_path, monkeypatch):
+def isolated_environment(tmp_path, monkeypatch, tei_stylesheets_folder):
     """Réglages, cache et réseau isolés pour chaque test."""
     settings_dir = tmp_path / "_settings"
     settings_dir.mkdir()
@@ -151,6 +158,7 @@ def isolated_environment(tmp_path, monkeypatch):
     home.mkdir()
     for var in ("HOME", "USERPROFILE", "LOCALAPPDATA", "APPDATA"):
         monkeypatch.setenv(var, str(home))
+    monkeypatch.setenv("VARIANS_TEI_STYLESHEETS", str(tei_stylesheets_folder))
 
     def _no_network(*args, **kwargs):
         raise OSError("Accès réseau interdit pendant les tests")

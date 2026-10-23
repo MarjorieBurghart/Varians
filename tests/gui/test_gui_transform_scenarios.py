@@ -59,7 +59,9 @@ def test_the_file_menu_lists_the_scenarios_of_the_project_and_the_predefined_one
     assert _rows(dialog, "project") == [["Personnes", tr("transform.source.file", file="xml/personnes.xml"),
                                          tr("transform.engine.lxml"), ""]]
     assert _rows(dialog, "predefined") == [[tr("transform.predefined.varians-html"), tr("transform.source.edition"),
-                                            tr("transform.engine.lxml"), ""]]
+                                            tr("transform.engine.lxml"), ""]] + [
+        [tr(f"transform.predefined.{key}"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""]
+        for key in ("tei-html", "tei-txt", "tei-markdown", "tei-latex")]
 
 
 def test_a_new_scenario_starts_from_the_stylesheet_of_the_preview_and_is_saved(open_window, sermons_project,

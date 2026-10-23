@@ -879,6 +879,10 @@ Přesto uložit?</string>
   <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
   <string key="transform.engine.missing">{engine} — není nainstalován</string>
   <string key="transform.predefined.varians-html">Edice HTML (styl Varians)</string>
+  <string key="transform.predefined.tei-html">TEI: HTML</string>
+  <string key="transform.predefined.tei-txt">TEI: prostý text</string>
+  <string key="transform.predefined.tei-markdown">TEI: Markdown</string>
+  <string key="transform.predefined.tei-latex">TEI: LaTeX</string>
   <string key="transform.scenario.title">Scénář transformace</string>
   <string key="transform.scenario.name">Název:</string>
   <string key="transform.scenario.source">Zdroj:</string>
@@ -914,6 +918,7 @@ Přesto uložit?</string>
   <string key="transform.problem.output_is_folder">Výsledek je složka: {detail}</string>
   <string key="transform.problem.output_is_source">Výsledek by nahradil zdroj projektu: {detail}</string>
   <string key="transform.problem.css_overwrites_source">Kopie CSS by nahradila zdroj projektu: {detail}</string>
+  <string key="transform.problem.tei_missing">TEI Stylesheets nejsou nainstalovány: {detail} (viz Soubor ▸ TEI Stylesheets…)</string>
   <string key="toolbar.transform">Transformovat</string>
   <string key="toolbar.transform.tip">Spustit poslední scénář transformace (Ctrl+Shift+T); šipka zobrazí seznam scénářů</string>
   <string key="transform.run">Spustit</string>
@@ -938,6 +943,7 @@ Nezapsané soubory (mimo složku výsledku nebo zdroje projektu):
 {error}</string>
   <string key="transform.journal.engine">Procesor: {engine} — doba: {seconds} s</string>
   <string key="transform.journal.params">Parametry: {params}</string>
+  <string key="transform.journal.library">Knihovna: {detail}</string>
   <string key="transform.journal.message">Zpráva: {detail}</string>
   <string key="transform.journal.warning">Upozornění: {detail}</string>
   <string key="transform.journal.network_read">Načteno ze sítě: {detail}</string>

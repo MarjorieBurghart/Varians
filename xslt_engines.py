@@ -20,8 +20,15 @@ suivent un même contrat :
   sources du projet et du scénario). lxml refuse ``exsl:document``.
 
 Journal : liste de ``[code, détail]`` (messages ``transform.journal.<code>``) :
-``message`` (``xsl:message``), ``warning``, ``network_read``,
-``css_copied``, ``write_refused``, ``assembly`` (problème d'assemblage).
+``library`` (la bibliothèque employée, ``request["library"]`` : « TEI
+Stylesheets 7.61.0 »), ``message`` (``xsl:message``), ``warning``,
+``network_read``, ``css_copied``, ``write_refused``, ``assembly`` (problème
+d'assemblage).
+
+Catalogues (V0.9.2.2) : Saxon lit les adresses de ``request["catalogs"]``
+(catalogues XML, celui des TEI Stylesheets) à la compilation, pour exécuter
+comme pour vérifier : une feuille qui importe l'adresse officielle des TEI
+Stylesheets les lit dans la bibliothèque installée, sans réseau.
 Échec : ``error_code`` (message ``transform.error.<code>``) et ``error``,
 le texte du moteur au format « fichier:ligne: message ».
 
@@ -52,7 +59,7 @@ NETWORK_TIMEOUT = 30
 ERROR_CODES = ("unknown_engine", "saxon_missing", "source_missing", "source_malformed", "xslt_missing",
                "xslt_malformed", "xslt_invalid", "transform_failed", "network_failed", "write_refused",
                "output_failed", "internal", "worker_failed", "cancelled")
-JOURNAL_CODES = ("message", "warning", "network_read", "css_copied", "write_refused", "assembly")
+JOURNAL_CODES = ("library", "message", "warning", "network_read", "css_copied", "write_refused", "assembly")
 
 
 @dataclass
@@ -115,6 +122,8 @@ def run(request) -> TransformResult:
             raise TransformError("unknown_engine", str(engine))
         version, transform = _ENGINES[engine]
         result.version = version()
+        if request.get("library"):
+            result.journal.append(["library", str(request["library"])])
         data, extra = transform(request, result.journal)
         result.outputs = _write_outputs(request, data, extra, result.journal)
         result.ok = True
@@ -466,6 +475,14 @@ def _saxon_version():
     return _saxon_processor().version.replace(" from Saxonica", "")
 
 
+def _saxon_catalogs(processor, request):
+    """Donne à Saxon les catalogues de la requête (ceux qui existent). Le
+    processeur les garde : chaque exécution a son propre processus."""
+    catalogs = [str(path) for path in request.get("catalogs") or () if Path(path).is_file()]
+    if catalogs:
+        processor.set_catalog_files(catalogs)
+
+
 def _saxon_blocks(text):
     """Messages de Saxon : une ligne d'en-tête, puis des lignes en retrait."""
     blocks = []
@@ -522,6 +539,7 @@ def _uri_path(uri):
 def _run_saxon(request, journal):
     from saxonche import PySaxonApiError
     processor = _saxon_processor()
+    _saxon_catalogs(processor, request)
     xslt, output = request["xslt"], Path(request["output"])
     log = Path(request["stderr_log"]) if request.get("stderr_log") else None
     start = log.stat().st_size if log is not None and log.exists() else 0
@@ -610,6 +628,7 @@ def _run_saxon(request, journal):
 def _check_saxon(request, issues):
     from saxonche import PySaxonApiError
     processor = _saxon_processor()
+    _saxon_catalogs(processor, request)
     xslt = Path(request["xslt"])
     log = Path(request["stderr_log"]) if request.get("stderr_log") else None
     start = log.stat().st_size if log is not None and log.exists() else 0
