@@ -65,6 +65,18 @@ class DocumentTabBar(QTabBar):
         font.setBold(bold)
         return font
 
+    def label_font(self, index):
+        """Police du nom de l'onglet ``index`` : en gras pour l'onglet courant."""
+        return self._label_font(index == self.currentIndex())
+
+    def label_colour(self, index):
+        """Couleur du nom de l'onglet ``index`` : celle de l'état XML du
+        document, sinon plus foncée pour l'onglet courant."""
+        colour = self.tabTextColor(index)
+        if colour.isValid():
+            return colour
+        return _CURRENT_TAB_TEXT if index == self.currentIndex() else _OTHER_TAB_TEXT
+
     def tabSizeHint(self, index):
         # Place du nom en gras pour chaque onglet : changer d'onglet ne
         # déplace pas les autres.
@@ -86,11 +98,8 @@ class DocumentTabBar(QTabBar):
             self.initStyleOption(option, index)
             painter.drawControl(QStyle.ControlElement.CE_TabBarTabShape, option)
             rect = self.style().subElementRect(QStyle.SubElement.SE_TabBarTabText, option, self)
-            colour = self.tabTextColor(index)
-            if not colour.isValid():
-                colour = _CURRENT_TAB_TEXT if index == current else _OTHER_TAB_TEXT
-            painter.setFont(self._label_font(index == current))
-            painter.setPen(colour)
+            painter.setFont(self.label_font(index))
+            painter.setPen(self.label_colour(index))
             painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, option.text)
 
 

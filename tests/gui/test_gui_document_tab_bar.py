@@ -127,12 +127,18 @@ def test_the_name_of_the_current_tab_is_bold_and_whole(open_window, project_with
 
 
 def test_the_health_colour_shows_on_the_current_tab_too(open_window, project_with_documents):
+    # La couleur et la graisse du nom sont lues sur l'onglet (label_colour,
+    # label_font) ; les pixels ne servent qu'à voir le rouge dessiné : le
+    # lissage sous-pixel de Linux borde de couleurs un texte noir.
     window = open_window(project_with_documents)
     bar = window.document_tab_bar
+    red = QColor("#a13d32")
     window.show_document(_aux(window))
     _type_at_end(window, "<")
     window.validate_text(False)
-    assert _has_red_text(_tab_colours(bar, 1))                  # onglet courant
+    assert bar.label_colour(1) == red and bar.label_font(1).bold()          # onglet courant
+    assert _has_red_text(_tab_colours(bar, 1))
     window.show_document(window.edition_session)
-    assert _has_red_text(_tab_colours(bar, 1))                  # autre onglet
-    assert not _has_red_text(_tab_colours(bar, 0))
+    assert bar.label_colour(1) == red and not bar.label_font(1).bold()      # autre onglet
+    assert _has_red_text(_tab_colours(bar, 1))
+    assert bar.label_colour(0) != red and bar.label_font(0).bold()
