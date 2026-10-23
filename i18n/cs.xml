@@ -834,6 +834,24 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="transform.duplicate">Duplikovat…</string>
   <string key="transform.remove">Odstranit</string>
   <string key="transform.remove.question">Odstranit scénář „{name}“ z projektu?</string>
+  <string key="transform.open_stylesheet">Otevřít šablonu</string>
+  <string key="transform.open_stylesheet.tip">Zobrazit šablonu XSLT scénáře k úpravám; přidá se k dokumentům projektu.</string>
+  <string key="transform.open_stylesheet.predefined">Chcete-li upravit jeho šablonu, nejprve tento scénář zduplikujte do projektu.</string>
+  <string key="transform.open_stylesheet.varians">Šablona „{name}“ je součástí Variansu: neupravuje se na místě.
+
+Varians ji zkopíruje do projektu:
+{path}
+
+Scénář „{scenario}“ bude používat tuto kopii.</string>
+  <string key="transform.open_stylesheet.outside">Šablona scénáře „{scenario}“ je mimo projekt:
+{path}
+
+Zkopírovat ji do projektu?
+{target}
+
+Scénář pak bude používat tuto kopii. „Otevřít bez kopírování“ upravuje původní soubor.</string>
+  <string key="transform.open_stylesheet.copy">Zkopírovat do projektu</string>
+  <string key="transform.open_stylesheet.in_place">Otevřít bez kopírování</string>
   <string key="transform.copy_name">{name} (kopie)</string>
   <string key="transform.source.edition">Edice</string>
   <string key="transform.source.current">Zobrazený dokument</string>

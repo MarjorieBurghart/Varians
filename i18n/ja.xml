@@ -834,6 +834,24 @@
   <string key="transform.duplicate">複製…</string>
   <string key="transform.remove">削除</string>
   <string key="transform.remove.question">シナリオ「{name}」をプロジェクトから削除しますか？</string>
+  <string key="transform.open_stylesheet">スタイルシートを開く</string>
+  <string key="transform.open_stylesheet.tip">シナリオのXSLTスタイルシートを表示して編集します。プロジェクトの文書に追加されます。</string>
+  <string key="transform.open_stylesheet.predefined">スタイルシートを編集するには、まずこのシナリオをプロジェクトに複製してください。</string>
+  <string key="transform.open_stylesheet.varians">スタイルシート「{name}」はVariansに付属しているため、その場では編集しません。
+
+Variansがプロジェクトにコピーします：
+{path}
+
+シナリオ「{scenario}」はこのコピーを使います。</string>
+  <string key="transform.open_stylesheet.outside">シナリオ「{scenario}」のスタイルシートはプロジェクトの外にあります：
+{path}
+
+プロジェクトにコピーしますか？
+{target}
+
+シナリオはこのコピーを使うようになります。「コピーせずに開く」は元のファイルを編集します。</string>
+  <string key="transform.open_stylesheet.copy">プロジェクトにコピー</string>
+  <string key="transform.open_stylesheet.in_place">コピーせずに開く</string>
   <string key="transform.copy_name">{name}（コピー）</string>
   <string key="transform.source.edition">校訂本文</string>
   <string key="transform.source.current">表示中の文書</string>

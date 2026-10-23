@@ -834,6 +834,24 @@ Salvata in un’altra cartella, non le troverebbe più. Copiate anche le parti, 
   <string key="transform.duplicate">Duplica…</string>
   <string key="transform.remove">Elimina</string>
   <string key="transform.remove.question">Eliminare lo scenario «{name}» dal progetto?</string>
+  <string key="transform.open_stylesheet">Apri il foglio</string>
+  <string key="transform.open_stylesheet.tip">Mostra il foglio XSLT dello scenario per modificarlo; viene aggiunto ai documenti del progetto.</string>
+  <string key="transform.open_stylesheet.predefined">Per modificarne il foglio, duplica prima questo scenario nel progetto.</string>
+  <string key="transform.open_stylesheet.varians">Il foglio «{name}» è fornito con Varians: non si modifica sul posto.
+
+Varians lo copierà nel progetto:
+{path}
+
+Lo scenario «{scenario}» userà questa copia.</string>
+  <string key="transform.open_stylesheet.outside">Il foglio dello scenario «{scenario}» è fuori dal progetto:
+{path}
+
+Copiarlo nel progetto?
+{target}
+
+Lo scenario userà allora questa copia. «Apri senza copiare» modifica il file originale.</string>
+  <string key="transform.open_stylesheet.copy">Copia nel progetto</string>
+  <string key="transform.open_stylesheet.in_place">Apri senza copiare</string>
   <string key="transform.copy_name">{name} (copia)</string>
   <string key="transform.source.edition">Edizione</string>
   <string key="transform.source.current">Documento visualizzato</string>

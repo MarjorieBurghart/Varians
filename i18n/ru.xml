@@ -834,6 +834,24 @@
   <string key="transform.duplicate">Дублировать…</string>
   <string key="transform.remove">Удалить</string>
   <string key="transform.remove.question">Удалить сценарий «{name}» из проекта?</string>
+  <string key="transform.open_stylesheet">Открыть таблицу стилей</string>
+  <string key="transform.open_stylesheet.tip">Показать таблицу стилей XSLT сценария для правки; она добавляется к документам проекта.</string>
+  <string key="transform.open_stylesheet.predefined">Чтобы изменить таблицу стилей, сначала скопируйте этот сценарий в проект.</string>
+  <string key="transform.open_stylesheet.varians">Таблица стилей «{name}» входит в Varians: её не правят на месте.
+
+Varians скопирует её в проект:
+{path}
+
+Сценарий «{scenario}» будет использовать эту копию.</string>
+  <string key="transform.open_stylesheet.outside">Таблица стилей сценария «{scenario}» находится вне проекта:
+{path}
+
+Скопировать её в проект?
+{target}
+
+Сценарий будет использовать эту копию. «Открыть без копирования» изменяет исходный файл.</string>
+  <string key="transform.open_stylesheet.copy">Скопировать в проект</string>
+  <string key="transform.open_stylesheet.in_place">Открыть без копирования</string>
   <string key="transform.copy_name">{name} (копия)</string>
   <string key="transform.source.edition">Издание</string>
   <string key="transform.source.current">Открытый документ</string>

@@ -65,13 +65,17 @@ def document_target_path(source, project_root):
     root = Path(project_root).expanduser().resolve()
     if source.is_relative_to(root):
         return source, False
-    folder = root / ("xslt" if is_stylesheet_file(source) else "xml")
-    candidate = folder / source.name
+    return free_path(root / ("xslt" if is_stylesheet_file(source) else "xml"), source.name), True
+
+
+def free_path(folder, name):
+    """``folder/name``, suffixé ``_2``, ``_3``… si ce nom est déjà pris."""
+    candidate, name = Path(folder) / name, Path(name)
     number = 2
     while candidate.exists():
-        candidate = folder / f"{source.stem}_{number}{source.suffix}"
+        candidate = Path(folder) / f"{name.stem}_{number}{name.suffix}"
         number += 1
-    return candidate, True
+    return candidate
 
 
 def copy_document_into_project(source, project_root):

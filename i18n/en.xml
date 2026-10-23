@@ -820,6 +820,24 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
   <string key="transform.duplicate">Duplicate…</string>
   <string key="transform.remove">Delete</string>
   <string key="transform.remove.question">Delete the scenario “{name}” from the project?</string>
+  <string key="transform.open_stylesheet">Open stylesheet</string>
+  <string key="transform.open_stylesheet.tip">Show the scenario’s XSLT stylesheet to edit it; it is added to the project’s documents.</string>
+  <string key="transform.open_stylesheet.predefined">First duplicate this scenario into the project to edit its stylesheet.</string>
+  <string key="transform.open_stylesheet.varians">The stylesheet “{name}” comes with Varians: it is not edited in place.
+
+Varians will copy it into the project:
+{path}
+
+The scenario “{scenario}” will use this copy.</string>
+  <string key="transform.open_stylesheet.outside">The stylesheet of the scenario “{scenario}” is outside the project:
+{path}
+
+Copy it into the project?
+{target}
+
+The scenario will then use this copy. “Open without copying” edits the original file.</string>
+  <string key="transform.open_stylesheet.copy">Copy into the project</string>
+  <string key="transform.open_stylesheet.in_place">Open without copying</string>
   <string key="transform.copy_name">{name} (copy)</string>
   <string key="transform.source.edition">Edition</string>
   <string key="transform.source.current">Displayed document</string>

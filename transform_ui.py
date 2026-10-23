@@ -5,6 +5,11 @@ et des scénarios prédéfinis fournis par Varians, que « Dupliquer… » copie
 dans le projet pour les adapter ; la boîte d'un scénario ; le bouton
 « Transformer ▾ » et l'exécution d'un scénario.
 
+« Ouvrir la feuille » (V0.9.2.1) affiche la feuille d'un scénario du projet
+comme un document du projet. Une feuille de Varians (``${varians}/…``) est
+d'abord copiée dans ``xslt/`` ; une feuille hors du projet peut l'être (ou
+s'ouvrir sur place) ; le scénario emploie alors la copie.
+
 Les chemins d'un scénario sont écrits relatifs au projet, ou ``${varians}/…``
 pour une feuille de Varians (``xslt_scenarios.scenario_path``). Les règles
 (sources, garde-fous du résultat) sont celles de ``xslt_scenarios``.
@@ -13,6 +18,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import tempfile
 from dataclasses import replace
 from pathlib import Path
@@ -25,13 +31,14 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 from app_context import _settings, tr as _t
-from project_config import TransformScenario
+from document_dialogs import free_path
+from project_config import DocumentConfig, TransformScenario
 from project_management import update_project_transformations
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
-from xslt_scenarios import (predefined_scenarios, project_sources, resolve_path, saxon_available, scenario_path,
-                            scenario_problems, scenario_request, scenario_source, stylesheet_path)
+from xslt_scenarios import (VARIANS_PREFIX, predefined_scenarios, project_sources, resolve_path, saxon_available,
+                            scenario_path, scenario_problems, scenario_request, scenario_source, stylesheet_path)
 
 # Problèmes qui empêchent d'enregistrer un scénario ; les autres (fichier
 # absent, Saxon non installé…) sont signalés, et l'enregistrement reste possible.
@@ -176,6 +183,12 @@ class ScenarioDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         self.ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
+        # « Ouvrir la feuille » : enregistre le scénario, puis ouvre sa feuille.
+        self.open_stylesheet_btn = buttons.addButton(_t("transform.open_stylesheet"),
+                                                     QDialogButtonBox.ButtonRole.ActionRole)
+        self.open_stylesheet_btn.setToolTip(_t("transform.open_stylesheet.tip"))
+        self.open_stylesheet_btn.clicked.connect(self._accept_and_open)
+        self.open_after = False
         form.addRow(buttons)
         for edit in (self.name_edit, self.xslt_field.edit, self.output_field.edit):
             edit.textChanged.connect(self._update_ok_button)
@@ -192,8 +205,15 @@ class ScenarioDialog(QDialog):
         self.output_field.edit.setText(self._proposed_output)
 
     def _update_ok_button(self, *_args):
-        self.ok_button.setEnabled(bool(self.name_edit.text().strip() and self.xslt_field.text()
-                                       and self.output_field.text()))
+        complete = bool(self.name_edit.text().strip() and self.xslt_field.text() and self.output_field.text())
+        self.ok_button.setEnabled(complete)
+        self.open_stylesheet_btn.setEnabled(complete)
+
+    def _accept_and_open(self):
+        self.open_after = True
+        self.accept()
+        if self.result() != QDialog.DialogCode.Accepted:
+            self.open_after = False
 
     def engine(self):
         return self.engine_combo.currentData()
@@ -302,6 +322,9 @@ class ScenarioListDialog(QDialog):
         for button in (self.add_btn, self.edit_btn, self.duplicate_btn, self.remove_btn):
             row.addWidget(button)
         row.addStretch(1)
+        self.open_stylesheet_btn = QPushButton(_t("transform.open_stylesheet"), self)
+        self.open_stylesheet_btn.clicked.connect(self.open_stylesheet)
+        row.addWidget(self.open_stylesheet_btn)
         root.addLayout(row)
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, parent=self)
         self.preview_btn = self.buttons.addButton(_t("transform.preview"), QDialogButtonBox.ButtonRole.ActionRole)
@@ -310,8 +333,11 @@ class ScenarioListDialog(QDialog):
         self.run_btn.clicked.connect(lambda: self._choose(False))
         self.buttons.rejected.connect(self.reject)
         root.addWidget(self.buttons)
-        # Scénario à exécuter quand la liste se ferme : (scénario, aperçu).
+        # Scénario à exécuter quand la liste se ferme : (scénario, aperçu) ;
+        # ou scénario dont la feuille est à ouvrir.
         self.chosen = None
+        self.open_requested = None
+        self._open_after = False
         self._refresh()
 
     # --- Liste ------------------------------------------------------------------
@@ -360,6 +386,11 @@ class ScenarioListDialog(QDialog):
         self.remove_btn.setEnabled(own)
         for button in (self.duplicate_btn, self.preview_btn, self.run_btn):
             button.setEnabled(chosen is not None)
+        stylesheet = stylesheet_path(chosen[2], self._project) if own else None
+        self.open_stylesheet_btn.setEnabled(stylesheet is not None and stylesheet.is_file())
+        predefined_chosen = chosen is not None and chosen[0] == "predefined"
+        self.open_stylesheet_btn.setToolTip(_t("transform.open_stylesheet.predefined" if predefined_chosen
+                                               else "transform.open_stylesheet.tip"))
 
     def _choose(self, preview):
         """« Aperçu » ou « Exécuter » : la liste se ferme sur ce choix."""
@@ -367,6 +398,22 @@ class ScenarioListDialog(QDialog):
         if scenario is not None:
             self.chosen = (scenario, preview)
             self.accept()
+
+    def open_stylesheet(self):
+        """« Ouvrir la feuille » d'un scénario du projet : la liste se ferme."""
+        chosen = self.selected()
+        if chosen is None or chosen[0] != "project":
+            return False
+        self.open_requested = chosen[2]
+        self.accept()
+        return True
+
+    def _then_open(self, scenario):
+        """Après « Ouvrir la feuille » dans la boîte du scénario enregistré."""
+        if self._open_after:
+            self.open_requested = scenario
+            self.accept()
+        return True
 
     # --- Modifications ----------------------------------------------------------
 
@@ -382,8 +429,10 @@ class ScenarioListDialog(QDialog):
 
     def _ask(self, scenario, skip=None):
         dialog = ScenarioDialog(scenario, self._project, self._names(skip), self._current, self)
+        self._open_after = False
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return None
+        self._open_after = dialog.open_after
         return dialog.scenario()
 
     def add_scenario(self):
@@ -392,7 +441,7 @@ class ScenarioListDialog(QDialog):
         scenario = self._ask(TransformScenario("", scenario_path(self._project, self._project.xslt), "", css=css))
         if scenario is None:
             return False
-        return self._store(self._scenarios + [scenario], len(self._scenarios))
+        return self._store(self._scenarios + [scenario], len(self._scenarios)) and self._then_open(scenario)
 
     def edit_scenario(self):
         chosen = self.selected()
@@ -404,7 +453,7 @@ class ScenarioListDialog(QDialog):
             return False
         scenarios = list(self._scenarios)
         scenarios[index] = scenario
-        return self._store(scenarios, index)
+        return self._store(scenarios, index) and self._then_open(scenario)
 
     def duplicate_scenario(self):
         """« Dupliquer… » : copie dans le projet, sous un nom libre."""
@@ -419,7 +468,7 @@ class ScenarioListDialog(QDialog):
         scenario = self._ask(replace(original, name=name))
         if scenario is None:
             return False
-        return self._store(self._scenarios + [scenario], len(self._scenarios))
+        return self._store(self._scenarios + [scenario], len(self._scenarios)) and self._then_open(scenario)
 
     def remove_scenario(self):
         chosen = self.selected()
@@ -460,10 +509,72 @@ class TransformScenariosMixin:
         """Fichier ▸ « Scénarios de transformation… »."""
         dialog = ScenarioListDialog(self.project, self.project.transformations, self._save_transformations,
                                     self._transform_current_path(), self)
-        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.chosen is not None:
-            scenario, preview = dialog.chosen
-            self.run_transform_scenario(scenario, preview=preview)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            if dialog.open_requested is not None:
+                self.open_scenario_stylesheet(dialog.open_requested)
+            elif dialog.chosen is not None:
+                scenario, preview = dialog.chosen
+                self.run_transform_scenario(scenario, preview=preview)
         return dialog
+
+    def open_scenario_stylesheet(self, scenario):
+        """« Ouvrir la feuille » : affiche la feuille du scénario comme un
+        document du projet (inscrit au besoin). Une feuille de Varians est
+        d'abord copiée dans ``xslt/`` ; une feuille hors du projet peut l'être,
+        ou s'ouvrir sur place. Après une copie, le scénario emploie la copie."""
+        title = _t("transform.open_stylesheet")
+        path = stylesheet_path(scenario, self.project)
+        if path is None or not path.is_file():
+            QMessageBox.warning(self, title, _t("transform.problem.xslt_missing", detail=scenario.xslt))
+            return False
+        root = self.project.root_dir.resolve()
+        varians = scenario.xslt.strip().startswith(VARIANS_PREFIX)
+        if varians or not path.is_relative_to(root):
+            target = free_path(root / "xslt", path.name)
+            box = QMessageBox(self)
+            box.setIcon(QMessageBox.Icon.Question)
+            box.setWindowTitle(title)
+            if varians:
+                box.setText(_t("transform.open_stylesheet.varians", name=path.name, path=target,
+                               scenario=scenario.name))
+            else:
+                box.setText(_t("transform.open_stylesheet.outside", scenario=scenario.name, path=path,
+                               target=target))
+            copy_btn = box.addButton(_t("transform.open_stylesheet.copy"), QMessageBox.ButtonRole.AcceptRole)
+            in_place_btn = None if varians else box.addButton(_t("transform.open_stylesheet.in_place"),
+                                                              QMessageBox.ButtonRole.ActionRole)
+            cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+            box.setDefaultButton(copy_btn)
+            box.setEscapeButton(cancel_btn)
+            box.exec()
+            clicked = box.clickedButton()
+            if clicked is copy_btn:
+                try:
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(path, target)
+                except OSError as exc:
+                    QMessageBox.critical(self, title, str(exc))
+                    return False
+                copied = replace(scenario, xslt=scenario_path(self.project, target))
+                scenarios = [copied if s.name == scenario.name else s for s in self.project.transformations]
+                if not self._save_transformations(scenarios):
+                    return False
+                self.statusBar().showMessage(_t("documents.add.copied", path=target), 6000)
+                path = target
+            elif in_place_btn is None or clicked is not in_place_btn:
+                return False
+        return self._show_stylesheet(path)
+
+    def _show_stylesheet(self, path):
+        """Affiche le document du projet ``path`` ; l'y inscrit d'abord s'il
+        n'en est pas un."""
+        for session in self.documents:
+            if session.path and path_key(session.path) == path_key(path):
+                if not self.show_document(session):
+                    return False
+                self.show_document_tab(session)
+                return True
+        return self._register_document(DocumentConfig(path))
 
     def _build_transform_button(self):
         """Bouton « Transformer ▾ » de la barre d'outils : un clic relance le
