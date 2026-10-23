@@ -34,6 +34,7 @@ from app_context import _settings, current_i18n, tr as _t
 from document_dialogs import free_path
 from project_config import DocumentConfig, TransformScenario
 from project_management import update_project_transformations
+from tei_stylesheets_ui import TeiStylesheetsDialog
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
@@ -328,6 +329,9 @@ class ScenarioListDialog(QDialog):
         self.open_stylesheet_btn = QPushButton(_t("transform.open_stylesheet"), self)
         self.open_stylesheet_btn.clicked.connect(self.open_stylesheet)
         row.addWidget(self.open_stylesheet_btn)
+        self.tei_stylesheets_btn = QPushButton(_t("tei_stylesheets.menu"), self)
+        self.tei_stylesheets_btn.clicked.connect(self.tei_stylesheets)
+        row.addWidget(self.tei_stylesheets_btn)
         root.addLayout(row)
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, parent=self)
         self.preview_btn = self.buttons.addButton(_t("transform.preview"), QDialogButtonBox.ButtonRole.ActionRole)
@@ -401,6 +405,12 @@ class ScenarioListDialog(QDialog):
         if scenario is not None:
             self.chosen = (scenario, preview)
             self.accept()
+
+    def tei_stylesheets(self):
+        """« TEI Stylesheets… » : la fenêtre des TEI Stylesheets ; au retour,
+        les problèmes des scénarios sont relevés de nouveau."""
+        TeiStylesheetsDialog(self).exec()
+        self._refresh()
 
     def open_stylesheet(self):
         """« Ouvrir la feuille » d'un scénario du projet : la liste se ferme."""
@@ -507,6 +517,12 @@ class TransformScenariosMixin:
     _LAST_SCENARIO_SETTING = "transformLastScenario"
 
     # --- Liste, bouton et menu ----------------------------------------------------
+
+    def tei_stylesheets_dialog(self):
+        """Fichier ▸ « TEI Stylesheets… » (V0.9.2.2)."""
+        dialog = TeiStylesheetsDialog(self)
+        dialog.exec()
+        return dialog
 
     def transform_scenarios_dialog(self):
         """Fichier ▸ « Scénarios de transformation… »."""

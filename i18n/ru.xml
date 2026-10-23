@@ -864,6 +864,35 @@ Varians создаст в проекте таблицу настройки, ко
 
 Она импортирует таблицу {name} консорциума TEI. Параметры (xsl:param) и шаблоны (xsl:template), записанные здесь, имеют приоритет над импортированными; всё остальное берётся из TEI Stylesheets, которые никогда не изменяются. Импортируемый адрес — официальный: Varians читает его из установленных TEI Stylesheets без сети, как и Oxygen.</string>
   <string key="transform.customization.examples">Примеры:</string>
+  <string key="tei_stylesheets.menu">TEI Stylesheets…</string>
+  <string key="tei_stylesheets.title">TEI Stylesheets</string>
+  <string key="tei_stylesheets.intro">Сценарии «TEI: …» используют таблицы XSLT консорциума TEI (github.com/TEIC/Stylesheets), установленные один раз для всех проектов. При запуске Varians не чаще раза в месяц проверяет, вышла ли новая версия, и устанавливает её только с вашего согласия.</string>
+  <string key="tei_stylesheets.version">Установленная версия</string>
+  <string key="tei_stylesheets.source">Источник</string>
+  <string key="tei_stylesheets.folder">Папка</string>
+  <string key="tei_stylesheets.licence">Лицензия</string>
+  <string key="tei_stylesheets.checked">Последняя проверка</string>
+  <string key="tei_stylesheets.none">нет (TEI Stylesheets не установлены)</string>
+  <string key="tei_stylesheets.source.bundled">поставляются с Varians</string>
+  <string key="tei_stylesheets.source.downloaded">загружены {date}</string>
+  <string key="tei_stylesheets.never">никогда</string>
+  <string key="tei_stylesheets.licence.text">на выбор BSD 2-Clause или CC BY-SA 3.0 — © 2011–2020 TEI Consortium</string>
+  <string key="tei_stylesheets.open_folder">Открыть папку</string>
+  <string key="tei_stylesheets.show_licence">Показать лицензию</string>
+  <string key="tei_stylesheets.check">Проверить обновление</string>
+  <string key="tei_stylesheets.up_to_date">TEI Stylesheets актуальны (версия {version}).</string>
+  <string key="tei_stylesheets.available">Доступны TEI Stylesheets {version} (у вас {current}). Установить?</string>
+  <string key="tei_stylesheets.available.detail">Новая версия будет использоваться со следующего преобразования во всех проектах; старая будет удалена при следующем запуске Varians. «Позже»: вопрос вернётся при следующей проверке.</string>
+  <string key="tei_stylesheets.install">Установить</string>
+  <string key="tei_stylesheets.later">Позже</string>
+  <string key="tei_stylesheets.downloading">Загрузка TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installing">Установка TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installed">TEI Stylesheets {version} установлены: они будут использоваться со следующего преобразования.</string>
+  <string key="tei_stylesheets.cancelled">Установка TEI Stylesheets отменена.</string>
+  <string key="tei_stylesheets.error.network">Сайт консорциума TEI недоступен: {detail}</string>
+  <string key="tei_stylesheets.error.invalid_reply">Неожиданный ответ консорциума TEI: {detail}</string>
+  <string key="tei_stylesheets.error.invalid_archive">Неверный архив TEI Stylesheets: {detail}. Установленная версия сохранена.</string>
+  <string key="tei_stylesheets.error.write_failed">Невозможно записать в папку TEI Stylesheets: {detail}</string>
   <string key="xslt_check.action">Проверить таблицу стилей XSLT</string>
   <string key="xslt_check.action.tip">Скомпилировать показанную таблицу стилей XSLT, не выполняя её, движком её сценариев (F8)</string>
   <string key="xslt_check.panel.title">Проверка таблицы стилей XSLT</string>

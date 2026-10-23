@@ -864,6 +864,35 @@ Její parametry a pravidla budou mít přednost před těmi z TEI Stylesheets; v
 
 Importuje šablonu {name} konsorcia TEI. Parametry (xsl:param) a pravidla (xsl:template) zapsané zde mají přednost před importovanými; vše ostatní pochází z TEI Stylesheets, které se nikdy nemění. Importovaná adresa je oficiální: Varians ji čte z nainstalovaných TEI Stylesheets bez sítě, stejně jako Oxygen.</string>
   <string key="transform.customization.examples">Příklady:</string>
+  <string key="tei_stylesheets.menu">TEI Stylesheets…</string>
+  <string key="tei_stylesheets.title">TEI Stylesheets</string>
+  <string key="tei_stylesheets.intro">Scénáře „TEI: …“ používají šablony XSLT konsorcia TEI (github.com/TEIC/Stylesheets), nainstalované jednou pro všechny projekty. Při spuštění Varians nejvýše jednou za měsíc ověří, zda vyšla nová verze; nainstaluje ji jen s vaším souhlasem.</string>
+  <string key="tei_stylesheets.version">Nainstalovaná verze</string>
+  <string key="tei_stylesheets.source">Původ</string>
+  <string key="tei_stylesheets.folder">Složka</string>
+  <string key="tei_stylesheets.licence">Licence</string>
+  <string key="tei_stylesheets.checked">Poslední kontrola</string>
+  <string key="tei_stylesheets.none">žádná (TEI Stylesheets nejsou nainstalovány)</string>
+  <string key="tei_stylesheets.source.bundled">dodáno s Variansem</string>
+  <string key="tei_stylesheets.source.downloaded">staženo {date}</string>
+  <string key="tei_stylesheets.never">nikdy</string>
+  <string key="tei_stylesheets.licence.text">podle volby BSD 2-Clause nebo CC BY-SA 3.0 — © 2011–2020 TEI Consortium</string>
+  <string key="tei_stylesheets.open_folder">Otevřít složku</string>
+  <string key="tei_stylesheets.show_licence">Zobrazit licenci</string>
+  <string key="tei_stylesheets.check">Vyhledat aktualizaci</string>
+  <string key="tei_stylesheets.up_to_date">TEI Stylesheets jsou aktuální (verze {version}).</string>
+  <string key="tei_stylesheets.available">K dispozici jsou TEI Stylesheets {version} (máte {current}). Nainstalovat?</string>
+  <string key="tei_stylesheets.available.detail">Nová verze se použije od příští transformace ve všech projektech; stará bude odstraněna při příštím spuštění Variansu. „Později“: otázka se vrátí při příští kontrole.</string>
+  <string key="tei_stylesheets.install">Nainstalovat</string>
+  <string key="tei_stylesheets.later">Později</string>
+  <string key="tei_stylesheets.downloading">Stahování TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installing">Instalace TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installed">TEI Stylesheets {version} nainstalovány: použijí se od příští transformace.</string>
+  <string key="tei_stylesheets.cancelled">Instalace TEI Stylesheets zrušena.</string>
+  <string key="tei_stylesheets.error.network">Web konsorcia TEI není dostupný: {detail}</string>
+  <string key="tei_stylesheets.error.invalid_reply">Neočekávaná odpověď konsorcia TEI: {detail}</string>
+  <string key="tei_stylesheets.error.invalid_archive">Nesprávný archiv TEI Stylesheets: {detail}. Nainstalovaná verze zůstává.</string>
+  <string key="tei_stylesheets.error.write_failed">Do složky TEI Stylesheets nelze zapisovat: {detail}</string>
   <string key="xslt_check.action">Zkontrolovat šablonu XSLT</string>
   <string key="xslt_check.action.tip">Zkompilovat zobrazenou šablonu XSLT bez spuštění, procesorem jejích scénářů (F8)</string>
   <string key="xslt_check.panel.title">Kontrola šablony XSLT</string>
