@@ -475,6 +475,25 @@ Format des données et fonctionnement du viewer : `WEB_VIEWER_ASSEMBLED.md`.
   synchronisations… », « Marquer la page » et « Double page… » restent
   propres au bureau ; `parse="text"` et `xi:fallback` sont signalés.
 
+## Plusieurs éditions dans un même projet (décision du 23 octobre 2026)
+
+Les « Réflexions préparatoires » du 15 octobre envisageaient un second
+modèle : plusieurs éditions TEI autonomes (« unités éditoriales ») dans un
+même projet, chacune avec son document maître, ses témoins, son pivot et
+ses alignements, autour de ressources communes. Ce modèle est **retiré de
+la feuille de route** :
+
+- des éditions qui ne partagent presque rien (par exemple un sermon latin du
+  XIIIᵉ siècle et un poème d'Emily Dickinson) sont plus simples dans des
+  projets séparés, ce qui est déjà possible ;
+- un corpus de textes transmis par des témoins différents tient dans une
+  seule édition en parties, avec des textes synchronisés à part (V0.9.1.1),
+  chacun avec son pivot et ses JSON.
+
+Conséquence pour les scénarios de transformation XSLT : leur source est un
+fichier ou l'édition (assemblée au besoin) ; une publication portant sur
+plusieurs éditions d'un même projet n'est plus envisagée.
+
 ## Restent à décider
 
 - La création d'une nouvelle partie depuis Varians (fichier et `xi:include`
