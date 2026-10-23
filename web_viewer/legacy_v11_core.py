@@ -1128,7 +1128,7 @@ def build_secondary_alignment(corrected: Path, alto_archive: Path, manifest_path
 # =============================================================================
 
 def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks: bool = False, page_resolver=None, base_line_keys=None, *,
-                             root=None, line_anchors=None, segment_of=None, target_of=None):
+                             root=None, line_anchors=None, segment_of=None, target_of=None, pb_line_keys=False):
     """Construit une vue de lecture par blocs (paragraphes/titres) sans matérialiser les <lb>.
 
     Les <lb> restent uniquement des ancres vers les lignes physiques. Chaque segment
@@ -1139,7 +1139,11 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     et ``target_of`` (voir ``_reading_options``). Dans un texte synchronisé
     à part, les segments portent ``seg`` (son numéro) ; ses lignes, ses
     leçons et ses pages sont celles de son pivot ; la ligne courante est
-    propre à chaque texte.
+    propre à chaque texte. Avec ``pb_line_keys``, chaque saut de page porte
+    aussi la ligne du pivot ouverte à cet endroit (``line_key``), comme
+    ``pivot_lines`` sur le bureau : le parcours d'un témoin par pages en a
+    besoin, car un ``<pb>`` placé juste après un ``<lb/>`` précède le texte
+    de cette ligne.
     """
     # The very same ordinal-to-JSON association that drives desktop cursor
     # navigation. PageResolver remains relevant for page-only witnesses, but
@@ -1253,14 +1257,17 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
 
     def add_pagebreak(label, facs="", edref="", foreign=False):
         block = ensure_block()
-        block["segments"].append(tagged({
+        seg = {
             "kind": "pb",
             "label": label or "",
             "page": label or "",
             "facs": facs or "",
             "edref": edref or "",
             "foreign": bool(foreign),
-        }))
+        }
+        if pb_line_keys:
+            seg["line_key"] = current_line_key()
+        block["segments"].append(tagged(seg))
 
     def add_lacuna(node):
         """Repère invisible d'un ``<lacunaStart/>`` ou ``<lacunaEnd/>``."""

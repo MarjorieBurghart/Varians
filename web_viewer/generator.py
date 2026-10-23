@@ -288,9 +288,10 @@ def build_dataset(project, display_witness_ids=None):
     corr_pages, witness_labels = extract_corrected_pages(
         project.edition, f"#{base_id}", page_resolver=page_resolver,
         base_line_keys=anchor_keys, **reading_options)
+    # Textes à part : chaque <pb> porte sa ligne, pour le parcours des témoins.
     reading_document = extract_reading_document(
         project.edition, f"#{base_id}", include_foreign_pagebreaks=True,
-        page_resolver=page_resolver, base_line_keys=anchor_keys, **reading_options)
+        page_resolver=page_resolver, base_line_keys=anchor_keys, pb_line_keys=bool(texts), **reading_options)
 
     # Do NOT use only TEI-extracted lines as the pivot's physical navigation
     # data. Desktop includes every JSON line (even when a TEI page lacks a
@@ -375,6 +376,8 @@ def build_dataset(project, display_witness_ids=None):
     if texts:
         _add_text_views(project, assembled, texts, text_pivot_pages, witnesses, folio_objects,
                         raw_sync_caches, edition_text)
+        _add_routes(assembled, texts, [w for w in witnesses if w['id'] in displayed_ids], caches,
+                    caches[base_id] if base_has_alignment else None, folio_objects, reading_document)
     # Publish the selected witnesses in the exact on-screen order. Keep only
     # the pivot as a hidden, image-free technical witness if it is not visible:
     # its physical keys are indispensable for text->secondary navigation.
@@ -488,6 +491,81 @@ def _add_text_views(project, assembled, texts, text_pivot_pages, witnesses, foli
                     view["start"] = start.ref
             if view is not None:
                 by_id[wid].setdefault("views", {})[str(k)] = view
+
+
+def _add_routes(assembled, texts, witnesses, caches, base_cache, folio_objects, reading_document):
+    """Parcours de chaque témoin affiché dans son propre ordre, d'un texte à
+    l'autre (``witness_route``, comme sur le bureau), et pages qui mènent le
+    texte : ``route``, ``route_uncertain``, ``lead`` (vue de l'édition ou
+    d'un texte, par pages) et ``lead_locus``.
+
+    Les sources du parcours sont les JSON après les règles d'ALTO, d'images
+    et d'IIIF, sans préfixe (l'identité des pages est celle du bureau) ; les
+    clés exportées portent le préfixe du texte."""
+    from dataclasses import replace
+
+    import segment_model
+    from folio_navigation import Folio
+    from web_viewer.segment_views import export_route, locus_leads, page_leads, page_marks
+    from witness_resource_refresh import flatten_primary
+    from witness_route import Source, witness_route
+    segments = assembled.segments
+    prefixes = {s.index: s.prefix for s in segments}
+    pivot_caches = {0: base_cache}
+    for segment in segments[1:]:
+        entry = texts[segment.index]["caches"].get(segment.pivot)
+        pivot_caches[segment.index] = entry[2] if entry is not None and texts[segment.index]["line_sync"] else None
+    base_by_key, pivot_keys, ranks = {}, {}, {}
+    for k, cache in pivot_caches.items():
+        items, base_by_key[k] = flatten_primary(cache) if cache is not None else ([], {})
+        pivot_keys[k] = [prefixes[k] + item["key"] for item in items]
+        ranks[k] = {key: rank for rank, key in enumerate(pivot_keys[k])}
+    locus_texts = [(s.index, texts[s.index]["loci"], texts[s.index]["ids"]) for s in segments[1:]]
+    for witness in witnesses:
+        wid = witness['id']
+        # Ses vues : (texte, par lignes, JSON sans préfixe, folios).
+        views = [(0, bool(witness['line_sync']), caches[wid], folio_objects[wid])]
+        for segment in segments[1:]:
+            view = witness.get('views', {}).get(str(segment.index))
+            if view is None:
+                continue
+            if view.get('same_pages'):
+                views.append((segment.index, False, caches[wid], folio_objects[wid]))
+            else:
+                views.append((segment.index, view['mode'] == 'line', texts[segment.index]["caches"][wid][2],
+                              [Folio(**f) for f in view['folios']]))
+        marks = page_marks(reading_document, wid, {k: folios for k, line, _cache, folios in views if not line},
+                           ranks)
+        sources = []
+        for k, line, cache, _folios in views:
+            anchor = segments[k].anchor if k else 0
+            segment_key = k or None
+            if line:
+                source = Source(segment_key, cache, wid == segments[k].pivot, base_by_key[k], anchor)
+            else:
+                source = Source(segment_key, marks=tuple(marks.get(k, ())), anchor=anchor)
+            if k == 0:
+                sources.append(source)
+            elif source.cache is not None or source.marks:
+                sources.append(replace(source, locus=segment_model.locus_start(
+                    texts[k]["loci"], wid, texts[k]["ids"])))
+        declared = segment_model.declared_page_ranks(
+            [caches[wid]] + [text["caches"][wid][2] for text in texts.values() if wid in text["caches"]],
+            folio_objects[wid])
+        route = witness_route(wid, sources, declared)
+        witness['route'] = export_route(route, prefixes, pivot_keys)
+        witness['route_uncertain'] = [0 if k is None else k for k in route.uncertain]
+        page_folios = []
+        for k, line, cache, folios in views:
+            if line:
+                continue
+            leads = page_leads(route, cache.get('pages', []) or [], folios)
+            if leads:
+                (witness if k == 0 else witness['views'][str(k)])['lead'] = leads
+            page_folios.extend(folios)
+        leads = locus_leads(wid, page_folios, locus_texts)
+        if leads:
+            witness['lead_locus'] = leads
 
 
 def _relative(path, project):
