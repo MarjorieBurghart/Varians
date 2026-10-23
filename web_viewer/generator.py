@@ -600,6 +600,7 @@ HTML_TEMPLATE = r'''<!doctype html><html lang="__LANG__"><head><meta charset="ut
 __GEOMETRY_JS__
 __IIIF_JS__
 __SEARCH_JS__
+__SYNC_JS__
 const DATA=JSON.parse(document.getElementById('data').textContent),$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeStorage={getItem(k){try{return window.localStorage.getItem(k)}catch(_){return null}},setItem(k,v){try{window.localStorage.setItem(k,v)}catch(_){}},removeItem(k){try{window.localStorage.removeItem(k)}catch(_){}}};
 const I18N=DATA.i18n||{default:'fr',fallback:'en',languages:[],catalogs:{}};let uiLang=safeStorage.getItem('tei-ui-language')||I18N.default||'fr';if(!I18N.catalogs?.[uiLang])uiLang=I18N.default||I18N.fallback||Object.keys(I18N.catalogs||{})[0]||'fr';function t(key,vars={}){let s=I18N.catalogs?.[uiLang]?.[key]??I18N.catalogs?.[I18N.fallback]?.[key]??key;return String(s).replace(/\{([A-Za-z0-9_]+)\}/g,(m,k)=>Object.prototype.hasOwnProperty.call(vars,k)?vars[k]:m)}
@@ -829,10 +830,12 @@ def make_html(data):
     geometry_js = (HERE / "geometry.js").read_text(encoding="utf-8")
     iiif_js = (HERE / "iiif.js").read_text(encoding="utf-8")
     search_js = (HERE / "fulltext_search.js").read_text(encoding="utf-8")
+    sync_js = (HERE / "sync_model.js").read_text(encoding="utf-8")
     return (HTML_TEMPLATE.replace("__DATA_JSON__", payload)
             .replace("__GEOMETRY_JS__", geometry_js)
             .replace("__IIIF_JS__", iiif_js)
             .replace("__SEARCH_JS__", search_js)
+            .replace("__SYNC_JS__", sync_js)
             .replace("__TITLE__", html.escape(str(data["meta"]["title"]), quote=True))
             .replace("__LANG__", html.escape(str(data.get("i18n", {}).get("default", "en")), quote=True))
             .replace("__BODY_CLASS__", body_class))
