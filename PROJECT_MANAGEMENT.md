@@ -433,3 +433,40 @@ fichier par sermon, par exemple) selon la norme XInclude :
   d’emploi : aide, « Mettre en place une édition en parties (XInclude) ».
 
 Un projet sans `xi:include` est inchangé.
+
+## V0.9.2.0 — Scénarios de transformation XSLT (`<transformations>`)
+
+Les scénarios de Fichier ▸ « Scénarios de transformation… » sont enregistrés
+dans le projet, pour être rejoués à l’identique et partagés avec lui :
+
+```xml
+<transformations>
+  <scenario name="Index des personnes" source="file" file="xml/personnes.xml"
+            engine="lxml" xslt="rendering/personnes.xsl" css="rendering/personnes.css"
+            output="publications/personnes.html">
+    <param name="titre" value="Index des personnes"/>
+  </scenario>
+  <scenario name="Une page par sermon" source="edition" engine="saxon"
+            xslt="rendering/pages.xsl" output="publications/sermons/index.html"/>
+</transformations>
+```
+
+- `name` (obligatoire) : nom affiché ; à nom égal, le premier scénario est
+  gardé ;
+- `source` : `edition` (par défaut ; l’édition, assemblée si elle a des
+  parties), `current` (le document affiché) ou `file` (le fichier `file`,
+  lu tel quel) ;
+- `engine` : `lxml` (par défaut, XSLT 1.0) ou `saxon` (XSLT 3.0) ;
+- `xslt`, `css` (facultative, copiée à côté du résultat), `output` (le
+  résultat, remplacé à chaque exécution) : chemins relatifs au projet ; un
+  chemin qui commence par `${varians}/` désigne une feuille fournie avec
+  Varians (dossier `rendering` de l’application) ;
+- `<param name="…" value="…"/>` : paramètres de la feuille, passés comme
+  chaînes ; à nom égal, le premier est gardé.
+
+Un projet sans scénario n’a pas d’élément `<transformations>`. Un scénario
+incomplet ou d’une valeur inconnue n’empêche pas d’ouvrir le projet : il est
+signalé dans la liste des scénarios, n’est pas exécuté, et reste dans le
+fichier. La fenêtre « Paramètres du projet » conserve les scénarios, et
+`project_management.update_project_transformations` ne réécrit que cet
+élément (copie `.bak` préalable).

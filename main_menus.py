@@ -60,6 +60,7 @@ class MainMenusMixin:
             _t("toolbar.generate_web"), "", self.generate_web_viewer, _t("toolbar.generate_web.tip")
         )
         tb.addAction(self.action_generate_web)
+        tb.addWidget(self._build_transform_button())
         tool_gap = QWidget()
         tool_gap.setFixedWidth(12)
         tb.addWidget(tool_gap)
@@ -131,6 +132,8 @@ class MainMenusMixin:
         self.action_generate_web_menu = self._make_action(
             _t("menu.generate_web"), "", self.generate_web_viewer, _t("toolbar.generate_web.tip")
         )
+        self.action_transform_scenarios = self._make_action(
+            _t("menu.transform_scenarios"), "", self.transform_scenarios_dialog)
         self.action_quit = self._make_action(_t("menu.quit"), "Ctrl+Q", self.close)
 
         menu.insertAction(self.recent_menu.menuAction(), self.action_new_project)
@@ -154,6 +157,7 @@ class MainMenusMixin:
         menu.addAction(self.action_ctrl_e_config)
         menu.addSeparator()
         menu.addAction(self.action_generate_web_menu)
+        menu.addAction(self.action_transform_scenarios)
         menu.addSeparator()
         menu.addAction(self.action_quit)
         # Dans un QMenu attaché à un QToolButton, les raccourcis doivent aussi
@@ -361,9 +365,12 @@ class MainMenusMixin:
         self.action_ctrl_e_config.setText(_t("menu.ctrl_e_config"))
         self.action_ctrl_e_config.setToolTip(_t("toolbar.ctrl_e_config.tip", path=self.project.custom_elements))
         self.action_generate_web_menu.setText(_t("menu.generate_web"))
+        self.action_transform_scenarios.setText(_t("menu.transform_scenarios"))
         self.action_quit.setText(_t("menu.quit"))
         self.action_generate_web.setText(_t("toolbar.generate_web"))
         self.action_generate_web.setToolTip(_t("toolbar.generate_web.tip"))
+        self.action_transform.setText(_t("toolbar.transform"))
+        self.action_transform.setToolTip(_t("toolbar.transform.tip"))
         self.action_xml_source.setText(_t("toolbar.xml_source"))
         self.action_preview.setText(_t("toolbar.preview"))
         self.action_reload_images.setText(_t("toolbar.reload_images"))

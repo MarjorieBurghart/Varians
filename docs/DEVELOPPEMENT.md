@@ -9,7 +9,8 @@ python -m pip install -r requirements-dev.txt
 python editeur_tei.py                    # ou : python editeur_tei.py chemin/vers/project.xml
 ```
 
-`requirements.txt` contient les dépendances d'exécution (PySide6, lxml) ;
+`requirements.txt` contient les dépendances d'exécution (PySide6, lxml, et
+Saxon-HE, paquet `saxonche`, pour les scénarios XSLT 3.0) ;
 `requirements-dev.txt` y ajoute les outils de test (pytest, pytest-qt).
 
 ## Tests
@@ -77,6 +78,7 @@ d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
 | `document_dialogs.py` | ajouter, créer, retirer un document XML auxiliaire |
 | `references_ui.py` | références entre documents : identifiants proposés, F12 / Alt+←, commande « Références » |
 | `apparatus_ui.py` | Aide ▸ « Débugger l'apparat… » : contrôles de l'apparat et requêtes XPath personnelles |
+| `transform_ui.py` | scénarios de transformation XSLT : liste, boîte d'un scénario, bouton « Transformer ▾ », exécution |
 
 Composants autonomes utilisés par la fenêtre :
 
@@ -88,6 +90,10 @@ Composants autonomes utilisés par la fenêtre :
 | `apparatus_xpath.py` | requêtes XPath 1.0 de contrôle de l'apparat (parallel segmentation), sans Qt |
 | `relaxng_worker.py` | processus de validation RELAX NG séparé (Varians relancé avec `--relaxng-worker`), sans Qt |
 | `validation_worker.py` | client de ce processus : requêtes, attente sans figer la fenêtre, repli |
+| `xslt_scenarios.py` | scénarios de transformation : chemins, sources, garde-fous, requête, sans Qt |
+| `xslt_engines.py` | moteurs des scénarios (lxml, Saxon), sans Qt |
+| `transform_worker.py` | processus d'une transformation (Varians relancé avec `--transform-worker`), sans Qt |
+| `transform_runner.py` | client de ce processus : lancer, annuler, compte rendu |
 | `busy_indicator.py` | lueur animée de la barre d'état pendant une validation |
 | `code_editor.py` | éditeur de la source XML (`CodeEditor`) |
 | `formatted_view.py` | aperçu XSLT/CSS et édition par fragments |
@@ -312,8 +318,14 @@ Règles :
 peut lire des fichiers locaux (`document()`, `xsl:import`), mais ne peut ni
 écrire de fichier (`exsl:document`), ni créer de dossier, ni accéder au
 réseau. Une erreur de la feuille est signalée telle quelle, au format
-`fichier:ligne: message`. Le moteur .NET via PowerShell ne sert de secours
-que si lxml n'est pas installé.
+`fichier:ligne: message` (`xslt_engines.xslt_error_text`, commun aux
+scénarios). Le moteur .NET via PowerShell ne sert de secours que si lxml
+n'est pas installé.
+
+Les scénarios de transformation (V0.9.2.0) ont leurs propres règles :
+lecture locale et réseau, écriture du seul résultat, processus à part,
+moteurs lxml et Saxon ; voir `XSLT_SCENARIOS.md`. Une version autonome
+(PyInstaller, Nuitka) devra embarquer `saxonche`.
 
 ## Historique et versions
 

@@ -166,6 +166,8 @@ Il a été suggéré de ne pas limiter l’architecture au seul XSLT 1.0 actuell
 
 L’exécution des transformations devra faire l’objet de garanties techniques : résolution contrôlée des imports et documents, gestion des chemins et des accès aux fichiers/réseau, absence d’écriture imprévue, journal d’exécution et reproductibilité. La politique exacte reste à concevoir.
 
+> **Décisions du 23 octobre 2026 (réalisées en V0.9.2.0) :** moteurs XSLT 1.0 (lxml) et XSLT 3.0 (Saxon-HE, installé avec Varians) ; scénarios enregistrés dans `project.xml` (`<transformations>`) ; lecture des fichiers locaux et du réseau ; écriture du seul résultat (et, avec Saxon, de fichiers dans son dossier) ; exécution dans un processus à part, avec un journal (moteur et version, paramètres, messages, lectures réseau, écritures refusées). Des scénarios prédéfinis sur les TEI Stylesheets, mis à jour automatiquement, sont prévus pour la version suivante. Voir `docs/DECISIONS_ASSEMBLAGE.md` et `XSLT_SCENARIOS.md`.
+
 ## 6. Compatibilité et migration
 
 Le scénario recommandé consiste à **faire fonctionner les projets historiques inchangés**, en interprétant au besoin leur unique `edition.xml` comme une **unité éditoriale implicite en mémoire**. Il ne faudrait pas imposer une conversion visible ou une restructuration manuelle aux utilisateurs des projets simples.
@@ -195,7 +197,7 @@ Les échanges n’ont pas encore tranché les questions suivantes :
 - Modes de navigation des références entre fichiers et niveau de vérification des identifiants.
 - Ergonomie détaillée : explorateur, onglets, aperçu individuel/contextualisé, transitions entre unités éditoriales.
 - Schémas de documents fragmentaires et restitution précise des erreurs de validation globale.
-- Format persistant, portée et héritage des scénarios XSLT ; choix des moteurs et de leurs dépendances.
+- ~~Format persistant, portée et héritage des scénarios XSLT ; choix des moteurs et de leurs dépendances.~~ Tranché le 23 octobre 2026 (V0.9.2.0) : scénarios propres au projet, dans `project.xml` ; lxml et Saxon.
 - Politique de sécurité pour les ressources locales/distantes et les transformations.
 - Stratégie de tests de migration et de non-régression, y compris le parcours **« une image, une transcription, sans options avancées »**.
 

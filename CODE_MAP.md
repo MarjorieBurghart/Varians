@@ -195,3 +195,13 @@ Format des données et fonctionnement : `WEB_VIEWER_ASSEMBLED.md`.
 - `web_viewer/segment_views.py` : `doc_positions`, `page_marks`, `export_route`, `page_leads`, `locus_leads`.
 - `web_viewer/sync_model.js` (`VariansSync`, sans DOM) : `docIndex`, `segAt`, `lastLinked`, `segOfKey`, `lacunaStarts`, `lacunaeAt`, `lineStops`, `pageStops`, `routeIndex`, `step`, `panelStop`, `presentStop`.
 - `project_actions.py` : `_save_edition_for_export` (édition, parties modifiées, fragment non appliqué).
+
+## V0.9.2.0 — scénarios de transformation XSLT
+
+Fonctionnement, format et sécurité : `XSLT_SCENARIOS.md`.
+
+- `project_config.py` : `TransformScenario`, `ProjectConfig.transformations`, `_parse_transformations` ; `project_management.py` : `transformations_element`, `update_project_transformations`.
+- `xslt_scenarios.py` : `resolve_path`, `scenario_path`, `stylesheet_path`, `predefined_scenarios`, `project_sources`, `scenario_source`, `scenario_problems`, `scenario_request`.
+- `xslt_engines.py` : `run`, `TransformResult`, `_run_lxml` (résolveur réseau), `_run_saxon` (deux passages pour `xsl:result-document`), `_write_outputs`.
+- `transform_worker.py` (`--transform-worker`) et `transform_runner.py` (`TransformRunner`).
+- `transform_ui.py` : `ScenarioListDialog`, `ScenarioDialog`, `TransformScenariosMixin` (`run_transform_scenario`, `_save_for_transform`, `_transform_finished`).

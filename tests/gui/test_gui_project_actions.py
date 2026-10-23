@@ -108,3 +108,30 @@ def test_project_settings_keep_the_pivot_of_each_text(open_window, example_proje
         if new_window is not None:
             new_window._force_close = True
             new_window.close()
+
+
+def test_project_settings_keep_the_transformation_scenarios(open_window, example_project, dialogs, qtbot):
+    # Comme les requêtes : la réécriture de project.xml garde les scénarios (V0.9.2.0).
+    from project_config import TransformScenario, load_project
+    from project_management import update_project_transformations
+
+    scenarios = [TransformScenario("Personnes", "rendering/personnes.xsl", "publications/personnes.html",
+                                   source="file", file="xml/personnes.xml", params=(("titre", "Index"),)),
+                 TransformScenario("Pages", "${varians}/tei-to-html.xsl", "publications/index.html", engine="saxon")]
+    update_project_transformations(example_project, scenarios)
+    window = open_window(example_project)
+
+    def accept(dialog):
+        dialog.accept()
+        return dialog.result()
+
+    dialogs.expect("dialog", accept)
+    dialogs.expect("information")
+    window.project_settings_dialog()
+    new_window = window._replacement_window
+    try:
+        assert load_project(example_project).transformations == tuple(scenarios)
+    finally:
+        if new_window is not None:
+            new_window._force_close = True
+            new_window.close()

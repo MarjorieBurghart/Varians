@@ -818,4 +818,106 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="diagnostics.route.edition">edice</string>
   <string key="status.route_uncertain">Nejisté místo textu {text} ve svědkovi {witness}: pořadí edice.</string>
   <string key="fragment.label.file">Fragment TEI · odstavec {index}/{total} · {file}</string>
+  <string key="menu.transform_scenarios">Scénáře transformace…</string>
+  <string key="transform.title">Scénáře transformace</string>
+  <string key="transform.group.project">Scénáře projektu</string>
+  <string key="transform.group.predefined">Předdefinované scénáře</string>
+  <string key="transform.column.name">Název</string>
+  <string key="transform.column.source">Zdroj</string>
+  <string key="transform.column.engine">Procesor</string>
+  <string key="transform.column.problem">Problém</string>
+  <string key="transform.add">Přidat…</string>
+  <string key="transform.edit">Upravit…</string>
+  <string key="transform.duplicate">Duplikovat…</string>
+  <string key="transform.remove">Odstranit</string>
+  <string key="transform.remove.question">Odstranit scénář „{name}“ z projektu?</string>
+  <string key="transform.copy_name">{name} (kopie)</string>
+  <string key="transform.source.edition">Edice</string>
+  <string key="transform.source.current">Zobrazený dokument</string>
+  <string key="transform.source.file">Soubor: {file}</string>
+  <string key="transform.source.file_choice">Soubor:</string>
+  <string key="transform.engine.lxml">XSLT 1.0 (lxml)</string>
+  <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
+  <string key="transform.engine.missing">{engine} — není nainstalován</string>
+  <string key="transform.predefined.varians-html">Edice HTML (styl Varians)</string>
+  <string key="transform.scenario.title">Scénář transformace</string>
+  <string key="transform.scenario.name">Název:</string>
+  <string key="transform.scenario.source">Zdroj:</string>
+  <string key="transform.scenario.engine">Procesor:</string>
+  <string key="transform.scenario.xslt">Styl XSLT:</string>
+  <string key="transform.scenario.css">CSS (nepovinné):</string>
+  <string key="transform.scenario.output">Výsledek:</string>
+  <string key="transform.scenario.params">Parametry:</string>
+  <string key="transform.param.name">Název</string>
+  <string key="transform.param.value">Hodnota</string>
+  <string key="transform.param.add">Přidat parametr</string>
+  <string key="transform.param.remove">Odebrat parametr</string>
+  <string key="transform.browse.file">Zdrojový soubor scénáře</string>
+  <string key="transform.browse.xslt">Styl XSLT scénáře</string>
+  <string key="transform.browse.css">CSS scénáře</string>
+  <string key="transform.browse.output">Soubor výsledku</string>
+  <string key="transform.scenario.duplicate_name">Scénář projektu s názvem „{name}“ již existuje.</string>
+  <string key="transform.scenario.refused">Tento scénář nelze uložit: {problem}</string>
+  <string key="transform.scenario.problems">Tento scénář nelze v této podobě spustit:
+{problems}
+
+Přesto uložit?</string>
+  <string key="transform.problem.unknown_source">Neznámý zdroj: {detail}</string>
+  <string key="transform.problem.no_file">Chybí zdrojový soubor</string>
+  <string key="transform.problem.file_missing">Zdrojový soubor nenalezen: {detail}</string>
+  <string key="transform.problem.no_current">Žádný zobrazený dokument</string>
+  <string key="transform.problem.unknown_engine">Neznámý procesor: {detail}</string>
+  <string key="transform.problem.saxon_missing">Saxon není nainstalován: spusťte installer_dependances.bat nebo pip install saxonche</string>
+  <string key="transform.problem.no_xslt">Chybí styl XSLT</string>
+  <string key="transform.problem.xslt_missing">Styl XSLT nenalezen: {detail}</string>
+  <string key="transform.problem.css_missing">CSS nenalezeno: {detail}</string>
+  <string key="transform.problem.no_output">Chybí soubor výsledku</string>
+  <string key="transform.problem.output_is_folder">Výsledek je složka: {detail}</string>
+  <string key="transform.problem.output_is_source">Výsledek by nahradil zdroj projektu: {detail}</string>
+  <string key="transform.problem.css_overwrites_source">Kopie CSS by nahradila zdroj projektu: {detail}</string>
+  <string key="toolbar.transform">Transformovat</string>
+  <string key="toolbar.transform.tip">Spustit poslední scénář transformace (Ctrl+Shift+T); šipka zobrazí seznam scénářů</string>
+  <string key="transform.run">Spustit</string>
+  <string key="transform.preview">Náhled</string>
+  <string key="transform.running">Probíhá transformace: {name}…</string>
+  <string key="transform.cancel">Zrušit</string>
+  <string key="transform.cancelled">Transformace zrušena: {name}</string>
+  <string key="transform.busy">Transformace již probíhá.</string>
+  <string key="transform.cannot_run">Scénář „{name}“ nelze spustit:
+{problems}</string>
+  <string key="transform.done.title">Transformace dokončena</string>
+  <string key="transform.done.text">Scénář „{name}“: zapsáno souborů: {count} za {seconds} s.
+
+Výsledek: {output}</string>
+  <string key="transform.done.refused">
+
+Nezapsané soubory (mimo složku výsledku nebo zdroje projektu):
+{files}</string>
+  <string key="transform.failed.title">Transformace selhala</string>
+  <string key="transform.failed.text">Scénář „{name}“ selhal; předchozí výsledek zůstává beze změny.
+
+{error}</string>
+  <string key="transform.journal.engine">Procesor: {engine} — doba: {seconds} s</string>
+  <string key="transform.journal.params">Parametry: {params}</string>
+  <string key="transform.journal.message">Zpráva: {detail}</string>
+  <string key="transform.journal.warning">Upozornění: {detail}</string>
+  <string key="transform.journal.network_read">Načteno ze sítě: {detail}</string>
+  <string key="transform.journal.css_copied">CSS zkopírováno: {detail}</string>
+  <string key="transform.journal.write_refused">Zápis odmítnut: {detail}</string>
+  <string key="transform.journal.assembly">Sestavení: {detail}</string>
+  <string key="transform.error.unknown_engine">Neznámý procesor: {detail}</string>
+  <string key="transform.error.saxon_missing">Saxon není nainstalován: spusťte installer_dependances.bat nebo pip install saxonche.{detail}</string>
+  <string key="transform.error.source_missing">Zdroj nelze přečíst: {detail}</string>
+  <string key="transform.error.source_malformed">Zdroj není správně formován: {detail}</string>
+  <string key="transform.error.xslt_missing">Styl XSLT nelze přečíst: {detail}</string>
+  <string key="transform.error.xslt_invalid">Chyba ve stylu XSLT: {detail}</string>
+  <string key="transform.error.transform_failed">Chyba během transformace: {detail}</string>
+  <string key="transform.error.network_failed">Načtení ze sítě selhalo: {detail}</string>
+  <string key="transform.error.write_refused">Zápis odmítnut: {detail}
+
+Styl zapisuje jen svůj výsledek a se Saxonem i další soubory ve složce výsledku.</string>
+  <string key="transform.error.output_failed">Výsledek nelze zapsat: {detail}</string>
+  <string key="transform.error.worker_failed">Proces transformace se zastavil: {detail}</string>
+  <string key="transform.error.internal">Interní chyba: {detail}</string>
+  <string key="transform.error.cancelled">Transformace zrušena.{detail}</string>
 </translations>

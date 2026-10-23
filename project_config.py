@@ -122,6 +122,27 @@ class PartConfig:
     base: str
 
 
+@dataclass(frozen=True)
+class TransformScenario:
+    """Scénario de transformation XSLT nommé (V0.9.2.0) :
+    ``<transformations><scenario name="…" xslt="…" output="…"/>``.
+
+    Les chemins (``xslt``, ``output``, ``file``, ``css``) sont gardés tels
+    qu'ils sont écrits, relatifs au projet ou commençant par ``${varians}/``
+    (les feuilles fournies avec Varians) ; ``xslt_scenarios`` les résout.
+    ``source`` vaut edition, current (le document affiché) ou file ;
+    ``engine`` lxml (XSLT 1.0) ou saxon (XSLT 3.0). Une valeur inconnue est
+    gardée : le scénario est signalé, et non exécuté."""
+    name: str
+    xslt: str
+    output: str
+    source: str = "edition"
+    file: str = ""
+    engine: str = "lxml"
+    css: str = ""
+    params: tuple[tuple[str, str], ...] = ()
+
+
 def has_line_synchronization(witness: WitnessConfig) -> bool:
     """Vrai si une *ressource* JSON de synchronisation explicite existe.
 
@@ -168,6 +189,8 @@ class ProjectConfig:
     xpath_queries: tuple[XPathQuery, ...] = ()
     # Pivots propres à certains textes, dans l'ordre de <parts>.
     parts: tuple[PartConfig, ...] = ()
+    # Scénarios de transformation XSLT, dans l'ordre de <transformations>.
+    transformations: tuple[TransformScenario, ...] = ()
 
     @property
     def root_dir(self) -> Path:
@@ -294,6 +317,33 @@ def _parse_parts(root: ET.Element) -> tuple[PartConfig, ...]:
         if name and base and name not in parts:
             parts[name] = PartConfig(name, base)
     return tuple(parts.values())
+
+
+def _parse_transformations(root: ET.Element) -> tuple[TransformScenario, ...]:
+    """Lit <transformations><scenario name="…" …><param name="…" value="…"/></scenario>.
+
+    Un scénario sans nom est ignoré ; à nom égal, le premier est gardé, de
+    même pour ses paramètres. Un scénario incomplet ou d'une valeur inconnue
+    est gardé pour le diagnostic."""
+    transformations_el = root.find("transformations")
+    if transformations_el is None:
+        return ()
+    scenarios = {}
+    for scenario_el in transformations_el.findall("scenario"):
+        name = (scenario_el.get("name") or "").strip()
+        if not name or name in scenarios:
+            continue
+        params = {}
+        for param_el in scenario_el.findall("param"):
+            param = (param_el.get("name") or "").strip()
+            if param and param not in params:
+                params[param] = param_el.get("value") or ""
+        scenarios[name] = TransformScenario(
+            name, (scenario_el.get("xslt") or "").strip(), (scenario_el.get("output") or "").strip(),
+            source=(scenario_el.get("source") or "edition").strip(), file=(scenario_el.get("file") or "").strip(),
+            engine=(scenario_el.get("engine") or "lxml").strip(), css=(scenario_el.get("css") or "").strip(),
+            params=tuple(params.items()))
+    return tuple(scenarios.values())
 
 
 def load_project(path: str | Path) -> ProjectConfig:
@@ -507,6 +557,7 @@ def load_project(path: str | Path) -> ProjectConfig:
         documents=_parse_documents(root, root_dir, edition),
         xpath_queries=_parse_xpath_queries(root),
         parts=_parse_parts(root),
+        transformations=_parse_transformations(root),
     )
 
 

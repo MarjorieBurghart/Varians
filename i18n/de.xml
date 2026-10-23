@@ -818,4 +818,106 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="diagnostics.route.edition">Edition</string>
   <string key="status.route_uncertain">Unsichere Stelle von {text} in {witness}: Reihenfolge der Edition.</string>
   <string key="fragment.label.file">TEI-Fragment · Absatz {index}/{total} · {file}</string>
+  <string key="menu.transform_scenarios">Transformationsszenarien…</string>
+  <string key="transform.title">Transformationsszenarien</string>
+  <string key="transform.group.project">Szenarien des Projekts</string>
+  <string key="transform.group.predefined">Vordefinierte Szenarien</string>
+  <string key="transform.column.name">Name</string>
+  <string key="transform.column.source">Quelle</string>
+  <string key="transform.column.engine">Prozessor</string>
+  <string key="transform.column.problem">Problem</string>
+  <string key="transform.add">Hinzufügen…</string>
+  <string key="transform.edit">Bearbeiten…</string>
+  <string key="transform.duplicate">Duplizieren…</string>
+  <string key="transform.remove">Löschen</string>
+  <string key="transform.remove.question">Szenario „{name}“ aus dem Projekt löschen?</string>
+  <string key="transform.copy_name">{name} (Kopie)</string>
+  <string key="transform.source.edition">Edition</string>
+  <string key="transform.source.current">Angezeigtes Dokument</string>
+  <string key="transform.source.file">Datei: {file}</string>
+  <string key="transform.source.file_choice">Datei:</string>
+  <string key="transform.engine.lxml">XSLT 1.0 (lxml)</string>
+  <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
+  <string key="transform.engine.missing">{engine} — nicht installiert</string>
+  <string key="transform.predefined.varians-html">HTML-Edition (Varians-Stylesheet)</string>
+  <string key="transform.scenario.title">Transformationsszenario</string>
+  <string key="transform.scenario.name">Name:</string>
+  <string key="transform.scenario.source">Quelle:</string>
+  <string key="transform.scenario.engine">Prozessor:</string>
+  <string key="transform.scenario.xslt">XSLT-Stylesheet:</string>
+  <string key="transform.scenario.css">CSS (optional):</string>
+  <string key="transform.scenario.output">Ergebnis:</string>
+  <string key="transform.scenario.params">Parameter:</string>
+  <string key="transform.param.name">Name</string>
+  <string key="transform.param.value">Wert</string>
+  <string key="transform.param.add">Parameter hinzufügen</string>
+  <string key="transform.param.remove">Parameter entfernen</string>
+  <string key="transform.browse.file">Quelldatei des Szenarios</string>
+  <string key="transform.browse.xslt">XSLT-Stylesheet des Szenarios</string>
+  <string key="transform.browse.css">CSS des Szenarios</string>
+  <string key="transform.browse.output">Ergebnisdatei</string>
+  <string key="transform.scenario.duplicate_name">Ein Szenario des Projekts mit dem Namen „{name}“ ist bereits vorhanden.</string>
+  <string key="transform.scenario.refused">Dieses Szenario kann nicht gespeichert werden: {problem}</string>
+  <string key="transform.scenario.problems">Dieses Szenario kann so nicht ausgeführt werden:
+{problems}
+
+Trotzdem speichern?</string>
+  <string key="transform.problem.unknown_source">Unbekannte Quelle: {detail}</string>
+  <string key="transform.problem.no_file">Keine Quelldatei</string>
+  <string key="transform.problem.file_missing">Quelldatei nicht gefunden: {detail}</string>
+  <string key="transform.problem.no_current">Kein angezeigtes Dokument</string>
+  <string key="transform.problem.unknown_engine">Unbekannter Prozessor: {detail}</string>
+  <string key="transform.problem.saxon_missing">Saxon ist nicht installiert: installer_dependances.bat ausführen oder pip install saxonche</string>
+  <string key="transform.problem.no_xslt">Kein XSLT-Stylesheet</string>
+  <string key="transform.problem.xslt_missing">XSLT-Stylesheet nicht gefunden: {detail}</string>
+  <string key="transform.problem.css_missing">CSS nicht gefunden: {detail}</string>
+  <string key="transform.problem.no_output">Keine Ergebnisdatei</string>
+  <string key="transform.problem.output_is_folder">Das Ergebnis ist ein Ordner: {detail}</string>
+  <string key="transform.problem.output_is_source">Das Ergebnis würde eine Quelle des Projekts ersetzen: {detail}</string>
+  <string key="transform.problem.css_overwrites_source">Die Kopie der CSS würde eine Quelle des Projekts ersetzen: {detail}</string>
+  <string key="toolbar.transform">Transformieren</string>
+  <string key="toolbar.transform.tip">Letztes Transformationsszenario ausführen (Strg+Umschalt+T); der Pfeil listet die Szenarien auf</string>
+  <string key="transform.run">Ausführen</string>
+  <string key="transform.preview">Vorschau</string>
+  <string key="transform.running">Transformation läuft: {name}…</string>
+  <string key="transform.cancel">Abbrechen</string>
+  <string key="transform.cancelled">Transformation abgebrochen: {name}</string>
+  <string key="transform.busy">Es läuft bereits eine Transformation.</string>
+  <string key="transform.cannot_run">Das Szenario „{name}“ kann nicht ausgeführt werden:
+{problems}</string>
+  <string key="transform.done.title">Transformation abgeschlossen</string>
+  <string key="transform.done.text">Szenario „{name}“: {count} Datei(en) in {seconds} s geschrieben.
+
+Ergebnis: {output}</string>
+  <string key="transform.done.refused">
+
+Nicht geschriebene Dateien (außerhalb des Ergebnisordners oder Quellen des Projekts):
+{files}</string>
+  <string key="transform.failed.title">Transformation fehlgeschlagen</string>
+  <string key="transform.failed.text">Das Szenario „{name}“ ist fehlgeschlagen; das vorherige Ergebnis bleibt unverändert.
+
+{error}</string>
+  <string key="transform.journal.engine">Prozessor: {engine} — Dauer: {seconds} s</string>
+  <string key="transform.journal.params">Parameter: {params}</string>
+  <string key="transform.journal.message">Meldung: {detail}</string>
+  <string key="transform.journal.warning">Warnung: {detail}</string>
+  <string key="transform.journal.network_read">Aus dem Netz gelesen: {detail}</string>
+  <string key="transform.journal.css_copied">CSS kopiert: {detail}</string>
+  <string key="transform.journal.write_refused">Schreiben verweigert: {detail}</string>
+  <string key="transform.journal.assembly">Zusammenführung: {detail}</string>
+  <string key="transform.error.unknown_engine">Unbekannter Prozessor: {detail}</string>
+  <string key="transform.error.saxon_missing">Saxon ist nicht installiert: installer_dependances.bat ausführen oder pip install saxonche.{detail}</string>
+  <string key="transform.error.source_missing">Quelle nicht lesbar: {detail}</string>
+  <string key="transform.error.source_malformed">Quelle nicht wohlgeformt: {detail}</string>
+  <string key="transform.error.xslt_missing">XSLT-Stylesheet nicht lesbar: {detail}</string>
+  <string key="transform.error.xslt_invalid">Fehler im XSLT-Stylesheet: {detail}</string>
+  <string key="transform.error.transform_failed">Fehler während der Transformation: {detail}</string>
+  <string key="transform.error.network_failed">Lesen aus dem Netz fehlgeschlagen: {detail}</string>
+  <string key="transform.error.write_refused">Schreiben verweigert: {detail}
+
+Ein Stylesheet schreibt nur sein Ergebnis und, mit Saxon, weitere Dateien im Ergebnisordner.</string>
+  <string key="transform.error.output_failed">Ergebnis kann nicht geschrieben werden: {detail}</string>
+  <string key="transform.error.worker_failed">Der Transformationsprozess wurde beendet: {detail}</string>
+  <string key="transform.error.internal">Interner Fehler: {detail}</string>
+  <string key="transform.error.cancelled">Transformation abgebrochen.{detail}</string>
 </translations>

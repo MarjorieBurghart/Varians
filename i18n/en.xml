@@ -804,4 +804,106 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
   <string key="diagnostics.route.edition">edition</string>
   <string key="status.route_uncertain">Uncertain place of {text} in {witness}: order of the edition.</string>
   <string key="fragment.label.file">TEI fragment · paragraph {index}/{total} · {file}</string>
+  <string key="menu.transform_scenarios">Transformation scenarios…</string>
+  <string key="transform.title">Transformation scenarios</string>
+  <string key="transform.group.project">Project scenarios</string>
+  <string key="transform.group.predefined">Predefined scenarios</string>
+  <string key="transform.column.name">Name</string>
+  <string key="transform.column.source">Source</string>
+  <string key="transform.column.engine">Engine</string>
+  <string key="transform.column.problem">Problem</string>
+  <string key="transform.add">Add…</string>
+  <string key="transform.edit">Edit…</string>
+  <string key="transform.duplicate">Duplicate…</string>
+  <string key="transform.remove">Delete</string>
+  <string key="transform.remove.question">Delete the scenario “{name}” from the project?</string>
+  <string key="transform.copy_name">{name} (copy)</string>
+  <string key="transform.source.edition">Edition</string>
+  <string key="transform.source.current">Displayed document</string>
+  <string key="transform.source.file">File: {file}</string>
+  <string key="transform.source.file_choice">File:</string>
+  <string key="transform.engine.lxml">XSLT 1.0 (lxml)</string>
+  <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
+  <string key="transform.engine.missing">{engine} — not installed</string>
+  <string key="transform.predefined.varians-html">HTML edition (Varians stylesheet)</string>
+  <string key="transform.scenario.title">Transformation scenario</string>
+  <string key="transform.scenario.name">Name:</string>
+  <string key="transform.scenario.source">Source:</string>
+  <string key="transform.scenario.engine">Engine:</string>
+  <string key="transform.scenario.xslt">XSLT stylesheet:</string>
+  <string key="transform.scenario.css">CSS (optional):</string>
+  <string key="transform.scenario.output">Result:</string>
+  <string key="transform.scenario.params">Parameters:</string>
+  <string key="transform.param.name">Name</string>
+  <string key="transform.param.value">Value</string>
+  <string key="transform.param.add">Add a parameter</string>
+  <string key="transform.param.remove">Remove the parameter</string>
+  <string key="transform.browse.file">Source file of the scenario</string>
+  <string key="transform.browse.xslt">XSLT stylesheet of the scenario</string>
+  <string key="transform.browse.css">CSS of the scenario</string>
+  <string key="transform.browse.output">Result file</string>
+  <string key="transform.scenario.duplicate_name">A project scenario named “{name}” already exists.</string>
+  <string key="transform.scenario.refused">This scenario cannot be saved: {problem}</string>
+  <string key="transform.scenario.problems">This scenario cannot run as it is:
+{problems}
+
+Save it anyway?</string>
+  <string key="transform.problem.unknown_source">Unknown source: {detail}</string>
+  <string key="transform.problem.no_file">No source file</string>
+  <string key="transform.problem.file_missing">Source file not found: {detail}</string>
+  <string key="transform.problem.no_current">No displayed document</string>
+  <string key="transform.problem.unknown_engine">Unknown engine: {detail}</string>
+  <string key="transform.problem.saxon_missing">Saxon is not installed: run installer_dependances.bat, or pip install saxonche</string>
+  <string key="transform.problem.no_xslt">No XSLT stylesheet</string>
+  <string key="transform.problem.xslt_missing">XSLT stylesheet not found: {detail}</string>
+  <string key="transform.problem.css_missing">CSS not found: {detail}</string>
+  <string key="transform.problem.no_output">No result file</string>
+  <string key="transform.problem.output_is_folder">The result is a folder: {detail}</string>
+  <string key="transform.problem.output_is_source">The result would replace a source of the project: {detail}</string>
+  <string key="transform.problem.css_overwrites_source">The copy of the CSS would replace a source of the project: {detail}</string>
+  <string key="toolbar.transform">Transform</string>
+  <string key="toolbar.transform.tip">Run the last transformation scenario (Ctrl+Shift+T); the arrow lists the scenarios</string>
+  <string key="transform.run">Run</string>
+  <string key="transform.preview">Preview</string>
+  <string key="transform.running">Transformation running: {name}…</string>
+  <string key="transform.cancel">Cancel</string>
+  <string key="transform.cancelled">Transformation cancelled: {name}</string>
+  <string key="transform.busy">A transformation is already running.</string>
+  <string key="transform.cannot_run">The scenario “{name}” cannot run:
+{problems}</string>
+  <string key="transform.done.title">Transformation finished</string>
+  <string key="transform.done.text">Scenario “{name}”: {count} file(s) written in {seconds} s.
+
+Result: {output}</string>
+  <string key="transform.done.refused">
+
+Files not written (outside the folder of the result, or sources of the project):
+{files}</string>
+  <string key="transform.failed.title">Transformation failed</string>
+  <string key="transform.failed.text">The scenario “{name}” failed; the previous result is unchanged.
+
+{error}</string>
+  <string key="transform.journal.engine">Engine: {engine} — duration: {seconds} s</string>
+  <string key="transform.journal.params">Parameters: {params}</string>
+  <string key="transform.journal.message">Message: {detail}</string>
+  <string key="transform.journal.warning">Warning: {detail}</string>
+  <string key="transform.journal.network_read">Read from the network: {detail}</string>
+  <string key="transform.journal.css_copied">CSS copied: {detail}</string>
+  <string key="transform.journal.write_refused">Writing refused: {detail}</string>
+  <string key="transform.journal.assembly">Assembly: {detail}</string>
+  <string key="transform.error.unknown_engine">Unknown engine: {detail}</string>
+  <string key="transform.error.saxon_missing">Saxon is not installed: run installer_dependances.bat, or pip install saxonche.{detail}</string>
+  <string key="transform.error.source_missing">Source cannot be read: {detail}</string>
+  <string key="transform.error.source_malformed">Source not well-formed: {detail}</string>
+  <string key="transform.error.xslt_missing">XSLT stylesheet cannot be read: {detail}</string>
+  <string key="transform.error.xslt_invalid">Error in the XSLT stylesheet: {detail}</string>
+  <string key="transform.error.transform_failed">Error during the transformation: {detail}</string>
+  <string key="transform.error.network_failed">Network read failed: {detail}</string>
+  <string key="transform.error.write_refused">Writing refused: {detail}
+
+A stylesheet writes only its result and, with Saxon, other files in the folder of the result.</string>
+  <string key="transform.error.output_failed">The result cannot be written: {detail}</string>
+  <string key="transform.error.worker_failed">The transformation process stopped: {detail}</string>
+  <string key="transform.error.internal">Internal error: {detail}</string>
+  <string key="transform.error.cancelled">Transformation cancelled.{detail}</string>
 </translations>
