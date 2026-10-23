@@ -1270,7 +1270,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         block["segments"].append(tagged(seg))
 
     def add_lacuna(node):
-        """Repère invisible d'un ``<lacunaStart/>`` ou ``<lacunaEnd/>``."""
+        """Repère invisible d'un ``<lacunaStart/>`` ou ``<lacunaEnd/>``, avec
+        la ligne du pivot ouverte à sa place."""
         witnesses = lacunae.get(id(node))
         if not witnesses:
             return
@@ -1280,6 +1281,9 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             "kind": "lacuna",
             "start": lname(node.tag) == "lacunaStart",
             "wit": list(witnesses),
+            # La ligne du pivot ouverte à cet endroit : celle où la lacune
+            # commence ou finit (le repère précède le texte de la ligne).
+            "line_key": current_line_key(),
         }))
 
     def add_lacunae_in(node):

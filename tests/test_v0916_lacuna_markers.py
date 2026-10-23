@@ -54,8 +54,10 @@ def test_each_lacuna_tag_becomes_a_marker(project):
     def next_line(index):
         return next(seg["line_key"] for _block, seg in flat[index + 1:] if seg["kind"] == "text" and seg.get("line_key"))
 
-    # Placés juste après le <lb/> de la ligne : avant le texte de cette ligne.
+    # Placés juste après le <lb/> de la ligne : avant le texte de cette ligne,
+    # dont ils portent la clé (la ligne du pivot ouverte à leur place).
     assert next_line(markers[0][0]) == keys[T2_START]
+    assert [seg["line_key"] for _i, seg in markers[:2]] == [keys[T2_START], keys[T2_END]]
     assert next_line(markers[1][0]) == keys[T2_END]
     assert next_line(markers[3][0]) == keys[PIVOT_GAP]
     assert all(block["type"] == "p" for block, seg in flat if seg["kind"] == "lacuna")

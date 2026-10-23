@@ -133,8 +133,21 @@ def test_a_lacuna_without_end_runs_to_the_end_and_an_end_without_start_is_ignore
         {"kind": "lacuna", "start": False, "wit": ["C"]},
         {"kind": "text", "text": "d", "line_key": "p::3"}]}]
     out = _node(tmp_path, """const index=S.docIndex(D);
-      return [1,3,5,7].map(p=>[...S.lacunaeAt(index,p)].sort());""", blocks)
-    assert out == [[], ["B", "C"], ["C"], ["B"]]
+      return {at:[1,3,5,7].map(p=>[...S.lacunaeAt(index,p)].sort()),
+              starts:[3,7].map(p=>[...S.lacunaStarts(index,p).entries()].sort()),
+              line:S.lastLinked(index,2)};""", blocks)
+    assert out["at"] == [[], ["B", "C"], ["C"], ["B"]]
+    # Le début de chaque lacune en cours (le premier, si elle recommence).
+    assert out["starts"] == [[["B", 2], ["C", 2]], [["B", 2]]]
+    assert out["line"] == "p::1"
+
+
+def test_a_lacuna_marker_gives_the_line_open_at_its_place(tmp_path):
+    blocks = [{"type": "p", "segments": [
+        {"kind": "text", "text": "a", "line_key": "p::1"},
+        {"kind": "lacuna", "start": True, "wit": ["B"], "line_key": "p::2"},
+        {"kind": "text", "text": "b", "line_key": "p::2"}]}]
+    assert _node(tmp_path, "return S.lastLinked(S.docIndex(D),1);", blocks) == "p::2"
 
 
 def test_the_route_of_a_panel_of_one_text_is_that_of_witness_route(tmp_path):

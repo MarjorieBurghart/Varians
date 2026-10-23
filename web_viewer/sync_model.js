@@ -20,7 +20,7 @@
       const rendered = block.type === 'p';
       for (const seg of block.segments || []) {
         const k = Number(seg.seg || 0);
-        if ((seg.kind === 'text' || seg.kind === 'pb') && seg.line_key) current.set(k, String(seg.line_key));
+        if ((seg.kind === 'text' || seg.kind === 'pb' || seg.kind === 'lacuna') && seg.line_key) current.set(k, String(seg.line_key));
         if (!rendered) continue;
         const pos = segs.length;
         segs.push(k); lines.push(current.has(k) ? current.get(k) : null); items.push(seg);
@@ -43,21 +43,24 @@
     for (const s of segments || []) if (s.prefix && String(key ?? '').startsWith(s.prefix)) return Number(s.index);
     return 0;
   }
-  // Témoins en lacune à une position : les repères de son texte jusqu'à elle.
-  // Une lacune sans fin court jusqu'à la fin du texte ; une fin sans début est
-  // ignorée ; dans l'édition, elle continue d'une partie à l'autre et après un
-  // texte à part ; un texte à part repart sans lacune.
-  function lacunaeAt(index, pos) {
-    const p = clamp(index, pos), state = new Set();
+  // Lacunes en cours à une position : {témoin: position de son début}, d'après
+  // les repères de son texte jusqu'à elle (pivot_lines.lacunae_at). Une lacune
+  // sans fin court jusqu'à la fin du texte ; une fin sans début est ignorée ;
+  // un début dans une lacune déjà ouverte n'en change pas le début ; dans
+  // l'édition, elle continue d'une partie à l'autre et après un texte à part ;
+  // un texte à part repart sans lacune.
+  function lacunaStarts(index, pos) {
+    const p = clamp(index, pos), state = new Map();
     if (p < 0) return state;
     const k = index.segs[p];
     for (const e of index.lacunae) {
       if (e.pos > p) break;
       if (e.seg !== k) continue;
-      for (const w of e.wit) { if (e.start) state.add(w); else state.delete(w); }
+      for (const w of e.wit) { if (!e.start) state.delete(w); else if (!state.has(w)) state.set(w, e.pos); }
     }
     return state;
   }
+  function lacunaeAt(index, pos) { return new Set(lacunaStarts(index, pos).keys()); }
   // Parcours d'un panneau par lignes d'un seul texte, dans l'ordre du panneau :
   // chaque élément mène à la ligne du pivot qu'il désigne (la première dans
   // l'ordre du pivot) ; une ligne non reliée mène à la ligne reliée qui la
@@ -143,6 +146,6 @@
     for (let i = route.length - 1; i >= 0; i--) if (route[i].s === s) return i;
     return -1;
   }
-  return {docIndex, segAt, lastLinked, positionOf, segOfKey, lacunaeAt, lineStops, pageStops,
+  return {docIndex, segAt, lastLinked, positionOf, segOfKey, lacunaStarts, lacunaeAt, lineStops, pageStops,
           routeIndex, step, panelStop, presentStop};
 });
