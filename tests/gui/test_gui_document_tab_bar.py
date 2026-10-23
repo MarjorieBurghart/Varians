@@ -87,3 +87,58 @@ def test_tab_colour_follows_the_health_of_each_document(open_window, project_wit
     window.show_document(window.edition_session)
     assert bar.tabTextColor(1) == QColor("#a13d32")              # propre au document
     assert bar.tabTextColor(0) == normal
+
+
+# --- Onglet courant bien distinct (V0.9.1.6) ------------------------------------------
+
+def _tab_colours(bar, index):
+    """Couleurs des pixels de l'onglet ``index`` tel qu'il est dessiné."""
+    image = bar.grab().toImage()
+    rect = bar.tabRect(index)
+    return [QColor(image.pixel(x, y)) for x in range(rect.left(), rect.right()) for y in range(rect.top(), rect.bottom())]
+
+
+def _has_red_text(colours):
+    return any(c.red() - max(c.green(), c.blue()) > 60 for c in colours)
+
+
+def test_the_current_tab_stands_out(open_window, project_with_documents):
+    from document_tabs import CURRENT_TAB_ACCENT
+    window = open_window(project_with_documents)
+    bar = window.document_tab_bar
+    window.show_document(_aux(window))
+    current = {c.name() for c in _tab_colours(bar, 1)}
+    other = {c.name() for c in _tab_colours(bar, 0)}
+    # Fond blanc et filet de couleur en haut pour l'onglet courant seulement.
+    assert CURRENT_TAB_ACCENT in current and CURRENT_TAB_ACCENT not in other
+    assert "#ffffff" in current and "#ffffff" not in other
+    window.show_document(window.edition_session)
+    assert CURRENT_TAB_ACCENT in {c.name() for c in _tab_colours(bar, 0)}
+
+
+def test_the_name_of_the_current_tab_is_bold_and_whole(open_window, project_with_documents):
+    from PySide6.QtGui import QFont, QFontMetrics
+    window = open_window(project_with_documents)
+    bar = window.document_tab_bar
+    bold = QFont(bar.font())
+    bold.setBold(True)
+    for index in range(bar.count()):
+        assert QFontMetrics(bold).horizontalAdvance(bar.tabText(index)) < bar.tabRect(index).width(), index
+
+
+def test_the_health_colour_shows_on_the_current_tab_too(open_window, project_with_documents):
+    # La couleur et la graisse du nom sont lues sur l'onglet (label_colour,
+    # label_font) ; les pixels ne servent qu'à voir le rouge dessiné : le
+    # lissage sous-pixel de Linux borde de couleurs un texte noir.
+    window = open_window(project_with_documents)
+    bar = window.document_tab_bar
+    red = QColor("#a13d32")
+    window.show_document(_aux(window))
+    _type_at_end(window, "<")
+    window.validate_text(False)
+    assert bar.label_colour(1) == red and bar.label_font(1).bold()          # onglet courant
+    assert _has_red_text(_tab_colours(bar, 1))
+    window.show_document(window.edition_session)
+    assert bar.label_colour(1) == red and not bar.label_font(1).bold()      # autre onglet
+    assert _has_red_text(_tab_colours(bar, 1))
+    assert bar.label_colour(0) != red and bar.label_font(0).bold()

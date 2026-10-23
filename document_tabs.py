@@ -19,9 +19,10 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QTextCursor, QTextDocument
-from PySide6.QtWidgets import QMessageBox, QPlainTextDocumentLayout, QTabBar, QVBoxLayout, QWidget
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QTextCursor, QTextDocument
+from PySide6.QtWidgets import (QMessageBox, QPlainTextDocumentLayout, QStyle, QStyleOptionTab, QStylePainter,
+                               QTabBar, QVBoxLayout, QWidget)
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
@@ -34,6 +35,72 @@ from xml_assembly import assemble, path_key
 
 # Couleur du nom d'un document selon sa bonne formation (cf. _set_document_health).
 _HEALTH_TAB_COLORS = {"malformed": "#a13d32", "rng_invalid": "#a06a20"}
+
+# Onglet du document affiché (V0.9.1.6) : fond blanc, filet de couleur en haut,
+# nom en gras ; les autres onglets en retrait, sur un fond plus sombre.
+CURRENT_TAB_ACCENT = "#3272a6"
+_DOCUMENT_TAB_QSS = f"""
+QTabBar::tab {{ padding: 5px 14px; margin-right: 2px; border: 1px solid #bdb5aa; border-bottom: none;
+               border-top-left-radius: 4px; border-top-right-radius: 4px; background: #dcd6cd; }}
+QTabBar::tab:!selected {{ margin-top: 4px; }}
+QTabBar::tab:hover:!selected {{ background: #ebe7e1; }}
+QTabBar::tab:selected {{ background: #ffffff; border-color: #9c9184; border-top: 3px solid {CURRENT_TAB_ACCENT}; }}
+"""
+_CURRENT_TAB_TEXT = QColor("#111111")
+_OTHER_TAB_TEXT = QColor("#4f4840")
+
+
+class DocumentTabBar(QTabBar):
+    """Rangée d'onglets des documents. La feuille de style dessine les
+    onglets ; les noms sont écrits ici, en gras pour le document affiché, et
+    dans la couleur de l'état XML de chaque document (``setTabTextColor``),
+    qu'une feuille de style ferait oublier."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet(_DOCUMENT_TAB_QSS)
+
+    def _label_font(self, bold):
+        font = QFont(self.font())
+        font.setBold(bold)
+        return font
+
+    def label_font(self, index):
+        """Police du nom de l'onglet ``index`` : en gras pour l'onglet courant."""
+        return self._label_font(index == self.currentIndex())
+
+    def label_colour(self, index):
+        """Couleur du nom de l'onglet ``index`` : celle de l'état XML du
+        document, sinon plus foncée pour l'onglet courant."""
+        colour = self.tabTextColor(index)
+        if colour.isValid():
+            return colour
+        return _CURRENT_TAB_TEXT if index == self.currentIndex() else _OTHER_TAB_TEXT
+
+    def tabSizeHint(self, index):
+        # Place du nom en gras pour chaque onglet : changer d'onglet ne
+        # déplace pas les autres.
+        size = super().tabSizeHint(index)
+        text = self.tabText(index)
+        extra = (QFontMetrics(self._label_font(True)).horizontalAdvance(text)
+                 - QFontMetrics(self._label_font(False)).horizontalAdvance(text))
+        return QSize(size.width() + max(0, extra), size.height())
+
+    def paintEvent(self, event):
+        painter = QStylePainter(self)
+        current = self.currentIndex()
+        # L'onglet courant en dernier, par-dessus ses voisins.
+        order = [index for index in range(self.count()) if index != current]
+        if current >= 0:
+            order.append(current)
+        for index in order:
+            option = QStyleOptionTab()
+            self.initStyleOption(option, index)
+            painter.drawControl(QStyle.ControlElement.CE_TabBarTabShape, option)
+            rect = self.style().subElementRect(QStyle.SubElement.SE_TabBarTabText, option, self)
+            painter.setFont(self.label_font(index))
+            painter.setPen(self.label_colour(index))
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, option.text)
 
 
 class DocumentTabsMixin:
@@ -308,7 +375,7 @@ class DocumentTabsMixin:
         """Rangée d'onglets des documents au-dessus de ``views`` (source et
         aperçu), un par document visible (voir document_display). Elle reste
         masquée tant que le projet ne compte que l'édition."""
-        bar = QTabBar(self)
+        bar = DocumentTabBar(self)
         bar.setDocumentMode(True)
         bar.setExpanding(False)
         bar.setUsesScrollButtons(True)
