@@ -100,10 +100,13 @@ class DocumentIOMixin:
                     document_revision=revision,
                 )
             if rng_result is not None and rng_result.schema_loaded and rng_result.well_formed and not rng_result.valid:
-                if not self._confirm_save_warning(
-                    _t("file.save_rng_invalid.title"),
-                    _t("file.save_rng_invalid.text", count=len(rng_result.issues)),
-                ):
+                if self._displayed_stylesheet() is not None:      # feuille XSLT (xslt_check_ui)
+                    errors = sum(1 for issue in rng_result.issues if issue.level != "WARNING")
+                    title, message = _t("file.save_xslt_invalid.title"), _t("file.save_xslt_invalid.text", count=errors)
+                else:
+                    title = _t("file.save_rng_invalid.title")
+                    message = _t("file.save_rng_invalid.text", count=len(rng_result.issues))
+                if not self._confirm_save_warning(title, message):
                     return False
 
         # Le nombre de <lb/> du témoin pivot concerne l'édition et ses parties ;

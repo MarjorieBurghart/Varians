@@ -852,6 +852,24 @@ Zkopírovat ji do projektu?
 Scénář pak bude používat tuto kopii. „Otevřít bez kopírování“ upravuje původní soubor.</string>
   <string key="transform.open_stylesheet.copy">Zkopírovat do projektu</string>
   <string key="transform.open_stylesheet.in_place">Otevřít bez kopírování</string>
+  <string key="xslt_check.action">Zkontrolovat šablonu XSLT</string>
+  <string key="xslt_check.action.tip">Zkompilovat zobrazenou šablonu XSLT bez spuštění, procesorem jejích scénářů (F8)</string>
+  <string key="xslt_check.panel.title">Kontrola šablony XSLT</string>
+  <string key="xslt_check.panel.valid">Šablona XSLT je podle {engines} v pořádku.</string>
+  <string key="xslt_check.panel.warnings">Šablona XSLT je podle {engines} v pořádku, s {count} varováním(i).</string>
+  <string key="xslt_check.panel.invalid">{count} chyb(a) v šabloně XSLT podle {engines}. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="xslt_check.panel.malformed">Šablona není správně utvořený XML. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="xslt_check.panel.failed">Kontrola pomocí {engine} není možná: {error}</string>
+  <string key="xslt_check.status.running">XSLT: kontrola…</string>
+  <string key="xslt_check.status.valid">{engines}: šablona v pořádku ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: {count} chyb(a)</string>
+  <string key="xslt_check.status.malformed">XSLT: chybně utvořený XML</string>
+  <string key="xslt_check.status.failed">XSLT: kontrola není možná</string>
+  <string key="xslt_check.message.valid">Kontrola XSLT: šablona je v pořádku.</string>
+  <string key="file.save_xslt_invalid.title">Chybná šablona XSLT</string>
+  <string key="file.save_xslt_invalid.text">Šablona je správně utvořená, ale její kompilace hlásí {count} chyb(u). Můžete ji uložit a chyby opravit později.
+
+Přesto uložit?</string>
   <string key="transform.copy_name">{name} (kopie)</string>
   <string key="transform.source.edition">Edice</string>
   <string key="transform.source.current">Zobrazený dokument</string>

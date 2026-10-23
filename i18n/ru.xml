@@ -852,6 +852,24 @@ Varians скопирует её в проект:
 Сценарий будет использовать эту копию. «Открыть без копирования» изменяет исходный файл.</string>
   <string key="transform.open_stylesheet.copy">Скопировать в проект</string>
   <string key="transform.open_stylesheet.in_place">Открыть без копирования</string>
+  <string key="xslt_check.action">Проверить таблицу стилей XSLT</string>
+  <string key="xslt_check.action.tip">Скомпилировать показанную таблицу стилей XSLT, не выполняя её, движком её сценариев (F8)</string>
+  <string key="xslt_check.panel.title">Проверка таблицы стилей XSLT</string>
+  <string key="xslt_check.panel.valid">Таблица стилей XSLT корректна по {engines}.</string>
+  <string key="xslt_check.panel.warnings">Таблица стилей XSLT корректна по {engines}, предупреждений: {count}.</string>
+  <string key="xslt_check.panel.invalid">Ошибок в таблице стилей XSLT по {engines}: {count}. Дважды щёлкните по ошибке, чтобы перейти к строке.</string>
+  <string key="xslt_check.panel.malformed">Таблица стилей не является корректным XML. Дважды щёлкните по ошибке, чтобы перейти к строке.</string>
+  <string key="xslt_check.panel.failed">Проверка с помощью {engine} невозможна: {error}</string>
+  <string key="xslt_check.status.running">XSLT: проверка…</string>
+  <string key="xslt_check.status.valid">{engines}: таблица стилей корректна ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: ошибок {count}</string>
+  <string key="xslt_check.status.malformed">XSLT: некорректный XML</string>
+  <string key="xslt_check.status.failed">XSLT: проверка невозможна</string>
+  <string key="xslt_check.message.valid">Проверка XSLT: таблица стилей корректна.</string>
+  <string key="file.save_xslt_invalid.title">Таблица стилей XSLT содержит ошибки</string>
+  <string key="file.save_xslt_invalid.text">Таблица стилей корректна как XML, но при компиляции найдено ошибок: {count}. Можно сохранить её и исправить ошибки позже.
+
+Всё равно сохранить?</string>
   <string key="transform.copy_name">{name} (копия)</string>
   <string key="transform.source.edition">Издание</string>
   <string key="transform.source.current">Открытый документ</string>

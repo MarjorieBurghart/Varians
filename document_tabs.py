@@ -758,6 +758,8 @@ class DocumentTabsMixin:
         self.action_save.setText(_t("menu.save_edition" if edition else "menu.save_document"))
         # Retirer un document réécrit <documents> : une partie n'y figure pas.
         self.action_remove_document.setEnabled(self.document.is_auxiliary)
+        # F8 : vérification d'une feuille XSLT, ou validation RELAX NG.
+        self._update_check_labels()
 
     # --- Garde-fous : commandes réservées à l'édition -------------------------
 

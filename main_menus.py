@@ -402,8 +402,7 @@ class MainMenusMixin:
             action.setText(language_labels.get(code, code))
             action.setChecked(code == I18N.language)
         self.rng_busy.setToolTip(_t("rng.status.running.tip"))
-        self.action_validate_rng.setText(_t("toolbar.validate_rng"))
-        self.action_validate_rng.setToolTip(_t("toolbar.validate_rng.tip"))
+        self._update_check_labels()
         self.action_format_xml.setText(_t("toolbar.format_xml"))
         self.action_format_xml.setToolTip(_t("toolbar.format_xml.tip"))
         self.search_source_label.setText(" " + _t("toolbar.search_source") + " ")
@@ -425,7 +424,6 @@ class MainMenusMixin:
         for session in self.documents:
             self._refresh_document_tab(session)
         self.left_tabs.setTabText(1, _t("tab.preview"))
-        self.validation_title.setText(_t("rng.panel.title"))
         self.validation_refresh.setToolTip(_t("rng.panel.refresh"))
         self.validation_close.setToolTip(_t("rng.panel.close"))
         self.validation_table.setHorizontalHeaderLabels([

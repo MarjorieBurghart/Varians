@@ -852,6 +852,24 @@ Copiarlo nel progetto?
 Lo scenario userà allora questa copia. «Apri senza copiare» modifica il file originale.</string>
   <string key="transform.open_stylesheet.copy">Copia nel progetto</string>
   <string key="transform.open_stylesheet.in_place">Apri senza copiare</string>
+  <string key="xslt_check.action">Verifica il foglio XSLT</string>
+  <string key="xslt_check.action.tip">Compila il foglio XSLT visualizzato, senza eseguirlo, con il motore dei suoi scenari (F8)</string>
+  <string key="xslt_check.panel.title">Verifica del foglio XSLT</string>
+  <string key="xslt_check.panel.valid">Foglio XSLT corretto secondo {engines}.</string>
+  <string key="xslt_check.panel.warnings">Foglio XSLT corretto secondo {engines}, con {count} avviso/i.</string>
+  <string key="xslt_check.panel.invalid">{count} errore/i nel foglio XSLT secondo {engines}. Fai doppio clic su un errore per andare alla riga corrispondente.</string>
+  <string key="xslt_check.panel.malformed">Il foglio non è un XML ben formato. Fai doppio clic sull’errore per andare alla riga.</string>
+  <string key="xslt_check.panel.failed">Verifica impossibile con {engine}: {error}</string>
+  <string key="xslt_check.status.running">XSLT: verifica in corso…</string>
+  <string key="xslt_check.status.valid">{engines}: foglio corretto ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: {count} errore/i</string>
+  <string key="xslt_check.status.malformed">XSLT: XML mal formato</string>
+  <string key="xslt_check.status.failed">XSLT: verifica impossibile</string>
+  <string key="xslt_check.message.valid">Verifica XSLT: foglio corretto.</string>
+  <string key="file.save_xslt_invalid.title">Foglio XSLT non corretto</string>
+  <string key="file.save_xslt_invalid.text">Il foglio è ben formato, ma la compilazione segnala {count} errore/i. Puoi salvarlo e correggere gli errori in seguito.
+
+Salvare comunque?</string>
   <string key="transform.copy_name">{name} (copia)</string>
   <string key="transform.source.edition">Edizione</string>
   <string key="transform.source.current">Documento visualizzato</string>

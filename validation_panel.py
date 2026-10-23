@@ -128,7 +128,9 @@ class ValidationPanelMixin:
 
     def _populate_validation_issues(self, issues, *, jump_to_xml=True):
         self._clear_validation_table()
-        assembled = self._assembly_context() is not None
+        # Colonne Document : pour une édition assemblée, ou des erreurs dans
+        # d'autres fichiers (feuille importée par une feuille XSLT).
+        assembled = self._assembly_context() is not None or any(self._foreign_issue(i) for i in issues)
         self.validation_table.setColumnHidden(_DOCUMENT_COLUMN, not assembled)
         for issue in issues:
             row = self.validation_table.rowCount()
@@ -167,6 +169,12 @@ class ValidationPanelMixin:
         return next((session for session in self.documents
                      if session.path is not None and path_key(session.path) == key), None)
 
+    def _foreign_issue(self, issue):
+        """Vrai pour une erreur d'un autre fichier que le document affiché,
+        hors édition assemblée."""
+        return bool(issue.file and self.document.path is not None and self._assembly_context() is None
+                    and path_key(issue.file) != path_key(self.document.path))
+
     def _issue_document_name(self, issue):
         session = self._issue_session(issue.file)
         return self._document_tab_name(session) if session is not None else Path(issue.file).name
@@ -182,6 +190,9 @@ class ValidationPanelMixin:
         if not jump_to_xml or line <= 0:
             return
         target = self._issue_session(file) if self._assembly_context() is not None else self.document
+        if file and self._assembly_context() is None and self.document.path is not None \
+                and path_key(file) != path_key(self.document.path):
+            target = self._issue_session(file)                 # une feuille importée, si elle est au projet
         if target is None:
             return
         if target is not self.document:
@@ -346,6 +357,11 @@ class ValidationPanelMixin:
         """
         text = self.editor.toPlainText() if xml_text is None else xml_text
         revision = self.editor.document().revision() if document_revision is None else int(document_revision)
+        # Une feuille XSLT est vérifiée par sa compilation (xslt_check_ui).
+        if self._displayed_stylesheet() is not None:
+            return self._check_stylesheet(text, revision, show_panel=show_panel,
+                                          show_success_message=show_success_message,
+                                          automatic=automatic, background=background)
         # Édition assemblée : le schéma est celui de l'édition, même quand une
         # partie est affichée.
         edition = self._assembly_context()

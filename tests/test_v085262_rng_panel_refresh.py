@@ -58,6 +58,10 @@ class DummyMain:
     def _assembly_context(self):
         return None
 
+    # Feuille XSLT affichée (V0.9.2.1) : aucune ici.
+    def _displayed_stylesheet(self):
+        return None
+
     def __init__(self):
         self.doc = DummyDoc()
         self.editor = SimpleNamespace(document=lambda: self.doc)

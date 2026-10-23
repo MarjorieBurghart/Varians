@@ -852,6 +852,24 @@ In das Projekt kopieren?
 Das Szenario verwendet dann diese Kopie. „Ohne Kopieren öffnen“ bearbeitet die Originaldatei.</string>
   <string key="transform.open_stylesheet.copy">In das Projekt kopieren</string>
   <string key="transform.open_stylesheet.in_place">Ohne Kopieren öffnen</string>
+  <string key="xslt_check.action">XSLT-Stylesheet prüfen</string>
+  <string key="xslt_check.action.tip">Das angezeigte XSLT-Stylesheet mit der Engine seiner Szenarien kompilieren, ohne es auszuführen (F8)</string>
+  <string key="xslt_check.panel.title">Prüfung des XSLT-Stylesheets</string>
+  <string key="xslt_check.panel.valid">XSLT-Stylesheet laut {engines} korrekt.</string>
+  <string key="xslt_check.panel.warnings">XSLT-Stylesheet laut {engines} korrekt, mit {count} Warnung(en).</string>
+  <string key="xslt_check.panel.invalid">{count} Fehler im XSLT-Stylesheet laut {engines}. Doppelklicken Sie auf einen Fehler, um zur Zeile zu springen.</string>
+  <string key="xslt_check.panel.malformed">Das Stylesheet ist kein wohlgeformtes XML. Doppelklicken Sie auf den Fehler, um zur Zeile zu springen.</string>
+  <string key="xslt_check.panel.failed">Prüfung mit {engine} nicht möglich: {error}</string>
+  <string key="xslt_check.status.running">XSLT: Prüfung läuft…</string>
+  <string key="xslt_check.status.valid">{engines}: Stylesheet korrekt ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: {count} Fehler</string>
+  <string key="xslt_check.status.malformed">XSLT: XML nicht wohlgeformt</string>
+  <string key="xslt_check.status.failed">XSLT: Prüfung nicht möglich</string>
+  <string key="xslt_check.message.valid">XSLT-Prüfung: Stylesheet korrekt.</string>
+  <string key="file.save_xslt_invalid.title">Fehlerhaftes XSLT-Stylesheet</string>
+  <string key="file.save_xslt_invalid.text">Das Stylesheet ist wohlgeformt, aber seine Kompilierung meldet {count} Fehler. Sie können es speichern und die Fehler später beheben.
+
+Trotzdem speichern?</string>
   <string key="transform.copy_name">{name} (Kopie)</string>
   <string key="transform.source.edition">Edition</string>
   <string key="transform.source.current">Angezeigtes Dokument</string>

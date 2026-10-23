@@ -838,6 +838,24 @@ La copier dans le projet ?
 Le scénario emploiera alors cette copie. « Ouvrir sans copier » modifie le fichier d’origine.</string>
   <string key="transform.open_stylesheet.copy">Copier dans le projet</string>
   <string key="transform.open_stylesheet.in_place">Ouvrir sans copier</string>
+  <string key="xslt_check.action">Vérifier la feuille XSLT</string>
+  <string key="xslt_check.action.tip">Compiler la feuille XSLT affichée, sans l’exécuter, avec le moteur de ses scénarios (F8)</string>
+  <string key="xslt_check.panel.title">Vérification de la feuille XSLT</string>
+  <string key="xslt_check.panel.valid">Feuille XSLT correcte selon {engines}.</string>
+  <string key="xslt_check.panel.warnings">Feuille XSLT correcte selon {engines}, avec {count} avertissement(s).</string>
+  <string key="xslt_check.panel.invalid">{count} erreur(s) dans la feuille XSLT selon {engines}. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
+  <string key="xslt_check.panel.malformed">La feuille n’est pas un XML bien formé. Double-cliquez sur l’erreur pour aller à la ligne.</string>
+  <string key="xslt_check.panel.failed">Vérification impossible avec {engine} : {error}</string>
+  <string key="xslt_check.status.running">XSLT : vérification…</string>
+  <string key="xslt_check.status.valid">{engines} : feuille correcte ✓</string>
+  <string key="xslt_check.status.invalid">{engines} : {count} erreur(s)</string>
+  <string key="xslt_check.status.malformed">XSLT : XML mal formé</string>
+  <string key="xslt_check.status.failed">XSLT : vérification impossible</string>
+  <string key="xslt_check.message.valid">Vérification XSLT : feuille correcte.</string>
+  <string key="file.save_xslt_invalid.title">Feuille XSLT incorrecte</string>
+  <string key="file.save_xslt_invalid.text">La feuille est bien formée, mais sa compilation signale {count} erreur(s). Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
+
+Enregistrer quand même ?</string>
   <string key="transform.copy_name">{name} (copie)</string>
   <string key="transform.source.edition">Édition</string>
   <string key="transform.source.current">Document affiché</string>

@@ -838,6 +838,24 @@ Copy it into the project?
 The scenario will then use this copy. “Open without copying” edits the original file.</string>
   <string key="transform.open_stylesheet.copy">Copy into the project</string>
   <string key="transform.open_stylesheet.in_place">Open without copying</string>
+  <string key="xslt_check.action">Check XSLT stylesheet</string>
+  <string key="xslt_check.action.tip">Compile the displayed XSLT stylesheet, without running it, with the engine of its scenarios (F8)</string>
+  <string key="xslt_check.panel.title">XSLT stylesheet check</string>
+  <string key="xslt_check.panel.valid">XSLT stylesheet correct according to {engines}.</string>
+  <string key="xslt_check.panel.warnings">XSLT stylesheet correct according to {engines}, with {count} warning(s).</string>
+  <string key="xslt_check.panel.invalid">{count} error(s) in the XSLT stylesheet according to {engines}. Double-click an error to go to its line.</string>
+  <string key="xslt_check.panel.malformed">The stylesheet is not well-formed XML. Double-click the error to go to its line.</string>
+  <string key="xslt_check.panel.failed">Check impossible with {engine}: {error}</string>
+  <string key="xslt_check.status.running">XSLT: checking…</string>
+  <string key="xslt_check.status.valid">{engines}: stylesheet correct ✓</string>
+  <string key="xslt_check.status.invalid">{engines}: {count} error(s)</string>
+  <string key="xslt_check.status.malformed">XSLT: malformed XML</string>
+  <string key="xslt_check.status.failed">XSLT: check impossible</string>
+  <string key="xslt_check.message.valid">XSLT check: stylesheet correct.</string>
+  <string key="file.save_xslt_invalid.title">Incorrect XSLT stylesheet</string>
+  <string key="file.save_xslt_invalid.text">The stylesheet is well-formed, but compiling it reports {count} error(s). You can save it and fix these errors later.
+
+Save anyway?</string>
   <string key="transform.copy_name">{name} (copy)</string>
   <string key="transform.source.edition">Edition</string>
   <string key="transform.source.current">Displayed document</string>

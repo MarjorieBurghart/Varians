@@ -852,6 +852,24 @@ Variansがプロジェクトにコピーします：
 シナリオはこのコピーを使うようになります。「コピーせずに開く」は元のファイルを編集します。</string>
   <string key="transform.open_stylesheet.copy">プロジェクトにコピー</string>
   <string key="transform.open_stylesheet.in_place">コピーせずに開く</string>
+  <string key="xslt_check.action">XSLTスタイルシートを検査</string>
+  <string key="xslt_check.action.tip">表示中のXSLTスタイルシートを、実行せずに、そのシナリオのエンジンでコンパイルします（F8）</string>
+  <string key="xslt_check.panel.title">XSLTスタイルシートの検査</string>
+  <string key="xslt_check.panel.valid">{engines} によればXSLTスタイルシートは正しいです。</string>
+  <string key="xslt_check.panel.warnings">{engines} によればXSLTスタイルシートは正しいです（警告 {count} 件）。</string>
+  <string key="xslt_check.panel.invalid">{engines} によればXSLTスタイルシートに {count} 件のエラーがあります。エラーをダブルクリックすると該当行に移動します。</string>
+  <string key="xslt_check.panel.malformed">スタイルシートは整形式のXMLではありません。エラーをダブルクリックすると該当行に移動します。</string>
+  <string key="xslt_check.panel.failed">{engine} では検査できません：{error}</string>
+  <string key="xslt_check.status.running">XSLT：検査中…</string>
+  <string key="xslt_check.status.valid">{engines}：スタイルシートは正しい ✓</string>
+  <string key="xslt_check.status.invalid">{engines}：エラー {count} 件</string>
+  <string key="xslt_check.status.malformed">XSLT：XMLが整形式ではありません</string>
+  <string key="xslt_check.status.failed">XSLT：検査できません</string>
+  <string key="xslt_check.message.valid">XSLT検査：スタイルシートは正しいです。</string>
+  <string key="file.save_xslt_invalid.title">XSLTスタイルシートにエラーがあります</string>
+  <string key="file.save_xslt_invalid.text">スタイルシートは整形式ですが、コンパイルで {count} 件のエラーが報告されました。保存して、後でエラーを修正することもできます。
+
+それでも保存しますか？</string>
   <string key="transform.copy_name">{name}（コピー）</string>
   <string key="transform.source.edition">校訂本文</string>
   <string key="transform.source.current">表示中の文書</string>
