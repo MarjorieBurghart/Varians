@@ -140,10 +140,10 @@ class _Task(QObject):
 
     @Slot(object, object)
     def _on_completed(self, result, error):
-        try:
-            self._finished(result, error)
-        finally:
-            _RUNNING.discard(self)
+        # Terminée avant sa suite : une installation qu'elle lance s'ajoute
+        # à son tour, et la fenêtre rafraîchie voit l'état juste.
+        _RUNNING.discard(self)
+        self._finished(result, error)
 
 
 # --- Vérification et installation -------------------------------------------------------------
@@ -215,6 +215,7 @@ def install(parent, version, done=None):
     progress = QProgressDialog(_t("tei_stylesheets.downloading", version=version), _t("common.cancel"), 0, 0,
                                parent)
     progress.setWindowTitle(_t("tei_stylesheets.title"))
+    progress.setMinimumWidth(460)                               # le libellé entier
     progress.setWindowModality(Qt.WindowModality.WindowModal)
     progress.setMinimumDuration(0)
     progress.setAutoClose(False)

@@ -84,6 +84,7 @@ def _in_window(qtbot, action):
         action(dialog)
         qtbot.waitUntil(lambda: not tei_stylesheets_ui.busy(), timeout=20_000)
         answer.seen = dialog.state()
+        answer.can_check_again = dialog.check_btn.isEnabled()
         dialog.reject()
         return dialog.result()
     return answer
@@ -143,6 +144,7 @@ def test_the_library_is_already_up_to_date(open_window, sermons_project, dialogs
     assert dialogs.seen[-1][2] == tr("tei_stylesheets.up_to_date", version=library.version)
     today = datetime.date.today().isoformat()
     assert _last_check() == today and look.seen["checked"] == today
+    assert look.can_check_again
 
 
 def test_a_network_error_is_reported(open_window, sermons_project, dialogs, qtbot, library, monkeypatch):
@@ -166,7 +168,7 @@ def test_a_new_version_is_installed_with_consent(open_window, sermons_project, d
     assert [version for version, _folder in fake.downloads] == [NEW]
     active = tei_stylesheets.active()
     assert active.version == NEW and active.source == "downloaded"
-    assert look.seen["version"] == NEW
+    assert look.seen["version"] == NEW and look.can_check_again
     assert look.seen["source"] == tr("tei_stylesheets.source.downloaded", date=datetime.date.today().isoformat())
     # L'ancienne version reste jusqu'au lancement suivant ; le téléchargement est effacé.
     assert library.folder.is_dir() and not fake.downloads[0][1].exists()
