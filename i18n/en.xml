@@ -917,6 +917,7 @@ Files not written (outside the folder of the result, or sources of the project):
   <string key="transform.error.source_missing">Source cannot be read: {detail}</string>
   <string key="transform.error.source_malformed">Source not well-formed: {detail}</string>
   <string key="transform.error.xslt_missing">XSLT stylesheet cannot be read: {detail}</string>
+  <string key="transform.error.xslt_malformed">The XSLT stylesheet is not well-formed XML: {detail}</string>
   <string key="transform.error.xslt_invalid">Error in the XSLT stylesheet: {detail}</string>
   <string key="transform.error.transform_failed">Error during the transformation: {detail}</string>
   <string key="transform.error.network_failed">Network read failed: {detail}</string>

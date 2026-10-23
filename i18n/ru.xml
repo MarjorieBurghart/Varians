@@ -931,6 +931,7 @@ Varians скопирует её в проект:
   <string key="transform.error.source_missing">Не удаётся прочитать источник: {detail}</string>
   <string key="transform.error.source_malformed">Источник не является корректным XML: {detail}</string>
   <string key="transform.error.xslt_missing">Не удаётся прочитать таблицу XSLT: {detail}</string>
+  <string key="transform.error.xslt_malformed">Таблица XSLT не является корректным XML: {detail}</string>
   <string key="transform.error.xslt_invalid">Ошибка в таблице XSLT: {detail}</string>
   <string key="transform.error.transform_failed">Ошибка во время преобразования: {detail}</string>
   <string key="transform.error.network_failed">Не удалось прочитать из сети: {detail}</string>

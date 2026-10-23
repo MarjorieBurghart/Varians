@@ -931,6 +931,7 @@ Nicht geschriebene Dateien (außerhalb des Ergebnisordners oder Quellen des Proj
   <string key="transform.error.source_missing">Quelle nicht lesbar: {detail}</string>
   <string key="transform.error.source_malformed">Quelle nicht wohlgeformt: {detail}</string>
   <string key="transform.error.xslt_missing">XSLT-Stylesheet nicht lesbar: {detail}</string>
+  <string key="transform.error.xslt_malformed">Das XSLT-Stylesheet ist kein wohlgeformtes XML: {detail}</string>
   <string key="transform.error.xslt_invalid">Fehler im XSLT-Stylesheet: {detail}</string>
   <string key="transform.error.transform_failed">Fehler während der Transformation: {detail}</string>
   <string key="transform.error.network_failed">Lesen aus dem Netz fehlgeschlagen: {detail}</string>

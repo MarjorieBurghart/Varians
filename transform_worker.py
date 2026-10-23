@@ -12,7 +12,9 @@ Le processus lit sur le descripteur 0, jusqu'à la fin de l'entrée, une
 requête JSON (``xslt_scenarios.scenario_request``), l'exécute
 (``xslt_engines.run``) et écrit sur le descripteur 1 le compte rendu en JSON
 (``TransformResult.to_dict``, plus ``qt_loaded``), puis s'arrête. Une
-requête incorrecte reçoit aussi un compte rendu (``error_code`` internal).
+requête ``op: "check"`` (V0.9.2.1) compile seulement la feuille
+(``xslt_engines.check``). Une requête incorrecte reçoit aussi un compte
+rendu (``error_code`` internal).
 
 Les descripteurs sont lus directement : ``sys.stdin`` et ``sys.stdout``
 peuvent être absents dans une application Windows sans console.
@@ -32,7 +34,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from xslt_engines import TransformResult, run
+from xslt_engines import TransformResult, check, run
 
 _APPLICATION_DIR = Path(__file__).resolve().parent
 
@@ -99,7 +101,7 @@ def serve(input_fd=0, output_fd=1):
         result = TransformResult(False, error_code="internal", error=f"invalid JSON: {exc}")
     else:
         if isinstance(request, dict):
-            result = run(request)
+            result = check(request) if request.get("op") == "check" else run(request)
         else:
             result = TransformResult(False, error_code="internal", error="request must be a JSON object")
     answer = dict(result.to_dict(), qt_loaded="PySide6" in sys.modules)

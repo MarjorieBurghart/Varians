@@ -19,10 +19,15 @@ Les chemins qui commencent par ``${varians}/`` désignent les feuilles
 fournies avec Varians : ``stylesheet_path`` est la seule fonction qui trouve
 la feuille d'un scénario, pour qu'une bibliothèque installée hors du projet
 (les TEI Stylesheets) puisse s'y ajouter.
+
+Feuilles éditées dans Varians (V0.9.2.1) : ``stylesheet_info`` reconnaît une
+feuille XSLT à sa racine ; ``check_engines`` donne les moteurs qui la
+vérifient (``xslt_engines.check``).
 """
 from __future__ import annotations
 
 import importlib.util
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -51,6 +56,73 @@ class ScenarioProblem:
     tel qu'il est écrit dans le scénario ou relatif au projet."""
     code: str
     detail: str = ""
+
+
+XSL_NAMESPACE = "http://www.w3.org/1999/XSL/Transform"
+_XSLT_ROOTS = ("stylesheet", "transform", "package")
+_COMMENT_OR_PI = re.compile(r"\s*(?:<\?.*?\?>|<!--.*?-->|<!DOCTYPE[^>\[]*(?:\[.*?\])?\s*>)", re.S)
+_START_TAG = re.compile(r"\s*<([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)((?:\s+[^\s=/>]+\s*=\s*(?:\"[^\"]*\"|'[^']*'))*)",
+                        re.S)
+_ATTRIBUTE = re.compile(r"([^\s=/>]+)\s*=\s*(?:\"([^\"]*)\"|'([^']*)')")
+
+
+@dataclass(frozen=True)
+class StylesheetInfo:
+    """Ce qu'on lit à la racine d'une feuille XSLT : le préfixe lié à
+    l'espace de noms XSLT (``""`` s'il est l'espace de noms par défaut), la
+    version (``""`` si elle manque) et le nom de la racine."""
+    prefix: str
+    version: str
+    root: str
+
+
+def stylesheet_info(text) -> StylesheetInfo | None:
+    """La racine de ``text`` si c'est une feuille XSLT, sinon None : un
+    ``stylesheet``, ``transform`` ou ``package`` de l'espace de noms XSLT, ou
+    un élément résultat littéral qui porte ``xsl:version``."""
+    position, text = 0, str(text or "")
+    while True:
+        match = _COMMENT_OR_PI.match(text, position)
+        if match is None or match.end() == position:
+            break
+        position = match.end()
+    match = _START_TAG.match(text, position)
+    if match is None:
+        return None
+    root = match.group(1)
+    attributes = {m.group(1): m.group(2) if m.group(2) is not None else m.group(3)
+                  for m in _ATTRIBUTE.finditer(match.group(2))}
+    prefixes = [name[6:] if name.startswith("xmlns:") else "" for name, value in attributes.items()
+                if value == XSL_NAMESPACE and (name == "xmlns" or name.startswith("xmlns:"))]
+    prefix, _colon, local = root.rpartition(":")
+    if prefix in prefixes and local in _XSLT_ROOTS:
+        return StylesheetInfo(prefix, attributes.get("version", ""), root)
+    for xsl in prefixes:
+        if xsl and f"{xsl}:version" in attributes and prefix != xsl:
+            return StylesheetInfo(xsl, attributes[f"{xsl}:version"], root)
+    return None
+
+
+def check_engines(path, project, text=None) -> tuple[str, ...]:
+    """Moteurs qui vérifient la feuille ``path`` : ceux des scénarios du
+    projet qui l'emploient, chacun une fois ; sinon d'après sa version
+    (``1.0`` : lxml, une autre : Saxon)."""
+    key = path_key(path)
+    engines = []
+    for scenario in project.transformations:
+        stylesheet = stylesheet_path(scenario, project)
+        if (stylesheet is not None and path_key(stylesheet) == key and scenario.engine in ENGINES
+                and scenario.engine not in engines):
+            engines.append(scenario.engine)
+    if engines:
+        return tuple(engines)
+    if text is None:
+        try:
+            text = Path(path).read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeError):
+            text = ""
+    info = stylesheet_info(text)
+    return ("lxml",) if info is not None and info.version.strip() == "1.0" else ("saxon",)
 
 
 def saxon_available() -> bool:

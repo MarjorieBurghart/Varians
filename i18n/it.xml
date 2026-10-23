@@ -931,6 +931,7 @@ File non scritti (fuori dalla cartella del risultato, o sorgenti del progetto):
   <string key="transform.error.source_missing">Sorgente illeggibile: {detail}</string>
   <string key="transform.error.source_malformed">Sorgente non ben formata: {detail}</string>
   <string key="transform.error.xslt_missing">Foglio XSLT illeggibile: {detail}</string>
+  <string key="transform.error.xslt_malformed">Il foglio XSLT non è un XML ben formato: {detail}</string>
   <string key="transform.error.xslt_invalid">Errore nel foglio XSLT: {detail}</string>
   <string key="transform.error.transform_failed">Errore durante la trasformazione: {detail}</string>
   <string key="transform.error.network_failed">Lettura dalla rete non riuscita: {detail}</string>

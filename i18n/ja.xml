@@ -931,6 +931,7 @@ Variansがプロジェクトにコピーします：
   <string key="transform.error.source_missing">入力を読み込めません：{detail}</string>
   <string key="transform.error.source_malformed">入力が整形式ではありません：{detail}</string>
   <string key="transform.error.xslt_missing">XSLT スタイルシートを読み込めません：{detail}</string>
+  <string key="transform.error.xslt_malformed">XSLT スタイルシートが整形式の XML ではありません：{detail}</string>
   <string key="transform.error.xslt_invalid">XSLT スタイルシートのエラー：{detail}</string>
   <string key="transform.error.transform_failed">変換中のエラー：{detail}</string>
   <string key="transform.error.network_failed">ネットワークから読み込めません：{detail}</string>

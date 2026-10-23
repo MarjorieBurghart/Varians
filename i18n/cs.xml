@@ -931,6 +931,7 @@ Nezapsané soubory (mimo složku výsledku nebo zdroje projektu):
   <string key="transform.error.source_missing">Zdroj nelze přečíst: {detail}</string>
   <string key="transform.error.source_malformed">Zdroj není správně formován: {detail}</string>
   <string key="transform.error.xslt_missing">Styl XSLT nelze přečíst: {detail}</string>
+  <string key="transform.error.xslt_malformed">Styl XSLT není správně utvořený XML: {detail}</string>
   <string key="transform.error.xslt_invalid">Chyba ve stylu XSLT: {detail}</string>
   <string key="transform.error.transform_failed">Chyba během transformace: {detail}</string>
   <string key="transform.error.network_failed">Načtení ze sítě selhalo: {detail}</string>

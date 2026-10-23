@@ -917,6 +917,7 @@ Fichiers non écrits (hors du dossier du résultat, ou sources du projet) :
   <string key="transform.error.source_missing">Source illisible : {detail}</string>
   <string key="transform.error.source_malformed">Source mal formée : {detail}</string>
   <string key="transform.error.xslt_missing">Feuille XSLT illisible : {detail}</string>
+  <string key="transform.error.xslt_malformed">La feuille XSLT n’est pas un XML bien formé : {detail}</string>
   <string key="transform.error.xslt_invalid">Erreur dans la feuille XSLT : {detail}</string>
   <string key="transform.error.transform_failed">Erreur pendant la transformation : {detail}</string>
   <string key="transform.error.network_failed">Lecture réseau impossible : {detail}</string>
