@@ -1218,9 +1218,13 @@ def _analyze_xml_context_from(
             name_end = m.end()
 
             # « <rdg|> » est un contexte d'attribut, pas un nom d'élément
-            # incomplet. On regarde donc aussi le « > » situé après le curseur.
+            # incomplet. On regarde donc aussi le « > » situé après le curseur,
+            # s'il ferme bien cette balise : celui d'une balise suivante
+            # (« <h|</p> ») laisse le nom en cours de saisie (V0.9.2.1).
             future_end = _find_tag_end(text, i + 1, len(text))
-            has_existing_tag_end = future_end is not None and future_end >= pos
+            next_lt = text.find("<", pos)
+            has_existing_tag_end = (future_end is not None and future_end >= pos
+                                    and not 0 <= next_lt < future_end)
 
             if pos < name_end:
                 prefix = text[name_start:pos]
