@@ -65,7 +65,9 @@ class PageResolver:
                     self.labels[label].add(pid)
         # A zone's xml:id points to its parent surface, never to a new page.
         # Record every declaration; duplicate zone IDs remain ambiguous.
-        root = ET.parse(edition).getroot()
+        # ``edition`` : a file, or the already parsed root of an assembled
+        # edition (V0.9.1.6).
+        root = edition if isinstance(edition, ET.Element) else ET.parse(edition).getroot()
         for surface in root.iter():
             if _local(surface.tag) != 'surface':
                 continue

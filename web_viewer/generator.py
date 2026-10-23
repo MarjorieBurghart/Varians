@@ -17,8 +17,9 @@ if str(ROOT) not in sys.path:
 
 from project_config import load_project, has_line_synchronization
 from folio_navigation import folios_for_witness
+from web_viewer.assembled_document import load_assembled
 from web_viewer.page_resolver import PageResolver
-from web_viewer.tei_line_anchors import build_pivot_lb_index
+from web_viewer.tei_line_anchors import build_pivot_lb_index, build_segment_lb_index
 from resource_state import primary_sync_line_count, secondary_sync_link_count
 from i18n import I18nManager
 from image_sources import normalized_image_block, apply_witness_image_policy
@@ -93,16 +94,29 @@ def build_dataset(project, display_witness_ids=None):
                           for p in base_cache.get('pages', [])
                           for line in p.get('lines', [])] if base_has_alignment else []
     import xml.etree.ElementTree as ET
-    _, anchor_report = build_pivot_lb_index(
-        ET.parse(project.edition).getroot(), base_id, physical_base_keys)
-    anchor_keys = physical_base_keys if base_has_alignment else None
-    page_resolver = PageResolver(project.edition, base_cache.get('pages', []), base_id)
+    # Édition en parties (V0.9.1.6) : l'édition assemblée, chaque élément
+    # rattaché à son texte ; sinon le fichier de l'édition, comme avant.
+    assembled = load_assembled(project)
+    if assembled is None:
+        edition_root = ET.parse(project.edition).getroot()
+        _, anchor_report = build_pivot_lb_index(edition_root, base_id, physical_base_keys)
+        anchor_keys = physical_base_keys if base_has_alignment else None
+        reading_options = {}
+    else:
+        edition_root = assembled.root
+        lookup, reports, _order = build_segment_lb_index(
+            edition_root, assembled.segment, {0: base_id}, {0: physical_base_keys})
+        anchor_report = reports[0]
+        anchor_keys = None
+        reading_options = dict(root=edition_root, line_anchors=lookup if base_has_alignment else None,
+                               segment_of=assembled.segment, target_of=assembled.target)
+    page_resolver = PageResolver(edition_root, base_cache.get('pages', []), base_id)
     corr_pages, witness_labels = extract_corrected_pages(
         project.edition, f"#{base_id}", page_resolver=page_resolver,
-        base_line_keys=anchor_keys)
+        base_line_keys=anchor_keys, **reading_options)
     reading_document = extract_reading_document(
         project.edition, f"#{base_id}", include_foreign_pagebreaks=True,
-        page_resolver=page_resolver, base_line_keys=anchor_keys)
+        page_resolver=page_resolver, base_line_keys=anchor_keys, **reading_options)
 
     # Do NOT use only TEI-extracted lines as the pivot's physical navigation
     # data. Desktop includes every JSON line (even when a TEI page lacks a
@@ -204,10 +218,13 @@ def build_dataset(project, display_witness_ids=None):
                           "pages": normalized_pages, "meta": cache.get("meta", {})})
     # Same TEI zone semantics as desktop: one physical image may contain
     # two independently addressed folios. No image is duplicated in the export.
-    try:
-        edition_text = project.edition.read_text(encoding='utf-8-sig')
-    except (OSError, UnicodeError):
-        edition_text = ''
+    if assembled is not None:
+        edition_text = ET.tostring(edition_root, encoding='unicode')
+    else:
+        try:
+            edition_text = project.edition.read_text(encoding='utf-8-sig')
+        except (OSError, UnicodeError):
+            edition_text = ''
     for witness in witnesses:
         pages = witness['pages']
         ids = [str(p.get('tei_surface_id')) for p in pages if p.get('tei_surface_id')]
@@ -232,6 +249,10 @@ def build_dataset(project, display_witness_ids=None):
         for w in witnesses if w['id'] in displayed_ids for p in w['pages']
     )
     i18n = I18nManager(project.translations_dir, project.language, project.fallback_language)
+    meta_assembly = {} if assembled is None else {
+        "assembled": True,
+        "assembly_problems": [_problem_entry(problem, project) for problem in assembled.problems],
+    }
     return {
         "meta": {"title": project.title, "base_witness": base_id,
                  "display_witnesses": displayed_ids,
@@ -246,10 +267,22 @@ def build_dataset(project, display_witness_ids=None):
                  "unanchored_text_segments": unanchored_text_segments,
                  "unmatched_tei_pages": sorted(set(missing)),
                  "external_iiif_images": sum(1 for ww in witnesses for pp in ww['pages']
-                                             if (pp.get('image') or {}).get('type') == 'iiif')},
+                                             if (pp.get('image') or {}).get('type') == 'iiif'),
+                 **meta_assembly},
         "witness_labels": witness_labels, "document": reading_document, "witnesses": witnesses,
         "i18n": i18n.export_catalogs(),
     }, missing
+
+
+def _problem_entry(problem, project):
+    """Problème d'assemblage pour le diagnostic de l'export : fichier
+    relatif au projet (aucun chemin absolu dans le viewer)."""
+    path = Path(problem.file)
+    try:
+        name = path.resolve().relative_to(Path(project.root_dir).resolve()).as_posix()
+    except ValueError:
+        name = path.name
+    return {"file": name, "line": int(problem.line or 0), "code": problem.code, "detail": problem.detail}
 
 
 HTML_TEMPLATE = r'''<!doctype html><html lang="__LANG__"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
