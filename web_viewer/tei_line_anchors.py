@@ -56,3 +56,37 @@ def build_pivot_lb_index(root: ET.Element, witness_id: str, physical_keys):
     report = AnchorReport(len(elements), len(keys), mapped,
                           len(elements)-mapped, len(keys)-mapped)
     return lookup, report
+
+
+def build_segment_lb_index(root: ET.Element, segment_of, pivots, keys_by_segment):
+    """Comme ``build_pivot_lb_index``, pour une édition assemblée dont les
+    textes synchronisés à part ont leur pivot et leurs lignes (V0.9.1.6).
+
+    ``segment_of(élément)`` donne le texte de chaque élément ; ``pivots`` :
+    ``{texte: pivot}`` ; ``keys_by_segment`` : ``{texte: clés de ses lignes}``,
+    dans l'ordre de son JSON. Dans chaque texte, le n-ième ``<lb
+    edRef="#pivot du texte"/>`` reçoit la n-ième clé, comme sur le bureau
+    (``pivot_lines``). Renvoie ``({id(lb): clé}, {texte: AnchorReport},
+    clés dans l'ordre du document)``."""
+    targets = {index: '#' + str(pivot).lstrip('#') for index, pivot in pivots.items()}
+    keys = {index: list(found or []) for index, found in keys_by_segment.items()}
+    counts = {index: 0 for index in targets}
+    lookup, order = {}, []
+    for el in root.iter():
+        if _local_name(el.tag) != 'lb':
+            continue
+        index = segment_of(el)
+        if index not in targets or el.attrib.get('edRef') != targets[index]:
+            continue
+        rank = counts[index]
+        counts[index] = rank + 1
+        found = keys.get(index, [])
+        if rank < len(found):
+            lookup[id(el)] = found[rank]
+            order.append(found[rank])
+    reports = {}
+    for index in targets:
+        total = len(keys.get(index, []))
+        mapped = min(counts[index], total)
+        reports[index] = AnchorReport(counts[index], total, mapped, counts[index] - mapped, total - mapped)
+    return lookup, reports, order
