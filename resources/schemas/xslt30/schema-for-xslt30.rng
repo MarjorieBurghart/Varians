@@ -1,0 +1,5381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+XSLT 3.0 Relax NG Schema
+
+Copyright (c) 2010-2016, Mohamed ZERGAOUI (Innovimax)
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+Neither the name of the Mohamed ZERGAOUI or Innovimax nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Converti pour Varians depuis schema-for-xslt30.rnc (w3c/qtspecs,
+révision 6cef5545618cd2edfd94f32af488a16bb19c598c) par rnc2rng 2.7.0 :
+voir LISEZMOI.md. Sert à la complétion des feuilles XSLT (xslt_completion).
+-->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         ns="http://www.w3.org/1999/XSL/Transform"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <start>
+    <choice>
+      <ref name="stylesheet.element"/>
+      <ref name="transform.element"/>
+      <ref name="package.element"/>
+      <ref name="literal-result-element-as-stylesheet"/>
+    </choice>
+  </start>
+  <define name="sequence-constructor.model">
+    <zeroOrMore>
+      <choice>
+        <ref name="instruction.category"/>
+        <ref name="literal-result-element"/>
+        <text/>
+      </choice>
+    </zeroOrMore>
+  </define>
+  <define name="literal-result-element-as-stylesheet">
+    <element>
+      <anyName>
+        <except>
+          <nsName ns="http://www.w3.org/1999/XSL/Transform"/>
+        </except>
+      </anyName>
+      <attribute>
+        <name ns="http://www.w3.org/1999/XSL/Transform">version</name>
+        <ref name="decimal.datatype"/>
+      </attribute>
+      <ref name="literal-result-element-no-version.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="literal-result-element">
+    <element>
+      <anyName>
+        <except>
+          <nsName ns="http://www.w3.org/1999/XSL/Transform"/>
+        </except>
+      </anyName>
+      <ref name="literal-result-element.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="literal-result-element.atts">
+    <ref name="literal-result-element-no-version.atts"/>
+    <optional>
+      <attribute>
+        <name ns="http://www.w3.org/1999/XSL/Transform">version</name>
+        <text/>
+      </attribute>
+    </optional>
+  </define>
+  <define name="literal-result-element-no-version.atts">
+    <interleave>
+      <zeroOrMore>
+        <attribute>
+          <anyName>
+            <except>
+              <nsName ns="http://www.w3.org/1999/XSL/Transform"/>
+            </except>
+          </anyName>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </zeroOrMore>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">default-collation</name>
+          <ref name="uris.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">default-mode</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <value>#unnamed</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">default-validation</name>
+          <choice>
+            <value>preserve</value>
+            <value>strip</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">exclude-result-prefixes</name>
+          <ref name="exclude.prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">expand-text</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">extension-element-prefixes</name>
+          <ref name="extension.prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">inherit-namespaces</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">on-empty</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">use-attribute-sets</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">use-when</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="http://www.w3.org/1999/XSL/Transform">xpath-default-namespace</name>
+          <data type="anyURI"/>
+        </attribute>
+      </optional>
+      <optional>
+        <choice>
+          <attribute>
+            <name ns="http://www.w3.org/1999/XSL/Transform">type</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="http://www.w3.org/1999/XSL/Transform">validation</name>
+            <choice>
+              <value>strict</value>
+              <value>lax</value>
+              <value>preserve</value>
+              <value>strip</value>
+            </choice>
+          </attribute>
+        </choice>
+      </optional>
+    </interleave>
+  </define>
+  <define name="top-level-extension">
+    <element>
+      <anyName>
+        <except>
+          <choice>
+            <nsName ns="http://www.w3.org/1999/XSL/Transform"/>
+            <nsName ns=""/>
+          </choice>
+        </except>
+      </anyName>
+      <ref name="anyElement"/>
+    </element>
+  </define>
+  <define name="anyElement">
+    <grammar>
+      <start>
+        <ref name="any"/>
+      </start>
+      <define name="any">
+        <zeroOrMore>
+          <choice>
+            <attribute>
+              <anyName/>
+              <text/>
+            </attribute>
+            <text/>
+            <element>
+              <anyName/>
+              <ref name="any"/>
+            </element>
+          </choice>
+        </zeroOrMore>
+      </define>
+    </grammar>
+  </define>
+  <define name="extension.atts">
+    <zeroOrMore>
+      <attribute>
+        <anyName>
+          <except>
+            <choice>
+              <nsName ns="http://www.w3.org/1999/XSL/Transform"/>
+              <nsName ns=""/>
+            </choice>
+          </except>
+        </anyName>
+        <text/>
+      </attribute>
+    </zeroOrMore>
+  </define>
+  <define name="declarations.model">
+    <zeroOrMore>
+      <choice>
+        <ref name="declaration.category"/>
+        <ref name="top-level-extension"/>
+      </choice>
+    </zeroOrMore>
+  </define>
+  <define name="global.atts">
+    <optional>
+      <attribute>
+        <name ns="">default-collation</name>
+        <ref name="uris.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_default-collation</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">default-mode</name>
+        <choice>
+          <ref name="eqname.datatype"/>
+          <value>#unnamed</value>
+        </choice>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_default-mode</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">default-validation</name>
+        <choice>
+          <value>preserve</value>
+          <value>strip</value>
+        </choice>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_default-validation</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">exclude-result-prefixes</name>
+        <ref name="exclude.prefixes.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_exclude-result-prefixes</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">expand-text</name>
+        <ref name="boolean.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_expand-text</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">extension-element-prefixes</name>
+        <ref name="extension.prefixes.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_extension-element-prefixes</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">use-when</name>
+        <ref name="expression.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_use-when</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">version</name>
+        <ref name="decimal.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_version</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">xpath-default-namespace</name>
+        <ref name="uri.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_xpath-default-namespace</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+  </define>
+  <define name="global.atts.except.version">
+    <optional>
+      <attribute>
+        <name ns="">default-collation</name>
+        <ref name="uris.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_default-collation</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">exclude-result-prefixes</name>
+        <ref name="exclude.prefixes.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_exclude-result-prefixes</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">expand-text</name>
+        <ref name="boolean.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_expand-text</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">extension-element-prefixes</name>
+        <ref name="extension.prefixes.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_extension-element-prefixes</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">use-when</name>
+        <ref name="expression.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_use-when</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">xpath-default-namespace</name>
+        <ref name="uri.datatype"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute>
+        <name ns="">_xpath-default-namespace</name>
+        <ref name="avt.datatype"/>
+      </attribute>
+    </optional>
+  </define>
+  <define name="qname.datatype">
+    <data type="QName"/>
+  </define>
+  <define name="uri.qualified.name">
+    <data type="token">
+      <param name="pattern">Q\{[^\{\}]*\}[\i-[:]][\c-[:]]*</param>
+    </data>
+  </define>
+  <define name="qname.strict">
+    <data type="token">
+      <param name="pattern">[\i-[:]][\c-[:]]:[\i-[:]][\c-[:]]</param>
+    </data>
+  </define>
+  <define name="eqname.datatype">
+    <choice>
+      <data type="QName"/>
+      <ref name="uri.qualified.name"/>
+      <ref name="qname.strict"/>
+    </choice>
+  </define>
+  <define name="qnames.datatype">
+    <list>
+      <zeroOrMore>
+        <ref name="qname.datatype"/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="eqnames.datatype">
+    <list>
+      <zeroOrMore>
+        <ref name="eqname.datatype"/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="ncname.datatype">
+    <data type="NCName"/>
+  </define>
+  <define name="prefix.datatype">
+    <data type="NCName"/>
+  </define>
+  <define name="boolean.datatype">
+    <choice>
+      <value>yes</value>
+      <value>no</value>
+      <value>true</value>
+      <value>false</value>
+      <value>0</value>
+      <value>1</value>
+    </choice>
+  </define>
+  <define name="expression.datatype">
+    <text/>
+  </define>
+  <define name="char.datatype">
+    <data type="string">
+      <param name="length">1</param>
+    </data>
+  </define>
+  <define name="string.datatype">
+    <text/>
+  </define>
+  <define name="id.datatype">
+    <data type="NCName"/>
+  </define>
+  <define name="tokens.datatype">
+    <list>
+      <zeroOrMore>
+        <data type="token" datatypeLibrary=""/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="prefixes.datatype">
+    <list>
+      <zeroOrMore>
+        <data type="token" datatypeLibrary=""/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="extension.prefixes.datatype">
+    <list>
+      <zeroOrMore>
+        <data type="NCName"/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="exclude.prefixes.datatype">
+    <list>
+      <choice>
+        <value>#all</value>
+        <zeroOrMore>
+          <choice>
+            <data type="NCName"/>
+            <value>#default</value>
+          </choice>
+        </zeroOrMore>
+      </choice>
+    </list>
+  </define>
+  <define name="token.datatype">
+    <data type="token" datatypeLibrary=""/>
+  </define>
+  <define name="language.datatype">
+    <data type="language"/>
+  </define>
+  <define name="nmtoken.datatype">
+    <data type="NMTOKEN"/>
+  </define>
+  <define name="decimal.datatype">
+    <data type="decimal"/>
+  </define>
+  <define name="integer.datatype">
+    <data type="integer"/>
+  </define>
+  <define name="uri.datatype">
+    <data type="anyURI"/>
+  </define>
+  <define name="uris.datatype">
+    <list>
+      <zeroOrMore>
+        <data type="anyURI"/>
+      </zeroOrMore>
+    </list>
+  </define>
+  <define name="pattern.datatype">
+    <text/>
+  </define>
+  <define name="qname-but-not-ncname.datatype">
+    <data type="QName">
+      <param name="pattern">.*:.*</param>
+    </data>
+  </define>
+  <define name="xs_schema.element">
+    <element>
+      <name ns="http://www.w3.org/2001/XMLSchema">schema</name>
+      <zeroOrMore>
+        <ref name="anyElement"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="item-type.datatype">
+    <text/>
+  </define>
+  <define name="sequence-type.datatype">
+    <text/>
+  </define>
+  <define name="declaration.category">
+    <choice>
+      <ref name="use-package.element"/>
+      <ref name="include.element"/>
+      <ref name="import.element"/>
+      <ref name="import-schema.element"/>
+      <ref name="strip-space.element"/>
+      <ref name="preserve-space.element"/>
+      <ref name="decimal-format.element"/>
+      <ref name="template.element"/>
+      <ref name="mode.element"/>
+      <ref name="global-context-item.element"/>
+      <ref name="variable.element"/>
+      <ref name="param.element"/>
+      <ref name="attribute-set.element"/>
+      <ref name="function.element"/>
+      <ref name="namespace-alias.element"/>
+      <ref name="accumulator.element"/>
+      <ref name="key.element"/>
+      <ref name="output.element"/>
+      <ref name="character-map.element"/>
+    </choice>
+  </define>
+  <define name="instruction.category">
+    <choice>
+      <ref name="apply-templates.element"/>
+      <ref name="apply-imports.element"/>
+      <ref name="next-match.element"/>
+      <ref name="for-each.element"/>
+      <ref name="iterate.element"/>
+      <ref name="next-iteration.element"/>
+      <ref name="break.element"/>
+      <ref name="if.element"/>
+      <ref name="choose.element"/>
+      <ref name="try.element"/>
+      <ref name="variable.element"/>
+      <ref name="call-template.element"/>
+      <ref name="evaluate.element"/>
+      <ref name="element.element"/>
+      <ref name="attribute.element"/>
+      <ref name="text.element"/>
+      <ref name="value-of.element"/>
+      <ref name="document.element"/>
+      <ref name="processing-instruction.element"/>
+      <ref name="namespace.element"/>
+      <ref name="comment.element"/>
+      <ref name="copy.element"/>
+      <ref name="copy-of.element"/>
+      <ref name="sequence.element"/>
+      <ref name="where-populated.element"/>
+      <ref name="on-empty.element"/>
+      <ref name="on-non-empty.element"/>
+      <ref name="number.element"/>
+      <ref name="perform-sort.element"/>
+      <ref name="for-each-group.element"/>
+      <ref name="merge.element"/>
+      <ref name="fork.element"/>
+      <ref name="analyze-string.element"/>
+      <ref name="source-document.element"/>
+      <ref name="map.element"/>
+      <ref name="map-entry.element"/>
+      <ref name="message.element"/>
+      <ref name="assert.element"/>
+      <ref name="fallback.element"/>
+      <ref name="result-document.element"/>
+    </choice>
+  </define>
+  <define name="package.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">package</name>
+      <ref name="extension.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">id</name>
+          <ref name="id.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_id</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">name</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_name</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">package-version</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_package-version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">version</name>
+          <ref name="decimal.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">input-type-annotations</name>
+          <choice>
+            <value>preserve</value>
+            <value>strip</value>
+            <value>unspecified</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_input-type-annotations</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">declared-modes</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_declared-modes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-mode</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <value>#unnamed</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-mode</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-validation</name>
+          <choice>
+            <value>preserve</value>
+            <value>strip</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-validation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-collation</name>
+          <ref name="uris.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-collation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">extension-element-prefixes</name>
+          <ref name="prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_extension-element-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">exclude-result-prefixes</name>
+          <ref name="prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_exclude-result-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">expand-text</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_expand-text</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-when</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-when</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">xpath-default-namespace</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_xpath-default-namespace</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <choice>
+          <ref name="expose.element"/>
+          <ref name="declarations.model"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="use-package.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">use-package</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">name</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_name</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">package-version</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_package-version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <choice>
+          <ref name="accept.element"/>
+          <ref name="override.element"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="expose.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">expose</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">component</name>
+          <choice>
+            <value>template</value>
+            <value>function</value>
+            <value>attribute-set</value>
+            <value>variable</value>
+            <value>mode</value>
+            <value>*</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_component</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">names</name>
+          <ref name="tokens.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_names</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">visibility</name>
+          <choice>
+            <value>public</value>
+            <value>private</value>
+            <value>final</value>
+            <value>abstract</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_visibility</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="accept.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">accept</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">component</name>
+            <choice>
+              <value>template</value>
+              <value>function</value>
+              <value>attribute-set</value>
+              <value>variable</value>
+              <value>mode</value>
+              <value>*</value>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_component</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">names</name>
+            <ref name="tokens.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_names</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">visibility</name>
+            <choice>
+              <value>public</value>
+              <value>private</value>
+              <value>final</value>
+              <value>abstract</value>
+              <value>hidden</value>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_visibility</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <empty/>
+    </element>
+  </define>
+  <define name="override.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">override</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <zeroOrMore>
+        <choice>
+          <ref name="template.element"/>
+          <ref name="function.element"/>
+          <ref name="variable.element"/>
+          <ref name="param.element"/>
+          <ref name="attribute-set.element"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="stylesheet.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">stylesheet</name>
+      <ref name="extension.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">id</name>
+          <ref name="id.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_id</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">version</name>
+          <ref name="decimal.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-mode</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <value>#unnamed</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-mode</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-validation</name>
+          <choice>
+            <value>preserve</value>
+            <value>strip</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-validation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">input-type-annotations</name>
+          <choice>
+            <value>preserve</value>
+            <value>strip</value>
+            <value>unspecified</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_input-type-annotations</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-collation</name>
+          <ref name="uris.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-collation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">extension-element-prefixes</name>
+          <ref name="prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_extension-element-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">exclude-result-prefixes</name>
+          <ref name="prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_exclude-result-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">expand-text</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_expand-text</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-when</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-when</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">xpath-default-namespace</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_xpath-default-namespace</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="declarations.model"/>
+    </element>
+  </define>
+  <define name="transform.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">transform</name>
+      <ref name="extension.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">id</name>
+          <ref name="id.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_id</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">version</name>
+          <ref name="decimal.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-mode</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <value>#unnamed</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-mode</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-validation</name>
+          <choice>
+            <value>preserve</value>
+            <value>strip</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-validation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">input-type-annotations</name>
+          <choice>
+            <value>preserve</value>
+            <value>strip</value>
+            <value>unspecified</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_input-type-annotations</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">default-collation</name>
+          <ref name="uris.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_default-collation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">extension-element-prefixes</name>
+          <ref name="prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_extension-element-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">exclude-result-prefixes</name>
+          <ref name="prefixes.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_exclude-result-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">expand-text</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_expand-text</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-when</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-when</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">xpath-default-namespace</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_xpath-default-namespace</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="declarations.model"/>
+    </element>
+  </define>
+  <define name="include.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">include</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">href</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_href</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="import.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">import</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">href</name>
+            <ref name="uri.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_href</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <empty/>
+    </element>
+  </define>
+  <define name="import-schema.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">import-schema</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">namespace</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_namespace</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">schema-location</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_schema-location</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="xs_schema.element"/>
+      </optional>
+    </element>
+  </define>
+  <define name="strip-space.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">strip-space</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">elements</name>
+            <ref name="tokens.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_elements</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <empty/>
+    </element>
+  </define>
+  <define name="preserve-space.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">preserve-space</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">elements</name>
+            <ref name="tokens.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_elements</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <empty/>
+    </element>
+  </define>
+  <define name="decimal-format.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">decimal-format</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">name</name>
+          <ref name="eqname.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_name</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">decimal-separator</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_decimal-separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">grouping-separator</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_grouping-separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">infinity</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_infinity</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">minus-sign</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_minus-sign</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">exponent-separator</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_exponent-separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">NaN</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_NaN</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">percent</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_percent</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">per-mille</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_per-mille</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">zero-digit</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_zero-digit</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">digit</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_digit</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">pattern-separator</name>
+          <ref name="char.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_pattern-separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="template.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">template</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">match</name>
+            <ref name="pattern.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_match</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">priority</name>
+          <ref name="decimal.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_priority</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">mode</name>
+          <list>
+            <choice>
+              <value>#all</value>
+              <zeroOrMore>
+                <choice>
+                  <value>#default</value>
+                  <value>#unnamed</value>
+                  <ref name="eqname.datatype"/>
+                </choice>
+              </zeroOrMore>
+            </choice>
+          </list>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_mode</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="sequence-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">visibility</name>
+          <choice>
+            <value>public</value>
+            <value>private</value>
+            <value>final</value>
+            <value>abstract</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_visibility</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <group>
+        <optional>
+          <ref name="context-item.element"/>
+        </optional>
+        <zeroOrMore>
+          <ref name="param.element"/>
+        </zeroOrMore>
+        <ref name="sequence-constructor.model"/>
+      </group>
+    </element>
+  </define>
+  <define name="apply-templates.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">apply-templates</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">mode</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <value>#unnamed</value>
+            <value>#default</value>
+            <value>#current</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_mode</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <choice>
+          <ref name="sort.element"/>
+          <ref name="with-param.element"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="mode.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">mode</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">name</name>
+          <ref name="eqname.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_name</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">streamable</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_streamable</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">on-no-match</name>
+          <choice>
+            <value>deep-copy</value>
+            <value>shallow-copy</value>
+            <value>deep-skip</value>
+            <value>shallow-skip</value>
+            <value>text-only-copy</value>
+            <value>fail</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_on-no-match</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">on-multiple-match</name>
+          <choice>
+            <value>use-last</value>
+            <value>fail</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_on-multiple-match</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">warning-on-no-match</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_warning-on-no-match</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">warning-on-multiple-match</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_warning-on-multiple-match</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">typed</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <value>strict</value>
+            <value>lax</value>
+            <value>unspecified</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_typed</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">visibility</name>
+          <choice>
+            <value>public</value>
+            <value>private</value>
+            <value>final</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_visibility</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-accumulators</name>
+          <ref name="tokens.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-accumulators</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="context-item.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">context-item</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="item-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use</name>
+          <choice>
+            <value>required</value>
+            <value>optional</value>
+            <value>absent</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="global-context-item.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">global-context-item</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="item-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use</name>
+          <choice>
+            <value>required</value>
+            <value>optional</value>
+            <value>absent</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="apply-imports.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">apply-imports</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <zeroOrMore>
+        <ref name="with-param.element"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="next-match.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">next-match</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <zeroOrMore>
+        <choice>
+          <ref name="with-param.element"/>
+          <ref name="fallback.element"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="for-each.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">for-each</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">select</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_select</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <group>
+        <zeroOrMore>
+          <ref name="sort.element"/>
+        </zeroOrMore>
+        <ref name="sequence-constructor.model"/>
+      </group>
+    </element>
+  </define>
+  <define name="iterate.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">iterate</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">select</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_select</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <group>
+        <zeroOrMore>
+          <ref name="param.element"/>
+        </zeroOrMore>
+        <optional>
+          <ref name="on-completion.element"/>
+        </optional>
+        <ref name="sequence-constructor.model"/>
+      </group>
+    </element>
+  </define>
+  <define name="next-iteration.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">next-iteration</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <zeroOrMore>
+        <ref name="with-param.element"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="break.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">break</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <choice>
+          <attribute>
+            <name ns="">select</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_select</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="on-completion.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">on-completion</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="if.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">if</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">test</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_test</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="choose.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">choose</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <group>
+        <oneOrMore>
+          <ref name="when.element"/>
+        </oneOrMore>
+        <optional>
+          <ref name="otherwise.element"/>
+        </optional>
+      </group>
+    </element>
+  </define>
+  <define name="when.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">when</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">test</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_test</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="otherwise.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">otherwise</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="try.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">try</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">rollback-output</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_rollback-output</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <group>
+        <ref name="sequence-constructor.model"/>
+        <ref name="catch.element"/>
+        <zeroOrMore>
+          <choice>
+            <ref name="catch.element"/>
+            <ref name="fallback.element"/>
+          </choice>
+        </zeroOrMore>
+      </group>
+    </element>
+  </define>
+  <define name="catch.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">catch</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">errors</name>
+          <ref name="tokens.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_errors</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="variable.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">variable</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="sequence-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">static</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_static</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">visibility</name>
+          <choice>
+            <value>public</value>
+            <value>private</value>
+            <value>final</value>
+            <value>abstract</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_visibility</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="param.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">param</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="sequence-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">required</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_required</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">tunnel</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_tunnel</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">static</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_static</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="with-param.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">with-param</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="sequence-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">tunnel</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_tunnel</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="call-template.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">call-template</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <zeroOrMore>
+        <ref name="with-param.element"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="attribute-set.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">attribute-set</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">use-attribute-sets</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-attribute-sets</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">visibility</name>
+          <choice>
+            <value>public</value>
+            <value>private</value>
+            <value>final</value>
+            <value>abstract</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_visibility</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">streamable</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_streamable</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <ref name="attribute.element"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="function.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">function</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="sequence-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">visibility</name>
+          <choice>
+            <value>public</value>
+            <value>private</value>
+            <value>final</value>
+            <value>abstract</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_visibility</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">streamability</name>
+          <choice>
+            <value>unclassified</value>
+            <value>absorbing</value>
+            <value>inspection</value>
+            <value>filter</value>
+            <value>shallow-descent</value>
+            <value>deep-descent</value>
+            <value>ascent</value>
+            <ref name="eqname.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_streamability</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">override-extension-function</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_override-extension-function</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">override</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_override</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">new-each-time</name>
+          <choice>
+            <value>yes</value>
+            <value>true</value>
+            <value>1</value>
+            <value>no</value>
+            <value>false</value>
+            <value>0</value>
+            <value>maybe</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_new-each-time</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">cache</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_cache</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <group>
+        <zeroOrMore>
+          <ref name="param.element"/>
+        </zeroOrMore>
+        <ref name="sequence-constructor.model"/>
+      </group>
+    </element>
+  </define>
+  <define name="evaluate.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">evaluate</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">xpath</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_xpath</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="sequence-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">base-uri</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_base-uri</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">with-params</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_with-params</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">context-item</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_context-item</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">namespace-context</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_namespace-context</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">schema-aware</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_schema-aware</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <choice>
+          <ref name="with-param.element"/>
+          <ref name="fallback.element"/>
+        </choice>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="namespace-alias.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">namespace-alias</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">stylesheet-prefix</name>
+            <choice>
+              <ref name="prefix.datatype"/>
+              <value>#default</value>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_stylesheet-prefix</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">result-prefix</name>
+            <choice>
+              <ref name="prefix.datatype"/>
+              <value>#default</value>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_result-prefix</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <empty/>
+    </element>
+  </define>
+  <define name="element.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">element</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <choice>
+              <ref name="qname.datatype"/>
+              <ref name="avt.datatype"/>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">namespace</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_namespace</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">inherit-namespaces</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_inherit-namespaces</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-attribute-sets</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-attribute-sets</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">type</name>
+              <ref name="eqname.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_type</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">validation</name>
+              <choice>
+                <value>strict</value>
+                <value>lax</value>
+                <value>preserve</value>
+                <value>strip</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_validation</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="attribute.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">attribute</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <choice>
+              <ref name="qname.datatype"/>
+              <ref name="avt.datatype"/>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">namespace</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_namespace</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">separator</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">type</name>
+              <ref name="eqname.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_type</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">validation</name>
+              <choice>
+                <value>strict</value>
+                <value>lax</value>
+                <value>preserve</value>
+                <value>strip</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_validation</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="text.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">text</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">disable-output-escaping</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_disable-output-escaping</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <text/>
+    </element>
+  </define>
+  <define name="value-of.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">value-of</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">separator</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">disable-output-escaping</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_disable-output-escaping</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="document.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">document</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">type</name>
+              <ref name="eqname.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_type</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">validation</name>
+              <choice>
+                <value>strict</value>
+                <value>lax</value>
+                <value>preserve</value>
+                <value>strip</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_validation</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="processing-instruction.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">processing-instruction</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <choice>
+              <ref name="ncname.datatype"/>
+              <ref name="avt.datatype"/>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="namespace.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">namespace</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <choice>
+              <ref name="ncname.datatype"/>
+              <ref name="avt.datatype"/>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="comment.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">comment</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="copy.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">copy</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">copy-namespaces</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_copy-namespaces</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">inherit-namespaces</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_inherit-namespaces</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-attribute-sets</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-attribute-sets</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">type</name>
+              <ref name="eqname.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_type</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">validation</name>
+              <choice>
+                <value>strict</value>
+                <value>lax</value>
+                <value>preserve</value>
+                <value>strip</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_validation</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="copy-of.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">copy-of</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">select</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_select</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">copy-accumulators</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_copy-accumulators</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">copy-namespaces</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_copy-namespaces</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">type</name>
+              <ref name="eqname.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_type</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">validation</name>
+              <choice>
+                <value>strict</value>
+                <value>lax</value>
+                <value>preserve</value>
+                <value>strip</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_validation</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <empty/>
+    </element>
+  </define>
+  <define name="sequence.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">sequence</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="where-populated.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">where-populated</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="on-empty.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">on-empty</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="on-non-empty.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">on-non-empty</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="number.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">number</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">value</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_value</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">level</name>
+          <choice>
+            <value>single</value>
+            <value>multiple</value>
+            <value>any</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_level</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">count</name>
+          <ref name="pattern.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_count</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">from</name>
+          <ref name="pattern.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_from</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">format</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_format</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">lang</name>
+          <choice>
+            <ref name="language.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_lang</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">letter-value</name>
+          <choice>
+            <value>alphabetic</value>
+            <value>traditional</value>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_letter-value</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">ordinal</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_ordinal</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">start-at</name>
+          <choice>
+            <ref name="integer.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_start-at</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">grouping-separator</name>
+          <choice>
+            <ref name="char.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_grouping-separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">grouping-size</name>
+          <choice>
+            <ref name="integer.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_grouping-size</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="sort.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">sort</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">lang</name>
+          <choice>
+            <ref name="language.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_lang</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">order</name>
+          <choice>
+            <value>ascending</value>
+            <value>descending</value>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_order</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">collation</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_collation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">stable</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_stable</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">case-order</name>
+          <choice>
+            <value>upper-first</value>
+            <value>lower-first</value>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_case-order</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">data-type</name>
+          <choice>
+            <value>text</value>
+            <value>number</value>
+            <ref name="eqname.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_data-type</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="perform-sort.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">perform-sort</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <group>
+        <oneOrMore>
+          <ref name="sort.element"/>
+        </oneOrMore>
+        <ref name="sequence-constructor.model"/>
+      </group>
+    </element>
+  </define>
+  <define name="for-each-group.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">for-each-group</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">select</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_select</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">group-by</name>
+              <ref name="expression.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_group-by</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">group-adjacent</name>
+              <ref name="expression.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_group-adjacent</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">group-starting-with</name>
+              <ref name="pattern.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_group-starting-with</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">group-ending-with</name>
+              <ref name="pattern.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_group-ending-with</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <optional>
+        <attribute>
+          <name ns="">composite</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_composite</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">collation</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_collation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <group>
+        <zeroOrMore>
+          <ref name="sort.element"/>
+        </zeroOrMore>
+        <ref name="sequence-constructor.model"/>
+      </group>
+    </element>
+  </define>
+  <define name="merge.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">merge</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <group>
+        <oneOrMore>
+          <ref name="merge-source.element"/>
+        </oneOrMore>
+        <ref name="merge-action.element"/>
+        <zeroOrMore>
+          <ref name="fallback.element"/>
+        </zeroOrMore>
+      </group>
+    </element>
+  </define>
+  <define name="merge-source.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">merge-source</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">name</name>
+          <ref name="ncname.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_name</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">for-each-item</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_for-each-item</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">for-each-stream</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_for-each-stream</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">select</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_select</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">streamable</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_streamable</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-accumulators</name>
+          <ref name="tokens.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-accumulators</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">sort-before-merge</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_sort-before-merge</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">validation</name>
+          <choice>
+            <value>strict</value>
+            <value>lax</value>
+            <value>preserve</value>
+            <value>strip</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_validation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">type</name>
+          <ref name="eqname.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_type</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">for-each-source</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_for-each-source</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <oneOrMore>
+        <ref name="merge-key.element"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="merge-key.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">merge-key</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">lang</name>
+          <choice>
+            <ref name="language.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_lang</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">order</name>
+          <choice>
+            <value>ascending</value>
+            <value>descending</value>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_order</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">collation</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_collation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">case-order</name>
+          <choice>
+            <value>upper-first</value>
+            <value>lower-first</value>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_case-order</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">data-type</name>
+          <choice>
+            <value>text</value>
+            <value>number</value>
+            <ref name="eqname.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_data-type</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="merge-action.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">merge-action</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="fork.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">fork</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <group>
+        <zeroOrMore>
+          <ref name="fallback.element"/>
+        </zeroOrMore>
+        <choice>
+          <zeroOrMore>
+            <group>
+              <ref name="sequence.element"/>
+              <zeroOrMore>
+                <ref name="fallback.element"/>
+              </zeroOrMore>
+            </group>
+          </zeroOrMore>
+          <group>
+            <ref name="for-each-group.element"/>
+            <zeroOrMore>
+              <ref name="fallback.element"/>
+            </zeroOrMore>
+          </group>
+        </choice>
+      </group>
+    </element>
+  </define>
+  <define name="analyze-string.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">analyze-string</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">select</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_select</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">regex</name>
+            <choice>
+              <ref name="string.datatype"/>
+              <ref name="avt.datatype"/>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_regex</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">flags</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_flags</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <group>
+        <optional>
+          <ref name="matching-substring.element"/>
+        </optional>
+        <optional>
+          <ref name="non-matching-substring.element"/>
+        </optional>
+        <zeroOrMore>
+          <ref name="fallback.element"/>
+        </zeroOrMore>
+      </group>
+    </element>
+  </define>
+  <define name="matching-substring.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">matching-substring</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="non-matching-substring.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">non-matching-substring</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="source-document.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">source-document</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">href</name>
+            <choice>
+              <ref name="uri.datatype"/>
+              <ref name="avt.datatype"/>
+            </choice>
+          </attribute>
+          <attribute>
+            <name ns="">_href</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">use-accumulators</name>
+          <ref name="tokens.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-accumulators</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">type</name>
+              <ref name="eqname.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_type</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">validation</name>
+              <choice>
+                <value>strict</value>
+                <value>lax</value>
+                <value>preserve</value>
+                <value>strip</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_validation</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <optional>
+        <attribute>
+          <name ns="">streamable</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_streamable</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="accumulator.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">accumulator</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <choice>
+        <attribute>
+          <name ns="">name</name>
+          <ref name="eqname.datatype"/>
+        </attribute>
+        <attribute>
+          <name ns="">_name</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </choice>
+      <choice>
+        <attribute>
+          <name ns="">initial-value</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+        <attribute>
+          <name ns="">_initial-value</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </choice>
+      <optional>
+        <attribute>
+          <name ns="">as</name>
+          <ref name="sequence-type.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_as</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">streamable</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_streamable</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <oneOrMore>
+        <ref name="accumulator-rule.element"/>
+      </oneOrMore>
+    </element>
+  </define>
+  <define name="accumulator-rule.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">accumulator-rule</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">match</name>
+            <ref name="pattern.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_match</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">phase</name>
+          <choice>
+            <value>start</value>
+            <value>end</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_phase</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="key.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">key</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">match</name>
+            <ref name="pattern.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_match</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">use</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">composite</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_composite</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">collation</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_collation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="map.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">map</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="map-entry.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">map-entry</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <choice>
+        <attribute>
+          <name ns="">key</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+        <attribute>
+          <name ns="">_key</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </choice>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="message.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">message</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">terminate</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_terminate</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">error-code</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_error-code</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="assert.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">assert</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">test</name>
+            <ref name="expression.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_test</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">select</name>
+          <ref name="expression.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_select</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">error-code</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_error-code</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="fallback.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">fallback</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="result-document.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">result-document</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <optional>
+        <attribute>
+          <name ns="">format</name>
+          <choice>
+            <ref name="eqname.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_format</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">href</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_href</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <choice>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">type</name>
+              <ref name="eqname.datatype"/>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_type</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+        <group>
+          <optional>
+            <attribute>
+              <name ns="">validation</name>
+              <choice>
+                <value>strict</value>
+                <value>lax</value>
+                <value>preserve</value>
+                <value>strip</value>
+              </choice>
+            </attribute>
+          </optional>
+          <optional>
+            <attribute>
+              <name ns="">_validation</name>
+              <ref name="avt.datatype"/>
+            </attribute>
+          </optional>
+        </group>
+      </choice>
+      <optional>
+        <attribute>
+          <name ns="">method</name>
+          <choice>
+            <value>xml</value>
+            <value>html</value>
+            <value>xhtml</value>
+            <value>text</value>
+            <value>json</value>
+            <value>adaptive</value>
+            <ref name="eqname.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_method</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">allow-duplicate-names</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_allow-duplicate-names</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">build-tree</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_build-tree</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">byte-order-mark</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_byte-order-mark</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">cdata-section-elements</name>
+          <choice>
+            <ref name="eqnames.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_cdata-section-elements</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">doctype-public</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_doctype-public</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">doctype-system</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_doctype-system</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">encoding</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_encoding</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">escape-uri-attributes</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_escape-uri-attributes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">html-version</name>
+          <choice>
+            <ref name="decimal.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_html-version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">include-content-type</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_include-content-type</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">indent</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_indent</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">item-separator</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_item-separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">json-node-output-method</name>
+          <choice>
+            <value>xml</value>
+            <value>html</value>
+            <value>xhtml</value>
+            <value>text</value>
+            <ref name="eqname.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_json-node-output-method</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">media-type</name>
+          <choice>
+            <ref name="string.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_media-type</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">normalization-form</name>
+          <choice>
+            <value>NFC</value>
+            <value>NFD</value>
+            <value>NFKC</value>
+            <value>NFKD</value>
+            <value>fully-normalized</value>
+            <value>none</value>
+            <ref name="nmtoken.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_normalization-form</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">omit-xml-declaration</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_omit-xml-declaration</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">parameter-document</name>
+          <choice>
+            <ref name="uri.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_parameter-document</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">standalone</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <value>omit</value>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_standalone</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">suppress-indentation</name>
+          <choice>
+            <ref name="eqnames.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_suppress-indentation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">undeclare-prefixes</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_undeclare-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-character-maps</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-character-maps</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">output-version</name>
+          <choice>
+            <ref name="nmtoken.datatype"/>
+            <ref name="avt.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_output-version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <ref name="sequence-constructor.model"/>
+    </element>
+  </define>
+  <define name="output.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">output</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts.except.version"/>
+      <optional>
+        <attribute>
+          <name ns="">name</name>
+          <ref name="eqname.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_name</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">method</name>
+          <choice>
+            <value>xml</value>
+            <value>html</value>
+            <value>xhtml</value>
+            <value>text</value>
+            <value>json</value>
+            <value>adaptive</value>
+            <ref name="eqname.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_method</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">allow-duplicate-names</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_allow-duplicate-names</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">build-tree</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_build-tree</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">byte-order-mark</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_byte-order-mark</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">cdata-section-elements</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_cdata-section-elements</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">doctype-public</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_doctype-public</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">doctype-system</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_doctype-system</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">encoding</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_encoding</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">escape-uri-attributes</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_escape-uri-attributes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">html-version</name>
+          <ref name="decimal.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_html-version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">include-content-type</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_include-content-type</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">indent</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_indent</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">item-separator</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_item-separator</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">json-node-output-method</name>
+          <choice>
+            <value>xml</value>
+            <value>html</value>
+            <value>xhtml</value>
+            <value>text</value>
+            <ref name="eqname.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_json-node-output-method</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">media-type</name>
+          <ref name="string.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_media-type</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">normalization-form</name>
+          <choice>
+            <value>NFC</value>
+            <value>NFD</value>
+            <value>NFKC</value>
+            <value>NFKD</value>
+            <value>fully-normalized</value>
+            <value>none</value>
+            <ref name="nmtoken.datatype"/>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_normalization-form</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">omit-xml-declaration</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_omit-xml-declaration</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">parameter-document</name>
+          <ref name="uri.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_parameter-document</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">standalone</name>
+          <choice>
+            <ref name="boolean.datatype"/>
+            <value>omit</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_standalone</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">suppress-indentation</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_suppress-indentation</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">undeclare-prefixes</name>
+          <ref name="boolean.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_undeclare-prefixes</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">use-character-maps</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-character-maps</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">version</name>
+          <ref name="nmtoken.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_version</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+  <define name="character-map.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">character-map</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">name</name>
+            <ref name="eqname.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_name</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <optional>
+        <attribute>
+          <name ns="">use-character-maps</name>
+          <ref name="eqnames.datatype"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute>
+          <name ns="">_use-character-maps</name>
+          <ref name="avt.datatype"/>
+        </attribute>
+      </optional>
+      <zeroOrMore>
+        <ref name="output-character.element"/>
+      </zeroOrMore>
+    </element>
+  </define>
+  <define name="output-character.element">
+    <element>
+      <name ns="http://www.w3.org/1999/XSL/Transform">output-character</name>
+      <ref name="extension.atts"/>
+      <ref name="global.atts"/>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">character</name>
+            <ref name="char.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_character</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <oneOrMore>
+        <choice>
+          <attribute>
+            <name ns="">string</name>
+            <ref name="string.datatype"/>
+          </attribute>
+          <attribute>
+            <name ns="">_string</name>
+            <ref name="avt.datatype"/>
+          </attribute>
+        </choice>
+      </oneOrMore>
+      <empty/>
+    </element>
+  </define>
+  <define name="avt.datatype">
+    <data type="string"/>
+  </define>
+</grammar>
