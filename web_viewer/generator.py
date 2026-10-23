@@ -2,6 +2,7 @@
 """Générateur de viewer web générique piloté par project.xml."""
 from __future__ import annotations
 
+import copy
 import json
 import hashlib
 import html
@@ -20,7 +21,7 @@ from folio_navigation import folios_for_witness
 from web_viewer.assembled_document import load_assembled
 from web_viewer.page_resolver import PageResolver
 from web_viewer.tei_line_anchors import build_pivot_lb_index, build_segment_lb_index
-from resource_state import primary_sync_line_count, secondary_sync_link_count
+from resource_state import primary_sync_line_count
 from i18n import I18nManager
 from image_sources import normalized_image_block, apply_witness_image_policy
 from alto_import import apply_witness_alto_policy
@@ -33,6 +34,185 @@ from web_viewer.legacy_v11_core import (
 )
 
 
+def _witness_cache(project, w):
+    """``(JSON brut, JSON après les règles d'ALTO, d'images et d'IIIF)`` du
+    témoin ``w`` (une configuration de project.xml, ou sa copie pour un texte
+    synchronisé à part : ``text_project``)."""
+    alignment_available = has_line_synchronization(w)
+    raw_cache = (load_json(w.alignment) if alignment_available
+                 else {"meta": {"witness": w.id, "role": w.role}, "pages": []})
+    cache = apply_witness_alto_policy(
+        raw_cache, getattr(w, "alto_source_type", "auto"),
+        [x.path for x in getattr(w, "alto_files", ())], project.root_dir,
+        w.id, w.role,
+        strict_no_ordinal=(getattr(w, 'image_source_type', '') == 'iiif'),
+    )
+    cache = apply_witness_image_policy(
+        cache, getattr(w, "image_source_type", "auto"),
+        getattr(w, "image_source_value", None), project.root_dir,
+        getattr(w, "image_files", ()), w.id,
+        getattr(w, 'iiif_selection_mode', 'all'),
+        getattr(w, 'iiif_selected_canvases', ()),
+        getattr(w, 'iiif_ocr_links', ()),
+        getattr(w, 'iiif_page_links', ()),
+    )
+    if getattr(w, 'iiif_web_local_copy', False) and w.image_source_type == 'iiif':
+        cache = apply_working_copy(cache, project.root_dir, w.id)
+    return raw_cache, cache
+
+
+def _namespaced(cache, prefix):
+    """Copie de ``cache`` dont les identifiants de pages, et les ``base_keys``
+    des lignes d'un témoin secondaire, portent ``prefix`` (texte synchronisé
+    à part : ses JSON peuvent reprendre les pages du JSON global)."""
+    out = copy.deepcopy(cache)
+    for page in out.get("pages", []) or []:
+        if page.get("id") is not None:
+            page["id"] = prefix + str(page["id"])
+        for line in page.get("lines", []) or []:
+            for field in ("base_keys", "keys816"):
+                if line.get(field):
+                    line[field] = [prefix + str(key) for key in line[field]]
+    return out
+
+
+def _pivot_pages(pages, corrected_by_key, variant_registry):
+    """Pages du pivot avec, pour chaque ligne reliée au TEI, son texte
+    corrigé, ses fragments et ses notes ; et leur nombre de lignes."""
+    pages_out, total_lines = [], 0
+    for cp in pages:
+        out_lines = []
+        for line in cp.get('lines', []):
+            key = f"{cp['id']}::{line.get('line')}"
+            c = corrected_by_key.get(key)
+            entry = dict(line)
+            if c is not None:
+                attach_variant_metadata_to_runs(c, variant_registry)
+                seen, anns = set(), []
+                for ann in c.get('annotations', []):
+                    if ann['id'] not in seen:
+                        seen.add(ann['id']); anns.append(ann)
+                entry.update(corrected=c['text'], runs=c['runs'],
+                             annotations=anns, break_no=c.get('break_no', False))
+            out_lines.append(entry)
+        po = dict(cp)
+        po['lines'] = out_lines
+        pages_out.append(po)
+        total_lines += len(out_lines)
+    return pages_out, total_lines
+
+
+def _normalized_pages(pages, project, is_base):
+    """Pages d'un témoin pour le viewer : bloc d'image normalisé ; les
+    anciens ``keys816`` deviennent ``base_keys``."""
+    if not is_base:
+        for p in pages:
+            for line in p.get("lines", []):
+                if "base_keys" not in line and "keys816" in line:
+                    line["base_keys"] = line.get("keys816") or []
+    normalized = []
+    for p in pages:
+        pp = dict(p)
+        pp["image"] = normalized_image_block(p, project.root_dir)
+        normalized.append(pp)
+    return normalized
+
+
+def _sync_state(w, raw_pages, normalized_pages, is_base, base_has_alignment, valid_base_keys, prefix=""):
+    """``(synchronisé par lignes, diagnostic)`` d'un témoin : relié aux lignes
+    du pivot réellement publiées, ou suivi par pages."""
+    matched_secondary_keys = {
+        prefix + str(key) for raw_page in raw_pages for raw_line in (raw_page.get('lines') or [])
+        for key in (raw_line.get('base_keys') or raw_line.get('keys816') or [])
+        if prefix + str(key) in valid_base_keys
+    } if not is_base else set()
+    witness_line_sync = bool(
+        base_has_alignment and (is_base or
+        (has_line_synchronization(w) and bool(matched_secondary_keys)))
+    )
+    return witness_line_sync, {
+        "raw_lines": sum(len(rp.get('lines') or []) for rp in raw_pages),
+        "matched_base_keys": len(matched_secondary_keys),
+        "emitted_lines": sum(len(pp.get('lines') or []) for pp in normalized_pages),
+        "state": ('line' if witness_line_sync else 'page'),
+    }
+
+
+def _folio_objects(edition_text, witness_id, pages):
+    """Folios du témoin (``folios_for_witness``) pour ses pages."""
+    ids = [str(p.get('tei_surface_id')) for p in pages if p.get('tei_surface_id')]
+    labels = {str(p['tei_surface_id']): str((p.get('image') or {}).get('label') or p.get('label') or '')
+              for p in pages if p.get('tei_surface_id')}
+    return folios_for_witness(edition_text, witness_id, ids, labels)
+
+
+def _folio_entries(folios):
+    return [dict(ref=f.ref, surface=f.surface, label=f.label, region=f.region) for f in folios]
+
+
+def _has_image(page):
+    image = page.get('image') or {}
+    return (image.get('type') in {'iiif', 'file'}
+            and bool(image.get('path') or image.get('service') or image.get('image')))
+
+
+def _text_caches(project, assembled):
+    """Pour chaque texte synchronisé à part (k ≥ 1) : ``(témoins par pages,
+    {témoin: (configuration, JSON brut, JSON après les règles)})``, et le
+    contexte des règles du texte (``segment_model``)."""
+    import segment_model
+    from folio_navigation import witness_loci
+    from text_alignments import text_project
+    from xml_assembly import path_key
+    try:
+        master = Path(project.edition).read_text(encoding='utf-8-sig')
+    except (OSError, UnicodeError):
+        master = ''
+    edition_loci = witness_loci(master)
+    declared = {w.id for w in project.witnesses}
+    found = {}
+    for segment in assembled.segments[1:]:
+        texts = {}
+        for path in assembled.segment_files(segment.index):
+            try:
+                texts[path] = Path(path).read_text(encoding='utf-8-sig')
+            except (OSError, UnicodeError):
+                texts[path] = ''
+        ids = segment_model.segment_ids(texts.values())
+        own = next((text for path, text in texts.items() if path_key(path) == segment.key), None)
+        loci = segment_model.segment_loci(edition_loci, own)
+        page_witnesses = segment_model.text_page_witnesses(assembled.lines, segment.key, ids, loci, declared)
+        tproject = text_project(project, segment.sync, page_witnesses)
+        caches = {}
+        for tw in tproject.witnesses:
+            if tw.alignment is not None:
+                raw, cache = _witness_cache(project, tw)
+                caches[tw.id] = (tw, raw, cache)
+        found[segment.index] = {"page_witnesses": set(tproject.page_witnesses), "caches": caches,
+                                "ids": ids, "loci": loci}
+    return found
+
+
+def _line_order(order, keys_by_segment, prefixes):
+    """Ordre de lecture de toutes les lignes : celui des ``<lb>`` du
+    document ; une ligne d'un JSON sans ``<lb>`` vient après la dernière
+    ligne de son texte."""
+    order = list(order)
+    placed = set(order)
+
+    def segment_of(key):
+        return next((k for k, prefix in prefixes.items() if prefix and key.startswith(prefix)), 0)
+
+    for index, keys in keys_by_segment.items():
+        missing = [key for key in keys if key not in placed]
+        if not missing:
+            continue
+        last = max((i for i, key in enumerate(order) if segment_of(key) == index), default=len(order) - 1)
+        order[last + 1:last + 1] = missing
+        placed.update(missing)
+    return order
+
+
 def build_dataset(project, display_witness_ids=None):
     """Build an export without rewriting the project's scientific witness order.
 
@@ -40,6 +220,10 @@ def build_dataset(project, display_witness_ids=None):
     visible witness IDs. None preserves the standalone/CLI behavior (all
     witnesses). The pivot remains an internal synchronization source even
     when its panel is hidden; hidden witnesses' facsimiles are not published.
+
+    Édition en parties (V0.9.1.6) : l'édition assemblée ; chaque texte
+    synchronisé à part (``meta.segments``) a ses JSON, son pivot et ses clés
+    préfixées (``~1~``…), et chaque témoin une vue par texte (``views``).
     """
     base_id = project.base_witness
     known_ids = [w.id for w in project.witnesses]
@@ -57,30 +241,8 @@ def build_dataset(project, display_witness_ids=None):
     # l'état de synchronisation après cette superposition, un JSON vide pourrait
     # activer à tort le mode ligne.
     raw_sync_caches = {}
-    raw_secondary_link_counts = {}
     for w in project.witnesses:
-        alignment_available = has_line_synchronization(w)
-        raw_cache = (load_json(w.alignment) if alignment_available
-                     else {"meta": {"witness": w.id, "role": w.role}, "pages": []})
-        raw_sync_caches[w.id] = raw_cache
-        raw_secondary_link_counts[w.id] = secondary_sync_link_count(raw_cache) if not w.is_base else 0
-        cache = apply_witness_alto_policy(
-            raw_cache, getattr(w, "alto_source_type", "auto"),
-            [x.path for x in getattr(w, "alto_files", ())], project.root_dir,
-            w.id, w.role,
-            strict_no_ordinal=(getattr(w, 'image_source_type', '') == 'iiif'),
-        )
-        caches[w.id] = apply_witness_image_policy(
-            cache, getattr(w, "image_source_type", "auto"),
-            getattr(w, "image_source_value", None), project.root_dir,
-            getattr(w, "image_files", ()), w.id,
-            getattr(w, 'iiif_selection_mode', 'all'),
-            getattr(w, 'iiif_selected_canvases', ()),
-            getattr(w, 'iiif_ocr_links', ()),
-            getattr(w, 'iiif_page_links', ()),
-        )
-        if getattr(w, 'iiif_web_local_copy', False) and w.image_source_type == 'iiif':
-            caches[w.id] = apply_working_copy(caches[w.id], project.root_dir, w.id)
+        raw_sync_caches[w.id], caches[w.id] = _witness_cache(project, w)
     base_cache = caches[base_id]
     base_cfg = project.witness_by_id[base_id]
     base_sync_line_count = primary_sync_line_count(raw_sync_caches.get(base_id))
@@ -97,6 +259,7 @@ def build_dataset(project, display_witness_ids=None):
     # Édition en parties (V0.9.1.6) : l'édition assemblée, chaque élément
     # rattaché à son texte ; sinon le fichier de l'édition, comme avant.
     assembled = load_assembled(project)
+    texts = {}
     if assembled is None:
         edition_root = ET.parse(project.edition).getroot()
         _, anchor_report = build_pivot_lb_index(edition_root, base_id, physical_base_keys)
@@ -104,11 +267,22 @@ def build_dataset(project, display_witness_ids=None):
         reading_options = {}
     else:
         edition_root = assembled.root
-        lookup, reports, _order = build_segment_lb_index(
-            edition_root, assembled.segment, {0: base_id}, {0: physical_base_keys})
+        texts = _text_caches(project, assembled) if len(assembled.segments) > 1 else {}
+        keys_by_segment = {0: physical_base_keys}
+        for segment in assembled.segments[1:]:
+            entry = (texts[segment.index]["caches"].get(segment.pivot) or (None, None, None))
+            raw, cache = entry[1], entry[2]
+            texts[segment.index]["line_sync"] = bool(raw is not None and primary_sync_line_count(raw) > 0)
+            keys_by_segment[segment.index] = ([f"{segment.prefix}{p['id']}::{line.get('line')}"
+                                               for p in cache.get('pages', []) for line in p.get('lines', [])]
+                                              if texts[segment.index]["line_sync"] else [])
+        lookup, reports, lb_order = build_segment_lb_index(
+            edition_root, assembled.segment, {s.index: s.pivot for s in assembled.segments}, keys_by_segment)
         anchor_report = reports[0]
         anchor_keys = None
-        reading_options = dict(root=edition_root, line_anchors=lookup if base_has_alignment else None,
+        # Sans JSON du pivot, les clés de page des <pb> (mode page), comme avant.
+        reading_options = dict(root=edition_root,
+                               line_anchors=lookup if any(keys_by_segment.values()) else None,
                                segment_of=assembled.segment, target_of=assembled.target)
     page_resolver = PageResolver(edition_root, base_cache.get('pages', []), base_id)
     corr_pages, witness_labels = extract_corrected_pages(
@@ -127,28 +301,9 @@ def build_dataset(project, display_witness_ids=None):
             key = c.get('line_key')
             if key:
                 corrected_by_key[key] = c
-    pages_out, missing, variant_registry = [], [], {}
-    total_lines = 0
-    if base_has_alignment:
-        for cp in base_cache.get('pages', []):
-            out_lines = []
-            for line in cp.get('lines', []):
-                key = f"{cp['id']}::{line.get('line')}"
-                c = corrected_by_key.get(key)
-                entry = dict(line)
-                if c is not None:
-                    attach_variant_metadata_to_runs(c, variant_registry)
-                    seen, anns = set(), []
-                    for ann in c.get('annotations', []):
-                        if ann['id'] not in seen:
-                            seen.add(ann['id']); anns.append(ann)
-                    entry.update(corrected=c['text'], runs=c['runs'],
-                                 annotations=anns, break_no=c.get('break_no', False))
-                out_lines.append(entry)
-            po = dict(cp)
-            po['lines'] = out_lines
-            pages_out.append(po)
-            total_lines += len(out_lines)
+    missing, variant_registry = [], {}
+    pages_out, total_lines = (_pivot_pages(base_cache.get('pages', []), corrected_by_key, variant_registry)
+                              if base_has_alignment else ([], 0))
     # Page-only mode does not establish a TEI-to-line correspondence merely
     # because ALTO geometric line boxes happen to be present.
     # Publication navigation can only target *real emitted* pivot lines. The
@@ -158,63 +313,51 @@ def build_dataset(project, display_witness_ids=None):
                        for line in p['lines'] if p.get('id') and line.get('line') is not None}
     if not valid_base_keys:
         base_has_alignment = False
+    # Lignes du pivot de chaque texte synchronisé à part.
+    text_pivot_pages = {}
+    for k, text in texts.items():
+        segment = assembled.segments[k]
+        entry = text["caches"].get(segment.pivot)
+        if entry is None or not text["line_sync"]:
+            text["line_sync"] = False
+            continue
+        pages, count = _pivot_pages(_namespaced(entry[2], segment.prefix).get('pages', []),
+                                    corrected_by_key, variant_registry)
+        text["valid_keys"] = {f"{p['id']}::{line['line']}" for p in pages
+                              for line in p['lines'] if p.get('id') and line.get('line') is not None}
+        text["line_sync"] = bool(text["valid_keys"])
+        text_pivot_pages[k] = (pages, count)
+    all_valid_keys = valid_base_keys.union(*(text.get("valid_keys", set()) for text in texts.values()))
     text_line_keys = [str(seg.get('line_key')) for block in reading_document.get('blocks', [])
                       for seg in block.get('segments', [])
                       if seg.get('kind') == 'text' and seg.get('line_key')]
-    orphan_text_keys = sorted(set(text_line_keys) - valid_base_keys)
+    orphan_text_keys = sorted(set(text_line_keys) - all_valid_keys)
     unanchored_text_segments = sum(1 for block in reading_document.get('blocks', [])
                                    for seg in block.get('segments', [])
                                    if seg.get('kind') == 'text' and
                                    str(seg.get('text') or '').strip() and not seg.get('line_key'))
     unique_var, unique_notes = set(), set()
-    for p in pages_out:
+    for p in pages_out + [p for pages, _count in text_pivot_pages.values() for p in pages]:
         for line in p["lines"]:
             for ann in line.get("annotations", []):
                 if ann.get("kind") == "variant": unique_var.add(ann["id"])
                 elif ann.get("kind") == "note": unique_notes.add(ann["id"])
     witnesses = []
-    has_images = False
     for w in project.witnesses:
         cache = caches[w.id]
+        is_base = w.id == base_id
         # Sans synchronisation ligne-à-ligne, conserver toutes les pages du
         # témoin de base. L'ALTO éventuel reste une géométrie de page, pas une
         # correspondance avec les lignes de l'édition.
-        pages = (pages_out if base_has_alignment else cache.get("pages", [])) if w.id == base_id else cache.get("pages", [])
-        if w.id != base_id:
-            for p in pages:
-                for line in p.get("lines", []):
-                    if "base_keys" not in line and "keys816" in line:
-                        line["base_keys"] = line.get("keys816") or []
-        normalized_pages = []
-        for p in pages:
-            pp = dict(p)
-            pp["image"] = normalized_image_block(p, project.root_dir)
-            image = pp["image"]
-            if image.get("type") == "iiif" and (image.get("service") or image.get("image")):
-                has_images = True
-            elif image.get("type") == "file" and image.get("path"):
-                has_images = True
-            normalized_pages.append(pp)
+        pages = (pages_out if base_has_alignment else cache.get("pages", [])) if is_base else cache.get("pages", [])
+        normalized_pages = _normalized_pages(pages, project, is_base)
         raw_pages = (raw_sync_caches.get(w.id) or {}).get('pages', []) or []
-        matched_secondary_keys = {
-            str(key) for raw_page in raw_pages for raw_line in (raw_page.get('lines') or [])
-            for key in (raw_line.get('base_keys') or raw_line.get('keys816') or [])
-            if str(key) in valid_base_keys
-        } if w.id != base_id else set()
-        linked_to_emitted_base = bool(matched_secondary_keys)
-        witness_line_sync = bool(
-            base_has_alignment and (w.id == base_id or
-            (has_line_synchronization(w) and linked_to_emitted_base))
-        )
+        witness_line_sync, diagnostic = _sync_state(w, raw_pages, normalized_pages, is_base,
+                                                    base_has_alignment, valid_base_keys)
         witnesses.append({"id": w.id, "label": w.label,
-                          "role": "base" if w.id == base_id else "secondary",
+                          "role": "base" if is_base else "secondary",
                           "line_sync": witness_line_sync,
-                          "sync_diagnostic": {
-                              "raw_lines": sum(len(rp.get('lines') or []) for rp in raw_pages),
-                              "matched_base_keys": len(matched_secondary_keys),
-                              "emitted_lines": sum(len(pp.get('lines') or []) for pp in normalized_pages),
-                              "state": ('line' if witness_line_sync else 'page'),
-                          },
+                          "sync_diagnostic": diagnostic,
                           "pages": normalized_pages, "meta": cache.get("meta", {})})
     # Same TEI zone semantics as desktop: one physical image may contain
     # two independently addressed folios. No image is duplicated in the export.
@@ -225,27 +368,30 @@ def build_dataset(project, display_witness_ids=None):
             edition_text = project.edition.read_text(encoding='utf-8-sig')
         except (OSError, UnicodeError):
             edition_text = ''
+    folio_objects = {}
     for witness in witnesses:
-        pages = witness['pages']
-        ids = [str(p.get('tei_surface_id')) for p in pages if p.get('tei_surface_id')]
-        labels = {str(p['tei_surface_id']): str((p.get('image') or {}).get('label') or p.get('label') or '')
-                  for p in pages if p.get('tei_surface_id')}
-        witness['folios'] = [dict(ref=f.ref, surface=f.surface, label=f.label, region=f.region)
-                             for f in folios_for_witness(edition_text, witness['id'], ids, labels)]
+        folio_objects[witness['id']] = _folio_objects(edition_text, witness['id'], witness['pages'])
+        witness['folios'] = _folio_entries(folio_objects[witness['id']])
+    if texts:
+        _add_text_views(project, assembled, texts, text_pivot_pages, witnesses, folio_objects,
+                        raw_sync_caches, edition_text)
     # Publish the selected witnesses in the exact on-screen order. Keep only
     # the pivot as a hidden, image-free technical witness if it is not visible:
     # its physical keys are indispensable for text->secondary navigation.
+    # Les pivots des textes à part sont gardés de même (V0.9.1.6).
     by_id = {w['id']: w for w in witnesses}
-    export_order = displayed_ids + ([base_id] if base_id not in displayed_ids else [])
+    technical = [base_id] + [s.pivot for s in assembled.segments[1:]] if texts else [base_id]
+    export_order = displayed_ids + [wid for wid in dict.fromkeys(technical) if wid not in displayed_ids]
     witnesses = [by_id[wid] for wid in export_order]
-    if base_id not in displayed_ids:
-        for page in by_id[base_id]['pages']:
-            page['image'] = {'type': 'none'}
+    for wid in export_order:
+        if wid not in displayed_ids:
+            for page in by_id[wid]['pages']:
+                page['image'] = {'type': 'none'}
+            for view in by_id[wid].get('views', {}).values():
+                for page in view.get('pages', []) or []:
+                    page['image'] = {'type': 'none'}
     has_images = any(
-        (p.get('image') or {}).get('type') in {'iiif', 'file'}
-        and bool((p.get('image') or {}).get('path')
-                 or (p.get('image') or {}).get('service')
-                 or (p.get('image') or {}).get('image'))
+        _has_image(p)
         for w in witnesses if w['id'] in displayed_ids for p in w['pages']
     )
     i18n = I18nManager(project.translations_dir, project.language, project.fallback_language)
@@ -253,12 +399,36 @@ def build_dataset(project, display_witness_ids=None):
         "assembled": True,
         "assembly_problems": [_problem_entry(problem, project) for problem in assembled.problems],
     }
+    if texts:
+        segments_meta = [{"index": 0, "name": None, "file": _relative(project.edition, project),
+                          "pivot": base_id, "prefix": "", "anchor": 0,
+                          "line_sync": bool(base_has_alignment), "lines": total_lines,
+                          "pivot_lb_index": anchor_report.as_dict()}]
+        for segment in assembled.segments[1:]:
+            pages, count = text_pivot_pages.get(segment.index, ([], 0))
+            segments_meta.append({"index": segment.index, "name": segment.name,
+                                  "file": _relative(segment.path, project), "pivot": segment.pivot,
+                                  "prefix": segment.prefix, "anchor": segment.anchor,
+                                  "line_sync": bool(texts[segment.index]["line_sync"]), "lines": count,
+                                  "pivot_lb_index": reports[segment.index].as_dict()})
+        valid_by_segment = {0: valid_base_keys,
+                            **{k: text.get("valid_keys", set()) for k, text in texts.items()}}
+        published = {k: [key for key in keys if key in valid_by_segment[k]] for k, keys in keys_by_segment.items()}
+        meta_assembly.update(
+            segments=segments_meta,
+            line_order=_line_order([key for key in lb_order if key in all_valid_keys], published,
+                                   {s.index: s.prefix for s in assembled.segments}),
+            text_sync_problems=[{"name": problem.name, "code": problem.code, "detail": problem.detail}
+                                for problem in assembled.sync_problems],
+        )
+    lines_total = total_lines + sum(count for _pages, count in text_pivot_pages.values())
+    line_sync = bool(base_has_alignment) or any(text.get("line_sync") for text in texts.values())
     return {
         "meta": {"title": project.title, "base_witness": base_id,
                  "display_witnesses": displayed_ids,
                  "pages": len(pages_out) if base_has_alignment else len(base_cache.get("pages", []) or []),
-                 "lines": total_lines, "variants": len(unique_var), "notes": len(unique_notes),
-                 "has_images": bool(has_images), "line_sync": bool(base_has_alignment),
+                 "lines": lines_total, "variants": len(unique_var), "notes": len(unique_notes),
+                 "has_images": bool(has_images), "line_sync": line_sync,
                  "tei_page_resolution": page_resolver.stats.copy(),
                  "raw_pivot_lines": base_sync_line_count,
                  "matched_pivot_lines": len(corrected_by_key),
@@ -272,6 +442,61 @@ def build_dataset(project, display_witness_ids=None):
         "witness_labels": witness_labels, "document": reading_document, "witnesses": witnesses,
         "i18n": i18n.export_catalogs(),
     }, missing
+
+
+def _add_text_views(project, assembled, texts, text_pivot_pages, witnesses, folio_objects,
+                    raw_sync_caches, edition_text):
+    """Vue de chaque témoin dans chaque texte synchronisé à part : par
+    lignes (son JSON pour ce texte, relié au pivot du texte), par pages (son
+    JSON sans lien, ou ses ``<pb>`` et ``<locus>`` dans le texte), ou
+    absente. La vue de l'édition reste dans les champs du témoin."""
+    import segment_model
+    by_id = {w['id']: w for w in witnesses}
+    for k, text in texts.items():
+        segment = assembled.segments[k]
+        for witness in witnesses:
+            wid = witness['id']
+            is_pivot = wid == segment.pivot
+            entry = text["caches"].get(wid)
+            view = None
+            if entry is not None:
+                tw, raw, cache = entry
+                if is_pivot and k in text_pivot_pages:
+                    pages = _normalized_pages(text_pivot_pages[k][0], project, True)
+                else:
+                    pages = _normalized_pages(_namespaced(cache, segment.prefix).get('pages', []), project, is_pivot)
+                line_sync, diagnostic = _sync_state(tw, raw.get('pages', []) or [], pages, is_pivot,
+                                                    text["line_sync"], text.get("valid_keys", set()),
+                                                    prefix=segment.prefix)
+                if line_sync or any(_has_image(page) for page in pages):
+                    folios = _folio_objects(edition_text, wid, pages)
+                    view = {"mode": "line" if line_sync else "page",
+                            "role": "base" if is_pivot else "secondary", "line_sync": line_sync,
+                            "sync_diagnostic": diagnostic, "pages": pages, "folios": _folio_entries(folios)}
+                    if not line_sync:
+                        start = segment_model.start_folio(assembled.lines, segment.key, wid, folios,
+                                                          text["loci"], text["ids"])
+                        if start is not None:
+                            view["start"] = start.ref
+            elif wid in text["page_witnesses"] and any(_has_image(page) for page in witness['pages']):
+                view = {"mode": "page", "role": "secondary", "line_sync": False, "same_pages": True,
+                        "sync_diagnostic": {"raw_lines": 0, "matched_base_keys": 0, "emitted_lines": 0,
+                                            "state": "page"}}
+                start = segment_model.start_folio(assembled.lines, segment.key, wid, folio_objects[wid],
+                                                  text["loci"], text["ids"])
+                if start is not None:
+                    view["start"] = start.ref
+            if view is not None:
+                by_id[wid].setdefault("views", {})[str(k)] = view
+
+
+def _relative(path, project):
+    """Chemin relatif au projet (aucun chemin absolu dans le viewer)."""
+    path = Path(path)
+    try:
+        return path.resolve().relative_to(Path(project.root_dir).resolve()).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _problem_entry(problem, project):
