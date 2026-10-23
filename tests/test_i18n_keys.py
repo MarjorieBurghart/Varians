@@ -102,7 +102,7 @@ def test_each_help_explains_background_validation():
 
 
 def test_each_help_explains_assembled_editions():
-    labels = ("rng.column.document", "references.action", "apparatus.menu", "parts.webgen.continue",
+    labels = ("rng.column.document", "references.action", "apparatus.menu",
               "documents.tab.rename", "documents.remove.menu")
     for language in LANGUAGES:
         root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
@@ -248,3 +248,4 @@ def test_each_help_explains_the_preview_of_an_assembled_edition():
         version = page[page.index('<section id="v0915">'):]
         assert 'href="#xinclude-preview"' in version[:version.index("</section>")], language
         assert page.index('<section id="v0914">') < page.index('<section id="v0915">'), language
+

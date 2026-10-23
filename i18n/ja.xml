@@ -156,6 +156,7 @@
   <string key="webgen.missing">
 
 ピボット伝本キャッシュにないページ：{pages}</string>
+  <string key="webgen.assembly_problems">\n\n結合の問題（該当するテキストはビューアにありません）：\n{problems}</string>
   <string key="project.open_error">プロジェクトを開けません</string>
   <string key="viewer.search.placeholder">検索…</string>
   <string key="viewer.prev_base">← 行</string>
@@ -791,11 +792,6 @@
   <string key="apparatus.witnesses.part">この部分の伝本（その &lt;listWit&gt;）：{ids}</string>
   <string key="apparatus.witnesses.locus">この部分の伝本（版の &lt;locus target&gt;）：{ids}</string>
   <string key="apparatus.witnesses.wit">この部分の @wit に挙げられた伝本：{ids}</string>
-  <string key="parts.webgen.title">部分に分かれた版</string>
-  <string key="parts.webgen.text">この版は XInclude で部分を取り込んでいます。Web ビューアーはまだ部分を含みません。版のファイルの本文だけが書き出され、部分は含まれません。
-
-それでも書き出しますか？</string>
-  <string key="parts.webgen.continue">それでも書き出す</string>
   <string key="status.structure.assembled.tip">ピボット伝本の行は、部分を含めて組み立てた版（XInclude）で、組み立てた文書の順に数えています。</string>
   <string key="manuscript.text_absent">この伝本には、このテキストの整列がありません。</string>
   <string key="status.structure.text.tip">テキスト {name} の {base} の行。このテキストは独自の整列（フォルダー alignments/{name}/）で別に同期されています。</string>

@@ -197,24 +197,64 @@ def test_an_edition_without_inclusion_has_no_part(open_window, project_with_docu
     assert not any(s.is_part for s in window.documents)
 
 
-def test_the_web_export_warns_that_the_parts_are_not_exported_yet(open_window, sermons_project, dialogs,
-                                                                   monkeypatch, tmp_path):
+def _fake_generate(monkeypatch, tmp_path, problems=()):
+    """Remplace le générateur : relève le contenu des fichiers de l'édition
+    au moment de l'export."""
     import web_viewer.generator
     calls = []
 
     def generate(project_path, **kwargs):
-        calls.append(project_path)
-        return tmp_path / "viewer.html", [], {"witnesses": [], "meta": {"lines": 0}}
+        root = Path(project_path).parent / "xml"
+        calls.append({path.name: path.read_text(encoding="utf-8") for path in root.rglob("*.xml")})
+        return tmp_path / "viewer.html", [], {"witnesses": [], "meta": {"lines": 0, "assembly_problems": list(problems)}}
 
     monkeypatch.setattr(web_viewer.generator, "generate", generate)
+    return calls
+
+
+def test_the_web_export_of_an_edition_in_parts_saves_its_parts_first(open_window, sermons_project, dialogs,
+                                                                     monkeypatch, tmp_path):
+    calls = _fake_generate(monkeypatch, tmp_path)
     window = open_window(sermons_project)
-    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # annuler
+    window.show_document(_doc(window, "s01.xml"))
+    _type_at_end(window, "<!-- essai -->")
+    window.show_document(window.edition_session)
+    # Un fragment non appliqué, dans une autre partie.
+    view = _preview(window)
+    assert view.load_fragment(6)                                        # premier paragraphe de s03
+    text = view.fragment_editor.toPlainText()
+    view.fragment_editor.setPlainText(text.replace("Surrexit Dominus", "SURREXIT Dominus", 1))
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # compte rendu seulement
     window.generate_web_viewer()
-    assert calls == [] and dialogs.seen[-1][1] == tr("parts.webgen.title")
-    dialogs.expect("box", QMessageBox.ButtonRole.AcceptRole)            # exporter quand même
-    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # fermer le compte rendu
+    assert len(calls) == 1
+    assert calls[0]["s01.xml"].endswith("<!-- essai -->")
+    assert "SURREXIT Dominus" in calls[0]["s03.xml"]
+    assert not any(session.modified for session in window.documents if session.in_edition)
+    assert [title for _kind, title, _text in dialogs.seen] == [tr("webgen.done.title")]
+
+
+def test_a_part_that_is_not_saved_cancels_the_web_export(open_window, sermons_project, dialogs,
+                                                          monkeypatch, tmp_path):
+    calls = _fake_generate(monkeypatch, tmp_path)
+    window = open_window(sermons_project)
+    window.show_document(_doc(window, "s02.xml"))
+    _type_at_end(window, "<p>")                                         # mal formé
+    window.show_document(window.edition_session)
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # ne pas l'enregistrer
     window.generate_web_viewer()
-    assert calls == [sermons_project]
+    assert calls == []
+    assert dialogs.seen[-1][1] == tr("file.save_malformed.title")
+    assert _doc(window, "s02.xml").modified
+
+
+def test_the_web_export_lists_the_assembly_problems(open_window, sermons_project, dialogs, monkeypatch, tmp_path):
+    problem = {"file": "xml/edition.xml", "line": 12, "code": "missing", "detail": "xml/sermons/s03.xml"}
+    _fake_generate(monkeypatch, tmp_path, [problem])
+    window = open_window(sermons_project)
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)
+    window.generate_web_viewer()
+    text = dialogs.seen[-1][2]
+    assert tr("webgen.assembly_problems", problems="• xml/edition.xml:12 — missing (xml/sermons/s03.xml)") in text
 
 
 def test_the_web_export_of_a_simple_project_does_not_warn(open_window, project_with_documents, dialogs,

@@ -156,6 +156,7 @@
   <string key="webgen.missing">
 
 Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>
+  <string key="webgen.assembly_problems">\n\nПроблемы сборки (соответствующий текст отсутствует во вьюере):\n{problems}</string>
   <string key="project.open_error">Не удалось открыть проект</string>
   <string key="viewer.search.placeholder">Поиск…</string>
   <string key="viewer.prev_base">← строка</string>
@@ -791,11 +792,6 @@
   <string key="apparatus.witnesses.part">Свидетели этой части (её &lt;listWit&gt;): {ids}</string>
   <string key="apparatus.witnesses.locus">Свидетели этой части (&lt;locus target&gt; издания): {ids}</string>
   <string key="apparatus.witnesses.wit">Свидетели, указанные в @wit этой части: {ids}</string>
-  <string key="parts.webgen.title">Издание из частей</string>
-  <string key="parts.webgen.text">Издание включает свои части через XInclude. Веб-просмотрщик пока их не содержит: будет экспортирован только текст файла издания, без частей.
-
-Всё равно экспортировать?</string>
-  <string key="parts.webgen.continue">Всё равно экспортировать</string>
   <string key="status.structure.assembled.tip">Строки опорного свидетеля считаются в собранном издании вместе с частями (XInclude), в порядке собранного документа.</string>
   <string key="manuscript.text_absent">Для этого текста нет выравнивания этого свидетеля.</string>
   <string key="status.structure.text.tip">Строки {base} в тексте {name}, синхронизируемом отдельно, со своими выравниваниями (папка alignments/{name}/).</string>

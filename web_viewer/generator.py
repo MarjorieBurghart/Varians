@@ -585,7 +585,10 @@ def _problem_entry(problem, project):
         name = path.resolve().relative_to(Path(project.root_dir).resolve()).as_posix()
     except ValueError:
         name = path.name
-    return {"file": name, "line": int(problem.line or 0), "code": problem.code, "detail": problem.detail}
+    detail = problem.detail
+    if problem.code in ("missing", "fallback") and detail:
+        detail = _relative(detail, project)       # le fichier manquant
+    return {"file": name, "line": int(problem.line or 0), "code": problem.code, "detail": detail}
 
 
 HTML_TEMPLATE = r'''<!doctype html><html lang="__LANG__"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>

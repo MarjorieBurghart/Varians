@@ -63,6 +63,9 @@ def test_a_missing_part_is_reported(sermons):
     problems = data["meta"]["assembly_problems"]
     assert [(p["file"], p["code"]) for p in problems] == [("xml/edition.xml", "missing")]
     assert problems[0]["line"] > 0
+    # Le fichier manquant, relatif au projet : aucun chemin absolu dans le viewer.
+    assert problems[0]["detail"] == "xml/sermons/s03.xml"
+    assert str(sermons.parent) not in json.dumps(data, ensure_ascii=False)
     assert "Sermo in adventu Domini" in _text(data)
 
 
