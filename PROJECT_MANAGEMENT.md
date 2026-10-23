@@ -354,6 +354,15 @@ Limite : une version de Varians antérieure à 0.8.7.0 lit le projet
 normalement, mais supprime `<documents>` si l’on y enregistre les paramètres
 du projet.
 
+**Feuilles XSLT (V0.9.2.1).** Une feuille XSLT est un document comme un
+autre : elle se déclare par un `<document file="xslt/index.xsl"/>`, sans
+attribut nouveau. Une feuille ajoutée depuis l’extérieur du projet est copiée
+dans le dossier `xslt/`, au même niveau que `xml/` (créé avec le projet, ou à
+la première copie) ; « Nouvelle feuille XSLT… » y propose la sienne. Les
+fichiers annexes d’une feuille (feuilles importées ou incluses, images, CSS,
+JavaScript) ne sont pas copiés : l’utilisateur les place lui-même dans
+`xslt/`. Voir `XSLT_SCENARIOS.md`.
+
 Les onglets masqués et leur ordre (Affichage ▸ « Choisir les documents
 affichés… », clic droit ▸ « Masquer l’onglet ») ne sont pas enregistrés dans
 `project.xml` : comme la disposition des témoins, c’est une préférence locale

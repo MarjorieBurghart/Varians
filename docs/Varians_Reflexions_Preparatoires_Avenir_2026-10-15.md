@@ -168,6 +168,8 @@ L’exécution des transformations devra faire l’objet de garanties techniques
 
 > **Décisions du 23 octobre 2026 (réalisées en V0.9.2.0) :** moteurs XSLT 1.0 (lxml) et XSLT 3.0 (Saxon-HE, installé avec Varians) ; scénarios enregistrés dans `project.xml` (`<transformations>`) ; lecture des fichiers locaux et du réseau ; écriture du seul résultat (et, avec Saxon, de fichiers dans son dossier) ; exécution dans un processus à part, avec un journal (moteur et version, paramètres, messages, lectures réseau, écritures refusées). Des scénarios prédéfinis sur les TEI Stylesheets, mis à jour automatiquement, sont prévus pour la version suivante. Voir `docs/DECISIONS_ASSEMBLAGE.md` et `XSLT_SCENARIOS.md`.
 
+> **Décisions du 23 octobre 2026 (réalisées en V0.9.2.1) :** les feuilles XSLT s’éditent dans Varians, sans outil tiers (utile en formation) : elles s’ajoutent au projet comme documents (une feuille venue d’ailleurs est copiée dans un dossier `xslt/`, au même niveau que `xml/` ; ses fichiers annexes y sont placés par l’utilisateur), se créent, s’ouvrent depuis leurs scénarios, sont vérifiées par compilation « comme le RNG » (moteur des scénarios, sinon d’après la version) et complétées d’après le schéma XSLT 3.0 du W3C. Voir `XSLT_SCENARIOS.md`.
+
 ## 6. Compatibilité et migration
 
 Le scénario recommandé consiste à **faire fonctionner les projets historiques inchangés**, en interprétant au besoin leur unique `edition.xml` comme une **unité éditoriale implicite en mémoire**. Il ne faudrait pas imposer une conversion visible ou une restructuration manuelle aux utilisateurs des projets simples.

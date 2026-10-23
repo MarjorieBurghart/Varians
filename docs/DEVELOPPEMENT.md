@@ -327,6 +327,21 @@ lecture locale et réseau, écriture du seul résultat, processus à part,
 moteurs lxml et Saxon ; voir `XSLT_SCENARIOS.md`. Une version autonome
 (PyInstaller, Nuitka) devra embarquer `saxonche`.
 
+## Feuilles XSLT éditées dans Varians
+
+Depuis V0.9.2.1, une feuille XSLT affichée est vérifiée par compilation
+(`xslt_check_ui`, requête `op: "check"` du processus de transformation) au
+lieu d'être validée par RELAX NG, et complétée d'après le schéma XSLT 3.0 du
+W3C (`xslt_completion`) ; voir `XSLT_SCENARIOS.md`. `_displayed_stylesheet`
+est appelée par `_validate_relaxng_document_impl` : les objets factices des
+tests anciens qui exécutent ce corps la fournissent (elle rend None).
+
+Le schéma livré, `resources/schemas/xslt30/schema-for-xslt30.rng`, est tiré
+du RNC du W3C par `rnc2rng` (outil de développement, `pip install rnc2rng`,
+non installé avec Varians) : la marche à suivre pour le refaire est dans
+`resources/schemas/xslt30/LISEZMOI.md`. Une version autonome devra embarquer
+le dossier `resources/schemas`.
+
 ## Historique et versions
 
 Depuis V0.8.6.0, l'historique est porté par Git. Les rapports de test et

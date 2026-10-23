@@ -324,3 +324,32 @@ def test_each_help_announces_the_scenarios_of_version_0920():
         assert page.index('<section id="v0917">') < page.index('<section id="v0920">'), language
         assert page.index('<section id="xinclude-guide">') < page.index('<section id="transformations">') \
             < page.index('<section id="v0900">'), language
+
+
+def test_each_help_explains_how_to_edit_stylesheets():
+    """Feuilles XSLT éditées dans Varians (V0.9.2.1)."""
+    labels = ("documents.menu", "documents.add.menu", "documents.new_stylesheet.menu", "transform.open_stylesheet",
+              "xslt_check.action", "transform.engine.lxml", "transform.engine.saxon", "transform.duplicate")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="xslt-editing">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("<code>xslt/</code>", "<code>xml/</code>", "${varians}/", "<kbd>F8</kbd>", "<code>version=\"1.0\"</code>",
+                     "xsl:import", "xsl:include", "custom-elements.xml", 'href="#transformations"',
+                     'href="#auxiliary-documents"'):
+            assert text in section, (language, text)
+        assert page.index('<section id="transformations">') < page.index('<section id="xslt-editing">') \
+            < page.index('<section id="v0900">'), language
+
+
+def test_each_help_announces_stylesheet_editing_in_version_0921():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0921">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#xslt-editing"' in version and "<code>xslt/</code>" in version, language
+        assert page.index('<section id="v0920">') < page.index('<section id="v0921">'), language

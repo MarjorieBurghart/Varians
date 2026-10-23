@@ -205,3 +205,15 @@ Fonctionnement, format et sécurité : `XSLT_SCENARIOS.md`.
 - `xslt_engines.py` : `run`, `TransformResult`, `_run_lxml` (résolveur réseau), `_run_saxon` (deux passages pour `xsl:result-document`), `_write_outputs`.
 - `transform_worker.py` (`--transform-worker`) et `transform_runner.py` (`TransformRunner`).
 - `transform_ui.py` : `ScenarioListDialog`, `ScenarioDialog`, `TransformScenariosMixin` (`run_transform_scenario`, `_save_for_transform`, `_transform_finished`).
+
+## V0.9.2.1 — feuilles XSLT éditées dans Varians
+
+Fonctionnement : `XSLT_SCENARIOS.md` (« Feuilles éditées dans Varians »).
+
+- `document_dialogs.py` : `document_target_path` (feuille hors du projet → `xslt/`), `free_path`, `new_stylesheet_text`, `new_stylesheet_dialog` (Documents ▸ « Nouvelle feuille XSLT… ») ; `project_management.create_portable_project` crée `xslt/`.
+- `transform_ui.py` : « Ouvrir la feuille » (`ScenarioListDialog.open_stylesheet`, `ScenarioDialog._accept_and_open`, `TransformScenariosMixin.open_scenario_stylesheet`, `_show_stylesheet`).
+- `xslt_scenarios.py` : `stylesheet_info` (`StylesheetInfo` : préfixe XSLT, version), `check_engines`.
+- `xslt_engines.py` : `check` (`_check_lxml`, `_lxml_issues`, `_check_saxon`, `_saxon_issue`), `TransformResult.issues` ; `transform_worker` : `op: "check"`.
+- `xslt_check_ui.py` : `StylesheetCheckMixin` (`_displayed_stylesheet`, `_update_check_labels`, `_check_stylesheet`, `_check_now`, `_check_in_background`, `_apply_check_results`), `check_validation_result` ; branché dans `validation_panel._validate_relaxng_document_impl` et `document_io._write_to`.
+- `xslt_completion.py` : `XSLT_SCHEMA` (`resources/schemas/xslt30`), `XSLT10_ATTRIBUTES`, `LITERAL_RESULT_ATTRIBUTES`, `element_names`, `attribute_names`, `attribute_values`, `StylesheetCompletionModel` ; `completion_ui._stylesheet_completion`.
+- `rng_completion._analyze_xml_context_from` : un nom tapé devant une autre balise (`<h|</p>`) reste un nom d'élément.
