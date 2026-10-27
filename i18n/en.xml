@@ -287,7 +287,7 @@ It has been removed from the recent-project list.</string>
   <string key="format_xml.invalid">Indentation cancelled: XML is not well-formed ({error})</string>
   <string key="format_xml.no_change">Indentation: no safe formatting change to apply.</string>
   <string key="format_xml.done">XML indented: {count} structural area(s) formatted.</string>
-  <string key="rng.panel.title">RELAX NG validation</string>
+  <string key="rng.panel.title">RELAX NG and Schematron validation</string>
   <string key="rng.panel.no_validation">No validation has been run.</string>
   <string key="rng.panel.no_schema">No RELAX NG schema is associated with this project.</string>
   <string key="rng.panel.lxml_missing">RELAX NG validation is unavailable: lxml is not installed.</string>
@@ -295,13 +295,22 @@ It has been removed from the recent-project list.</string>
   <string key="rng.panel.xml_invalid">The XML is not well-formed; RELAX NG validation cannot run.</string>
   <string key="rng.panel.valid">Document is valid against {schema}.</string>
   <string key="rng.panel.invalid">{count} validation error(s) against {schema}. Double-click an error to jump to the corresponding line.</string>
+  <string key="rng.panel.invalid.schematron">{count} validation error(s) against {schema}: {rng} RELAX NG, {schematron} Schematron. Double-click an error to jump to the corresponding line.</string>
+  <string key="rng.panel.valid.messages">Document is valid against {schema}; {count} message(s) from the Schematron rules (warnings, information).</string>
   <string key="rng.panel.close">Hide validation panel</string>
   <string key="rng.column.level">Level</string>
+  <string key="rng.column.origin">Origin</string>
+  <string key="rng.origin.xml">XML</string>
+  <string key="rng.origin.relaxng">RELAX NG</string>
+  <string key="rng.origin.xinclude">XInclude</string>
+  <string key="rng.origin.schematron">Schematron</string>
+  <string key="rng.origin.xslt">XSLT</string>
   <string key="rng.column.line">Line</string>
   <string key="rng.column.column">Column</string>
   <string key="rng.column.message">Message</string>
   <string key="rng.level.error">Error</string>
   <string key="rng.level.warning">Warning</string>
+  <string key="rng.level.info">Information</string>
   <string key="rng.status.none">RNG: no schema</string>
   <string key="rng.status.pending">RNG: pending</string>
   <string key="rng.status.modified">RNG: document modified</string>
@@ -329,8 +338,20 @@ It has been removed from the recent-project list.</string>
   <string key="rng.panel.no_xml_model">No RELAX NG &lt;?xml-model?&gt; declaration was detected in the edition.</string>
   <string key="rng.panel.schema_resolution_error">The declared schema could not be resolved: {error}</string>
   <string key="rng.status.no_xml_model">RNG: no xml-model</string>
-  <string key="schematron.status.detected">Schematron: detected ({count})</string>
-  <string key="schematron.status.tooltip">One or more Schematron declarations were detected in &lt;?xml-model?&gt;. Schematron validation is planned for a future version and is not run yet.</string>
+  <string key="schematron.status.valid">Schematron: ✓</string>
+  <string key="schematron.status.errors">Schematron: {count} error(s)</string>
+  <string key="schematron.status.messages">Schematron: {count} message(s)</string>
+  <string key="schematron.status.no_rules">Schematron: no rules</string>
+  <string key="schematron.status.rules_error">Schematron: incorrect rules</string>
+  <string key="schematron.status.saxon_missing">Schematron: Saxon missing</string>
+  <string key="schematron.status.disabled">Schematron: not checked</string>
+  <string key="schematron.tip.sources">Schematron rules applied: {sources}</string>
+  <string key="schematron.tip.error">{source}: {detail}</string>
+  <string key="schematron.tip.saxon_missing">Schematron rules need Saxon (the saxonche package), which is not installed: python -m pip install --user saxonche. RELAX NG validation is done.</string>
+  <string key="schematron.tip.no_rules">No Schematron rules in: {sources}</string>
+  <string key="schematron.tip.disabled">Validation is disabled for this project: the declared Schematron rules are not checked.</string>
+  <string key="schematron.panel.rules_error">Incorrect Schematron rules ({source}): {detail}</string>
+  <string key="schematron.panel.saxon_missing">Schematron rules not checked: Saxon (the saxonche package) is not installed.</string>
   <string key="file.save_anyway">Save anyway</string>
   <string key="file.save_malformed.title">XML is not well-formed</string>
   <string key="file.save_malformed.text">The XML document is not well-formed. You can still save it so that your work is not lost and fix it later.
@@ -338,8 +359,8 @@ It has been removed from the recent-project list.</string>
 The XSLT preview and RELAX NG validation may remain unavailable until the syntax error is corrected.
 
 Save anyway?</string>
-  <string key="file.save_rng_invalid.title">Document is not valid against RELAX NG</string>
-  <string key="file.save_rng_invalid.text">The document is well-formed, but RELAX NG validation reports {count} error(s). You can save it and fix these errors later.
+  <string key="file.save_rng_invalid.title">Document is not valid</string>
+  <string key="file.save_rng_invalid.text">The document is well-formed, but validation (RELAX NG, Schematron rules) reports {count} error(s). You can save it and fix these errors later.
 
 Save anyway?</string>
   <string key="xml.health.malformed.tooltip">XML is not well-formed — saving is allowed after a warning.</string>

@@ -301,7 +301,7 @@
   <string key="format_xml.invalid">Форматирование отменено: XML сформирован некорректно ({error})</string>
   <string key="format_xml.no_change">Форматирование: безопасных изменений нет.</string>
   <string key="format_xml.done">XML отформатирован: обработано структурных областей — {count}.</string>
-  <string key="rng.panel.title">Проверка RELAX NG</string>
+  <string key="rng.panel.title">Проверка RELAX NG и Schematron</string>
   <string key="rng.panel.no_validation">Проверка ещё не запускалась.</string>
   <string key="rng.panel.no_schema">С этим проектом не связана схема RELAX NG.</string>
   <string key="rng.panel.lxml_missing">Проверка RELAX NG недоступна: lxml не установлен.</string>
@@ -309,13 +309,22 @@
   <string key="rng.panel.xml_invalid">XML сформирован некорректно; проверку RELAX NG выполнить нельзя.</string>
   <string key="rng.panel.valid">Документ действителен по схеме {schema}.</string>
   <string key="rng.panel.invalid">Ошибок проверки по {schema}: {count}. Дважды щёлкните по ошибке, чтобы перейти к соответствующей строке.</string>
+  <string key="rng.panel.invalid.schematron">Ошибок проверки по {schema}: {count} (RELAX NG: {rng}, Schematron: {schematron}). Дважды щёлкните по ошибке, чтобы перейти к соответствующей строке.</string>
+  <string key="rng.panel.valid.messages">Документ действителен по схеме {schema}; сообщений правил Schematron (предупреждения, сведения): {count}.</string>
   <string key="rng.panel.close">Скрыть панель проверки</string>
   <string key="rng.column.level">Уровень</string>
+  <string key="rng.column.origin">Источник</string>
+  <string key="rng.origin.xml">XML</string>
+  <string key="rng.origin.relaxng">RELAX NG</string>
+  <string key="rng.origin.xinclude">XInclude</string>
+  <string key="rng.origin.schematron">Schematron</string>
+  <string key="rng.origin.xslt">XSLT</string>
   <string key="rng.column.line">Строка</string>
   <string key="rng.column.column">Столбец</string>
   <string key="rng.column.message">Сообщение</string>
   <string key="rng.level.error">Ошибка</string>
   <string key="rng.level.warning">Предупреждение</string>
+  <string key="rng.level.info">Информация</string>
   <string key="rng.status.none">RNG: схемы нет</string>
   <string key="rng.status.pending">RNG: ожидает проверки</string>
   <string key="rng.status.modified">RNG: документ изменён</string>
@@ -343,8 +352,20 @@
   <string key="rng.panel.no_xml_model">В издании не обнаружено декларации RELAX NG &lt;?xml-model?&gt;.</string>
   <string key="rng.panel.schema_resolution_error">Не удалось разрешить объявленную схему: {error}</string>
   <string key="rng.status.no_xml_model">RNG: нет xml-model</string>
-  <string key="schematron.status.detected">Schematron: обнаружен ({count})</string>
-  <string key="schematron.status.tooltip">В &lt;?xml-model?&gt; обнаружена одна или несколько деклараций Schematron. Проверка Schematron запланирована для будущей версии и пока не выполняется.</string>
+  <string key="schematron.status.valid">Schematron: ✓</string>
+  <string key="schematron.status.errors">Schematron: ошибок: {count}</string>
+  <string key="schematron.status.messages">Schematron: сообщений: {count}</string>
+  <string key="schematron.status.no_rules">Schematron: правил нет</string>
+  <string key="schematron.status.rules_error">Schematron: ошибки в правилах</string>
+  <string key="schematron.status.saxon_missing">Schematron: нет Saxon</string>
+  <string key="schematron.status.disabled">Schematron: не проверяется</string>
+  <string key="schematron.tip.sources">Применены правила Schematron: {sources}</string>
+  <string key="schematron.tip.error">{source}: {detail}</string>
+  <string key="schematron.tip.saxon_missing">Для правил Schematron нужен Saxon (пакет saxonche), он не установлен: python -m pip install --user saxonche. Проверка RELAX NG выполняется.</string>
+  <string key="schematron.tip.no_rules">Нет правил Schematron в: {sources}</string>
+  <string key="schematron.tip.disabled">Проверка для этого проекта отключена: объявленные правила Schematron не проверяются.</string>
+  <string key="schematron.panel.rules_error">Ошибки в правилах Schematron ({source}): {detail}</string>
+  <string key="schematron.panel.saxon_missing">Правила Schematron не проверены: Saxon (пакет saxonche) не установлен.</string>
   <string key="file.save_anyway">Всё равно сохранить</string>
   <string key="file.save_malformed.title">XML сформирован некорректно</string>
   <string key="file.save_malformed.text">Документ XML сформирован некорректно. Его всё равно можно сохранить, чтобы не потерять работу, и исправить позже.
@@ -352,8 +373,8 @@
 Предпросмотр XSLT и проверка RELAX NG могут быть недоступны до исправления синтаксической ошибки.
 
 Всё равно сохранить?</string>
-  <string key="file.save_rng_invalid.title">Документ недействителен по RELAX NG</string>
-  <string key="file.save_rng_invalid.text">Документ сформирован корректно, но проверка RELAX NG сообщает об ошибках: {count}. Можно сохранить документ и исправить ошибки позже.
+  <string key="file.save_rng_invalid.title">Документ недействителен</string>
+  <string key="file.save_rng_invalid.text">Документ сформирован корректно, но проверка (RELAX NG, правила Schematron) сообщает об ошибках: {count}. Можно сохранить документ и исправить ошибки позже.
 
 Всё равно сохранить?</string>
   <string key="xml.health.malformed.tooltip">XML сформирован некорректно — сохранение разрешено после предупреждения.</string>

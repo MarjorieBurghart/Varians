@@ -6,6 +6,8 @@ from __future__ import annotations
 from PySide6.QtCore import QEvent, Qt
 from PySide6.QtWidgets import QApplication
 
+from app_context import tr
+
 
 def _insert_after(window, marker, text):
     source = window.editor.toPlainText()
@@ -40,7 +42,8 @@ def test_rng_error_is_listed_and_navigable(open_window, example_project):
     assert window.validation_table.rowCount() >= 1
     assert window._last_rng_result is not None and not window._last_rng_result.valid
     # La ligne affichée est celle que libxml2 rapporte ; le double-clic y mène.
-    reported_line = int(window.validation_table.item(0, 1).text())
+    reported_line = int(window.validation_table.item(0, 2).text())
+    assert window.validation_table.item(0, 1).text() == tr("rng.origin.relaxng")
     assert reported_line > 0
     window.left_tabs.setCurrentWidget(window.formatted_view)
     window.editor.moveCursor(window.editor.textCursor().MoveOperation.End)

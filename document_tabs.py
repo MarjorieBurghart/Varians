@@ -576,8 +576,8 @@ class DocumentTabsMixin:
                        self.editor.horizontalScrollBar().value()),
             "status": (self.xml_status.text(), self.xml_status.styleSheet(),
                        self.rng_status.text(), self.rng_status.styleSheet(),
-                       self.schematron_status.text(), self.schematron_status.toolTip(),
-                       self.validation_summary.text()),
+                       self.schematron_status.text(), self.schematron_status.styleSheet(),
+                       self.schematron_status.toolTip(), self.validation_summary.text()),
             # Les textes d'état ci-dessus sont dans la langue de l'interface.
             "language": current_i18n().language,
         }
@@ -609,21 +609,18 @@ class DocumentTabsMixin:
             # Premier affichage (ou langue changée entre-temps) : contrôle XML
             # immédiat, RELAX NG juste après.
             self._reset_validation_state()
-            self.schematron_status.setText("")
-            self.schematron_status.setToolTip("")
             session.last_xml_health_revision = -1   # afficher le résultat
             self.validate_text(False)
             call_later(120, self, lambda shown=session: self.document is shown and
                        self.validate_relaxng_document(show_panel=False, automatic=True, background=True))
             return
         (xml_text, xml_style, rng_text, rng_style,
-         schematron_text, schematron_tip, summary) = status
+         schematron_text, schematron_style, schematron_tip, summary) = status
         self.xml_status.setText(xml_text)
         self.xml_status.setStyleSheet(xml_style)
         self.rng_status.setText(rng_text)
         self.rng_status.setStyleSheet(rng_style)
-        self.schematron_status.setText(schematron_text)
-        self.schematron_status.setToolTip(schematron_tip)
+        self._set_schematron_label(schematron_text, schematron_style, schematron_tip)
         self.validation_summary.setText(summary)
         result = session.last_rng_result
         if result is not None and session.last_rng_revision == revision and result.issues:

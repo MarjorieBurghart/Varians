@@ -301,7 +301,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="format_xml.invalid">Odsazení zrušeno: XML není správně utvořené ({error})</string>
   <string key="format_xml.no_change">Odsazení: žádná bezpečná změna formátování k provedení.</string>
   <string key="format_xml.done">XML odsazeno: naformátováno {count} strukturálních oblastí.</string>
-  <string key="rng.panel.title">Validace RELAX NG</string>
+  <string key="rng.panel.title">Validace RELAX NG a Schematron</string>
   <string key="rng.panel.no_validation">Dosud nebyla spuštěna žádná validace.</string>
   <string key="rng.panel.no_schema">K tomuto projektu není přiřazeno žádné schéma RELAX NG.</string>
   <string key="rng.panel.lxml_missing">Validace RELAX NG není dostupná: lxml není nainstalováno.</string>
@@ -309,13 +309,22 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="rng.panel.xml_invalid">XML není správně utvořené; validaci RELAX NG nelze spustit.</string>
   <string key="rng.panel.valid">Dokument je podle {schema} platný.</string>
   <string key="rng.panel.invalid">{count} validačních chyb podle {schema}. Dvojklikem na chybu přejdete na odpovídající řádek.</string>
+  <string key="rng.panel.invalid.schematron">{count} validačních chyb podle {schema}: {rng} RELAX NG, {schematron} Schematron. Dvojklikem na chybu přejdete na odpovídající řádek.</string>
+  <string key="rng.panel.valid.messages">Dokument je podle {schema} platný; pravidla Schematron hlásí {count} zpráv (varování, informace).</string>
   <string key="rng.panel.close">Skrýt panel validace</string>
   <string key="rng.column.level">Úroveň</string>
+  <string key="rng.column.origin">Původ</string>
+  <string key="rng.origin.xml">XML</string>
+  <string key="rng.origin.relaxng">RELAX NG</string>
+  <string key="rng.origin.xinclude">XInclude</string>
+  <string key="rng.origin.schematron">Schematron</string>
+  <string key="rng.origin.xslt">XSLT</string>
   <string key="rng.column.line">Řádek</string>
   <string key="rng.column.column">Sloupec</string>
   <string key="rng.column.message">Zpráva</string>
   <string key="rng.level.error">Chyba</string>
   <string key="rng.level.warning">Varování</string>
+  <string key="rng.level.info">Informace</string>
   <string key="rng.status.none">RNG: bez schématu</string>
   <string key="rng.status.pending">RNG: čeká na validaci</string>
   <string key="rng.status.modified">RNG: dokument změněn</string>
@@ -343,8 +352,20 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="rng.panel.no_xml_model">V edici nebyla nalezena žádná deklarace RELAX NG &lt;?xml-model?&gt;.</string>
   <string key="rng.panel.schema_resolution_error">Deklarované schéma se nepodařilo vyřešit: {error}</string>
   <string key="rng.status.no_xml_model">RNG: bez xml-model</string>
-  <string key="schematron.status.detected">Schematron: zjištěn ({count})</string>
-  <string key="schematron.status.tooltip">V &lt;?xml-model?&gt; byla zjištěna jedna nebo více deklarací Schematron. Validace Schematron je plánována pro budoucí verzi a zatím se nespouští.</string>
+  <string key="schematron.status.valid">Schematron: ✓</string>
+  <string key="schematron.status.errors">Schematron: {count} chyb</string>
+  <string key="schematron.status.messages">Schematron: {count} zpráv</string>
+  <string key="schematron.status.no_rules">Schematron: žádná pravidla</string>
+  <string key="schematron.status.rules_error">Schematron: chybná pravidla</string>
+  <string key="schematron.status.saxon_missing">Schematron: chybí Saxon</string>
+  <string key="schematron.status.disabled">Schematron: nekontrolováno</string>
+  <string key="schematron.tip.sources">Použitá pravidla Schematron: {sources}</string>
+  <string key="schematron.tip.error">{source}: {detail}</string>
+  <string key="schematron.tip.saxon_missing">Pravidla Schematron vyžadují Saxon (balíček saxonche), který není nainstalován: python -m pip install --user saxonche. Validace RELAX NG se provádí.</string>
+  <string key="schematron.tip.no_rules">Žádná pravidla Schematron v: {sources}</string>
+  <string key="schematron.tip.disabled">Validace je pro tento projekt vypnutá: deklarovaná pravidla Schematron se nekontrolují.</string>
+  <string key="schematron.panel.rules_error">Chybná pravidla Schematron ({source}): {detail}</string>
+  <string key="schematron.panel.saxon_missing">Pravidla Schematron nebyla zkontrolována: Saxon (balíček saxonche) není nainstalován.</string>
   <string key="file.save_anyway">Přesto uložit</string>
   <string key="file.save_malformed.title">XML není správně utvořené</string>
   <string key="file.save_malformed.text">Dokument XML není správně utvořený. Přesto jej můžete uložit, abyste nepřišli o práci, a opravit jej později.
@@ -352,8 +373,8 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
 Náhled XSLT a validace RELAX NG mohou zůstat nedostupné, dokud nebude opravena syntaktická chyba.
 
 Přesto uložit?</string>
-  <string key="file.save_rng_invalid.title">Dokument není platný podle RELAX NG</string>
-  <string key="file.save_rng_invalid.text">Dokument je správně utvořený, ale validace RELAX NG hlásí {count} chyb. Můžete jej uložit a chyby opravit později.
+  <string key="file.save_rng_invalid.title">Dokument není platný</string>
+  <string key="file.save_rng_invalid.text">Dokument je správně utvořený, ale validace (RELAX NG, pravidla Schematron) hlásí {count} chyb. Můžete jej uložit a chyby opravit později.
 
 Přesto uložit?</string>
   <string key="xml.health.malformed.tooltip">XML není správně utvořené — po varování je uložení povoleno.</string>

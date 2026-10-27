@@ -301,7 +301,7 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="format_xml.invalid">Indentazione annullata: XML non ben formato ({error})</string>
   <string key="format_xml.no_change">Indentazione: nessuna modifica di formattazione sicura da applicare.</string>
   <string key="format_xml.done">XML indentato: {count} area/e strutturale/i formattata/e.</string>
-  <string key="rng.panel.title">Validazione RELAX NG</string>
+  <string key="rng.panel.title">Validazione RELAX NG e Schematron</string>
   <string key="rng.panel.no_validation">Nessuna validazione eseguita.</string>
   <string key="rng.panel.no_schema">Nessuno schema RELAX NG associato a questo progetto.</string>
   <string key="rng.panel.lxml_missing">Validazione RELAX NG non disponibile: lxml non è installato.</string>
@@ -309,13 +309,22 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="rng.panel.xml_invalid">L’XML non è ben formato; la validazione RELAX NG non può essere eseguita.</string>
   <string key="rng.panel.valid">Il documento è valido rispetto a {schema}.</string>
   <string key="rng.panel.invalid">{count} errore/i di validazione rispetto a {schema}. Fai doppio clic su un errore per andare alla riga corrispondente.</string>
+  <string key="rng.panel.invalid.schematron">{count} errore/i di validazione rispetto a {schema}: {rng} RELAX NG, {schematron} Schematron. Fai doppio clic su un errore per andare alla riga corrispondente.</string>
+  <string key="rng.panel.valid.messages">Il documento è valido rispetto a {schema}; {count} messaggio/i delle regole Schematron (avvisi, informazioni).</string>
   <string key="rng.panel.close">Nascondi pannello di validazione</string>
   <string key="rng.column.level">Livello</string>
+  <string key="rng.column.origin">Origine</string>
+  <string key="rng.origin.xml">XML</string>
+  <string key="rng.origin.relaxng">RELAX NG</string>
+  <string key="rng.origin.xinclude">XInclude</string>
+  <string key="rng.origin.schematron">Schematron</string>
+  <string key="rng.origin.xslt">XSLT</string>
   <string key="rng.column.line">Riga</string>
   <string key="rng.column.column">Colonna</string>
   <string key="rng.column.message">Messaggio</string>
   <string key="rng.level.error">Errore</string>
   <string key="rng.level.warning">Avviso</string>
+  <string key="rng.level.info">Informazione</string>
   <string key="rng.status.none">RNG: nessuno schema</string>
   <string key="rng.status.pending">RNG: da validare</string>
   <string key="rng.status.modified">RNG: documento modificato</string>
@@ -343,8 +352,20 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="rng.panel.no_xml_model">Nell’edizione non è stata rilevata alcuna dichiarazione RELAX NG &lt;?xml-model?&gt;.</string>
   <string key="rng.panel.schema_resolution_error">Impossibile risolvere lo schema dichiarato: {error}</string>
   <string key="rng.status.no_xml_model">RNG: nessun xml-model</string>
-  <string key="schematron.status.detected">Schematron: rilevato ({count})</string>
-  <string key="schematron.status.tooltip">In &lt;?xml-model?&gt; sono state rilevate una o più dichiarazioni Schematron. La validazione Schematron è prevista per una versione futura e non viene ancora eseguita.</string>
+  <string key="schematron.status.valid">Schematron: ✓</string>
+  <string key="schematron.status.errors">Schematron: {count} errore/i</string>
+  <string key="schematron.status.messages">Schematron: {count} messaggio/i</string>
+  <string key="schematron.status.no_rules">Schematron: nessuna regola</string>
+  <string key="schematron.status.rules_error">Schematron: regole errate</string>
+  <string key="schematron.status.saxon_missing">Schematron: Saxon mancante</string>
+  <string key="schematron.status.disabled">Schematron: non verificato</string>
+  <string key="schematron.tip.sources">Regole Schematron applicate: {sources}</string>
+  <string key="schematron.tip.error">{source}: {detail}</string>
+  <string key="schematron.tip.saxon_missing">Le regole Schematron richiedono Saxon (pacchetto saxonche), che non è installato: python -m pip install --user saxonche. La validazione RELAX NG viene eseguita.</string>
+  <string key="schematron.tip.no_rules">Nessuna regola Schematron in: {sources}</string>
+  <string key="schematron.tip.disabled">La validazione è disattivata per questo progetto: le regole Schematron dichiarate non vengono verificate.</string>
+  <string key="schematron.panel.rules_error">Regole Schematron errate ({source}): {detail}</string>
+  <string key="schematron.panel.saxon_missing">Regole Schematron non verificate: Saxon (pacchetto saxonche) non è installato.</string>
   <string key="file.save_anyway">Salva comunque</string>
   <string key="file.save_malformed.title">XML non ben formato</string>
   <string key="file.save_malformed.text">Il documento XML non è ben formato. Puoi comunque salvarlo per non perdere il lavoro e correggerlo in seguito.
@@ -352,8 +373,8 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
 L’anteprima XSLT e la validazione RELAX NG potrebbero restare non disponibili finché l’errore di sintassi non viene corretto.
 
 Salvare comunque?</string>
-  <string key="file.save_rng_invalid.title">Documento non valido rispetto a RELAX NG</string>
-  <string key="file.save_rng_invalid.text">Il documento è ben formato, ma la validazione RELAX NG segnala {count} errore/i. Puoi salvarlo e correggere gli errori in seguito.
+  <string key="file.save_rng_invalid.title">Documento non valido</string>
+  <string key="file.save_rng_invalid.text">Il documento è ben formato, ma la validazione (RELAX NG, regole Schematron) segnala {count} errore/i. Puoi salvarlo e correggere gli errori in seguito.
 
 Salvare comunque?</string>
   <string key="xml.health.malformed.tooltip">XML non ben formato — salvataggio consentito dopo un avviso.</string>

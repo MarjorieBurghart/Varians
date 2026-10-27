@@ -7,7 +7,6 @@ from pathlib import Path
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app_context import call_later, HERE, tr as _t
-from relaxng_validation import relaxng_schema_token
 from save_io import atomic_write_text_with_backup
 from xml_assembly import find_includes
 
@@ -85,11 +84,9 @@ class DocumentIOMixin:
             rng_result = None
             if self._last_rng_revision == revision and self._last_rng_result is not None:
                 resolution = self._resolve_completion_schema(text)
-                if resolution.schema_path is not None:
-                    try:
-                        current_token = relaxng_schema_token(resolution.schema_path)
-                    except Exception:
-                        current_token = None
+                if resolution.schema_path is not None or resolution.schematron_sources:
+                    # Schéma et règles Schematron (V0.9.2.3) inchangés.
+                    current_token = self._validation_token(resolution)
                     if current_token is not None and current_token == self._last_rng_schema_token:
                         rng_result = self._last_rng_result
             if rng_result is None:
@@ -103,9 +100,10 @@ class DocumentIOMixin:
                 if self._displayed_stylesheet() is not None:      # feuille XSLT (xslt_check_ui)
                     errors = sum(1 for issue in rng_result.issues if issue.level != "WARNING")
                     title, message = _t("file.save_xslt_invalid.title"), _t("file.save_xslt_invalid.text", count=errors)
-                else:
+                else:                                             # RELAX NG et Schematron
+                    errors = sum(1 for issue in rng_result.issues if issue.level not in ("WARNING", "INFO"))
                     title = _t("file.save_rng_invalid.title")
-                    message = _t("file.save_rng_invalid.text", count=len(rng_result.issues))
+                    message = _t("file.save_rng_invalid.text", count=errors)
                 if not self._confirm_save_warning(title, message):
                     return False
 

@@ -301,7 +301,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="format_xml.invalid">Einrückung abgebrochen: XML ist nicht wohlgeformt ({error})</string>
   <string key="format_xml.no_change">Einrückung: keine sichere Formatierungsänderung anzuwenden.</string>
   <string key="format_xml.done">XML eingerückt: {count} strukturelle(r) Bereich(e) formatiert.</string>
-  <string key="rng.panel.title">RELAX-NG-Validierung</string>
+  <string key="rng.panel.title">RELAX-NG- und Schematron-Validierung</string>
   <string key="rng.panel.no_validation">Noch keine Validierung durchgeführt.</string>
   <string key="rng.panel.no_schema">Diesem Projekt ist kein RELAX-NG-Schema zugeordnet.</string>
   <string key="rng.panel.lxml_missing">RELAX-NG-Validierung nicht verfügbar: lxml ist nicht installiert.</string>
@@ -309,13 +309,22 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="rng.panel.xml_invalid">Das XML ist nicht wohlgeformt; die RELAX-NG-Validierung kann nicht ausgeführt werden.</string>
   <string key="rng.panel.valid">Dokument ist gemäß {schema} gültig.</string>
   <string key="rng.panel.invalid">{count} Validierungsfehler gemäß {schema}. Doppelklicken Sie auf einen Fehler, um zur entsprechenden Zeile zu springen.</string>
+  <string key="rng.panel.invalid.schematron">{count} Validierungsfehler gemäß {schema}: {rng} RELAX NG, {schematron} Schematron. Doppelklicken Sie auf einen Fehler, um zur entsprechenden Zeile zu springen.</string>
+  <string key="rng.panel.valid.messages">Dokument ist gemäß {schema} gültig; {count} Meldung(en) der Schematron-Regeln (Warnungen, Informationen).</string>
   <string key="rng.panel.close">Validierungsbereich ausblenden</string>
   <string key="rng.column.level">Stufe</string>
+  <string key="rng.column.origin">Herkunft</string>
+  <string key="rng.origin.xml">XML</string>
+  <string key="rng.origin.relaxng">RELAX NG</string>
+  <string key="rng.origin.xinclude">XInclude</string>
+  <string key="rng.origin.schematron">Schematron</string>
+  <string key="rng.origin.xslt">XSLT</string>
   <string key="rng.column.line">Zeile</string>
   <string key="rng.column.column">Spalte</string>
   <string key="rng.column.message">Meldung</string>
   <string key="rng.level.error">Fehler</string>
   <string key="rng.level.warning">Warnung</string>
+  <string key="rng.level.info">Information</string>
   <string key="rng.status.none">RNG: kein Schema</string>
   <string key="rng.status.pending">RNG: ausstehend</string>
   <string key="rng.status.modified">RNG: Dokument geändert</string>
@@ -343,8 +352,20 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="rng.panel.no_xml_model">In der Edition wurde keine RELAX-NG-Deklaration &lt;?xml-model?&gt; erkannt.</string>
   <string key="rng.panel.schema_resolution_error">Das deklarierte Schema konnte nicht aufgelöst werden: {error}</string>
   <string key="rng.status.no_xml_model">RNG: kein xml-model</string>
-  <string key="schematron.status.detected">Schematron: erkannt ({count})</string>
-  <string key="schematron.status.tooltip">Eine oder mehrere Schematron-Deklarationen wurden in &lt;?xml-model?&gt; erkannt. Schematron-Validierung ist für eine spätere Version vorgesehen und wird derzeit noch nicht ausgeführt.</string>
+  <string key="schematron.status.valid">Schematron: ✓</string>
+  <string key="schematron.status.errors">Schematron: {count} Fehler</string>
+  <string key="schematron.status.messages">Schematron: {count} Meldung(en)</string>
+  <string key="schematron.status.no_rules">Schematron: keine Regeln</string>
+  <string key="schematron.status.rules_error">Schematron: fehlerhafte Regeln</string>
+  <string key="schematron.status.saxon_missing">Schematron: Saxon fehlt</string>
+  <string key="schematron.status.disabled">Schematron: nicht geprüft</string>
+  <string key="schematron.tip.sources">Angewandte Schematron-Regeln: {sources}</string>
+  <string key="schematron.tip.error">{source}: {detail}</string>
+  <string key="schematron.tip.saxon_missing">Schematron-Regeln benötigen Saxon (Paket saxonche), das nicht installiert ist: python -m pip install --user saxonche. Die RELAX-NG-Validierung wird durchgeführt.</string>
+  <string key="schematron.tip.no_rules">Keine Schematron-Regeln in: {sources}</string>
+  <string key="schematron.tip.disabled">Die Validierung ist für dieses Projekt deaktiviert: Die deklarierten Schematron-Regeln werden nicht geprüft.</string>
+  <string key="schematron.panel.rules_error">Fehlerhafte Schematron-Regeln ({source}): {detail}</string>
+  <string key="schematron.panel.saxon_missing">Schematron-Regeln nicht geprüft: Saxon (Paket saxonche) ist nicht installiert.</string>
   <string key="file.save_anyway">Trotzdem speichern</string>
   <string key="file.save_malformed.title">XML ist nicht wohlgeformt</string>
   <string key="file.save_malformed.text">Das XML-Dokument ist nicht wohlgeformt. Sie können es dennoch speichern, damit Ihre Arbeit nicht verloren geht, und den Fehler später beheben.
@@ -352,8 +373,8 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
 Die XSLT-Vorschau und RELAX-NG-Validierung können bis zur Behebung des Syntaxfehlers nicht verfügbar sein.
 
 Trotzdem speichern?</string>
-  <string key="file.save_rng_invalid.title">Dokument ist gemäß RELAX NG ungültig</string>
-  <string key="file.save_rng_invalid.text">Das Dokument ist wohlgeformt, aber die RELAX-NG-Validierung meldet {count} Fehler. Sie können es speichern und die Fehler später beheben.
+  <string key="file.save_rng_invalid.title">Dokument ist ungültig</string>
+  <string key="file.save_rng_invalid.text">Das Dokument ist wohlgeformt, aber die Validierung (RELAX NG, Schematron-Regeln) meldet {count} Fehler. Sie können es speichern und die Fehler später beheben.
 
 Trotzdem speichern?</string>
   <string key="xml.health.malformed.tooltip">XML ist nicht wohlgeformt — Speichern ist nach einer Warnung möglich.</string>

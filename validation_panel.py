@@ -13,6 +13,15 @@ texte non enregistré des parties ouvertes. Le résultat est rangé sur
 l'édition et sur ses parties ; une colonne Document indique le fichier de
 chaque erreur, et l'onglet de chaque partie prend la couleur de ses propres
 erreurs.
+
+Règles Schematron (V0.9.2.3) : celles des sources de la résolution
+(``SchemaResolution.schematron_sources``) sont appliquées dans le même
+passage ; une colonne Origine distingue leurs messages (XML, RELAX NG,
+XInclude, Schematron). Une erreur Schematron rend le document invalide comme
+une erreur RELAX NG (onglet orange, question avant d'enregistrer) ; un
+avertissement ou une information non. L'étiquette Schematron de la barre
+d'état résume leur résultat ; son info-bulle donne les sources des règles et
+le détail d'une règle incorrecte.
 """
 from __future__ import annotations
 
@@ -30,9 +39,21 @@ from schema_resolution import detect_xml_models, resolve_schema
 from validation_worker import worker_client
 from xml_assembly import path_key
 
-# Colonne Document du panneau : affichée seulement pour une édition qui a
-# des parties.
-_DOCUMENT_COLUMN = 4
+# Colonnes du panneau : Niveau, Origine, Ligne, Colonne, Message, Document ;
+# la colonne Document n'est affichée que pour une édition qui a des parties.
+_MESSAGE_COLUMN = 4
+_DOCUMENT_COLUMN = 5
+_LEVELS = {"WARNING": "rng.level.warning", "INFO": "rng.level.info"}
+_ORIGINS = {"SCHEMATRON": "rng.origin.schematron", "XINCLUDE": "rng.origin.xinclude", "XSLT": "rng.origin.xslt"}
+
+
+def _is_error(issue):
+    """Vrai pour une erreur, faux pour un avertissement ou une information."""
+    return str(issue.level).upper() not in _LEVELS
+
+
+def _is_schematron(issue):
+    return issue.domain == "SCHEMATRON"
 
 
 class ValidationPanelMixin:
@@ -66,17 +87,15 @@ class ValidationPanelMixin:
         head.addWidget(self.validation_close)
         root.addLayout(head)
 
-        self.validation_table = QTableWidget(0, 5, panel)
+        self.validation_table = QTableWidget(0, 6, panel)
         self.validation_table.setHorizontalHeaderLabels([
-            _t("rng.column.level"), _t("rng.column.line"),
+            _t("rng.column.level"), _t("rng.column.origin"), _t("rng.column.line"),
             _t("rng.column.column"), _t("rng.column.message"), _t("rng.column.document"),
         ])
         header = self.validation_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(_DOCUMENT_COLUMN, QHeaderView.ResizeMode.ResizeToContents)
+        for column in range(6):
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(_MESSAGE_COLUMN, QHeaderView.ResizeMode.Stretch)
         self.validation_table.setColumnHidden(_DOCUMENT_COLUMN, True)
         self.validation_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.validation_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -106,6 +125,8 @@ class ValidationPanelMixin:
         if hasattr(self, "rng_status"):
             self.rng_status.setText(_t("rng.status.none") if self._schema_mode == "none" else _t("rng.status.pending"))
             self.rng_status.setStyleSheet("color:#777" if self._schema_mode == "none" else "")
+        if hasattr(self, "schematron_status"):
+            self._set_schematron_label()
 
     def show_validation_panel(self):
         # Une hauteur modeste garde la vue d'édition utilisable sur petit écran.
@@ -135,9 +156,9 @@ class ValidationPanelMixin:
         for issue in issues:
             row = self.validation_table.rowCount()
             self.validation_table.insertRow(row)
-            level_text = _t("rng.level.warning") if str(issue.level).upper() == "WARNING" else _t("rng.level.error")
             values = [
-                level_text,
+                _t(_LEVELS.get(str(issue.level).upper(), "rng.level.error")),
+                self._issue_origin(issue),
                 str(issue.line or ""),
                 str(issue.column or ""),
                 self._issue_message(issue),
@@ -151,6 +172,15 @@ class ValidationPanelMixin:
                 Qt.ItemDataRole.UserRole,
                 (int(issue.line or 0), int(issue.column or 0), bool(jump_to_xml), issue.file),
             )
+
+    @staticmethod
+    def _issue_origin(issue):
+        """Colonne Origine : XML (bonne formation), RELAX NG, XInclude,
+        Schematron, ou XSLT (vérification d'une feuille)."""
+        domain = str(issue.domain or "").upper()
+        if domain in _ORIGINS:
+            return _t(_ORIGINS[domain])
+        return _t("rng.origin.relaxng") if domain.startswith("RELAXNG") else _t("rng.origin.xml")
 
     @staticmethod
     def _issue_message(issue):
@@ -241,18 +271,20 @@ class ValidationPanelMixin:
 
     def _rng_invalid_for(self, session, result):
         """True si ``result`` signale une erreur dans ``session`` : toute
-        erreur hors d'une édition assemblée, sinon celles de son fichier."""
+        erreur hors d'une édition assemblée, sinon celles de son fichier (un
+        avertissement ne compte pas)."""
         if result is None or result.valid:
             return False
         if not (session.in_edition and self._edition_has_parts()):
             return True
-        return any(self._issue_session(issue.file) is session for issue in result.issues)
+        return any(_is_error(issue) and self._issue_session(issue.file) is session for issue in result.issues)
 
     def _share_assembled_result(self, result):
         """Résultat de l'édition assemblée, obtenu pour le document affiché :
         rangé aussi sur l'édition et sur ses parties chargées, avec l'état RNG
         affiché ; l'onglet de chacune prend la couleur de ses propres erreurs."""
-        rng = (self.rng_status.text(), self.rng_status.styleSheet(), self.validation_summary.text())
+        rng = (self.rng_status.text(), self.rng_status.styleSheet(), self.schematron_status.text(),
+               self.schematron_status.styleSheet(), self.schematron_status.toolTip(), self.validation_summary.text())
         for session in self.documents:
             if session is self.document or not session.in_edition:
                 continue
@@ -262,9 +294,7 @@ class ValidationPanelMixin:
                 session.last_rng_schema_token = self._last_rng_schema_token
                 status = (session.view_state or {}).get("status")
                 if status:
-                    xml_text, xml_style, _text, _style, schematron, schematron_tip, _summary = status
-                    session.view_state["status"] = (xml_text, xml_style, rng[0], rng[1],
-                                                    schematron, schematron_tip, rng[2])
+                    session.view_state["status"] = status[:2] + rng
             if session.health != "malformed":
                 session.health = "rng_invalid" if self._rng_invalid_for(session, result) else "normal"
             self._refresh_document_tab(session)
@@ -311,15 +341,83 @@ class ValidationPanelMixin:
         self._completion_model_key = None
         self.validate_relaxng_document(show_panel=True, show_success_message=True, refresh_schema=True)
 
+    def _set_schematron_label(self, text="", style="", tip=""):
+        self.schematron_status.setText(text)
+        self.schematron_status.setStyleSheet(style)
+        self.schematron_status.setToolTip(tip)
+
     def _update_schematron_status(self, resolution):
-        count = len(getattr(resolution, "schematron", ()) or ()) if resolution is not None else 0
-        if count:
-            self.schematron_status.setText(_t("schematron.status.detected", count=count))
-            self.schematron_status.setStyleSheet("color:#8b641d")
-            self.schematron_status.setToolTip(_t("schematron.status.tooltip"))
+        """Avant la validation : l'étiquette Schematron quand aucune règle ne
+        sera vérifiée (validation désactivée, ou aucune source) ; sinon elle
+        attend le résultat (``_show_schematron_result``)."""
+        if self._schema_mode == "none":
+            declared = bool(getattr(resolution, "schematron", ()) if resolution is not None else ())
+            self._set_schematron_label(_t("schematron.status.disabled") if declared else "", "color:#777",
+                                       _t("schematron.tip.disabled") if declared else "")
+        elif resolution is None or not (resolution.schematron_sources or resolution.schematron_errors):
+            self._set_schematron_label()
+
+    @staticmethod
+    def _schematron_problems(resolution, result):
+        """``(source, détail)`` des règles incorrectes : déclaration
+        introuvable (résolution) ou règles que Saxon refuse (résultat)."""
+        return tuple(getattr(resolution, "schematron_errors", ()) or ()) + tuple(
+            getattr(result, "schematron_errors", ()) or ())
+
+    def _show_schematron_result(self, resolution, result):
+        """Étiquette Schematron d'après le résultat (None : règles non
+        appliquées, document mal formé ou schéma impossible à charger)."""
+        problems = self._schematron_problems(resolution, result)
+        sources = tuple(getattr(resolution, "schematron_sources", ()) or ())
+        applied = tuple(result.schematron_rules) if result is not None else ()
+        tips = [_t("schematron.tip.error", source=Path(source).name, detail=detail) for source, detail in problems]
+        if applied:
+            tips.insert(0, _t("schematron.tip.sources", sources=", ".join(Path(path).name for path in applied)))
+        messages = [issue for issue in (result.issues if result is not None else ()) if _is_schematron(issue)]
+        errors = sum(1 for issue in messages if _is_error(issue))
+        if result is not None and result.schematron_error == "saxon_missing":
+            self._set_schematron_label(_t("schematron.status.saxon_missing"), "color:#a14b2f",
+                                       _t("schematron.tip.saxon_missing"))
+        elif problems:
+            self._set_schematron_label(_t("schematron.status.rules_error"), "color:#a13d32;font-weight:600",
+                                       "\n".join(tips))
+        elif result is None or not (result.well_formed and result.schema_loaded):
+            self._set_schematron_label()
+        elif errors:
+            self._set_schematron_label(_t("schematron.status.errors", count=errors),
+                                       "color:#a06a20;font-weight:600", "\n".join(tips))
+        elif messages:
+            self._set_schematron_label(_t("schematron.status.messages", count=len(messages)), "color:#8b641d",
+                                       "\n".join(tips))
+        elif applied:
+            self._set_schematron_label(_t("schematron.status.valid"), "color:#376b3c", "\n".join(tips))
+        elif sources and getattr(resolution, "schematron", ()):
+            self._set_schematron_label(_t("schematron.status.no_rules"), "color:#777", _t(
+                "schematron.tip.no_rules", sources=", ".join(Path(path).name for path in sources)))
         else:
-            self.schematron_status.setText("")
-            self.schematron_status.setToolTip("")
+            self._set_schematron_label()
+
+    def _schematron_summary(self, resolution, result):
+        """Phrases ajoutées au résumé du panneau : règles incorrectes, Saxon
+        absent."""
+        notes = [_t("schematron.panel.rules_error", source=Path(source).name, detail=detail)
+                 for source, detail in self._schematron_problems(resolution, result)]
+        if result is not None and result.schematron_error == "saxon_missing":
+            notes.append(_t("schematron.panel.saxon_missing"))
+        return "".join(" " + note for note in notes)
+
+    @staticmethod
+    def _validation_token(resolution):
+        """Jeton du schéma et des sources des règles : il change si l'un de
+        ces fichiers ou de ceux qu'ils incluent change (None : inconnu)."""
+        if resolution is None:
+            return None
+        paths = [resolution.schema_path] if resolution.schema_path is not None else []
+        paths += [path for path in resolution.schematron_sources if path not in paths]
+        try:
+            return tuple(relaxng_schema_token(path) for path in paths)
+        except Exception:
+            return None
 
     def _schema_display_name(self, resolution):
         if resolution is None:
@@ -329,7 +427,10 @@ class ValidationPanelMixin:
                 return Path(resolution.href).name or resolution.href
             except Exception:
                 return resolution.href
-        return Path(resolution.schema_path).name if resolution.schema_path else ""
+        if resolution.schema_path:
+            return Path(resolution.schema_path).name
+        # Des règles Schematron sans RELAX NG.
+        return ", ".join(Path(path).name for path in resolution.schematron_sources)
 
     def validate_relaxng_document(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False, background=False):
         """Valide la révision courante, sans revalidation récursive du panneau.
@@ -410,6 +511,7 @@ class ValidationPanelMixin:
             self._last_rng_result = None
             self._last_rng_revision = revision
             self._clear_validation_table()
+            self._show_schematron_result(resolution, None)
             self.validation_summary.setText(_t("rng.panel.schema_resolution_error", error=resolution.error))
             self.rng_status.setText(_t("rng.status.schema_error"))
             self.rng_status.setStyleSheet("color:#a13d32;font-weight:600")
@@ -417,7 +519,8 @@ class ValidationPanelMixin:
                 self.show_validation_panel()
             return None
 
-        if resolution.schema_path is None:
+        if resolution.schema_path is None and not resolution.schematron_sources:
+            self._show_schematron_result(resolution, None)
             self._last_rng_result = None
             self._last_rng_revision = revision
             self._clear_validation_table()
@@ -448,6 +551,7 @@ class ValidationPanelMixin:
             return None
 
         schema = resolution.schema_path
+        sources = resolution.schematron_sources
         base_url = self.current_path or self.project.edition
         parts = None
         if edition is not None:
@@ -458,11 +562,12 @@ class ValidationPanelMixin:
         self.rng_status.setText(_t("rng.status.running"))
         self.rng_status.setStyleSheet("color:#777")
         if background:
-            self._validate_in_background(text, schema, base_url, options, parts)
+            self._validate_in_background(text, schema, base_url, options, parts, sources)
             return None
-        return self._apply_rng_result(worker_client().validate(text, schema, base_url, parts=parts), **options)
+        return self._apply_rng_result(
+            worker_client().validate(text, schema, base_url, parts=parts, schematron=sources), **options)
 
-    def _validate_in_background(self, text, schema, base_url, options, parts=None):
+    def _validate_in_background(self, text, schema, base_url, options, parts=None, sources=()):
         """Validation automatique : la fenêtre reste utilisable. Le résultat est
         affiché à son arrivée s'il concerne encore le document affiché ; un
         document quitté entre-temps sera validé à nouveau à son retour."""
@@ -480,7 +585,7 @@ class ValidationPanelMixin:
                 session.view_state["status"] = None
 
         pending.add(key)
-        worker_client().validate_async(text, schema, base_url, self, arrived, parts=parts)
+        worker_client().validate_async(text, schema, base_url, self, arrived, parts=parts, schematron=sources)
 
     def _rng_busy_changed(self, busy):
         """Lueur de la barre d'état pendant une validation en cours."""
@@ -502,11 +607,15 @@ class ValidationPanelMixin:
             return None
         self._last_rng_result = result
         self._last_rng_revision = revision
-        try:
-            self._last_rng_schema_token = relaxng_schema_token(schema)
-        except Exception:
-            self._last_rng_schema_token = None
+        self._last_rng_schema_token = self._validation_token(resolution)
         schema_name = self._schema_display_name(resolution)
+        notes = self._schematron_summary(resolution, result)
+        self._show_schematron_result(resolution, result)
+        # Sans RELAX NG (des règles Schematron seules), l'étiquette RNG le dit.
+        if schema is None:
+            rng_valid = (_t("rng.status.no_xml_model"), "color:#777")
+        else:
+            rng_valid = (_t("rng.status.valid"), "color:#376b3c")
 
         if not result.schema_loaded:
             self._populate_validation_issues(result.issues, jump_to_xml=False)
@@ -533,10 +642,17 @@ class ValidationPanelMixin:
             return result
 
         if result.valid:
-            self._clear_validation_table()
-            self.validation_summary.setText(_t("rng.panel.valid", schema=schema_name))
-            self.rng_status.setText(_t("rng.status.valid"))
-            self.rng_status.setStyleSheet("color:#376b3c")
+            # Des avertissements ou informations Schematron restent listés.
+            messages = sum(1 for issue in result.issues if _is_schematron(issue))
+            if result.issues:
+                self._populate_validation_issues(result.issues, jump_to_xml=True)
+            else:
+                self._clear_validation_table()
+            summary = (_t("rng.panel.valid.messages", schema=schema_name, count=messages) if messages
+                       else _t("rng.panel.valid", schema=schema_name))
+            self.validation_summary.setText(summary + notes)
+            self.rng_status.setText(rng_valid[0])
+            self.rng_status.setStyleSheet(rng_valid[1])
             self._set_document_health("normal")
             if self._assembly_context() is not None:
                 self._share_assembled_result(result)
@@ -547,10 +663,21 @@ class ValidationPanelMixin:
             return result
 
         self._populate_validation_issues(result.issues, jump_to_xml=True)
-        count = len(result.issues)
-        self.validation_summary.setText(_t("rng.panel.invalid", count=count, schema=schema_name))
-        self.rng_status.setText(_t("rng.status.invalid", count=count))
-        self.rng_status.setStyleSheet("color:#a06a20;font-weight:600")
+        errors = [issue for issue in result.issues if _is_error(issue)]
+        schematron = sum(1 for issue in errors if _is_schematron(issue))
+        rng = len(errors) - schematron
+        if schematron:
+            summary = _t("rng.panel.invalid.schematron", count=len(errors), schema=schema_name,
+                         rng=rng, schematron=schematron)
+        else:
+            summary = _t("rng.panel.invalid", count=len(errors), schema=schema_name)
+        self.validation_summary.setText(summary + notes)
+        if rng:
+            self.rng_status.setText(_t("rng.status.invalid", count=rng))
+            self.rng_status.setStyleSheet("color:#a06a20;font-weight:600")
+        else:                                               # erreurs Schematron seulement
+            self.rng_status.setText(rng_valid[0])
+            self.rng_status.setStyleSheet(rng_valid[1])
         # Édition assemblée : chaque document prend la couleur de ses erreurs.
         self._set_document_health("rng_invalid" if self._rng_invalid_for(self.document, result) else "normal")
         if self._assembly_context() is not None:
