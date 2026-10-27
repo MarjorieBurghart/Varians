@@ -264,3 +264,15 @@ Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.5 »).
 - `xml_model_edit.py` (sans Qt) : `schematron_declarations`, `set_phase`, `add_declaration`, `remove_declaration`, `declaration_text`.
 - `schema_resolution._fetch_remote_rng` : suit `schemaLocation`.
 - `resources/schemas/schematron/` : ajouts « edited (Varians, 2020/2025) ».
+
+## V0.9.2.6 — fichiers inclus non enregistrés
+
+Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.6 »).
+
+- `schematron.py` : `rules_files(path, texts)`, `_with_unsaved_inclusions` (copies temporaires, `xml:base`), `_unsaved_malformed`, `compiled(…, texts=…)`, `check_compilation(text, path, texts)` ; `_rules_trees`, `rules_text`, `_phases` reçoivent `texts`.
+- `relaxng_validation.dependency_reference` : suit `sch:extends/@href`.
+- `schematron_check.check(text, path, texts)` ; `relaxng_worker` (champ `texts` de `check_schematron`), `validation_worker` (`check_schematron(…, texts)`).
+- `validation_panel.py` : `_open_unsaved_texts`, `_unsaved_rules_texts`, `_source_tip_name` (`schematron.tip.unsaved_included`), `_validation_outdated` (fichier Schematron).
+- `schematron_check_ui.py` : `_schematron_inclusions` (textes et jeton de la vérification).
+- `schematron_rules_dialog._declared_phases` : phases des fichiers inclus non enregistrés.
+- `code_editor.CodeEditor.set_text_document` : défilement remis en haut avant `setDocument` (correction : la position d'un long document défilé, appliquée un instant à un document court, faisait osciller les barres de défilement sans fin).

@@ -21,10 +21,13 @@ descripteur 1 :
   sources sont appliquées ensuite (``"schema"`` peut alors être vide) ; une
   source peut être ``["chemin", "phase"]`` (V0.9.2.4) ; avec
   ``"rules": {"chemin": "texte"}`` (V0.9.2.5), le texte non enregistré d'un
-  fichier de règles remplace celui du disque ;
+  fichier de règles, ou (V0.9.2.6) d'un fichier qu'il inclut, remplace celui
+  du disque ;
 - ``{"id": 3, "op": "check_schematron", "text": "…", "path": "regles.sch"}``
   (V0.9.2.4) → ``{"id": 3, "result": {…}}`` : la vérification du texte d'un
-  fichier Schematron (``schematron_check.check``) ;
+  fichier Schematron (``schematron_check.check``) ; avec ``"texts":
+  {"chemin": "texte"}`` (V0.9.2.6), le texte non enregistré des fichiers
+  qu'il inclut remplace celui du disque ;
 - ``{"id": 2, "op": "ping"}`` → ``{"id": 2, "ok": true, "pid": …,
   "qt_loaded": false}`` ;
 - une requête incorrecte → ``{"id": …, "error": "…"}``.
@@ -112,8 +115,11 @@ def handle_request(request):
         text, path = request.get("text"), request.get("path")
         if not isinstance(text, str) or not isinstance(path, str) or not path:
             return {"id": request_id, "error": "check_schematron needs 'text' and 'path'"}
+        texts = request.get("texts")
+        if texts is not None and not _texts(texts):
+            return {"id": request_id, "error": "'texts' must map paths to texts"}
         from schematron_check import check
-        return {"id": request_id, "result": result_to_dict(check(text, path))}
+        return {"id": request_id, "result": result_to_dict(check(text, path, texts))}
     return {"id": request_id, "error": f"unknown op: {op!r}"}
 
 

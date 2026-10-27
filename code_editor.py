@@ -376,6 +376,12 @@ class CodeEditor(QPlainTextEdit):
         d'affichage de l'éditeur (police, tabulations) lui sont appliqués.
         L'état visuel lié à l'ancien document (repliage, résultat de
         recherche) est réinitialisé.
+
+        Le défilement revient en haut avant le changement (V0.9.2.6) : la
+        position de l'ancien document, appliquée un instant au nouveau
+        pendant ``setDocument``, pouvait faire osciller les barres de
+        défilement sans fin (un long document défilé, puis un document
+        court). La fenêtre garde et rétablit la position de chaque document.
         """
         old = self.document()
         if document is old:
@@ -389,6 +395,8 @@ class CodeEditor(QPlainTextEdit):
             document.setDocumentLayout(QPlainTextDocumentLayout(document))
         document.setDefaultFont(self.font())
         tab_stop = self.tabStopDistance()
+        self.verticalScrollBar().setValue(0)
+        self.horizontalScrollBar().setValue(0)
         self.setDocument(document)
         self.setTabStopDistance(tab_stop)
         document.contentsChange.connect(self._folding_document_changed)

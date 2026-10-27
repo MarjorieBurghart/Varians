@@ -482,6 +482,31 @@ def test_each_help_announces_version_0925():
         assert page.index('<section id="v0924">') < page.index('<section id="v0925">'), language
 
 
+def test_each_help_explains_the_unsaved_included_files():
+    """Fichiers inclus non enregistrés (V0.9.2.6) : l'info-bulle citée en
+    exemple ; les limites ne disent plus qu'un fichier inclus est lu tel
+    qu'il est enregistré."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="schematron">'):]
+        section = section[:section.index("</section>")]
+        tip = catalog["schematron.tip.unsaved_included"].format(name="regles.sch", files="motifs.sch")
+        assert tip in section and "<code>sch:extends</code>" in section, language
+        limits = section[section.rindex("<p><strong>"):]
+        assert "<code>sch:include</code>" not in limits, language
+
+
+def test_each_help_announces_version_0926():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0926">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#schematron"' in version and "<code>sch:include</code>" in version, language
+        assert page.index('<section id="v0925">') < page.index('<section id="v0926">'), language
+
+
 def test_the_documents_menu_names_xml_and_xslt():
     root = ET.parse(ROOT / "i18n" / "fr.xml").getroot()
     catalog = {string.get("key"): string.text for string in root.findall("string")}

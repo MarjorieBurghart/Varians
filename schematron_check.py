@@ -111,14 +111,15 @@ def _structure_errors(root, path):
     return errors
 
 
-def _included_ids(path, text):
-    """Les identifiants définis dans les fichiers que *text* inclut."""
+def _included_ids(path, text, texts=None):
+    """Les identifiants définis dans les fichiers que *text* inclut (lus
+    dans leur texte non enregistré si *texts* le donne)."""
     from schematron import _rules_trees
-    return {element.get("id") for _source, root in _rules_trees(path, text)[1:]
+    return {element.get("id") for _source, root in _rules_trees(path, text, texts)[1:]
             for element in root.iter() if element.get("id")}
 
 
-def _located(issues, root, path, text):
+def _located(issues, root, path, text, texts=None):
     """Les erreurs RELAX NG, sans les références à un identifiant d'un
     fichier inclus, et chaque référence inconnue à la ligne de son élément
     (libxml2 ne la situe pas)."""
@@ -130,7 +131,7 @@ def _located(issues, root, path, text):
             continue
         attribute, value = match.groups()
         if included is None:
-            included = _included_ids(path, text)
+            included = _included_ids(path, text, texts)
         if value in included:
             continue
         if not issue.line:
@@ -150,9 +151,11 @@ def _missing_includes(root, path):
             yield _rule_error("missing", href, path, include.sourceline or 0)
 
 
-def check(text, path) -> ValidationResult:
+def check(text, path, texts=None) -> ValidationResult:
     """Vérifie le texte *text* du fichier Schematron *path* (voir le
-    module)."""
+    module) ; *texts* (V0.9.2.6) : ``{chemin: texte}`` des fichiers inclus
+    ouverts et non enregistrés, lus à la place du disque."""
+    from schematron import _unsaved, _unsaved_malformed
     path = Path(path).expanduser().resolve()
     result, root = _checked(text, None, path)
     if root is None:                          # mal formé
@@ -161,12 +164,15 @@ def check(text, path) -> ValidationResult:
     whole = etree.QName(root).localname == "schema"
     if whole and not issues:
         relaxng, _tree = _checked(text, ISO_SCHEMA, path)
-        issues = list(_located(relaxng.issues, root, path, text))
+        issues = list(_located(relaxng.issues, root, path, text, texts))
     issues += _missing_includes(root, path)
+    malformed = _unsaved_malformed(path, _unsaved(path, text, texts))
+    if malformed is not None:
+        issues.append(malformed)
     saxon_error = ""
     if whole and not issues:
         from schematron import check_compilation
-        compiled = check_compilation(text, path)
+        compiled = check_compilation(text, path, texts)
         if compiled is None:
             saxon_error = "saxon_missing"
         else:

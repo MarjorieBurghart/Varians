@@ -176,3 +176,24 @@ def test_a_change_of_language_keeps_the_columns_and_the_rules_button(open_window
         assert window.validation_rules.text() == tr("schematron.panel.rules_button")
     finally:
         window._set_language_code("fr")
+
+
+def test_the_phases_of_an_unsaved_included_file_are_proposed(open_window, example_project, dialogs):
+    from project_config import DocumentConfig, load_project
+    from project_management import update_project_documents
+    xml = example_project.parent / "xml"
+    _declare(example_project, rules=RULES.replace('  <phase id="kind">', '  <include href="phases.sch"/>\n  <phase id="kind">'))
+    phases = xml / "phases.sch"
+    phases.write_text(f'<phase xmlns="{SCH_NS}" id="ancienne"><active pattern="kind"/></phase>\n', encoding="utf-8")
+    update_project_documents(example_project, list(load_project(example_project).documents) + [DocumentConfig(phases)])
+    window = open_window(example_project)
+    window.show_document(next(s for s in window.documents if s.path == phases))
+    text = window.editor.toPlainText()
+    cursor = window.editor.textCursor()
+    cursor.setPosition(text.index("ancienne"))
+    cursor.setPosition(text.index("ancienne") + len("ancienne"), cursor.MoveMode.KeepAnchor)
+    cursor.insertText("nouvelle")
+    window.show_document(window.edition_session)
+    seen = []
+    _run(dialogs, window, lambda dialog: seen.append(dialog.phase_choices(0)))
+    assert seen == [["", "#ALL", "kind", "vide", "nouvelle"]]

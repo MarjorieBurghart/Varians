@@ -1,3 +1,20 @@
+VARIANS V0.9.2.6 — RÈGLES SCHEMATRON : FICHIERS INCLUS NON ENREGISTRÉS
+
+• Fichiers inclus : un fichier inclus par un fichier de règles
+  (sch:include, sch:extends, inclusions RELAX NG et XSD), ouvert dans
+  Varians et modifié, est appliqué au document avec son texte, sans
+  l'enregistrer, comme le fichier de règles lui-même depuis la 0.9.2.5.
+  L'info-bulle de l'étiquette Schematron le nomme (« regles.sch (non
+  enregistré : motifs.sch) ») ; une règle fautive y mène à sa ligne.
+• Vérification d'un fichier .sch (F8) : elle lit de même les fichiers
+  qu'il inclut, et elle est refaite au retour sur ce fichier quand l'un
+  d'eux a changé (modifié, enregistré).
+• La boîte « Règles Schematron du document » propose aussi les phases
+  définies dans les fichiers inclus non enregistrés.
+• Correction : Varians ne se fige plus en passant d'un long document,
+  défilé (une partie de l'édition, par exemple), à un document court.
+• Le format de project.xml ne change pas. Voir RELAXNG_VALIDATION.md.
+
 VARIANS V0.9.2.5 — RÈGLES SCHEMATRON : TEXTE NON ENREGISTRÉ, PHASE, NORME 2020, XSD
 
 • Règles non enregistrées : un fichier de règles ouvert dans Varians et
@@ -5,7 +22,7 @@ VARIANS V0.9.2.5 — RÈGLES SCHEMATRON : TEXTE NON ENREGISTRÉ, PHASE, NORME 20
   revenir au document après l'avoir modifié le fait valider de nouveau.
   L'info-bulle de l'étiquette Schematron le signale (« regles.sch, non
   enregistré ») ; défaire (Ctrl+Z) jusqu'à l'état enregistré revient aux
-  règles du disque. Un fichier inclus (sch:include) reste lu sur le disque.
+  règles du disque.
 • Boîte « Règles Schematron du document » : un clic sur l'étiquette
   Schematron de la barre d'état, ou le bouton « Règles… » du panneau de
   validation, l'ouvre. Pour chaque fichier de règles déclaré, la phase se

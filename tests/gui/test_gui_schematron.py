@@ -10,6 +10,7 @@ import importlib.util
 import os
 import sys
 import time
+from pathlib import Path
 
 import pytest
 from PySide6.QtGui import QColor, QTextCursor
@@ -425,3 +426,93 @@ def test_an_incorrect_unsaved_rule_leads_to_its_line(open_window, example_projec
     window.goto_validation_issue(0)
     qtbot.wait(50)
     assert window.document.path.name == "regles.sch" and window.editor.textCursor().blockNumber() + 1 == 8
+
+
+# --- Fichiers inclus non enregistrés (V0.9.2.6) ------------------------------------
+
+RULES_INCLUDING = f"""<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="{SCH_NS}" queryBinding="xslt2">
+  <ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>
+  <include href="motifs.sch"/>
+  <pattern id="vide">
+    <rule context="tei:varianstest"><report test="not(normalize-space())" role="warning">Vide.</report></rule>
+  </pattern>
+</schema>
+"""
+# Ligne 3 : l'assertion.
+MOTIFS = f"""<pattern xmlns="{SCH_NS}" id="varianstest">
+  <rule context="tei:varianstest">
+    <assert test="@kind = ('a', 'b')" id="kind">Le kind « <value-of select="@kind"/> » est inconnu.</assert>
+  </rule>
+</pattern>
+"""
+
+
+def _with_included_rules(project):
+    """regles.sch, déclaré par l'édition, inclut motifs.sch ; les deux sont
+    des documents du projet."""
+    from project_config import DocumentConfig
+    from project_management import update_project_documents
+    rules = _declare_rules(project, RULES_INCLUDING)
+    motifs = rules.parent / "motifs.sch"
+    motifs.write_text(MOTIFS, encoding="utf-8")
+    update_project_documents(project, [DocumentConfig(rules), DocumentConfig(motifs)])
+    return rules, motifs
+
+
+def _show(window, name):
+    session = next(session for session in window.documents if session.path.name == name)
+    window.show_document(session)
+    return session
+
+
+@needs_saxon
+def test_an_unsaved_included_file_is_applied_on_return_to_the_edition(open_window, example_project, qtbot):
+    _rules, motifs = _with_included_rules(example_project)
+    window = open_window(example_project)
+    _insert_after(window, "<body>", '\n<varianstest kind="z">x</varianstest>')
+    assert not window.validate_relaxng_document(show_panel=True).valid
+    _show(window, "motifs.sch")
+    _wait_validation(qtbot)
+    _replace_in_editor(window, "('a', 'b')", "('a', 'b', 'z')")
+    window.show_document(window.edition_session)
+    _wait_validation(qtbot)
+    # Sans enregistrer motifs.sch : la règle modifiée s'applique, et
+    # l'info-bulle nomme le fichier inclus non enregistré.
+    assert window._last_rng_result.valid
+    assert tr("schematron.tip.unsaved_included", name="regles.sch", files="motifs.sch") in \
+        window.schematron_status.toolTip()
+    assert motifs.read_text(encoding="utf-8") == MOTIFS
+    _show(window, "motifs.sch")
+    window.editor.undo()
+    window.show_document(window.edition_session)
+    _wait_validation(qtbot)
+    assert not window._last_rng_result.valid
+    assert "motifs.sch" not in window.schematron_status.toolTip()
+
+
+@needs_saxon
+def test_the_check_of_a_rules_file_reads_its_unsaved_included_files(open_window, example_project, qtbot):
+    _rules, motifs = _with_included_rules(example_project)
+    window = open_window(example_project)
+    _show(window, "regles.sch")
+    _wait_validation(qtbot)
+    assert window._last_rng_result.valid
+    _show(window, "motifs.sch")
+    _wait_validation(qtbot)
+    _replace_in_editor(window, "@kind = ('a', 'b')", "@kind = (")
+    # De retour sur regles.sch, la vérification est refaite d'elle-même, avec
+    # motifs.sch tel qu'il est dans Varians ; l'erreur mène à sa ligne.
+    _show(window, "regles.sch")
+    qtbot.wait(300)
+    _wait_validation(qtbot)
+    [issue] = window._last_rng_result.issues
+    assert (issue.type_name, Path(issue.file).name, issue.line) == ("xpath", "motifs.sch", 3)
+    window.goto_validation_issue(0)
+    qtbot.wait(50)
+    assert window.document.path == motifs and window.editor.textCursor().blockNumber() + 1 == 3
+    window.editor.undo()
+    _show(window, "regles.sch")
+    qtbot.wait(300)
+    _wait_validation(qtbot)
+    assert window._last_rng_result.valid

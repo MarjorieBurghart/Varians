@@ -368,6 +368,7 @@
   <string key="schematron.panel.saxon_missing">Schematronルールは検査されていません：Saxon（saxoncheパッケージ）がインストールされていません。</string>
   <string key="schematron.tip.phase">{name}（フェーズ {phase}）</string>
   <string key="schematron.tip.unsaved">{name}（未保存）</string>
+  <string key="schematron.tip.unsaved_included">{name}（未保存: {files}）</string>
   <string key="schematron.tip.click">クリックしてルールのファイルとフェーズを選びます。</string>
   <string key="schematron.panel.rules_button">ルール…</string>
   <string key="schematron.panel.rules_button.tip">文書の Schematron ルール：宣言されたルールのファイルと検査するフェーズ</string>
