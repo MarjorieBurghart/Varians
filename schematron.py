@@ -35,11 +35,17 @@ parties) et rend un ``SchematronReport`` :
   l'exécution) : c'est le schéma qui est en faute, pas le document ;
 - ``error`` : ``saxon_missing`` si des règles existent mais que Saxon n'est
   pas installé.
+
+Le détail d'une règle incorrecte vient du message de Saxon, et de sa sortie
+d'erreur quand le processus l'écrit dans un fichier
+(``relaxng_validation.STDERR_LOG``, voir validation_worker) : sous Windows,
+Saxon n'écrit qu'à cet endroit l'expression fautive.
 """
 from __future__ import annotations
 
 import copy
 import importlib.util
+import os
 import re
 import threading
 from dataclasses import dataclass
@@ -48,7 +54,8 @@ from pathlib import Path
 from lxml import etree
 
 from project_config import APPLICATION_ROOT
-from relaxng_validation import ValidationIssue, _discover_schema_dependencies, _schema_dependency_signature
+from relaxng_validation import (STDERR_LOG, ValidationIssue, _discover_schema_dependencies,
+                                _schema_dependency_signature)
 
 SCH_NS = "http://purl.oclc.org/dsdl/schematron"
 SVRL_NS = "http://purl.oclc.org/dsdl/svrl"
@@ -201,13 +208,35 @@ def _expression_site(path, expression):
     return best[1:] if best else None
 
 
-def _saxon_text(exc, path=None) -> str:
-    """Le message d'une erreur de Saxon, « fichier:ligne: message » si
-    l'expression fautive est retrouvée dans la source *path*, sinon suivi de
+def _stderr_size():
+    """Taille actuelle du fichier de la sortie d'erreur (None sans fichier)."""
+    try:
+        return os.path.getsize(os.environ[STDERR_LOG])
+    except (KeyError, OSError):
+        return None
+
+
+def _stderr_since(start):
+    """Ce que Saxon a écrit sur la sortie d'erreur depuis *start*."""
+    if start is None:
+        return ""
+    try:
+        with open(os.environ[STDERR_LOG], "rb") as stream:
+            stream.seek(start)
+            return stream.read().decode("utf-8", errors="replace")
+    except (KeyError, OSError):
+        return ""
+
+
+def _saxon_text(exc, path=None, stderr="") -> str:
+    """Le message d'une erreur de Saxon (de sa sortie d'erreur *stderr*,
+    sinon de l'exception), « fichier:ligne: message » si l'expression
+    fautive est retrouvée dans la source *path*, sinon suivi de
     l'expression ; le lieu que donne Saxon est dans la feuille produite par
     SchXslt2, il n'est pas repris."""
     from xslt_engines import _saxon_blocks
-    blocks = _saxon_blocks(str(exc).strip())
+    blocks = [block for block in _saxon_blocks(stderr) if not block[0].startswith("Warning")]
+    blocks = blocks or _saxon_blocks(str(exc).strip())
     if not blocks:
         return type(exc).__name__
     header, detail = blocks[0][0], " ".join(" ".join(blocks[0][1:]).split())
@@ -247,6 +276,7 @@ def _compile(path, signature) -> _Compiled:
     from saxonche import PySaxonApiError
     base = path.as_uri()
     _COMPILATIONS += 1
+    start = _stderr_size()
     try:
         builder = processor.new_document_builder()
         builder.set_base_uri(base)
@@ -254,7 +284,7 @@ def _compile(path, signature) -> _Compiled:
         executable = processor.new_xslt30_processor().compile_stylesheet(
             stylesheet_text=_with_base(stylesheet, base))
     except PySaxonApiError as exc:
-        return _Compiled(signature, error=_saxon_text(exc, path))
+        return _Compiled(signature, error=_saxon_text(exc, path, _stderr_since(start)))
     return _Compiled(signature, executable)
 
 
@@ -332,6 +362,7 @@ def validate(tree, sources, file_of=None) -> SchematronReport:
             if entry.executable is None:
                 continue
             from saxonche import PySaxonApiError
+            start = _stderr_size()
             try:
                 if document is None:
                     builder = _processor().new_document_builder()
@@ -341,7 +372,7 @@ def validate(tree, sources, file_of=None) -> SchematronReport:
                     document = builder.parse_xml(xml_text=etree.tostring(root.getroottree(), encoding="unicode"))
                 svrl = entry.executable.transform_to_string(xdm_node=document)
             except PySaxonApiError as exc:
-                errors.append((str(source), _saxon_text(exc)))
+                errors.append((str(source), _saxon_text(exc, Path(source), _stderr_since(start))))
                 continue
             report = etree.fromstring(svrl.encode("utf-8"))
             failures = report.findall(f"{{{SVRL_NS}}}error")

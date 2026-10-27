@@ -14,7 +14,12 @@ jamais bloquée par la compilation d'un gros schéma.
   ignorant clics et frappes, pour qu'aucune action ne parte au milieu.
 
 Avec ``parts`` (``{chemin: texte}``, même vide), l'édition est validée
-assemblée par XInclude (``relaxng_validation.validate_document``).
+assemblée par XInclude (``relaxng_validation.validate_document``) ; avec
+``schematron`` (V0.9.2.3), les règles Schematron de ces sources sont
+appliquées ensuite, et le schéma RELAX NG peut manquer (None). La sortie
+d'erreur du processus est un fichier temporaire (``stderr_log``, nommé par
+la variable ``VARIANS_STDERR_LOG``), où Saxon écrit le détail d'une règle
+incorrecte ; il est effacé à l'arrêt du processus.
 
 **Repli** : si le processus ne démarre pas ou s'arrête, la validation se fait
 dans Varians même, comme avant la V0.8.9.2 (la fenêtre est alors bloquée
@@ -27,6 +32,7 @@ import os
 import queue
 import subprocess
 import sys
+import tempfile
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,7 +41,7 @@ import shiboken6
 from PySide6.QtCore import QCoreApplication, QEvent, QEventLoop, QObject, QTimer, Qt, Signal
 from PySide6.QtWidgets import QApplication
 
-from relaxng_validation import validate_document
+from relaxng_validation import STDERR_LOG, validate_document
 from relaxng_worker import result_from_dict
 
 _APPLICATION_DIR = Path(__file__).resolve().parent
@@ -84,6 +90,7 @@ class RelaxNGWorkerClient(QObject):
         self._command = list(command) if command else default_worker_command()
         self._process = None
         self._outgoing = None
+        self.stderr_log = None
         self._next_id = 0
         self._pending = {}
         self._results = {}
@@ -102,28 +109,31 @@ class RelaxNGWorkerClient(QObject):
 
     # --- Requêtes ---------------------------------------------------------------
 
-    def validate_async(self, xml_text, schema_path, base_url, owner, callback, parts=None):
+    def validate_async(self, xml_text, schema_path, base_url, owner, callback, parts=None, schematron=None):
         """Valide sans attendre ; ``callback(result)`` est appelé dans le fil
         principal, sauf si ``owner`` (un QObject) a été détruit entre-temps."""
-        return self._submit(xml_text, schema_path, base_url, owner, callback, parts)
+        return self._submit(xml_text, schema_path, base_url, owner, callback, parts, schematron)
 
-    def validate(self, xml_text, schema_path, base_url=None, parts=None):
+    def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None):
         """Valide et renvoie le résultat ; la fenêtre continue de se redessiner
         pendant l'attente, sans traiter clics ni frappes."""
         if QCoreApplication.instance() is None:             # pas de boucle d'événements
-            return validate_document(xml_text, schema_path, base_url or None, parts)
-        request_id = self._submit(xml_text, schema_path, base_url, None, None, parts)
+            return validate_document(xml_text, schema_path or None, base_url or None, parts, schematron)
+        request_id = self._submit(xml_text, schema_path, base_url, None, None, parts, schematron)
         if request_id not in self._results:
             self._wait_for(request_id)
         return self._results.pop(request_id)
 
-    def _submit(self, xml_text, schema_path, base_url, owner, callback, parts=None):
+    def _submit(self, xml_text, schema_path, base_url, owner, callback, parts=None, schematron=None):
         self._next_id += 1
         request_id = self._next_id
-        request = {"id": request_id, "op": "validate", "xml": xml_text, "schema": str(schema_path),
+        request = {"id": request_id, "op": "validate", "xml": xml_text,
+                   "schema": str(schema_path) if schema_path else "",
                    "base_url": str(base_url) if base_url else None}
         if parts is not None:
             request["parts"] = {str(path): text for path, text in parts.items()}
+        if schematron:
+            request["schematron"] = [str(path) for path in schematron]
         entry = _Pending(request, owner, callback)
         if not self._ensure_process():
             self._deliver(request_id, entry, self._validate_here(request), was_pending=False)
@@ -172,9 +182,12 @@ class RelaxNGWorkerClient(QObject):
         if self._process is not None:
             return True
         try:
-            self._process = subprocess.Popen(
-                self._command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            handle, self.stderr_log = tempfile.mkstemp(prefix="varians-validation-", suffix=".log")
+            with os.fdopen(handle, "wb") as errors:
+                self._process = subprocess.Popen(
+                    self._command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=errors,
+                    env=dict(os.environ, **{STDERR_LOG: self.stderr_log}),
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
         except (OSError, ValueError) as exc:
             self._fall_back(str(exc))
             return False
@@ -249,8 +262,8 @@ class RelaxNGWorkerClient(QObject):
 
     @staticmethod
     def _validate_here(request):
-        return validate_document(request["xml"], request["schema"], request.get("base_url") or None,
-                                 request.get("parts"))
+        return validate_document(request["xml"], request["schema"] or None, request.get("base_url") or None,
+                                 request.get("parts"), request.get("schematron"))
 
     def _fall_back(self, reason):
         """Le processus est indisponible : valider désormais dans Varians, y
@@ -265,15 +278,20 @@ class RelaxNGWorkerClient(QObject):
 
     def _stop_process(self, timeout=3.0):
         process, self._process = self._process, None
-        if process is None:
-            return
-        if self._outgoing is not None:
-            self._outgoing.put(None)                        # fin de l'entrée : arrêt propre
-        try:
-            process.wait(timeout)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout)
+        if process is not None:
+            if self._outgoing is not None:
+                self._outgoing.put(None)                    # fin de l'entrée : arrêt propre
+            try:
+                process.wait(timeout)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout)
+        log, self.stderr_log = self.stderr_log, None
+        if log is not None:
+            try:
+                os.unlink(log)
+            except OSError:
+                pass
 
     def shutdown(self):
         """Arrête le processus (fermeture de Varians) ; une validation en cours

@@ -9,10 +9,13 @@ fichier racine ou l'une de ses dépendances locales (include/externalRef) change
 Depuis la V0.9.0.0, une édition qui inclut ses parties par XInclude est
 validée assemblée (``validate_assembled``) : chaque erreur est rapportée dans
 son fichier (``ValidationIssue.file``), à sa ligne.
+
+Depuis la V0.9.2.3, ``validate_document`` applique aussi des règles
+Schematron (module ``schematron``) au même arbre que le RNG.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 import os
@@ -23,6 +26,11 @@ try:
     from lxml import etree
 except ImportError:  # pragma: no cover - dépend de l'environnement utilisateur
     etree = None
+
+# Variable d'environnement du processus de validation : le fichier de sa
+# sortie d'erreur (voir validation_worker), où Saxon écrit le détail d'une
+# règle Schematron incorrecte.
+STDERR_LOG = "VARIANS_STDERR_LOG"
 
 
 @dataclass(frozen=True)
@@ -46,6 +54,12 @@ class ValidationResult:
     valid: bool
     issues: tuple[ValidationIssue, ...]
     error: str = ""
+    # V0.9.2.3, règles Schematron (voir validate_document) : sources
+    # appliquées, ``(source, détail)`` des règles incorrectes, et
+    # « saxon_missing » si Saxon manque.
+    schematron_rules: tuple[str, ...] = ()
+    schematron_errors: tuple[tuple[str, str], ...] = ()
+    schematron_error: str = ""
 
 
 @dataclass
@@ -254,9 +268,20 @@ def validate_relaxng(xml_text: str, schema_path: str | Path, *, base_url: str | 
     chaque validation, ce qui est nécessaire pour valider la révision courante,
     mais ce coût est très inférieur à la recompilation d'un gros RNG TEI.
     """
-    compiled, failure = _load_schema(schema_path)
-    if failure is not None:
-        return failure
+    return _checked(xml_text, schema_path, base_url)[0]
+
+
+def _checked(xml_text, schema_path, base_url):
+    """``(résultat, arbre)`` de ``validate_relaxng`` ; arbre None si le
+    schéma n'a pas pu être chargé ou que le document est mal formé. Sans
+    *schema_path*, la bien-formation seule."""
+    if etree is None:
+        return ValidationResult(False, False, False, False, (), "lxml is not installed"), None
+    compiled = None
+    if schema_path:
+        compiled, failure = _load_schema(schema_path)
+        if failure is not None:
+            return failure, None
 
     try:
         parser = etree.XMLParser(resolve_entities=False, no_network=True, recover=False, huge_tree=True)
@@ -273,15 +298,17 @@ def validate_relaxng(xml_text: str, schema_path: str | Path, *, base_url: str | 
                 domain="PARSER",
                 type_name="XMLSyntaxError",
             ),)
-        return ValidationResult(True, True, False, False, issues, str(exc))
+        return ValidationResult(True, True, False, False, issues, str(exc)), None
 
+    if compiled is None:
+        return ValidationResult(True, True, True, True, (), ""), document
     # error_log appartient à l'objet RelaxNG et reflète sa dernière validation :
     # protéger validate()+lecture du log rend le cache sûr si un worker est
     # introduit ou utilisé plus tard.
     with compiled.validate_lock:
         valid = bool(compiled.relaxng.validate(document))
         issues = () if valid else _unique_issues(compiled.relaxng.error_log)
-    return ValidationResult(True, True, True, valid, issues, "")
+    return ValidationResult(True, True, True, valid, issues, ""), document
 
 
 def validate_assembled(master_text: str, schema_path: str | Path, master_path: str | Path,
@@ -299,20 +326,32 @@ def validate_assembled(master_text: str, schema_path: str | Path, master_path: s
     xpointer, erreur de syntaxe) ; le panneau RELAX NG le met en forme dans
     la langue de l'interface.
     """
+    return _checked_assembled(master_text, schema_path, master_path, parts)[0]
+
+
+def _checked_assembled(master_text, schema_path, master_path, parts):
+    """``(résultat, arbre, fichier)`` de ``validate_assembled`` : arbre
+    assemblé (None, comme pour ``_checked``), et ``fichier(élément)`` donne
+    la partie d'où vient un élément (vide pour l'édition)."""
     if etree is None:
-        return ValidationResult(False, False, False, False, (), "lxml is not installed")
+        return ValidationResult(False, False, False, False, (), "lxml is not installed"), None, None
     # Importé ici : xml_assembly exige lxml, dont ce module se passe à l'import.
     from xml_assembly import assemble
 
     assembly = assemble(master_text, master_path, parts)
     if assembly.root is None:
-        return validate_relaxng(master_text, schema_path, base_url=master_path)
-    compiled, failure = _load_schema(schema_path)
-    if failure is not None:
-        return failure
+        return (*_checked(master_text, schema_path, master_path), None)
+    compiled = None
+    if schema_path:
+        compiled, failure = _load_schema(schema_path)
+        if failure is not None:
+            return failure, None, None
 
     def file_name(path):
         return "" if path == assembly.master else str(path)
+
+    def element_file(element):
+        return file_name(assembly.origin(element))
 
     problems = tuple(ValidationIssue(
         line=problem.line, column=0, level="ERROR", message=problem.detail,
@@ -320,6 +359,8 @@ def validate_assembled(master_text: str, schema_path: str | Path, master_path: s
     ) for problem in assembly.problems)
 
     tree = assembly.root.getroottree()
+    if compiled is None:
+        return ValidationResult(True, True, True, not problems, problems, ""), tree, element_file
 
     def file_of(entry):
         path = getattr(entry, "path", None)
@@ -328,19 +369,38 @@ def validate_assembled(master_text: str, schema_path: str | Path, master_path: s
         except etree.XPathError:
             found = []
         if found and isinstance(found[0], etree._Element):
-            return file_name(assembly.origin(found[0]))
+            return element_file(found[0])
         return ""
 
     with compiled.validate_lock:
         valid = bool(compiled.relaxng.validate(tree))
         issues = () if valid else _unique_issues(compiled.relaxng.error_log, file_of)
-    return ValidationResult(True, True, True, valid and not problems, problems + issues, "")
+    return ValidationResult(True, True, True, valid and not problems, problems + issues, ""), tree, element_file
 
 
-def validate_document(xml_text: str, schema_path: str | Path, base_url: str | Path | None = None,
-                      parts: dict | None = None) -> ValidationResult:
+def validate_document(xml_text: str, schema_path: str | Path | None, base_url: str | Path | None = None,
+                      parts: dict | None = None, schematron=None) -> ValidationResult:
     """Point d'entrée commun au processus de validation et au repli dans
-    Varians : l'édition est assemblée quand *parts* est donné (même vide)."""
+    Varians : l'édition est assemblée quand *parts* est donné (même vide).
+
+    *schematron* (V0.9.2.3) : les sources des règles Schematron
+    (``schema_resolution.SchemaResolution.schematron_sources``), appliquées
+    au même arbre que le RNG, si le document est bien formé et que le RNG a
+    pu être chargé. Leurs messages suivent ceux du RNG ; une erreur rend le
+    document invalide, pas un avertissement ni une information. Sans
+    *schema_path*, la bien-formation puis les règles seules."""
     if parts is None:
-        return validate_relaxng(xml_text, schema_path, base_url=base_url)
-    return validate_assembled(xml_text, schema_path, base_url or "document.xml", parts)
+        result, tree = _checked(xml_text, schema_path, base_url)
+        file_of = None
+    else:
+        result, tree, file_of = _checked_assembled(xml_text, schema_path, base_url or "document.xml", parts)
+    if not schematron or tree is None:
+        return result
+    # Importé ici : Saxon n'est chargé qu'au premier besoin.
+    from schematron import validate as apply_rules
+
+    report = apply_rules(tree, schematron, file_of)
+    failed = any(issue.level == "ERROR" for issue in report.issues)
+    return replace(result, valid=result.valid and not failed, issues=result.issues + report.issues,
+                   schematron_rules=report.rules, schematron_errors=report.errors,
+                   schematron_error=report.error)

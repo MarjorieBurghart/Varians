@@ -16,13 +16,17 @@ descripteur 1 :
   "base_url": "chemin.xml"}`` → ``{"id": 1, "result": {…}, "compilations": n}`` ;
   avec ``"parts": {"chemin": "texte"}`` (même vide), l'édition est validée
   assemblée par XInclude, le texte des parties ouvertes remplaçant celui des
-  fichiers (``relaxng_validation.validate_document``) ;
+  fichiers (``relaxng_validation.validate_document``) ; avec
+  ``"schematron": ["chemin", …]`` (V0.9.2.3), les règles Schematron de ces
+  sources sont appliquées ensuite (``"schema"`` peut alors être vide) ;
 - ``{"id": 2, "op": "ping"}`` → ``{"id": 2, "ok": true, "pid": …,
   "qt_loaded": false}`` ;
 - une requête incorrecte → ``{"id": …, "error": "…"}``.
 
 Les descripteurs sont lus directement : ``sys.stdin`` et ``sys.stdout``
-peuvent être absents dans une application Windows sans console.
+peuvent être absents dans une application Windows sans console. La sortie
+d'erreur est le fichier que nomme la variable ``VARIANS_STDERR_LOG`` (voir
+validation_worker) : Saxon y écrit le détail d'une règle incorrecte.
 """
 from __future__ import annotations
 
@@ -45,7 +49,11 @@ def result_from_dict(data):
     """Inverse de ``result_to_dict``."""
     issues = tuple(ValidationIssue(**issue) for issue in data.get("issues", ()))
     return ValidationResult(bool(data["available"]), bool(data["schema_loaded"]), bool(data["well_formed"]),
-                            bool(data["valid"]), issues, str(data.get("error", "")))
+                            bool(data["valid"]), issues, str(data.get("error", "")),
+                            schematron_rules=tuple(str(path) for path in data.get("schematron_rules", ())),
+                            schematron_errors=tuple((str(source), str(detail))
+                                                    for source, detail in data.get("schematron_errors", ())),
+                            schematron_error=str(data.get("schematron_error", "")))
 
 
 def handle_request(request):
@@ -58,13 +66,17 @@ def handle_request(request):
         return {"id": request_id, "ok": True, "pid": os.getpid(), "qt_loaded": "PySide6" in sys.modules}
     if op == "validate":
         xml_text, schema = request.get("xml"), request.get("schema")
-        if not isinstance(xml_text, str) or not isinstance(schema, str) or not schema:
+        sources = request.get("schematron")
+        if sources is not None and not (isinstance(sources, list) and all(
+                isinstance(path, str) and path for path in sources)):
+            return {"id": request_id, "error": "'schematron' must be a list of paths"}
+        if not isinstance(xml_text, str) or not isinstance(schema, str) or not (schema or sources):
             return {"id": request_id, "error": "validate needs 'xml' and 'schema'"}
         parts = request.get("parts")
         if parts is not None and not (isinstance(parts, dict) and all(
                 isinstance(path, str) and isinstance(text, str) for path, text in parts.items())):
             return {"id": request_id, "error": "'parts' must map paths to texts"}
-        result = validate_document(xml_text, schema, request.get("base_url") or None, parts)
+        result = validate_document(xml_text, schema or None, request.get("base_url") or None, parts, sources)
         return {"id": request_id, "result": result_to_dict(result),
                 "compilations": relaxng_cache_info()["compilations"]}
     return {"id": request_id, "error": f"unknown op: {op!r}"}
