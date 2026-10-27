@@ -148,8 +148,8 @@ Une version autonome (PyInstaller, Nuitka) devra embarquer `saxonche`.
   modifiées et le fragment non appliqué (`_save_edition_for_export`), puis
   le document source, la feuille et la CSS s'ils sont ouverts et modifiés.
 - « Transformation en cours… » avec Annuler au-delà d'une demi-seconde ;
-  compte rendu avec « Ouvrir » et le journal en détail ; l'aperçu s'ouvre
-  aussitôt.
+  compte rendu avec « Ouvrir », « Ouvrir le dossier » (V0.9.2.2) et le
+  journal en détail ; l'aperçu s'ouvre aussitôt.
 
 La feuille de Varians (`rendering/tei-to-html.xsl`) reçoit le paramètre
 `css` (`tei.css` par défaut) pour son `<link>` : l'aperçu est inchangé.

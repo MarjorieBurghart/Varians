@@ -5,6 +5,7 @@
   <string key="app.window.file">Varians — {project} — {name}{mark}</string>
   <string key="app.untitled">無題.xml</string>
   <string key="common.open">開く</string>
+  <string key="common.open_folder">フォルダを開く</string>
   <string key="common.close">閉じる</string>
   <string key="common.cancel">キャンセル</string>
   <string key="common.save">保存</string>
@@ -877,7 +878,6 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="tei_stylesheets.source.downloaded">{date} にダウンロード</string>
   <string key="tei_stylesheets.never">未確認</string>
   <string key="tei_stylesheets.licence.text">BSD 2-Clause または CC BY-SA 3.0 のいずれか — © 2011–2020 TEI Consortium</string>
-  <string key="tei_stylesheets.open_folder">フォルダを開く</string>
   <string key="tei_stylesheets.show_licence">ライセンスを表示</string>
   <string key="tei_stylesheets.check">更新を確認</string>
   <string key="tei_stylesheets.up_to_date">TEI Stylesheets は最新です（バージョン {version}）。</string>

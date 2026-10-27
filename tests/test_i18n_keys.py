@@ -300,7 +300,8 @@ def test_each_help_explains_the_transformation_scenarios_with_the_command_labels
               "transform.group.project", "transform.group.predefined", "transform.add", "transform.edit",
               "transform.duplicate", "transform.remove", "transform.run", "transform.preview",
               "transform.predefined.varians-html", "transform.engine.lxml", "transform.engine.saxon",
-              "transform.source.edition", "transform.source.current", "transform.cancel", "common.open")
+              "transform.source.edition", "transform.source.current", "transform.cancel", "common.open",
+              "common.open_folder")
     for language in LANGUAGES:
         root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
         catalog = {string.get("key"): string.text for string in root.findall("string")}

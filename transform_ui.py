@@ -821,10 +821,13 @@ class TransformScenariosMixin:
         box.setText(text)
         box.setDetailedText(journal)
         open_btn = box.addButton(_t("common.open"), QMessageBox.ButtonRole.AcceptRole)
+        folder_btn = box.addButton(_t("common.open_folder"), QMessageBox.ButtonRole.ActionRole)
         box.addButton(_t("common.close"), QMessageBox.ButtonRole.RejectRole)
         box.exec()
         if box.clickedButton() is open_btn:
             QDesktopServices.openUrl(QUrl.fromLocalFile(output))
+        elif box.clickedButton() is folder_btn:                 # le dossier du résultat
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(Path(output).parent)))
 
 
 def transform_journal(result, request):

@@ -5,6 +5,7 @@
   <string key="app.window.file">Varians — {project} — {name}{mark}</string>
   <string key="app.untitled">без_названия.xml</string>
   <string key="common.open">Открыть</string>
+  <string key="common.open_folder">Открыть папку</string>
   <string key="common.close">Закрыть</string>
   <string key="common.cancel">Отмена</string>
   <string key="common.save">Сохранить</string>
@@ -877,7 +878,6 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="tei_stylesheets.source.downloaded">загружены {date}</string>
   <string key="tei_stylesheets.never">никогда</string>
   <string key="tei_stylesheets.licence.text">на выбор BSD 2-Clause или CC BY-SA 3.0 — © 2011–2020 TEI Consortium</string>
-  <string key="tei_stylesheets.open_folder">Открыть папку</string>
   <string key="tei_stylesheets.show_licence">Показать лицензию</string>
   <string key="tei_stylesheets.check">Проверить обновление</string>
   <string key="tei_stylesheets.up_to_date">TEI Stylesheets актуальны (версия {version}).</string>

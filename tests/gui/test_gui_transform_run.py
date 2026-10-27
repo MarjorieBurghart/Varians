@@ -73,6 +73,15 @@ def test_the_predefined_scenario_runs_from_the_list(open_window, sermons_project
     assert [Path(path) for path in opened] == [output]
 
 
+def test_the_report_opens_the_folder_of_the_result(open_window, sermons_project, dialogs, qtbot, opened):
+    window = open_window(sermons_project)
+    output = sermons_project.parent / "publications" / "edition.html"
+    dialogs.expect("dialog", _choose("predefined", 0, "run_btn"))
+    dialogs.expect("box", tr("common.open_folder"))                 # Ouvrir le dossier
+    _finish(qtbot, window, window.transform_scenarios_dialog)
+    assert output.is_file() and [Path(path) for path in opened] == [output.parent]
+
+
 def test_a_tei_scenario_runs_from_the_list_and_names_the_library(open_window, sermons_project, dialogs, qtbot,
                                                                  opened, monkeypatch):
     from app_context import current_i18n

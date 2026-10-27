@@ -5,6 +5,7 @@
   <string key="app.window.file">Varians — {project} — {name}{mark}</string>
   <string key="app.untitled">untitled.xml</string>
   <string key="common.open">Open</string>
+  <string key="common.open_folder">Open the folder</string>
   <string key="common.close">Close</string>
   <string key="common.cancel">Cancel</string>
   <string key="common.save">Save</string>
@@ -863,7 +864,6 @@ It imports the stylesheet {name} of the TEI Consortium. The parameters (xsl:para
   <string key="tei_stylesheets.source.downloaded">downloaded on {date}</string>
   <string key="tei_stylesheets.never">never</string>
   <string key="tei_stylesheets.licence.text">either BSD 2-Clause or CC BY-SA 3.0 — © 2011–2020 TEI Consortium</string>
-  <string key="tei_stylesheets.open_folder">Open the folder</string>
   <string key="tei_stylesheets.show_licence">Show the licence</string>
   <string key="tei_stylesheets.check">Check for an update</string>
   <string key="tei_stylesheets.up_to_date">The TEI Stylesheets are up to date (version {version}).</string>

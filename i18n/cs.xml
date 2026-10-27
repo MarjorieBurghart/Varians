@@ -5,6 +5,7 @@
   <string key="app.window.file">Varians — {project} — {name}{mark}</string>
   <string key="app.untitled">bez_nazvu.xml</string>
   <string key="common.open">Otevřít</string>
+  <string key="common.open_folder">Otevřít složku</string>
   <string key="common.close">Zavřít</string>
   <string key="common.cancel">Zrušit</string>
   <string key="common.save">Uložit</string>
@@ -877,7 +878,6 @@ Importuje šablonu {name} konsorcia TEI. Parametry (xsl:param) a pravidla (xsl:t
   <string key="tei_stylesheets.source.downloaded">staženo {date}</string>
   <string key="tei_stylesheets.never">nikdy</string>
   <string key="tei_stylesheets.licence.text">podle volby BSD 2-Clause nebo CC BY-SA 3.0 — © 2011–2020 TEI Consortium</string>
-  <string key="tei_stylesheets.open_folder">Otevřít složku</string>
   <string key="tei_stylesheets.show_licence">Zobrazit licenci</string>
   <string key="tei_stylesheets.check">Vyhledat aktualizaci</string>
   <string key="tei_stylesheets.up_to_date">TEI Stylesheets jsou aktuální (verze {version}).</string>

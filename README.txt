@@ -25,6 +25,9 @@ VARIANS V0.9.2.2 — TEI STYLESHEETS
 • Licence des TEI Stylesheets : au choix, BSD à deux clauses ou
   CC BY-SA 3.0, © 2011–2020 TEI Consortium ; le fichier LICENCE les
   accompagne.
+• Compte rendu d'une transformation : « Ouvrir le dossier » ouvre le
+  dossier du résultat. Les boutons et textes standard des fenêtres
+  (« Montrer les détails… », « Fermer »…) suivent la langue de l'interface.
 • Plus tard : DOCX, ODT, EPUB, HTML en plusieurs fichiers.
 • Le format de project.xml ne change pas. Voir XSLT_SCENARIOS.md.
 

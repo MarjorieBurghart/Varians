@@ -272,7 +272,7 @@ class TeiStylesheetsDialog(QDialog):
         self.source_label = QLabel(self)
         self.folder_label = QLineEdit(self)                     # un long chemin : lu en entier
         self.folder_label.setReadOnly(True)
-        self.open_folder_btn = QPushButton(_t("tei_stylesheets.open_folder"), self)
+        self.open_folder_btn = QPushButton(_t("common.open_folder"), self)
         self.open_folder_btn.clicked.connect(self.open_folder)
         self.licence_label = QLabel(_t("tei_stylesheets.licence.text"), self)
         self.licence_label.setWordWrap(True)

@@ -85,8 +85,10 @@ class DialogScript:
     « question », « warning », « critical », « information » (méthodes
     statiques de QMessageBox), « box » (QMessageBox construite puis
     ``exec()``) ou « dialog » (toute autre QDialog ``exec()``). Pour « box »,
-    ``answer`` est le rôle du bouton à cliquer (``QMessageBox.ButtonRole``)
-    ou ``None`` pour fermer sans choix. Pour « dialog », ``answer`` est une
+    ``answer`` est le rôle du bouton à cliquer (``QMessageBox.ButtonRole``),
+    le texte de ce bouton (quand plusieurs boutons ont le même rôle, comme
+    « Montrer les détails… »), ou ``None`` pour fermer sans choix. Pour
+    « dialog », ``answer`` est une
     fonction qui reçoit la boîte et renvoie le code de retour de ``exec()``.
     Chaque boîte affichée est enregistrée dans ``seen``.
     """
@@ -126,10 +128,10 @@ class DialogScript:
         if role is None:
             return 0
         for button in box.buttons():
-            if box.buttonRole(button) == role:
+            if (button.text() == role) if isinstance(role, str) else (box.buttonRole(button) == role):
                 button.click()
                 return 0
-        raise UnexpectedDialog(f"Aucun bouton de rôle {role} dans « {box.windowTitle()} »")
+        raise UnexpectedDialog(f"Aucun bouton {role!r} dans « {box.windowTitle()} »")
 
     # QDialog(...) … dlg.exec() ---------------------------------------------
     def dialog_exec(self, dialog):

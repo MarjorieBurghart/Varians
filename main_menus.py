@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QApplication, QLabel, QLineEdit, QMenu, QSizePolicy, QToolBar, QToolButton, QWidget,
 )
 from app_context import (
-    _settings, clear_recent_projects, current_i18n, recent_project_paths,
+    _settings, apply_qt_language, clear_recent_projects, current_i18n, recent_project_paths,
     remember_recent_project, tr as _t,
 )
 from help_dialogs import (
@@ -324,6 +324,7 @@ class MainMenusMixin:
             return
         if not I18N.set_language(code):
             return
+        apply_qt_language(code)
         _settings().setValue("startupLanguage", code)
         try:
             update_project_language(self.project.path, code)
