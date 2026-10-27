@@ -116,6 +116,11 @@ class ValidationPanelMixin:
         self.validation_title.setFont(title_font)
         self.validation_summary = QLabel(_t("rng.panel.no_validation"))
         self.validation_summary.setWordWrap(True)
+        # Déclarations Schematron du document (V0.9.2.5).
+        self.validation_rules = QToolButton(panel)
+        self.validation_rules.setText(_t("schematron.panel.rules_button"))
+        self.validation_rules.setToolTip(_t("schematron.panel.rules_button.tip"))
+        self.validation_rules.clicked.connect(self.schematron_rules_dialog)
         self.validation_refresh = QToolButton(panel)
         self.validation_refresh.setText("↻")
         self.validation_refresh.setToolTip(_t("rng.panel.refresh"))
@@ -126,6 +131,7 @@ class ValidationPanelMixin:
         self.validation_close.clicked.connect(self.hide_validation_panel)
         head.addWidget(self.validation_title)
         head.addWidget(self.validation_summary, 1)
+        head.addWidget(self.validation_rules)
         head.addWidget(self.validation_refresh)
         head.addWidget(self.validation_close)
         root.addLayout(head)
@@ -431,6 +437,10 @@ class ValidationPanelMixin:
         self.validate_relaxng_document(show_panel=True, show_success_message=True, refresh_schema=True)
 
     def _set_schematron_label(self, text="", style="", tip=""):
+        """L'étiquette Schematron de la barre d'état ; un clic ouvre la boîte
+        des règles (V0.9.2.5), que l'info-bulle annonce."""
+        if text:
+            tip = "\n".join(part for part in (tip, _t("schematron.tip.click")) if part)
         self.schematron_status.setText(text)
         self.schematron_status.setStyleSheet(style)
         self.schematron_status.setToolTip(tip)

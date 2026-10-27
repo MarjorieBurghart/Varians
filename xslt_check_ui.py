@@ -71,6 +71,9 @@ class StylesheetCheckMixin:
         self.action_validate_rng.setText(_t(action))
         self.action_validate_rng.setToolTip(_t(tip))
         self.validation_title.setText(_t(title))
+        # Les déclarations Schematron sont celles d'un document XML.
+        if hasattr(self, "validation_rules"):
+            self.validation_rules.setEnabled(action == "toolbar.validate_rng")
 
     # --- Vérification ------------------------------------------------------------
 

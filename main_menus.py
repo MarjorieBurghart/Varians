@@ -434,8 +434,10 @@ class MainMenusMixin:
         self.left_tabs.setTabText(1, _t("tab.preview"))
         self.validation_refresh.setToolTip(_t("rng.panel.refresh"))
         self.validation_close.setToolTip(_t("rng.panel.close"))
+        self.validation_rules.setText(_t("schematron.panel.rules_button"))
+        self.validation_rules.setToolTip(_t("schematron.panel.rules_button.tip"))
         self.validation_table.setHorizontalHeaderLabels([
-            _t("rng.column.level"), _t("rng.column.line"),
+            _t("rng.column.level"), _t("rng.column.origin"), _t("rng.column.line"),
             _t("rng.column.column"), _t("rng.column.message"), _t("rng.column.document"),
         ])
         self.source_wrap_element_action.setText(_t("fragment.wrap"))
