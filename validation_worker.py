@@ -18,13 +18,15 @@ assemblée par XInclude (``relaxng_validation.validate_document``) ; avec
 ``schematron`` (V0.9.2.3), les règles Schematron de ces sources sont
 appliquées ensuite, et le schéma RELAX NG peut manquer (None) ; avec
 ``rules`` (V0.9.2.5, ``{chemin: texte}``), le texte non enregistré d'un
-fichier de règles remplace celui du disque. La sortie
+fichier de règles, ou (V0.9.2.6) d'un fichier qu'il inclut, remplace celui
+du disque. La sortie
 d'erreur du processus est un fichier temporaire (``stderr_log``, nommé par
 la variable ``VARIANS_STDERR_LOG``), où Saxon écrit le détail d'une règle
 incorrecte ; il est effacé à l'arrêt du processus.
 
 ``check_schematron`` et ``check_schematron_async`` (V0.9.2.4) vérifient de
-la même façon le texte d'un fichier Schematron (``schematron_check``).
+la même façon le texte d'un fichier Schematron (``schematron_check``), avec
+(V0.9.2.6) le texte non enregistré des fichiers qu'il inclut (``texts``).
 
 **Repli** : si le processus ne démarre pas ou s'arrête, la validation se fait
 dans Varians même, comme avant la V0.8.9.2 (la fenêtre est alors bloquée
@@ -126,15 +128,16 @@ class RelaxNGWorkerClient(QObject):
         pendant l'attente, sans traiter clics ni frappes."""
         return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules))
 
-    def check_schematron_async(self, text, path, owner, callback):
+    def check_schematron_async(self, text, path, owner, callback, texts=None):
         """Vérifie sans attendre le texte du fichier Schematron *path* (voir
-        ``validate_async``)."""
-        return self._submit(_check_request(text, path), owner, callback)
+        ``validate_async``) ; *texts* : ``{chemin: texte}`` des fichiers
+        inclus non enregistrés (V0.9.2.6)."""
+        return self._submit(_check_request(text, path, texts), owner, callback)
 
-    def check_schematron(self, text, path):
+    def check_schematron(self, text, path, texts=None):
         """Vérifie le texte du fichier Schematron *path* et rend le résultat
         (voir ``validate``)."""
-        return self._wait(_check_request(text, path))
+        return self._wait(_check_request(text, path, texts))
 
     def _wait(self, request):
         if QCoreApplication.instance() is None:             # pas de boucle d'événements
@@ -278,7 +281,7 @@ class RelaxNGWorkerClient(QObject):
     def _validate_here(request):
         if request["op"] == "check_schematron":
             from schematron_check import check
-            return check(request["text"], request["path"])
+            return check(request["text"], request["path"], request.get("texts"))
         return validate_document(request["xml"], request["schema"] or None, request.get("base_url") or None,
                                  request.get("parts"), request.get("schematron"), request.get("rules"))
 
@@ -333,8 +336,11 @@ def _validate_request(xml_text, schema_path, base_url, parts, schematron, rules=
     return request
 
 
-def _check_request(text, path):
-    return {"op": "check_schematron", "text": text, "path": str(path)}
+def _check_request(text, path, texts=None):
+    request = {"op": "check_schematron", "text": text, "path": str(path)}
+    if texts:
+        request["texts"] = {str(file): content for file, content in texts.items()}
+    return request
 
 
 _client = None

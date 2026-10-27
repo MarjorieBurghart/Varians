@@ -234,6 +234,61 @@ def test_an_incomplete_check_request_is_refused(request_):
     assert response == {"id": 5, "error": "check_schematron needs 'text' and 'path'"}
 
 
+# --- Fichiers inclus non enregistrés (V0.9.2.6) --------------------------------------
+
+INCLUDED = (f'<sch:pattern xmlns:sch="{SCH_NS}" id="inclus">\n'
+            '  <sch:rule context="p"><sch:assert test="@n">Sans numéro.</sch:assert></sch:rule>\n'
+            '</sch:pattern>\n')
+WITH_INCLUSION = RULES.replace("  <sch:pattern", '  <sch:include href="motifs.sch"/>\n  <sch:pattern', 1)
+# Ligne 3 : une phase qui cite le groupe du fichier inclus.
+WITH_PHASE = WITH_INCLUSION.replace("  <sch:include", '  <sch:phase id="tout"><sch:active pattern="inclus"/>'
+                                    '</sch:phase>\n  <sch:include', 1)
+
+
+@pytest.fixture
+def motifs(tmp_path):
+    """``motifs.sch``, inclus par les règles ; enregistré sous un autre
+    identifiant que celui que cite ``WITH_PHASE``."""
+    path = tmp_path / "motifs.sch"
+    path.write_text(INCLUDED.replace('id="inclus"', 'id="ancien"'), encoding="utf-8")
+    return path
+
+
+def test_a_reference_to_a_pattern_of_an_unsaved_included_file_is_not_an_error(tmp_path, motifs):
+    assert _rows(_check(tmp_path, WITH_PHASE)) == [("RELAXNGV", "", 3)]
+    assert check(WITH_PHASE, tmp_path / "regles.sch", texts={str(motifs): INCLUDED}).issues == ()
+
+
+@needs_saxon
+def test_an_incorrect_expression_of_an_unsaved_included_file_is_given_at_its_line(tmp_path, motifs):
+    assert _check(tmp_path, WITH_INCLUSION).valid
+    texts = {str(motifs): "\n" + INCLUDED.replace('test="@n"', 'test="@n["')}
+    [issue] = check(WITH_INCLUSION, tmp_path / "regles.sch", texts=texts).issues
+    assert (issue.type_name, issue.file, issue.line) == ("xpath", str(motifs.resolve()), 3)
+
+
+def test_a_malformed_unsaved_included_file_is_given_at_its_line(tmp_path, motifs):
+    [issue] = check(WITH_INCLUSION, tmp_path / "regles.sch", texts={str(motifs): "\n<sch:pattern"}).issues
+    assert (issue.type_name, issue.file, issue.line) == ("malformed", str(motifs.resolve()), 2)
+
+
+def test_the_validation_process_checks_with_the_unsaved_included_files(tmp_path, motifs):
+    request = {"id": 6, "op": "check_schematron", "text": WITH_PHASE, "path": str(tmp_path / "regles.sch")}
+    assert not result_from_dict(handle_request(request)["result"]).valid
+    response = handle_request(dict(request, texts={str(motifs): INCLUDED}))
+    assert result_from_dict(response["result"]).valid
+    assert handle_request(dict(request, texts=["motifs.sch"])) == {
+        "id": 6, "error": "'texts' must map paths to texts"}
+
+
+def test_a_check_request_carries_the_unsaved_included_files():
+    from validation_worker import _check_request
+    assert _check_request("<schema/>", "regles.sch") == {"op": "check_schematron", "text": "<schema/>",
+                                                         "path": "regles.sch"}
+    assert _check_request("<schema/>", "regles.sch", {"motifs.sch": "<pattern/>"})["texts"] == {
+        "motifs.sch": "<pattern/>"}
+
+
 def test_the_module_needs_neither_qt_nor_saxon_to_be_imported():
     import subprocess
     code = "import sys, schematron_check; print('PySide6' in sys.modules, 'saxonche' in sys.modules)"

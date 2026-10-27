@@ -176,19 +176,23 @@ def _stat_signature(paths: tuple[Path, ...]) -> tuple:
 
 XSD_NS = "http://www.w3.org/2001/XMLSchema"
 _XSD_INCLUSIONS = {"include", "import", "redefine", "override"}
+_SCH_NS = "http://purl.oclc.org/dsdl/schematron"
 
 
 def dependency_reference(elem) -> tuple[str, str] | None:
     """``(attribut, adresse)`` d'un élément qui inclut un autre fichier de
     schéma : ``include``/``externalRef`` RELAX NG ou Schematron (``href``),
-    ou (V0.9.2.5) ``xs:include``, ``xs:import``, ``xs:redefine`` et
-    ``xs:override`` d'un XSD (``schemaLocation``) ; sinon None."""
+    (V0.9.2.5) ``xs:include``, ``xs:import``, ``xs:redefine`` et
+    ``xs:override`` d'un XSD (``schemaLocation``), ou (V0.9.2.6)
+    ``sch:extends`` d'une Schematron 2020 (``href``) ; sinon None."""
     tag = elem.tag if isinstance(elem.tag, str) else ""
     namespace, _brace, local = tag[1:].rpartition("}") if tag.startswith("{") else ("", "", tag)
     if namespace == XSD_NS:
         attribute = "schemaLocation" if local in _XSD_INCLUSIONS else None
+    elif local in {"include", "externalRef"} or (namespace == _SCH_NS and local == "extends"):
+        attribute = "href"
     else:
-        attribute = "href" if local in {"include", "externalRef"} else None
+        attribute = None
     href = (elem.get(attribute) or "").strip() if attribute else ""
     return (attribute, href) if href else None
 

@@ -538,6 +538,125 @@ def test_a_changed_included_xsd_is_compiled_again(xsd):
     assert _found(validate(_tree(DOC), [xsd]))[0][2] == "Pas de vers."
 
 
+# --- Fichiers inclus non enregistrés (V0.9.2.6) -------------------------------------
+
+def _motif(rule, extra=""):
+    return f'<pattern xmlns="{SCH}" id="inclus"{extra}>{rule}</pattern>\n'
+
+
+LG_ASSERT = '<assert test="tei:l">Inclus : groupe sans vers.</assert>'
+P_REPORT = '<report test="true()">Inclus : paragraphe.</report>'
+LG_INCLUDED = f'<rule context="tei:lg">{LG_ASSERT}</rule>'
+P_INCLUDED = f'<rule context="tei:p">{P_REPORT}</rule>'
+
+
+@pytest.fixture
+def included(tmp_path):
+    """``principal.sch``, qui inclut ``sous/motif.sch`` (enregistré : la
+    règle des groupes de vers) ; rend le chemin des deux."""
+    (tmp_path / "sous").mkdir()
+    motif = _write(tmp_path / "sous", "motif.sch", _motif(LG_INCLUDED))
+    return _write(tmp_path, "principal.sch", _sch('<include href="sous/motif.sch"/>')), motif
+
+
+@needs_saxon
+def test_the_unsaved_text_of_an_included_file_is_applied(included):
+    sch, motif = included
+    report = validate(_tree(DOC), [sch], texts={str(motif): _motif(P_INCLUDED)})
+    assert _found(report) == [(5, "ERROR", "Inclus : paragraphe.")] and report.rules == (str(sch),)
+    # Sans texte, le fichier enregistré.
+    assert _found(validate(_tree(DOC), [sch])) == [(4, "ERROR", "Inclus : groupe sans vers.")]
+
+
+@needs_saxon
+def test_an_unsaved_included_file_includes_from_its_own_folder(included, tmp_path):
+    sch, motif = included
+    regle = _write(tmp_path / "sous", "regle.sch", f'<rule xmlns="{SCH}" context="tei:p">'
+                                                   '<report test="true()">Règle de sous/regle.sch.</report></rule>\n')
+    text = _motif('<include href="regle.sch"/>')
+    assert _found(validate(_tree(DOC), [sch], texts={str(motif): text})) == [
+        (5, "ERROR", "Règle de sous/regle.sch.")]
+    # Le fichier qu'il inclut, lui aussi non enregistré, et le fichier principal.
+    texts = {str(motif): text, str(regle): f'<rule xmlns="{SCH}" context="tei:lg">'
+                                           '<report test="true()">Règle non enregistrée.</report></rule>\n',
+             str(sch): _sch('<include href="sous/motif.sch"/>\n' + P_RULE)}
+    assert sorted(message for _line, _level, message in _found(validate(_tree(DOC), [sch], texts=texts))) == [
+        "Paragraphe.", "Règle non enregistrée."]
+
+
+@needs_saxon
+def test_a_saved_file_between_the_source_and_an_unsaved_one_is_followed(tmp_path):
+    # haut.sch (enregistré) → milieu.sch (enregistré) → sous/regle.sch (non enregistré).
+    (tmp_path / "sous").mkdir()
+    regle = _write(tmp_path / "sous", "regle.sch", f'<rule xmlns="{SCH}" context="tei:lg">{LG_ASSERT}</rule>\n')
+    _write(tmp_path, "milieu.sch", _motif('<include href="sous/regle.sch"/>'))
+    sch = _write(tmp_path, "haut.sch", _sch('<include href="milieu.sch"/>'))
+    assert _found(validate(_tree(DOC), [sch])) == [(4, "ERROR", "Inclus : groupe sans vers.")]
+    texts = {str(regle): f'<rule xmlns="{SCH}" context="tei:p">{P_REPORT}</rule>\n'}
+    assert _found(validate(_tree(DOC), [sch], texts=texts)) == [(5, "ERROR", "Inclus : paragraphe.")]
+
+
+@needs_saxon
+def test_a_new_text_of_an_included_file_replaces_the_compiled_rules(included):
+    sch, motif = included
+    for message in ("Un.", "Deux.", "Deux."):
+        texts = {str(motif): _motif(P_INCLUDED.replace("Inclus : paragraphe.", message))}
+        assert _found(validate(_tree(DOC), [sch], texts=texts))[0][2] == message
+    assert schematron.cache_info() == {"entries": 1, "compilations": 2}
+
+
+@needs_saxon
+def test_an_incorrect_rule_of_an_unsaved_included_file_is_given_at_its_line(included):
+    sch, motif = included
+    text = "\n\n" + _motif(LG_INCLUDED.replace('test="tei:l"', 'test="tei:l["'))
+    [error] = validate(_tree(DOC), [sch], texts={str(motif): text}).errors
+    assert (error.type_name, error.file, error.line) == ("xpath", str(motif), 3)
+
+
+def test_a_malformed_unsaved_included_file_is_an_error_at_its_line(included):
+    sch, motif = included
+    [error] = validate(_tree(DOC), [sch], texts={str(motif): "\n<pattern"}).errors
+    assert (error.type_name, error.file, error.line) == ("malformed", str(motif), 2)
+
+
+@needs_saxon
+def test_the_phases_of_an_unsaved_included_file_are_used(included, tmp_path):
+    sch, _motif_path = included
+    phase = _write(tmp_path, "phase.sch", f'<phase xmlns="{SCH}" id="ancienne"><active pattern="inclus"/></phase>\n')
+    sch.write_text(_sch('<include href="phase.sch"/>\n<include href="sous/motif.sch"/>'), encoding="utf-8")
+    texts = {str(phase): f'<phase xmlns="{SCH}" id="nouvelle"><active pattern="inclus"/></phase>\n'}
+    assert validate(_tree(DOC), [SchematronSource(sch, "nouvelle")], texts=texts).errors == ()
+    [error] = validate(_tree(DOC), [SchematronSource(sch, "ancienne")], texts=texts).errors
+    assert error.message == "ancienne\tnouvelle"
+
+
+@needs_saxon
+def test_the_rules_of_an_unsaved_included_rng_are_applied(tei_rng):
+    dates = tei_rng.parent / "dates.rng"
+    texts = {str(dates): DATES_RNG.replace("n'est pas au format AAAA-MM-JJ", "est mal écrite")}
+    messages = [message for _line, _level, message in _found(validate(_tree(DOC), [tei_rng], texts=texts))]
+    assert "La date « mars 1290 » est mal écrite." in messages
+
+
+@needs_saxon
+def test_a_library_extended_by_href_can_be_unsaved(tmp_path):
+    library = _write(tmp_path, "biblio.sch", f'<library xmlns="{SCH}">{_motif(LG_INCLUDED)}</library>\n')
+    sch = _write(tmp_path, "principal.sch", _sch('<extends href="biblio.sch"/>'))
+    assert _found(validate(_tree(DOC), [sch]))[0][2] == "Inclus : groupe sans vers."
+    texts = {str(library): f'<library xmlns="{SCH}">{_motif(P_INCLUDED)}</library>\n'}
+    assert _found(validate(_tree(DOC), [sch], texts=texts)) == [(5, "ERROR", "Inclus : paragraphe.")]
+
+
+def test_the_rules_files_follow_the_unsaved_texts(included, tmp_path):
+    sch, motif = included
+    nouveau = _write(tmp_path, "nouveau.sch", _motif(P_INCLUDED))
+    assert schematron.rules_files(sch) == (sch, motif)
+    texts = {str(sch): _sch('<include href="nouveau.sch"/>')}
+    assert schematron.rules_files(sch, texts) == (sch, nouveau)
+    assert schematron.rules_files(sch, {str(motif): _motif('<include href="../nouveau.sch"/>')}) == (
+        sch, motif, nouveau)
+
+
 # --- Cache ------------------------------------------------------------------------
 
 @needs_saxon
