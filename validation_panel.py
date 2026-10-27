@@ -59,9 +59,11 @@ _ORIGINS = {"SCHEMATRON": "rng.origin.schematron", "XINCLUDE": "rng.origin.xincl
             RULES_DOMAIN: "rng.origin.schematron_rules"}
 # Codes des règles incorrectes (schematron.SchematronReport.errors) ;
 # « declaration » : une déclaration Schematron que la résolution n'a pas pu
-# suivre ; « assembly » : l'assemblage des règles, à la vérification d'un
-# fichier .sch (schematron_check).
+# suivre ; « assembly » et, pour la structure, « element », « attribute »,
+# « required » : à la vérification d'un fichier .sch (schematron_check).
 _RULES_CODES = ("missing", "malformed", "xpath", "compile", "runtime", "declaration", "assembly")
+# Codes dont le message est « nom, tabulation, parent ».
+_STRUCTURE_CODES = ("element", "attribute", "required")
 
 
 def _is_error(issue):
@@ -75,6 +77,9 @@ def _rules_message(issue):
     if issue.type_name == "phase":
         phase, _tab, phases = issue.message.partition("\t")
         return _t("schematron.rules.phase", phase=phase, phases=phases or "—")
+    if issue.type_name in _STRUCTURE_CODES:
+        name, _tab, parent = issue.message.partition("\t")
+        return _t(f"schematron.rules.{issue.type_name}", name=name, parent=parent)
     code = issue.type_name if issue.type_name in _RULES_CODES else "compile"
     return _t(f"schematron.rules.{code}", detail=issue.message or issue.file)
 

@@ -373,6 +373,9 @@
   <string key="schematron.rules.xpath">Ошибка в выражении XPath: {detail}</string>
   <string key="schematron.rules.compile">Ошибка в правилах: {detail}</string>
   <string key="schematron.rules.assembly">Несогласованные правила: {detail}</string>
+  <string key="schematron.rules.element">Элемент «{name}» не допускается в этом месте в «{parent}»</string>
+  <string key="schematron.rules.attribute">Атрибут «{name}» не допускается у «{parent}»</string>
+  <string key="schematron.rules.required">Атрибут «{name}» обязателен у «{parent}»</string>
   <string key="schematron.rules.runtime">Ошибка при выполнении правил: {detail}</string>
   <string key="schematron.rules.declaration">Не удаётся разрешить объявление Schematron: {detail}</string>
   <string key="schematron.rules.add.title">Файл правил</string>

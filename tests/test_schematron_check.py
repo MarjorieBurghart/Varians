@@ -90,10 +90,46 @@ def test_malformed_rules_are_not_checked_further(tmp_path):
     assert any(issue.domain == "PARSER" and issue.line == 6 for issue in result.issues)
 
 
-def test_a_structure_error_is_given_at_its_line(tmp_path):
-    result = _check(tmp_path, RULES.replace('<sch:rule context="lg">', "<sch:rule>"))
+@pytest.mark.parametrize("old, new, expected", [
+    # Attribut obligatoire, attribut inconnu, élément mal placé ou inconnu :
+    # une erreur à sa ligne, sans les messages en cascade de libxml2.
+    ('<sch:rule context="lg">', "<sch:rule>", [("required", 4, "context\tsch:rule")]),
+    ('test="l" severity', 'test="l" niveau="x" severity', [("attribute", 5, "niveau\tsch:assert")]),
+    ('<sch:assert test="l" severity="warning">Groupe sans vers.</sch:assert>',
+     '<sch:asert test="l">Groupe sans vers.</sch:asert>', [("element", 5, "sch:asert\tsch:rule")]),
+    ('  <sch:pattern id="vers">\n', '  <sch:pattern id="vers">\n    <sch:ns prefix="t" uri="u"/>\n',
+     [("element", 4, "sch:ns\tsch:pattern")]),
+])
+def test_a_structure_error_is_given_at_its_line(tmp_path, old, new, expected):
+    result = _check(tmp_path, RULES.replace(old, new, 1))
     assert not result.valid
-    assert any(domain == "RELAXNGV" and line == 4 for domain, _code, line in _rows(result))
+    assert [(issue.type_name, issue.line, issue.message) for issue in result.issues] == expected
+    assert all(issue.domain == "SCHEMATRON_RULES" for issue in result.issues)
+
+
+def test_an_element_out_of_order_is_reported_once(tmp_path):
+    text = RULES.replace(
+        "</sch:schema>", '  <sch:ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>\n</sch:schema>')
+    result = _check(tmp_path, text)
+    assert [(issue.type_name, issue.line) for issue in result.issues] == [("element", 8)]
+
+
+def test_foreign_elements_and_attributes_are_allowed(tmp_path):
+    text = RULES.replace('<sch:schema xmlns:sch=', '<sch:schema xmlns:xsl="http://www.w3.org/1999/XSL/Transform" '
+                         'xmlns:v="urn:varians" v:note="x" xmlns:sch=').replace(
+        "  <sch:pattern", '  <xsl:function name="v:f"><xsl:sequence select="1"/></xsl:function>\n  <sch:pattern', 1)
+    assert _check(tmp_path, text).valid
+
+
+def test_an_included_fragment_is_checked_on_its_own(tmp_path):
+    fragment = (f'<sch:pattern xmlns:sch="{SCH_NS}" id="inclus">\n'
+                '  <sch:rule context="p"><sch:assert test="@n">Sans numéro.</sch:assert></sch:rule>\n'
+                '</sch:pattern>\n')
+    assert _check(tmp_path, fragment, "motifs.sch").valid
+    result = _check(tmp_path, fragment.replace('test="@n"', 'test="@n" role="x"'), "motifs.sch")
+    assert result.valid                                              # attribut role permis
+    result = _check(tmp_path, fragment.replace('<sch:rule context="p">', "<sch:rule>"), "motifs.sch")
+    assert [(issue.type_name, issue.line) for issue in result.issues] == [("required", 2)]
 
 
 def test_an_unknown_reference_is_given_at_the_line_of_its_element(tmp_path):
@@ -160,11 +196,11 @@ def test_an_inconsistency_of_the_assembled_rules_is_given_at_its_line(tmp_path):
     assert issue.file == str((tmp_path / "motifs.sch").resolve()) and "vers" in issue.message
 
 
-@needs_saxon
-def test_an_unknown_diagnostic_is_reported(tmp_path):
+def test_an_unknown_diagnostic_is_reported_once_at_its_line(tmp_path):
+    # Par le schéma ISO (IDREFS) ; la compilation, qui le dirait aussi,
+    # n'est pas tentée.
     text = RULES.replace('test="l"', 'test="l" diagnostics="d"')
-    result = _check(tmp_path, text)
-    assert ("SCHEMATRON_RULES", "assembly", 5) in _rows(result)
+    assert _rows(_check(tmp_path, text)) == [("RELAXNGV", "", 5)]
 
 
 def test_without_saxon_the_structure_is_still_checked(tmp_path, monkeypatch):
@@ -173,8 +209,9 @@ def test_without_saxon_the_structure_is_still_checked(tmp_path, monkeypatch):
     monkeypatch.setitem(sys.modules, "saxonche", None)
     result = _check(tmp_path, RULES.replace('test="l"', 'test="l["'))
     assert result.valid and result.schematron_error == "saxon_missing"
+    # Une erreur de structure : la compilation n'est pas tentée.
     result = _check(tmp_path, RULES.replace('<sch:rule context="lg">', "<sch:rule>"))
-    assert not result.valid and result.schematron_error == "saxon_missing"
+    assert not result.valid and [issue.type_name for issue in result.issues] == ["required"]
 
 
 # --- Processus de validation ---------------------------------------------------------

@@ -359,6 +359,9 @@ It has been removed from the recent-project list.</string>
   <string key="schematron.rules.xpath">Incorrect XPath expression: {detail}</string>
   <string key="schematron.rules.compile">Incorrect rules: {detail}</string>
   <string key="schematron.rules.assembly">Inconsistent rules: {detail}</string>
+  <string key="schematron.rules.element">Element “{name}” not allowed at this place in “{parent}”</string>
+  <string key="schematron.rules.attribute">Attribute “{name}” not allowed on “{parent}”</string>
+  <string key="schematron.rules.required">Attribute “{name}” required on “{parent}”</string>
   <string key="schematron.rules.runtime">Error while running the rules: {detail}</string>
   <string key="schematron.rules.declaration">Schematron declaration cannot be resolved: {detail}</string>
   <string key="schematron.rules.add.title">Rules file</string>

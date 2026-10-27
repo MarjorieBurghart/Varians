@@ -102,9 +102,10 @@ def test_a_structure_error_is_listed_at_its_line(open_window, with_rules):
     window = open_window(with_rules(STRUCTURE))
     _show(window)
     window.action_validate_rng.trigger()
-    rows = _rows(window)
-    assert [tr("rng.level.error"), "RELAX NG", "5"] in [row[:3] for row in rows]
-    assert window.rng_status.text() == tr("schematron_check.status.invalid", count=_errors(window))
+    # Une seule erreur, à sa ligne, sans les messages en cascade de libxml2.
+    assert _rows(window) == [[tr("rng.level.error"), tr("rng.origin.schematron_rules"), "5",
+                              tr("schematron.rules.attribute", name="sorte", parent="sch:rule")]]
+    assert window.rng_status.text() == tr("schematron_check.status.invalid", count=1)
     assert window.document.health == "rng_invalid"
 
 

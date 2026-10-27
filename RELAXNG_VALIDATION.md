@@ -376,12 +376,23 @@ frappe après F8, enregistrement. Opération du processus
 1. bonne formation (domaine `PARSER`) ;
 2. structure d'après `resources/schemas/schematron/iso-schematron.rng`
    (ISO/IEC 19757-3 2016, copie de lxml complétée de `@severity`, voir son
-   LISEZMOI) : erreurs `RELAXNGV` à leur ligne ; une référence `IDREF` à un
-   identifiant d'un fichier inclus est retirée ; une référence inconnue,
-   que libxml2 ne situe pas, est donnée à la ligne de l'élément qui la porte ;
+   LISEZMOI). Ce schéma est fait d'`interleave` : libxml2 y donne, pour une
+   seule faute, une cascade de messages souvent sans ligne ou trompeurs.
+   `_structure_errors` parcourt donc l'arbre avec le modèle de complétion
+   du schéma (`schematron_completion`, attentif à l'ordre des frères) : une
+   erreur par élément non permis à sa place (`element`), attribut sans
+   espace de noms inconnu (`attribute`), attribut obligatoire absent
+   (`required`, table `_REQUIRED`), message « nom, tabulation, parent ».
+   Les éléments et attributs étrangers sont permis. S'il ne trouve rien,
+   libxml2 sert de repli (`RELAXNGV`, types de données, `IDREF`…) : une
+   référence `IDREF` à un identifiant d'un fichier inclus est retirée ; une
+   référence inconnue, que libxml2 ne situe pas, est donnée à la ligne de
+   l'élément qui la porte. Un fichier inclus (racine autre que
+   `sch:schema`) n'est vérifié que par `_structure_errors` ;
 3. inclusions : un `sch:include` vers un fichier absent → `missing` à sa
-   ligne, sans compilation ;
-4. compilation (`schematron.check_compilation`) du texte de l'éditeur, base
+   ligne ;
+4. si rien n'a été trouvé et que la racine est `sch:schema`, compilation
+   (`schematron.check_compilation`) du texte de l'éditeur, base
    = le chemin du fichier, phase `#ALL`, avec un second transpileur où
    `schxslt:check-assembled-schema` est vrai et dont les `xsl:message` sont
    gardés (`set_save_xsl_message`) : erreurs d'assemblage (`assembly`,

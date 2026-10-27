@@ -373,6 +373,9 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="schematron.rules.xpath">Fehlerhafter XPath-Ausdruck: {detail}</string>
   <string key="schematron.rules.compile">Fehlerhafte Regeln: {detail}</string>
   <string key="schematron.rules.assembly">Widersprüchliche Regeln: {detail}</string>
+  <string key="schematron.rules.element">Element „{name}“ ist an dieser Stelle in „{parent}“ nicht erlaubt</string>
+  <string key="schematron.rules.attribute">Attribut „{name}“ ist bei „{parent}“ nicht erlaubt</string>
+  <string key="schematron.rules.required">Attribut „{name}“ ist bei „{parent}“ erforderlich</string>
   <string key="schematron.rules.runtime">Fehler beim Ausführen der Regeln: {detail}</string>
   <string key="schematron.rules.declaration">Schematron-Deklaration nicht auflösbar: {detail}</string>
   <string key="schematron.rules.add.title">Regeldatei</string>

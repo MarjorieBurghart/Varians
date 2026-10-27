@@ -373,6 +373,9 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="schematron.rules.xpath">Espressione XPath errata: {detail}</string>
   <string key="schematron.rules.compile">Regole errate: {detail}</string>
   <string key="schematron.rules.assembly">Regole incoerenti: {detail}</string>
+  <string key="schematron.rules.element">Elemento «{name}» non consentito in questo punto di «{parent}»</string>
+  <string key="schematron.rules.attribute">Attributo «{name}» non consentito su «{parent}»</string>
+  <string key="schematron.rules.required">Attributo «{name}» obbligatorio su «{parent}»</string>
   <string key="schematron.rules.runtime">Errore durante l’esecuzione delle regole: {detail}</string>
   <string key="schematron.rules.declaration">Dichiarazione Schematron non risolvibile: {detail}</string>
   <string key="schematron.rules.add.title">File di regole</string>
