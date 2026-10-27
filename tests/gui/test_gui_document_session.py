@@ -102,6 +102,34 @@ def test_switching_documents_keeps_separate_undo_histories(qtbot, editor_module)
     assert editor.toPlainText() == "<a>premier</a>"
 
 
+def test_a_new_document_does_not_receive_the_scroll_of_the_previous_one(qtbot, editor_module, monkeypatch):
+    """V0.9.2.6 : la position de défilement du document quitté, appliquée
+    un instant au nouveau document pendant ``setDocument``, pouvait faire
+    osciller les barres de défilement sans fin (Varians figé en passant
+    d'une partie modifiée de l'édition à un court fichier .sch). L'éditeur
+    revient en haut avant de changer de document ; la position du document
+    quitté est déjà gardée par la fenêtre (``_remember_document_view``)."""
+    from PySide6.QtGui import QTextDocument
+
+    editor, _first = _code_editor(qtbot, editor_module, "\n".join(f"<l n='{i}'>{'x' * 200}</l>" for i in range(300)))
+    editor.resize(500, 300)
+    editor.show()
+    editor.verticalScrollBar().setValue(120)
+    editor.horizontalScrollBar().setValue(80)
+    real = editor_module.CodeEditor.setDocument
+
+    def checked(self, document):
+        # Sans la remise à zéro, l'appel réel ne rendrait pas la main.
+        assert (self.verticalScrollBar().value(), self.horizontalScrollBar().value()) == (0, 0)
+        real(self, document)
+
+    monkeypatch.setattr(editor_module.CodeEditor, "setDocument", checked)
+    second = QTextDocument(editor)
+    second.setPlainText("<p>court</p>")
+    editor.set_text_document(second)
+    assert editor.toPlainText() == "<p>court</p>"
+
+
 def test_document_signals_follow_the_displayed_document(qtbot, editor_module):
     from PySide6.QtGui import QTextCursor, QTextDocument
 

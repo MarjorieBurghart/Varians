@@ -11,6 +11,8 @@ VARIANS V0.9.2.6 — RÈGLES SCHEMATRON : FICHIERS INCLUS NON ENREGISTRÉS
   d'eux a changé (modifié, enregistré).
 • La boîte « Règles Schematron du document » propose aussi les phases
   définies dans les fichiers inclus non enregistrés.
+• Correction : Varians ne se fige plus en passant d'un long document,
+  défilé (une partie de l'édition, par exemple), à un document court.
 • Le format de project.xml ne change pas. Voir RELAXNG_VALIDATION.md.
 
 VARIANS V0.9.2.5 — RÈGLES SCHEMATRON : TEXTE NON ENREGISTRÉ, PHASE, NORME 2020, XSD

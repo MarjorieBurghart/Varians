@@ -275,3 +275,4 @@ Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.6 »).
 - `validation_panel.py` : `_open_unsaved_texts`, `_unsaved_rules_texts`, `_source_tip_name` (`schematron.tip.unsaved_included`), `_validation_outdated` (fichier Schematron).
 - `schematron_check_ui.py` : `_schematron_inclusions` (textes et jeton de la vérification).
 - `schematron_rules_dialog._declared_phases` : phases des fichiers inclus non enregistrés.
+- `code_editor.CodeEditor.set_text_document` : défilement remis en haut avant `setDocument` (correction : la position d'un long document défilé, appliquée un instant à un document court, faisait osciller les barres de défilement sans fin).
