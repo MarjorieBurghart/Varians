@@ -367,6 +367,7 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="schematron.panel.rules_error">Regole Schematron errate ({source}): {detail}</string>
   <string key="schematron.panel.saxon_missing">Regole Schematron non verificate: Saxon (pacchetto saxonche) non è installato.</string>
   <string key="schematron.tip.phase">{name} (fase {phase})</string>
+  <string key="schematron.tip.unsaved">{name}, non salvato</string>
   <string key="schematron.rules.missing">File di regole non trovato: {detail}</string>
   <string key="schematron.rules.malformed">File di regole mal formato: {detail}</string>
   <string key="schematron.rules.phase">Fase sconosciuta «{phase}»; fasi del file: {phases}</string>

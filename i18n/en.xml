@@ -353,6 +353,7 @@ It has been removed from the recent-project list.</string>
   <string key="schematron.panel.rules_error">Incorrect Schematron rules ({source}): {detail}</string>
   <string key="schematron.panel.saxon_missing">Schematron rules not checked: Saxon (the saxonche package) is not installed.</string>
   <string key="schematron.tip.phase">{name} (phase {phase})</string>
+  <string key="schematron.tip.unsaved">{name}, unsaved</string>
   <string key="schematron.rules.missing">Rules file not found: {detail}</string>
   <string key="schematron.rules.malformed">Malformed rules file: {detail}</string>
   <string key="schematron.rules.phase">Unknown phase “{phase}”; phases of the file: {phases}</string>

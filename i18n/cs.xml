@@ -367,6 +367,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="schematron.panel.rules_error">Chybná pravidla Schematron ({source}): {detail}</string>
   <string key="schematron.panel.saxon_missing">Pravidla Schematron nebyla zkontrolována: Saxon (balíček saxonche) není nainstalován.</string>
   <string key="schematron.tip.phase">{name} (fáze {phase})</string>
+  <string key="schematron.tip.unsaved">{name}, neuloženo</string>
   <string key="schematron.rules.missing">Soubor pravidel nenalezen: {detail}</string>
   <string key="schematron.rules.malformed">Soubor pravidel není správně utvořený: {detail}</string>
   <string key="schematron.rules.phase">Neznámá fáze „{phase}“; fáze souboru: {phases}</string>

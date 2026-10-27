@@ -16,7 +16,9 @@ jamais bloquée par la compilation d'un gros schéma.
 Avec ``parts`` (``{chemin: texte}``, même vide), l'édition est validée
 assemblée par XInclude (``relaxng_validation.validate_document``) ; avec
 ``schematron`` (V0.9.2.3), les règles Schematron de ces sources sont
-appliquées ensuite, et le schéma RELAX NG peut manquer (None). La sortie
+appliquées ensuite, et le schéma RELAX NG peut manquer (None) ; avec
+``rules`` (V0.9.2.5, ``{chemin: texte}``), le texte non enregistré d'un
+fichier de règles remplace celui du disque. La sortie
 d'erreur du processus est un fichier temporaire (``stderr_log``, nommé par
 la variable ``VARIANS_STDERR_LOG``), où Saxon écrit le détail d'une règle
 incorrecte ; il est effacé à l'arrêt du processus.
@@ -112,15 +114,17 @@ class RelaxNGWorkerClient(QObject):
 
     # --- Requêtes ---------------------------------------------------------------
 
-    def validate_async(self, xml_text, schema_path, base_url, owner, callback, parts=None, schematron=None):
+    def validate_async(self, xml_text, schema_path, base_url, owner, callback, parts=None, schematron=None,
+                       rules=None):
         """Valide sans attendre ; ``callback(result)`` est appelé dans le fil
         principal, sauf si ``owner`` (un QObject) a été détruit entre-temps."""
-        return self._submit(_validate_request(xml_text, schema_path, base_url, parts, schematron), owner, callback)
+        return self._submit(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules),
+                            owner, callback)
 
-    def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None):
+    def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None, rules=None):
         """Valide et renvoie le résultat ; la fenêtre continue de se redessiner
         pendant l'attente, sans traiter clics ni frappes."""
-        return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron))
+        return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules))
 
     def check_schematron_async(self, text, path, owner, callback):
         """Vérifie sans attendre le texte du fichier Schematron *path* (voir
@@ -276,7 +280,7 @@ class RelaxNGWorkerClient(QObject):
             from schematron_check import check
             return check(request["text"], request["path"])
         return validate_document(request["xml"], request["schema"] or None, request.get("base_url") or None,
-                                 request.get("parts"), request.get("schematron"))
+                                 request.get("parts"), request.get("schematron"), request.get("rules"))
 
     def _fall_back(self, reason):
         """Le processus est indisponible : valider désormais dans Varians, y
@@ -315,7 +319,7 @@ class RelaxNGWorkerClient(QObject):
         self._stop_process()
 
 
-def _validate_request(xml_text, schema_path, base_url, parts, schematron):
+def _validate_request(xml_text, schema_path, base_url, parts, schematron, rules=None):
     request = {"op": "validate", "xml": xml_text, "schema": str(schema_path) if schema_path else "",
                "base_url": str(base_url) if base_url else None}
     if parts is not None:
@@ -324,6 +328,8 @@ def _validate_request(xml_text, schema_path, base_url, parts, schematron):
         # Une source avec sa phase (SchematronSource) : [chemin, phase].
         request["schematron"] = [[str(getattr(source, "path", source)), getattr(source, "phase", "")]
                                  for source in schematron]
+        if rules:
+            request["rules"] = {str(path): text for path, text in rules.items()}
     return request
 
 

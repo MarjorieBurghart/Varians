@@ -30,6 +30,10 @@ le double-clic mène au fichier des règles, à la ligne de la règle (Varians
 propose d'ajouter aux documents un fichier du dossier du projet qui n'en est
 pas un). Un résultat dont le schéma ou les règles ont changé depuis est
 périmé : il est validé de nouveau à l'affichage du document.
+
+Règles non enregistrées (V0.9.2.5) : un fichier de règles ouvert et modifié
+est appliqué avec son texte non enregistré (``_rules_texts``) ; le jeton
+compte la révision de ce texte, et l'info-bulle le signale.
 """
 from __future__ import annotations
 
@@ -344,6 +348,16 @@ class ValidationPanelMixin:
                  and (session is self.document or session.modified)}
         return text_of(self.edition_session), parts
 
+    def _rules_texts(self, resolution):
+        """``{chemin: texte}`` des fichiers de règles de *resolution* ouverts
+        dans Varians et modifiés (V0.9.2.5) : leur texte non enregistré est
+        appliqué à la place du disque. Une modification défaite jusqu'à
+        l'état enregistré n'en est plus une (``QTextDocument.isModified``)."""
+        keys = {path_key(source) for source in (getattr(resolution, "schematron_sources", ()) or ())}
+        return {str(session.path): session.text_document.toPlainText() for session in self.documents
+                if session.path is not None and session.text_document is not None
+                and session.text_document.isModified() and path_key(session.path) in keys}
+
     def _rng_invalid_for(self, session, result):
         """True si ``result`` signale une erreur dans ``session`` : toute
         erreur hors d'une édition assemblée, sinon celles de son fichier (un
@@ -455,8 +469,11 @@ class ValidationPanelMixin:
         tips = [_rules_located(issue) for issue in problems]
         if applied:
             phases = {path_key(source): getattr(source, "phase", "") for source in sources}
+            unsaved = {path_key(path) for path in self._rules_texts(resolution)}
             names = [_t("schematron.tip.phase", name=Path(path).name, phase=phases[path_key(path)])
                      if phases.get(path_key(path)) else Path(path).name for path in applied]
+            names = [_t("schematron.tip.unsaved", name=name) if path_key(path) in unsaved else name
+                     for name, path in zip(names, applied)]
             tips.insert(0, _t("schematron.tip.sources", sources=", ".join(names)))
         messages = [issue for issue in (result.issues if result is not None else ()) if _is_schematron(issue)]
         errors = sum(1 for issue in messages if _is_error(issue))
@@ -506,16 +523,20 @@ class ValidationPanelMixin:
             return False
         return current is not None and current != token
 
-    @staticmethod
-    def _validation_token(resolution):
+    def _validation_token(self, resolution):
         """Jeton du schéma et des sources des règles : il change si l'un de
-        ces fichiers ou de ceux qu'ils incluent change (None : inconnu)."""
+        ces fichiers ou de ceux qu'ils incluent change (None : inconnu), ou
+        (V0.9.2.5) le texte non enregistré d'un fichier de règles ouvert."""
         if resolution is None:
             return None
         paths = [Path(resolution.schema_path)] if resolution.schema_path is not None else []
         paths += [Path(source) for source in resolution.schematron_sources if Path(source) not in paths]
+        unsaved = {path_key(path) for path in self._rules_texts(resolution)}
+        revisions = tuple(("unsaved", path_key(session.path), session.text_document.revision())
+                          for session in self.documents
+                          if session.path is not None and path_key(session.path) in unsaved)
         try:
-            return tuple(relaxng_schema_token(path) for path in paths)
+            return tuple(relaxng_schema_token(path) for path in paths) + revisions
         except Exception:
             return None
 
@@ -657,6 +678,7 @@ class ValidationPanelMixin:
 
         schema = resolution.schema_path
         sources = resolution.schematron_sources
+        rules = self._rules_texts(resolution)
         base_url = self.current_path or self.project.edition
         parts = None
         if edition is not None:
@@ -667,12 +689,12 @@ class ValidationPanelMixin:
         self.rng_status.setText(_t("rng.status.running"))
         self.rng_status.setStyleSheet("color:#777")
         if background:
-            self._validate_in_background(text, schema, base_url, options, parts, sources)
+            self._validate_in_background(text, schema, base_url, options, parts, sources, rules)
             return None
         return self._apply_rng_result(
-            worker_client().validate(text, schema, base_url, parts=parts, schematron=sources), **options)
+            worker_client().validate(text, schema, base_url, parts=parts, schematron=sources, rules=rules), **options)
 
-    def _validate_in_background(self, text, schema, base_url, options, parts=None, sources=()):
+    def _validate_in_background(self, text, schema, base_url, options, parts=None, sources=(), rules=None):
         """Validation automatique : la fenêtre reste utilisable. Le résultat est
         affiché à son arrivée s'il concerne encore le document affiché ; un
         document quitté entre-temps sera validé à nouveau à son retour."""
@@ -690,7 +712,8 @@ class ValidationPanelMixin:
                 session.view_state["status"] = None
 
         pending.add(key)
-        worker_client().validate_async(text, schema, base_url, self, arrived, parts=parts, schematron=sources)
+        worker_client().validate_async(text, schema, base_url, self, arrived, parts=parts, schematron=sources,
+                                       rules=rules)
 
     def _rng_busy_changed(self, busy):
         """Lueur de la barre d'état pendant une validation en cours."""

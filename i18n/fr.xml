@@ -353,6 +353,7 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="schematron.panel.rules_error">Règles Schematron incorrectes ({source}) : {detail}</string>
   <string key="schematron.panel.saxon_missing">Règles Schematron non vérifiées : Saxon (paquet saxonche) n’est pas installé.</string>
   <string key="schematron.tip.phase">{name} (phase {phase})</string>
+  <string key="schematron.tip.unsaved">{name}, non enregistré</string>
   <string key="schematron.rules.missing">Fichier de règles introuvable : {detail}</string>
   <string key="schematron.rules.malformed">Fichier de règles mal formé : {detail}</string>
   <string key="schematron.rules.phase">Phase inconnue « {phase} » ; phases du fichier : {phases}</string>

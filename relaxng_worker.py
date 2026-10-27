@@ -19,7 +19,9 @@ descripteur 1 :
   fichiers (``relaxng_validation.validate_document``) ; avec
   ``"schematron": ["chemin", …]`` (V0.9.2.3), les règles Schematron de ces
   sources sont appliquées ensuite (``"schema"`` peut alors être vide) ; une
-  source peut être ``["chemin", "phase"]`` (V0.9.2.4) ;
+  source peut être ``["chemin", "phase"]`` (V0.9.2.4) ; avec
+  ``"rules": {"chemin": "texte"}`` (V0.9.2.5), le texte non enregistré d'un
+  fichier de règles remplace celui du disque ;
 - ``{"id": 3, "op": "check_schematron", "text": "…", "path": "regles.sch"}``
   (V0.9.2.4) → ``{"id": 3, "result": {…}}`` : la vérification du texte d'un
   fichier Schematron (``schematron_check.check``) ;
@@ -67,6 +69,12 @@ def _valid_sources(sources):
         for item in sources)
 
 
+def _texts(value):
+    """Vrai pour un dictionnaire ``{chemin: texte}``."""
+    return isinstance(value, dict) and all(isinstance(path, str) and isinstance(text, str)
+                                           for path, text in value.items())
+
+
 def result_from_dict(data):
     """Inverse de ``result_to_dict``."""
     issues = tuple(ValidationIssue(**issue) for issue in data.get("issues", ()))
@@ -92,11 +100,12 @@ def handle_request(request):
             return {"id": request_id, "error": "'schematron' must be a list of paths or [path, phase]"}
         if not isinstance(xml_text, str) or not isinstance(schema, str) or not (schema or sources):
             return {"id": request_id, "error": "validate needs 'xml' and 'schema'"}
-        parts = request.get("parts")
-        if parts is not None and not (isinstance(parts, dict) and all(
-                isinstance(path, str) and isinstance(text, str) for path, text in parts.items())):
+        parts, rules = request.get("parts"), request.get("rules")
+        if parts is not None and not _texts(parts):
             return {"id": request_id, "error": "'parts' must map paths to texts"}
-        result = validate_document(xml_text, schema or None, request.get("base_url") or None, parts, sources)
+        if rules is not None and not _texts(rules):
+            return {"id": request_id, "error": "'rules' must map paths to texts"}
+        result = validate_document(xml_text, schema or None, request.get("base_url") or None, parts, sources, rules)
         return {"id": request_id, "result": result_to_dict(result),
                 "compilations": relaxng_cache_info()["compilations"]}
     if op == "check_schematron":

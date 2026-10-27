@@ -435,6 +435,54 @@ def test_a_sch_file_can_include_another_one(tmp_path):
     assert _found(validate(_tree(DOC), [sch])) == [(4, "ERROR", "Inclus : groupe sans vers.")]
 
 
+# --- Texte non enregistré (V0.9.2.5) -----------------------------------------------
+
+LG_RULE = '<pattern><rule context="tei:lg"><assert test="tei:l">Groupe sans vers.</assert></rule></pattern>'
+P_RULE = '<pattern><rule context="tei:p"><report test="true()">Paragraphe.</report></rule></pattern>'
+
+
+@needs_saxon
+def test_the_unsaved_text_of_a_rules_file_is_applied(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    report = validate(_tree(DOC), [sch], texts={str(sch): _sch(P_RULE)})
+    assert _found(report) == [(5, "ERROR", "Paragraphe.")] and report.rules == (str(sch),)
+    # Sans texte, le fichier enregistré.
+    assert _found(validate(_tree(DOC), [sch])) == [(4, "ERROR", "Groupe sans vers.")]
+
+
+@needs_saxon
+def test_an_unsaved_text_replaces_the_compiled_rules_of_its_file(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    for message in ("Un.", "Deux.", "Deux."):
+        text = _sch(P_RULE.replace("Paragraphe.", message))
+        assert _found(validate(_tree(DOC), [sch], texts={str(sch): text}))[0][2] == message
+    # Une compilation par texte différent, et une seule entrée pour le fichier.
+    assert schematron.cache_info() == {"entries": 1, "compilations": 2}
+
+
+@needs_saxon
+def test_an_incorrect_rule_of_the_unsaved_text_is_given_at_its_line(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    text = _sch("\n\n" + LG_RULE.replace('test="tei:l"', 'test="tei:l["'))
+    [error] = validate(_tree(DOC), [sch], texts={str(sch): text}).errors
+    assert (error.type_name, error.file, error.line) == ("xpath", str(sch), 6)      # 4 dans le fichier enregistré
+
+
+@needs_saxon
+def test_the_phases_of_the_unsaved_text_are_used(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    report = validate(_tree(DOC), [SchematronSource(sch, "tout")], texts={str(sch): _sch(PHASES)})
+    assert report.errors == () and len(report.issues) == 2
+    [error] = validate(_tree(DOC), [SchematronSource(sch, "autre")], texts={str(sch): _sch(PHASES)}).errors
+    assert error.message == "autre\tvers, tout"
+
+
+def test_a_malformed_unsaved_text_is_an_error_of_the_rules(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    [error] = validate(_tree(DOC), [sch], texts={str(sch): "<schema"}).errors
+    assert (error.type_name, error.file) == ("malformed", str(sch))
+
+
 # --- Cache ------------------------------------------------------------------------
 
 @needs_saxon

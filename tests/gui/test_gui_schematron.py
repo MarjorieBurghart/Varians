@@ -359,3 +359,69 @@ def test_a_rules_file_outside_the_project_is_not_opened(open_window, example_pro
     window.goto_validation_issue(0)                              # aucune boîte
     assert window.statusBar().currentMessage() == tr("schematron.rules.outside", name="regles.sch",
                                                      path=str(outside.resolve()))
+
+
+# --- Règles non enregistrées (V0.9.2.5) --------------------------------------------
+
+def _open_rules_document(window):
+    sch = next(session for session in window.documents if session.path.name == "regles.sch")
+    window.show_document(sch)
+    return sch
+
+
+def _replace_in_editor(window, old, new):
+    text = window.editor.toPlainText()
+    cursor = window.editor.textCursor()
+    start = text.index(old)
+    cursor.setPosition(start)
+    cursor.setPosition(start + len(old), QTextCursor.MoveMode.KeepAnchor)
+    cursor.insertText(new)
+
+
+@needs_saxon
+def test_unsaved_rules_are_applied_on_return_to_the_edition(open_window, example_project, qtbot):
+    from project_config import DocumentConfig
+    from project_management import update_project_documents
+    rules = _declare_rules(example_project)
+    update_project_documents(example_project, [DocumentConfig(rules)])
+    window = open_window(example_project)
+    _insert_after(window, "<body>", '\n<varianstest kind="z">x</varianstest>')
+    assert not window.validate_relaxng_document(show_panel=True).valid
+    _open_rules_document(window)
+    _wait_validation(qtbot)
+    _replace_in_editor(window, "('a', 'b')", "('a', 'b', 'z')")
+    window.show_document(window.edition_session)
+    _wait_validation(qtbot)
+    # Sans enregistrer regles.sch : ses règles modifiées font valider
+    # l'édition de nouveau, et l'info-bulle le dit.
+    assert window._last_rng_result.valid
+    assert window.schematron_status.text() == tr("schematron.status.valid")
+    assert tr("schematron.tip.unsaved", name="regles.sch") in window.schematron_status.toolTip()
+    assert rules.read_text(encoding="utf-8") == RULES
+    # F8 garde ces règles ; défaire la modification les rétablit.
+    assert window.validate_relaxng_document(show_panel=True).valid
+    _open_rules_document(window)
+    window.editor.undo()
+    window.show_document(window.edition_session)
+    _wait_validation(qtbot)
+    assert not window._last_rng_result.valid
+    assert tr("schematron.tip.unsaved", name="regles.sch") not in window.schematron_status.toolTip()
+
+
+@needs_saxon
+def test_an_incorrect_unsaved_rule_leads_to_its_line(open_window, example_project, qtbot):
+    from project_config import DocumentConfig
+    from project_management import update_project_documents
+    rules = _declare_rules(example_project)
+    update_project_documents(example_project, [DocumentConfig(rules)])
+    window = open_window(example_project)
+    _open_rules_document(window)
+    _wait_validation(qtbot)
+    _replace_in_editor(window, "<assert test=\"@kind = ('a', 'b')\"", "\n\n<assert test=\"@kind = (\"")
+    window.show_document(window.edition_session)
+    _wait_validation(qtbot)
+    [row] = _rows(window)
+    assert row[ORIGIN] == tr(RULES_ORIGIN) and (row[LINE], row[DOCUMENT]) == ("8", "regles.sch")
+    window.goto_validation_issue(0)
+    qtbot.wait(50)
+    assert window.document.path.name == "regles.sch" and window.editor.textCursor().blockNumber() + 1 == 8

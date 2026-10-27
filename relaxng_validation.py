@@ -380,7 +380,7 @@ def _checked_assembled(master_text, schema_path, master_path, parts):
 
 
 def validate_document(xml_text: str, schema_path: str | Path | None, base_url: str | Path | None = None,
-                      parts: dict | None = None, schematron=None) -> ValidationResult:
+                      parts: dict | None = None, schematron=None, rules: dict | None = None) -> ValidationResult:
     """Point d'entrée commun au processus de validation et au repli dans
     Varians : l'édition est assemblée quand *parts* est donné (même vide).
 
@@ -389,7 +389,9 @@ def validate_document(xml_text: str, schema_path: str | Path | None, base_url: s
     au même arbre que le RNG, si le document est bien formé et que le RNG a
     pu être chargé. Leurs messages suivent ceux du RNG ; une erreur rend le
     document invalide, pas un avertissement ni une information. Sans
-    *schema_path*, la bien-formation puis les règles seules."""
+    *schema_path*, la bien-formation puis les règles seules. *rules*
+    (V0.9.2.5) : ``{chemin: texte}`` des fichiers de règles ouverts et non
+    enregistrés, appliqués à la place du disque."""
     if parts is None:
         result, tree = _checked(xml_text, schema_path, base_url)
         file_of = None
@@ -400,7 +402,7 @@ def validate_document(xml_text: str, schema_path: str | Path | None, base_url: s
     # Importé ici : Saxon n'est chargé qu'au premier besoin.
     from schematron import validate as apply_rules
 
-    report = apply_rules(tree, schematron, file_of, base_url)
+    report = apply_rules(tree, schematron, file_of, base_url, rules)
     failed = any(issue.level == "ERROR" for issue in report.issues)
     return replace(result, valid=result.valid and not failed, issues=result.issues + report.issues,
                    schematron_rules=report.rules, schematron_errors=report.errors,

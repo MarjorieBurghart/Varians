@@ -21,6 +21,10 @@ phase demandée, sinon celle de ``defaultPhase``, sinon toutes les règles
 (``#ALL``) ; une phase qui n'existe pas dans le fichier est une erreur des
 règles.
 
+Le texte non enregistré d'un fichier de règles ouvert dans Varians
+(V0.9.2.5, ``validate(…, texts={chemin: texte})``) remplace celui du disque
+pour ce fichier ; ses inclusions restent lues sur le disque.
+
 ``validate(tree, sources, file_of)`` applique les règles à l'arbre lxml
 (celui que le RNG vient de valider, l'édition assemblée pour une édition en
 parties) et rend un ``SchematronReport`` :
@@ -58,6 +62,7 @@ Saxon n'écrit qu'à cet endroit l'expression fautive.
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib.util
 import os
 import re
@@ -69,6 +74,7 @@ from lxml import etree
 
 from project_config import APPLICATION_ROOT
 from schema_resolution import SchematronSource
+from xml_assembly import path_key
 from relaxng_validation import (STDERR_LOG, ValidationIssue, _dependency_path, _discover_schema_dependencies,
                                 _schema_dependency_signature)
 
@@ -210,12 +216,16 @@ def _rules_trees(path, text=None):
     return trees
 
 
-def rules_text(path) -> str | None:
-    """La Schematron de la source *path* (voir le module) ; None si elle n'a
-    pas de règles. Une source absente ou mal formée lève ``OSError`` ou
-    ``etree.XMLSyntaxError``."""
+def rules_text(path, text=None) -> str | None:
+    """La Schematron de la source *path* (voir le module), lue dans *text*
+    s'il est donné (V0.9.2.5 : le texte non enregistré d'un fichier ouvert
+    dans Varians) ; None si elle n'a pas de règles. Une source absente ou
+    mal formée lève ``OSError`` ou ``etree.XMLSyntaxError``."""
     path = Path(path).expanduser().resolve()
-    tree = _parse(path)
+    if text is None:
+        tree = _parse(path)
+    else:
+        tree = etree.ElementTree(etree.fromstring(text.encode("utf-8"), _parser(), base_url=str(path)))
     if tree.getroot().tag == f"{{{SCH_NS}}}schema":
         return etree.tostring(tree, encoding="unicode")
     schema = etree.Element(f"{{{SCH_NS}}}schema", nsmap={"sch": SCH_NS}, queryBinding="xslt2")
@@ -352,32 +362,34 @@ def _with_base(stylesheet, base) -> str:
     return etree.tostring(root, encoding="unicode")
 
 
-def _phases(path):
-    """Identifiants des ``sch:phase`` de *path* et des fichiers qu'il inclut."""
-    found = [phase.get("id") for _source, root in _rules_trees(path)
+def _phases(path, text=None):
+    """Identifiants des ``sch:phase`` de *path* (lu dans *text* s'il est
+    donné) et des fichiers qu'il inclut."""
+    found = [phase.get("id") for _source, root in _rules_trees(path, text)
              for phase in root.iter(f"{{{SCH_NS}}}phase") if phase.get("id")]
     return list(dict.fromkeys(found))
 
 
-def _phase_error(path, text, phase):
+def _phase_error(path, text, phase, source_text=None):
     """L'erreur ``phase`` si la phase demandée, ou la phase par défaut du
-    schéma, n'existe pas dans le fichier ; sinon None."""
+    schéma (*text*), n'existe pas dans le fichier (lu dans *source_text*
+    s'il est donné) ; sinon None."""
     if phase in _GENERIC_PHASES[:2]:
         phase = etree.fromstring(text.encode("utf-8"), etree.XMLParser(huge_tree=True)).get("defaultPhase") or ""
     if phase in _GENERIC_PHASES:
         return None
-    phases = _phases(path)
+    phases = _phases(path, source_text)
     if phase in phases:
         return None
     return _rule_error("phase", f"{phase}\t{', '.join(phases)}", path)
 
 
-def _compile(path, phase, signature) -> _Compiled:
+def _compile(path, phase, signature, source_text=None) -> _Compiled:
     global _COMPILATIONS
-    if not path.is_file():
+    if source_text is None and not path.is_file():
         return _Compiled(signature, error=_rule_error("missing", "", path))
     try:
-        text = rules_text(path)
+        text = rules_text(path, source_text)
     except OSError as exc:
         return _Compiled(signature, error=_rule_error("missing", " ".join(str(exc).split()), path))
     except etree.XMLSyntaxError as exc:
@@ -386,7 +398,7 @@ def _compile(path, phase, signature) -> _Compiled:
                                                       getattr(exc, "lineno", 0)))
     if text is None:
         return _Compiled(signature)
-    failure = _phase_error(path, text, phase)
+    failure = _phase_error(path, text, phase, source_text)
     if failure is not None:
         return _Compiled(signature, error=failure)
     try:
@@ -406,20 +418,24 @@ def _compile(path, phase, signature) -> _Compiled:
         executable = processor.new_xslt30_processor().compile_stylesheet(
             stylesheet_text=_with_base(stylesheet, base))
     except PySaxonApiError as exc:
-        return _Compiled(signature, error=_saxon_error(exc, path, _stderr_since(start)))
+        return _Compiled(signature, error=_saxon_error(exc, path, _stderr_since(start), source_text))
     return _Compiled(signature, executable)
 
 
-def compiled(path, phase="") -> _Compiled:
+def compiled(path, phase="", text=None) -> _Compiled:
     """La source *path* compilée pour la phase *phase*, d'après le cache si
-    aucun fichier n'a changé."""
+    aucun fichier n'a changé ; *text* : son texte non enregistré (V0.9.2.5),
+    dont l'empreinte compte dans la signature : un nouveau texte remplace la
+    feuille compilée du fichier au lieu de s'y ajouter."""
     path = Path(path).expanduser().resolve()
     key = (str(path), phase or "")
     signature = _schema_dependency_signature(path)
+    if text is not None:
+        signature = (signature, hashlib.sha256(text.encode("utf-8")).hexdigest())
     with _LOCK:
         cached = _CACHE.get(key)
         if cached is None or cached.signature != signature:
-            cached = _CACHE[key] = _compile(path, phase or "", signature)
+            cached = _CACHE[key] = _compile(path, phase or "", signature, text)
         return cached
 
 
@@ -540,17 +556,21 @@ def _document_uri(base):
         return None
 
 
-def validate(tree, sources, file_of=None, base=None) -> SchematronReport:
+def validate(tree, sources, file_of=None, base=None, texts=None) -> SchematronReport:
     """Applique les règles de *sources* à *tree* (voir le module) ; *base* :
-    le chemin du document (``base-uri()`` des règles)."""
+    le chemin du document (``base-uri()`` des règles) ; *texts* (V0.9.2.5) :
+    ``{chemin: texte}`` des fichiers de règles ouverts et non enregistrés,
+    dont le texte remplace celui du disque."""
     root = tree.getroot() if hasattr(tree, "getroot") else tree
     issues, rules, errors = [], [], []
     seen = set()
     document = None
+    unsaved = {path_key(path): text for path, text in (texts or {}).items()}
     with _LOCK:
         for source in sources:
             path, phase = _source(source)
-            entry = compiled(path, phase)
+            text = unsaved.get(path_key(path))
+            entry = compiled(path, phase, text)
             if entry.saxon_missing:
                 return SchematronReport(error="saxon_missing")
             if entry.error is not None:
@@ -569,7 +589,7 @@ def validate(tree, sources, file_of=None, base=None) -> SchematronReport:
                     document = builder.parse_xml(xml_text=etree.tostring(root.getroottree(), encoding="unicode"))
                 svrl = entry.executable.transform_to_string(xdm_node=document)
             except PySaxonApiError as exc:
-                errors.append(_saxon_error(exc, path, _stderr_since(start)))
+                errors.append(_saxon_error(exc, path, _stderr_since(start), text))
                 continue
             report = etree.fromstring(svrl.encode("utf-8"))
             failures = report.findall(f"{{{SVRL_NS}}}error")

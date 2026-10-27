@@ -367,6 +367,7 @@
   <string key="schematron.panel.rules_error">Schematronルールの誤り（{source}）：{detail}</string>
   <string key="schematron.panel.saxon_missing">Schematronルールは検査されていません：Saxon（saxoncheパッケージ）がインストールされていません。</string>
   <string key="schematron.tip.phase">{name}（フェーズ {phase}）</string>
+  <string key="schematron.tip.unsaved">{name}（未保存）</string>
   <string key="schematron.rules.missing">ルールのファイルが見つかりません：{detail}</string>
   <string key="schematron.rules.malformed">ルールのファイルが整形式ではありません：{detail}</string>
   <string key="schematron.rules.phase">不明なフェーズ「{phase}」。ファイルのフェーズ：{phases}</string>
