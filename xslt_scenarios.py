@@ -22,8 +22,11 @@ la feuille d'un scénario.
 TEI Stylesheets (V0.9.2.2) : ``${tei}/…`` désigne un fichier de la version
 active des feuilles du TEI-C (``tei_stylesheets``), installée au premier
 usage depuis l'archive livrée (``tei_library``) ; sans elle, un scénario qui
-l'emploie a le problème ``tei_missing``. Quatre scénarios prédéfinis
-« TEI : … » publient l'édition avec Saxon. La requête d'un scénario Saxon,
+l'emploie a le problème ``tei_missing``. Huit scénarios prédéfinis
+« TEI : … » publient l'édition avec Saxon, dont, depuis la V0.9.2.7, les
+pages HTML, DOCX, ODT et EPUB (``TransformScenario.package``) ; dans la
+valeur d'un paramètre, ``${tei}/`` devient l'adresse de la bibliothèque
+(``substitute``). La requête d'un scénario Saxon,
 comme celle de la vérification d'une feuille (``check_request``), porte le
 catalogue de la bibliothèque (``catalogs``) : une feuille de
 personnalisation qui importe l'adresse officielle des feuilles
@@ -190,9 +193,16 @@ def stylesheet_path(scenario, project) -> Path | None:
     return resolve_path(project, scenario.xslt)
 
 
-# Scénarios TEI : clé, dossier du profil des TEI Stylesheets, extension du résultat.
-TEI_SCENARIOS = (("tei-html", "html", "html"), ("tei-txt", "txt", "txt"), ("tei-markdown", "markdown", "md"),
-                 ("tei-latex", "latex", "tex"))
+# Scénarios TEI : clé, dossier du profil des TEI Stylesheets, résultat, format
+# du résultat (``xslt_packages``, V0.9.2.7).
+TEI_SCENARIOS = (("tei-html", "html", "publications/tei/edition.html", ""),
+                 ("tei-pages", "html", "publications/tei/pages/index.html", "pages"),
+                 ("tei-docx", "docx", "publications/tei/edition.docx", "docx"),
+                 ("tei-odt", "odt", "publications/tei/edition.odt", "odt"),
+                 ("tei-epub", "epub3", "publications/tei/edition.epub", "epub"),
+                 ("tei-txt", "txt", "publications/tei/edition.txt", ""),
+                 ("tei-markdown", "markdown", "publications/tei/edition.md", ""),
+                 ("tei-latex", "latex", "publications/tei/edition.tex", ""))
 
 
 def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenario, ...]:
@@ -211,16 +221,23 @@ def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenar
                                    css=VARIANS_PREFIX + "tei.css",
                                    params=(("tocTitle", translate("toc") if translate else "Contents"),))]
     languages = (("lang", language), ("documentationLanguage", language)) if language else ()
-    for key, profile, extension in TEI_SCENARIOS:
-        css, params = "", languages
+    for key, profile, output, package in TEI_SCENARIOS:
+        css, params = "", ()
         if profile == "html":
             # La CSS des TEI Stylesheets, copiée à côté du résultat : aucun
             # lien vers tei-c.org, ni vers « / » (lien « Home »).
             css = TEI_PREFIX + "tei.css"
-            params = (("cssFile", "tei.css"), ("cssPrintFile", ""), ("homeURL", "")) + languages
-        scenarios.append(TransformScenario(name(key), f"{TEI_PREFIX}profiles/default/{profile}/to.xsl",
-                                           f"publications/tei/edition.{extension}", engine="saxon", css=css,
-                                           params=params))
+            params = (("cssFile", "tei.css"), ("cssPrintFile", ""), ("homeURL", ""))
+        if package == "pages":
+            # Une page par division et par sous-division : une édition dont
+            # le texte est une seule division (comme un recueil) a ainsi
+            # une page par pièce.
+            params += (("splitLevel", "1"),)
+        if package == "epub":
+            # Les CSS que l'EPUB recopie, lues dans la bibliothèque.
+            params = (("cssFile", TEI_PREFIX + "tei.css"), ("cssPrintFile", TEI_PREFIX + "epub-print.css"))
+        scenarios.append(TransformScenario(name(key), f"{TEI_PREFIX}profiles/default/{profile}/to.xsl", output,
+                                           engine="saxon", css=css, params=params + languages, package=package))
     return tuple(scenarios)
 
 
@@ -323,8 +340,14 @@ PIVOT = "${pivot}"
 
 def substitute(value, project) -> str:
     """*value*, la valeur d'un paramètre, où ``${pivot}`` (V0.9.2.7) devient
-    l'identifiant du témoin pivot du projet."""
-    return str(value).replace(PIVOT, project.base_witness or "")
+    l'identifiant du témoin pivot du projet, et ``${tei}/`` l'adresse
+    (``file:``) du dossier des TEI Stylesheets installées."""
+    value = str(value).replace(PIVOT, project.base_witness or "")
+    if TEI_PREFIX in value:
+        library = tei_library()
+        if library is not None:
+            value = value.replace(TEI_PREFIX, library.folder.resolve().as_uri() + "/")
+    return value
 
 
 def scenario_request(scenario, project, current=None, output_dir=None, sources=None) -> dict:
@@ -456,8 +479,12 @@ def _wrap(paragraph, width=76, indent="  ") -> list[str]:
     return [indent + line for line in lines]
 
 
+# Sorties en XHTML des TEI Stylesheets (pages HTML, EPUB 3).
+_HTML_OUTPUTS = {"html", "html5", "epub", "epub3"}
+
+
 def _html_output(parts) -> bool:
-    return "html" in parts[2:3] if len(parts) > 2 and parts[0] == "profiles" else "html" in parts[:1]
+    return bool(_HTML_OUTPUTS & set(parts[2:3] if len(parts) > 2 and parts[0] == "profiles" else parts[:1]))
 
 
 def customization_text(raw, comment="", examples="") -> str:

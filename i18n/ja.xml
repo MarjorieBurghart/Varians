@@ -994,6 +994,10 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.engine.missing">{engine} — 未インストール</string>
   <string key="transform.predefined.varians-html">HTML 版（Varians のスタイルシート）</string>
   <string key="transform.predefined.tei-html">TEI：HTML</string>
+  <string key="transform.predefined.tei-pages">TEI：複数ファイルの HTML</string>
+  <string key="transform.predefined.tei-docx">TEI：DOCX（Word）</string>
+  <string key="transform.predefined.tei-odt">TEI：ODT（LibreOffice）</string>
+  <string key="transform.predefined.tei-epub">TEI：EPUB</string>
   <string key="transform.predefined.tei-txt">TEI：テキスト</string>
   <string key="transform.predefined.tei-markdown">TEI：Markdown</string>
   <string key="transform.predefined.tei-latex">TEI：LaTeX</string>

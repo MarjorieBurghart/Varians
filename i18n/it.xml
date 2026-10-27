@@ -994,6 +994,10 @@ Salvare comunque?</string>
   <string key="transform.engine.missing">{engine} — non installato</string>
   <string key="transform.predefined.varians-html">Edizione HTML (foglio di stile di Varians)</string>
   <string key="transform.predefined.tei-html">TEI: HTML</string>
+  <string key="transform.predefined.tei-pages">TEI: HTML in più file</string>
+  <string key="transform.predefined.tei-docx">TEI: DOCX (Word)</string>
+  <string key="transform.predefined.tei-odt">TEI: ODT (LibreOffice)</string>
+  <string key="transform.predefined.tei-epub">TEI: EPUB</string>
   <string key="transform.predefined.tei-txt">TEI: testo</string>
   <string key="transform.predefined.tei-markdown">TEI: Markdown</string>
   <string key="transform.predefined.tei-latex">TEI: LaTeX</string>

@@ -67,7 +67,8 @@ def test_the_file_menu_lists_the_scenarios_of_the_project_and_the_predefined_one
     assert dialog.predefined_group.child(1) is dialog.tei_group and not dialog.tei_group.isExpanded()
     assert _rows(dialog, "tei") == [
         [tr(f"transform.predefined.{key}"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""]
-        for key in ("tei-html", "tei-txt", "tei-markdown", "tei-latex")]
+        for key in ("tei-html", "tei-pages", "tei-docx", "tei-odt", "tei-epub", "tei-txt", "tei-markdown",
+                    "tei-latex")]
 
 
 def test_a_tei_scenario_is_chosen_in_its_sub_group(open_window, sermons_project, dialogs):

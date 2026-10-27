@@ -8,6 +8,8 @@ document auxiliaire (xml/personnes.xml).
 from __future__ import annotations
 
 import shutil
+import urllib.parse
+import urllib.request
 from dataclasses import replace
 from pathlib import Path
 
@@ -208,8 +210,15 @@ def test_each_problem_has_a_message_in_the_seven_catalogs():
 # La bibliothèque des tests est installée depuis l'archive livrée, dans un
 # dossier temporaire commun à la session (tests/conftest.py).
 
-TEI_OUTPUTS = {"tei-html": ("html", "html"), "tei-txt": ("txt", "txt"), "tei-markdown": ("markdown", "md"),
-               "tei-latex": ("latex", "tex")}
+# Scénarios TEI : profil des TEI Stylesheets, résultat, format du résultat.
+TEI_OUTPUTS = {"tei-html": ("html", "publications/tei/edition.html", ""),
+               "tei-pages": ("html", "publications/tei/pages/index.html", "pages"),
+               "tei-docx": ("docx", "publications/tei/edition.docx", "docx"),
+               "tei-odt": ("odt", "publications/tei/edition.odt", "odt"),
+               "tei-epub": ("epub3", "publications/tei/edition.epub", "epub"),
+               "tei-txt": ("txt", "publications/tei/edition.txt", ""),
+               "tei-markdown": ("markdown", "publications/tei/edition.md", ""),
+               "tei-latex": ("latex", "publications/tei/edition.tex", "")}
 
 
 @pytest.fixture
@@ -238,38 +247,62 @@ def test_the_tei_scenarios_are_predefined(project):
     scenarios = predefined_scenarios()
     assert [scenario.name for scenario in scenarios] == ["varians-html", *TEI_OUTPUTS]
     for scenario in scenarios[1:]:
-        folder, extension = TEI_OUTPUTS[scenario.name]
+        folder, output, package = TEI_OUTPUTS[scenario.name]
         assert scenario.xslt == f"${{tei}}/profiles/default/{folder}/to.xsl"
         # Dans un dossier à part : leur CSS (tei.css) ne remplace pas celle de Varians.
-        assert scenario.output == f"publications/tei/edition.{extension}"
+        assert scenario.output == output and scenario.package == package
         assert (scenario.source, scenario.engine) == ("edition", "saxon")
         assert stylesheet_path(scenario, project).is_file()
         assert scenario_problems(scenario, project) == []
-    html = scenarios[1]
+    named = {scenario.name: scenario for scenario in scenarios}
+    html = named["tei-html"]
     # La CSS des TEI Stylesheets, copiée à côté du résultat : aucun lien vers tei-c.org.
     assert html.css == "${tei}/tei.css"
     assert html.params == (("cssFile", "tei.css"), ("cssPrintFile", ""), ("homeURL", ""))
-    assert scenarios[2].css == "" and scenarios[2].params == ()
-    # Les deux éditions HTML ne copient pas leur CSS au même endroit.
+    # Une page par division et par sous-division (V0.9.2.7).
+    assert named["tei-pages"].css == "${tei}/tei.css"
+    assert named["tei-pages"].params == html.params + (("splitLevel", "1"),)
+    # L'EPUB lit ses CSS dans la bibliothèque, et non sur tei-c.org.
+    assert named["tei-epub"].css == ""
+    assert named["tei-epub"].params == (("cssFile", "${tei}/tei.css"), ("cssPrintFile", "${tei}/epub-print.css"))
+    for name in ("tei-docx", "tei-odt", "tei-txt"):
+        assert named[name].css == "" and named[name].params == ()
+    # Les éditions HTML ne copient pas leur CSS au même endroit.
     copies = [resolve_path(project, s.output).parent / resolve_path(project, s.css).name for s in scenarios if s.css]
-    assert len(copies) == len(set(copies)) == 2
+    assert len(copies) == len(set(copies)) == 3
+
+
+def test_the_tei_folder_is_substituted_in_the_parameters(project):
+    from xslt_scenarios import tei_library
+    folder = tei_library().folder
+    epub = next(scenario for scenario in predefined_scenarios() if scenario.name == "tei-epub")
+    params = dict(scenario_request(epub, project)["params"])
+    assert params == {"cssFile": (folder / "tei.css").as_uri(), "cssPrintFile": (folder / "epub-print.css").as_uri()}
+    assert Path(urllib.request.url2pathname(urllib.parse.urlparse(params["cssFile"]).path)) == folder / "tei.css"
 
 
 def test_the_tei_scenarios_speak_the_language_of_the_interface():
     html = predefined_scenarios(language="fr")[1]
     assert html.params[-2:] == (("lang", "fr"), ("documentationLanguage", "fr"))
-    assert predefined_scenarios(language="ja")[4].params == (("lang", "ja"), ("documentationLanguage", "ja"))
+    latex = next(scenario for scenario in predefined_scenarios(language="ja") if scenario.name == "tei-latex")
+    assert latex.params == (("lang", "ja"), ("documentationLanguage", "ja"))
+    epub = next(scenario for scenario in predefined_scenarios(language="ja") if scenario.name == "tei-epub")
+    assert epub.params[-2:] == (("lang", "ja"), ("documentationLanguage", "ja"))
     names = [scenario.name for scenario in predefined_scenarios(lambda key: f"«{key}»", "fr")]
-    assert names == ["«varians-html»", "«tei-html»", "«tei-txt»", "«tei-markdown»", "«tei-latex»"]
+    assert names == ["«varians-html»", "«tei-html»", "«tei-pages»", "«tei-docx»", "«tei-odt»", "«tei-epub»",
+                     "«tei-txt»", "«tei-markdown»", "«tei-latex»"]
 
 
 def test_without_tei_stylesheets_the_tei_scenarios_report_it(project, no_tei):
     from xslt_scenarios import ScenarioProblem, tei_library
     assert tei_library() is None
-    varians, html, text = predefined_scenarios()[:3]
-    assert scenario_problems(html, project) == [ScenarioProblem("tei_missing", str(no_tei))]
-    assert scenario_problems(text, project) == [ScenarioProblem("tei_missing", str(no_tei))]
+    varians, *tei = predefined_scenarios()
+    for scenario in tei:
+        assert scenario_problems(scenario, project) == [ScenarioProblem("tei_missing", str(no_tei))]
     assert scenario_problems(varians, project) == []
+    # Un paquet DOCX ou ODT part du modèle des TEI Stylesheets, même avec une autre feuille.
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="odt"), project)) == ["tei_missing"]
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="epub"), project)) == []
 
 
 def _customization(project, imported="profiles/default/html/to.xsl"):
@@ -346,6 +379,9 @@ def test_a_customization_imports_the_official_address_of_the_stylesheet():
     assert "<b><xsl:apply-templates/></b>" in comment.text
     latex = etree.fromstring(customization_text("${tei}/profiles/default/latex/to.xsl").encode("utf-8"))
     assert None not in latex.nsmap and "<b>" not in latex.getprevious().text
+    # L'EPUB 3 aussi est du XHTML (V0.9.2.7).
+    epub = etree.fromstring(customization_text("${tei}/profiles/default/epub3/to.xsl").encode("utf-8"))
+    assert epub.nsmap[None] == "http://www.w3.org/1999/xhtml" and "<b>" in epub.getprevious().text
 
 
 def test_the_comment_of_a_customization_is_wrapped_by_display_width():

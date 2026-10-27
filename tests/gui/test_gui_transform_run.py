@@ -112,7 +112,7 @@ def test_the_toolbar_button_lists_the_scenarios_and_reruns_the_last_one(open_win
     # V0.9.2.7 : les scénarios des TEI Stylesheets, dans un sous-menu.
     tei = next(action.menu() for action in window.transform_menu.actions() if action.menu() is not None)
     assert [action.text() for action in tei.actions()] == [tr(f"transform.predefined.{key}") for key in (
-        "tei-html", "tei-txt", "tei-markdown", "tei-latex")]
+        "tei-html", "tei-pages", "tei-docx", "tei-odt", "tei-epub", "tei-txt", "tei-markdown", "tei-latex")]
     assert button.menu() is window.transform_menu
 
     # Aucun scénario lancé : le bouton ouvre la liste.
