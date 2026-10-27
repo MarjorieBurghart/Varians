@@ -22,9 +22,18 @@ une erreur RELAX NG (onglet orange, question avant d'enregistrer) ; un
 avertissement ou une information non. L'étiquette Schematron de la barre
 d'état résume leur résultat ; son info-bulle donne les sources des règles et
 le détail d'une règle incorrecte.
+
+Phases et règles incorrectes (V0.9.2.4) : l'info-bulle nomme la phase de
+chaque source ; une règle incorrecte (domaine SCHEMATRON_RULES) a sa ligne
+dans le panneau, après les messages du document, sans le rendre invalide ;
+le double-clic mène au fichier des règles, à la ligne de la règle (Varians
+propose d'ajouter aux documents un fichier du dossier du projet qui n'en est
+pas un). Un résultat dont le schéma ou les règles ont changé depuis est
+périmé : il est validé de nouveau à l'affichage du document.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -34,7 +43,8 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QToolButton, QVBoxLayout,
 )
 from app_context import call_later, tr as _t
-from relaxng_validation import lxml_available, relaxng_schema_token
+from project_config import DocumentConfig
+from relaxng_validation import ValidationIssue, lxml_available, relaxng_schema_token
 from schema_resolution import detect_xml_models, resolve_schema
 from validation_worker import worker_client
 from xml_assembly import path_key
@@ -44,12 +54,35 @@ from xml_assembly import path_key
 _MESSAGE_COLUMN = 4
 _DOCUMENT_COLUMN = 5
 _LEVELS = {"WARNING": "rng.level.warning", "INFO": "rng.level.info"}
-_ORIGINS = {"SCHEMATRON": "rng.origin.schematron", "XINCLUDE": "rng.origin.xinclude", "XSLT": "rng.origin.xslt"}
+RULES_DOMAIN = "SCHEMATRON_RULES"
+_ORIGINS = {"SCHEMATRON": "rng.origin.schematron", "XINCLUDE": "rng.origin.xinclude", "XSLT": "rng.origin.xslt",
+            RULES_DOMAIN: "rng.origin.schematron_rules"}
+# Codes des règles incorrectes (schematron.SchematronReport.errors) ;
+# « declaration » : une déclaration Schematron que la résolution n'a pas pu
+# suivre.
+_RULES_CODES = ("missing", "malformed", "xpath", "compile", "runtime", "declaration")
 
 
 def _is_error(issue):
-    """Vrai pour une erreur, faux pour un avertissement ou une information."""
-    return str(issue.level).upper() not in _LEVELS
+    """Vrai pour une erreur du document, faux pour un avertissement, une
+    information ou une règle incorrecte."""
+    return str(issue.level).upper() not in _LEVELS and issue.domain != RULES_DOMAIN
+
+
+def _rules_message(issue):
+    """Le message d'une règle incorrecte, dans la langue de l'interface."""
+    if issue.type_name == "phase":
+        phase, _tab, phases = issue.message.partition("\t")
+        return _t("schematron.rules.phase", phase=phase, phases=phases or "—")
+    code = issue.type_name if issue.type_name in _RULES_CODES else "compile"
+    return _t(f"schematron.rules.{code}", detail=issue.message or issue.file)
+
+
+def _rules_located(issue):
+    """« fichier:ligne: message » d'une règle incorrecte."""
+    name = Path(issue.file).name if issue.file else ""
+    place = f"{name}:{issue.line}: " if issue.line else (f"{name}: " if name else "")
+    return place + _rules_message(issue)
 
 
 def _is_schematron(issue):
@@ -170,7 +203,7 @@ class ValidationPanelMixin:
             # La donnée est attachée à la première cellule pour le double-clic.
             self.validation_table.item(row, 0).setData(
                 Qt.ItemDataRole.UserRole,
-                (int(issue.line or 0), int(issue.column or 0), bool(jump_to_xml), issue.file),
+                (int(issue.line or 0), int(issue.column or 0), bool(jump_to_xml), issue.file, issue.domain),
             )
 
     @staticmethod
@@ -188,6 +221,8 @@ class ValidationPanelMixin:
         dans la langue de l'interface (voir validate_assembled)."""
         if issue.domain == "XINCLUDE":
             return _t(f"rng.xinclude.{issue.type_name}", detail=issue.message)
+        if issue.domain == RULES_DOMAIN:
+            return _rules_message(issue)
         return issue.message
 
     def _issue_session(self, file):
@@ -216,7 +251,10 @@ class ValidationPanelMixin:
         data = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
         if not data:
             return
-        line, column, jump_to_xml, file = data
+        line, column, jump_to_xml, file, domain = data
+        if domain == RULES_DOMAIN:
+            self._open_rules_file(file, line)
+            return
         if not jump_to_xml or line <= 0:
             return
         target = self._issue_session(file) if self._assembly_context() is not None else self.document
@@ -232,6 +270,37 @@ class ValidationPanelMixin:
             # Le défilement du document affiché est restauré juste après.
             call_later(0, self, lambda: self.document is target and self._goto_line(line, column))
         self._goto_line(line, column)
+
+    def _open_rules_file(self, file, line):
+        """Double-clic sur une règle incorrecte : affiche son fichier, à sa
+        ligne (au début si elle est inconnue). Un fichier du dossier du
+        projet qui n'est pas un document du projet peut y être ajouté ; un
+        fichier hors du projet ne s'ouvre pas."""
+        path = Path(file) if file else None
+        if path is None or not path.is_file():
+            return
+        target = self._issue_session(str(path))
+        if target is None:
+            path = path.resolve()
+            if not path.is_relative_to(Path(self.project.root_dir).resolve()):
+                self.statusBar().showMessage(_t("schematron.rules.outside", name=path.name, path=str(path)), 10000)
+                return
+            answer = QMessageBox.question(
+                self, _t("schematron.rules.add.title"), _t("schematron.rules.add.text", name=path.name),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes)
+            if answer != QMessageBox.StandardButton.Yes or not self._register_document(DocumentConfig(path)):
+                return
+            target = self._issue_session(str(path))
+            if target is None:
+                return
+        line = max(1, int(line or 0))
+        if target is not self.document:
+            if not self.show_document(target):
+                return
+            self.show_document_tab(target)
+        # Le défilement du document affiché est restauré juste après.
+        call_later(0, self, lambda: self.document is target and self._goto_line(line, 1))
+        self._goto_line(line, 1)
 
     def _goto_line(self, line, column):
         self.left_tabs.setCurrentIndex(0)
@@ -358,13 +427,18 @@ class ValidationPanelMixin:
             self._set_schematron_label()
 
     @staticmethod
-    def _schematron_problems(resolution, result):
-        """``(source, détail)`` des règles incorrectes : déclaration
-        introuvable (résolution) ou règles que Saxon refuse (résultat : des
-        ``ValidationIssue``, « fichier:ligne: message »)."""
-        rules = tuple((issue.file, f"{Path(issue.file).name}:{issue.line}: {issue.message}" if issue.line
-                       else issue.message) for issue in (getattr(result, "schematron_errors", ()) or ()))
-        return tuple(getattr(resolution, "schematron_errors", ()) or ()) + rules
+    def _resolution_rules_errors(resolution):
+        """Les déclarations Schematron que la résolution n'a pas pu suivre,
+        comme des règles incorrectes (code ``declaration``)."""
+        return tuple(ValidationIssue(0, 0, "ERROR", str(error), RULES_DOMAIN, "declaration", str(href))
+                     for href, error in (getattr(resolution, "schematron_errors", ()) or ()))
+
+    def _schematron_problems(self, resolution, result):
+        """Les règles incorrectes, pour l'info-bulle et le résumé : celles du
+        résultat (qui reprend déjà celles de la résolution), sinon celles de
+        la résolution."""
+        return tuple(result.schematron_errors if result is not None
+                     else self._resolution_rules_errors(resolution))
 
     def _show_schematron_result(self, resolution, result):
         """Étiquette Schematron d'après le résultat (None : règles non
@@ -372,9 +446,12 @@ class ValidationPanelMixin:
         problems = self._schematron_problems(resolution, result)
         sources = tuple(getattr(resolution, "schematron_sources", ()) or ())
         applied = tuple(result.schematron_rules) if result is not None else ()
-        tips = [_t("schematron.tip.error", source=Path(source).name, detail=detail) for source, detail in problems]
+        tips = [_rules_located(issue) for issue in problems]
         if applied:
-            tips.insert(0, _t("schematron.tip.sources", sources=", ".join(Path(path).name for path in applied)))
+            phases = {path_key(source): getattr(source, "phase", "") for source in sources}
+            names = [_t("schematron.tip.phase", name=Path(path).name, phase=phases[path_key(path)])
+                     if phases.get(path_key(path)) else Path(path).name for path in applied]
+            tips.insert(0, _t("schematron.tip.sources", sources=", ".join(names)))
         messages = [issue for issue in (result.issues if result is not None else ()) if _is_schematron(issue)]
         errors = sum(1 for issue in messages if _is_error(issue))
         if result is not None and result.schematron_error == "saxon_missing":
@@ -402,11 +479,25 @@ class ValidationPanelMixin:
     def _schematron_summary(self, resolution, result):
         """Phrases ajoutées au résumé du panneau : règles incorrectes, Saxon
         absent."""
-        notes = [_t("schematron.panel.rules_error", source=Path(source).name, detail=detail)
-                 for source, detail in self._schematron_problems(resolution, result)]
+        notes = [_t("schematron.panel.rules_error", source=Path(issue.file).name, detail=_rules_located(issue))
+                 for issue in self._schematron_problems(resolution, result)]
         if result is not None and result.schematron_error == "saxon_missing":
             notes.append(_t("schematron.panel.saxon_missing"))
         return "".join(" " + note for note in notes)
+
+    def _validation_outdated(self, session):
+        """Vrai si le schéma ou les règles du document affiché (*session*)
+        ont changé depuis son dernier résultat : un fichier de règles
+        enregistré entre-temps, par exemple."""
+        token = session.last_rng_schema_token
+        if (session.last_rng_result is None or self._schema_mode == "none" or not token
+                or token[0] == "xslt" or self._displayed_stylesheet() is not None):
+            return False
+        try:
+            current = self._validation_token(self._resolve_completion_schema())
+        except Exception:
+            return False
+        return current is not None and current != token
 
     @staticmethod
     def _validation_token(resolution):
@@ -607,6 +698,9 @@ class ValidationPanelMixin:
             if self._rng_watch_enabled:
                 self.rng_refresh_timer.start(180)
             return None
+        # Les déclarations introuvables rejoignent les règles incorrectes.
+        result = replace(result, schematron_errors=self._resolution_rules_errors(resolution)
+                         + tuple(result.schematron_errors))
         self._last_rng_result = result
         self._last_rng_revision = revision
         self._last_rng_schema_token = self._validation_token(resolution)
@@ -646,8 +740,9 @@ class ValidationPanelMixin:
         if result.valid:
             # Des avertissements ou informations Schematron restent listés.
             messages = sum(1 for issue in result.issues if _is_schematron(issue))
-            if result.issues:
-                self._populate_validation_issues(result.issues, jump_to_xml=True)
+            rows = tuple(result.issues) + tuple(result.schematron_errors)
+            if rows:
+                self._populate_validation_issues(rows, jump_to_xml=True)
             else:
                 self._clear_validation_table()
             summary = (_t("rng.panel.valid.messages", schema=schema_name, count=messages) if messages
@@ -664,7 +759,7 @@ class ValidationPanelMixin:
                 self.statusBar().showMessage(_t("rng.message.valid"), 3500)
             return result
 
-        self._populate_validation_issues(result.issues, jump_to_xml=True)
+        self._populate_validation_issues(tuple(result.issues) + tuple(result.schematron_errors), jump_to_xml=True)
         errors = [issue for issue in result.issues if _is_error(issue)]
         schematron = sum(1 for issue in errors if _is_schematron(issue))
         rng = len(errors) - schematron

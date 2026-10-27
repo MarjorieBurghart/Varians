@@ -623,10 +623,16 @@ class DocumentTabsMixin:
         self._set_schematron_label(schematron_text, schematron_style, schematron_tip)
         self.validation_summary.setText(summary)
         result = session.last_rng_result
-        if result is not None and session.last_rng_revision == revision and result.issues:
-            self._populate_validation_issues(result.issues, jump_to_xml=result.schema_loaded)
+        rows = (tuple(result.issues) + tuple(result.schematron_errors)) if result is not None else ()
+        if session.last_rng_revision == revision and rows:
+            self._populate_validation_issues(rows, jump_to_xml=result.schema_loaded)
         else:
             self._clear_validation_table()
+        # Schéma ou règles changés depuis ce résultat (V0.9.2.4) : nouvelle
+        # validation.
+        if session.last_rng_revision == revision and self._validation_outdated(session):
+            call_later(120, self, lambda shown=session: self.document is shown and
+                       self.validate_relaxng_document(show_panel=False, automatic=True, background=True))
         # Contrôles interrompus par le changement de document.
         if session.last_xml_health_revision != revision:
             self.validate_timer.start()

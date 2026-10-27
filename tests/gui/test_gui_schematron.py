@@ -241,3 +241,121 @@ def test_without_validation_the_rules_are_not_checked(open_window, example_proje
     window = open_window(example_project)
     assert window._schema_mode == "none"
     assert window.schematron_status.text() == tr("schematron.status.disabled")
+
+
+# --- V0.9.2.4 : phases, règles incorrectes dans le panneau ---------------------------
+
+RULES_PHASES = f"""<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="{SCH_NS}" queryBinding="xslt2">
+  <ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>
+  <phase id="kind"><active pattern="kind"/></phase>
+  <phase id="vide"><active pattern="vide"/></phase>
+  <pattern id="kind">
+    <rule context="tei:varianstest"><assert test="@kind = ('a', 'b')">Kind inconnu.</assert></rule>
+  </pattern>
+  <pattern id="vide">
+    <rule context="tei:varianstest"><report test="not(normalize-space())" role="warning">Vide.</report></rule>
+  </pattern>
+</schema>
+"""
+RULES_ORIGIN = "rng.origin.schematron_rules"
+
+
+def _declare_phase(project, rules, phase):
+    path = _declare_rules(project, rules)
+    edition = project.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    edition.write_text(text.replace(SCH_MODEL, SCH_MODEL[:-2] + f' phase="{phase}"?>'), encoding="utf-8")
+    return path
+
+
+def _lead(key):
+    """Le début d'un message des règles, avant son détail."""
+    return tr(key, detail="").rstrip()
+
+
+@needs_saxon
+def test_an_incorrect_rule_is_listed_and_leads_to_the_rules_file(open_window, example_project, dialogs, qtbot):
+    _declare_rules(example_project, RULES.replace("@kind = ('a', 'b')", "@kind = ("))
+    window = open_window(example_project)
+    window.validate_relaxng_manual()
+    [row] = _rows(window)
+    assert row[LEVEL] == tr("rng.level.error") and row[ORIGIN] == tr(RULES_ORIGIN)
+    assert (row[LINE], row[DOCUMENT]) == ("6", "regles.sch")
+    assert row[MESSAGE].startswith(_lead("schematron.rules.xpath")) and "XPST" in row[MESSAGE]
+    # Une règle incorrecte ne rend pas le document invalide.
+    assert window._last_rng_result.valid and window._document_health == "normal"
+    # regles.sch n'est pas un document du projet : Varians propose de
+    # l'ajouter, puis l'affiche à la ligne de la règle.
+    dialogs.expect("question", QMessageBox.StandardButton.Yes)
+    window.goto_validation_issue(0)
+    qtbot.wait(50)
+    assert "regles.sch" in dialogs.seen[-1][2]
+    assert window.document.path.name == "regles.sch"
+    assert window.editor.textCursor().blockNumber() + 1 == 6
+    assert "regles.sch" in example_project.read_text(encoding="utf-8")
+
+
+@needs_saxon
+def test_an_unknown_phase_is_listed(open_window, example_project):
+    _declare_phase(example_project, RULES_PHASES, "absente")
+    window = open_window(example_project)
+    window.validate_relaxng_manual()
+    [row] = _rows(window)
+    assert row[ORIGIN] == tr(RULES_ORIGIN) and row[DOCUMENT] == "regles.sch"
+    assert row[MESSAGE] == tr("schematron.rules.phase", phase="absente", phases="kind, vide")
+
+
+@needs_saxon
+def test_the_phase_of_the_declaration_is_used_and_named(open_window, example_project):
+    _declare_phase(example_project, RULES_PHASES, "vide")
+    window = open_window(example_project)
+    _insert_after(window, "<body>", '\n<varianstest kind="z"/>')
+    result = window.validate_relaxng_document(show_panel=True)
+    # Phase « vide » : l'avertissement, pas l'erreur du kind.
+    assert result.valid and [row[MESSAGE] for row in _rows(window)] == ["Vide."]
+    assert tr("schematron.tip.phase", name="regles.sch", phase="vide") in window.schematron_status.toolTip()
+
+
+@needs_saxon
+def test_saved_rules_are_applied_on_return_to_the_edition(open_window, example_project, qtbot):
+    from project_config import DocumentConfig
+    from project_management import update_project_documents
+    rules = _declare_rules(example_project)
+    update_project_documents(example_project, [DocumentConfig(rules)])
+    window = open_window(example_project)
+    _insert_after(window, "<body>", '\n<varianstest kind="z">x</varianstest>')
+    assert not window.validate_relaxng_document(show_panel=True).valid
+    sch = next(session for session in window.documents if session.path.name == "regles.sch")
+    window.show_document(sch)
+    _wait_validation(qtbot)
+    text = window.editor.toPlainText()
+    cursor = window.editor.textCursor()
+    start = text.index("('a', 'b')")
+    cursor.setPosition(start)
+    cursor.setPosition(start + len("('a', 'b')"), QTextCursor.MoveMode.KeepAnchor)
+    cursor.insertText("('a', 'b', 'z')")
+    assert window.save()
+    window.show_document(window.edition_session)
+    _wait_validation(qtbot)
+    # Les règles enregistrées font valider l'édition de nouveau.
+    assert window._last_rng_result.valid
+    assert window.schematron_status.text() == tr("schematron.status.valid")
+
+
+@needs_saxon
+def test_a_rules_file_outside_the_project_is_not_opened(open_window, example_project, tmp_path):
+    outside = tmp_path / "ailleurs" / "regles.sch"
+    outside.parent.mkdir()
+    outside.write_text(RULES.replace("@kind = ('a', 'b')", "@kind = ("), encoding="utf-8")
+    _declare_rules(example_project)
+    edition = example_project.parent / "xml" / "edition.xml"
+    edition.write_text(edition.read_text(encoding="utf-8").replace('href="regles.sch"', f'href="{outside.as_uri()}"'),
+                       encoding="utf-8")
+    window = open_window(example_project)
+    window.validate_relaxng_manual()
+    [row] = _rows(window)
+    assert row[ORIGIN] == tr(RULES_ORIGIN)
+    window.goto_validation_issue(0)                              # aucune boîte
+    assert window.statusBar().currentMessage() == tr("schematron.rules.outside", name="regles.sch",
+                                                     path=str(outside.resolve()))
