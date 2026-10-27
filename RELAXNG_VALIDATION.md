@@ -4,7 +4,8 @@ Cette couche TEI-aware distingue trois notions :
 
 1. **XML bien formé** : la syntaxe XML est correcte.
 2. **XML valide selon RELAX NG** : le document bien formé respecte le schéma actif.
-3. **Schematron** : les déclarations sont détectées mais ne sont pas encore exécutées.
+3. **Schematron** : les règles du schéma et des déclarations Schematron sont
+   appliquées depuis la V0.9.2.3 (voir la dernière section).
 
 ## Politique de schéma du projet
 
@@ -43,7 +44,8 @@ pas utilisé pour RELAX NG.
 ```
 
 Le document reste éditable normalement. Les déclarations Schematron de
-`<?xml-model?>` peuvent toutefois être détectées à titre informatif.
+`<?xml-model?>` sont détectées à titre informatif, mais leurs règles ne sont
+pas vérifiées (« Schematron : non vérifié »).
 
 Les anciens projets contenant simplement :
 
@@ -77,9 +79,9 @@ Une instruction de la forme :
   schematypens="http://purl.oclc.org/dsdl/schematron"?>
 ```
 
-est détectée et signalée dans la barre d'état. **Aucune validation Schematron
-n'est encore exécutée en V0.5.1.** Cette détection réserve le contrat pour une
-intégration ultérieure sans changer le format de projet.
+était seulement détectée et signalée dans la barre d'état de la V0.5.1 à la
+V0.9.2.2. Depuis la V0.9.2.3, ses règles sont appliquées : voir « V0.9.2.3 —
+règles Schematron » ci-dessous.
 
 ## Signal visuel des états
 
@@ -243,3 +245,83 @@ même ? » (titre « Feuille XSLT incorrecte »). Le panneau affiche la colonne
 Document quand une erreur est dans un autre fichier (feuille importée ou
 incluse) ; le double-clic mène à ce fichier s’il est un document du projet.
 
+## V0.9.2.3 — règles Schematron
+
+Les règles Schematron sont appliquées dans le même passage que le RNG, par
+le même processus de validation, aux mêmes moments (ouverture, frappe, F8,
+enregistrement).
+
+**Sources des règles** (`schema_resolution.SchemaResolution.schematron_sources`,
+en modes `auto` et `file`) :
+
+1. le RNG employé (`schema_path`), qu'il vienne du `<?xml-model?>` ou du
+   projet : ses règles intégrées (`sch:ns`, `sch:let`, `sch:pattern`,
+   `sch:diagnostics` hors d'un élément Schematron), y compris celles des RNG
+   inclus ; un RNG sans règles ne compte pas ;
+2. chaque déclaration `xml-model` de type Schematron, vers un `.sch` ou un
+   RNG, résolue comme celle du RNG : relative au document, ou distante
+   (`http`/`https`) et mise en cache avec ses inclusions
+   (`_fetch_remote_rng`, qui suit aussi `sch:include`).
+
+Pas de doublon (`path_key`) ; une même adresse n'est téléchargée qu'une fois
+par résolution : la déclaration Schematron des documents TEI désigne le même
+`tei_all.rng` que leur RNG. Une déclaration introuvable va dans
+`schematron_errors` sans arrêter le reste. Mode `none` : aucune source.
+
+**Moteur** (`schematron.py`, sans Qt) : SchXslt2 1.11.2
+(`resources/schxslt2/transpile.xsl`, MIT, voir son LISEZMOI) transforme la
+Schematron en feuille XSLT 3.0, compilée par Saxon (`saxonche`, processeur
+partagé avec `xslt_engines`) ; la feuille compilée reste en cache tant que la
+source et les fichiers qu'elle inclut ne changent pas
+(`_schema_dependency_signature`). Paramètres statiques :
+`schxslt:compact-report` vrai, `schxslt:terminate-validation-on-error` faux
+(une erreur d'exécution d'une règle est écrite dans le rapport). Toutes les
+règles sont évaluées en XPath 3.1, quel que soit `queryBinding` ; phase :
+`defaultPhase`, sinon toutes.
+
+**Validation** (`relaxng_validation.validate_document(…, schematron=[…])`) :
+après le RNG, si le document est bien formé et que le RNG a pu être chargé,
+les règles sont appliquées au même arbre lxml (l'édition assemblée, avec le
+texte des parties ouvertes). Saxon lit cet arbre sérialisé ; chaque message
+(`svrl:failed-assert`, `svrl:successful-report`) est ramené à son élément
+par son emplacement (`@location`, `fn:path()`), donc à sa ligne lxml et, par
+`Assembly.origin`, à sa partie. Un attribut ou un texte donne la ligne de
+son élément.
+
+- `ValidationIssue.domain = "SCHEMATRON"` ; `type_name` : identifiant de
+  l'assertion, sinon de la règle ou du groupe ; niveau d'après `@severity`,
+  sinon `@role` : `warning`, `warn`, `nonfatal` → `WARNING` ; `info`,
+  `information` → `INFO` ; le reste → `ERROR`.
+- `valid` est faux s'il y a une erreur RNG ou Schematron ; un avertissement
+  ou une information ne rendent pas invalide.
+- `ValidationResult.schematron_rules` (sources appliquées),
+  `schematron_errors` (`(source, détail)` des règles incorrectes : fichier
+  absent ou mal formé, XPath fautif — « fichier:ligne: message » —, erreur
+  d'exécution) et `schematron_error` (`saxon_missing`). Une règle incorrecte
+  ne rend pas le document invalide.
+- Sans RNG mais avec une déclaration Schematron : bien-formation, puis les
+  règles seules (`schema` vide dans la requête).
+- Processus : champ `"schematron": [chemins]` des requêtes ; sa sortie
+  d'erreur est un fichier temporaire (`VARIANS_STDERR_LOG`), où Saxon écrit,
+  sous Windows, le détail d'une erreur de compilation ; effacé à l'arrêt.
+
+**Fenêtre** : colonne **Origine** (XML, RELAX NG, XInclude, Schematron,
+XSLT) après **Niveau** ; niveau Information ; résumé qui compte à part les
+erreurs RELAX NG et Schematron ; un document valide garde ses avertissements
+dans la liste ; étiquette Schematron de la barre d'état (✓, erreurs,
+messages, aucune règle, règles incorrectes, Saxon manquant, non vérifié),
+info-bulle avec les sources et le détail ; onglet orange pour une erreur
+seulement ; question d'enregistrement « Document non valide » qui compte les
+erreurs RELAX NG et Schematron. Le jeton de validation
+(`_validation_token`) couvre le RNG et les sources des règles : une règle
+modifiée fait valider de nouveau à l'enregistrement.
+
+**Nouveaux projets** : `minimal_tei_text` écrit aussi la déclaration
+Schematron de TEI All.
+
+**Limites** : XPath 3.1 pour toutes les règles (une règle écrite pour
+XPath 1.0 peut, dans de rares comparaisons de types, lever une erreur
+qu'XPath 1.0 taisait : elle est alors signalée comme règle incorrecte) ;
+phase par défaut seulement, `phase` d'une déclaration ignoré ; ni
+Schematron 1.5, ni règles d'un XSD ; un `document()` d'une règle lit les
+fichiers locaux.

@@ -364,6 +364,20 @@ l'utilisateur. Le réseau est bloqué dans les tests de l'interface
 fenêtre un faux TEI-C (`FakeTeiC`). Une version autonome devra embarquer le
 dossier `resources/tei-stylesheets`.
 
+## Règles Schematron
+
+Depuis V0.9.2.3, Varians applique les règles Schematron avec SchXslt2
+(`resources/schxslt2/transpile.xsl`, licence MIT) et Saxon ; voir
+`RELAXNG_VALIDATION.md`. Pour livrer une nouvelle version de SchXslt2,
+suivre `resources/schxslt2/LISEZMOI.md` : télécharger le `.jar` publié sur
+Maven Central, vérifier son empreinte, en extraire `content/transpile.xsl`,
+mettre à jour le LISEZMOI (version, empreintes), puis lancer les tests :
+`tests/test_schematron.py` contrôle le fichier livré (licence, empreinte) et
+l'application des règles, `tests/test_schematron_validation.py` la
+validation, `tests/gui/test_gui_schematron.py` la fenêtre. Ces tests sont
+ignorés sans Saxon. Une version autonome devra embarquer le dossier
+`resources/schxslt2`.
+
 ## Historique et versions
 
 Depuis V0.8.6.0, l'historique est porté par Git. Les rapports de test et
