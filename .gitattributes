@@ -1,0 +1,3 @@
+# Fichiers tiers livrés tels quels, sans conversion des fins de ligne : leur
+# empreinte est notée dans leur LISEZMOI.
+resources/schxslt2/transpile.xsl -text

@@ -357,8 +357,21 @@ def _issues(report, root, file_of):
         )
 
 
-def validate(tree, sources, file_of=None) -> SchematronReport:
-    """Applique les règles de *sources* à *tree* (voir le module)."""
+def _document_uri(base):
+    """L'URI de base du document validé, d'après son chemin *base* (None
+    s'il n'en a pas). Celle que garde lxml ne sert pas : sous Windows, elle
+    peut perdre la barre qui suit le lecteur (« D:a/… »)."""
+    if base is None:
+        return None
+    try:
+        return Path(base).expanduser().resolve().as_uri()
+    except (OSError, ValueError):
+        return None
+
+
+def validate(tree, sources, file_of=None, base=None) -> SchematronReport:
+    """Applique les règles de *sources* à *tree* (voir le module) ; *base* :
+    le chemin du document (``base-uri()`` des règles)."""
     root = tree.getroot() if hasattr(tree, "getroot") else tree
     issues, rules, errors = [], [], []
     seen = set()
@@ -378,9 +391,9 @@ def validate(tree, sources, file_of=None) -> SchematronReport:
             try:
                 if document is None:
                     builder = _processor().new_document_builder()
-                    url = root.getroottree().docinfo.URL
-                    if url and "://" not in url:
-                        builder.set_base_uri(Path(url).resolve().as_uri())
+                    uri = _document_uri(base)
+                    if uri is not None:
+                        builder.set_base_uri(uri)
                     document = builder.parse_xml(xml_text=etree.tostring(root.getroottree(), encoding="unicode"))
                 svrl = entry.executable.transform_to_string(xdm_node=document)
             except PySaxonApiError as exc:

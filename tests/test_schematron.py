@@ -277,6 +277,20 @@ def test_an_error_in_a_part_of_an_assembled_edition_is_reported_in_that_part(tmp
 
 
 @needs_saxon
+def test_the_address_of_the_document_is_the_one_given(tmp_path):
+    # L'adresse que garde lxml peut être inutilisable (sous Windows :
+    # « D:a/… ») : c'est celle que donne Varians qui compte.
+    sch = _write(tmp_path, "adresse.sch", _sch(
+        '<pattern><rule context="/*"><assert test="ends-with(base-uri(/), \'/donne/edition.xml\')">'
+        '<value-of select="base-uri(/)"/></assert></rule></pattern>'))
+    tree = _tree(DOC, "ailleurs/edition.xml")
+    assert validate(tree, [sch], base=tmp_path / "donne" / "edition.xml").issues == ()
+    # Sans adresse donnée, aucune.
+    [issue] = validate(tree, [sch]).issues
+    assert "ailleurs" not in issue.message
+
+
+@needs_saxon
 def test_an_incorrect_rule_is_an_error_of_the_rules_not_of_the_document(tmp_path, tei_rng):
     bad = _write(tmp_path, "fautive.sch", _sch(
         '<pattern><rule context="tei:lg"><assert test="tei:l[">vide</assert></rule></pattern>'))

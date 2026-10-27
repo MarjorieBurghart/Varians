@@ -399,7 +399,7 @@ def validate_document(xml_text: str, schema_path: str | Path | None, base_url: s
     # Importé ici : Saxon n'est chargé qu'au premier besoin.
     from schematron import validate as apply_rules
 
-    report = apply_rules(tree, schematron, file_of)
+    report = apply_rules(tree, schematron, file_of, base_url)
     failed = any(issue.level == "ERROR" for issue in report.issues)
     return replace(result, valid=result.valid and not failed, issues=result.issues + report.issues,
                    schematron_rules=report.rules, schematron_errors=report.errors,

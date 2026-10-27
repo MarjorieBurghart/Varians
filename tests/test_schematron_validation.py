@@ -141,6 +141,17 @@ def test_an_assembled_edition_without_rng_is_also_checked(files):
 
 
 @needs_saxon
+@pytest.mark.parametrize("parts", [None, {}])
+def test_the_rules_see_the_address_of_the_document(files, parts):
+    (files / "adresse.sch").write_text(SCH.replace(
+        '<rule context="lg">', '<rule context="/*"><assert test="ends-with(base-uri(/), \'/edition.xml\')">'
+        '<value-of select="base-uri(/)"/></assert></rule><rule context="lg">'), encoding="utf-8")
+    (files / "edition.xml").write_text("<r/>", encoding="utf-8")
+    result = _validate(files, "<r/>", sources=("adresse.sch",), parts=parts)
+    assert result.valid and result.issues == ()
+
+
+@needs_saxon
 def test_incorrect_rules_do_not_make_the_document_invalid(files):
     (files / "fautive.sch").write_text(SCH.replace('test="l"', 'test="l["'), encoding="utf-8")
     result = _validate(files, "<r><lg/></r>", sources=("fautive.sch",))
