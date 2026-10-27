@@ -174,6 +174,25 @@ def _stat_signature(paths: tuple[Path, ...]) -> tuple:
     return tuple(result)
 
 
+XSD_NS = "http://www.w3.org/2001/XMLSchema"
+_XSD_INCLUSIONS = {"include", "import", "redefine", "override"}
+
+
+def dependency_reference(elem) -> tuple[str, str] | None:
+    """``(attribut, adresse)`` d'un élément qui inclut un autre fichier de
+    schéma : ``include``/``externalRef`` RELAX NG ou Schematron (``href``),
+    ou (V0.9.2.5) ``xs:include``, ``xs:import``, ``xs:redefine`` et
+    ``xs:override`` d'un XSD (``schemaLocation``) ; sinon None."""
+    tag = elem.tag if isinstance(elem.tag, str) else ""
+    namespace, _brace, local = tag[1:].rpartition("}") if tag.startswith("{") else ("", "", tag)
+    if namespace == XSD_NS:
+        attribute = "schemaLocation" if local in _XSD_INCLUSIONS else None
+    else:
+        attribute = "href" if local in {"include", "externalRef"} else None
+    href = (elem.get(attribute) or "").strip() if attribute else ""
+    return (attribute, href) if href else None
+
+
 def _discover_schema_dependencies(schema_path: Path) -> tuple[Path, ...]:
     visited: set[Path] = set()
     ordered: list[Path] = []
@@ -192,11 +211,10 @@ def _discover_schema_dependencies(schema_path: Path) -> tuple[Path, ...]:
         except (OSError, StdET.ParseError):
             return
         for elem in root.iter():
-            tag = elem.tag if isinstance(elem.tag, str) else ""
-            local = tag.rsplit("}", 1)[-1]
-            if local not in {"include", "externalRef"}:
+            reference = dependency_reference(elem)
+            if reference is None:
                 continue
-            dep = _dependency_path(path.parent, elem.get("href") or "")
+            dep = _dependency_path(path.parent, reference[1])
             if dep is not None:
                 walk(dep)
 

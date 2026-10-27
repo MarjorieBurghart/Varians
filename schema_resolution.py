@@ -21,6 +21,8 @@ import os
 import re
 import xml.etree.ElementTree as ET
 
+from relaxng_validation import dependency_reference
+
 RELAXNG_NS = "http://relaxng.org/ns/structure/1.0"
 SCHEMATRON_NS = "http://purl.oclc.org/dsdl/schematron"
 _XML_MODEL_RE = re.compile(r"<\?xml-model\s+(.*?)\?>", re.I | re.S)
@@ -146,18 +148,17 @@ def _fetch_remote_rng(url: str, cache_dir: Path, visited: set[str] | None = None
 
     changed = False
     for elem in root.iter():
-        local = elem.tag.rsplit("}", 1)[-1] if isinstance(elem.tag, str) else ""
-        if local not in {"include", "externalRef"}:
+        # RNG, Schematron (href), XSD (schemaLocation, V0.9.2.5).
+        reference = dependency_reference(elem)
+        if reference is None:
             continue
-        href = (elem.get("href") or "").strip()
-        if not href:
-            continue
+        attribute, href = reference
         dep_url = urljoin(final_url, href)
         parsed = urlparse(dep_url)
         if parsed.scheme not in {"http", "https"}:
             continue
         dep_path, _ = _fetch_remote_rng(dep_url, cache_dir, visited, force=force)
-        elem.set("href", dep_path.resolve().as_uri())
+        elem.set(attribute, dep_path.resolve().as_uri())
         changed = True
 
     if changed:

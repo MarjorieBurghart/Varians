@@ -483,6 +483,61 @@ def test_a_malformed_unsaved_text_is_an_error_of_the_rules(tmp_path):
     assert (error.type_name, error.file) == ("malformed", str(sch))
 
 
+# --- Règles d'un XSD (V0.9.2.5) ---------------------------------------------------
+
+XSD = "http://www.w3.org/2001/XMLSchema"
+XSD_MAIN = f"""<?xml version="1.0"?>
+<xs:schema xmlns:xs="{XSD}" targetNamespace="{TEI}">
+  <xs:include schemaLocation="types.xsd"/>
+  <xs:import namespace="urn:autre" schemaLocation="autre/annexe.xsd"/>
+</xs:schema>
+"""
+XSD_TYPES = f"""<?xml version="1.0"?>
+<xs:schema xmlns:xs="{XSD}" xmlns:sch="{SCH}" targetNamespace="{TEI}">
+  <xs:element name="lg"><xs:annotation><xs:appinfo>
+    <sch:ns prefix="tei" uri="{TEI}"/>
+    <sch:pattern><sch:rule context="tei:lg"><sch:assert test="tei:l">Groupe sans vers.</sch:assert></sch:rule></sch:pattern>
+  </xs:appinfo></xs:annotation></xs:element>
+</xs:schema>
+"""
+XSD_ANNEXE = f"""<?xml version="1.0"?>
+<xs:schema xmlns:xs="{XSD}" xmlns:sch="{SCH}" targetNamespace="urn:autre">
+  <xs:annotation><xs:appinfo>
+    <sch:pattern><sch:rule context="tei:p"><sch:report test="true()">Paragraphe.</sch:report></sch:rule></sch:pattern>
+  </xs:appinfo></xs:annotation>
+</xs:schema>
+"""
+
+
+@pytest.fixture
+def xsd(tmp_path):
+    _write(tmp_path, "types.xsd", XSD_TYPES)
+    (tmp_path / "autre").mkdir()
+    _write(tmp_path / "autre", "annexe.xsd", XSD_ANNEXE)
+    return _write(tmp_path, "edition.xsd", XSD_MAIN)
+
+
+def test_the_rules_of_a_xsd_and_of_its_included_and_imported_files_are_gathered(xsd):
+    root = etree.fromstring(rules_text(xsd).encode("utf-8"))
+    assert [etree.QName(child).localname for child in root] == ["ns", "pattern", "pattern"]
+
+
+@needs_saxon
+def test_the_rules_of_a_xsd_are_applied(xsd):
+    assert [message for _line, _level, message in _found(validate(_tree(DOC), [xsd]))] == [
+        "Groupe sans vers.", "Paragraphe."]
+
+
+@needs_saxon
+def test_a_changed_included_xsd_is_compiled_again(xsd):
+    validate(_tree(DOC), [xsd])
+    types = xsd.parent / "types.xsd"
+    types.write_text(XSD_TYPES.replace("Groupe sans vers.", "Pas de vers."), encoding="utf-8")
+    stamp = time.time() + 5
+    os.utime(types, (stamp, stamp))
+    assert _found(validate(_tree(DOC), [xsd]))[0][2] == "Pas de vers."
+
+
 # --- Cache ------------------------------------------------------------------------
 
 @needs_saxon

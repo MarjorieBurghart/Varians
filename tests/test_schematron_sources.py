@@ -194,3 +194,20 @@ def test_a_source_is_a_path(local):
     source = SchematronSource(local / "regles.sch", "apparat")
     assert Path(source) == local / "regles.sch" and str(source) == str(local / "regles.sch")
 
+
+
+def test_a_remote_xsd_is_cached_with_its_included_files(tmp_path, web):
+    # V0.9.2.5 : xs:include et xs:import (@schemaLocation) d'un XSD distant.
+    xsd = "http://www.w3.org/2001/XMLSchema"
+    web.pages["https://example.org/xsd/edition.xsd"] = (
+        f'<xs:schema xmlns:xs="{xsd}"><xs:include schemaLocation="types.xsd"/>'
+        f'<xs:import namespace="urn:a" schemaLocation="https://example.org/autre/a.xsd"/></xs:schema>')
+    web.pages["https://example.org/xsd/types.xsd"] = f'<xs:schema xmlns:xs="{xsd}"/>'
+    web.pages["https://example.org/autre/a.xsd"] = f'<xs:schema xmlns:xs="{xsd}"/>'
+    text, path = _document(tmp_path, _model("https://example.org/xsd/edition.xsd", SCHEMATRON_NS))
+    [source] = _paths(_resolve(tmp_path, text, path))
+    cached = source.read_text(encoding="utf-8")
+    for name in (("example.org", "xsd", "types.xsd"), ("example.org", "autre", "a.xsd")):
+        included = (tmp_path / "cache").joinpath(*name)
+        assert included.is_file() and included.resolve().as_uri() in cached
+    assert len(web.calls) == 3
