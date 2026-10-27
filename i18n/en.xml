@@ -987,6 +987,12 @@ Save anyway?</string>
   <string key="transform.scenario.name">Name:</string>
   <string key="transform.scenario.source">Source:</string>
   <string key="transform.scenario.engine">Engine:</string>
+  <string key="transform.scenario.package">Output format:</string>
+  <string key="transform.package.none">A single file</string>
+  <string key="transform.package.pages">HTML pages (one per division)</string>
+  <string key="transform.package.docx">DOCX (Word)</string>
+  <string key="transform.package.odt">ODT (LibreOffice)</string>
+  <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">XSLT stylesheet:</string>
   <string key="transform.scenario.css">CSS (optional):</string>
   <string key="transform.scenario.output">Result:</string>
@@ -1019,6 +1025,7 @@ Save it anyway?</string>
   <string key="transform.problem.output_is_source">The result would replace a source of the project: {detail}</string>
   <string key="transform.problem.css_overwrites_source">The copy of the CSS would replace a source of the project: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets not installed: {detail} (see File ▸ TEI Stylesheets…)</string>
+  <string key="transform.problem.package_invalid">Unknown output format, or without Saxon: {detail} (pages, docx, odt or epub, with the Saxon engine)</string>
   <string key="toolbar.transform">Transform</string>
   <string key="toolbar.transform.tip">Run the last transformation scenario (Ctrl+Shift+T); the arrow lists the scenarios</string>
   <string key="transform.run">Run</string>
@@ -1050,6 +1057,7 @@ Files not written (outside the folder of the result, or sources of the project):
   <string key="transform.journal.css_copied">CSS copied: {detail}</string>
   <string key="transform.journal.write_refused">Writing refused: {detail}</string>
   <string key="transform.journal.assembly">Assembly: {detail}</string>
+  <string key="transform.journal.image_skipped">Image not included (remote or not found): {detail}</string>
   <string key="transform.error.unknown_engine">Unknown engine: {detail}</string>
   <string key="transform.error.saxon_missing">Saxon is not installed: run installer_dependances.bat, or pip install saxonche.{detail}</string>
   <string key="transform.error.source_missing">Source cannot be read: {detail}</string>

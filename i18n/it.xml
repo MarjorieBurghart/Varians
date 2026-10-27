@@ -1001,6 +1001,12 @@ Salvare comunque?</string>
   <string key="transform.scenario.name">Nome:</string>
   <string key="transform.scenario.source">Sorgente:</string>
   <string key="transform.scenario.engine">Motore:</string>
+  <string key="transform.scenario.package">Formato del risultato:</string>
+  <string key="transform.package.none">Un solo file</string>
+  <string key="transform.package.pages">Pagine HTML (una per divisione)</string>
+  <string key="transform.package.docx">DOCX (Word)</string>
+  <string key="transform.package.odt">ODT (LibreOffice)</string>
+  <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">Foglio XSLT:</string>
   <string key="transform.scenario.css">CSS (facoltativo):</string>
   <string key="transform.scenario.output">Risultato:</string>
@@ -1033,6 +1039,7 @@ Salvarlo comunque?</string>
   <string key="transform.problem.output_is_source">Il risultato sostituirebbe una sorgente del progetto: {detail}</string>
   <string key="transform.problem.css_overwrites_source">La copia del CSS sostituirebbe una sorgente del progetto: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets non installati: {detail} (vedere File ▸ TEI Stylesheets…)</string>
+  <string key="transform.problem.package_invalid">Formato del risultato sconosciuto o senza Saxon: {detail} (pages, docx, odt o epub, con il motore Saxon)</string>
   <string key="toolbar.transform">Trasforma</string>
   <string key="toolbar.transform.tip">Esegui l’ultimo scenario di trasformazione (Ctrl+Maiusc+T); la freccia elenca gli scenari</string>
   <string key="transform.run">Esegui</string>
@@ -1064,6 +1071,7 @@ File non scritti (fuori dalla cartella del risultato, o sorgenti del progetto):
   <string key="transform.journal.css_copied">CSS copiato: {detail}</string>
   <string key="transform.journal.write_refused">Scrittura rifiutata: {detail}</string>
   <string key="transform.journal.assembly">Assemblaggio: {detail}</string>
+  <string key="transform.journal.image_skipped">Immagine non inclusa (remota o non trovata): {detail}</string>
   <string key="transform.error.unknown_engine">Motore sconosciuto: {detail}</string>
   <string key="transform.error.saxon_missing">Saxon non è installato: avviare installer_dependances.bat, oppure pip install saxonche.{detail}</string>
   <string key="transform.error.source_missing">Sorgente illeggibile: {detail}</string>

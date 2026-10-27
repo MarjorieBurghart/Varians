@@ -1001,6 +1001,12 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.scenario.name">名前：</string>
   <string key="transform.scenario.source">入力：</string>
   <string key="transform.scenario.engine">プロセッサ：</string>
+  <string key="transform.scenario.package">出力形式：</string>
+  <string key="transform.package.none">単一のファイル</string>
+  <string key="transform.package.pages">HTML ページ（区分ごとに 1 ページ）</string>
+  <string key="transform.package.docx">DOCX（Word）</string>
+  <string key="transform.package.odt">ODT（LibreOffice）</string>
+  <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">XSLT スタイルシート：</string>
   <string key="transform.scenario.css">CSS（任意）：</string>
   <string key="transform.scenario.output">出力：</string>
@@ -1033,6 +1039,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.problem.output_is_source">出力がプロジェクトのソースを置き換えてしまいます：{detail}</string>
   <string key="transform.problem.css_overwrites_source">CSS のコピーがプロジェクトのソースを置き換えてしまいます：{detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets がインストールされていません：{detail}（ファイル ▸ TEI Stylesheets… を参照）</string>
+  <string key="transform.problem.package_invalid">不明な出力形式、または Saxon 以外：{detail}（pages、docx、odt、epub のいずれか、Saxon プロセッサで）</string>
   <string key="toolbar.transform">変換</string>
   <string key="toolbar.transform.tip">最後の変換シナリオを実行（Ctrl+Shift+T）。矢印でシナリオの一覧</string>
   <string key="transform.run">実行</string>
@@ -1064,6 +1071,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.journal.css_copied">CSS をコピー：{detail}</string>
   <string key="transform.journal.write_refused">書き込み拒否：{detail}</string>
   <string key="transform.journal.assembly">結合：{detail}</string>
+  <string key="transform.journal.image_skipped">画像は含まれていません（リモートまたは見つかりません）：{detail}</string>
   <string key="transform.error.unknown_engine">不明なプロセッサ：{detail}</string>
   <string key="transform.error.saxon_missing">Saxon がインストールされていません：installer_dependances.bat を実行するか、pip install saxonche。{detail}</string>
   <string key="transform.error.source_missing">入力を読み込めません：{detail}</string>

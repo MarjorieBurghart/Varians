@@ -148,6 +148,42 @@ def test_a_scenario_is_edited_and_keeps_an_unknown_engine(open_window, sermons_p
     )
 
 
+def test_the_package_of_a_scenario_is_chosen_and_an_unknown_one_is_kept(open_window, sermons_project, dialogs):
+    book = TransformScenario("Livre", "rendering/personnes.xsl", "publications/livre.docx", engine="saxon",
+                             package="docx")
+    future = TransformScenario("Futur", "rendering/personnes.xsl", "publications/futur.pdf", engine="saxon",
+                               package="pdf")
+    window = open_window(_with_scenarios(sermons_project, book, future))
+    seen = {}
+
+    def select_and_edit(row):
+        def action(dialog):
+            dialog.tree.setCurrentItem(dialog.project_group.child(row))
+            dialog.edit_scenario()
+        return action
+
+    def change(dialog):
+        seen["choices"] = [dialog.package_combo.itemData(i) for i in range(dialog.package_combo.count())]
+        seen["docx"] = dialog.package_combo.currentData()
+        dialog.package_combo.setCurrentIndex(dialog.package_combo.findData("odt"))
+
+    def keep(dialog):
+        seen["pdf"] = dialog.package_combo.currentData()
+
+    answers = [] if saxon_available() else [("question", QMessageBox.StandardButton.Yes)]
+    dialogs.expect("dialog", _in_list(select_and_edit(0)))
+    dialogs.expect("dialog", _scenario(change))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    dialogs.expect("dialog", _in_list(select_and_edit(1)))
+    dialogs.expect("dialog", _scenario(keep))
+    dialogs.expect("question", QMessageBox.StandardButton.Yes)           # « Paquet inconnu : pdf »
+    window.transform_scenarios_dialog()
+    assert seen == {"choices": ["", "pages", "docx", "odt", "epub"], "docx": "docx", "pdf": "pdf"}
+    assert [s.package for s in load_project(sermons_project).transformations] == ["odt", "pdf"]
+
+
 def test_a_predefined_scenario_is_duplicated_into_the_project(open_window, sermons_project, dialogs):
     window = open_window(sermons_project)
 

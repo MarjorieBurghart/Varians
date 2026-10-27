@@ -1001,6 +1001,12 @@ Přesto uložit?</string>
   <string key="transform.scenario.name">Název:</string>
   <string key="transform.scenario.source">Zdroj:</string>
   <string key="transform.scenario.engine">Procesor:</string>
+  <string key="transform.scenario.package">Formát výstupu:</string>
+  <string key="transform.package.none">Jediný soubor</string>
+  <string key="transform.package.pages">Stránky HTML (jedna na oddíl)</string>
+  <string key="transform.package.docx">DOCX (Word)</string>
+  <string key="transform.package.odt">ODT (LibreOffice)</string>
+  <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">Styl XSLT:</string>
   <string key="transform.scenario.css">CSS (nepovinné):</string>
   <string key="transform.scenario.output">Výsledek:</string>
@@ -1033,6 +1039,7 @@ Přesto uložit?</string>
   <string key="transform.problem.output_is_source">Výsledek by nahradil zdroj projektu: {detail}</string>
   <string key="transform.problem.css_overwrites_source">Kopie CSS by nahradila zdroj projektu: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets nejsou nainstalovány: {detail} (viz Soubor ▸ TEI Stylesheets…)</string>
+  <string key="transform.problem.package_invalid">Neznámý formát výstupu nebo bez Saxonu: {detail} (pages, docx, odt nebo epub, s procesorem Saxon)</string>
   <string key="toolbar.transform">Transformovat</string>
   <string key="toolbar.transform.tip">Spustit poslední scénář transformace (Ctrl+Shift+T); šipka zobrazí seznam scénářů</string>
   <string key="transform.run">Spustit</string>
@@ -1064,6 +1071,7 @@ Nezapsané soubory (mimo složku výsledku nebo zdroje projektu):
   <string key="transform.journal.css_copied">CSS zkopírováno: {detail}</string>
   <string key="transform.journal.write_refused">Zápis odmítnut: {detail}</string>
   <string key="transform.journal.assembly">Sestavení: {detail}</string>
+  <string key="transform.journal.image_skipped">Obrázek nebyl převzat (vzdálený nebo nenalezený): {detail}</string>
   <string key="transform.error.unknown_engine">Neznámý procesor: {detail}</string>
   <string key="transform.error.saxon_missing">Saxon není nainstalován: spusťte installer_dependances.bat nebo pip install saxonche.{detail}</string>
   <string key="transform.error.source_missing">Zdroj nelze přečíst: {detail}</string>

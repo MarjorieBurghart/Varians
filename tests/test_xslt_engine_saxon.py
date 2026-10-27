@@ -281,3 +281,186 @@ def test_the_css_is_copied_and_named_to_the_stylesheet_of_varians(project):
     folder = project.root_dir / "publications"
     assert result.outputs == [str(folder / "edition.html"), str(folder / "perso.css")]
     assert 'href="perso.css"' in (folder / "edition.html").read_text(encoding="utf-8")
+
+
+# --- Paquets DOCX, ODT, EPUB et pages HTML (V0.9.2.7) ----------------------------------------
+
+import io
+import struct
+import zipfile
+import zlib
+
+W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+
+
+def _template(path, files):
+    """Une archive ``files`` (``{nom: texte}``), comme template.docx ou .odt."""
+    with zipfile.ZipFile(path, "w") as archive:
+        for name, text in files.items():
+            archive.writestr(name, text)
+    return path
+
+
+def _package(project, body, package, output, template=None, source_text=None, params=()):
+    """Exécute la feuille ``body`` en paquet ``package`` ; ``template`` :
+    l'archive du modèle, à la place de celle des TEI Stylesheets."""
+    if source_text is not None:
+        (project.root_dir / "xml" / "source.xml").write_text(source_text, encoding="utf-8")
+    scenario = TransformScenario("Essai", _stylesheet(project, body), output, engine="saxon", package=package,
+                                 params=params, **({"source": "file", "file": "xml/source.xml"}
+                                                   if source_text is not None else {}))
+    request = scenario_request(scenario, project)
+    request["package_fixstyle"] = None
+    if template is not None:
+        request["package_template"] = str(template)
+    return run_in_process(request), project.root_dir / output
+
+
+DOCX_TEMPLATE = {
+    "[Content_Types].xml": "<Types/>", "_rels/.rels": "<Relationships/>",
+    "word/styles.xml": "<styles>modèle</styles>", "word/footnotes.xml": "<ancien/>",
+    "word/header1.xml": "<ancien/>", "word/webSettings.xml": "<webSettings/>",
+    "docProps/core.xml": "<core>ancien</core>", "docProps/app.xml": "<app/>", "docProps/custom.xml": "<ancien/>",
+}
+DOCX = (f'<xsl:param name="word-directory"/>'
+        f'<xsl:template match="/">'
+        f'<xsl:result-document href="{{$word-directory}}/word/footnotes.xml"><notes/></xsl:result-document>'
+        f'<xsl:result-document href="{{$word-directory}}/docProps/newcore.xml"><core>nouveau</core>'
+        f'</xsl:result-document>'
+        f'<w:document xmlns:w="{W}" styles="{{doc($word-directory || \'/word/styles.xml\')}}"/>'
+        f'</xsl:template>')
+
+
+@saxon
+def test_a_docx_package_is_built_from_its_template(project, tmp_path):
+    template = _template(tmp_path / "template.docx", DOCX_TEMPLATE)
+    result, output = _package(project, DOCX, "docx", "publications/edition.docx", template)
+    assert result.ok, result.error
+    assert result.outputs == [str(output)]
+    with zipfile.ZipFile(output) as archive:
+        names = archive.namelist()
+        assert names[0] == "[Content_Types].xml"
+        # Le résultat principal, avec ce qu'il a lu du modèle déballé.
+        document = archive.read("word/document.xml").decode("utf-8")
+        assert "w:document" in document and 'styles="modèle"' in document
+        assert archive.read("word/footnotes.xml").decode("utf-8").endswith("<notes/>")
+        assert "nouveau" in archive.read("docProps/core.xml").decode("utf-8")
+        assert "comments.xml" in " ".join(names) and "webSettings.xml" in " ".join(names)
+        for absent in ("word/header1.xml", "docProps/custom.xml", "docProps/newcore.xml", "image-size-info.xml"):
+            assert absent not in names
+        assert all(info.compress_type == zipfile.ZIP_DEFLATED for info in archive.infolist())
+    assert sorted(p.name for p in output.parent.iterdir()) == ["edition.docx"]
+
+
+ODT = ('<xsl:param name="outputDir"/>'
+       '<xsl:template match="/">'
+       '<xsl:result-document href="{$outputDir}/meta.xml"><meta/></xsl:result-document>'
+       '<content ancien="{doc($outputDir || \'/content.xml\')/*/@n}"/>'
+       '</xsl:template>')
+
+
+@saxon
+def test_an_odt_package_has_its_mimetype_first_and_stored(project, tmp_path):
+    template = _template(tmp_path / "template.odt", {
+        "mimetype": "application/vnd.oasis.opendocument.text", "content.xml": '<content n="modèle"/>',
+        "styles.xml": "<styles/>", "META-INF/manifest.xml": "<manifest/>"})
+    result, output = _package(project, ODT, "odt", "publications/edition.odt", template)
+    assert result.ok, result.error
+    with zipfile.ZipFile(output) as archive:
+        first = archive.infolist()[0]
+        assert (first.filename, first.compress_type, first.extra) == ("mimetype", zipfile.ZIP_STORED, b"")
+        assert archive.read("mimetype") == b"application/vnd.oasis.opendocument.text"
+        assert 'ancien="modèle"' in archive.read("content.xml").decode("utf-8")
+        assert archive.read("meta.xml").decode("utf-8").endswith("<meta/>")
+        assert "styles.xml" in archive.namelist()
+
+
+EPUB = ('<xsl:param name="directory"/>'
+        '<xsl:template match="/">'
+        '<xsl:result-document href="{$directory}/mimetype" method="text">application/epub+zip</xsl:result-document>'
+        '<xsl:result-document href="{$directory}/META-INF/container.xml"><container/></xsl:result-document>'
+        '<xsl:result-document href="{$directory}/OPS/index.html" method="html"><html><body>été</body></html>'
+        '</xsl:result-document>'
+        '<xsl:result-document href="{$directory}/copy.xml"><travail/></xsl:result-document>'
+        '</xsl:template>')
+
+
+@saxon
+def test_an_epub_package_is_built_from_the_files_of_the_stylesheet(project):
+    result, output = _package(project, EPUB, "epub", "publications/edition.epub")
+    assert result.ok, result.error
+    with zipfile.ZipFile(output) as archive:
+        first = archive.infolist()[0]
+        assert (first.filename, first.compress_type) == ("mimetype", zipfile.ZIP_STORED)
+        assert archive.read("mimetype") == b"application/epub+zip"
+        assert sorted(archive.namelist()) == ["META-INF/container.xml", "OPS/index.html", "mimetype"]
+        assert "été" in archive.read("OPS/index.html").decode("utf-8")
+
+
+@saxon
+def test_a_package_may_not_write_outside_its_folder(project):
+    output = project.root_dir / "publications" / "edition.epub"
+    result, _output = _package(project, '<xsl:param name="directory"/><xsl:template match="/">'
+                                        '<xsl:result-document href="{$directory}/../ailleurs.txt" method="text">x'
+                                        '</xsl:result-document></xsl:template>', "epub", "publications/edition.epub")
+    assert not result.ok and result.error_code == "write_refused" and "ailleurs.txt" in result.error
+    assert not output.exists()
+
+
+@saxon
+def test_a_protected_file_is_never_replaced_by_a_package(project):
+    edition = project.edition
+    before = edition.read_bytes()
+    result, _output = _package(project, EPUB, "epub", "xml/edition.xml")
+    assert not result.ok and result.error_code == "write_refused"
+    assert edition.read_bytes() == before
+
+
+SPLIT = ('<xsl:param name="STDOUT"/><xsl:param name="splitLevel"/>'
+         '<xsl:template match="/">'
+         '<xsl:result-document href="index.html" method="html"><html><body>sommaire '
+         '<xsl:value-of select="$STDOUT, $splitLevel"/></body></html></xsl:result-document>'
+         '<xsl:result-document href="s1.html" method="html"><html><body>un</body></html></xsl:result-document>'
+         '</xsl:template>')
+
+
+@saxon
+def test_pages_write_the_index_and_one_file_per_division(project):
+    result, output = _package(project, SPLIT, "pages", "publications/pages/index.html")
+    assert result.ok, result.error
+    folder = output.parent
+    assert result.outputs == [str(output), str(folder / "s1.html")]
+    assert "sommaire false 0" in output.read_text(encoding="utf-8")         # STDOUT=false, splitLevel=0
+    assert sorted(p.name for p in folder.iterdir()) == ["index.html", "s1.html"]
+    # Un niveau de découpe choisi dans le scénario.
+    result, output = _package(project, SPLIT, "pages", "publications/pages/index.html", params=(("splitLevel", "1"),))
+    assert "sommaire false 1" in output.read_text(encoding="utf-8")
+
+
+def _png(width, height):
+    """Un PNG minimal (en-tête IHDR, une image vide) de ``width``×``height``."""
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+    header = struct.pack(">IIBBBBB", width, height, 8, 0, 0, 0, 0)
+    raw = b"".join(b"\0" + b"\0" * width for _ in range(height))
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+
+
+@saxon
+def test_the_images_of_the_source_are_copied_with_their_size(project, tmp_path):
+    (project.root_dir / "xml" / "figures").mkdir()
+    (project.root_dir / "xml" / "figures" / "carte.png").write_bytes(_png(40, 25))
+    source = ('<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><body><p>'
+              '<graphic url="figures/carte.png"/><graphic url="https://exemple.org/loin.jpg"/>'
+              '</p></body></text></TEI>')
+    body = (f'<xsl:param name="word-directory"/><xsl:template match="/">'
+            f'<w:document xmlns:w="{W}" taille="{{doc($word-directory || \'/image-size-info.xml\')'
+            f'//image[@url=\'media/resource1.png\']/(width || \'x\' || height)}}"/></xsl:template>')
+    template = _template(tmp_path / "template.docx", DOCX_TEMPLATE)
+    result, output = _package(project, body, "docx", "publications/edition.docx", template, source_text=source)
+    assert result.ok, result.error
+    with zipfile.ZipFile(output) as archive:
+        assert archive.read("word/media/resource1.png") == (project.root_dir / "xml" / "figures" / "carte.png").read_bytes()
+        assert 'taille="40x25"' in archive.read("word/document.xml").decode("utf-8")
+    # Une image distante n'est pas téléchargée : le journal le dit.
+    assert ["image_skipped", "https://exemple.org/loin.jpg"] in result.journal

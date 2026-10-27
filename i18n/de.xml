@@ -1001,6 +1001,12 @@ Trotzdem speichern?</string>
   <string key="transform.scenario.name">Name:</string>
   <string key="transform.scenario.source">Quelle:</string>
   <string key="transform.scenario.engine">Prozessor:</string>
+  <string key="transform.scenario.package">Ausgabeformat:</string>
+  <string key="transform.package.none">Eine einzelne Datei</string>
+  <string key="transform.package.pages">HTML-Seiten (eine pro Abschnitt)</string>
+  <string key="transform.package.docx">DOCX (Word)</string>
+  <string key="transform.package.odt">ODT (LibreOffice)</string>
+  <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">XSLT-Stylesheet:</string>
   <string key="transform.scenario.css">CSS (optional):</string>
   <string key="transform.scenario.output">Ergebnis:</string>
@@ -1033,6 +1039,7 @@ Trotzdem speichern?</string>
   <string key="transform.problem.output_is_source">Das Ergebnis würde eine Quelle des Projekts ersetzen: {detail}</string>
   <string key="transform.problem.css_overwrites_source">Die Kopie der CSS würde eine Quelle des Projekts ersetzen: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets nicht installiert: {detail} (siehe Datei ▸ TEI Stylesheets…)</string>
+  <string key="transform.problem.package_invalid">Unbekanntes Ausgabeformat oder ohne Saxon: {detail} (pages, docx, odt oder epub, mit dem Saxon-Prozessor)</string>
   <string key="toolbar.transform">Transformieren</string>
   <string key="toolbar.transform.tip">Letztes Transformationsszenario ausführen (Strg+Umschalt+T); der Pfeil listet die Szenarien auf</string>
   <string key="transform.run">Ausführen</string>
@@ -1064,6 +1071,7 @@ Nicht geschriebene Dateien (außerhalb des Ergebnisordners oder Quellen des Proj
   <string key="transform.journal.css_copied">CSS kopiert: {detail}</string>
   <string key="transform.journal.write_refused">Schreiben verweigert: {detail}</string>
   <string key="transform.journal.assembly">Zusammenführung: {detail}</string>
+  <string key="transform.journal.image_skipped">Bild nicht übernommen (entfernt oder nicht gefunden): {detail}</string>
   <string key="transform.error.unknown_engine">Unbekannter Prozessor: {detail}</string>
   <string key="transform.error.saxon_missing">Saxon ist nicht installiert: installer_dependances.bat ausführen oder pip install saxonche.{detail}</string>
   <string key="transform.error.source_missing">Quelle nicht lesbar: {detail}</string>

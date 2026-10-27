@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
     QHeaderView, QLineEdit, QMenu, QMessageBox, QProgressDialog, QPushButton, QRadioButton, QTableWidget,
     QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
+import xslt_packages
 from app_context import _settings, current_i18n, tr as _t
 from document_dialogs import free_path
 from project_config import DocumentConfig, TransformScenario
@@ -155,6 +156,14 @@ class ScenarioDialog(QDialog):
             self.engine_combo.addItem(scenario.engine, scenario.engine)
         self.engine_combo.setCurrentIndex(self.engine_combo.findData(scenario.engine))
         form.addRow(_t("transform.scenario.engine"), self.engine_combo)
+        # Format du résultat (V0.9.2.7, ``xslt_packages``) ; un format inconnu est gardé.
+        self.package_combo = QComboBox(self)
+        for package in ("none",) + xslt_packages.PACKAGES:
+            self.package_combo.addItem(_t(f"transform.package.{package}"), "" if package == "none" else package)
+        if self.package_combo.findData(scenario.package) < 0:
+            self.package_combo.addItem(scenario.package, scenario.package)
+        self.package_combo.setCurrentIndex(self.package_combo.findData(scenario.package))
+        form.addRow(_t("transform.scenario.package"), self.package_combo)
 
         self.xslt_field = _PathField(project, scenario.xslt, _t("transform.browse.xslt"),
                                      file_filter="XSLT (*.xsl *.xslt);;*", parent=self)
@@ -261,7 +270,8 @@ class ScenarioDialog(QDialog):
         source = self.source()
         return TransformScenario(self.name_edit.text().strip(), self.xslt_field.text(), self.output_field.text(),
                                  source=source, file=self.file_field.text() if source == "file" else "",
-                                 engine=self.engine(), css=self.css_field.text(), params=self.params())
+                                 engine=self.engine(), css=self.css_field.text(), params=self.params(),
+                                 package=self.package_combo.currentData())
 
     def accept(self):
         scenario = self.scenario()

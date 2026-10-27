@@ -183,10 +183,20 @@ def test_a_chosen_path_is_written_relative_to_the_project_or_to_the_stylesheets_
     assert scenario_path(project, tmp_path / "ailleurs.xsl") == (tmp_path / "ailleurs.xsl").as_posix()
 
 
+def test_a_package_needs_saxon_and_a_known_format(project):
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="docx"), project)) == []
+    assert _codes(scenario_problems(replace(BASE, package="docx"), project)) == ["package_invalid"]
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="pdf"), project)) == ["package_invalid"]
+    request = scenario_request(replace(BASE, engine="saxon", package="docx"), project)
+    assert request["package"] == "docx" and Path(request["package_template"]).name == "template.docx"
+    assert Path(request["package_fixstyle"]).name == "fixstyle.xsl"
+    assert "package" not in scenario_request(BASE, project)
+
+
 def test_each_problem_has_a_message_in_the_seven_catalogs():
     import xml.etree.ElementTree as ET
     from xslt_scenarios import PROBLEM_CODES
-    assert {"output_is_source", "tei_missing"} <= set(PROBLEM_CODES) and len(PROBLEM_CODES) == 14
+    assert {"output_is_source", "tei_missing", "package_invalid"} <= set(PROBLEM_CODES) and len(PROBLEM_CODES) == 15
     for language in ("fr", "en", "de", "ja", "cs", "it", "ru"):
         root = ET.parse(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml").getroot()
         catalog = {string.get("key") for string in root.findall("string")}

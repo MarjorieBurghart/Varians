@@ -45,6 +45,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 import tei_stylesheets
+import xslt_packages
 from project_config import DEFAULT_APPLICATION_XSLT, TransformScenario
 from project_management import portable_path
 from xml_assembly import assemble, path_key
@@ -57,7 +58,7 @@ SOURCES = ("edition", "current", "file")
 ENGINES = ("lxml", "saxon")
 PROBLEM_CODES = ("unknown_source", "no_file", "file_missing", "no_current", "unknown_engine", "saxon_missing",
                  "no_xslt", "xslt_missing", "css_missing", "no_output", "output_is_folder", "output_is_source",
-                 "css_overwrites_source", "tei_missing")
+                 "css_overwrites_source", "tei_missing", "package_invalid")
 
 
 @dataclass(frozen=True)
@@ -69,7 +70,8 @@ class ScenarioProblem:
     ``saxon_missing``, ``no_xslt``, ``xslt_missing``, ``css_missing``,
     ``no_output``, ``output_is_folder``, ``output_is_source``,
     ``css_overwrites_source``, ``tei_missing`` (TEI Stylesheets non
-    installées : le dossier de la bibliothèque). ``detail`` : la valeur ou le
+    installées : le dossier de la bibliothèque), ``package_invalid`` (un
+    paquet inconnu, ou sans Saxon, V0.9.2.7). ``detail`` : la valeur ou le
     chemin en cause, tel qu'il est écrit dans le scénario ou relatif au
     projet."""
     code: str
@@ -272,7 +274,9 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
     ``current`` : le document affiché ; ``sources`` : ``project_sources``,
     s'il est déjà connu."""
     problems = []
-    tei_missing = (_uses_tei(scenario.xslt) or _uses_tei(scenario.css)) and tei_library() is None
+    # Les paquets DOCX et ODT partent du modèle des TEI Stylesheets.
+    tei_missing = ((_uses_tei(scenario.xslt) or _uses_tei(scenario.css) or scenario.package in ("docx", "odt"))
+                   and tei_library() is None)
     if tei_missing:
         problems.append(ScenarioProblem("tei_missing", str(tei_stylesheets.library_dir())))
     if scenario.source not in SOURCES:
@@ -288,6 +292,8 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
         problems.append(ScenarioProblem("unknown_engine", scenario.engine))
     elif scenario.engine == "saxon" and not saxon_available():
         problems.append(ScenarioProblem("saxon_missing"))
+    if scenario.package and (scenario.package not in xslt_packages.PACKAGES or scenario.engine != "saxon"):
+        problems.append(ScenarioProblem("package_invalid", scenario.package))
     xslt = stylesheet_path(scenario, project)
     if xslt is None:
         problems.append(ScenarioProblem("no_xslt"))
@@ -325,7 +331,9 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
     """Requête d'exécution (sérialisable en JSON) d'un scénario sans
     problème : chemins absolus, paramètres (avec ``css``, le nom de la CSS,
     sauf si le scénario le fixe, et ``${pivot}`` remplacé par le témoin
-    pivot, voir ``substitute``), fichiers protégés. ``output_dir`` :
+    pivot, voir ``substitute``), fichiers protégés, et pour un paquet
+    (``xslt_packages``) son format, le modèle des TEI Stylesheets (DOCX,
+    ODT) et la feuille qui en corrige les styles (DOCX). ``output_dir`` :
     dossier où écrire le résultat à la place du sien (aperçu)."""
     source, assemble_source = scenario_source(scenario, project, current)
     css = resolve_path(project, scenario.css)
@@ -353,6 +361,15 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
             request["catalogs"] = [str(library.catalog)]
             if _employs(xslt, library):
                 request["library"] = f"TEI Stylesheets {library.version}"
+    if scenario.package:
+        library = tei_library()
+        request["package"] = scenario.package
+        request["package_template"] = request["package_fixstyle"] = None
+        if library is not None and scenario.package in ("docx", "odt"):
+            request["package_template"] = str(library.folder / "profiles" / "default" / scenario.package
+                                              / f"template.{scenario.package}")
+        if library is not None and scenario.package == "docx":
+            request["package_fixstyle"] = str(library.folder / "docx" / "tools" / "fixstyle.xsl")
     return request
 
 

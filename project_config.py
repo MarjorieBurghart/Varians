@@ -131,8 +131,10 @@ class TransformScenario:
     qu'ils sont écrits, relatifs au projet ou commençant par ``${varians}/``
     (les feuilles fournies avec Varians) ; ``xslt_scenarios`` les résout.
     ``source`` vaut edition, current (le document affiché) ou file ;
-    ``engine`` lxml (XSLT 1.0) ou saxon (XSLT 3.0). Une valeur inconnue est
-    gardée : le scénario est signalé, et non exécuté."""
+    ``engine`` lxml (XSLT 1.0) ou saxon (XSLT 3.0). ``package`` (V0.9.2.7) :
+    vide pour un seul fichier, ou pages, docx, odt, epub (``xslt_packages``).
+    Une valeur inconnue est gardée : le scénario est signalé, et non
+    exécuté."""
     name: str
     xslt: str
     output: str
@@ -141,6 +143,7 @@ class TransformScenario:
     engine: str = "lxml"
     css: str = ""
     params: tuple[tuple[str, str], ...] = ()
+    package: str = ""
 
 
 def has_line_synchronization(witness: WitnessConfig) -> bool:
@@ -342,7 +345,7 @@ def _parse_transformations(root: ET.Element) -> tuple[TransformScenario, ...]:
             name, (scenario_el.get("xslt") or "").strip(), (scenario_el.get("output") or "").strip(),
             source=(scenario_el.get("source") or "edition").strip(), file=(scenario_el.get("file") or "").strip(),
             engine=(scenario_el.get("engine") or "lxml").strip(), css=(scenario_el.get("css") or "").strip(),
-            params=tuple(params.items()))
+            params=tuple(params.items()), package=(scenario_el.get("package") or "").strip())
     return tuple(scenarios.values())
 
 
