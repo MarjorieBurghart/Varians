@@ -193,7 +193,13 @@ def _transpiler():
 def _expression_site(path, expression):
     """``(fichier, ligne)`` de l'élément Schematron de *path* (ou d'un
     fichier inclus) dont une expression figure dans *expression* (SchXslt2
-    entoure le test d'une assertion de ``not(…)``) ; la plus longue."""
+    entoure le test d'une assertion de ``not(…)``) ; la plus longue. Saxon
+    abrège une longue expression (« … g... ») : une expression qui commence
+    par ce qui en reste lui correspond aussi. Espaces normalisés."""
+    expression = " ".join(expression.split())
+    truncated = expression.endswith("...")
+    stem = expression[:-3] if truncated else expression
+    core = stem[4:] if stem.startswith("not(") else stem
     best = None
     for source in _discover_schema_dependencies(path):
         try:
@@ -202,9 +208,15 @@ def _expression_site(path, expression):
             continue
         for element in tree.iter(f"{{{SCH_NS}}}*"):
             for name in _EXPRESSION_ATTRIBUTES:
-                value = (element.get(name) or "").strip()
-                if value and value in expression and (best is None or len(value) > best[0]):
-                    best = (len(value), source, element.sourceline or 0)
+                value = " ".join((element.get(name) or "").split())
+                if value and value in stem:
+                    score = len(value)
+                elif truncated and core and value.startswith(core):
+                    score = len(core)
+                else:
+                    continue
+                if best is None or score > best[0]:
+                    best = (score, source, element.sourceline or 0)
     return best[1:] if best else None
 
 

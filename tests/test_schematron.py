@@ -309,6 +309,23 @@ def test_the_detail_of_an_incorrect_rule_gives_its_file_and_line(tmp_path):
         "XPST0017 Cannot find a 0-argument function named Q{fn}count() : count()")
 
 
+def test_a_truncated_expression_still_gives_the_line_of_its_rule(tmp_path):
+    # Saxon abrège une longue expression (« … g... ») ; une autre règle
+    # (contexte tei:rdg) figure en entier dans ce qui reste.
+    sch = _write(tmp_path, "apparat.sch", _sch("""
+  <pattern>
+    <rule context="tei:app">
+      <assert test="count(tei:lem | tei:rdg)
+                    ge">Une seule leçon.</assert>
+    </rule>
+    <rule context="tei:rdg"><assert test="@wit">Sans témoin.</assert></rule>
+  </pattern>"""))
+    exc = Exception(" Error in {not(count(tei:lem | tei:rdg) g...} at char 33 in if/@test on line 1 column 2329"
+                    " of file:///x/:\n  XPST0003  Unexpected token ) before ...\n")
+    # La ligne est celle où finit la balise ouvrante (convention de lxml).
+    assert schematron._saxon_text(exc, sch.resolve()) == "apparat.sch:8: XPST0003 Unexpected token ) before ..."
+
+
 @needs_saxon
 def test_a_rule_reads_a_document_relative_to_its_source(tmp_path):
     folder = tmp_path / "regles"
