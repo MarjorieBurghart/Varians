@@ -100,9 +100,13 @@ def add_declaration(text, href, phase="") -> str:
 
 def remove_declaration(text, index) -> str:
     """*text* sans la déclaration Schematron de rang *index* ; seule sur sa
-    ligne, elle part avec sa ligne. IndexError si elle n'existe pas."""
+    ligne, elle part avec sa ligne ; en tête d'une ligne qu'elle partage
+    (comme après ``add_declaration``), avec le saut de ligne qui la précède.
+    IndexError si elle n'existe pas."""
     declaration = schematron_declarations(text)[index]
     start, end = declaration.start, declaration.end
     if (start == 0 or text[start - 1] == "\n") and text[end:end + 1] == "\n":
         end += 1
+    elif start > 0 and text[start - 1] == "\n":
+        start -= 1
     return text[:start] + text[end:]

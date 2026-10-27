@@ -76,6 +76,12 @@ def test_a_declaration_is_removed_with_its_line():
     assert remove_declaration(inline, 0) == f'<?xml version="1.0"?>\n{RNG}<TEI/>\n'
 
 
+def test_a_declaration_added_then_removed_leaves_the_text_as_it_was():
+    inline = f'<?xml version="1.0"?>\n{RNG}{SCH}<TEI/>\n'
+    for text in (TEXT, inline):
+        assert remove_declaration(add_declaration(text, "apparat.sch"), 1) == text
+
+
 def test_an_unknown_index_is_refused():
     with pytest.raises(IndexError):
         set_phase(TEXT, 1, "x")
