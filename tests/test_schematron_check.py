@@ -240,3 +240,48 @@ def test_the_module_needs_neither_qt_nor_saxon_to_be_imported():
     output = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
                             cwd=str(ISO_SCHEMA.parents[3])).stdout
     assert output.split() == ["False", "False"]
+
+
+# --- Norme 2020/2025 (V0.9.2.5) ---------------------------------------------------------
+
+EDITION_2020 = f"""<?xml version="1.0"?>
+<sch:schema xmlns:sch="{SCH_NS}" queryBinding="xslt2" schematronEdition="2025">
+  <sch:ns prefix="xs" uri="http://www.w3.org/2001/XMLSchema"/>
+  <sch:param name="seuil" value="1" as="xs:integer"/>
+  <sch:let name="vers" value="'l'" as="xs:string"/>
+  <sch:phase id="groupes" from="//lg" when="true()"><sch:active pattern="lg"/></sch:phase>
+  <sch:rules>
+    <sch:rule abstract="true" id="avec-vers"><sch:assert test="l">Groupe sans vers.</sch:assert></sch:rule>
+  </sch:rules>
+  <sch:group id="lg">
+    <sch:rule context="lg" visit-each="l"><sch:report test="string-length(.) lt $seuil">Vers vide.</sch:report></sch:rule>
+    <sch:rule context="lg"><sch:extends rule="avec-vers"/></sch:rule>
+  </sch:group>
+  <sch:pattern id="p"><sch:rule context="p"><sch:assert test="@n">Sans numéro.</sch:assert></sch:rule></sch:pattern>
+</sch:schema>
+"""
+
+
+def test_the_novelties_of_2020_are_accepted(tmp_path):
+    result = _check(tmp_path, EDITION_2020)
+    assert result.valid and result.issues == ()
+
+
+def test_a_misplaced_group_is_still_reported(tmp_path):
+    text = EDITION_2020.replace('<sch:extends rule="avec-vers"/>', '<sch:group id="g2"/>')
+    assert [(issue.type_name, issue.line) for issue in _check(tmp_path, text).issues] == [("element", 12)]
+
+
+def test_a_library_is_checked_like_an_included_file(tmp_path):
+    library = (f'<sch:library xmlns:sch="{SCH_NS}">\n'
+               '  <sch:rules><sch:rule abstract="true" id="r"><sch:assert test="1">x</sch:assert></sch:rule></sch:rules>\n'
+               '</sch:library>\n')
+    assert _check(tmp_path, library, "bibliotheque.sch").valid
+    result = _check(tmp_path, library.replace('abstract="true" id="r"', 'abstract="true"'), "bibliotheque.sch")
+    assert [(issue.type_name, issue.line) for issue in result.issues] == [("required", 2)]
+
+
+@needs_saxon
+def test_the_novelties_of_2020_are_compiled_by_saxon(tmp_path):
+    # Vérifiées et compilées : aucune erreur, ni de structure, ni de SchXslt2.
+    assert _check(tmp_path, EDITION_2020.replace("lt $seuil", "lt $seuil[")).issues[0].type_name == "xpath"

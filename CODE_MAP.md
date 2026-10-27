@@ -252,3 +252,15 @@ Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.4 — phases, règles incorr
 - `xml_roots.py` : `root_tag` (racine lue sans analyser, partagée avec `xslt_scenarios.stylesheet_info`), `schematron_info`.
 - `validation_panel.py` : lignes des règles incorrectes (`RULES_DOMAIN`, `_rules_message`, `_rules_located`, `_resolution_rules_errors`), `_open_rules_file` (double-clic), `_validation_outdated` (appelée par `document_tabs._restore_document_view`), phase dans l'info-bulle.
 - `document_dialogs.py` : `SCHEMATRON_SUFFIXES`, `is_schematron_file`, `new_schematron_text`, `new_schematron_dialog` ; `main_menus.action_new_schematron`.
+
+## V0.9.2.5 — règles non enregistrées, boîte des déclarations, norme 2020/2025, XSD
+
+Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.5 »).
+
+- `schematron.py` : `compiled(path, phase, text)`, `validate(…, texts=…)`, `rules_text(path, text)`, `_phases(path, text)`.
+- `relaxng_validation.py` : `validate_document(…, rules=…)`, `dependency_reference` (`href`, `schemaLocation`), `XSD_NS` ; `relaxng_worker` (champ `rules`, `_texts`), `validation_worker` (`rules=`).
+- `validation_panel.py` : `_rules_texts`, `_validation_token` (méthode, révisions des textes non enregistrés), info-bulle (`schematron.tip.unsaved`, `schematron.tip.click`), bouton `validation_rules`.
+- `schematron_rules_dialog.py` : `SchematronRulesDialog`, `SchematronRulesMixin` (`schematron_rules_dialog`, `_rules_target`, `_declared_phases`, `_declaration_path`), `ClickableLabel` (étiquette Schematron de `editeur_tei`), `relative_href`, `replace_text`.
+- `xml_model_edit.py` (sans Qt) : `schematron_declarations`, `set_phase`, `add_declaration`, `remove_declaration`, `declaration_text`.
+- `schema_resolution._fetch_remote_rng` : suit `schemaLocation`.
+- `resources/schemas/schematron/` : ajouts « edited (Varians, 2020/2025) ».

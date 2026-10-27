@@ -22,9 +22,18 @@ def test_the_completion_reads_the_bundled_schema():
     assert SCHEMATRON_SCHEMA.name == "iso-schematron.rng" and SCHEMATRON_SCHEMA.is_file()
 
 
-def test_the_root_is_a_schema():
-    assert element_names(_info(), None) == ("sch:schema",)
-    assert element_names(_info(""), None) == ("schema",)
+def test_the_root_is_a_schema_or_a_library():
+    assert element_names(_info(), None) == ("sch:library", "sch:schema")
+    assert element_names(_info(""), None) == ("library", "schema")
+
+
+def test_the_novelties_of_2020_are_proposed():
+    assert {"sch:group", "sch:rules", "sch:param"} <= set(element_names(_info(), "sch:schema"))
+    assert "visit-each" in attribute_names(_info(), "sch:rule")
+    assert {"from", "when"} <= set(attribute_names(_info(), "sch:phase"))
+    assert "as" in attribute_names(_info(), "sch:let")
+    assert "schematronEdition" in attribute_names(_info(), "sch:schema")
+    assert "sch:rule" in element_names(_info(), "sch:group")
 
 
 def test_the_children_follow_the_order_of_the_schema():

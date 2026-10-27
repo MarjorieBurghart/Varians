@@ -453,6 +453,35 @@ def test_each_help_announces_schematron_phases_and_files_in_version_0924():
         assert page.index('<section id="v0923">') < page.index('<section id="v0924">'), language
 
 
+def test_each_help_explains_the_rules_dialog_unsaved_rules_2020_and_xsd():
+    """Boîte des déclarations, règles non enregistrées, norme 2020/2025,
+    règles d'un XSD (V0.9.2.5)."""
+    labels = ("schematron.dialog.title", "schematron.panel.rules_button")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="schematron">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("<code>&lt;?xml-model?&gt;</code>", "<kbd>Ctrl+Z</kbd>", "regles.sch", "<code>sch:library</code>",
+                     "<code>@visit-each</code>", "<code>xs:appinfo</code>", "<code>xs:include</code>",
+                     "<code>xs:import</code>", "<code>sch:include</code>"):
+            assert text in section, (language, text)
+
+
+def test_each_help_announces_version_0925():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0925">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#schematron"' in version and catalog["schematron.dialog.title"] in version, language
+        assert page.index('<section id="v0924">') < page.index('<section id="v0925">'), language
+
+
 def test_the_documents_menu_names_xml_and_xslt():
     root = ET.parse(ROOT / "i18n" / "fr.xml").getroot()
     catalog = {string.get("key"): string.text for string in root.findall("string")}

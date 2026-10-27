@@ -175,6 +175,17 @@ def test_the_phase_of_a_source_is_used(files):
     assert result.valid and [error.type_name for error in result.schematron_errors] == ["phase"]
 
 
+@needs_saxon
+def test_the_unsaved_rules_are_applied(files):
+    # V0.9.2.5 : le texte non enregistré d'un fichier de règles ouvert.
+    unsaved = SCH.replace('test="l"', 'test="@n"')
+    result = validate_document("<r><lg><l/></lg></r>", files / "essai.rng", files / "edition.xml",
+                               schematron=[files / "regles.sch"], rules={str(files / "regles.sch"): unsaved})
+    assert not result.valid and [issue.message for issue in result.issues] == ["Groupe sans vers."]
+    assert validate_document("<r><lg><l/></lg></r>", files / "essai.rng", files / "edition.xml",
+                             schematron=[files / "regles.sch"]).valid
+
+
 def test_without_saxon_the_rng_validation_goes_on(files, monkeypatch):
     import xslt_engines
     monkeypatch.setattr(xslt_engines, "_SAXON", None)

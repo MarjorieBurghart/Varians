@@ -435,6 +435,109 @@ def test_a_sch_file_can_include_another_one(tmp_path):
     assert _found(validate(_tree(DOC), [sch])) == [(4, "ERROR", "Inclus : groupe sans vers.")]
 
 
+# --- Texte non enregistré (V0.9.2.5) -----------------------------------------------
+
+LG_RULE = '<pattern><rule context="tei:lg"><assert test="tei:l">Groupe sans vers.</assert></rule></pattern>'
+P_RULE = '<pattern><rule context="tei:p"><report test="true()">Paragraphe.</report></rule></pattern>'
+
+
+@needs_saxon
+def test_the_unsaved_text_of_a_rules_file_is_applied(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    report = validate(_tree(DOC), [sch], texts={str(sch): _sch(P_RULE)})
+    assert _found(report) == [(5, "ERROR", "Paragraphe.")] and report.rules == (str(sch),)
+    # Sans texte, le fichier enregistré.
+    assert _found(validate(_tree(DOC), [sch])) == [(4, "ERROR", "Groupe sans vers.")]
+
+
+@needs_saxon
+def test_an_unsaved_text_replaces_the_compiled_rules_of_its_file(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    for message in ("Un.", "Deux.", "Deux."):
+        text = _sch(P_RULE.replace("Paragraphe.", message))
+        assert _found(validate(_tree(DOC), [sch], texts={str(sch): text}))[0][2] == message
+    # Une compilation par texte différent, et une seule entrée pour le fichier.
+    assert schematron.cache_info() == {"entries": 1, "compilations": 2}
+
+
+@needs_saxon
+def test_an_incorrect_rule_of_the_unsaved_text_is_given_at_its_line(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    text = _sch("\n\n" + LG_RULE.replace('test="tei:l"', 'test="tei:l["'))
+    [error] = validate(_tree(DOC), [sch], texts={str(sch): text}).errors
+    assert (error.type_name, error.file, error.line) == ("xpath", str(sch), 6)      # 4 dans le fichier enregistré
+
+
+@needs_saxon
+def test_the_phases_of_the_unsaved_text_are_used(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    report = validate(_tree(DOC), [SchematronSource(sch, "tout")], texts={str(sch): _sch(PHASES)})
+    assert report.errors == () and len(report.issues) == 2
+    [error] = validate(_tree(DOC), [SchematronSource(sch, "autre")], texts={str(sch): _sch(PHASES)}).errors
+    assert error.message == "autre\tvers, tout"
+
+
+def test_a_malformed_unsaved_text_is_an_error_of_the_rules(tmp_path):
+    sch = _write(tmp_path, "regles.sch", _sch(LG_RULE))
+    [error] = validate(_tree(DOC), [sch], texts={str(sch): "<schema"}).errors
+    assert (error.type_name, error.file) == ("malformed", str(sch))
+
+
+# --- Règles d'un XSD (V0.9.2.5) ---------------------------------------------------
+
+XSD = "http://www.w3.org/2001/XMLSchema"
+XSD_MAIN = f"""<?xml version="1.0"?>
+<xs:schema xmlns:xs="{XSD}" targetNamespace="{TEI}">
+  <xs:include schemaLocation="types.xsd"/>
+  <xs:import namespace="urn:autre" schemaLocation="autre/annexe.xsd"/>
+</xs:schema>
+"""
+XSD_TYPES = f"""<?xml version="1.0"?>
+<xs:schema xmlns:xs="{XSD}" xmlns:sch="{SCH}" targetNamespace="{TEI}">
+  <xs:element name="lg"><xs:annotation><xs:appinfo>
+    <sch:ns prefix="tei" uri="{TEI}"/>
+    <sch:pattern><sch:rule context="tei:lg"><sch:assert test="tei:l">Groupe sans vers.</sch:assert></sch:rule></sch:pattern>
+  </xs:appinfo></xs:annotation></xs:element>
+</xs:schema>
+"""
+XSD_ANNEXE = f"""<?xml version="1.0"?>
+<xs:schema xmlns:xs="{XSD}" xmlns:sch="{SCH}" targetNamespace="urn:autre">
+  <xs:annotation><xs:appinfo>
+    <sch:pattern><sch:rule context="tei:p"><sch:report test="true()">Paragraphe.</sch:report></sch:rule></sch:pattern>
+  </xs:appinfo></xs:annotation>
+</xs:schema>
+"""
+
+
+@pytest.fixture
+def xsd(tmp_path):
+    _write(tmp_path, "types.xsd", XSD_TYPES)
+    (tmp_path / "autre").mkdir()
+    _write(tmp_path / "autre", "annexe.xsd", XSD_ANNEXE)
+    return _write(tmp_path, "edition.xsd", XSD_MAIN)
+
+
+def test_the_rules_of_a_xsd_and_of_its_included_and_imported_files_are_gathered(xsd):
+    root = etree.fromstring(rules_text(xsd).encode("utf-8"))
+    assert [etree.QName(child).localname for child in root] == ["ns", "pattern", "pattern"]
+
+
+@needs_saxon
+def test_the_rules_of_a_xsd_are_applied(xsd):
+    assert [message for _line, _level, message in _found(validate(_tree(DOC), [xsd]))] == [
+        "Groupe sans vers.", "Paragraphe."]
+
+
+@needs_saxon
+def test_a_changed_included_xsd_is_compiled_again(xsd):
+    validate(_tree(DOC), [xsd])
+    types = xsd.parent / "types.xsd"
+    types.write_text(XSD_TYPES.replace("Groupe sans vers.", "Pas de vers."), encoding="utf-8")
+    stamp = time.time() + 5
+    os.utime(types, (stamp, stamp))
+    assert _found(validate(_tree(DOC), [xsd]))[0][2] == "Pas de vers."
+
+
 # --- Cache ------------------------------------------------------------------------
 
 @needs_saxon

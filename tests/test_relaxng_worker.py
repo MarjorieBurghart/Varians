@@ -202,6 +202,25 @@ def test_a_source_can_name_its_phase(tmp_path, schema):
     assert result.valid and [error.type_name for error in result.schematron_errors] == ["phase"]
 
 
+@needs_saxon
+def test_unsaved_rules_are_sent_with_the_request(tmp_path, schema):
+    # V0.9.2.5 : "rules" donne le texte non enregistré d'un fichier de règles.
+    rules = tmp_path / "regles.sch"
+    rules.write_text(SCHEMATRON, encoding="utf-8")
+    request = {"id": 12, "op": "validate", "xml": "<root><p>a</p></root>", "schema": str(schema),
+               "schematron": [str(rules)], "rules": {str(rules): SCHEMATRON.replace("&gt; 1", "&gt; 0")}}
+    assert result_from_dict(handle_request(request)["result"]).valid
+    request.pop("rules")
+    assert not result_from_dict(handle_request(request)["result"]).valid
+
+
+@pytest.mark.parametrize("rules", ["regles.sch", ["a"], {"a.sch": 3}])
+def test_unsaved_rules_must_map_paths_to_texts(schema, rules):
+    response = handle_request({"id": 13, "op": "validate", "xml": "<root/>", "schema": str(schema),
+                               "schematron": ["a.sch"], "rules": rules})
+    assert response == {"id": 13, "error": "'rules' must map paths to texts"}
+
+
 @pytest.mark.parametrize("sources", ["regles.sch", [3], {"a": "b"}, [["a.sch"]], [["a.sch", 2]]])
 def test_schematron_sources_must_be_a_list_of_paths(schema, sources):
     response = handle_request({"id": 10, "op": "validate", "xml": "<root/>", "schema": str(schema),

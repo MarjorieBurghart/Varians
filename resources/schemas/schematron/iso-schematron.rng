@@ -34,10 +34,19 @@
   (lxml/isoschematron/resources/rng/iso-schematron.rng, where "properties"
   is optional), with the "severity" attribute of "assert" and "report"
   (ISO/IEC 19757-3:2020), which SchXslt2 applies, marked "edited (Varians)".
+  Since Varians 0.9.2.5, also the novelties of the 2020 and 2025 editions
+  that SchXslt2 applies (group, rules, library, schema-level param, @as,
+  rule/@visit-each, phase/@from and @when, @schematronEdition), marked
+  "edited (Varians, 2020/2025)", after what SchXslt2 accepts: this is not
+  a copy of the schema of these editions.
 -->
 <grammar ns="http://purl.oclc.org/dsdl/schematron" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
   <start>
-    <ref name="schema"/>
+    <choice>
+      <ref name="schema"/>
+      <!-- edited (Varians, 2020/2025): a library of definitions, root of an external file -->
+      <ref name="library"/>
+    </choice>
   </start>
   <!-- Element declarations -->
   <define name="schema">
@@ -63,6 +72,12 @@
           <ref name="non-empty-string"/>
         </attribute>
       </optional>
+      <optional>
+        <!-- edited (Varians, 2020/2025) -->
+        <attribute name="schematronEdition">
+          <ref name="non-empty-string"/>
+        </attribute>
+      </optional>
       <interleave>
         <ref name="foreign"/>
         <zeroOrMore>
@@ -79,13 +94,22 @@
             <ref name="p"/>
           </zeroOrMore>
           <zeroOrMore>
-            <ref name="let"/>
+            <!-- edited (Varians, 2020/2025): schema-level param, with let -->
+            <choice>
+              <ref name="let"/>
+              <ref name="param"/>
+            </choice>
           </zeroOrMore>
           <zeroOrMore>
             <ref name="phase"/>
           </zeroOrMore>
           <oneOrMore>
-            <ref name="pattern"/>
+            <!-- edited (Varians, 2020/2025): group and rules, with pattern -->
+            <choice>
+              <ref name="pattern"/>
+              <ref name="group"/>
+              <ref name="rules"/>
+            </choice>
           </oneOrMore>
           <zeroOrMore>
             <ref name="p"/>
@@ -245,6 +269,12 @@
       <attribute name="name">
         <ref name="nameValue"/>
       </attribute>
+      <optional>
+        <!-- edited (Varians, 2020/2025) -->
+        <attribute name="as">
+          <ref name="non-empty-string"/>
+        </attribute>
+      </optional>
       <choice>
         <attribute name="value">
           <data type="string" datatypeLibrary=""/>
@@ -311,6 +341,12 @@
       <attribute name="name">
         <ref name="nameValue"/>
       </attribute>
+      <optional>
+        <!-- edited (Varians, 2020/2025) -->
+        <attribute name="as">
+          <ref name="non-empty-string"/>
+        </attribute>
+      </optional>
       <attribute name="value">
         <ref name="non-empty-string"/>
       </attribute>
@@ -408,11 +444,192 @@
       </interleave>
     </element>
   </define>
+  <define name="group">
+    <!-- edited (Varians, 2020/2025): like pattern -->
+    <element name="group">
+      <optional>
+        <attribute name="documents">
+          <ref name="pathValue"/>
+        </attribute>
+      </optional>
+      <ref name="rich"/>
+      <interleave>
+        <ref name="foreign"/>
+        <zeroOrMore>
+          <ref name="inclusion"/>
+        </zeroOrMore>
+        <choice>
+          <group>
+            <attribute name="abstract">
+              <value>true</value>
+            </attribute>
+            <attribute name="id">
+              <data type="ID"/>
+            </attribute>
+            <optional>
+              <ref name="title"/>
+            </optional>
+            <group>
+              <zeroOrMore>
+                <ref name="p"/>
+              </zeroOrMore>
+              <zeroOrMore>
+                <ref name="let"/>
+              </zeroOrMore>
+              <zeroOrMore>
+                <ref name="rule"/>
+              </zeroOrMore>
+            </group>
+          </group>
+          <group>
+            <optional>
+              <attribute name="abstract">
+                <value>false</value>
+              </attribute>
+            </optional>
+            <optional>
+              <attribute name="id">
+                <data type="ID"/>
+              </attribute>
+            </optional>
+            <optional>
+              <ref name="title"/>
+            </optional>
+            <group>
+              <zeroOrMore>
+                <ref name="p"/>
+              </zeroOrMore>
+              <zeroOrMore>
+                <ref name="let"/>
+              </zeroOrMore>
+              <zeroOrMore>
+                <ref name="rule"/>
+              </zeroOrMore>
+            </group>
+          </group>
+          <group>
+            <optional>
+              <attribute name="abstract">
+                <value>false</value>
+              </attribute>
+            </optional>
+            <attribute name="is-a">
+              <data type="IDREF"/>
+            </attribute>
+            <optional>
+              <attribute name="id">
+                <data type="ID"/>
+              </attribute>
+            </optional>
+            <optional>
+              <ref name="title"/>
+            </optional>
+            <group>
+              <zeroOrMore>
+                <ref name="p"/>
+              </zeroOrMore>
+              <zeroOrMore>
+                <ref name="param"/>
+              </zeroOrMore>
+            </group>
+          </group>
+        </choice>
+      </interleave>
+    </element>
+  </define>
+  <define name="rules">
+    <!-- edited (Varians, 2020/2025): a container of (abstract) rules -->
+    <element name="rules">
+      <ref name="rich"/>
+      <interleave>
+        <ref name="foreign"/>
+        <zeroOrMore>
+          <ref name="inclusion"/>
+        </zeroOrMore>
+        <group>
+          <zeroOrMore>
+            <ref name="let"/>
+          </zeroOrMore>
+          <zeroOrMore>
+            <ref name="rule"/>
+          </zeroOrMore>
+        </group>
+      </interleave>
+    </element>
+  </define>
+  <define name="library">
+    <!-- edited (Varians, 2020/2025): like schema, without its required parts, with top-level extends -->
+    <element name="library">
+      <optional>
+        <attribute name="id">
+          <data type="ID"/>
+        </attribute>
+      </optional>
+      <ref name="rich"/>
+      <interleave>
+        <ref name="foreign"/>
+        <zeroOrMore>
+          <ref name="inclusion"/>
+        </zeroOrMore>
+        <zeroOrMore>
+          <ref name="extends"/>
+        </zeroOrMore>
+        <group>
+          <optional>
+            <ref name="title"/>
+          </optional>
+          <zeroOrMore>
+            <ref name="ns"/>
+          </zeroOrMore>
+          <zeroOrMore>
+            <ref name="p"/>
+          </zeroOrMore>
+          <zeroOrMore>
+            <choice>
+              <ref name="let"/>
+              <ref name="param"/>
+            </choice>
+          </zeroOrMore>
+          <zeroOrMore>
+            <ref name="phase"/>
+          </zeroOrMore>
+          <zeroOrMore>
+            <choice>
+              <ref name="pattern"/>
+              <ref name="group"/>
+              <ref name="rules"/>
+            </choice>
+          </zeroOrMore>
+          <zeroOrMore>
+            <ref name="p"/>
+          </zeroOrMore>
+          <optional>
+            <ref name="diagnostics"/>
+          </optional>
+          <optional>
+            <ref name="properties"/>
+          </optional>
+        </group>
+      </interleave>
+    </element>
+  </define>
   <define name="phase">
     <element name="phase">
       <attribute name="id">
         <data type="ID"/>
       </attribute>
+      <optional>
+        <!-- edited (Varians, 2020/2025) -->
+        <attribute name="from">
+          <ref name="pathValue"/>
+        </attribute>
+      </optional>
+      <optional>
+        <!-- edited (Varians, 2020/2025) -->
+        <attribute name="when">
+          <ref name="exprValue"/>
+        </attribute>
+      </optional>
       <ref name="rich"/>
       <interleave>
         <ref name="foreign"/>
@@ -527,6 +744,12 @@
       <optional>
         <attribute name="flag">
           <ref name="flagValue"/>
+        </attribute>
+      </optional>
+      <optional>
+        <!-- edited (Varians, 2020/2025) -->
+        <attribute name="visit-each">
+          <ref name="pathValue"/>
         </attribute>
       </optional>
       <ref name="rich"/>
