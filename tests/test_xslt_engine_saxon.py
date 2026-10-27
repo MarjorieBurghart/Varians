@@ -117,6 +117,23 @@ def test_parameters_are_passed_as_strings(project):
 
 
 @saxon
+def test_typed_parameters_receive_untyped_values(project):
+    """V0.9.2.7 : les paramètres arrivent sans type (xs:untypedAtomic),
+    comme avec la ligne de commande de Saxon : « false » devient un
+    booléen, « 3 » un entier, une chaîne reste une chaîne."""
+    result, output = _run(project, '<xsl:param name="voir" as="xs:boolean" select="true()"/>'
+                                   '<xsl:param name="n" as="xs:integer" select="0"/>'
+                                   '<xsl:param name="nom" as="xs:string" select="\'\'"/>'
+                                   '<xsl:template match="/"><r v="{if ($voir) then \'oui\' else \'non\'}"'
+                                   ' n="{$n + 1}" nom="{$nom}"/></xsl:template>',
+                          params=(("voir", "false"), ("n", "3"), ("nom", "Lettre « B »")))
+    assert result.ok, result.error
+    from lxml import etree
+    written = etree.fromstring(output.read_bytes())
+    assert (written.get("v"), written.get("n"), written.get("nom")) == ("non", "4", "Lettre « B »")
+
+
+@saxon
 def test_messages_are_kept_in_the_journal_even_before_a_failure(project):
     result, _output = _run(project, '<xsl:template match="/"><xsl:message>bonjour</xsl:message><r/></xsl:template>')
     assert result.ok, result.error

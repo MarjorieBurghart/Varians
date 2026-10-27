@@ -144,6 +144,15 @@ def test_the_displayed_document_is_the_current_file_or_the_assembled_edition(pro
 
 # --- Requête ------------------------------------------------------------------------------
 
+def test_the_pivot_witness_is_substituted_in_the_parameters(project):
+    """V0.9.2.7 : ``${pivot}``, dans la valeur d'un paramètre, est le témoin
+    pivot du projet au moment de l'exécution."""
+    scenario = replace(BASE, params=(("temoin-de-base", "${pivot}"), ("titre", "Pivot ${pivot} !"), ("autre", "x")))
+    params = scenario_request(scenario, project)["params"]
+    pivot = project.base_witness
+    assert pivot and params == [["temoin-de-base", pivot], ["titre", f"Pivot {pivot} !"], ["autre", "x"]]
+
+
 def test_the_request_holds_absolute_paths_and_the_parameters(project):
     scenario = replace(BASE, css="rendering/tei.css", params=(("titre", "Index"),))
     request = scenario_request(scenario, project)

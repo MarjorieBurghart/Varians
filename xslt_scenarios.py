@@ -312,17 +312,27 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
     return problems
 
 
+PIVOT = "${pivot}"
+
+
+def substitute(value, project) -> str:
+    """*value*, la valeur d'un paramètre, où ``${pivot}`` (V0.9.2.7) devient
+    l'identifiant du témoin pivot du projet."""
+    return str(value).replace(PIVOT, project.base_witness or "")
+
+
 def scenario_request(scenario, project, current=None, output_dir=None, sources=None) -> dict:
     """Requête d'exécution (sérialisable en JSON) d'un scénario sans
     problème : chemins absolus, paramètres (avec ``css``, le nom de la CSS,
-    sauf si le scénario le fixe), fichiers protégés. ``output_dir`` :
+    sauf si le scénario le fixe, et ``${pivot}`` remplacé par le témoin
+    pivot, voir ``substitute``), fichiers protégés. ``output_dir`` :
     dossier où écrire le résultat à la place du sien (aperçu)."""
     source, assemble_source = scenario_source(scenario, project, current)
     css = resolve_path(project, scenario.css)
     output = resolve_path(project, scenario.output)
     if output_dir is not None:
         output = Path(output_dir) / output.name
-    params = [[name, value] for name, value in scenario.params]
+    params = [[name, substitute(value, project)] for name, value in scenario.params]
     if css is not None and all(name != "css" for name, _value in scenario.params):
         params.append(["css", css.name])
     xslt = stylesheet_path(scenario, project)

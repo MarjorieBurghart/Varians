@@ -10,7 +10,8 @@ suivent un même contrat :
 - **entrée** : le fichier source lu avec son URI de base, ou l'édition
   assemblée par XInclude (``xml_assembly``), chaque partie gardant la
   sienne ; les entités externes ne sont pas résolues ;
-- **paramètres** : des chaînes ;
+- **paramètres** : des chaînes ; Saxon les reçoit sans type
+  (``xs:untypedAtomic``, V0.9.2.7), comme sur sa ligne de commande ;
 - **lecture** : tout fichier local, et ``http``/``https`` par un résolveur
   de Varians (délai ``NETWORK_TIMEOUT``, journal ``network_read``) ; une
   lecture réseau impossible arrête l'exécution ;
@@ -562,8 +563,11 @@ def _run_saxon(request, journal):
                 executable = processor.new_xslt30_processor().compile_stylesheet(stylesheet_file=str(xslt))
             except PySaxonApiError as exc:
                 raise _saxon_failure(exc, stderr(), xslt, "xslt_invalid") from exc
+            # Sans type (xs:untypedAtomic, V0.9.2.7), comme la ligne de
+            # commande de Saxon : « false » convient à un paramètre
+            # xs:boolean, « 3 » à un xs:integer, et reste une chaîne ailleurs.
             for name, value in request.get("params", ()):
-                executable.set_parameter(str(name), processor.make_string_value(str(value)))
+                executable.set_parameter(str(name), processor.make_atomic_value("untypedAtomic", str(value)))
             executable.set_save_xsl_message(True)
             return executable
 
