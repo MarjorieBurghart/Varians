@@ -65,6 +65,12 @@ def source_label(scenario):
     return scenario.source
 
 
+def is_tei_scenario(scenario) -> bool:
+    """Vrai pour un scénario des TEI Stylesheets (feuille ``${tei}/…``),
+    rangé dans le sous-groupe « TEI Stylesheets » (V0.9.2.7)."""
+    return scenario.xslt.startswith(TEI_PREFIX)
+
+
 def predefined():
     """Scénarios prédéfinis, dans la langue de l'interface : leur nom, le
     titre du sommaire de l'aperçu et la langue des TEI Stylesheets."""
@@ -304,6 +310,9 @@ class ScenarioListDialog(QDialog):
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tree.currentItemChanged.connect(self._update_buttons)
         self.tree.itemDoubleClicked.connect(lambda _item, _column: self.edit_scenario())
+        # Les colonnes ne mesurent que les lignes visibles : un sous-groupe
+        # déplié les fait mesurer de nouveau.
+        self.tree.itemExpanded.connect(lambda _item: [self.tree.resizeColumnToContents(c) for c in range(4)])
         self.project_group = QTreeWidgetItem(self.tree, [_t("transform.group.project")])
         self.predefined_group = QTreeWidgetItem(self.tree, [_t("transform.group.predefined")])
         for group in (self.project_group, self.predefined_group):
@@ -312,6 +321,10 @@ class ScenarioListDialog(QDialog):
             font = group.font(0)
             font.setBold(True)
             group.setFont(0, font)
+        # Les scénarios des TEI Stylesheets, moins utiles pour une édition
+        # critique : un sous-groupe replié (V0.9.2.7).
+        self.tei_group = None
+        self._tei_expanded = False
         root.addWidget(self.tree, 1)
 
         row = QHBoxLayout()
@@ -350,37 +363,69 @@ class ScenarioListDialog(QDialog):
     # --- Liste ------------------------------------------------------------------
 
     def _refresh(self, select=None):
-        """Remplit les deux groupes ; ``select`` : ``(groupe, rang)`` à choisir."""
+        """Remplit les deux groupes, et le sous-groupe « TEI Stylesheets »
+        des scénarios prédéfinis ; ``select`` : ``(groupe, rang)`` à
+        choisir. Chaque ligne porte sa clé ``(groupe, rang)``."""
         sources = project_sources(self._project)
-        for group, scenarios in ((self.project_group, self._scenarios), (self.predefined_group, self._predefined)):
+        if self.tei_group is not None:
+            self._tei_expanded = self.tei_group.isExpanded()
+        self.tei_group = None
+        for name, group, scenarios in (("project", self.project_group, self._scenarios),
+                                       ("predefined", self.predefined_group, self._predefined)):
             group.takeChildren()
-            for scenario in scenarios:
+            for rank, scenario in enumerate(scenarios):
+                parent = group
+                if name == "predefined" and is_tei_scenario(scenario):
+                    parent = self._tei_group()
                 problems = scenario_problems(scenario, self._project, self._current, sources)
-                item = QTreeWidgetItem(group, [scenario.name, source_label(scenario), engine_label(scenario.engine),
-                                               problem_text(problems[0]) if problems else ""])
+                item = QTreeWidgetItem(parent, [scenario.name, source_label(scenario), engine_label(scenario.engine),
+                                                problem_text(problems[0]) if problems else ""])
+                item.setData(0, Qt.ItemDataRole.UserRole, (name, rank))
                 if problems:
                     item.setToolTip(3, "\n".join(problem_text(problem) for problem in problems))
                     item.setForeground(3, Qt.GlobalColor.darkRed)
             group.setExpanded(True)
+        if self.tei_group is not None:
+            self.tei_group.setExpanded(self._tei_expanded)
         for column in range(4):
             self.tree.resizeColumnToContents(column)
         if select is not None:
-            group = self.project_group if select[0] == "project" else self.predefined_group
-            if 0 <= select[1] < group.childCount():
-                self.tree.setCurrentItem(group.child(select[1]))
+            item = self.item_for(*select)
+            if item is not None:
+                if item.parent() is self.tei_group:
+                    self.tei_group.setExpanded(True)
+                self.tree.setCurrentItem(item)
         self._update_buttons()
+
+    def _tei_group(self):
+        """Le sous-groupe « TEI Stylesheets », créé au premier scénario TEI."""
+        if self.tei_group is None:
+            self.tei_group = QTreeWidgetItem(self.predefined_group, [_t("transform.group.tei")])
+            self.tei_group.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            self.tei_group.setFirstColumnSpanned(True)
+        return self.tei_group
+
+    def item_for(self, group, rank):
+        """La ligne du scénario ``(group, rang)``, ou None."""
+        groups = [self.project_group if group == "project" else self.predefined_group]
+        while groups:
+            parent = groups.pop()
+            for index in range(parent.childCount()):
+                child = parent.child(index)
+                if child.data(0, Qt.ItemDataRole.UserRole) == (group, rank):
+                    return child
+                groups.append(child)
+        return None
 
     def selected(self):
         """``(groupe, rang, scénario)`` choisi, ou None."""
         item = self.tree.currentItem()
-        parent = item.parent() if item is not None else None
-        if parent is self.project_group:
-            index = parent.indexOfChild(item)
-            return "project", index, self._scenarios[index]
-        if parent is self.predefined_group:
-            index = parent.indexOfChild(item)
-            return "predefined", index, self._predefined[index]
-        return None
+        key = item.data(0, Qt.ItemDataRole.UserRole) if item is not None else None
+        if not key:
+            return None
+        group, rank = key
+        scenarios = self._scenarios if group == "project" else self._predefined
+        return (group, rank, scenarios[rank]) if 0 <= rank < len(scenarios) else None
 
     def selected_scenario(self):
         chosen = self.selected()
@@ -651,14 +696,29 @@ class TransformScenariosMixin:
         return self.transform_button
 
     def _fill_transform_menu(self):
+        """Scénarios du projet, prédéfinis, et ceux des TEI Stylesheets dans un
+        sous-menu (V0.9.2.7) ; puis la liste des scénarios."""
         menu = self.transform_menu
         menu.clear()
-        for scenarios in (self.project.transformations, predefined()):
-            for scenario in scenarios:
-                action = menu.addAction(scenario.name)
-                action.triggered.connect(lambda _checked=False, s=scenario: self.run_transform_scenario(s))
-            if scenarios:
-                menu.addSeparator()
+
+        def add(target, scenario):
+            action = target.addAction(scenario.name)
+            action.triggered.connect(lambda _checked=False, s=scenario: self.run_transform_scenario(s))
+
+        for scenario in self.project.transformations:
+            add(menu, scenario)
+        if self.project.transformations:
+            menu.addSeparator()
+        scenarios = predefined()
+        for scenario in scenarios:
+            if not is_tei_scenario(scenario):
+                add(menu, scenario)
+        tei = [scenario for scenario in scenarios if is_tei_scenario(scenario)]
+        if tei:
+            submenu = menu.addMenu(_t("transform.group.tei"))
+            for scenario in tei:
+                add(submenu, scenario)
+        menu.addSeparator()
         menu.addAction(self.action_transform_scenarios)
 
     def _transform_current_path(self):

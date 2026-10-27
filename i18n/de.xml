@@ -882,6 +882,7 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="transform.title">Transformationsszenarien</string>
   <string key="transform.group.project">Szenarien des Projekts</string>
   <string key="transform.group.predefined">Vordefinierte Szenarien</string>
+  <string key="transform.group.tei">TEI Stylesheets</string>
   <string key="transform.column.name">Name</string>
   <string key="transform.column.source">Quelle</string>
   <string key="transform.column.engine">Prozessor</string>

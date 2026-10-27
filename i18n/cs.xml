@@ -882,6 +882,7 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="transform.title">Scénáře transformace</string>
   <string key="transform.group.project">Scénáře projektu</string>
   <string key="transform.group.predefined">Předdefinované scénáře</string>
+  <string key="transform.group.tei">TEI Stylesheets</string>
   <string key="transform.column.name">Název</string>
   <string key="transform.column.source">Zdroj</string>
   <string key="transform.column.engine">Procesor</string>

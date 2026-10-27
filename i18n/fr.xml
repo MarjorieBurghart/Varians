@@ -868,6 +868,7 @@ Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi le
   <string key="transform.title">Scénarios de transformation</string>
   <string key="transform.group.project">Scénarios du projet</string>
   <string key="transform.group.predefined">Scénarios prédéfinis</string>
+  <string key="transform.group.tei">TEI Stylesheets</string>
   <string key="transform.column.name">Nom</string>
   <string key="transform.column.source">Source</string>
   <string key="transform.column.engine">Moteur</string>

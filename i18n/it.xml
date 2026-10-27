@@ -882,6 +882,7 @@ Salvata in un’altra cartella, non le troverebbe più. Copiate anche le parti, 
   <string key="transform.title">Scenari di trasformazione</string>
   <string key="transform.group.project">Scenari del progetto</string>
   <string key="transform.group.predefined">Scenari predefiniti</string>
+  <string key="transform.group.tei">TEI Stylesheets</string>
   <string key="transform.column.name">Nome</string>
   <string key="transform.column.source">Sorgente</string>
   <string key="transform.column.engine">Motore</string>

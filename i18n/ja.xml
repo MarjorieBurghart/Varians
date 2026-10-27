@@ -882,6 +882,7 @@
   <string key="transform.title">変換シナリオ</string>
   <string key="transform.group.project">プロジェクトのシナリオ</string>
   <string key="transform.group.predefined">定義済みシナリオ</string>
+  <string key="transform.group.tei">TEI Stylesheets</string>
   <string key="transform.column.name">名前</string>
   <string key="transform.column.source">入力</string>
   <string key="transform.column.engine">プロセッサ</string>

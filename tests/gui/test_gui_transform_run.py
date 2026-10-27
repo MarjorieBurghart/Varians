@@ -53,8 +53,7 @@ def _finish(qtbot, window, start):
 
 def _choose(group, row, button):
     def answer(dialog):
-        parent = dialog.project_group if group == "project" else dialog.predefined_group
-        dialog.tree.setCurrentItem(parent.child(row))
+        dialog.tree.setCurrentItem(dialog.item_for(group, row))
         getattr(dialog, button).click()
         return dialog.result()
     return answer
@@ -108,8 +107,12 @@ def test_the_toolbar_button_lists_the_scenarios_and_reruns_the_last_one(open_win
     assert window.action_transform.shortcut() == QKeySequence("Ctrl+Shift+T")
     window.transform_menu.aboutToShow.emit()
     labels = [action.text() for action in window.transform_menu.actions() if not action.isSeparator()]
-    assert labels == ["Noms", *(tr(f"transform.predefined.{key}") for key in (
-        "varians-html", "tei-html", "tei-txt", "tei-markdown", "tei-latex")), tr("menu.transform_scenarios")]
+    assert labels == ["Noms", tr("transform.predefined.varians-html"), tr("transform.group.tei"),
+                      tr("menu.transform_scenarios")]
+    # V0.9.2.7 : les scénarios des TEI Stylesheets, dans un sous-menu.
+    tei = next(action.menu() for action in window.transform_menu.actions() if action.menu() is not None)
+    assert [action.text() for action in tei.actions()] == [tr(f"transform.predefined.{key}") for key in (
+        "tei-html", "tei-txt", "tei-markdown", "tei-latex")]
     assert button.menu() is window.transform_menu
 
     # Aucun scénario lancé : le bouton ouvre la liste.

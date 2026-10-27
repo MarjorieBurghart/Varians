@@ -882,6 +882,7 @@
   <string key="transform.title">Сценарии преобразования</string>
   <string key="transform.group.project">Сценарии проекта</string>
   <string key="transform.group.predefined">Готовые сценарии</string>
+  <string key="transform.group.tei">TEI Stylesheets</string>
   <string key="transform.column.name">Название</string>
   <string key="transform.column.source">Источник</string>
   <string key="transform.column.engine">Процессор</string>

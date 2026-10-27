@@ -868,6 +868,7 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
   <string key="transform.title">Transformation scenarios</string>
   <string key="transform.group.project">Project scenarios</string>
   <string key="transform.group.predefined">Predefined scenarios</string>
+  <string key="transform.group.tei">TEI Stylesheets</string>
   <string key="transform.column.name">Name</string>
   <string key="transform.column.source">Source</string>
   <string key="transform.column.engine">Engine</string>

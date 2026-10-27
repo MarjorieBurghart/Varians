@@ -47,7 +47,7 @@ def _scenario(setup):
 
 
 def _rows(dialog, group):
-    item = dialog.project_group if group == "project" else dialog.predefined_group
+    item = {"project": dialog.project_group, "predefined": dialog.predefined_group, "tei": dialog.tei_group}[group]
     return [[item.child(i).text(c) for c in range(4)] for i in range(item.childCount())]
 
 
@@ -62,9 +62,32 @@ def test_the_file_menu_lists_the_scenarios_of_the_project_and_the_predefined_one
     assert _rows(dialog, "project") == [["Personnes", tr("transform.source.file", file="xml/personnes.xml"),
                                          tr("transform.engine.lxml"), ""]]
     assert _rows(dialog, "predefined") == [[tr("transform.predefined.varians-html"), tr("transform.source.edition"),
-                                            tr("transform.engine.lxml"), ""]] + [
+                                            tr("transform.engine.lxml"), ""], [tr("transform.group.tei"), "", "", ""]]
+    # V0.9.2.7 : les scénarios des TEI Stylesheets, dans un sous-groupe replié.
+    assert dialog.predefined_group.child(1) is dialog.tei_group and not dialog.tei_group.isExpanded()
+    assert _rows(dialog, "tei") == [
         [tr(f"transform.predefined.{key}"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""]
         for key in ("tei-html", "tei-txt", "tei-markdown", "tei-latex")]
+
+
+def test_a_tei_scenario_is_chosen_in_its_sub_group(open_window, sermons_project, dialogs):
+    from transform_ui import predefined
+    window = open_window(sermons_project)
+
+    def check(dialog):
+        from PySide6.QtCore import Qt
+        assert not dialog.tei_group.flags() & Qt.ItemFlag.ItemIsSelectable
+        dialog.tree.setCurrentItem(dialog.tei_group)
+        assert dialog.selected() is None and not dialog.run_btn.isEnabled()
+        item = dialog.item_for("predefined", 2)
+        assert item.parent() is dialog.tei_group
+        dialog.tree.setCurrentItem(item)
+        assert dialog.selected() == ("predefined", 2, predefined()[2]) and dialog.run_btn.isEnabled()
+        assert dialog.item_for("predefined", 0).parent() is dialog.predefined_group
+
+    listing = _in_list(check)
+    dialogs.expect("dialog", listing)
+    window.action_transform_scenarios.trigger()
 
 
 def test_a_new_scenario_starts_from_the_stylesheet_of_the_preview_and_is_saved(open_window, sermons_project,
@@ -129,7 +152,7 @@ def test_a_predefined_scenario_is_duplicated_into_the_project(open_window, sermo
     window = open_window(sermons_project)
 
     def duplicate(dialog):
-        dialog.tree.setCurrentItem(dialog.predefined_group.child(0))
+        dialog.tree.setCurrentItem(dialog.item_for("predefined", 0))
         assert not dialog.edit_btn.isEnabled() and not dialog.remove_btn.isEnabled()
         dialog.duplicate_scenario()
 
@@ -236,8 +259,7 @@ def _keep_open(action):
 
 def _open_row(group, row):
     def action(dialog):
-        parent = dialog.project_group if group == "project" else dialog.predefined_group
-        dialog.tree.setCurrentItem(parent.child(row))
+        dialog.tree.setCurrentItem(dialog.item_for(group, row))
         dialog.open_stylesheet_btn.click()
     return action
 
@@ -275,7 +297,7 @@ def test_the_open_button_needs_a_stylesheet_of_the_project(open_window, sermons_
         assert button.isEnabled() and button.toolTip() == tr("transform.open_stylesheet.tip")
         dialog.tree.setCurrentItem(dialog.project_group.child(1))
         assert not button.isEnabled()
-        dialog.tree.setCurrentItem(dialog.predefined_group.child(0))
+        dialog.tree.setCurrentItem(dialog.item_for("predefined", 0))
         assert not button.isEnabled() and button.toolTip() == tr("transform.open_stylesheet.predefined")
 
     dialogs.expect("dialog", _in_list(check))
