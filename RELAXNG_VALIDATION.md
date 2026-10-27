@@ -410,3 +410,56 @@ validée avec les règles enregistrées, pas avec le texte non enregistré d'un
 `.sch` ouvert ; la vérification d'un `.sch` suit l'édition 2016 (+
 `@severity`) : `sch:group`, `sch:library`… y sont des erreurs de structure ;
 ni Schematron 1.5, ni règles d'un XSD.
+
+## V0.9.2.5 — règles non enregistrées, boîte des déclarations, norme 2020/2025, XSD
+
+**Règles non enregistrées.** Un fichier de règles ouvert dans Varians et
+modifié (`QTextDocument.isModified`, faux après un Ctrl+Z jusqu'à l'état
+enregistré) est appliqué avec son texte : `validation_panel._rules_texts`
+donne `{chemin: texte}` des sources ouvertes et modifiées ; il part dans la
+requête (`"rules"`, comme `"parts"`) jusqu'à
+`relaxng_validation.validate_document(…, rules=…)` puis
+`schematron.validate(…, texts=…)`. `schematron.compiled(path, phase, text)`
+compile depuis ce texte (`rules_text`, `_phases`, `_phase_error`,
+`_saxon_error` en tiennent compte) ; la clé du cache reste (chemin, phase),
+la signature ajoute l'empreinte du texte : une nouvelle frappe remplace
+l'entrée. `_validation_token` ajoute la révision de chaque texte non
+enregistré : revenir au document après avoir modifié ses règles le fait
+valider de nouveau (`_validation_outdated`). L'info-bulle de l'étiquette
+Schematron le signale (`schematron.tip.unsaved`). Un fichier inclus
+(`sch:include`) reste lu sur le disque : SchXslt2 le charge lui-même.
+
+**Boîte « Règles Schematron du document… »** (`schematron_rules_dialog`,
+`xml_model_edit`). Ouverte par un clic sur l'étiquette Schematron
+(`ClickableLabel`) ou par le bouton « Règles… » du panneau
+(`validation_rules`, désactivé pour une feuille XSLT ou un `.sch`). Elle
+montre les déclarations Schematron du document affiché, de l'édition si une
+partie est affichée (`_rules_target`) : fichier et phase, choisie parmi
+« phase par défaut », `#ALL` et les phases du fichier
+(`_declared_phases`, texte non enregistré compris ; copie du cache pour une
+adresse distante). « Ajouter… » écrit une déclaration (adresse relative au
+document, `relative_href`), « Retirer » l'enlève, « Ouvrir » affiche le
+fichier (`_open_rules_file`). `xml_model_edit` (sans Qt) réécrit seulement
+la déclaration visée (`set_phase`, `add_declaration`, `remove_declaration`),
+guillemets et autres pseudo-attributs gardés ; `replace_text` remplace la
+partie qui change en une seule modification annulable.
+
+**Norme 2020/2025.** Le schéma livré accepte ce que SchXslt2 applique :
+`group`, `rules`, `library` (seconde racine), `param` au niveau du schéma,
+`@as` de `let` et `param`, `rule/@visit-each`, `phase/@from` et `@when`,
+`schema/@schematronEdition` (voir son LISEZMOI). La vérification
+(`_structure_errors`) et la complétion suivent le modèle de ce schéma. Un
+fichier de racine `library` est vérifié comme un fichier inclus, sans
+compilation.
+
+**XSD.** `relaxng_validation.dependency_reference` donne l'attribut et
+l'adresse d'un élément qui inclut un fichier : `include`/`externalRef`
+(`href`) et `xs:include`, `xs:import`, `xs:redefine`, `xs:override`
+(`schemaLocation`). `_discover_schema_dependencies` (signature du cache,
+`rules_text`, `_rules_trees`) et `schema_resolution._fetch_remote_rng`
+(téléchargement, réécriture de l'attribut) s'en servent : les règles
+intégrées à un XSD déclaré comme Schematron comprennent celles de ses
+inclusions. La validation par un XSD n'est pas faite.
+
+**Correction.** `main_menus.retranslate_ui` réécrit les six en-têtes du
+panneau de validation, colonne Origine comprise.

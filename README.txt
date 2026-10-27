@@ -1,3 +1,30 @@
+VARIANS V0.9.2.5 — RÈGLES SCHEMATRON : TEXTE NON ENREGISTRÉ, PHASE, NORME 2020, XSD
+
+• Règles non enregistrées : un fichier de règles ouvert dans Varians et
+  modifié est appliqué au document avec son texte, sans l'enregistrer ;
+  revenir au document après l'avoir modifié le fait valider de nouveau.
+  L'info-bulle de l'étiquette Schematron le signale (« regles.sch, non
+  enregistré ») ; défaire (Ctrl+Z) jusqu'à l'état enregistré revient aux
+  règles du disque. Un fichier inclus (sch:include) reste lu sur le disque.
+• Boîte « Règles Schematron du document » : un clic sur l'étiquette
+  Schematron de la barre d'état, ou le bouton « Règles… » du panneau de
+  validation, l'ouvre. Pour chaque fichier de règles déclaré, la phase se
+  choisit dans une liste (phase par défaut, toutes les règles, phases du
+  fichier) ; « Ajouter… » déclare un fichier, « Retirer » enlève une
+  déclaration, « Ouvrir » affiche le fichier. Les changements sont écrits
+  dans les <?xml-model?> du document (de l'édition si une partie est
+  affichée), en une seule modification annulable.
+• Norme 2020 et 2025 : la vérification et la complétion d'un fichier .sch
+  acceptent sch:group, sch:rules, sch:library, sch:param au niveau du
+  schéma, @as, @visit-each, @from et @when des phases, @schematronEdition,
+  comme SchXslt2 (schéma livré complété, voir son LISEZMOI).
+• XSD : les règles intégrées à un XSD déclaré comme Schematron comprennent
+  celles des fichiers qu'il inclut ou importe (xs:include, xs:import), en
+  local comme à distance (cache). La validation par un XSD n'est pas faite.
+• Correction : au changement de langue, les en-têtes du panneau de
+  validation ne se décalent plus (colonne Origine, depuis la 0.9.2.3).
+• Le format de project.xml ne change pas. Voir RELAXNG_VALIDATION.md.
+
 VARIANS V0.9.2.4 — PHASES ET FICHIERS SCHEMATRON
 
 • Phases : une déclaration Schematron peut choisir sa phase, par l'attribut
