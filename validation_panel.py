@@ -59,8 +59,9 @@ _ORIGINS = {"SCHEMATRON": "rng.origin.schematron", "XINCLUDE": "rng.origin.xincl
             RULES_DOMAIN: "rng.origin.schematron_rules"}
 # Codes des règles incorrectes (schematron.SchematronReport.errors) ;
 # « declaration » : une déclaration Schematron que la résolution n'a pas pu
-# suivre.
-_RULES_CODES = ("missing", "malformed", "xpath", "compile", "runtime", "declaration")
+# suivre ; « assembly » : l'assemblage des règles, à la vérification d'un
+# fichier .sch (schematron_check).
+_RULES_CODES = ("missing", "malformed", "xpath", "compile", "runtime", "declaration", "assembly")
 
 
 def _is_error(issue):
@@ -491,7 +492,8 @@ class ValidationPanelMixin:
         enregistré entre-temps, par exemple."""
         token = session.last_rng_schema_token
         if (session.last_rng_result is None or self._schema_mode == "none" or not token
-                or token[0] == "xslt" or self._displayed_stylesheet() is not None):
+                or token[0] in ("xslt", "schematron") or self._displayed_stylesheet() is not None
+                or self._displayed_schematron() is not None):
             return False
         try:
             current = self._validation_token(self._resolve_completion_schema())
@@ -554,6 +556,11 @@ class ValidationPanelMixin:
         # Une feuille XSLT est vérifiée par sa compilation (xslt_check_ui).
         if self._displayed_stylesheet() is not None:
             return self._check_stylesheet(text, revision, show_panel=show_panel,
+                                          show_success_message=show_success_message,
+                                          automatic=automatic, background=background)
+        # Un fichier Schematron est vérifié à part (schematron_check_ui).
+        if self._displayed_schematron() is not None:
+            return self._check_schematron(text, revision, show_panel=show_panel,
                                           show_success_message=show_success_message,
                                           automatic=automatic, background=background)
         # Édition assemblée : le schéma est celui de l'édition, même quand une

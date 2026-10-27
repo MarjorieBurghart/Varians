@@ -372,6 +372,7 @@
   <string key="schematron.rules.phase">不明なフェーズ「{phase}」。ファイルのフェーズ：{phases}</string>
   <string key="schematron.rules.xpath">XPath 式の誤り：{detail}</string>
   <string key="schematron.rules.compile">ルールの誤り：{detail}</string>
+  <string key="schematron.rules.assembly">ルールの不整合：{detail}</string>
   <string key="schematron.rules.runtime">ルール実行中のエラー：{detail}</string>
   <string key="schematron.rules.declaration">Schematron 宣言を解決できません：{detail}</string>
   <string key="schematron.rules.add.title">ルールのファイル</string>
@@ -711,8 +712,11 @@
   <string key="documents.unsaved.text">次の文書には保存されていない変更があります：</string>
   <string key="documents.save_all">すべて保存</string>
   <string key="documents.menu">プロジェクトのXML／XSLT文書…</string>
-  <string key="documents.add.menu">XML文書またはXSLTを追加…</string>
-  <string key="documents.add.title">プロジェクトにXML文書またはXSLTスタイルシートを追加</string>
+  <string key="documents.add.menu">XML文書、XSLTまたはSchematronを追加…</string>
+  <string key="documents.add.title">プロジェクトにXML文書、XSLTスタイルシートまたはSchematronファイルを追加</string>
+  <string key="documents.new_schematron.menu">新しいSchematronファイル…</string>
+  <string key="documents.new_schematron.title">新しいSchematronファイル</string>
+  <string key="documents.new_schematron.example">レンマも異読もない校異。</string>
   <string key="documents.new_stylesheet.menu">新しいXSLTスタイルシート…</string>
   <string key="documents.new_stylesheet.title">新しいXSLTスタイルシート</string>
   <string key="documents.new_stylesheet.version">スタイルシートのXSLTバージョン：</string>
@@ -941,6 +945,22 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="xslt_check.message.valid">XSLT検査：スタイルシートは正しいです。</string>
   <string key="file.save_xslt_invalid.title">XSLTスタイルシートにエラーがあります</string>
   <string key="file.save_xslt_invalid.text">スタイルシートは整形式ですが、コンパイルで {count} 件のエラーが報告されました。保存して、後でエラーを修正することもできます。
+
+それでも保存しますか？</string>
+  <string key="schematron_check.action">Schematronルールを検査</string>
+  <string key="schematron_check.action.tip">表示中のSchematronファイルを適用せずに検査：ISO Schematronの構造とXPath式（F8）</string>
+  <string key="schematron_check.panel.title">Schematronルールの検査</string>
+  <string key="schematron_check.panel.valid">Schematronルールは正しいです。</string>
+  <string key="schematron_check.panel.invalid">Schematronルールに {count} 件のエラーがあります。エラーをダブルクリックすると該当行に移動します。</string>
+  <string key="schematron_check.panel.malformed">Schematronファイルは整形式のXMLではありません。エラーをダブルクリックすると該当行に移動します。</string>
+  <string key="schematron_check.panel.saxon_missing">XPath式は検査されていません：Saxon（saxoncheパッケージ）がインストールされていません。</string>
+  <string key="schematron_check.status.running">Schematron：検査中…</string>
+  <string key="schematron_check.status.valid">Schematronルールは正しい ✓</string>
+  <string key="schematron_check.status.invalid">Schematronルール：エラー {count} 件</string>
+  <string key="schematron_check.status.malformed">Schematron：XMLが整形式ではありません</string>
+  <string key="schematron_check.message.valid">Schematron検査：ルールは正しいです。</string>
+  <string key="file.save_schematron_invalid.title">Schematronルールにエラーがあります</string>
+  <string key="file.save_schematron_invalid.text">ファイルは整形式ですが、検査で {count} 件のエラーが報告されました。保存して、後でエラーを修正することもできます。
 
 それでも保存しますか？</string>
   <string key="transform.copy_name">{name}（コピー）</string>

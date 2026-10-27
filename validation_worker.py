@@ -21,6 +21,9 @@ d'erreur du processus est un fichier temporaire (``stderr_log``, nommé par
 la variable ``VARIANS_STDERR_LOG``), où Saxon écrit le détail d'une règle
 incorrecte ; il est effacé à l'arrêt du processus.
 
+``check_schematron`` et ``check_schematron_async`` (V0.9.2.4) vérifient de
+la même façon le texte d'un fichier Schematron (``schematron_check``).
+
 **Repli** : si le processus ne démarre pas ou s'arrête, la validation se fait
 dans Varians même, comme avant la V0.8.9.2 (la fenêtre est alors bloquée
 pendant la compilation), et les requêtes en cours ne sont pas perdues.
@@ -112,30 +115,35 @@ class RelaxNGWorkerClient(QObject):
     def validate_async(self, xml_text, schema_path, base_url, owner, callback, parts=None, schematron=None):
         """Valide sans attendre ; ``callback(result)`` est appelé dans le fil
         principal, sauf si ``owner`` (un QObject) a été détruit entre-temps."""
-        return self._submit(xml_text, schema_path, base_url, owner, callback, parts, schematron)
+        return self._submit(_validate_request(xml_text, schema_path, base_url, parts, schematron), owner, callback)
 
     def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None):
         """Valide et renvoie le résultat ; la fenêtre continue de se redessiner
         pendant l'attente, sans traiter clics ni frappes."""
+        return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron))
+
+    def check_schematron_async(self, text, path, owner, callback):
+        """Vérifie sans attendre le texte du fichier Schematron *path* (voir
+        ``validate_async``)."""
+        return self._submit(_check_request(text, path), owner, callback)
+
+    def check_schematron(self, text, path):
+        """Vérifie le texte du fichier Schematron *path* et rend le résultat
+        (voir ``validate``)."""
+        return self._wait(_check_request(text, path))
+
+    def _wait(self, request):
         if QCoreApplication.instance() is None:             # pas de boucle d'événements
-            return validate_document(xml_text, schema_path or None, base_url or None, parts, schematron)
-        request_id = self._submit(xml_text, schema_path, base_url, None, None, parts, schematron)
+            return self._validate_here(request)
+        request_id = self._submit(request, None, None)
         if request_id not in self._results:
             self._wait_for(request_id)
         return self._results.pop(request_id)
 
-    def _submit(self, xml_text, schema_path, base_url, owner, callback, parts=None, schematron=None):
+    def _submit(self, request, owner, callback):
         self._next_id += 1
         request_id = self._next_id
-        request = {"id": request_id, "op": "validate", "xml": xml_text,
-                   "schema": str(schema_path) if schema_path else "",
-                   "base_url": str(base_url) if base_url else None}
-        if parts is not None:
-            request["parts"] = {str(path): text for path, text in parts.items()}
-        if schematron:
-            # Une source avec sa phase (SchematronSource) : [chemin, phase].
-            request["schematron"] = [[str(getattr(source, "path", source)), getattr(source, "phase", "")]
-                                     for source in schematron]
+        request = dict(request, id=request_id)
         entry = _Pending(request, owner, callback)
         if not self._ensure_process():
             self._deliver(request_id, entry, self._validate_here(request), was_pending=False)
@@ -264,6 +272,9 @@ class RelaxNGWorkerClient(QObject):
 
     @staticmethod
     def _validate_here(request):
+        if request["op"] == "check_schematron":
+            from schematron_check import check
+            return check(request["text"], request["path"])
         return validate_document(request["xml"], request["schema"] or None, request.get("base_url") or None,
                                  request.get("parts"), request.get("schematron"))
 
@@ -302,6 +313,22 @@ class RelaxNGWorkerClient(QObject):
         if self.busy and self._process is not None:
             self._process.kill()
         self._stop_process()
+
+
+def _validate_request(xml_text, schema_path, base_url, parts, schematron):
+    request = {"op": "validate", "xml": xml_text, "schema": str(schema_path) if schema_path else "",
+               "base_url": str(base_url) if base_url else None}
+    if parts is not None:
+        request["parts"] = {str(path): text for path, text in parts.items()}
+    if schematron:
+        # Une source avec sa phase (SchematronSource) : [chemin, phase].
+        request["schematron"] = [[str(getattr(source, "path", source)), getattr(source, "phase", "")]
+                                 for source in schematron]
+    return request
+
+
+def _check_request(text, path):
+    return {"op": "check_schematron", "text": text, "path": str(path)}
 
 
 _client = None

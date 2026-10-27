@@ -372,6 +372,7 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="schematron.rules.phase">Fase sconosciuta «{phase}»; fasi del file: {phases}</string>
   <string key="schematron.rules.xpath">Espressione XPath errata: {detail}</string>
   <string key="schematron.rules.compile">Regole errate: {detail}</string>
+  <string key="schematron.rules.assembly">Regole incoerenti: {detail}</string>
   <string key="schematron.rules.runtime">Errore durante l’esecuzione delle regole: {detail}</string>
   <string key="schematron.rules.declaration">Dichiarazione Schematron non risolvibile: {detail}</string>
   <string key="schematron.rules.add.title">File di regole</string>
@@ -711,8 +712,11 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
   <string key="documents.unsaved.text">I documenti seguenti contengono modifiche non salvate:</string>
   <string key="documents.save_all">Salva tutto</string>
   <string key="documents.menu">Documenti XML / XSLT del progetto…</string>
-  <string key="documents.add.menu">Aggiungi un documento XML o XSLT…</string>
-  <string key="documents.add.title">Aggiungi al progetto un documento XML o un foglio XSLT</string>
+  <string key="documents.add.menu">Aggiungi un documento XML, XSLT o Schematron…</string>
+  <string key="documents.add.title">Aggiungi al progetto un documento XML, un foglio XSLT o un file Schematron</string>
+  <string key="documents.new_schematron.menu">Nuovo file Schematron…</string>
+  <string key="documents.new_schematron.title">Nuovo file Schematron</string>
+  <string key="documents.new_schematron.example">Voce d’apparato senza lemma né lezione.</string>
   <string key="documents.new_stylesheet.menu">Nuovo foglio XSLT…</string>
   <string key="documents.new_stylesheet.title">Nuovo foglio XSLT</string>
   <string key="documents.new_stylesheet.version">Versione XSLT del foglio:</string>
@@ -941,6 +945,22 @@ Importa il foglio {name} del TEI Consortium. I parametri (xsl:param) e le regole
   <string key="xslt_check.message.valid">Verifica XSLT: foglio corretto.</string>
   <string key="file.save_xslt_invalid.title">Foglio XSLT non corretto</string>
   <string key="file.save_xslt_invalid.text">Il foglio è ben formato, ma la compilazione segnala {count} errore/i. Puoi salvarlo e correggere gli errori in seguito.
+
+Salvare comunque?</string>
+  <string key="schematron_check.action">Verifica le regole Schematron</string>
+  <string key="schematron_check.action.tip">Verifica il file Schematron visualizzato, senza applicarlo: struttura ISO Schematron ed espressioni XPath (F8)</string>
+  <string key="schematron_check.panel.title">Verifica delle regole Schematron</string>
+  <string key="schematron_check.panel.valid">Regole Schematron corrette.</string>
+  <string key="schematron_check.panel.invalid">{count} errore/i nelle regole Schematron. Fai doppio clic su un errore per andare alla riga corrispondente.</string>
+  <string key="schematron_check.panel.malformed">Il file Schematron non è un XML ben formato. Fai doppio clic sull’errore per andare alla riga.</string>
+  <string key="schematron_check.panel.saxon_missing">Espressioni XPath non verificate: Saxon (pacchetto saxonche) non è installato.</string>
+  <string key="schematron_check.status.running">Schematron: verifica in corso…</string>
+  <string key="schematron_check.status.valid">Regole Schematron corrette ✓</string>
+  <string key="schematron_check.status.invalid">Regole Schematron: {count} errore/i</string>
+  <string key="schematron_check.status.malformed">Schematron: XML mal formato</string>
+  <string key="schematron_check.message.valid">Verifica Schematron: regole corrette.</string>
+  <string key="file.save_schematron_invalid.title">Regole Schematron non corrette</string>
+  <string key="file.save_schematron_invalid.text">Il file è ben formato, ma la verifica segnala {count} errore/i. Puoi salvarlo e correggere gli errori in seguito.
 
 Salvare comunque?</string>
   <string key="transform.copy_name">{name} (copia)</string>

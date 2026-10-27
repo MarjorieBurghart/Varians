@@ -20,6 +20,9 @@ descripteur 1 :
   ``"schematron": ["chemin", …]`` (V0.9.2.3), les règles Schematron de ces
   sources sont appliquées ensuite (``"schema"`` peut alors être vide) ; une
   source peut être ``["chemin", "phase"]`` (V0.9.2.4) ;
+- ``{"id": 3, "op": "check_schematron", "text": "…", "path": "regles.sch"}``
+  (V0.9.2.4) → ``{"id": 3, "result": {…}}`` : la vérification du texte d'un
+  fichier Schematron (``schematron_check.check``) ;
 - ``{"id": 2, "op": "ping"}`` → ``{"id": 2, "ok": true, "pid": …,
   "qt_loaded": false}`` ;
 - une requête incorrecte → ``{"id": …, "error": "…"}``.
@@ -96,6 +99,12 @@ def handle_request(request):
         result = validate_document(xml_text, schema or None, request.get("base_url") or None, parts, sources)
         return {"id": request_id, "result": result_to_dict(result),
                 "compilations": relaxng_cache_info()["compilations"]}
+    if op == "check_schematron":
+        text, path = request.get("text"), request.get("path")
+        if not isinstance(text, str) or not isinstance(path, str) or not path:
+            return {"id": request_id, "error": "check_schematron needs 'text' and 'path'"}
+        from schematron_check import check
+        return {"id": request_id, "result": result_to_dict(check(text, path))}
     return {"id": request_id, "error": f"unknown op: {op!r}"}
 
 

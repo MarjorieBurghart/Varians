@@ -57,12 +57,20 @@ class StylesheetCheckMixin:
         return info
 
     def _update_check_labels(self):
-        """F8 et le titre du panneau : vérification XSLT ou validation RNG."""
-        stylesheet = getattr(self, "document", None) is not None and self._displayed_stylesheet() is not None
-        self.action_validate_rng.setText(_t("xslt_check.action" if stylesheet else "toolbar.validate_rng"))
-        self.action_validate_rng.setToolTip(_t("xslt_check.action.tip" if stylesheet
-                                               else "toolbar.validate_rng.tip"))
-        self.validation_title.setText(_t("xslt_check.panel.title" if stylesheet else "rng.panel.title"))
+        """F8 et le titre du panneau : vérification XSLT, vérification des
+        règles Schematron (V0.9.2.4, schematron_check_ui) ou validation
+        RNG."""
+        displayed = getattr(self, "document", None) is not None
+        if displayed and self._displayed_stylesheet() is not None:
+            action, tip, title = "xslt_check.action", "xslt_check.action.tip", "xslt_check.panel.title"
+        elif displayed and self._displayed_schematron() is not None:
+            action, tip, title = ("schematron_check.action", "schematron_check.action.tip",
+                                  "schematron_check.panel.title")
+        else:
+            action, tip, title = "toolbar.validate_rng", "toolbar.validate_rng.tip", "rng.panel.title"
+        self.action_validate_rng.setText(_t(action))
+        self.action_validate_rng.setToolTip(_t(tip))
+        self.validation_title.setText(_t(title))
 
     # --- Vérification ------------------------------------------------------------
 

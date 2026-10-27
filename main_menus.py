@@ -146,11 +146,13 @@ class MainMenusMixin:
         self.action_new_document = self._make_action(_t("documents.new.menu"), "", self.new_document_dialog)
         self.action_new_stylesheet = self._make_action(
             _t("documents.new_stylesheet.menu"), "", self.new_stylesheet_dialog)
+        self.action_new_schematron = self._make_action(
+            _t("documents.new_schematron.menu"), "", self.new_schematron_dialog)
         self.action_remove_document = self._make_action(
             _t("documents.remove.menu"), "", self.remove_document_from_project)
         self.action_remove_document.setEnabled(False)       # l'édition est affichée
         for action in (self.action_add_document, self.action_new_document, self.action_new_stylesheet,
-                       self.action_remove_document):
+                       self.action_new_schematron, self.action_remove_document):
             self.documents_menu.addAction(action)
         self.action_iiif_manager = self._make_action(_t('iiif.manager.menu'), '', self.open_iiif_download_manager)
         menu.addAction(self.action_iiif_manager)
@@ -369,6 +371,7 @@ class MainMenusMixin:
         self.action_add_document.setText(_t("documents.add.menu"))
         self.action_new_document.setText(_t("documents.new.menu"))
         self.action_new_stylesheet.setText(_t("documents.new_stylesheet.menu"))
+        self.action_new_schematron.setText(_t("documents.new_schematron.menu"))
         self.action_remove_document.setText(_t("documents.remove.menu"))
         self.action_ctrl_e_config.setText(_t("menu.ctrl_e_config"))
         self.action_ctrl_e_config.setToolTip(_t("toolbar.ctrl_e_config.tip", path=self.project.custom_elements))

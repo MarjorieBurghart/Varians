@@ -1,25 +1,28 @@
 # -*- coding: utf-8 -*-
 """Menu Fichier ▸ Documents XML du projet : ajouter un document existant,
-créer un nouveau document ou une nouvelle feuille XSLT, retirer un document
-du projet.
+créer un nouveau document, une nouvelle feuille XSLT ou (V0.9.2.4) un
+nouveau fichier Schematron, retirer un document du projet.
 
-Un fichier situé hors du projet est copié dans son dossier ``xml/``, ou
-``xslt/`` pour une feuille XSLT (``.xsl``, ``.xslt``), jamais par-dessus un
-fichier existant ; retirer un document du projet ne supprime jamais son
-fichier.
+Un fichier situé hors du projet est copié dans son dossier ``xml/`` (un
+fichier Schematron ``.sch`` aussi), ou ``xslt/`` pour une feuille XSLT
+(``.xsl``, ``.xslt``), jamais par-dessus un fichier existant ; retirer un
+document du projet ne supprime jamais son fichier.
 """
 from __future__ import annotations
 
 import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 from PySide6.QtWidgets import QFileDialog, QInputDialog, QLineEdit, QMessageBox
 from app_context import tr as _t
 from project_config import DocumentConfig
+from xml_roots import SCHEMATRON_NS
 
 TEI_NS = "http://www.tei-c.org/ns/1.0"
 STYLESHEET_SUFFIXES = (".xsl", ".xslt")
+SCHEMATRON_SUFFIXES = (".sch",)
 # Versions d'une nouvelle feuille, et le moteur qui les exécute.
 STYLESHEET_VERSIONS = (("1.0", "lxml"), ("3.0", "saxon"))
 
@@ -52,6 +55,10 @@ _STYLESHEET_BODY = ('\n'
 
 def is_stylesheet_file(path):
     return Path(path).suffix.lower() in STYLESHEET_SUFFIXES
+
+
+def is_schematron_file(path):
+    return Path(path).suffix.lower() in SCHEMATRON_SUFFIXES
 
 
 def document_target_path(source, project_root):
@@ -107,15 +114,33 @@ def new_stylesheet_text(version):
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + _STYLESHEET_HEADS[version] + _STYLESHEET_BODY
 
 
+def new_schematron_text(message):
+    """Fichier Schematron minimal : ``queryBinding="xslt2"``, préfixe
+    ``tei`` déclaré, et un groupe de règles d'exemple, un avertissement de
+    texte *message* (dans la langue de l'interface) pour un apparat sans
+    lemme ni leçon."""
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<sch:schema xmlns:sch="{SCHEMATRON_NS}" queryBinding="xslt2">\n'
+            '  <sch:ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>\n\n'
+            '  <sch:pattern id="apparat">\n'
+            '    <sch:rule context="tei:app">\n'
+            '      <sch:assert test="tei:lem or tei:rdg" role="warning">'
+            f'{escape(message)}</sch:assert>\n'
+            '    </sch:rule>\n'
+            '  </sch:pattern>\n\n'
+            '</sch:schema>\n')
+
+
 class DocumentDialogsMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
 
     def add_document_dialog(self):
-        """Ajoute au projet un document XML ou une feuille XSLT existants et
-        l'affiche."""
+        """Ajoute au projet un document XML, une feuille XSLT ou un fichier
+        Schematron existants et l'affiche."""
         fn, _ = QFileDialog.getOpenFileName(
             self, _t("documents.add.title"), str(self.project.root_dir / "xml"),
-            f"XML, XSLT (*.xml *.xsl *.xslt);;XML (*.xml);;XSLT (*.xsl *.xslt);;{_t('common.all_files')} (*)")
+            "XML, XSLT, Schematron (*.xml *.xsl *.xslt *.sch);;XML (*.xml);;XSLT (*.xsl *.xslt);;"
+            f"Schematron (*.sch);;{_t('common.all_files')} (*)")
         if not fn:
             return False
         source = Path(fn).expanduser().resolve()
@@ -179,6 +204,23 @@ class DocumentDialogsMixin:
             return False
         version = STYLESHEET_VERSIONS[labels.index(label)][0]
         return self._create_document(path, new_stylesheet_text(version))
+
+    def new_schematron_dialog(self):
+        """Crée un fichier Schematron minimal, proposé dans ``xml/``,
+        l'ajoute au projet et l'affiche ; l'édition n'est pas modifiée (sa
+        déclaration ``xml-model`` reste à écrire)."""
+        title = _t("documents.new_schematron.title")
+        fn, _ = QFileDialog.getSaveFileName(
+            self, title, str(self.project.root_dir / "xml" / "regles.sch"), "Schematron (*.sch)")
+        if not fn:
+            return False
+        path = Path(fn).expanduser().resolve()
+        if not path.suffix:
+            path = path.with_suffix(".sch")
+        if path.exists():
+            QMessageBox.warning(self, title, _t("documents.new.exists", path=path))
+            return False
+        return self._create_document(path, new_schematron_text(_t("documents.new_schematron.example")))
 
     def _create_document(self, path, text):
         """Écrit le nouveau fichier ``path`` (jamais par-dessus un fichier),

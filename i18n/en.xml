@@ -358,6 +358,7 @@ It has been removed from the recent-project list.</string>
   <string key="schematron.rules.phase">Unknown phase “{phase}”; phases of the file: {phases}</string>
   <string key="schematron.rules.xpath">Incorrect XPath expression: {detail}</string>
   <string key="schematron.rules.compile">Incorrect rules: {detail}</string>
+  <string key="schematron.rules.assembly">Inconsistent rules: {detail}</string>
   <string key="schematron.rules.runtime">Error while running the rules: {detail}</string>
   <string key="schematron.rules.declaration">Schematron declaration cannot be resolved: {detail}</string>
   <string key="schematron.rules.add.title">Rules file</string>
@@ -697,8 +698,11 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="documents.unsaved.text">The following documents have unsaved changes:</string>
   <string key="documents.save_all">Save all</string>
   <string key="documents.menu">Project XML / XSLT documents…</string>
-  <string key="documents.add.menu">Add an XML or XSLT document…</string>
-  <string key="documents.add.title">Add an XML document or an XSLT stylesheet to the project</string>
+  <string key="documents.add.menu">Add an XML, XSLT or Schematron document…</string>
+  <string key="documents.add.title">Add an XML document, an XSLT stylesheet or a Schematron file to the project</string>
+  <string key="documents.new_schematron.menu">New Schematron file…</string>
+  <string key="documents.new_schematron.title">New Schematron file</string>
+  <string key="documents.new_schematron.example">Apparatus entry without lemma or reading.</string>
   <string key="documents.new_stylesheet.menu">New XSLT stylesheet…</string>
   <string key="documents.new_stylesheet.title">New XSLT stylesheet</string>
   <string key="documents.new_stylesheet.version">XSLT version of the stylesheet:</string>
@@ -927,6 +931,22 @@ It imports the stylesheet {name} of the TEI Consortium. The parameters (xsl:para
   <string key="xslt_check.message.valid">XSLT check: stylesheet correct.</string>
   <string key="file.save_xslt_invalid.title">Incorrect XSLT stylesheet</string>
   <string key="file.save_xslt_invalid.text">The stylesheet is well-formed, but compiling it reports {count} error(s). You can save it and fix these errors later.
+
+Save anyway?</string>
+  <string key="schematron_check.action">Check the Schematron rules</string>
+  <string key="schematron_check.action.tip">Check the displayed Schematron file without applying it: ISO Schematron structure and XPath expressions (F8)</string>
+  <string key="schematron_check.panel.title">Schematron rules check</string>
+  <string key="schematron_check.panel.valid">Schematron rules correct.</string>
+  <string key="schematron_check.panel.invalid">{count} error(s) in the Schematron rules. Double-click an error to go to its line.</string>
+  <string key="schematron_check.panel.malformed">The Schematron file is not well-formed XML. Double-click the error to go to its line.</string>
+  <string key="schematron_check.panel.saxon_missing">XPath expressions not checked: Saxon (the saxonche package) is not installed.</string>
+  <string key="schematron_check.status.running">Schematron: checking…</string>
+  <string key="schematron_check.status.valid">Schematron rules correct ✓</string>
+  <string key="schematron_check.status.invalid">Schematron rules: {count} error(s)</string>
+  <string key="schematron_check.status.malformed">Schematron: malformed XML</string>
+  <string key="schematron_check.message.valid">Schematron check: rules correct.</string>
+  <string key="file.save_schematron_invalid.title">Incorrect Schematron rules</string>
+  <string key="file.save_schematron_invalid.text">The file is well-formed, but checking it reports {count} error(s). You can save it and fix these errors later.
 
 Save anyway?</string>
   <string key="transform.copy_name">{name} (copy)</string>

@@ -372,6 +372,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="schematron.rules.phase">Unbekannte Phase „{phase}“; Phasen der Datei: {phases}</string>
   <string key="schematron.rules.xpath">Fehlerhafter XPath-Ausdruck: {detail}</string>
   <string key="schematron.rules.compile">Fehlerhafte Regeln: {detail}</string>
+  <string key="schematron.rules.assembly">Widersprüchliche Regeln: {detail}</string>
   <string key="schematron.rules.runtime">Fehler beim Ausführen der Regeln: {detail}</string>
   <string key="schematron.rules.declaration">Schematron-Deklaration nicht auflösbar: {detail}</string>
   <string key="schematron.rules.add.title">Regeldatei</string>
@@ -711,8 +712,11 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="documents.unsaved.text">Die folgenden Dokumente enthalten nicht gespeicherte Änderungen:</string>
   <string key="documents.save_all">Alle speichern</string>
   <string key="documents.menu">XML-/XSLT-Dokumente des Projekts…</string>
-  <string key="documents.add.menu">XML- oder XSLT-Dokument hinzufügen…</string>
-  <string key="documents.add.title">XML-Dokument oder XSLT-Stylesheet zum Projekt hinzufügen</string>
+  <string key="documents.add.menu">XML-, XSLT- oder Schematron-Dokument hinzufügen…</string>
+  <string key="documents.add.title">XML-Dokument, XSLT-Stylesheet oder Schematron-Datei zum Projekt hinzufügen</string>
+  <string key="documents.new_schematron.menu">Neue Schematron-Datei…</string>
+  <string key="documents.new_schematron.title">Neue Schematron-Datei</string>
+  <string key="documents.new_schematron.example">Apparateintrag ohne Lemma und Lesart.</string>
   <string key="documents.new_stylesheet.menu">Neues XSLT-Stylesheet…</string>
   <string key="documents.new_stylesheet.title">Neues XSLT-Stylesheet</string>
   <string key="documents.new_stylesheet.version">XSLT-Version des Stylesheets:</string>
@@ -941,6 +945,22 @@ Es importiert das Stylesheet {name} des TEI Consortium. Die hier geschriebenen P
   <string key="xslt_check.message.valid">XSLT-Prüfung: Stylesheet korrekt.</string>
   <string key="file.save_xslt_invalid.title">Fehlerhaftes XSLT-Stylesheet</string>
   <string key="file.save_xslt_invalid.text">Das Stylesheet ist wohlgeformt, aber seine Kompilierung meldet {count} Fehler. Sie können es speichern und die Fehler später beheben.
+
+Trotzdem speichern?</string>
+  <string key="schematron_check.action">Schematron-Regeln prüfen</string>
+  <string key="schematron_check.action.tip">Angezeigte Schematron-Datei prüfen, ohne sie anzuwenden: ISO-Schematron-Struktur und XPath-Ausdrücke (F8)</string>
+  <string key="schematron_check.panel.title">Prüfung der Schematron-Regeln</string>
+  <string key="schematron_check.panel.valid">Schematron-Regeln korrekt.</string>
+  <string key="schematron_check.panel.invalid">{count} Fehler in den Schematron-Regeln. Doppelklicken Sie auf einen Fehler, um zur Zeile zu springen.</string>
+  <string key="schematron_check.panel.malformed">Die Schematron-Datei ist kein wohlgeformtes XML. Doppelklicken Sie auf den Fehler, um zur Zeile zu springen.</string>
+  <string key="schematron_check.panel.saxon_missing">XPath-Ausdrücke nicht geprüft: Saxon (Paket saxonche) ist nicht installiert.</string>
+  <string key="schematron_check.status.running">Schematron: Prüfung läuft…</string>
+  <string key="schematron_check.status.valid">Schematron-Regeln korrekt ✓</string>
+  <string key="schematron_check.status.invalid">Schematron-Regeln: {count} Fehler</string>
+  <string key="schematron_check.status.malformed">Schematron: XML nicht wohlgeformt</string>
+  <string key="schematron_check.message.valid">Schematron-Prüfung: Regeln korrekt.</string>
+  <string key="file.save_schematron_invalid.title">Fehlerhafte Schematron-Regeln</string>
+  <string key="file.save_schematron_invalid.text">Die Datei ist wohlgeformt, aber ihre Prüfung meldet {count} Fehler. Sie können sie speichern und die Fehler später beheben.
 
 Trotzdem speichern?</string>
   <string key="transform.copy_name">{name} (Kopie)</string>

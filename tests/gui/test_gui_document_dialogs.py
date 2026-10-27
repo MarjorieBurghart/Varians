@@ -229,7 +229,7 @@ def test_the_add_dialog_offers_stylesheets(open_window, example_project, file_di
     assert window.action_add_document.text() == tr("documents.add.menu")
     assert not window.add_document_dialog()
     (parent, title, folder, filters), = calls
-    assert filters.split(";;")[0] == "XML, XSLT (*.xml *.xsl *.xslt)"
+    assert filters.split(";;")[0] == "XML, XSLT, Schematron (*.xml *.xsl *.xslt *.sch)"
     assert "XSLT (*.xsl *.xslt)" in filters.split(";;")
 
 

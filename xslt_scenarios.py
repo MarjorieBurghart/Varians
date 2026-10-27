@@ -48,6 +48,7 @@ import tei_stylesheets
 from project_config import DEFAULT_APPLICATION_XSLT, TransformScenario
 from project_management import portable_path
 from xml_assembly import assemble, path_key
+from xml_roots import root_tag
 
 VARIANS_STYLESHEETS = DEFAULT_APPLICATION_XSLT.parent
 VARIANS_PREFIX = "${varians}/"
@@ -77,10 +78,6 @@ class ScenarioProblem:
 
 XSL_NAMESPACE = "http://www.w3.org/1999/XSL/Transform"
 _XSLT_ROOTS = ("stylesheet", "transform", "package")
-_COMMENT_OR_PI = re.compile(r"\s*(?:<\?.*?\?>|<!--.*?-->|<!DOCTYPE[^>\[]*(?:\[.*?\])?\s*>)", re.S)
-_START_TAG = re.compile(r"\s*<([A-Za-z_][\w.-]*(?::[A-Za-z_][\w.-]*)?)((?:\s+[^\s=/>]+\s*=\s*(?:\"[^\"]*\"|'[^']*'))*)",
-                        re.S)
-_ATTRIBUTE = re.compile(r"([^\s=/>]+)\s*=\s*(?:\"([^\"]*)\"|'([^']*)')")
 
 
 @dataclass(frozen=True)
@@ -97,18 +94,10 @@ def stylesheet_info(text) -> StylesheetInfo | None:
     """La racine de ``text`` si c'est une feuille XSLT, sinon None : un
     ``stylesheet``, ``transform`` ou ``package`` de l'espace de noms XSLT, ou
     un élément résultat littéral qui porte ``xsl:version``."""
-    position, text = 0, str(text or "")
-    while True:
-        match = _COMMENT_OR_PI.match(text, position)
-        if match is None or match.end() == position:
-            break
-        position = match.end()
-    match = _START_TAG.match(text, position)
-    if match is None:
+    tag = root_tag(text)
+    if tag is None:
         return None
-    root = match.group(1)
-    attributes = {m.group(1): m.group(2) if m.group(2) is not None else m.group(3)
-                  for m in _ATTRIBUTE.finditer(match.group(2))}
+    root, attributes = tag
     prefixes = [name[6:] if name.startswith("xmlns:") else "" for name, value in attributes.items()
                 if value == XSL_NAMESPACE and (name == "xmlns" or name.startswith("xmlns:"))]
     prefix, _colon, local = root.rpartition(":")
