@@ -12,7 +12,8 @@ from PySide6.QtWidgets import QMessageBox
 from app_context import tr
 
 ERROR_COLOR = QColor("#a06a20")
-DOCUMENT_COLUMN = 4
+DOCUMENT_COLUMN = 5
+LINE_COLUMN, MESSAGE_COLUMN = 2, 4
 
 
 def _doc(window, name):
@@ -31,7 +32,7 @@ def _break(path):
 
 def _rows(window):
     table = window.validation_table
-    return [(table.item(row, DOCUMENT_COLUMN).text(), table.item(row, 1).text())
+    return [(table.item(row, DOCUMENT_COLUMN).text(), table.item(row, LINE_COLUMN).text())
             for row in range(table.rowCount())]
 
 
@@ -126,7 +127,8 @@ def test_an_inclusion_problem_is_an_error_of_the_edition(open_window, collection
     table = window.validation_table
     assert _rows(window) == [(tr("documents.edition_tab"), "9")]
     missing = edition.parent / "sermons" / "absent.xml"
-    assert table.item(0, 3).text() == tr("rng.xinclude.missing", detail=str(missing))
+    assert table.item(0, MESSAGE_COLUMN).text() == tr("rng.xinclude.missing", detail=str(missing))
+    assert table.item(0, 1).text() == tr("rng.origin.xinclude")
 
 
 def test_a_simple_project_has_no_document_column(open_window, example_project):

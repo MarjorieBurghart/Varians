@@ -5,11 +5,13 @@ Ce module est indépendant de Qt. Il détecte les associations RELAX NG et
 Schematron dans le prologue XML, résout les chemins locaux et met en cache les
 schémas RNG distants. Pour un RNG distant, les ``include`` et ``externalRef``
 sont récupérés récursivement et réécrits vers le cache local afin que lxml
-puisse ensuite compiler le schéma avec ``no_network=True``.
+puisse ensuite compiler le schéma avec ``no_network=True``. Depuis la
+V0.9.2.3, il donne aussi les sources des règles Schematron appliquées
+(``SchemaResolution.schematron_sources``).
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from urllib.parse import urljoin, urlparse, unquote
 from urllib.request import Request, urlopen
@@ -53,6 +55,9 @@ class SchemaResolution:
     from_cache: bool = False
     schematron: tuple[XmlModelDeclaration, ...] = ()
     error: str = ""
+    # V0.9.2.3 : voir resolve_schema.
+    schematron_sources: tuple[Path, ...] = ()
+    schematron_errors: tuple[tuple[str, str], ...] = ()
 
 
 def detect_xml_models(xml_text: str) -> tuple[XmlModelDeclaration, ...]:
@@ -158,6 +163,42 @@ def _local_href_path(href: str, xml_path: Path) -> Path:
     return (xml_path.parent / unquote(href)).expanduser().resolve()
 
 
+def _path_key(path) -> str:
+    """Clé de comparaison d'un chemin (comme ``xml_assembly.path_key``)."""
+    return os.path.normcase(os.path.abspath(os.fspath(path)))
+
+
+def _with_schematron_sources(resolution, declarations, xml_path, cache_root, force_refresh, fetched):
+    """*resolution* complétée des sources Schematron (voir ``resolve_schema``)."""
+    sources, keys, errors = [], set(), []
+
+    def add(path):
+        if _path_key(path) not in keys:
+            keys.add(_path_key(path))
+            sources.append(path)
+
+    if resolution.schema_path is not None:
+        add(resolution.schema_path)
+    for declaration in declarations:
+        href = declaration.href
+        try:
+            if urlparse(href).scheme in {"http", "https"}:
+                path = fetched.get(href)
+                if path is None:
+                    path, _cached = _fetch_remote_rng(href, cache_root, force=force_refresh)
+                    fetched[href] = path
+            else:
+                path = _local_href_path(href, xml_path)
+        except Exception as exc:
+            errors.append((href, str(exc)))
+            continue
+        if not path.is_file():
+            errors.append((href, f"Schematron file not found: {path}"))
+            continue
+        add(path.resolve())
+    return replace(resolution, schematron_sources=tuple(sources), schematron_errors=tuple(errors))
+
+
 def resolve_schema(
     *,
     mode: str,
@@ -170,13 +211,31 @@ def resolve_schema(
     """Résout le RNG à utiliser selon le mode de projet.
 
     ``mode`` vaut ``auto`` (xml-model), ``file`` (schéma explicite) ou ``none``.
-    Les déclarations Schematron sont toujours détectées à titre informatif.
+    Les déclarations Schematron sont toujours détectées (``schematron``).
+
+    Depuis la V0.9.2.3, ``schematron_sources`` donne, en modes ``auto`` et
+    ``file``, les fichiers dont les règles Schematron seront appliquées, sans
+    doublon : le RNG employé (``schema_path``, ses règles intégrées), puis
+    chaque déclaration Schematron (RNG ou ``.sch``), locale ou distante (mise
+    en cache comme un RNG distant, avec ses ``sch:include``). Une même adresse
+    n'est téléchargée qu'une fois : la déclaration Schematron de la TEI
+    désigne le même ``tei_all.rng`` que son RNG. Une déclaration introuvable
+    va dans ``schematron_errors`` (``(href, erreur)``), sans arrêter le reste.
     """
     mode = (mode or "auto").strip().lower()
     xml_path = Path(xml_path).expanduser().resolve()
     declarations = detect_xml_models(xml_text)
     schematron = tuple(d for d in declarations if d.is_schematron)
+    cache_root = Path(cache_dir).expanduser().resolve() if cache_dir else default_schema_cache_dir()
+    fetched: dict[str, Path] = {}
+    resolution = _resolve_rng(mode, declarations, schematron, xml_path, project_schema, cache_root,
+                              force_refresh, fetched)
+    if mode not in {"auto", "file"}:
+        return resolution
+    return _with_schematron_sources(resolution, schematron, xml_path, cache_root, force_refresh, fetched)
 
+
+def _resolve_rng(mode, declarations, schematron, xml_path, project_schema, cache_root, force_refresh, fetched):
     if mode == "none":
         return SchemaResolution(mode, None, "none", schematron=schematron)
 
@@ -200,12 +259,12 @@ def resolve_schema(
 
     parsed = urlparse(rng.href)
     if parsed.scheme in {"http", "https"}:
-        cache_root = Path(cache_dir).expanduser().resolve() if cache_dir else default_schema_cache_dir()
         try:
             path, cached = _fetch_remote_rng(rng.href, cache_root, force=force_refresh)
         except Exception as exc:
             return SchemaResolution(mode, None, "xml-model", href=rng.href, remote=True,
                                     schematron=schematron, error=str(exc))
+        fetched[rng.href] = path
         return SchemaResolution(mode, path, "xml-model", href=rng.href, remote=True,
                                 from_cache=cached, schematron=schematron)
 

@@ -389,6 +389,38 @@ def test_each_help_announces_the_tei_stylesheets_in_version_0922():
         assert page.index('<section id="v0921">') < page.index('<section id="v0922">'), language
 
 
+def test_each_help_explains_the_schematron_rules():
+    """Règles appliquées, messages, barre d'état, règles incorrectes, Saxon
+    (V0.9.2.3)."""
+    labels = ("rng.column.origin", "rng.level.info", "schematron.status.valid", "schematron.status.rules_error",
+              "schematron.status.saxon_missing", "schematron.status.disabled", "file.save_rng_invalid.title",
+              "rng.panel.title")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="schematron">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ("SchXslt2", "http://purl.oclc.org/dsdl/schematron", "<code>tei_all.rng</code>",
+                     "<code>.sch</code>", "<code>@role</code>", "<code>@severity</code>", "<code>nonfatal</code>",
+                     "<kbd>F8</kbd>", "MIT", "saxonche", "XPath", "<code>sch:phase</code>",
+                     'href="#rng-background"'):
+            assert text in section, (language, text)
+        assert page.index('<section id="rng-background">') < page.index('<section id="schematron">') \
+            < page.index('<section id="v0892">'), language
+
+
+def test_each_help_announces_the_schematron_rules_in_version_0923():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0923">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#schematron"' in version and "Schematron" in version, language
+        assert page.index('<section id="v0922">') < page.index('<section id="v0923">'), language
+
+
 def test_the_documents_menu_names_xml_and_xslt():
     root = ET.parse(ROOT / "i18n" / "fr.xml").getroot()
     catalog = {string.get("key"): string.text for string in root.findall("string")}

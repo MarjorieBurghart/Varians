@@ -301,7 +301,7 @@
   <string key="format_xml.invalid">インデントを中止しました：XMLが整形式ではありません（{error}）</string>
   <string key="format_xml.no_change">インデント：安全に適用できる整形変更はありません。</string>
   <string key="format_xml.done">XMLをインデントしました：構造領域 {count}件を整形しました。</string>
-  <string key="rng.panel.title">RELAX NG検証</string>
+  <string key="rng.panel.title">RELAX NG・Schematron検証</string>
   <string key="rng.panel.no_validation">まだ検証していません。</string>
   <string key="rng.panel.no_schema">このプロジェクトにはRELAX NGスキーマが関連付けられていません。</string>
   <string key="rng.panel.lxml_missing">RELAX NG検証を利用できません：lxmlがインストールされていません。</string>
@@ -309,13 +309,22 @@
   <string key="rng.panel.xml_invalid">XMLが整形式ではないため、RELAX NG検証を実行できません。</string>
   <string key="rng.panel.valid">文書は {schema} に対して有効です。</string>
   <string key="rng.panel.invalid">{schema} に対して検証エラーが{count}件あります。エラーをダブルクリックすると該当行へ移動します。</string>
+  <string key="rng.panel.invalid.schematron">{schema} に対して検証エラーが{count}件あります（RELAX NG {rng}件、Schematron {schematron}件）。エラーをダブルクリックすると該当行へ移動します。</string>
+  <string key="rng.panel.valid.messages">文書は {schema} に対して有効です。Schematronルールのメッセージ（警告・情報）が{count}件あります。</string>
   <string key="rng.panel.close">検証パネルを隠す</string>
   <string key="rng.column.level">レベル</string>
+  <string key="rng.column.origin">由来</string>
+  <string key="rng.origin.xml">XML</string>
+  <string key="rng.origin.relaxng">RELAX NG</string>
+  <string key="rng.origin.xinclude">XInclude</string>
+  <string key="rng.origin.schematron">Schematron</string>
+  <string key="rng.origin.xslt">XSLT</string>
   <string key="rng.column.line">行</string>
   <string key="rng.column.column">列</string>
   <string key="rng.column.message">メッセージ</string>
   <string key="rng.level.error">エラー</string>
   <string key="rng.level.warning">警告</string>
+  <string key="rng.level.info">情報</string>
   <string key="rng.status.none">RNG：スキーマなし</string>
   <string key="rng.status.pending">RNG：未検証</string>
   <string key="rng.status.modified">RNG：文書変更済み</string>
@@ -343,8 +352,20 @@
   <string key="rng.panel.no_xml_model">校訂本文にRELAX NGの &lt;?xml-model?&gt; 宣言が見つかりません。</string>
   <string key="rng.panel.schema_resolution_error">宣言されたスキーマを解決できませんでした：{error}</string>
   <string key="rng.status.no_xml_model">RNG：xml-modelなし</string>
-  <string key="schematron.status.detected">Schematron：検出（{count}）</string>
-  <string key="schematron.status.tooltip">&lt;?xml-model?&gt; に1件以上のSchematron宣言が見つかりました。Schematron検証は将来のバージョンで実装予定で、現在はまだ実行しません。</string>
+  <string key="schematron.status.valid">Schematron：✓</string>
+  <string key="schematron.status.errors">Schematron：エラー {count}件</string>
+  <string key="schematron.status.messages">Schematron：メッセージ {count}件</string>
+  <string key="schematron.status.no_rules">Schematron：ルールなし</string>
+  <string key="schematron.status.rules_error">Schematron：ルールに誤り</string>
+  <string key="schematron.status.saxon_missing">Schematron：Saxonなし</string>
+  <string key="schematron.status.disabled">Schematron：未検査</string>
+  <string key="schematron.tip.sources">適用したSchematronルール：{sources}</string>
+  <string key="schematron.tip.error">{source}：{detail}</string>
+  <string key="schematron.tip.saxon_missing">SchematronルールにはSaxon（saxoncheパッケージ）が必要ですが、インストールされていません：python -m pip install --user saxonche。RELAX NG検証は行われます。</string>
+  <string key="schematron.tip.no_rules">Schematronルールが含まれていません：{sources}</string>
+  <string key="schematron.tip.disabled">このプロジェクトでは検証が無効です。宣言されたSchematronルールは検査されません。</string>
+  <string key="schematron.panel.rules_error">Schematronルールの誤り（{source}）：{detail}</string>
+  <string key="schematron.panel.saxon_missing">Schematronルールは検査されていません：Saxon（saxoncheパッケージ）がインストールされていません。</string>
   <string key="file.save_anyway">このまま保存</string>
   <string key="file.save_malformed.title">XMLが整形式ではありません</string>
   <string key="file.save_malformed.text">XML文書が整形式ではありません。作業内容を失わないよう、そのまま保存して後で修正することもできます。
@@ -352,8 +373,8 @@
 構文エラーを修正するまで、XSLTプレビューとRELAX NG検証を利用できない場合があります。
 
 このまま保存しますか？</string>
-  <string key="file.save_rng_invalid.title">RELAX NGに対して文書が無効です</string>
-  <string key="file.save_rng_invalid.text">文書は整形式ですが、RELAX NG検証で{count}件のエラーが報告されています。保存して後で修正できます。
+  <string key="file.save_rng_invalid.title">文書が無効です</string>
+  <string key="file.save_rng_invalid.text">文書は整形式ですが、検証（RELAX NG、Schematronルール）で{count}件のエラーが報告されています。保存して後で修正できます。
 
 このまま保存しますか？</string>
   <string key="xml.health.malformed.tooltip">XMLが整形式ではありません — 警告後に保存できます。</string>

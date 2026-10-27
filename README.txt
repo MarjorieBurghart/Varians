@@ -1,3 +1,38 @@
+VARIANS V0.9.2.3 — RÈGLES SCHEMATRON
+
+• Varians applique désormais les règles Schematron, en même temps que la
+  validation RELAX NG (ouverture, frappe, F8, enregistrement), dans le même
+  processus séparé : celles qui sont intégrées au RNG employé (91 groupes
+  dans tei_all.rng, celles d'une personnalisation ODD), qu'il vienne du
+  <?xml-model?> ou des paramètres du projet, puis celles de chaque
+  déclaration xml-model de type Schematron (fichier .sch ou RNG ; une
+  adresse http est mise en cache comme un RNG distant). Les mêmes règles ne
+  sont jamais vérifiées deux fois.
+• Panneau « Validation RELAX NG et Schematron » : colonne Origine (XML,
+  RELAX NG, XInclude, Schematron), niveau Information ; double-clic vers la
+  ligne de l'élément, dans sa partie pour une édition assemblée. Niveau
+  d'après @severity, sinon @role (warning, warn, nonfatal : avertissement ;
+  info : information ; le reste : erreur).
+• Une erreur Schematron compte comme une erreur RELAX NG : onglet orange,
+  question « Document non valide » avant d'enregistrer. Un avertissement ou
+  une information restent listés sans rendre le document invalide.
+• Barre d'état : étiquette Schematron (✓, erreurs, messages, règles
+  incorrectes, Saxon manquant, non vérifié), info-bulle avec les fichiers
+  des règles et le détail d'une règle incorrecte (fichier, ligne, message) ;
+  une règle incorrecte ne rend pas le document invalide.
+• Moteur : SchXslt2 1.11.2 (David Maus, licence MIT), livré dans
+  resources/schxslt2/ (voir son LISEZMOI), et Saxon (saxonche). Sans Saxon,
+  seule la validation RELAX NG est faite.
+• Les nouveaux projets déclarent aussi les règles Schematron de TEI All.
+• Limites : règles évaluées en XPath 3.1 quel que soit leur queryBinding ;
+  phase par défaut seulement ; ni Schematron 1.5, ni règles d'un XSD.
+• Un document TEI jusqu'ici valide peut recevoir de nouveaux messages. Le
+  format de project.xml ne change pas. Voir RELAXNG_VALIDATION.md.
+• Un projet qui garde une copie des traductions (dossier i18n/) y garde
+  l'ancien titre du panneau et l'ancien texte de la question
+  d'enregistrement ; remplacer ces fichiers par ceux de Varians pour
+  adopter les nouveaux.
+
 VARIANS V0.9.2.2 — TEI STYLESHEETS
 
 • Varians apporte les TEI Stylesheets, les feuilles XSLT du TEI Consortium
@@ -1294,7 +1329,7 @@ NOUVEAUTÉ V0.5.1 — XML-MODEL ET ÉTATS DE VALIDITÉ
 - Trois modes de schéma : détection automatique <?xml-model?>, schéma du projet, aucun RNG.
 - Les href RNG relatifs et distants sont pris en charge ; les schémas distants et leurs dépendances sont mis en cache.
 - Un bouton ↻ du panneau permet de rafraîchir un schéma distant.
-- Les déclarations Schematron de <?xml-model?> sont détectées et signalées, sans validation Schematron pour l'instant.
+- Les déclarations Schematron de <?xml-model?> sont détectées et signalées (leurs règles sont appliquées depuis la V0.9.2.3).
 - Onglets rouge pâle : XML non bien formé.
 - Onglets orange pâle : XML bien formé mais invalide selon RELAX NG.
 - La sauvegarde est désormais autorisée dans les deux cas après un avertissement explicite.

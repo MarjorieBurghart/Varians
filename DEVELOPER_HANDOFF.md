@@ -371,7 +371,7 @@ Validation complète RELAX NG via lxml, avec cache de schéma compilé et invali
 
 Détecte les instructions `<?xml-model?>`, résout les schémas locaux/distants, met en cache les RNG distants et leurs dépendances.
 
-Schematron est détecté à titre informatif mais **n'est pas encore validé**.
+Depuis la V0.9.2.3, elle donne aussi les sources des règles Schematron (`schematron_sources` : le RNG employé, puis les déclarations Schematron, sans doublon) ; le module `schematron.py` les applique (SchXslt2 et Saxon). Voir `RELAXNG_VALIDATION.md`.
 
 ### `rng_completion.py`
 
@@ -589,7 +589,7 @@ La vérification de bien-formé est automatique et asynchrone. F8 lance la valid
 
 Le cache de schéma compilé doit être invalidé si le RNG principal **ou une dépendance `include`/`externalRef`** change.
 
-Schematron : détecté, mais pas exécuté à ce stade.
+Schematron (V0.9.2.3) : les règles du RNG employé et des déclarations Schematron sont appliquées dans le même passage que le RNG ; une erreur Schematron compte comme une erreur RNG, un avertissement non. Voir `RELAXNG_VALIDATION.md`.
 
 ---
 
@@ -693,7 +693,7 @@ Il contient de l'historique spécifique au prototype initial. Le code moderne en
 
 ### Schematron
 
-Détection seulement. Toute implémentation future doit respecter la distinction entre bien-formé, validité RNG et règles Schematron dans l'UI.
+Appliqué depuis la V0.9.2.3 (`schematron.py`, SchXslt2 livré dans `resources/schxslt2/`, Saxon). L'interface distingue bien-formé, validité RNG et règles Schematron (colonne Origine, étiquette Schematron de la barre d'état). Restent hors champ : phases autres que la phase par défaut, Schematron 1.5, règles d'un XSD.
 
 ### Outil tiers d'alignement
 

@@ -40,9 +40,12 @@ def test_auto_schema_adds_tei_all_xml_model_but_none_does_not():
     witnesses = [WitnessDraft("A", "A", None, "base")]
     auto = minimal_tei_text("Test", witnesses, "A", schema_mode="auto")
     models = detect_xml_models(auto)
-    assert len(models) == 1
-    assert models[0].schematypens == "http://relaxng.org/ns/structure/1.0"
-    assert models[0].href.endswith("/tei_all.rng")
+    # V0.9.2.3 : le RNG, puis ses règles Schematron, comme dans les
+    # documents de la TEI.
+    assert [model.schematypens for model in models] == [
+        "http://relaxng.org/ns/structure/1.0", "http://purl.oclc.org/dsdl/schematron"]
+    assert models[0].href.endswith("/tei_all.rng") and models[1].href == models[0].href
+    assert all(model.type == "application/xml" for model in models)
 
     none = minimal_tei_text("Test", witnesses, "A", schema_mode="none")
     assert detect_xml_models(none) == ()

@@ -228,3 +228,14 @@ Fonctionnement : `XSLT_SCENARIOS.md` (« TEI Stylesheets »).
 - `transform_ui.py` : `TransformScenariosMixin._customize` (« Ouvrir la feuille » d'un scénario TEI), `_use_stylesheet`, `tei_stylesheets_dialog` ; `ScenarioListDialog.tei_stylesheets` (bouton « TEI Stylesheets… ») ; `predefined()` passe la langue de l'interface. `xslt_check_ui._check_stylesheet` emploie `check_request`.
 - `tei_stylesheets_ui.py` : `TeiStylesheetsDialog`, `at_launch` (appelée par `editeur_tei.main`), `check_for_update`, `install`, `_Task` (fil à part, résultat par signal), `busy`, `progress_dialog`, réglage `teiStylesheets/lastCheck`. `main_menus.py` : `action_tei_stylesheets`, après « Scénarios de transformation… ».
 - `app_context.apply_qt_language` : traductions de Qt (`qtbase_<langue>.qm`, textes standard des boîtes et des boutons) dans la langue de l'interface ; appelée par `editeur_tei.main`, `MainWindow.__init__` et `MainMenusMixin._set_language_code`. Compte rendu d'une transformation : « Ouvrir le dossier » (`TransformScenariosMixin._transform_finished`).
+
+## V0.9.2.3 — règles Schematron
+
+Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.3 — règles Schematron »).
+
+- `schematron.py` (sans Qt) : `rules_text` (fichier `.sch`, ou règles intégrées à un RNG et aux RNG inclus), `compiled` (`_compile`, cache selon `_schema_dependency_signature`, `_transpiler` : `resources/schxslt2/transpile.xsl` compilé une fois avec ses paramètres statiques), `validate` → `SchematronReport` (`issues`, `rules`, `errors`, `error`), `_element_at` (emplacement SVRL → élément lxml), `_level`, `_saxon_text` et `_expression_site` (règle incorrecte : fichier et ligne), sortie d'erreur du processus (`relaxng_validation.STDERR_LOG`). SchXslt2 livré : `resources/schxslt2/` (LISEZMOI).
+- `schema_resolution.py` : `SchemaResolution.schematron_sources`, `schematron_errors`, `_with_schematron_sources`, `_resolve_rng`.
+- `relaxng_validation.py` : `validate_document(…, schematron=…)`, `_checked`, `_checked_assembled`, champs `schematron_rules`, `schematron_errors`, `schematron_error` de `ValidationResult` ; `relaxng_worker` (champ `schematron`), `validation_worker` (`schematron=`, `stderr_log`).
+- `validation_panel.py` : colonne Origine (`_issue_origin`), `_is_error`, `_update_schematron_status`, `_show_schematron_result`, `_schematron_summary`, `_validation_token` ; `document_tabs` (état de l'étiquette Schematron de chaque document), `document_io._write_to` (question d'enregistrement, jeton).
+- `project_management.minimal_tei_text` : déclaration Schematron de TEI All.
+

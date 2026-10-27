@@ -109,7 +109,8 @@ def minimal_tei_text(
     Le document ne suppose aucune image, aucun ALTO ni synchronisation. En mode
     de schéma ``auto``, une instruction ``xml-model`` vers TEI All est ajoutée
     afin que la validation et la complétion RNG soient disponibles dès que le
-    schéma distant est accessible (puis via le cache local de Varians).
+    schéma distant est accessible (puis via le cache local de Varians) ; une
+    seconde, de type Schematron, déclare ses règles (V0.9.2.3).
     """
     ET.register_namespace("", TEI_NS)
     q = lambda name: f"{{{TEI_NS}}}{name}"
@@ -148,9 +149,13 @@ def minimal_tei_text(
     xml = ET.tostring(root, encoding="unicode", short_empty_elements=False)
     prolog = '<?xml version="1.0" encoding="UTF-8"?>\n'
     if schema_mode == "auto":
+        # Le RNG, puis ses règles Schematron (V0.9.2.3), comme dans les
+        # documents de la TEI.
         prolog += (
             f'<?xml-model href="{DEFAULT_TEI_RNG}" type="application/xml" '
             'schematypens="http://relaxng.org/ns/structure/1.0"?>\n'
+            f'<?xml-model href="{DEFAULT_TEI_RNG}" type="application/xml" '
+            'schematypens="http://purl.oclc.org/dsdl/schematron"?>\n'
         )
     return prolog + xml + "\n"
 

@@ -3,6 +3,7 @@
 vers le processus séparé, attente sans figer la fenêtre, repli dans Varians."""
 from __future__ import annotations
 
+import importlib.util
 import sys
 import threading
 import time
@@ -184,3 +185,35 @@ def test_an_assembled_edition_is_validated_with_its_parts(make_client, schema, t
     qtbot.waitUntil(lambda: bool(answers), timeout=30000)
     assert answers[0].valid
     assert client.uses_process is (command is None)
+
+
+RULES = """<?xml version="1.0"?>
+<schema xmlns="http://purl.oclc.org/dsdl/schematron">
+  <pattern><rule context="p"><assert test="string-length(.) &gt; 1">Paragraphe trop court.</assert></rule></pattern>
+</schema>
+"""
+
+
+@pytest.mark.skipif(importlib.util.find_spec("saxonche") is None, reason="Saxon (saxonche) n'est pas installé")
+@pytest.mark.parametrize("command", [None, "absent"])
+def test_schematron_sources_go_with_the_request(make_client, schema, tmp_path, qtbot, command):
+    # V0.9.2.3 : par le processus séparé, puis par le repli dans Varians.
+    client = make_client([str(tmp_path / "absent")] if command else None)
+    rules = tmp_path / "regles.sch"
+    rules.write_text(RULES, encoding="utf-8")
+    result = client.validate("<root>\n<p>a</p>\n</root>", schema, schematron=[rules])
+    assert not result.valid and [(i.domain, i.line) for i in result.issues] == [("SCHEMATRON", 2)]
+    answers = []
+    client.validate_async("<root><p>a</p></root>", None, None, QPushButton(), answers.append, schematron=[rules])
+    qtbot.waitUntil(lambda: bool(answers), timeout=30000)
+    assert answers[0].schematron_rules == (str(rules),) and not answers[0].valid
+    assert client.uses_process is (command is None)
+
+
+def test_the_worker_writes_its_errors_to_a_log_removed_at_the_end(make_client, schema, qtbot):
+    client = make_client()
+    assert client.validate("<root/>", schema).valid
+    log = Path(client.stderr_log)
+    assert log.is_file()
+    client.shutdown()
+    assert not log.exists()

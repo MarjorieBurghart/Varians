@@ -51,8 +51,9 @@ def _show(window, name):
 
 
 def _rows(window):
+    """Niveau, ligne, colonne, message, document (sans la colonne Origine)."""
     table = window.validation_table
-    return [[table.item(row, column).text() for column in range(5)] for row in range(table.rowCount())]
+    return [[table.item(row, column).text() for column in (0, 2, 3, 4, 5)] for row in range(table.rowCount())]
 
 
 def _checked(qtbot, window, text):
@@ -70,7 +71,8 @@ def test_f8_checks_the_displayed_stylesheet_and_lists_its_errors(open_window, wi
     rows = _rows(window)
     assert [(row[0], row[1]) for row in rows] == [(tr("rng.level.error"), "3"), (tr("rng.level.error"), "5")]
     assert all(row[3] for row in rows)
-    assert window.validation_table.isColumnHidden(4)
+    assert window.validation_table.item(0, 1).text() == tr("rng.origin.xslt")
+    assert window.validation_table.isColumnHidden(5)
     assert window.rng_status.text() == tr("xslt_check.status.invalid", engines=_lxml(), count=2)
     assert window.validation_summary.text() == tr("xslt_check.panel.invalid", engines=_lxml(), count=2)
     assert window.document.health == "rng_invalid"
@@ -170,7 +172,7 @@ def test_an_error_in_an_imported_stylesheet_leads_to_its_document(open_window, w
     _show(window, "index.xsl")
     window.action_validate_rng.trigger()
     (row,) = _rows(window)
-    assert row[1] == "3" and not window.validation_table.isColumnHidden(4)
+    assert row[1] == "3" and not window.validation_table.isColumnHidden(5)
     assert row[4] == window._document_tab_name(next(s for s in window.documents if s.path.name == "commun.xsl"))
     window.goto_validation_issue(0)
     assert window.document.path.name == "commun.xsl"
