@@ -72,8 +72,15 @@ def test_the_docx_scenario_writes_a_word_document(project):
         names = archive.namelist()
         assert names[0] == "[Content_Types].xml"
         assert {"word/document.xml", "word/styles.xml", "word/_rels/document.xml.rels", "docProps/core.xml"} <= set(names)
-        assert "Sermo in adventu Domini" in archive.read("word/document.xml").decode("utf-8")
+        document = archive.read("word/document.xml").decode("utf-8")
+        assert "Sermo in adventu Domini" in document
         assert not {"docProps/newcore.xml", "image-size-info.xml"} & set(names)
+        # L'apparat en notes de bas de page (pré-passage, témoin pivot A) :
+        # la leçon retenue dans le texte, les variantes en note.
+        notes = re.sub(r"<[^>]+>", "", archive.read("word/footnotes.xml").decode("utf-8"))
+        assert "significant ] signant B" in notes
+        assert "significant" in document and "signant<" not in document
+        assert "w:footnoteReference" in document and "<w:br w:type=\"page\"/>" not in document
 
 
 def test_the_odt_scenario_writes_an_opendocument_text(project):
@@ -83,8 +90,12 @@ def test_the_odt_scenario_writes_an_opendocument_text(project):
         first = archive.infolist()[0]
         assert (first.filename, first.compress_type) == ("mimetype", zipfile.ZIP_STORED)
         assert archive.read("mimetype") == b"application/vnd.oasis.opendocument.text"
-        assert "Sermo in adventu Domini" in archive.read("content.xml").decode("utf-8")
+        content = archive.read("content.xml").decode("utf-8")
+        assert "Sermo in adventu Domini" in content
         assert "META-INF/manifest.xml" in archive.namelist()
+        notes = [re.sub(r"<[^>]+>", "", note) for note in re.findall(r'<text:note text:note-class="footnote".*?</text:note>',
+                                                                      content, re.S)]
+        assert any("significant ] signant B" in note for note in notes)
 
 
 def test_the_epub_scenario_writes_a_book_with_the_css_of_the_library(project):

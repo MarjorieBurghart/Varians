@@ -999,6 +999,7 @@ Enregistrer quand même ?</string>
   <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">Feuille XSLT :</string>
   <string key="transform.scenario.css">CSS (facultative) :</string>
+  <string key="transform.scenario.prepare">Pré-passage TEI → TEI (facultatif) :</string>
   <string key="transform.scenario.output">Résultat :</string>
   <string key="transform.scenario.params">Paramètres :</string>
   <string key="transform.param.name">Nom</string>
@@ -1008,6 +1009,7 @@ Enregistrer quand même ?</string>
   <string key="transform.browse.file">Fichier source du scénario</string>
   <string key="transform.browse.xslt">Feuille XSLT du scénario</string>
   <string key="transform.browse.css">CSS du scénario</string>
+  <string key="transform.browse.prepare">Feuille du pré-passage (TEI → TEI)</string>
   <string key="transform.browse.output">Fichier du résultat</string>
   <string key="transform.scenario.duplicate_name">Un scénario du projet porte déjà le nom « {name} ».</string>
   <string key="transform.scenario.refused">Ce scénario ne peut pas être enregistré : {problem}</string>
@@ -1030,6 +1032,7 @@ L’enregistrer quand même ?</string>
   <string key="transform.problem.css_overwrites_source">La copie de la CSS remplacerait une source du projet : {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets non installées : {detail} (voir Fichier ▸ TEI Stylesheets…)</string>
   <string key="transform.problem.package_invalid">Format du résultat inconnu ou sans Saxon : {detail} (pages, docx, odt ou epub, avec le moteur Saxon)</string>
+  <string key="transform.problem.prepare_invalid">Le pré-passage demande le moteur Saxon : {detail}</string>
   <string key="toolbar.transform">Transformer</string>
   <string key="toolbar.transform.tip">Exécuter le dernier scénario de transformation (Ctrl+Maj+T) ; la flèche donne la liste des scénarios</string>
   <string key="transform.run">Exécuter</string>

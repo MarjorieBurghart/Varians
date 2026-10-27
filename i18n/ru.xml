@@ -1013,6 +1013,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">Таблица XSLT:</string>
   <string key="transform.scenario.css">CSS (необязательно):</string>
+  <string key="transform.scenario.prepare">Предварительный проход TEI → TEI (необязательно):</string>
   <string key="transform.scenario.output">Результат:</string>
   <string key="transform.scenario.params">Параметры:</string>
   <string key="transform.param.name">Название</string>
@@ -1022,6 +1023,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="transform.browse.file">Исходный файл сценария</string>
   <string key="transform.browse.xslt">Таблица XSLT сценария</string>
   <string key="transform.browse.css">CSS сценария</string>
+  <string key="transform.browse.prepare">Таблица стилей предварительного прохода (TEI → TEI)</string>
   <string key="transform.browse.output">Файл результата</string>
   <string key="transform.scenario.duplicate_name">Сценарий проекта с названием «{name}» уже существует.</string>
   <string key="transform.scenario.refused">Этот сценарий нельзя сохранить: {problem}</string>
@@ -1044,6 +1046,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="transform.problem.css_overwrites_source">Копия CSS заменила бы исходный файл проекта: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets не установлены: {detail} (см. Файл ▸ TEI Stylesheets…)</string>
   <string key="transform.problem.package_invalid">Неизвестный формат результата или без Saxon: {detail} (pages, docx, odt или epub, с процессором Saxon)</string>
+  <string key="transform.problem.prepare_invalid">Предварительному проходу нужен процессор Saxon: {detail}</string>
   <string key="toolbar.transform">Преобразовать</string>
   <string key="toolbar.transform.tip">Выполнить последний сценарий преобразования (Ctrl+Shift+T); стрелка открывает список сценариев</string>
   <string key="transform.run">Выполнить</string>

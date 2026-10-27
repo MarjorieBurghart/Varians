@@ -999,6 +999,7 @@ Save anyway?</string>
   <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">XSLT stylesheet:</string>
   <string key="transform.scenario.css">CSS (optional):</string>
+  <string key="transform.scenario.prepare">TEI → TEI pre-pass (optional):</string>
   <string key="transform.scenario.output">Result:</string>
   <string key="transform.scenario.params">Parameters:</string>
   <string key="transform.param.name">Name</string>
@@ -1008,6 +1009,7 @@ Save anyway?</string>
   <string key="transform.browse.file">Source file of the scenario</string>
   <string key="transform.browse.xslt">XSLT stylesheet of the scenario</string>
   <string key="transform.browse.css">CSS of the scenario</string>
+  <string key="transform.browse.prepare">Pre-pass stylesheet (TEI → TEI)</string>
   <string key="transform.browse.output">Result file</string>
   <string key="transform.scenario.duplicate_name">A project scenario named “{name}” already exists.</string>
   <string key="transform.scenario.refused">This scenario cannot be saved: {problem}</string>
@@ -1030,6 +1032,7 @@ Save it anyway?</string>
   <string key="transform.problem.css_overwrites_source">The copy of the CSS would replace a source of the project: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets not installed: {detail} (see File ▸ TEI Stylesheets…)</string>
   <string key="transform.problem.package_invalid">Unknown output format, or without Saxon: {detail} (pages, docx, odt or epub, with the Saxon engine)</string>
+  <string key="transform.problem.prepare_invalid">The pre-pass needs the Saxon engine: {detail}</string>
   <string key="toolbar.transform">Transform</string>
   <string key="toolbar.transform.tip">Run the last transformation scenario (Ctrl+Shift+T); the arrow lists the scenarios</string>
   <string key="transform.run">Run</string>

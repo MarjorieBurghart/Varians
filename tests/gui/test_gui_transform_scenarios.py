@@ -185,6 +185,31 @@ def test_the_package_of_a_scenario_is_chosen_and_an_unknown_one_is_kept(open_win
     assert [s.package for s in load_project(sermons_project).transformations] == ["odt", "pdf"]
 
 
+def test_the_prepass_of_a_scenario_is_shown_and_kept(open_window, sermons_project, dialogs):
+    (sermons_project.parent / "rendering" / "avant.xsl").write_text("<xsl:stylesheet/>", encoding="utf-8")
+    book = TransformScenario("Livre", "rendering/personnes.xsl", "publications/livre.docx", engine="saxon",
+                             package="docx", prepare="rendering/avant.xsl")
+    window = open_window(_with_scenarios(sermons_project, book))
+    seen = {}
+
+    def edit(dialog):
+        dialog.tree.setCurrentItem(dialog.project_group.child(0))
+        dialog.edit_scenario()
+
+    def change(dialog):
+        seen["prepare"] = dialog.prepare_field.text()
+        dialog.name_edit.setText("Livre 2")
+
+    answers = [] if saxon_available() else [("question", QMessageBox.StandardButton.Yes)]
+    dialogs.expect("dialog", _in_list(edit))
+    dialogs.expect("dialog", _scenario(change))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    assert seen == {"prepare": "rendering/avant.xsl"}
+    assert load_project(sermons_project).transformations == (replace(book, name="Livre 2"),)
+
+
 def test_a_predefined_scenario_is_duplicated_into_the_project(open_window, sermons_project, dialogs):
     window = open_window(sermons_project)
 

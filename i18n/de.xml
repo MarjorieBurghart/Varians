@@ -1013,6 +1013,7 @@ Trotzdem speichern?</string>
   <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">XSLT-Stylesheet:</string>
   <string key="transform.scenario.css">CSS (optional):</string>
+  <string key="transform.scenario.prepare">Vorlauf TEI → TEI (optional):</string>
   <string key="transform.scenario.output">Ergebnis:</string>
   <string key="transform.scenario.params">Parameter:</string>
   <string key="transform.param.name">Name</string>
@@ -1022,6 +1023,7 @@ Trotzdem speichern?</string>
   <string key="transform.browse.file">Quelldatei des Szenarios</string>
   <string key="transform.browse.xslt">XSLT-Stylesheet des Szenarios</string>
   <string key="transform.browse.css">CSS des Szenarios</string>
+  <string key="transform.browse.prepare">Stylesheet des Vorlaufs (TEI → TEI)</string>
   <string key="transform.browse.output">Ergebnisdatei</string>
   <string key="transform.scenario.duplicate_name">Ein Szenario des Projekts mit dem Namen „{name}“ ist bereits vorhanden.</string>
   <string key="transform.scenario.refused">Dieses Szenario kann nicht gespeichert werden: {problem}</string>
@@ -1044,6 +1046,7 @@ Trotzdem speichern?</string>
   <string key="transform.problem.css_overwrites_source">Die Kopie der CSS würde eine Quelle des Projekts ersetzen: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets nicht installiert: {detail} (siehe Datei ▸ TEI Stylesheets…)</string>
   <string key="transform.problem.package_invalid">Unbekanntes Ausgabeformat oder ohne Saxon: {detail} (pages, docx, odt oder epub, mit dem Saxon-Prozessor)</string>
+  <string key="transform.problem.prepare_invalid">Der Vorlauf erfordert den Saxon-Prozessor: {detail}</string>
   <string key="toolbar.transform">Transformieren</string>
   <string key="toolbar.transform.tip">Letztes Transformationsszenario ausführen (Strg+Umschalt+T); der Pfeil listet die Szenarien auf</string>
   <string key="transform.run">Ausführen</string>

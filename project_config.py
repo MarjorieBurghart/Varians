@@ -133,8 +133,9 @@ class TransformScenario:
     ``source`` vaut edition, current (le document affiché) ou file ;
     ``engine`` lxml (XSLT 1.0) ou saxon (XSLT 3.0). ``package`` (V0.9.2.7) :
     vide pour un seul fichier, ou pages, docx, odt, epub (``xslt_packages``).
-    Une valeur inconnue est gardée : le scénario est signalé, et non
-    exécuté."""
+    ``prepare`` (V0.9.2.7) : une feuille TEI → TEI appliquée à la source
+    avant ``xslt``, avec les mêmes paramètres (Saxon). Une valeur inconnue
+    est gardée : le scénario est signalé, et non exécuté."""
     name: str
     xslt: str
     output: str
@@ -144,6 +145,7 @@ class TransformScenario:
     css: str = ""
     params: tuple[tuple[str, str], ...] = ()
     package: str = ""
+    prepare: str = ""
 
 
 def has_line_synchronization(witness: WitnessConfig) -> bool:
@@ -345,7 +347,8 @@ def _parse_transformations(root: ET.Element) -> tuple[TransformScenario, ...]:
             name, (scenario_el.get("xslt") or "").strip(), (scenario_el.get("output") or "").strip(),
             source=(scenario_el.get("source") or "edition").strip(), file=(scenario_el.get("file") or "").strip(),
             engine=(scenario_el.get("engine") or "lxml").strip(), css=(scenario_el.get("css") or "").strip(),
-            params=tuple(params.items()), package=(scenario_el.get("package") or "").strip())
+            params=tuple(params.items()), package=(scenario_el.get("package") or "").strip(),
+            prepare=(scenario_el.get("prepare") or "").strip())
     return tuple(scenarios.values())
 
 

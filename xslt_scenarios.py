@@ -57,11 +57,13 @@ from xml_roots import root_tag
 VARIANS_STYLESHEETS = DEFAULT_APPLICATION_XSLT.parent
 VARIANS_PREFIX = "${varians}/"
 TEI_PREFIX = "${tei}/"
+# Dans la valeur d'un paramètre : le témoin pivot du projet (V0.9.2.7).
+PIVOT = "${pivot}"
 SOURCES = ("edition", "current", "file")
 ENGINES = ("lxml", "saxon")
 PROBLEM_CODES = ("unknown_source", "no_file", "file_missing", "no_current", "unknown_engine", "saxon_missing",
                  "no_xslt", "xslt_missing", "css_missing", "no_output", "output_is_folder", "output_is_source",
-                 "css_overwrites_source", "tei_missing", "package_invalid")
+                 "css_overwrites_source", "tei_missing", "package_invalid", "prepare_invalid")
 
 
 @dataclass(frozen=True)
@@ -74,7 +76,8 @@ class ScenarioProblem:
     ``no_output``, ``output_is_folder``, ``output_is_source``,
     ``css_overwrites_source``, ``tei_missing`` (TEI Stylesheets non
     installées : le dossier de la bibliothèque), ``package_invalid`` (un
-    paquet inconnu, ou sans Saxon, V0.9.2.7). ``detail`` : la valeur ou le
+    paquet inconnu, ou sans Saxon, V0.9.2.7), ``prepare_invalid`` (un
+    pré-passage sans Saxon, V0.9.2.7). ``detail`` : la valeur ou le
     chemin en cause, tel qu'il est écrit dans le scénario ou relatif au
     projet."""
     code: str
@@ -236,8 +239,15 @@ def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenar
         if package == "epub":
             # Les CSS que l'EPUB recopie, lues dans la bibliothèque.
             params = (("cssFile", TEI_PREFIX + "tei.css"), ("cssPrintFile", TEI_PREFIX + "epub-print.css"))
+        prepare = ""
+        if package in ("docx", "odt"):
+            # Les TEI Stylesheets rendent mal l'apparat dans Word et LibreOffice :
+            # un pré-passage le met en notes de bas de page, d'après le témoin pivot.
+            prepare = VARIANS_PREFIX + "apparat-en-notes.xsl"
+            params = (("temoin-de-base", PIVOT),)
         scenarios.append(TransformScenario(name(key), f"{TEI_PREFIX}profiles/default/{profile}/to.xsl", output,
-                                           engine="saxon", css=css, params=params + languages, package=package))
+                                           engine="saxon", css=css, params=params + languages, package=package,
+                                           prepare=prepare))
     return tuple(scenarios)
 
 
@@ -282,7 +292,8 @@ def scenario_source(scenario, project, current=None):
 def _protected(scenario, project, current, sources):
     source, _assemble = scenario_source(scenario, project, current) if scenario.source in SOURCES else (None, False)
     paths = list(project_sources(project) if sources is None else sources)
-    paths += [source, stylesheet_path(scenario, project), resolve_path(project, scenario.css)]
+    paths += [source, stylesheet_path(scenario, project), resolve_path(project, scenario.prepare),
+              resolve_path(project, scenario.css)]
     return {path_key(path): Path(path) for path in paths if path}
 
 
@@ -316,6 +327,12 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
         problems.append(ScenarioProblem("no_xslt"))
     elif not xslt.is_file() and not (tei_missing and _uses_tei(scenario.xslt)):
         problems.append(ScenarioProblem("xslt_missing", scenario.xslt))
+    prepare = resolve_path(project, scenario.prepare)
+    if prepare is not None:
+        if scenario.engine != "saxon":
+            problems.append(ScenarioProblem("prepare_invalid", scenario.prepare))
+        if not prepare.is_file() and not (tei_missing and _uses_tei(scenario.prepare)):
+            problems.append(ScenarioProblem("xslt_missing", scenario.prepare))
     css = resolve_path(project, scenario.css)
     if css is not None and not css.is_file() and not (tei_missing and _uses_tei(scenario.css)):
         problems.append(ScenarioProblem("css_missing", scenario.css))
@@ -335,9 +352,6 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
     return problems
 
 
-PIVOT = "${pivot}"
-
-
 def substitute(value, project) -> str:
     """*value*, la valeur d'un paramètre, où ``${pivot}`` (V0.9.2.7) devient
     l'identifiant du témoin pivot du projet, et ``${tei}/`` l'adresse
@@ -354,7 +368,8 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
     """Requête d'exécution (sérialisable en JSON) d'un scénario sans
     problème : chemins absolus, paramètres (avec ``css``, le nom de la CSS,
     sauf si le scénario le fixe, et ``${pivot}`` remplacé par le témoin
-    pivot, voir ``substitute``), fichiers protégés, et pour un paquet
+    pivot, voir ``substitute``), fichiers protégés, la feuille du
+    pré-passage (``prepare``), et pour un paquet
     (``xslt_packages``) son format, le modèle des TEI Stylesheets (DOCX,
     ODT) et la feuille qui en corrige les styles (DOCX). ``output_dir`` :
     dossier où écrire le résultat à la place du sien (aperçu)."""
@@ -384,6 +399,9 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
             request["catalogs"] = [str(library.catalog)]
             if _employs(xslt, library):
                 request["library"] = f"TEI Stylesheets {library.version}"
+    prepare = resolve_path(project, scenario.prepare)
+    if prepare is not None:
+        request["prepare"] = str(prepare)
     if scenario.package:
         library = tei_library()
         request["package"] = scenario.package

@@ -195,10 +195,26 @@ def test_a_package_needs_saxon_and_a_known_format(project):
     assert "package" not in scenario_request(BASE, project)
 
 
+def test_a_prepass_needs_saxon_and_an_existing_stylesheet(project):
+    (project.root_dir / "rendering" / "avant.xsl").write_text("<xsl:stylesheet/>", encoding="utf-8")
+    scenario = replace(BASE, engine="saxon", prepare="rendering/avant.xsl")
+    assert _codes(scenario_problems(scenario, project)) == []
+    assert _codes(scenario_problems(replace(scenario, engine="lxml"), project)) == ["prepare_invalid"]
+    missing = scenario_problems(replace(scenario, prepare="rendering/absente.xsl"), project)
+    assert [(p.code, p.detail) for p in missing] == [("xslt_missing", "rendering/absente.xsl")]
+    request = scenario_request(scenario, project)
+    assert request["prepare"] == str(project.root_dir / "rendering" / "avant.xsl")
+    # Le résultat ne remplace jamais la feuille du pré-passage.
+    assert str(project.root_dir / "rendering" / "avant.xsl") in request["protected"]
+    assert _codes(scenario_problems(replace(scenario, output="rendering/avant.xsl"), project)) == ["output_is_source"]
+    assert "prepare" not in scenario_request(BASE, project)
+
+
 def test_each_problem_has_a_message_in_the_seven_catalogs():
     import xml.etree.ElementTree as ET
     from xslt_scenarios import PROBLEM_CODES
-    assert {"output_is_source", "tei_missing", "package_invalid"} <= set(PROBLEM_CODES) and len(PROBLEM_CODES) == 15
+    assert {"output_is_source", "tei_missing", "package_invalid", "prepare_invalid"} <= set(PROBLEM_CODES)
+    assert len(PROBLEM_CODES) == 16
     for language in ("fr", "en", "de", "ja", "cs", "it", "ru"):
         root = ET.parse(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml").getroot()
         catalog = {string.get("key") for string in root.findall("string")}
@@ -265,8 +281,12 @@ def test_the_tei_scenarios_are_predefined(project):
     # L'EPUB lit ses CSS dans la bibliothèque, et non sur tei-c.org.
     assert named["tei-epub"].css == ""
     assert named["tei-epub"].params == (("cssFile", "${tei}/tei.css"), ("cssPrintFile", "${tei}/epub-print.css"))
-    for name in ("tei-docx", "tei-odt", "tei-txt"):
-        assert named[name].css == "" and named[name].params == ()
+    # DOCX et ODT : l'apparat en notes de bas de page, d'après le témoin pivot.
+    for name in ("tei-docx", "tei-odt"):
+        assert named[name].prepare == "${varians}/apparat-en-notes.xsl"
+        assert named[name].css == "" and named[name].params == (("temoin-de-base", "${pivot}"),)
+    assert named["tei-txt"].css == "" and named["tei-txt"].params == ()
+    assert [s.name for s in scenarios if s.prepare] == ["tei-docx", "tei-odt"]
     # Les éditions HTML ne copient pas leur CSS au même endroit.
     copies = [resolve_path(project, s.output).parent / resolve_path(project, s.css).name for s in scenarios if s.css]
     assert len(copies) == len(set(copies)) == 3

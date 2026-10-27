@@ -24,7 +24,9 @@ Paquets (V0.9.2.7, Saxon, ``request["package"]``, voir ``xslt_packages``) :
 ``pages`` écrit ``index.html`` et ses pages dans le dossier du résultat ;
 ``docx``, ``odt`` et ``epub`` font l'archive d'un dossier de travail
 temporaire, préparé avant (``package_template``, ``package_fixstyle``,
-images), où seule la feuille écrit, et qui devient le résultat.
+images), où seule la feuille écrit, et qui devient le résultat. Un
+pré-passage (``request["prepare"]``, Saxon) transforme d'abord la source
+(TEI → TEI) avec les mêmes paramètres.
 
 Journal : liste de ``[code, détail]`` (messages ``transform.journal.<code>``) :
 ``library`` (la bibliothèque employée, ``request["library"]`` : « TEI
@@ -625,6 +627,28 @@ def _run_saxon(request, journal):
                 source = builder.parse_xml(xml_file_name=str(request["source"]))
         except PySaxonApiError as exc:
             raise _saxon_failure(exc, stderr(), request["source"], "source_malformed") from exc
+        if request.get("prepare"):
+            # Pré-passage (V0.9.2.7) : une feuille TEI → TEI, avec les mêmes
+            # paramètres ; son résultat garde l'URI de base de la source.
+            prepare = request["prepare"]
+            try:
+                executable = processor.new_xslt30_processor().compile_stylesheet(stylesheet_file=str(prepare))
+            except PySaxonApiError as exc:
+                raise _saxon_failure(exc, stderr(), prepare, "xslt_invalid") from exc
+            for name, value in params.items():
+                executable.set_parameter(name, processor.make_atomic_value("untypedAtomic", value))
+            executable.set_save_xsl_message(True)
+            try:
+                prepared = executable.transform_to_string(xdm_node=source)
+            except PySaxonApiError as exc:
+                _saxon_journal(executable, "", journal, prepare)
+                raise _saxon_failure(exc, stderr(), prepare, "transform_failed") from exc
+            _saxon_journal(executable, "", journal, prepare)
+            builder.set_base_uri(Path(request["source"]).as_uri())
+            try:
+                source = builder.parse_xml(xml_text=prepared)
+            except PySaxonApiError as exc:
+                raise _saxon_failure(exc, stderr(), prepare, "transform_failed") from exc
         if folder is not None:
             try:
                 xslt_packages.prepare(package, folder, request.get("package_template"),

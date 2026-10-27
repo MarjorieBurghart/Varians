@@ -464,3 +464,35 @@ def test_the_images_of_the_source_are_copied_with_their_size(project, tmp_path):
         assert 'taille="40x25"' in archive.read("word/document.xml").decode("utf-8")
     # Une image distante n'est pas téléchargée : le journal le dit.
     assert ["image_skipped", "https://exemple.org/loin.jpg"] in result.journal
+
+
+# --- Pré-passage (V0.9.2.7) ---------------------------------------------------------------------
+
+PREPARE = ('<xsl:param name="marque"/><xsl:mode on-no-match="shallow-copy"/>'
+           '<xsl:template match="tei:p" xmlns:tei="http://www.tei-c.org/ns/1.0">'
+           '<ab xmlns="http://www.tei-c.org/ns/1.0" n="{$marque}"><xsl:apply-templates/></ab></xsl:template>')
+COUNT = ('<xsl:param name="marque"/><xsl:template match="/" xmlns:tei="http://www.tei-c.org/ns/1.0">'
+         '<r p="{count(//tei:p)}" ab="{count(//tei:ab)}" n="{(//tei:ab/@n)[1]}" marque="{$marque}"'
+         ' base="{base-uri(/)}"/></xsl:template>')
+
+
+@saxon
+def test_the_prepass_transforms_the_source_before_the_stylesheet(project):
+    source = (project.root_dir / "xml" / "source.xml")
+    source.write_text('<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><body><p>un</p><p>deux</p></body></text></TEI>',
+                      encoding="utf-8")
+    result, output = _run(project, COUNT, output="publications/compte.xml", source="file", file="xml/source.xml",
+                          prepare=_stylesheet(project, PREPARE, "avant.xsl"), params=(("marque", "M"),))
+    assert result.ok, result.error
+    text = output.read_text(encoding="utf-8")
+    # Les mêmes paramètres pour les deux feuilles ; l'URI de base de la source est gardée.
+    assert 'p="0" ab="2" n="M" marque="M"' in text and f'base="{source.as_uri()}"' in text
+
+
+@saxon
+def test_an_error_of_the_prepass_names_its_stylesheet(project):
+    result, output = _run(project, COUNT, output="publications/compte.xml",
+                          prepare=_stylesheet(project, '<xsl:template match="/"><xsl:value-of select="1 div 0"/>'
+                                                       '</xsl:template>', "avant.xsl"))
+    assert not result.ok and result.error_code == "transform_failed" and "avant.xsl" in result.error
+    assert not output.exists()

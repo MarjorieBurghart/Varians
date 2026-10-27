@@ -19,7 +19,7 @@ PERSONS = TransformScenario(
     source="file", file="xml/personnes.xml", css="rendering/personnes.css",
     params=(("titre", "Index des personnes"), ("vide", "")))
 PAGES = TransformScenario("Une page par sermon", "rendering/pages.xsl", "publications/sermons/index.html",
-                          engine="saxon", package="pages")
+                          engine="saxon", package="pages", prepare="rendering/avant.xsl")
 
 
 def _draft(root: Path, **extra) -> ProjectDraft:
@@ -62,13 +62,14 @@ def test_scenarios_are_read_in_order_with_their_defaults(tmp_path):
         <param name="titre" value="Index des personnes"/>
         <param name="vide"/>
       </scenario>
-      <scenario name="Une page par sermon" engine="saxon" xslt="rendering/pages.xsl"
+      <scenario name="Une page par sermon" engine="saxon" xslt="rendering/pages.xsl" prepare=" rendering/avant.xsl "
                 output="publications/sermons/index.html" package=" pages "/>
     </transformations>""")
     assert load_project(path).transformations == (PERSONS, PAGES)
     assert PAGES.source == "edition" and PAGES.file == "" and PAGES.css == "" and PAGES.params == ()
     assert TransformScenario("x", "a.xsl", "b.html").engine == "lxml"
     assert TransformScenario("x", "a.xsl", "b.html").package == ""
+    assert TransformScenario("x", "a.xsl", "b.html").prepare == ""
 
 
 def test_nameless_or_repeated_scenarios_and_parameters_are_ignored(tmp_path):
@@ -105,8 +106,8 @@ def test_scenarios_are_written_and_read_back(tmp_path):
     assert [p.attrib for p in first.findall("param")] == [{"name": "titre", "value": "Index des personnes"},
                                                          {"name": "vide", "value": ""}]
     assert scenarios[1].attrib == {"name": "Une page par sermon", "source": "edition", "engine": "saxon",
-                                   "xslt": "rendering/pages.xsl", "output": "publications/sermons/index.html",
-                                   "package": "pages"}
+                                   "xslt": "rendering/pages.xsl", "prepare": "rendering/avant.xsl",
+                                   "output": "publications/sermons/index.html", "package": "pages"}
     assert load_project(path).transformations == (PERSONS, PAGES)
 
 

@@ -167,10 +167,13 @@ class ScenarioDialog(QDialog):
 
         self.xslt_field = _PathField(project, scenario.xslt, _t("transform.browse.xslt"),
                                      file_filter="XSLT (*.xsl *.xslt);;*", parent=self)
+        self.prepare_field = _PathField(project, scenario.prepare, _t("transform.browse.prepare"),
+                                        file_filter="XSLT (*.xsl *.xslt);;*", parent=self)
         self.css_field = _PathField(project, scenario.css, _t("transform.browse.css"),
                                     file_filter="CSS (*.css);;*", parent=self)
         self.output_field = _PathField(project, scenario.output, _t("transform.browse.output"), save=True, parent=self)
         form.addRow(_t("transform.scenario.xslt"), self.xslt_field)
+        form.addRow(_t("transform.scenario.prepare"), self.prepare_field)
         form.addRow(_t("transform.scenario.css"), self.css_field)
         form.addRow(_t("transform.scenario.output"), self.output_field)
         # Un nouveau scénario propose publications/<nom>.html, tant que le
@@ -271,7 +274,7 @@ class ScenarioDialog(QDialog):
         return TransformScenario(self.name_edit.text().strip(), self.xslt_field.text(), self.output_field.text(),
                                  source=source, file=self.file_field.text() if source == "file" else "",
                                  engine=self.engine(), css=self.css_field.text(), params=self.params(),
-                                 package=self.package_combo.currentData())
+                                 package=self.package_combo.currentData(), prepare=self.prepare_field.text())
 
     def accept(self):
         scenario = self.scenario()

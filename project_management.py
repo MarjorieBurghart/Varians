@@ -394,6 +394,8 @@ def transformations_element(scenarios) -> ET.Element | None:
             attrs["file"] = scenario.file
         attrs["engine"] = scenario.engine
         attrs["xslt"] = scenario.xslt
+        if scenario.prepare:
+            attrs["prepare"] = scenario.prepare
         if scenario.css:
             attrs["css"] = scenario.css
         attrs["output"] = scenario.output

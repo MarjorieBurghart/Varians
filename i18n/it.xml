@@ -1013,6 +1013,7 @@ Salvare comunque?</string>
   <string key="transform.package.epub">EPUB</string>
   <string key="transform.scenario.xslt">Foglio XSLT:</string>
   <string key="transform.scenario.css">CSS (facoltativo):</string>
+  <string key="transform.scenario.prepare">Pre-passaggio TEI → TEI (facoltativo):</string>
   <string key="transform.scenario.output">Risultato:</string>
   <string key="transform.scenario.params">Parametri:</string>
   <string key="transform.param.name">Nome</string>
@@ -1022,6 +1023,7 @@ Salvare comunque?</string>
   <string key="transform.browse.file">File sorgente dello scenario</string>
   <string key="transform.browse.xslt">Foglio XSLT dello scenario</string>
   <string key="transform.browse.css">CSS dello scenario</string>
+  <string key="transform.browse.prepare">Foglio del pre-passaggio (TEI → TEI)</string>
   <string key="transform.browse.output">File del risultato</string>
   <string key="transform.scenario.duplicate_name">Esiste già uno scenario del progetto denominato «{name}».</string>
   <string key="transform.scenario.refused">Questo scenario non può essere salvato: {problem}</string>
@@ -1044,6 +1046,7 @@ Salvarlo comunque?</string>
   <string key="transform.problem.css_overwrites_source">La copia del CSS sostituirebbe una sorgente del progetto: {detail}</string>
   <string key="transform.problem.tei_missing">TEI Stylesheets non installati: {detail} (vedere File ▸ TEI Stylesheets…)</string>
   <string key="transform.problem.package_invalid">Formato del risultato sconosciuto o senza Saxon: {detail} (pages, docx, odt o epub, con il motore Saxon)</string>
+  <string key="transform.problem.prepare_invalid">Il pre-passaggio richiede il motore Saxon: {detail}</string>
   <string key="toolbar.transform">Trasforma</string>
   <string key="toolbar.transform.tip">Esegui l’ultimo scenario di trasformazione (Ctrl+Maiusc+T); la freccia elenca gli scenari</string>
   <string key="transform.run">Esegui</string>
