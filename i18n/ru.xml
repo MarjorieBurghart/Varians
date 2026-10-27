@@ -368,6 +368,7 @@
   <string key="schematron.panel.saxon_missing">Правила Schematron не проверены: Saxon (пакет saxonche) не установлен.</string>
   <string key="schematron.tip.phase">{name} (фаза {phase})</string>
   <string key="schematron.tip.unsaved">{name}, не сохранён</string>
+  <string key="schematron.tip.unsaved_included">{name} (не сохранено: {files})</string>
   <string key="schematron.tip.click">Щёлкните, чтобы выбрать файлы правил и их фазу.</string>
   <string key="schematron.panel.rules_button">Правила…</string>
   <string key="schematron.panel.rules_button.tip">Правила Schematron документа: объявленные файлы правил и проверяемая фаза</string>

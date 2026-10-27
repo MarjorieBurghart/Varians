@@ -368,6 +368,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="schematron.panel.saxon_missing">Pravidla Schematron nebyla zkontrolována: Saxon (balíček saxonche) není nainstalován.</string>
   <string key="schematron.tip.phase">{name} (fáze {phase})</string>
   <string key="schematron.tip.unsaved">{name}, neuloženo</string>
+  <string key="schematron.tip.unsaved_included">{name} (neuloženo: {files})</string>
   <string key="schematron.tip.click">Kliknutím zvolíte soubory pravidel a jejich fázi.</string>
   <string key="schematron.panel.rules_button">Pravidla…</string>
   <string key="schematron.panel.rules_button.tip">Pravidla Schematron dokumentu: deklarované soubory pravidel a kontrolovaná fáze</string>

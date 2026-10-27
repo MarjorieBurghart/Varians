@@ -368,6 +368,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="schematron.panel.saxon_missing">Schematron-Regeln nicht geprüft: Saxon (Paket saxonche) ist nicht installiert.</string>
   <string key="schematron.tip.phase">{name} (Phase {phase})</string>
   <string key="schematron.tip.unsaved">{name}, nicht gespeichert</string>
+  <string key="schematron.tip.unsaved_included">{name} (nicht gespeichert: {files})</string>
   <string key="schematron.tip.click">Klicken, um die Regeldateien und ihre Phase zu wählen.</string>
   <string key="schematron.panel.rules_button">Regeln…</string>
   <string key="schematron.panel.rules_button.tip">Schematron-Regeln des Dokuments: deklarierte Regeldateien und geprüfte Phase</string>

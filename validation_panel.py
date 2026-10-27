@@ -33,7 +33,10 @@ périmé : il est validé de nouveau à l'affichage du document.
 
 Règles non enregistrées (V0.9.2.5) : un fichier de règles ouvert et modifié
 est appliqué avec son texte non enregistré (``_rules_texts``) ; le jeton
-compte la révision de ce texte, et l'info-bulle le signale.
+compte la révision de ce texte, et l'info-bulle le signale. De même
+(V0.9.2.6) pour un fichier qu'il inclut (``_unsaved_rules_texts``,
+``schematron.rules_files``) ; l'info-bulle nomme alors les fichiers non
+enregistrés de la source.
 """
 from __future__ import annotations
 
@@ -354,15 +357,45 @@ class ValidationPanelMixin:
                  and (session is self.document or session.modified)}
         return text_of(self.edition_session), parts
 
-    def _rules_texts(self, resolution):
-        """``{chemin: texte}`` des fichiers de règles de *resolution* ouverts
-        dans Varians et modifiés (V0.9.2.5) : leur texte non enregistré est
-        appliqué à la place du disque. Une modification défaite jusqu'à
-        l'état enregistré n'en est plus une (``QTextDocument.isModified``)."""
-        keys = {path_key(source) for source in (getattr(resolution, "schematron_sources", ()) or ())}
+    def _open_unsaved_texts(self):
+        """``{chemin: texte}`` des documents ouverts et modifiés hors de
+        l'édition (fichiers de règles, feuilles XSLT…). Une modification
+        défaite jusqu'à l'état enregistré n'en est plus une
+        (``QTextDocument.isModified``)."""
         return {str(session.path): session.text_document.toPlainText() for session in self.documents
-                if session.path is not None and session.text_document is not None
-                and session.text_document.isModified() and path_key(session.path) in keys}
+                if session.path is not None and session.text_document is not None and not session.in_edition
+                and session.text_document.isModified()}
+
+    def _unsaved_rules_texts(self, paths, texts=None):
+        """``{chemin: texte}`` des documents ouverts et modifiés qui sont l'un
+        des fichiers de règles *paths* (V0.9.2.5) ou (V0.9.2.6) un fichier
+        qu'ils incluent ; *texts* : ceux de ``_open_unsaved_texts``, s'ils
+        sont déjà connus."""
+        texts = self._open_unsaved_texts() if texts is None else texts
+        if not texts:
+            return {}
+        from schematron import rules_files
+        keys = {path_key(file) for path in paths for file in rules_files(path, texts)}
+        return {path: text for path, text in texts.items() if path_key(path) in keys}
+
+    def _rules_texts(self, resolution):
+        """``{chemin: texte}`` des fichiers de règles de *resolution*, et des
+        fichiers qu'ils incluent, ouverts dans Varians et modifiés : leur
+        texte non enregistré est appliqué à la place du disque."""
+        return self._unsaved_rules_texts(tuple(getattr(resolution, "schematron_sources", ()) or ()))
+
+    def _source_tip_name(self, name, path, texts):
+        """*name*, le nom de la source *path* dans l'info-bulle, avec ses
+        fichiers non enregistrés (*texts*, ``{chemin: texte}``) : la source
+        seule (V0.9.2.5), ou (V0.9.2.6) les fichiers qu'elle inclut."""
+        from schematron import rules_files
+        unsaved = {path_key(file) for file in texts}
+        if not unsaved:
+            return name
+        files = [file for file in rules_files(path, texts) if path_key(file) in unsaved]
+        if any(path_key(file) != path_key(path) for file in files):
+            return _t("schematron.tip.unsaved_included", name=name, files=", ".join(file.name for file in files))
+        return _t("schematron.tip.unsaved", name=name) if files else name
 
     def _rng_invalid_for(self, session, result):
         """True si ``result`` signale une erreur dans ``session`` : toute
@@ -479,11 +512,10 @@ class ValidationPanelMixin:
         tips = [_rules_located(issue) for issue in problems]
         if applied:
             phases = {path_key(source): getattr(source, "phase", "") for source in sources}
-            unsaved = {path_key(path) for path in self._rules_texts(resolution)}
+            texts = self._rules_texts(resolution)
             names = [_t("schematron.tip.phase", name=Path(path).name, phase=phases[path_key(path)])
                      if phases.get(path_key(path)) else Path(path).name for path in applied]
-            names = [_t("schematron.tip.unsaved", name=name) if path_key(path) in unsaved else name
-                     for name, path in zip(names, applied)]
+            names = [self._source_tip_name(name, path, texts) for name, path in zip(names, applied)]
             tips.insert(0, _t("schematron.tip.sources", sources=", ".join(names)))
         messages = [issue for issue in (result.issues if result is not None else ()) if _is_schematron(issue)]
         errors = sum(1 for issue in messages if _is_error(issue))
@@ -523,9 +555,16 @@ class ValidationPanelMixin:
         ont changé depuis son dernier résultat : un fichier de règles
         enregistré entre-temps, par exemple."""
         token = session.last_rng_schema_token
-        if (session.last_rng_result is None or self._schema_mode == "none" or not token
-                or token[0] in ("xslt", "schematron") or self._displayed_stylesheet() is not None
-                or self._displayed_schematron() is not None):
+        if session.last_rng_result is None or self._schema_mode == "none" or not token:
+            return False
+        # Fichier Schematron (V0.9.2.6) : un fichier qu'il inclut a changé.
+        if token[0] == "schematron":
+            try:
+                return (self._displayed_schematron() is not None
+                        and self._schematron_inclusions(session)[1] != token)
+            except Exception:
+                return False
+        if token[0] == "xslt" or self._displayed_stylesheet() is not None or self._displayed_schematron() is not None:
             return False
         try:
             current = self._validation_token(self._resolve_completion_schema())

@@ -29,7 +29,6 @@ from PySide6.QtWidgets import (
 
 from app_context import tr as _t
 from schema_resolution import _local_href_path, _url_cache_path, default_schema_cache_dir
-from xml_assembly import path_key
 from xml_model_edit import add_declaration, remove_declaration, schematron_declarations, set_phase
 
 _GENERIC = ("", "#ALL")
@@ -239,16 +238,15 @@ class SchematronRulesMixin:
         return _local_href_path(href, Path(session.path))
 
     def _declared_phases(self, href, session):
-        """Phases du fichier déclaré par *href* (son texte non enregistré
-        s'il est ouvert et modifié dans Varians)."""
+        """Phases du fichier déclaré par *href* et des fichiers qu'il inclut
+        (leur texte non enregistré s'ils sont ouverts et modifiés dans
+        Varians)."""
         from schematron import _phases
         path = self._declaration_path(href, session)
         if path is None or not path.is_file():
             return ()
-        opened = next((s for s in self.documents if s.path is not None and s.text_document is not None
-                       and path_key(s.path) == path_key(path) and s.text_document.isModified()), None)
         try:
-            return tuple(_phases(path, opened.text_document.toPlainText() if opened is not None else None))
+            return tuple(_phases(path, texts=self._unsaved_rules_texts([path])))
         except Exception:
             return ()
 

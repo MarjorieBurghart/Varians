@@ -227,8 +227,12 @@ def _references(root, path):
         if reference is None:
             continue
         dependency = _dependency_path(path.parent, reference[1])
+        try:
+            dependency = dependency.expanduser().resolve() if dependency is not None else None
+        except (OSError, ValueError):
+            continue                       # adresse impossible sur ce système
         if dependency is not None:
-            yield element, reference[0], dependency.expanduser().resolve()
+            yield element, reference[0], dependency
 
 
 def _disk_files(path):

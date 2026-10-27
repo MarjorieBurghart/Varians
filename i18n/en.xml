@@ -354,6 +354,7 @@ It has been removed from the recent-project list.</string>
   <string key="schematron.panel.saxon_missing">Schematron rules not checked: Saxon (the saxonche package) is not installed.</string>
   <string key="schematron.tip.phase">{name} (phase {phase})</string>
   <string key="schematron.tip.unsaved">{name}, unsaved</string>
+  <string key="schematron.tip.unsaved_included">{name} (unsaved: {files})</string>
   <string key="schematron.tip.click">Click to choose the rules files and their phase.</string>
   <string key="schematron.panel.rules_button">Rules…</string>
   <string key="schematron.panel.rules_button.tip">Schematron rules of the document: declared rules files and checked phase</string>
