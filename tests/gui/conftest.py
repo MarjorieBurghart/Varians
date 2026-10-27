@@ -85,8 +85,10 @@ class DialogScript:
     « question », « warning », « critical », « information » (méthodes
     statiques de QMessageBox), « box » (QMessageBox construite puis
     ``exec()``) ou « dialog » (toute autre QDialog ``exec()``). Pour « box »,
-    ``answer`` est le rôle du bouton à cliquer (``QMessageBox.ButtonRole``)
-    ou ``None`` pour fermer sans choix. Pour « dialog », ``answer`` est une
+    ``answer`` est le rôle du bouton à cliquer (``QMessageBox.ButtonRole``),
+    le texte de ce bouton (quand plusieurs boutons ont le même rôle, comme
+    « Montrer les détails… »), ou ``None`` pour fermer sans choix. Pour
+    « dialog », ``answer`` est une
     fonction qui reçoit la boîte et renvoie le code de retour de ``exec()``.
     Chaque boîte affichée est enregistrée dans ``seen``.
     """
@@ -126,10 +128,10 @@ class DialogScript:
         if role is None:
             return 0
         for button in box.buttons():
-            if box.buttonRole(button) == role:
+            if (button.text() == role) if isinstance(role, str) else (box.buttonRole(button) == role):
                 button.click()
                 return 0
-        raise UnexpectedDialog(f"Aucun bouton de rôle {role} dans « {box.windowTitle()} »")
+        raise UnexpectedDialog(f"Aucun bouton {role!r} dans « {box.windowTitle()} »")
 
     # QDialog(...) … dlg.exec() ---------------------------------------------
     def dialog_exec(self, dialog):
@@ -137,8 +139,15 @@ class DialogScript:
         return answer(dialog) if callable(answer) else 0
 
 
+@pytest.fixture(scope="session")
+def tei_stylesheets_folder(tmp_path_factory):
+    """Bibliothèque des TEI Stylesheets commune aux tests de la session :
+    l'archive livrée n'y est extraite qu'une fois."""
+    return tmp_path_factory.mktemp("tei-stylesheets-gui")
+
+
 @pytest.fixture(autouse=True)
-def isolated_environment(tmp_path, monkeypatch):
+def isolated_environment(tmp_path, monkeypatch, tei_stylesheets_folder):
     """Réglages, cache et réseau isolés pour chaque test."""
     settings_dir = tmp_path / "_settings"
     settings_dir.mkdir()
@@ -151,6 +160,7 @@ def isolated_environment(tmp_path, monkeypatch):
     home.mkdir()
     for var in ("HOME", "USERPROFILE", "LOCALAPPDATA", "APPDATA"):
         monkeypatch.setenv(var, str(home))
+    monkeypatch.setenv("VARIANS_TEI_STYLESHEETS", str(tei_stylesheets_folder))
 
     def _no_network(*args, **kwargs):
         raise OSError("Accès réseau interdit pendant les tests")
@@ -159,7 +169,8 @@ def isolated_environment(tmp_path, monkeypatch):
     import iiif_local
     import iiif_manifest
     import schema_resolution
-    for module in (iiif_local, iiif_manifest, schema_resolution):
+    import tei_stylesheets
+    for module in (iiif_local, iiif_manifest, schema_resolution, tei_stylesheets):
         monkeypatch.setattr(module, "urlopen", _no_network)
 
     # Images distantes (IIIF/Gallica) : échec immédiat et explicite, sans les

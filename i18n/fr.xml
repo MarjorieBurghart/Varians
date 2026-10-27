@@ -5,6 +5,7 @@
   <string key="app.window.file">Varians — {project} — {name}{mark}</string>
   <string key="app.untitled">sans titre.xml</string>
   <string key="common.open">Ouvrir</string>
+  <string key="common.open_folder">Ouvrir le dossier</string>
   <string key="common.close">Fermer</string>
   <string key="common.cancel">Annuler</string>
   <string key="common.save">Enregistrer</string>
@@ -838,6 +839,46 @@ La copier dans le projet ?
 Le scénario emploiera alors cette copie. « Ouvrir sans copier » modifie le fichier d’origine.</string>
   <string key="transform.open_stylesheet.copy">Copier dans le projet</string>
   <string key="transform.open_stylesheet.in_place">Ouvrir sans copier</string>
+  <string key="transform.open_stylesheet.tei">La feuille « {name} » fait partie des TEI Stylesheets : elle ne se modifie pas.
+
+Varians va créer dans le projet une feuille de personnalisation qui l’importe :
+{path}
+
+Ses paramètres et ses règles l’emporteront sur ceux des TEI Stylesheets ; tout le reste viendra d’elles. Le scénario « {scenario} » emploiera cette feuille.</string>
+  <string key="transform.open_stylesheet.create">Créer la feuille de personnalisation</string>
+  <string key="transform.customization.created">Feuille de personnalisation créée : {path}</string>
+  <string key="transform.customization.comment">Feuille de personnalisation des TEI Stylesheets, créée par Varians.
+
+Elle importe la feuille {name} du TEI Consortium. Les paramètres (xsl:param) et les règles (xsl:template) écrits ici l’emportent sur ceux qu’elle importe ; tout le reste vient des TEI Stylesheets, qui ne sont jamais modifiées. L’adresse importée est l’adresse officielle : Varians la lit dans les TEI Stylesheets installées, sans réseau, comme Oxygen.</string>
+  <string key="transform.customization.examples">Exemples :</string>
+  <string key="tei_stylesheets.menu">TEI Stylesheets…</string>
+  <string key="tei_stylesheets.title">TEI Stylesheets</string>
+  <string key="tei_stylesheets.intro">Les scénarios « TEI : … » emploient les feuilles XSLT du TEI Consortium (github.com/TEIC/Stylesheets), installées une fois pour tous les projets. Au lancement, Varians vérifie au plus une fois par mois si une nouvelle version est publiée ; il ne l’installe qu’avec votre accord.</string>
+  <string key="tei_stylesheets.version">Version installée</string>
+  <string key="tei_stylesheets.source">Origine</string>
+  <string key="tei_stylesheets.folder">Dossier</string>
+  <string key="tei_stylesheets.licence">Licence</string>
+  <string key="tei_stylesheets.checked">Dernière vérification</string>
+  <string key="tei_stylesheets.none">aucune (TEI Stylesheets non installées)</string>
+  <string key="tei_stylesheets.source.bundled">livrées avec Varians</string>
+  <string key="tei_stylesheets.source.downloaded">téléchargées le {date}</string>
+  <string key="tei_stylesheets.never">jamais</string>
+  <string key="tei_stylesheets.licence.text">au choix, BSD à deux clauses ou CC BY-SA 3.0 — © 2011–2020 TEI Consortium</string>
+  <string key="tei_stylesheets.show_licence">Voir la licence</string>
+  <string key="tei_stylesheets.check">Rechercher une mise à jour</string>
+  <string key="tei_stylesheets.up_to_date">Les TEI Stylesheets sont à jour (version {version}).</string>
+  <string key="tei_stylesheets.available">TEI Stylesheets {version} disponibles (vous avez {current}). Installer ?</string>
+  <string key="tei_stylesheets.available.detail">La nouvelle version servira dès la transformation suivante, pour tous les projets ; l’ancienne sera supprimée au prochain lancement de Varians. « Plus tard » : la question reviendra à la vérification suivante.</string>
+  <string key="tei_stylesheets.install">Installer</string>
+  <string key="tei_stylesheets.later">Plus tard</string>
+  <string key="tei_stylesheets.downloading">Téléchargement des TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installing">Installation des TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installed">TEI Stylesheets {version} installées : elles serviront dès la transformation suivante.</string>
+  <string key="tei_stylesheets.cancelled">Installation des TEI Stylesheets annulée.</string>
+  <string key="tei_stylesheets.error.network">Le site du TEI Consortium est inaccessible : {detail}</string>
+  <string key="tei_stylesheets.error.invalid_reply">Réponse inattendue du TEI Consortium : {detail}</string>
+  <string key="tei_stylesheets.error.invalid_archive">Archive des TEI Stylesheets incorrecte : {detail}. La version installée est gardée.</string>
+  <string key="tei_stylesheets.error.write_failed">Écriture impossible dans le dossier des TEI Stylesheets : {detail}</string>
   <string key="xslt_check.action">Vérifier la feuille XSLT</string>
   <string key="xslt_check.action.tip">Compiler la feuille XSLT affichée, sans l’exécuter, avec le moteur de ses scénarios (F8)</string>
   <string key="xslt_check.panel.title">Vérification de la feuille XSLT</string>
@@ -865,6 +906,10 @@ Enregistrer quand même ?</string>
   <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
   <string key="transform.engine.missing">{engine} — non installé</string>
   <string key="transform.predefined.varians-html">Édition HTML (feuille de Varians)</string>
+  <string key="transform.predefined.tei-html">TEI : HTML</string>
+  <string key="transform.predefined.tei-txt">TEI : texte</string>
+  <string key="transform.predefined.tei-markdown">TEI : Markdown</string>
+  <string key="transform.predefined.tei-latex">TEI : LaTeX</string>
   <string key="transform.scenario.title">Scénario de transformation</string>
   <string key="transform.scenario.name">Nom :</string>
   <string key="transform.scenario.source">Source :</string>
@@ -900,6 +945,7 @@ L’enregistrer quand même ?</string>
   <string key="transform.problem.output_is_folder">Le résultat est un dossier : {detail}</string>
   <string key="transform.problem.output_is_source">Le résultat remplacerait une source du projet : {detail}</string>
   <string key="transform.problem.css_overwrites_source">La copie de la CSS remplacerait une source du projet : {detail}</string>
+  <string key="transform.problem.tei_missing">TEI Stylesheets non installées : {detail} (voir Fichier ▸ TEI Stylesheets…)</string>
   <string key="toolbar.transform">Transformer</string>
   <string key="toolbar.transform.tip">Exécuter le dernier scénario de transformation (Ctrl+Maj+T) ; la flèche donne la liste des scénarios</string>
   <string key="transform.run">Exécuter</string>
@@ -924,6 +970,7 @@ Fichiers non écrits (hors du dossier du résultat, ou sources du projet) :
 {error}</string>
   <string key="transform.journal.engine">Moteur : {engine} — durée : {seconds} s</string>
   <string key="transform.journal.params">Paramètres : {params}</string>
+  <string key="transform.journal.library">Bibliothèque : {detail}</string>
   <string key="transform.journal.message">Message : {detail}</string>
   <string key="transform.journal.warning">Avertissement : {detail}</string>
   <string key="transform.journal.network_read">Lu sur le réseau : {detail}</string>

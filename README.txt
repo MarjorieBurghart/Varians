@@ -1,3 +1,36 @@
+VARIANS V0.9.2.2 — TEI STYLESHEETS
+
+• Varians apporte les TEI Stylesheets, les feuilles XSLT du TEI Consortium
+  (github.com/TEIC/Stylesheets), version 7.61.0 : installées au premier
+  usage, une fois pour tous les projets, dans le dossier de données de
+  l'utilisateur (Windows : %LOCALAPPDATA%\Varians\tei-stylesheets), elles
+  marchent sans réseau. Voir resources/tei-stylesheets/LISEZMOI.md.
+• Quatre scénarios prédéfinis, avec Saxon : « TEI : HTML », « TEI : texte »,
+  « TEI : Markdown » et « TEI : LaTeX » publient l'édition (assemblée) dans
+  publications/tei/. Le HTML reçoit la CSS des TEI Stylesheets, sans lien
+  vers tei-c.org ; les textes ajoutés suivent la langue de l'interface.
+  Dans un scénario, ${tei}/… désigne un fichier des TEI Stylesheets.
+• Personnaliser : « Dupliquer… » un scénario TEI, puis « Ouvrir la
+  feuille » crée dans xslt/ une feuille de personnalisation (xsl:import de
+  l'adresse officielle des TEI Stylesheets, lue dans la version installée,
+  comme dans Oxygen) ; ses paramètres et ses règles l'emportent sur ceux
+  du TEI-C, qui ne sont jamais modifiés.
+• Mises à jour : au lancement, au plus une fois par mois, Varians cherche
+  une nouvelle version, sans rien dire s'il n'y en a pas ou sans réseau ;
+  il ne l'installe qu'avec votre accord (Installer / Plus tard), avec une
+  fenêtre de progression et Annuler. Fichier ▸ « TEI Stylesheets… » (et le
+  bouton de la liste des scénarios) : version, origine, dossier, licence,
+  « Rechercher une mise à jour ». Le journal d'une exécution donne la
+  version employée.
+• Licence des TEI Stylesheets : au choix, BSD à deux clauses ou
+  CC BY-SA 3.0, © 2011–2020 TEI Consortium ; le fichier LICENCE les
+  accompagne.
+• Compte rendu d'une transformation : « Ouvrir le dossier » ouvre le
+  dossier du résultat. Les boutons et textes standard des fenêtres
+  (« Montrer les détails… », « Fermer »…) suivent la langue de l'interface.
+• Plus tard : DOCX, ODT, EPUB, HTML en plusieurs fichiers.
+• Le format de project.xml ne change pas. Voir XSLT_SCENARIOS.md.
+
 VARIANS V0.9.2.1 — ÉDITER LES FEUILLES XSLT
 
 • Une feuille XSLT s'ouvre comme un document du projet. Fichier ▸

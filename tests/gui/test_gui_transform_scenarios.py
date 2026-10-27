@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 """Fichier ▸ « Scénarios de transformation… » (V0.9.2.0) : liste des
 scénarios du projet et des scénarios prédéfinis, boîte d'un scénario,
-enregistrement dans project.xml ; « Ouvrir la feuille » (V0.9.2.1)."""
+enregistrement dans project.xml ; « Ouvrir la feuille » (V0.9.2.1), qui crée
+la feuille de personnalisation d'un scénario TEI (V0.9.2.2)."""
 from __future__ import annotations
 
 from dataclasses import replace
 
+import pytest
 from PySide6.QtWidgets import QDialog, QMessageBox
 
 from app_context import tr
 from project_config import TransformScenario, load_project
 from project_management import update_project_transformations
+from xslt_scenarios import saxon_available
 
 PERSONS = TransformScenario("Personnes", "rendering/personnes.xsl", "publications/personnes.html",
                             source="file", file="xml/personnes.xml", params=(("titre", "Index"),))
@@ -59,7 +62,9 @@ def test_the_file_menu_lists_the_scenarios_of_the_project_and_the_predefined_one
     assert _rows(dialog, "project") == [["Personnes", tr("transform.source.file", file="xml/personnes.xml"),
                                          tr("transform.engine.lxml"), ""]]
     assert _rows(dialog, "predefined") == [[tr("transform.predefined.varians-html"), tr("transform.source.edition"),
-                                            tr("transform.engine.lxml"), ""]]
+                                            tr("transform.engine.lxml"), ""]] + [
+        [tr(f"transform.predefined.{key}"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""]
+        for key in ("tei-html", "tei-txt", "tei-markdown", "tei-latex")]
 
 
 def test_a_new_scenario_starts_from_the_stylesheet_of_the_preview_and_is_saved(open_window, sermons_project,
@@ -386,3 +391,67 @@ def test_the_scenario_dialog_does_not_open_a_refused_scenario(open_window, sermo
     window.transform_scenarios_dialog()
     assert window.document is window.edition_session
     assert load_project(sermons_project).transformations == (PERSONS,)
+
+
+# --- « Ouvrir la feuille » d'un scénario TEI (V0.9.2.2) ----------------------------------------
+
+TEI_COPY = TransformScenario("TEI perso", "${tei}/profiles/default/html/to.xsl", "publications/tei/perso.html",
+                             engine="saxon", css="${tei}/tei.css", params=(("cssFile", "tei.css"),))
+IMPORT = '<xsl:import href="http://www.tei-c.org/release/xml/tei/stylesheet/profiles/default/html/to.xsl"/>'
+
+
+def test_a_tei_stylesheet_opens_as_a_new_customization_stylesheet(open_window, sermons_project, dialogs):
+    from xslt_scenarios import tei_library
+    library = tei_library()
+    official = (library.folder / "profiles" / "default" / "html" / "to.xsl").read_bytes()
+    window = open_window(_with_scenarios(sermons_project, PERSONS, TEI_COPY))
+    dialogs.expect("dialog", _keep_open(_open_row("project", 1)))
+    dialogs.expect("box", ROLE.AcceptRole)                           # Créer la feuille de personnalisation
+    window.transform_scenarios_dialog()
+    target = sermons_project.parent / "xslt" / "tei-html.xsl"
+    text = target.read_text(encoding="utf-8")
+    assert IMPORT in text and 'xmlns="http://www.w3.org/1999/xhtml"' in text
+    assert tr("transform.customization.comment", name="profiles/default/html/to.xsl").split()[0] in text
+    kind, title, message = dialogs.seen[-1]
+    assert title == tr("transform.open_stylesheet") and "profiles/default/html/to.xsl" in message
+    assert str(target) in message and "TEI perso" in message
+    # Le scénario emploie la feuille de personnalisation ; le reste ne change pas.
+    expected = (PERSONS, replace(TEI_COPY, xslt="xslt/tei-html.xsl"))
+    assert load_project(sermons_project).transformations == expected
+    assert window.project.transformations == expected
+    assert window.document.path == target
+    assert _declared(sermons_project) == [target]
+    assert (library.folder / "profiles" / "default" / "html" / "to.xsl").read_bytes() == official
+
+
+def test_a_customization_is_not_created_on_cancel(open_window, sermons_project, dialogs):
+    window = open_window(_with_scenarios(sermons_project, TEI_COPY))
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    dialogs.expect("box", ROLE.RejectRole)                           # Annuler
+    window.transform_scenarios_dialog()
+    assert not (sermons_project.parent / "xslt").exists()
+    assert load_project(sermons_project).transformations == (TEI_COPY,)
+    assert window.document is window.edition_session
+
+
+def test_an_existing_customization_is_not_replaced(open_window, sermons_project, dialogs):
+    (sermons_project.parent / "xslt").mkdir()
+    (sermons_project.parent / "xslt" / "tei-html.xsl").write_text("<existant/>", encoding="utf-8")
+    window = open_window(_with_scenarios(sermons_project, TEI_COPY))
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    dialogs.expect("box", ROLE.AcceptRole)
+    window.transform_scenarios_dialog()
+    target = sermons_project.parent / "xslt" / "tei-html_2.xsl"
+    assert IMPORT in target.read_text(encoding="utf-8")
+    assert (sermons_project.parent / "xslt" / "tei-html.xsl").read_text(encoding="utf-8") == "<existant/>"
+    assert load_project(sermons_project).transformations == (replace(TEI_COPY, xslt="xslt/tei-html_2.xsl"),)
+
+
+@pytest.mark.skipif(not saxon_available(), reason="Saxon (saxonche) n'est pas installé")
+def test_the_customization_is_checked_with_the_tei_stylesheets(open_window, sermons_project, dialogs, qtbot):
+    window = open_window(_with_scenarios(sermons_project, TEI_COPY))
+    dialogs.expect("dialog", _keep_open(_open_row("project", 0)))
+    dialogs.expect("box", ROLE.AcceptRole)
+    window.transform_scenarios_dialog()
+    window.action_validate_rng.trigger()                               # F8, hors ligne
+    assert window.rng_status.text() == tr("xslt_check.status.valid", engines=tr("transform.engine.saxon"))

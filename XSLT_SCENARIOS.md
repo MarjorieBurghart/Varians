@@ -1,4 +1,4 @@
-# Scénarios de transformation XSLT (V0.9.2.0) et feuilles éditées dans Varians (V0.9.2.1)
+# Scénarios de transformation XSLT (V0.9.2.0), feuilles éditées dans Varians (V0.9.2.1) et TEI Stylesheets (V0.9.2.2)
 
 Un scénario applique une feuille XSLT à l'édition, au document affiché ou à
 un fichier, et écrit le résultat dans un fichier. Les scénarios sont
@@ -18,16 +18,19 @@ Les règles de la Vue XSLT / CSS (`XSLT_POLICY.md`) ne changent pas.
 | `transform_ui.py` | liste et boîte d'un scénario, bouton « Transformer ▾ », exécution, compte rendu, « Ouvrir la feuille » (mixin de `MainWindow`) |
 | `xslt_check_ui.py` | vérification de la feuille affichée « comme le RNG » (V0.9.2.1, mixin de `MainWindow`) |
 | `xslt_completion.py` | complétion d'une feuille XSLT d'après le schéma XSLT 3.0 livré (V0.9.2.1) ; sans Qt |
+| `tei_stylesheets.py` | bibliothèque des TEI Stylesheets : versions, installation sûre, archive livrée, dernière version, téléchargement (V0.9.2.2) ; sans Qt |
+| `tei_stylesheets_ui.py` | fenêtre « TEI Stylesheets… », vérification au lancement, installation avec accord (V0.9.2.2) |
 
 ## Chemins et sources
 
 Les chemins d'un scénario (`xslt`, `css`, `output`, `file`) sont gardés tels
-qu'ils sont écrits : relatifs au projet, absolus, ou `${varians}/…` pour les
-feuilles fournies avec Varians (dossier `rendering` de l'application).
-`stylesheet_path` est la seule fonction qui trouve la feuille d'un
-scénario : une bibliothèque installée hors du projet (les TEI Stylesheets,
-version suivante) s'y ajoutera. `scenario_path` écrit le chemin d'un fichier
-choisi (relatif au projet, sinon `${varians}/…`, sinon absolu).
+qu'ils sont écrits : relatifs au projet, absolus, `${varians}/…` pour les
+feuilles fournies avec Varians (dossier `rendering` de l'application), ou
+`${tei}/…` pour un fichier de la version active des TEI Stylesheets
+(V0.9.2.2, voir plus bas). `stylesheet_path` est la seule fonction qui trouve
+la feuille d'un scénario. `scenario_path` écrit le chemin d'un fichier
+choisi (relatif au projet, sinon `${varians}/…`, sinon `${tei}/…` pour un
+fichier d'une version installée, sinon absolu).
 
 Sources (`scenario_source`) :
 
@@ -55,12 +58,14 @@ chaque écriture (`request["protected"]`).
 `scenario_request` prépare un dictionnaire sérialisable en JSON : `name`,
 `engine`, `source`, `assemble`, `xslt`, `css`, `output`, `params` (paires
 de chaînes ; `css`, le nom de la CSS, est ajouté sauf si le scénario le
-fixe), `protected`. L'aperçu remplace le dossier du résultat par un dossier
+fixe), `protected`, et pour Saxon `catalogs` et `library` (V0.9.2.2, voir
+« TEI Stylesheets »). L'aperçu remplace le dossier du résultat par un dossier
 temporaire de la session (`output_dir`).
 
 `xslt_engines.run` rend un `TransformResult` : `ok`, `outputs` (le résultat
-d'abord), `journal` (`[code, détail]`, `JOURNAL_CODES` : `message`,
-`warning`, `network_read`, `css_copied`, `write_refused`, `assembly`),
+d'abord), `journal` (`[code, détail]`, `JOURNAL_CODES` : `library`,
+`message`, `warning`, `network_read`, `css_copied`, `write_refused`,
+`assembly`),
 `error_code` (`ERROR_CODES`) et `error` (« fichier:ligne: message »),
 `engine`, `version`, `seconds`.
 
@@ -134,16 +139,17 @@ Une version autonome (PyInstaller, Nuitka) devra embarquer `saxonche`.
   et scénarios prédéfinis (`predefined_scenarios` : « Édition HTML »,
   `${varians}/tei-to-html.xsl` et `${varians}/tei.css`, avec le titre du
   sommaire de l'aperçu dans la langue de l'interface, paramètre
-  `tocTitle`), que « Dupliquer… » copie dans le projet ; « Aperçu »,
-  « Exécuter ».
+  `tocTitle`), puis les quatre scénarios « TEI : … » (V0.9.2.2), que
+  « Dupliquer… » copie dans le projet ; « Aperçu », « Exécuter » ; bouton
+  « TEI Stylesheets… ».
 - Bouton « Transformer ▾ » : dernier scénario lancé dans le projet (réglage
   local `transformLastScenario`, Ctrl+Shift+T), liste des scénarios.
 - Avant l'exécution (`_save_for_transform`) : l'édition, ses parties
   modifiées et le fragment non appliqué (`_save_edition_for_export`), puis
   le document source, la feuille et la CSS s'ils sont ouverts et modifiés.
 - « Transformation en cours… » avec Annuler au-delà d'une demi-seconde ;
-  compte rendu avec « Ouvrir » et le journal en détail ; l'aperçu s'ouvre
-  aussitôt.
+  compte rendu avec « Ouvrir », « Ouvrir le dossier » (V0.9.2.2) et le
+  journal en détail ; l'aperçu s'ouvre aussitôt.
 
 La feuille de Varians (`rendering/tei-to-html.xsl`) reçoit le paramètre
 `css` (`tei.css` par défaut) pour son `<link>` : l'aperçu est inchangé.
@@ -215,6 +221,76 @@ attributs « fantômes » d'XSLT 3.0 (`_match`…) sont écartés.
 (Ctrl+Espace, liste automatique des attributs, Ctrl+E), sans les éléments
 personnalisés du projet.
 
+## TEI Stylesheets (V0.9.2.2)
+
+Les feuilles XSLT 3.0 du TEI Consortium (github.com/TEIC/Stylesheets)
+servent aux scénarios prédéfinis « TEI : … ».
+
+- **Bibliothèque** (`tei_stylesheets`) : une version par dossier,
+  `<bibliothèque>/7.61.0/`, dans le dossier de données de l'utilisateur
+  (`library_dir` : `%LOCALAPPDATA%\Varians\tei-stylesheets`, sinon
+  `$XDG_DATA_HOME` ou `~/.local/share` `/varians/tei-stylesheets` ;
+  `VARIANS_TEI_STYLESHEETS` le remplace, notamment pour les tests). Seuls
+  `xml/tei/stylesheet/` (à la racine du dossier de la version) et
+  `doc/tei-xsl/LICENCE` (`LICENCE`) sont extraits d'une archive du TEI-C.
+  La version active (`active`) est la plus récente installée complètement :
+  son témoin `.varians-installed` (version, origine, date) est écrit en
+  dernier.
+- **Archive livrée** : `resources/tei-stylesheets/tei-xsl-7.61.0.zip`
+  (feuilles et licence seules ; origine, licence et façon de la refaire dans
+  son `LISEZMOI.md`), installée au premier usage (`ensure_installed`,
+  appelée par `xslt_scenarios.tei_library`), ou si elle est plus récente
+  que la version installée.
+- **Installation sûre** (`install_zip`) : chemin absolu, `..`, `:`, `\` ou
+  lien refusent l'archive entière ; nombre de fichiers et taille plafonnés ;
+  extraction dans un dossier temporaire voisin (`.tmp-…`), contrôle de
+  `VERSION`, `catalog.xml`, `profiles/default/html/to.xsl` et `LICENCE`,
+  témoin, puis renommage. Une archive refusée ne change rien. Les anciennes
+  versions, les versions incomplètes et les dossiers `.tmp-…` sont supprimés
+  au lancement suivant (`remove_old_versions`).
+- **Scénarios prédéfinis** (`TEI_SCENARIOS`) : « TEI : HTML », « TEI :
+  texte », « TEI : Markdown », « TEI : LaTeX », Saxon, source `edition`,
+  feuille `${tei}/profiles/default/<format>/to.xsl`, résultat
+  `publications/tei/edition.<ext>` : un dossier à part, pour que `tei.css` ne
+  remplace pas la CSS de l'édition HTML de Varians. Le HTML copie
+  `${tei}/tei.css` et reçoit `cssFile=tei.css`, `cssPrintFile=` (vide) et
+  `homeURL=` (vide) : aucun lien vers tei-c.org ni vers « / ». Les quatre
+  reçoivent `lang` et `documentationLanguage`, la langue de l'interface
+  (textes ajoutés par les feuilles, « Table des matières »…).
+- **Problème** `tei_missing` : un scénario qui emploie `${tei}/` alors
+  qu'aucune version n'est installée (ni installable depuis l'archive
+  livrée) ; le détail est le dossier de la bibliothèque.
+- **Catalogue** : la requête d'un scénario Saxon (`scenario_request`) et
+  celle d'une vérification (`check_request`) portent `catalogs`, le
+  `catalog.xml` de la version active. `xslt_engines._saxon_catalogs` le
+  donne à Saxon (`set_catalog_files`) avant la compilation : il renvoie
+  l'adresse officielle `http://www.tei-c.org/release/xml/tei/stylesheet/`
+  (`tei_stylesheets.OFFICIAL_URI`) vers les fichiers installés. Saxon garde
+  le catalogue reçu ; chaque exécution a son propre processus.
+- **Journal** : `library` (« Bibliothèque : TEI Stylesheets 7.61.0 ») si la
+  feuille est une des TEI Stylesheets ou si son texte contient l'adresse
+  officielle (`request["library"]`).
+- **Feuille de personnalisation** : « Ouvrir la feuille » d'un scénario du
+  projet dont la feuille commence par `${tei}/` crée, après accord,
+  `xslt/<customization_name>` (`tei-html.xsl`…, sans remplacer un fichier)
+  avec `customization_text` : un commentaire dans la langue de l'interface
+  (coupé selon la largeur affichée), deux exemples, et un `xsl:import` de
+  l'adresse officielle ; pour une sortie HTML, l'espace de noms par défaut
+  est celui du XHTML. Le scénario l'emploie ensuite.
+- **Mises à jour** (`tei_stylesheets_ui`) : `at_launch` (appelée par
+  `editeur_tei.main`, 1,5 s après l'affichage de la fenêtre) supprime les
+  anciennes versions, puis, si le réglage `teiStylesheets/lastCheck` date
+  d'au moins 30 jours, lance `check_for_update` : `latest_version` (fichier
+  `VERSION` de la branche `released` du dépôt, délai 15 s) dans un fil à
+  part ; silence sans nouveauté ni réseau. Une nouvelle version est proposée
+  (Installer / Plus tard) ; `install` télécharge l'archive publiée
+  (`RELEASE_URL`) dans un dossier `.tmp-…` de la bibliothèque, avec
+  progression et Annuler, l'installe (`install_zip`), puis l'efface. La
+  fenêtre « TEI Stylesheets… » (Fichier, et bouton de la liste des
+  scénarios) montre la version, l'origine, le dossier, la licence et la
+  dernière vérification ; « Rechercher une mise à jour » vérifie aussitôt
+  et dit aussi « à jour » ou l'erreur.
+
 ## Limites
 
 - XSLT 1.0 (lxml) : un seul fichier de résultat.
@@ -229,6 +305,14 @@ personnalisés du projet.
   d'attributs sont celles d'XSLT 3.0 ; ni les noms déclarés dans la feuille
   (modèles, modes, clés) ni l'XPath ne sont complétés ; une feuille qui déclare
   un `xml-model` est vérifiée par compilation, non par ce schéma.
+- TEI Stylesheets (V0.9.2.2) : DOCX, ODT et EPUB (une archive à fabriquer)
+  et le HTML en plusieurs fichiers (`splitLevel`) ne sont pas proposés ; le
+  LaTeX se compile hors de Varians (xelatex) ; en texte et en Markdown, les
+  TEI Stylesheets écrivent le lemme et la variante à la suite. Une seule
+  version est installée pour tous les projets : une publication refaite
+  après une mise à jour peut différer (le journal donne la version). Deux
+  instances de Varians : celle qui se lance supprime les anciennes versions,
+  même si l'autre transforme encore avec l'une d'elles.
 
 ## Tests
 
@@ -240,4 +324,11 @@ personnalisés du projet.
 `tests/gui/test_gui_transform_run.py` ; feuilles (V0.9.2.1) :
 `tests/test_document_files.py`, `tests/test_xslt_check.py`,
 `tests/test_xslt_completion.py`, `tests/gui/test_gui_document_dialogs.py`,
-`tests/gui/test_gui_xslt_check.py`, `tests/gui/test_gui_xslt_completion.py`.
+`tests/gui/test_gui_xslt_check.py`, `tests/gui/test_gui_xslt_completion.py` ;
+TEI Stylesheets (V0.9.2.2) : `tests/test_tei_stylesheets.py`,
+`tests/test_tei_scenarios_saxon.py` (ignoré sans Saxon),
+`tests/gui/test_gui_tei_stylesheets.py`, et des tests dans
+`tests/test_xslt_scenarios.py`, `tests/gui/test_gui_transform_scenarios.py`
+et `tests/gui/test_gui_transform_run.py`. Les tests installent la
+bibliothèque dans un dossier temporaire de la session
+(`tests/conftest.py`, `tests/gui/conftest.py`).

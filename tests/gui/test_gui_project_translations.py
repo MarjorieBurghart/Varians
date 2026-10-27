@@ -28,3 +28,20 @@ def test_project_without_its_translation_folder_uses_those_of_varians(open_windo
     assert window.action_check_references.text() == "Références"
     window._set_language_code("en")
     assert window.action_check_references.text() == "References"
+
+
+def test_the_standard_texts_of_qt_follow_the_interface_language(open_window, sermons_project):
+    """Boutons et textes standard de Qt (« Montrer les détails… » d'une boîte
+    de message, « Fermer »…) : traductions de Qt dans la langue de l'interface."""
+    from PySide6.QtCore import QCoreApplication
+
+    def details():
+        return QCoreApplication.translate("QMessageBox", "Show Details...")
+
+    window = open_window(sermons_project)
+    assert details() == "Montrer les détails…"
+    assert QCoreApplication.translate("QPlatformTheme", "Close") == "Fermer"
+    window._set_language_code("de")
+    assert details() == "Details einblenden..."
+    window._set_language_code("en")
+    assert details() == "Show Details..."

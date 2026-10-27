@@ -73,6 +73,34 @@ def test_the_predefined_scenario_runs_from_the_list(open_window, sermons_project
     assert [Path(path) for path in opened] == [output]
 
 
+def test_the_report_opens_the_folder_of_the_result(open_window, sermons_project, dialogs, qtbot, opened):
+    window = open_window(sermons_project)
+    output = sermons_project.parent / "publications" / "edition.html"
+    dialogs.expect("dialog", _choose("predefined", 0, "run_btn"))
+    dialogs.expect("box", tr("common.open_folder"))                 # Ouvrir le dossier
+    _finish(qtbot, window, window.transform_scenarios_dialog)
+    assert output.is_file() and [Path(path) for path in opened] == [output.parent]
+
+
+def test_a_tei_scenario_runs_from_the_list_and_names_the_library(open_window, sermons_project, dialogs, qtbot,
+                                                                 opened, monkeypatch):
+    from app_context import current_i18n
+    from xslt_scenarios import tei_library
+    details = []
+    monkeypatch.setattr(QMessageBox, "setDetailedText", lambda box, text: details.append(text))
+    window = open_window(sermons_project)
+    output = sermons_project.parent / "publications" / "tei" / "edition.html"
+    dialogs.expect("dialog", _choose("predefined", 1, "run_btn"))                # « TEI : HTML »
+    dialogs.expect("box", ROLE.RejectRole)
+    _finish(qtbot, window, window.transform_scenarios_dialog)
+    assert "Sermo in adventu Domini" in output.read_text(encoding="utf-8")
+    assert (output.parent / "tei.css").is_file()
+    # Le journal nomme la version des TEI Stylesheets ; elles parlent la langue de l'interface.
+    assert tr("transform.journal.library", detail=f"TEI Stylesheets {tei_library().version}") in details[-1]
+    assert f"documentationLanguage = {current_i18n().language}" in details[-1]
+    assert opened == []
+
+
 def test_the_toolbar_button_lists_the_scenarios_and_reruns_the_last_one(open_window, sermons_project, dialogs,
                                                                        qtbot, opened):
     window = open_window(_project(sermons_project, NAMES))
@@ -80,7 +108,8 @@ def test_the_toolbar_button_lists_the_scenarios_and_reruns_the_last_one(open_win
     assert window.action_transform.shortcut() == QKeySequence("Ctrl+Shift+T")
     window.transform_menu.aboutToShow.emit()
     labels = [action.text() for action in window.transform_menu.actions() if not action.isSeparator()]
-    assert labels == ["Noms", tr("transform.predefined.varians-html"), tr("menu.transform_scenarios")]
+    assert labels == ["Noms", *(tr(f"transform.predefined.{key}") for key in (
+        "varians-html", "tei-html", "tei-txt", "tei-markdown", "tei-latex")), tr("menu.transform_scenarios")]
     assert button.menu() is window.transform_menu
 
     # Aucun scénario lancé : le bouton ouvre la liste.

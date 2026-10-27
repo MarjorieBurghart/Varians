@@ -18,11 +18,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Version attendue de l'application (app_context.APP_VERSION). À changer ici,
 # en même temps que APP_VERSION, à chaque nouvelle version.
-CURRENT_VERSION = "0.9.2.1"
+CURRENT_VERSION = "0.9.2.2"
 
 # Nombre de messages de chaque catalogue i18n (i18n/*.xml, identique dans les
 # sept langues). À changer ici à chaque ajout ou retrait de message.
-CATALOG_SIZE = 887
+CATALOG_SIZE = 927
 
 # Ordre de concaténation : editeur_tei.py d'abord (les recherches de texte
 # par position, comme source.index(...), y trouvent leurs repères en premier).
@@ -54,6 +54,7 @@ APPLICATION_MODULES = (
     "transform_ui.py",
     "transform_runner.py",
     "xslt_check_ui.py",
+    "tei_stylesheets_ui.py",
 )
 
 

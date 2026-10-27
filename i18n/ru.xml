@@ -5,6 +5,7 @@
   <string key="app.window.file">Varians — {project} — {name}{mark}</string>
   <string key="app.untitled">без_названия.xml</string>
   <string key="common.open">Открыть</string>
+  <string key="common.open_folder">Открыть папку</string>
   <string key="common.close">Закрыть</string>
   <string key="common.cancel">Отмена</string>
   <string key="common.save">Сохранить</string>
@@ -852,6 +853,46 @@ Varians скопирует её в проект:
 Сценарий будет использовать эту копию. «Открыть без копирования» изменяет исходный файл.</string>
   <string key="transform.open_stylesheet.copy">Скопировать в проект</string>
   <string key="transform.open_stylesheet.in_place">Открыть без копирования</string>
+  <string key="transform.open_stylesheet.tei">Таблица стилей «{name}» входит в TEI Stylesheets: её не правят.
+
+Varians создаст в проекте таблицу настройки, которая её импортирует:
+{path}
+
+Её параметры и шаблоны будут иметь приоритет над параметрами и шаблонами TEI Stylesheets; всё остальное будет взято из них. Сценарий «{scenario}» будет использовать эту таблицу.</string>
+  <string key="transform.open_stylesheet.create">Создать таблицу настройки</string>
+  <string key="transform.customization.created">Таблица настройки создана: {path}</string>
+  <string key="transform.customization.comment">Таблица настройки TEI Stylesheets, созданная Varians.
+
+Она импортирует таблицу {name} консорциума TEI. Параметры (xsl:param) и шаблоны (xsl:template), записанные здесь, имеют приоритет над импортированными; всё остальное берётся из TEI Stylesheets, которые никогда не изменяются. Импортируемый адрес — официальный: Varians читает его из установленных TEI Stylesheets без сети, как и Oxygen.</string>
+  <string key="transform.customization.examples">Примеры:</string>
+  <string key="tei_stylesheets.menu">TEI Stylesheets…</string>
+  <string key="tei_stylesheets.title">TEI Stylesheets</string>
+  <string key="tei_stylesheets.intro">Сценарии «TEI: …» используют таблицы XSLT консорциума TEI (github.com/TEIC/Stylesheets), установленные один раз для всех проектов. При запуске Varians не чаще раза в месяц проверяет, вышла ли новая версия, и устанавливает её только с вашего согласия.</string>
+  <string key="tei_stylesheets.version">Установленная версия</string>
+  <string key="tei_stylesheets.source">Источник</string>
+  <string key="tei_stylesheets.folder">Папка</string>
+  <string key="tei_stylesheets.licence">Лицензия</string>
+  <string key="tei_stylesheets.checked">Последняя проверка</string>
+  <string key="tei_stylesheets.none">нет (TEI Stylesheets не установлены)</string>
+  <string key="tei_stylesheets.source.bundled">поставляются с Varians</string>
+  <string key="tei_stylesheets.source.downloaded">загружены {date}</string>
+  <string key="tei_stylesheets.never">никогда</string>
+  <string key="tei_stylesheets.licence.text">на выбор BSD 2-Clause или CC BY-SA 3.0 — © 2011–2020 TEI Consortium</string>
+  <string key="tei_stylesheets.show_licence">Показать лицензию</string>
+  <string key="tei_stylesheets.check">Проверить обновление</string>
+  <string key="tei_stylesheets.up_to_date">TEI Stylesheets актуальны (версия {version}).</string>
+  <string key="tei_stylesheets.available">Доступны TEI Stylesheets {version} (у вас {current}). Установить?</string>
+  <string key="tei_stylesheets.available.detail">Новая версия будет использоваться со следующего преобразования во всех проектах; старая будет удалена при следующем запуске Varians. «Позже»: вопрос вернётся при следующей проверке.</string>
+  <string key="tei_stylesheets.install">Установить</string>
+  <string key="tei_stylesheets.later">Позже</string>
+  <string key="tei_stylesheets.downloading">Загрузка TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installing">Установка TEI Stylesheets {version}…</string>
+  <string key="tei_stylesheets.installed">TEI Stylesheets {version} установлены: они будут использоваться со следующего преобразования.</string>
+  <string key="tei_stylesheets.cancelled">Установка TEI Stylesheets отменена.</string>
+  <string key="tei_stylesheets.error.network">Сайт консорциума TEI недоступен: {detail}</string>
+  <string key="tei_stylesheets.error.invalid_reply">Неожиданный ответ консорциума TEI: {detail}</string>
+  <string key="tei_stylesheets.error.invalid_archive">Неверный архив TEI Stylesheets: {detail}. Установленная версия сохранена.</string>
+  <string key="tei_stylesheets.error.write_failed">Невозможно записать в папку TEI Stylesheets: {detail}</string>
   <string key="xslt_check.action">Проверить таблицу стилей XSLT</string>
   <string key="xslt_check.action.tip">Скомпилировать показанную таблицу стилей XSLT, не выполняя её, движком её сценариев (F8)</string>
   <string key="xslt_check.panel.title">Проверка таблицы стилей XSLT</string>
@@ -879,6 +920,10 @@ Varians скопирует её в проект:
   <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
   <string key="transform.engine.missing">{engine} — не установлен</string>
   <string key="transform.predefined.varians-html">HTML-издание (таблица стилей Varians)</string>
+  <string key="transform.predefined.tei-html">TEI: HTML</string>
+  <string key="transform.predefined.tei-txt">TEI: текст</string>
+  <string key="transform.predefined.tei-markdown">TEI: Markdown</string>
+  <string key="transform.predefined.tei-latex">TEI: LaTeX</string>
   <string key="transform.scenario.title">Сценарий преобразования</string>
   <string key="transform.scenario.name">Название:</string>
   <string key="transform.scenario.source">Источник:</string>
@@ -914,6 +959,7 @@ Varians скопирует её в проект:
   <string key="transform.problem.output_is_folder">Результат — это папка: {detail}</string>
   <string key="transform.problem.output_is_source">Результат заменил бы исходный файл проекта: {detail}</string>
   <string key="transform.problem.css_overwrites_source">Копия CSS заменила бы исходный файл проекта: {detail}</string>
+  <string key="transform.problem.tei_missing">TEI Stylesheets не установлены: {detail} (см. Файл ▸ TEI Stylesheets…)</string>
   <string key="toolbar.transform">Преобразовать</string>
   <string key="toolbar.transform.tip">Выполнить последний сценарий преобразования (Ctrl+Shift+T); стрелка открывает список сценариев</string>
   <string key="transform.run">Выполнить</string>
@@ -938,6 +984,7 @@ Varians скопирует её в проект:
 {error}</string>
   <string key="transform.journal.engine">Процессор: {engine} — длительность: {seconds} с</string>
   <string key="transform.journal.params">Параметры: {params}</string>
+  <string key="transform.journal.library">Библиотека: {detail}</string>
   <string key="transform.journal.message">Сообщение: {detail}</string>
   <string key="transform.journal.warning">Предупреждение: {detail}</string>
   <string key="transform.journal.network_read">Прочитано из сети: {detail}</string>

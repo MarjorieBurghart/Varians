@@ -217,3 +217,14 @@ Fonctionnement : `XSLT_SCENARIOS.md` (« Feuilles éditées dans Varians »).
 - `xslt_check_ui.py` : `StylesheetCheckMixin` (`_displayed_stylesheet`, `_update_check_labels`, `_check_stylesheet`, `_check_now`, `_check_in_background`, `_apply_check_results`), `check_validation_result` ; branché dans `validation_panel._validate_relaxng_document_impl` et `document_io._write_to`.
 - `xslt_completion.py` : `XSLT_SCHEMA` (`resources/schemas/xslt30`), `XSLT10_ATTRIBUTES`, `LITERAL_RESULT_ATTRIBUTES`, `element_names`, `attribute_names`, `attribute_values`, `StylesheetCompletionModel` ; `completion_ui._stylesheet_completion`.
 - `rng_completion._analyze_xml_context_from` : un nom tapé devant une autre balise (`<h|</p>`) reste un nom d'élément.
+
+## V0.9.2.2 — TEI Stylesheets
+
+Fonctionnement : `XSLT_SCENARIOS.md` (« TEI Stylesheets »).
+
+- `tei_stylesheets.py` (sans Qt) : `library_dir`, `parse_version`, `is_newer`, `Installed` (`catalog`, `licence`), `installed`, `active`, `install_zip` (`_destination`, `_extract`), `remove_old_versions`, `bundled_zip`, `ensure_installed`, `latest_version`, `download`, `LibraryError` ; archive livrée `resources/tei-stylesheets/` (LISEZMOI).
+- `xslt_scenarios.py` : `TEI_PREFIX` (`${tei}/`), `tei_library`, `TEI_SCENARIOS` et `predefined_scenarios(translate, language)`, problème `tei_missing`, `catalogs` et `library` dans `scenario_request` (`_employs`), `check_request`, `customization_name`, `customization_text` (`_wrap`).
+- `xslt_engines.py` : `_saxon_catalogs` (exécution et vérification), journal `library`.
+- `transform_ui.py` : `TransformScenariosMixin._customize` (« Ouvrir la feuille » d'un scénario TEI), `_use_stylesheet`, `tei_stylesheets_dialog` ; `ScenarioListDialog.tei_stylesheets` (bouton « TEI Stylesheets… ») ; `predefined()` passe la langue de l'interface. `xslt_check_ui._check_stylesheet` emploie `check_request`.
+- `tei_stylesheets_ui.py` : `TeiStylesheetsDialog`, `at_launch` (appelée par `editeur_tei.main`), `check_for_update`, `install`, `_Task` (fil à part, résultat par signal), `busy`, `progress_dialog`, réglage `teiStylesheets/lastCheck`. `main_menus.py` : `action_tei_stylesheets`, après « Scénarios de transformation… ».
+- `app_context.apply_qt_language` : traductions de Qt (`qtbase_<langue>.qm`, textes standard des boîtes et des boutons) dans la langue de l'interface ; appelée par `editeur_tei.main`, `MainWindow.__init__` et `MainMenusMixin._set_language_code`. Compte rendu d'une transformation : « Ouvrir le dossier » (`TransformScenariosMixin._transform_finished`).

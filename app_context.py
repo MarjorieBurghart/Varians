@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Contexte partagé de l'application Varians.
 
-Traductions actives, réglages QSettings et projets récents. Ces services
+Traductions actives (avec celles de Qt, ``apply_qt_language``), réglages
+QSettings et projets récents. Ces services
 étaient définis dans ``editeur_tei.py`` ; ils sont regroupés ici pour que les
 modules de l'interface (panneaux, menus, etc.) puissent les importer sans
 importer ``editeur_tei`` lui-même. Ce dernier peut en effet être exécuté comme
@@ -13,10 +14,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import shiboken6
-from PySide6.QtCore import QSettings, QTimer
+from PySide6.QtCore import QCoreApplication, QLibraryInfo, QSettings, QTimer, QTranslator
 
 HERE = Path(__file__).resolve().parent
-APP_VERSION = "0.9.2.1"
+APP_VERSION = "0.9.2.2"
 
 # --- Traductions --------------------------------------------------------------
 
@@ -36,6 +37,31 @@ def current_i18n():
 def tr(key, default=None, **values):
     """Texte traduit dans la langue active (équivalent de ``_t``)."""
     return _i18n.tr(key, default=default, **values)
+
+
+_qt_translator = None
+
+
+def apply_qt_language(code) -> bool:
+    """Textes standard de Qt dans la langue ``code`` de l'interface :
+    boutons des boîtes (« Fermer », « Annuler »…), « Montrer les détails… »,
+    menus contextuels des champs, boîtes de fichiers. Ce sont les traductions
+    livrées avec Qt (``qtbase_<code>.qm``) ; sans traduction pour ``code``,
+    Qt reste en anglais. Rend vrai si une traduction est installée."""
+    global _qt_translator
+    app = QCoreApplication.instance()
+    if app is None:
+        return False
+    if _qt_translator is not None:
+        app.removeTranslator(_qt_translator)
+        _qt_translator = None
+    translator = QTranslator(app)
+    folder = QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath)
+    if not code or not translator.load(f"qtbase_{code}", folder):
+        return False
+    app.installTranslator(translator)
+    _qt_translator = translator
+    return True
 
 
 def error_message(exc) -> str:

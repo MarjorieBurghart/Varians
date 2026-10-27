@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QApplication, QLabel, QLineEdit, QMenu, QSizePolicy, QToolBar, QToolButton, QWidget,
 )
 from app_context import (
-    _settings, clear_recent_projects, current_i18n, recent_project_paths,
+    _settings, apply_qt_language, clear_recent_projects, current_i18n, recent_project_paths,
     remember_recent_project, tr as _t,
 )
 from help_dialogs import (
@@ -134,6 +134,7 @@ class MainMenusMixin:
         )
         self.action_transform_scenarios = self._make_action(
             _t("menu.transform_scenarios"), "", self.transform_scenarios_dialog)
+        self.action_tei_stylesheets = self._make_action(_t("tei_stylesheets.menu"), "", self.tei_stylesheets_dialog)
         self.action_quit = self._make_action(_t("menu.quit"), "Ctrl+Q", self.close)
 
         menu.insertAction(self.recent_menu.menuAction(), self.action_new_project)
@@ -162,6 +163,7 @@ class MainMenusMixin:
         menu.addSeparator()
         menu.addAction(self.action_generate_web_menu)
         menu.addAction(self.action_transform_scenarios)
+        menu.addAction(self.action_tei_stylesheets)
         menu.addSeparator()
         menu.addAction(self.action_quit)
         # Dans un QMenu attaché à un QToolButton, les raccourcis doivent aussi
@@ -322,6 +324,7 @@ class MainMenusMixin:
             return
         if not I18N.set_language(code):
             return
+        apply_qt_language(code)
         _settings().setValue("startupLanguage", code)
         try:
             update_project_language(self.project.path, code)
@@ -371,6 +374,7 @@ class MainMenusMixin:
         self.action_ctrl_e_config.setToolTip(_t("toolbar.ctrl_e_config.tip", path=self.project.custom_elements))
         self.action_generate_web_menu.setText(_t("menu.generate_web"))
         self.action_transform_scenarios.setText(_t("menu.transform_scenarios"))
+        self.action_tei_stylesheets.setText(_t("tei_stylesheets.menu"))
         self.action_quit.setText(_t("menu.quit"))
         self.action_generate_web.setText(_t("toolbar.generate_web"))
         self.action_generate_web.setToolTip(_t("toolbar.generate_web.tip"))

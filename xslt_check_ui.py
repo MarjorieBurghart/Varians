@@ -29,7 +29,7 @@ from document_dialogs import is_stylesheet_file
 from relaxng_validation import ValidationIssue, ValidationResult
 from transform_runner import TransformRunner
 from validation_worker import _InputBlocker
-from xslt_scenarios import StylesheetInfo, check_engines, stylesheet_info
+from xslt_scenarios import StylesheetInfo, check_engines, check_request, stylesheet_info
 
 # Au-delà, F8 et l'enregistrement n'attendent plus la vérification.
 CHECK_TIMEOUT_MSEC = 60_000
@@ -81,7 +81,7 @@ class StylesheetCheckMixin:
         if (not show_success_message and self._last_rng_revision == revision
                 and self._last_rng_result is not None and self._last_rng_schema_token == token):
             return self._last_rng_result
-        requests = [{"op": "check", "engine": engine, "xslt": str(path), "text": text} for engine in engines]
+        requests = [check_request(engine, path, text) for engine in engines]
         self.rng_status.setText(_t("xslt_check.status.running"))
         self.rng_status.setStyleSheet("color:#777")
         if background:
