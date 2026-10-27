@@ -371,7 +371,7 @@ Validation complète RELAX NG via lxml, avec cache de schéma compilé et invali
 
 Détecte les instructions `<?xml-model?>`, résout les schémas locaux/distants, met en cache les RNG distants et leurs dépendances.
 
-Depuis la V0.9.2.3, elle donne aussi les sources des règles Schematron (`schematron_sources` : le RNG employé, puis les déclarations Schematron, sans doublon) ; le module `schematron.py` les applique (SchXslt2 et Saxon). Voir `RELAXNG_VALIDATION.md`.
+Depuis la V0.9.2.3, elle donne aussi les sources des règles Schematron (`schematron_sources` : le RNG employé, puis les déclarations Schematron, sans doublon ; V0.9.2.4 : des `SchematronSource(path, phase)`, la phase venant de l'attribut `phase` d'une déclaration) ; le module `schematron.py` les applique (SchXslt2 et Saxon). Voir `RELAXNG_VALIDATION.md`.
 
 ### `rng_completion.py`
 
@@ -589,7 +589,7 @@ La vérification de bien-formé est automatique et asynchrone. F8 lance la valid
 
 Le cache de schéma compilé doit être invalidé si le RNG principal **ou une dépendance `include`/`externalRef`** change.
 
-Schematron (V0.9.2.3) : les règles du RNG employé et des déclarations Schematron sont appliquées dans le même passage que le RNG ; une erreur Schematron compte comme une erreur RNG, un avertissement non. Voir `RELAXNG_VALIDATION.md`.
+Schematron (V0.9.2.3) : les règles du RNG employé et des déclarations Schematron sont appliquées dans le même passage que le RNG ; une erreur Schematron compte comme une erreur RNG, un avertissement non. Une règle incorrecte (V0.9.2.4 : `ValidationIssue` du domaine `SCHEMATRON_RULES`) a sa ligne dans le panneau sans rendre le document invalide. Un fichier `.sch` affiché est vérifié à la place (`schematron_check_ui`, opération `check_schematron`). Voir `RELAXNG_VALIDATION.md`.
 
 ---
 
@@ -693,7 +693,7 @@ Il contient de l'historique spécifique au prototype initial. Le code moderne en
 
 ### Schematron
 
-Appliqué depuis la V0.9.2.3 (`schematron.py`, SchXslt2 livré dans `resources/schxslt2/`, Saxon). L'interface distingue bien-formé, validité RNG et règles Schematron (colonne Origine, étiquette Schematron de la barre d'état). Restent hors champ : phases autres que la phase par défaut, Schematron 1.5, règles d'un XSD.
+Appliqué depuis la V0.9.2.3 (`schematron.py`, SchXslt2 livré dans `resources/schxslt2/`, Saxon). L'interface distingue bien-formé, validité RNG et règles Schematron (colonne Origine, étiquette Schematron de la barre d'état). Depuis la V0.9.2.4 : phase choisie par l'attribut `phase` d'une déclaration ; fichiers `.sch` ajoutés, créés, vérifiés (F8) et complétés dans Varians (`schematron_check`, `schematron_check_ui`, `schematron_completion`, schéma ISO livré dans `resources/schemas/schematron/`). Restent hors champ : choix de la phase dans Varians, validation de l'édition avec le texte non enregistré d'un `.sch` ouvert, nouveautés de l'édition 2020 (`sch:group`…) dans la vérification d'un `.sch`, Schematron 1.5, règles d'un XSD.
 
 ### Outil tiers d'alignement
 

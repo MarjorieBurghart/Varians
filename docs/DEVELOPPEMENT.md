@@ -378,6 +378,14 @@ validation, `tests/gui/test_gui_schematron.py` la fenêtre. Ces tests sont
 ignorés sans Saxon. Une version autonome devra embarquer le dossier
 `resources/schxslt2`.
 
+Depuis V0.9.2.4, un fichier `.sch` affiché est vérifié d'après le schéma ISO
+Schematron livré dans `resources/schemas/schematron/iso-schematron.rng`,
+copie de celle de lxml complétée de `@severity` : son LISEZMOI dit comment
+la refaire (fichier de départ, empreinte, ajouts marqués « edited
+(Varians) »), et `tests/test_schematron_check.py` vérifie que lxml compile le
+schéma et que la mention de modification exigée par l'ISO y figure. Une
+version autonome devra aussi embarquer `resources/schemas/schematron`.
+
 ## Historique et versions
 
 Depuis V0.8.6.0, l'historique est porté par Git. Les rapports de test et

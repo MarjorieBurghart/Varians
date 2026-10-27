@@ -1,3 +1,37 @@
+VARIANS V0.9.2.4 — PHASES ET FICHIERS SCHEMATRON
+
+• Phases : une déclaration Schematron peut choisir sa phase, par l'attribut
+  standard phase (comme dans Oxygen) :
+    <?xml-model href="regles.sch" type="application/xml"
+        schematypens="http://purl.oclc.org/dsdl/schematron" phase="lecons"?>
+  #ALL : toutes les règles ; #DEFAULT ou rien : la phase par défaut du
+  fichier (defaultPhase), sinon toutes. Une phase inconnue est une règle
+  incorrecte, avec la liste des phases du fichier. L'info-bulle de
+  l'étiquette Schematron nomme la phase de chaque fichier de règles.
+• Règles incorrectes (XPath fautif, phase inconnue, fichier introuvable ou
+  mal formé) : une ligne chacune dans le panneau de validation, origine
+  « Schematron (règles) », sans rendre le document invalide. Double-clic :
+  le fichier des règles s'affiche à la ligne de la règle ; Varians propose
+  d'ajouter aux documents du projet un fichier de son dossier qui n'en est
+  pas encore un ; un fichier hors du projet ne s'ouvre pas (barre d'état).
+• Après l'enregistrement d'un fichier de règles, le document est validé de
+  nouveau dès qu'on revient à lui.
+• Fichiers .sch dans Varians : « Ajouter un document XML, XSLT ou
+  Schematron… » les accepte (copie dans xml/ d'un fichier hors du projet) ;
+  « Nouveau fichier Schematron… » crée xml/regles.sch (préfixe tei, une
+  règle d'exemple). Un fichier Schematron affiché est vérifié à la place de
+  la validation RELAX NG (F8 « Vérifier les règles Schematron », affichage,
+  frappe après F8, enregistrement) : bonne formation, structure d'après le
+  schéma ISO Schematron livré (resources/schemas/schematron, complété de
+  @severity), fichiers inclus, compilation de toutes les phases par Saxon ;
+  chaque erreur à sa ligne. Ctrl+Espace propose ses éléments, attributs et
+  valeurs (severity, role, queryBinding).
+• Limites : phase choisie par la déclaration seulement ; l'édition est
+  validée avec les règles enregistrées ; la vérification d'un .sch suit
+  l'édition 2016 de la norme (+ @severity) ; ni Schematron 1.5, ni règles
+  d'un XSD.
+• Le format de project.xml ne change pas. Voir RELAXNG_VALIDATION.md.
+
 VARIANS V0.9.2.3 — RÈGLES SCHEMATRON
 
 • Varians applique désormais les règles Schematron, en même temps que la
