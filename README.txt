@@ -28,6 +28,10 @@ VARIANS V0.9.2.3 — RÈGLES SCHEMATRON
   phase par défaut seulement ; ni Schematron 1.5, ni règles d'un XSD.
 • Un document TEI jusqu'ici valide peut recevoir de nouveaux messages. Le
   format de project.xml ne change pas. Voir RELAXNG_VALIDATION.md.
+• Un projet qui garde une copie des traductions (dossier i18n/) y garde
+  l'ancien titre du panneau et l'ancien texte de la question
+  d'enregistrement ; remplacer ces fichiers par ceux de Varians pour
+  adopter les nouveaux.
 
 VARIANS V0.9.2.2 — TEI STYLESHEETS
 
