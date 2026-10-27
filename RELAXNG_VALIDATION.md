@@ -463,3 +463,42 @@ inclusions. La validation par un XSD n'est pas faite.
 
 **Correction.** `main_menus.retranslate_ui` réécrit les six en-têtes du
 panneau de validation, colonne Origine comprise.
+
+## V0.9.2.6 — fichiers inclus non enregistrés
+
+**Fichiers inclus.** Un fichier inclus par une source de règles
+(`sch:include`, `sch:extends/@href` d'une Schematron 2020, inclusions
+RELAX NG et XSD), ouvert dans Varians et modifié, est lu dans son texte non
+enregistré, comme la source elle-même depuis la V0.9.2.5.
+`schematron.rules_files(path, texts)` donne la source et les fichiers
+qu'elle inclut, de proche en proche, chacun lu dans son texte non enregistré
+s'il en a un (sinon le graphe du disque, en cache) ; `_rules_trees`,
+`rules_text`, `_phases`, `_phase_error`, `_expression_site` (lieu d'une
+erreur XPath) et `_assembly_errors` s'en servent. SchXslt2 lisant lui-même
+les fichiers inclus (`document()`), `_with_unsaved_inclusions` fait pointer,
+le temps de la transpilation, chaque inclusion d'un fichier non enregistré
+(ou d'un fichier enregistré qui en inclut un) vers une copie temporaire de
+son texte, dont `xml:base` garde l'adresse du fichier : ses propres
+inclusions se résolvent comme depuis le disque. Un texte non enregistré mal
+formé est une erreur `malformed`, à son fichier et à sa ligne
+(`_unsaved_malformed`). La signature du cache compte la date des fichiers
+que suivent les textes non enregistrés et l'empreinte de ces textes.
+`relaxng_validation.dependency_reference` suit aussi `sch:extends/@href`.
+
+**Interface.** `validation_panel._unsaved_rules_texts(paths)` réunit les
+textes des documents ouverts et modifiés hors de l'édition
+(`_open_unsaved_texts`) qui sont une source ou un fichier qu'elle inclut ;
+`_rules_texts` (requête, jeton de revalidation) s'en sert. L'info-bulle
+nomme les fichiers inclus non enregistrés d'une source
+(`schematron.tip.unsaved_included` : « regles.sch (non enregistré :
+motifs.sch) »).
+
+**Vérification d'un `.sch`.** `schematron_check.check(text, path, texts)`
+et `check_compilation(text, path, texts)` lisent de même les fichiers
+inclus non enregistrés ; la requête `check_schematron` reçoit le champ
+`"texts"`. `schematron_check_ui._schematron_inclusions` donne ces textes et
+le jeton de la vérification, `("schematron",)` suivi de la révision des
+textes non enregistrés et de la date des autres fichiers inclus :
+`_validation_outdated` refait la vérification au retour sur le fichier
+quand l'un d'eux a changé. La boîte des règles propose aussi les phases des
+fichiers inclus non enregistrés.
