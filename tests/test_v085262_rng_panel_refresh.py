@@ -62,6 +62,10 @@ class DummyMain:
     def _displayed_stylesheet(self):
         return None
 
+    # Fichier Schematron affiché (V0.9.2.4) : aucun ici.
+    def _displayed_schematron(self):
+        return None
+
     def __init__(self):
         self.doc = DummyDoc()
         self.editor = SimpleNamespace(document=lambda: self.doc)

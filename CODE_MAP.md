@@ -239,3 +239,16 @@ Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.3 — règles Schematron »)
 - `validation_panel.py` : colonne Origine (`_issue_origin`), `_is_error`, `_update_schematron_status`, `_show_schematron_result`, `_schematron_summary`, `_validation_token` ; `document_tabs` (état de l'étiquette Schematron de chaque document), `document_io._write_to` (question d'enregistrement, jeton).
 - `project_management.minimal_tei_text` : déclaration Schematron de TEI All.
 
+
+## V0.9.2.4 — phases et fichiers Schematron
+
+Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.4 — phases, règles incorrectes, fichiers `.sch` »).
+
+- `schema_resolution.py` : `SchematronSource(path, phase)`, `_with_schematron_sources` (la phase d'une déclaration remplace celle de la même source).
+- `schematron.py` : `compiled(path, phase)` (cache par couple), `_phases`, `_phase_error`, `_rule_error` (erreurs `SCHEMATRON_RULES`), `_saxon_error` (remplace `_saxon_text`), `_rules_trees` (fichier et inclusions, éventuellement d'après le texte de l'éditeur), `_transpiler(check)`, `check_compilation`, `_assembly_errors`, `_ASSEMBLY_SITES`.
+- `schematron_check.py` (sans Qt) : `check(text, path)` → `ValidationResult` (bonne formation, structure d'après `resources/schemas/schematron/iso-schematron.rng` — `_structure_errors`, `_REQUIRED`, libxml2 en repli —, inclusions, compilation) ; `relaxng_worker` (`op: "check_schematron"`), `validation_worker` (`check_schematron`, `check_schematron_async`).
+- `schematron_check_ui.py` : `SchematronCheckMixin` (`_displayed_schematron`, `_check_schematron`, `_apply_schematron_check`) ; branchements dans `xslt_check_ui._update_check_labels`, `validation_panel._validate_relaxng_document_impl`, `document_io._write_to`.
+- `schematron_completion.py` (sans Qt) : `SchematronCompletionModel`, `SUGGESTED_VALUES` ; `completion_ui._vocabulary_completion` (feuille XSLT ou fichier Schematron).
+- `xml_roots.py` : `root_tag` (racine lue sans analyser, partagée avec `xslt_scenarios.stylesheet_info`), `schematron_info`.
+- `validation_panel.py` : lignes des règles incorrectes (`RULES_DOMAIN`, `_rules_message`, `_rules_located`, `_resolution_rules_errors`), `_open_rules_file` (double-clic), `_validation_outdated` (appelée par `document_tabs._restore_document_view`), phase dans l'info-bulle.
+- `document_dialogs.py` : `SCHEMATRON_SUFFIXES`, `is_schematron_file`, `new_schematron_text`, `new_schematron_dialog` ; `main_menus.action_new_schematron`.

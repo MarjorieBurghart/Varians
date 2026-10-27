@@ -305,6 +305,7 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="rng.origin.xinclude">XInclude</string>
   <string key="rng.origin.schematron">Schematron</string>
   <string key="rng.origin.xslt">XSLT</string>
+  <string key="rng.origin.schematron_rules">Schematron (règles)</string>
   <string key="rng.column.line">Ligne</string>
   <string key="rng.column.column">Colonne</string>
   <string key="rng.column.message">Message</string>
@@ -346,12 +347,26 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="schematron.status.saxon_missing">Schematron : Saxon manquant</string>
   <string key="schematron.status.disabled">Schematron : non vérifié</string>
   <string key="schematron.tip.sources">Règles Schematron appliquées : {sources}</string>
-  <string key="schematron.tip.error">{source} : {detail}</string>
   <string key="schematron.tip.saxon_missing">Les règles Schematron demandent Saxon (paquet saxonche), qui n’est pas installé : python -m pip install --user saxonche. La validation RELAX NG est faite.</string>
   <string key="schematron.tip.no_rules">Aucune règle Schematron dans : {sources}</string>
   <string key="schematron.tip.disabled">La validation est désactivée pour ce projet : les règles Schematron déclarées ne sont pas vérifiées.</string>
   <string key="schematron.panel.rules_error">Règles Schematron incorrectes ({source}) : {detail}</string>
   <string key="schematron.panel.saxon_missing">Règles Schematron non vérifiées : Saxon (paquet saxonche) n’est pas installé.</string>
+  <string key="schematron.tip.phase">{name} (phase {phase})</string>
+  <string key="schematron.rules.missing">Fichier de règles introuvable : {detail}</string>
+  <string key="schematron.rules.malformed">Fichier de règles mal formé : {detail}</string>
+  <string key="schematron.rules.phase">Phase inconnue « {phase} » ; phases du fichier : {phases}</string>
+  <string key="schematron.rules.xpath">Expression XPath fautive : {detail}</string>
+  <string key="schematron.rules.compile">Règles incorrectes : {detail}</string>
+  <string key="schematron.rules.assembly">Règles incohérentes : {detail}</string>
+  <string key="schematron.rules.element">Élément « {name} » non permis à cet endroit dans « {parent} »</string>
+  <string key="schematron.rules.attribute">Attribut « {name} » non permis sur « {parent} »</string>
+  <string key="schematron.rules.required">Attribut « {name} » obligatoire sur « {parent} »</string>
+  <string key="schematron.rules.runtime">Erreur à l’exécution des règles : {detail}</string>
+  <string key="schematron.rules.declaration">Déclaration Schematron impossible à résoudre : {detail}</string>
+  <string key="schematron.rules.add.title">Fichier de règles</string>
+  <string key="schematron.rules.add.text">« {name} » n’est pas un document du projet. L’ajouter aux documents du projet pour l’afficher ?</string>
+  <string key="schematron.rules.outside">« {name} » est hors du dossier du projet : il ne s’ouvre pas dans Varians ({path}).</string>
   <string key="file.save_anyway">Enregistrer quand même</string>
   <string key="file.save_malformed.title">XML non bien formé</string>
   <string key="file.save_malformed.text">Le document XML n’est pas bien formé. Vous pouvez néanmoins l’enregistrer afin de ne pas perdre votre travail et le corriger ultérieurement.
@@ -686,8 +701,11 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="documents.unsaved.text">Les documents suivants contiennent des modifications non enregistrées :</string>
   <string key="documents.save_all">Tout enregistrer</string>
   <string key="documents.menu">Documents XML / XSLT du projet…</string>
-  <string key="documents.add.menu">Ajouter un document XML ou XSLT…</string>
-  <string key="documents.add.title">Ajouter un document XML ou une feuille XSLT au projet</string>
+  <string key="documents.add.menu">Ajouter un document XML, XSLT ou Schematron…</string>
+  <string key="documents.add.title">Ajouter au projet un document XML, une feuille XSLT ou un fichier Schematron</string>
+  <string key="documents.new_schematron.menu">Nouveau fichier Schematron…</string>
+  <string key="documents.new_schematron.title">Nouveau fichier Schematron</string>
+  <string key="documents.new_schematron.example">Apparat sans lemme ni leçon.</string>
   <string key="documents.new_stylesheet.menu">Nouvelle feuille XSLT…</string>
   <string key="documents.new_stylesheet.title">Nouvelle feuille XSLT</string>
   <string key="documents.new_stylesheet.version">Version d’XSLT de la feuille :</string>
@@ -916,6 +934,22 @@ Elle importe la feuille {name} du TEI Consortium. Les paramètres (xsl:param) et
   <string key="xslt_check.message.valid">Vérification XSLT : feuille correcte.</string>
   <string key="file.save_xslt_invalid.title">Feuille XSLT incorrecte</string>
   <string key="file.save_xslt_invalid.text">La feuille est bien formée, mais sa compilation signale {count} erreur(s). Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
+
+Enregistrer quand même ?</string>
+  <string key="schematron_check.action">Vérifier les règles Schematron</string>
+  <string key="schematron_check.action.tip">Vérifier le fichier Schematron affiché, sans l’appliquer : structure ISO Schematron et expressions XPath (F8)</string>
+  <string key="schematron_check.panel.title">Vérification des règles Schematron</string>
+  <string key="schematron_check.panel.valid">Règles Schematron correctes.</string>
+  <string key="schematron_check.panel.invalid">{count} erreur(s) dans les règles Schematron. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
+  <string key="schematron_check.panel.malformed">Le fichier Schematron n’est pas un XML bien formé. Double-cliquez sur l’erreur pour aller à la ligne.</string>
+  <string key="schematron_check.panel.saxon_missing">Expressions XPath non vérifiées : Saxon (paquet saxonche) n’est pas installé.</string>
+  <string key="schematron_check.status.running">Schematron : vérification…</string>
+  <string key="schematron_check.status.valid">Règles Schematron correctes ✓</string>
+  <string key="schematron_check.status.invalid">Règles Schematron : {count} erreur(s)</string>
+  <string key="schematron_check.status.malformed">Schematron : XML mal formé</string>
+  <string key="schematron_check.message.valid">Vérification Schematron : règles correctes.</string>
+  <string key="file.save_schematron_invalid.title">Règles Schematron incorrectes</string>
+  <string key="file.save_schematron_invalid.text">Le fichier est bien formé, mais sa vérification signale {count} erreur(s). Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
 
 Enregistrer quand même ?</string>
   <string key="transform.copy_name">{name} (copie)</string>

@@ -319,6 +319,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="rng.origin.xinclude">XInclude</string>
   <string key="rng.origin.schematron">Schematron</string>
   <string key="rng.origin.xslt">XSLT</string>
+  <string key="rng.origin.schematron_rules">Schematron (pravidla)</string>
   <string key="rng.column.line">Řádek</string>
   <string key="rng.column.column">Sloupec</string>
   <string key="rng.column.message">Zpráva</string>
@@ -360,12 +361,26 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="schematron.status.saxon_missing">Schematron: chybí Saxon</string>
   <string key="schematron.status.disabled">Schematron: nekontrolováno</string>
   <string key="schematron.tip.sources">Použitá pravidla Schematron: {sources}</string>
-  <string key="schematron.tip.error">{source}: {detail}</string>
   <string key="schematron.tip.saxon_missing">Pravidla Schematron vyžadují Saxon (balíček saxonche), který není nainstalován: python -m pip install --user saxonche. Validace RELAX NG se provádí.</string>
   <string key="schematron.tip.no_rules">Žádná pravidla Schematron v: {sources}</string>
   <string key="schematron.tip.disabled">Validace je pro tento projekt vypnutá: deklarovaná pravidla Schematron se nekontrolují.</string>
   <string key="schematron.panel.rules_error">Chybná pravidla Schematron ({source}): {detail}</string>
   <string key="schematron.panel.saxon_missing">Pravidla Schematron nebyla zkontrolována: Saxon (balíček saxonche) není nainstalován.</string>
+  <string key="schematron.tip.phase">{name} (fáze {phase})</string>
+  <string key="schematron.rules.missing">Soubor pravidel nenalezen: {detail}</string>
+  <string key="schematron.rules.malformed">Soubor pravidel není správně utvořený: {detail}</string>
+  <string key="schematron.rules.phase">Neznámá fáze „{phase}“; fáze souboru: {phases}</string>
+  <string key="schematron.rules.xpath">Chybný výraz XPath: {detail}</string>
+  <string key="schematron.rules.compile">Chybná pravidla: {detail}</string>
+  <string key="schematron.rules.assembly">Nekonzistentní pravidla: {detail}</string>
+  <string key="schematron.rules.element">Prvek „{name}“ není na tomto místě v „{parent}“ povolen</string>
+  <string key="schematron.rules.attribute">Atribut „{name}“ není u „{parent}“ povolen</string>
+  <string key="schematron.rules.required">Atribut „{name}“ je u „{parent}“ povinný</string>
+  <string key="schematron.rules.runtime">Chyba při provádění pravidel: {detail}</string>
+  <string key="schematron.rules.declaration">Deklaraci Schematron nelze vyřešit: {detail}</string>
+  <string key="schematron.rules.add.title">Soubor pravidel</string>
+  <string key="schematron.rules.add.text">„{name}“ není dokumentem projektu. Přidat jej do dokumentů projektu a zobrazit?</string>
+  <string key="schematron.rules.outside">„{name}“ je mimo složku projektu: ve Variansu se neotevře ({path}).</string>
   <string key="file.save_anyway">Přesto uložit</string>
   <string key="file.save_malformed.title">XML není správně utvořené</string>
   <string key="file.save_malformed.text">Dokument XML není správně utvořený. Přesto jej můžete uložit, abyste nepřišli o práci, a opravit jej později.
@@ -700,8 +715,11 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="documents.unsaved.text">Následující dokumenty obsahují neuložené změny:</string>
   <string key="documents.save_all">Uložit vše</string>
   <string key="documents.menu">Dokumenty XML / XSLT projektu…</string>
-  <string key="documents.add.menu">Přidat dokument XML nebo XSLT…</string>
-  <string key="documents.add.title">Přidat do projektu dokument XML nebo šablonu XSLT</string>
+  <string key="documents.add.menu">Přidat dokument XML, XSLT nebo Schematron…</string>
+  <string key="documents.add.title">Přidat do projektu dokument XML, šablonu XSLT nebo soubor Schematron</string>
+  <string key="documents.new_schematron.menu">Nový soubor Schematron…</string>
+  <string key="documents.new_schematron.title">Nový soubor Schematron</string>
+  <string key="documents.new_schematron.example">Položka aparátu bez lemmatu i varianty.</string>
   <string key="documents.new_stylesheet.menu">Nová šablona XSLT…</string>
   <string key="documents.new_stylesheet.title">Nová šablona XSLT</string>
   <string key="documents.new_stylesheet.version">Verze XSLT šablony:</string>
@@ -930,6 +948,22 @@ Importuje šablonu {name} konsorcia TEI. Parametry (xsl:param) a pravidla (xsl:t
   <string key="xslt_check.message.valid">Kontrola XSLT: šablona je v pořádku.</string>
   <string key="file.save_xslt_invalid.title">Chybná šablona XSLT</string>
   <string key="file.save_xslt_invalid.text">Šablona je správně utvořená, ale její kompilace hlásí {count} chyb(u). Můžete ji uložit a chyby opravit později.
+
+Přesto uložit?</string>
+  <string key="schematron_check.action">Zkontrolovat pravidla Schematron</string>
+  <string key="schematron_check.action.tip">Zkontrolovat zobrazený soubor Schematron bez jeho použití: struktura ISO Schematron a výrazy XPath (F8)</string>
+  <string key="schematron_check.panel.title">Kontrola pravidel Schematron</string>
+  <string key="schematron_check.panel.valid">Pravidla Schematron jsou v pořádku.</string>
+  <string key="schematron_check.panel.invalid">{count} chyb(a) v pravidlech Schematron. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="schematron_check.panel.malformed">Soubor Schematron není správně utvořený XML. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="schematron_check.panel.saxon_missing">Výrazy XPath nebyly zkontrolovány: Saxon (balíček saxonche) není nainstalován.</string>
+  <string key="schematron_check.status.running">Schematron: kontrola…</string>
+  <string key="schematron_check.status.valid">Pravidla Schematron v pořádku ✓</string>
+  <string key="schematron_check.status.invalid">Pravidla Schematron: {count} chyb(a)</string>
+  <string key="schematron_check.status.malformed">Schematron: chybně utvořený XML</string>
+  <string key="schematron_check.message.valid">Kontrola Schematron: pravidla jsou v pořádku.</string>
+  <string key="file.save_schematron_invalid.title">Chybná pravidla Schematron</string>
+  <string key="file.save_schematron_invalid.text">Soubor je správně utvořený, ale jeho kontrola hlásí {count} chyb(u). Můžete jej uložit a chyby opravit později.
 
 Přesto uložit?</string>
   <string key="transform.copy_name">{name} (kopie)</string>

@@ -319,6 +319,7 @@
   <string key="rng.origin.xinclude">XInclude</string>
   <string key="rng.origin.schematron">Schematron</string>
   <string key="rng.origin.xslt">XSLT</string>
+  <string key="rng.origin.schematron_rules">Schematron (правила)</string>
   <string key="rng.column.line">Строка</string>
   <string key="rng.column.column">Столбец</string>
   <string key="rng.column.message">Сообщение</string>
@@ -360,12 +361,26 @@
   <string key="schematron.status.saxon_missing">Schematron: нет Saxon</string>
   <string key="schematron.status.disabled">Schematron: не проверяется</string>
   <string key="schematron.tip.sources">Применены правила Schematron: {sources}</string>
-  <string key="schematron.tip.error">{source}: {detail}</string>
   <string key="schematron.tip.saxon_missing">Для правил Schematron нужен Saxon (пакет saxonche), он не установлен: python -m pip install --user saxonche. Проверка RELAX NG выполняется.</string>
   <string key="schematron.tip.no_rules">Нет правил Schematron в: {sources}</string>
   <string key="schematron.tip.disabled">Проверка для этого проекта отключена: объявленные правила Schematron не проверяются.</string>
   <string key="schematron.panel.rules_error">Ошибки в правилах Schematron ({source}): {detail}</string>
   <string key="schematron.panel.saxon_missing">Правила Schematron не проверены: Saxon (пакет saxonche) не установлен.</string>
+  <string key="schematron.tip.phase">{name} (фаза {phase})</string>
+  <string key="schematron.rules.missing">Файл правил не найден: {detail}</string>
+  <string key="schematron.rules.malformed">Файл правил сформирован некорректно: {detail}</string>
+  <string key="schematron.rules.phase">Неизвестная фаза «{phase}»; фазы файла: {phases}</string>
+  <string key="schematron.rules.xpath">Ошибка в выражении XPath: {detail}</string>
+  <string key="schematron.rules.compile">Ошибка в правилах: {detail}</string>
+  <string key="schematron.rules.assembly">Несогласованные правила: {detail}</string>
+  <string key="schematron.rules.element">Элемент «{name}» не допускается в этом месте в «{parent}»</string>
+  <string key="schematron.rules.attribute">Атрибут «{name}» не допускается у «{parent}»</string>
+  <string key="schematron.rules.required">Атрибут «{name}» обязателен у «{parent}»</string>
+  <string key="schematron.rules.runtime">Ошибка при выполнении правил: {detail}</string>
+  <string key="schematron.rules.declaration">Не удаётся разрешить объявление Schematron: {detail}</string>
+  <string key="schematron.rules.add.title">Файл правил</string>
+  <string key="schematron.rules.add.text">«{name}» не является документом проекта. Добавить его в документы проекта, чтобы показать?</string>
+  <string key="schematron.rules.outside">«{name}» находится вне папки проекта и не открывается в Varians ({path}).</string>
   <string key="file.save_anyway">Всё равно сохранить</string>
   <string key="file.save_malformed.title">XML сформирован некорректно</string>
   <string key="file.save_malformed.text">Документ XML сформирован некорректно. Его всё равно можно сохранить, чтобы не потерять работу, и исправить позже.
@@ -700,8 +715,11 @@
   <string key="documents.unsaved.text">В следующих документах есть несохранённые изменения:</string>
   <string key="documents.save_all">Сохранить все</string>
   <string key="documents.menu">XML-/XSLT-документы проекта…</string>
-  <string key="documents.add.menu">Добавить XML- или XSLT-документ…</string>
-  <string key="documents.add.title">Добавить в проект XML-документ или таблицу стилей XSLT</string>
+  <string key="documents.add.menu">Добавить XML-, XSLT- или Schematron-документ…</string>
+  <string key="documents.add.title">Добавить в проект XML-документ, таблицу стилей XSLT или файл Schematron</string>
+  <string key="documents.new_schematron.menu">Новый файл Schematron…</string>
+  <string key="documents.new_schematron.title">Новый файл Schematron</string>
+  <string key="documents.new_schematron.example">Запись аппарата без леммы и чтения.</string>
   <string key="documents.new_stylesheet.menu">Новая таблица стилей XSLT…</string>
   <string key="documents.new_stylesheet.title">Новая таблица стилей XSLT</string>
   <string key="documents.new_stylesheet.version">Версия XSLT таблицы стилей:</string>
@@ -930,6 +948,22 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="xslt_check.message.valid">Проверка XSLT: таблица стилей корректна.</string>
   <string key="file.save_xslt_invalid.title">Таблица стилей XSLT содержит ошибки</string>
   <string key="file.save_xslt_invalid.text">Таблица стилей корректна как XML, но при компиляции найдено ошибок: {count}. Можно сохранить её и исправить ошибки позже.
+
+Всё равно сохранить?</string>
+  <string key="schematron_check.action">Проверить правила Schematron</string>
+  <string key="schematron_check.action.tip">Проверить показанный файл Schematron, не применяя его: структура ISO Schematron и выражения XPath (F8)</string>
+  <string key="schematron_check.panel.title">Проверка правил Schematron</string>
+  <string key="schematron_check.panel.valid">Правила Schematron корректны.</string>
+  <string key="schematron_check.panel.invalid">Ошибок в правилах Schematron: {count}. Дважды щёлкните по ошибке, чтобы перейти к строке.</string>
+  <string key="schematron_check.panel.malformed">Файл Schematron не является корректным XML. Дважды щёлкните по ошибке, чтобы перейти к строке.</string>
+  <string key="schematron_check.panel.saxon_missing">Выражения XPath не проверены: Saxon (пакет saxonche) не установлен.</string>
+  <string key="schematron_check.status.running">Schematron: проверка…</string>
+  <string key="schematron_check.status.valid">Правила Schematron корректны ✓</string>
+  <string key="schematron_check.status.invalid">Правила Schematron: ошибок {count}</string>
+  <string key="schematron_check.status.malformed">Schematron: некорректный XML</string>
+  <string key="schematron_check.message.valid">Проверка Schematron: правила корректны.</string>
+  <string key="file.save_schematron_invalid.title">Правила Schematron содержат ошибки</string>
+  <string key="file.save_schematron_invalid.text">Файл корректен как XML, но при проверке найдено ошибок: {count}. Можно сохранить его и исправить ошибки позже.
 
 Всё равно сохранить?</string>
   <string key="transform.copy_name">{name} (копия)</string>

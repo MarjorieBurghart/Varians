@@ -325,3 +325,88 @@ qu'XPath 1.0 taisait : elle est alors signalée comme règle incorrecte) ;
 phase par défaut seulement, `phase` d'une déclaration ignoré ; ni
 Schematron 1.5, ni règles d'un XSD ; un `document()` d'une règle lit les
 fichiers locaux.
+
+## V0.9.2.4 — phases, règles incorrectes, fichiers `.sch`
+
+**Phases.** Une source de règles est un `SchematronSource(path, phase)`
+(`schema_resolution`) : phase vide pour le RNG employé, celle de
+l'attribut `phase` (`XmlModelDeclaration.phase`) pour une déclaration. Une
+déclaration du même fichier avec une phase remplace la phase de la source
+déjà retenue : la TEI déclarée avec `phase="#ALL"` n'est vérifiée qu'une fois.
+`schematron.compiled(path, phase)` garde une feuille compilée par couple
+(chemin, phase) et passe `schxslt:phase` au transpileur (`#DEFAULT` si la
+phase est vide). Phases acceptées : vide, `#DEFAULT`, `#ALL`, ou l'identifiant
+d'un `sch:phase` du fichier ou d'un fichier inclus ; sinon (et pour un
+`defaultPhase` inconnu) erreur des règles `phase`, avec la liste des phases :
+SchXslt2, lui, ne garderait aucune règle sans rien dire. Le processus reçoit
+`"schematron": [[chemin, phase], …]` (un chemin seul reste accepté).
+
+**Règles incorrectes structurées.** `SchematronReport.errors` et
+`ValidationResult.schematron_errors` sont des `ValidationIssue` du domaine
+`SCHEMATRON_RULES` : `file` et `line` de la règle fautive (0 si inconnue),
+`type_name` = code (`missing`, `malformed`, `phase`, `xpath`, `compile`,
+`runtime` ; l'interface ajoute `declaration` pour une déclaration que la
+résolution n'a pas pu suivre, et la vérification d'un `.sch` `assembly`),
+`message` = détail (pour `phase` : la phase, une tabulation, les phases du
+fichier). `result_from_dict` accepte encore la forme `(source, détail)`.
+
+**Panneau.** Une ligne par règle incorrecte, après les messages du document :
+niveau Erreur, origine « Schematron (règles) », message traduit selon le code
+(`schematron.rules.<code>`), colonne Document : le fichier des règles. Elle
+ne compte ni dans la validité, ni dans la couleur de l'onglet, ni dans la
+question d'enregistrement (`_is_error` ignore ce domaine). Double-clic
+(`_open_rules_file`) : un document du projet s'affiche à la ligne ; un
+fichier du dossier du projet peut être ajouté aux documents (question) ; un
+fichier hors du projet est signalé dans la barre d'état. L'info-bulle de
+l'étiquette Schematron nomme la phase de chaque source
+(`schematron.tip.phase`).
+
+**Revalidation.** `_restore_document_view` relance la validation (en
+arrière-plan) quand le jeton du schéma et des règles a changé depuis le
+dernier résultat du document (`_validation_outdated`) : un `.sch`
+enregistré dans Varians est appliqué dès qu'on revient à l'édition.
+
+**Fichiers `.sch` comme documents** (`schematron_check`, `schematron_check_ui`,
+`schematron_completion`, `xml_roots`). Un fichier Schematron affiché
+(`xml_roots.schematron_info`, sinon l'extension `.sch`) est vérifié à la
+place de la validation RELAX NG, comme une feuille XSLT : F8, affichage,
+frappe après F8, enregistrement. Opération du processus
+`{"op": "check_schematron", "text": …, "path": …}` → `schematron_check.check` :
+
+1. bonne formation (domaine `PARSER`) ;
+2. structure d'après `resources/schemas/schematron/iso-schematron.rng`
+   (ISO/IEC 19757-3 2016, copie de lxml complétée de `@severity`, voir son
+   LISEZMOI). Ce schéma est fait d'`interleave` : libxml2 y donne, pour une
+   seule faute, une cascade de messages souvent sans ligne ou trompeurs.
+   `_structure_errors` parcourt donc l'arbre avec le modèle de complétion
+   du schéma (`schematron_completion`, attentif à l'ordre des frères) : une
+   erreur par élément non permis à sa place (`element`), attribut sans
+   espace de noms inconnu (`attribute`), attribut obligatoire absent
+   (`required`, table `_REQUIRED`), message « nom, tabulation, parent ».
+   Les éléments et attributs étrangers sont permis. S'il ne trouve rien,
+   libxml2 sert de repli (`RELAXNGV`, types de données, `IDREF`…) : une
+   référence `IDREF` à un identifiant d'un fichier inclus est retirée ; une
+   référence inconnue, que libxml2 ne situe pas, est donnée à la ligne de
+   l'élément qui la porte. Un fichier inclus (racine autre que
+   `sch:schema`) n'est vérifié que par `_structure_errors` ;
+3. inclusions : un `sch:include` vers un fichier absent → `missing` à sa
+   ligne ;
+4. si rien n'a été trouvé et que la racine est `sch:schema`, compilation
+   (`schematron.check_compilation`) du texte de l'éditeur, base
+   = le chemin du fichier, phase `#ALL`, avec un second transpileur où
+   `schxslt:check-assembled-schema` est vrai et dont les `xsl:message` sont
+   gardés (`set_save_xsl_message`) : erreurs d'assemblage (`assembly`,
+   message de SchXslt2 en anglais, ligne retrouvée d'après la valeur citée,
+   `_ASSEMBLY_SITES`), puis erreur XPath à la ligne de l'expression dans le
+   texte (`_expression_site(…, text)`).
+
+Sans Saxon : étapes 1 à 3, `schematron_error = "saxon_missing"`. Le résultat
+est rangé avec le jeton `("schematron",)`. Complétion : schéma ISO livré,
+préfixe du fichier, éléments étrangers ignorés, valeurs proposées pour
+`severity`, `role`, `queryBinding`.
+
+**Limites** : phase choisie par la déclaration seulement ; l'édition est
+validée avec les règles enregistrées, pas avec le texte non enregistré d'un
+`.sch` ouvert ; la vérification d'un `.sch` suit l'édition 2016 (+
+`@severity`) : `sch:group`, `sch:library`… y sont des erreurs de structure ;
+ni Schematron 1.5, ni règles d'un XSD.

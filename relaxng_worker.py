@@ -18,7 +18,11 @@ descripteur 1 :
   assemblée par XInclude, le texte des parties ouvertes remplaçant celui des
   fichiers (``relaxng_validation.validate_document``) ; avec
   ``"schematron": ["chemin", …]`` (V0.9.2.3), les règles Schematron de ces
-  sources sont appliquées ensuite (``"schema"`` peut alors être vide) ;
+  sources sont appliquées ensuite (``"schema"`` peut alors être vide) ; une
+  source peut être ``["chemin", "phase"]`` (V0.9.2.4) ;
+- ``{"id": 3, "op": "check_schematron", "text": "…", "path": "regles.sch"}``
+  (V0.9.2.4) → ``{"id": 3, "result": {…}}`` : la vérification du texte d'un
+  fichier Schematron (``schematron_check.check``) ;
 - ``{"id": 2, "op": "ping"}`` → ``{"id": 2, "ok": true, "pid": …,
   "qt_loaded": false}`` ;
 - une requête incorrecte → ``{"id": …, "error": "…"}``.
@@ -42,7 +46,25 @@ def result_to_dict(result):
     """``ValidationResult`` → dictionnaire sérialisable en JSON."""
     data = asdict(result)
     data["issues"] = [asdict(issue) for issue in result.issues]
+    data["schematron_errors"] = [asdict(issue) for issue in result.schematron_errors]
     return data
+
+
+def _rules_error(item):
+    """Une règle incorrecte reçue : un ``ValidationIssue``, ou la forme
+    ``(source, détail)`` de la V0.9.2.3."""
+    if isinstance(item, dict):
+        return ValidationIssue(**item)
+    source, detail = item
+    return ValidationIssue(0, 0, "ERROR", str(detail), "SCHEMATRON_RULES", "compile", str(source))
+
+
+def _valid_sources(sources):
+    """Vrai pour une liste de chemins ou de couples ``[chemin, phase]``."""
+    return isinstance(sources, list) and all(
+        (isinstance(item, str) and item) or (
+            isinstance(item, list) and len(item) == 2 and all(isinstance(part, str) for part in item) and item[0])
+        for item in sources)
 
 
 def result_from_dict(data):
@@ -51,8 +73,7 @@ def result_from_dict(data):
     return ValidationResult(bool(data["available"]), bool(data["schema_loaded"]), bool(data["well_formed"]),
                             bool(data["valid"]), issues, str(data.get("error", "")),
                             schematron_rules=tuple(str(path) for path in data.get("schematron_rules", ())),
-                            schematron_errors=tuple((str(source), str(detail))
-                                                    for source, detail in data.get("schematron_errors", ())),
+                            schematron_errors=tuple(_rules_error(item) for item in data.get("schematron_errors", ())),
                             schematron_error=str(data.get("schematron_error", "")))
 
 
@@ -67,9 +88,8 @@ def handle_request(request):
     if op == "validate":
         xml_text, schema = request.get("xml"), request.get("schema")
         sources = request.get("schematron")
-        if sources is not None and not (isinstance(sources, list) and all(
-                isinstance(path, str) and path for path in sources)):
-            return {"id": request_id, "error": "'schematron' must be a list of paths"}
+        if sources is not None and not _valid_sources(sources):
+            return {"id": request_id, "error": "'schematron' must be a list of paths or [path, phase]"}
         if not isinstance(xml_text, str) or not isinstance(schema, str) or not (schema or sources):
             return {"id": request_id, "error": "validate needs 'xml' and 'schema'"}
         parts = request.get("parts")
@@ -79,6 +99,12 @@ def handle_request(request):
         result = validate_document(xml_text, schema or None, request.get("base_url") or None, parts, sources)
         return {"id": request_id, "result": result_to_dict(result),
                 "compilations": relaxng_cache_info()["compilations"]}
+    if op == "check_schematron":
+        text, path = request.get("text"), request.get("path")
+        if not isinstance(text, str) or not isinstance(path, str) or not path:
+            return {"id": request_id, "error": "check_schematron needs 'text' and 'path'"}
+        from schematron_check import check
+        return {"id": request_id, "result": result_to_dict(check(text, path))}
     return {"id": request_id, "error": f"unknown op: {op!r}"}
 
 

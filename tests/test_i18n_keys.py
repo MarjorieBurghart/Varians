@@ -421,6 +421,38 @@ def test_each_help_announces_the_schematron_rules_in_version_0923():
         assert page.index('<section id="v0922">') < page.index('<section id="v0923">'), language
 
 
+def test_each_help_explains_schematron_phases_and_files():
+    """Phase d'une déclaration, règles incorrectes dans le panneau, fichiers
+    .sch dans Varians : ajout, création, vérification, complétion
+    (V0.9.2.4)."""
+    labels = ("rng.origin.schematron_rules", "schematron_check.action", "documents.new_schematron.menu",
+              "documents.add.menu", "schematron.status.rules_error", "rng.column.document")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="schematron">'):]
+        section = section[:section.index("</section>")]
+        for key in labels:
+            assert catalog[key] in section, (language, key)
+        for text in ('phase="lecons"', "<code>#ALL</code>", "<code>#DEFAULT</code>", "<code>defaultPhase</code>",
+                     "<code>xml/regles.sch</code>", "<code>xml/</code>", "<code>severity</code>",
+                     "<code>queryBinding</code>", "<code>sch:group</code>", "apparat.sch"):
+            assert text in section, (language, text)
+
+
+def test_each_help_announces_schematron_phases_and_files_in_version_0924():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0924">'):]
+        version = version[:version.index("</section>")]
+        assert 'href="#schematron"' in version and "<code>phase</code>" in version, language
+        assert catalog["documents.new_schematron.menu"] in version, language
+        assert page.index('<section id="v0923">') < page.index('<section id="v0924">'), language
+
+
 def test_the_documents_menu_names_xml_and_xslt():
     root = ET.parse(ROOT / "i18n" / "fr.xml").getroot()
     catalog = {string.get("key"): string.text for string in root.findall("string")}

@@ -100,6 +100,10 @@ class DocumentIOMixin:
                 if self._displayed_stylesheet() is not None:      # feuille XSLT (xslt_check_ui)
                     errors = sum(1 for issue in rng_result.issues if issue.level != "WARNING")
                     title, message = _t("file.save_xslt_invalid.title"), _t("file.save_xslt_invalid.text", count=errors)
+                elif self._displayed_schematron() is not None:    # règles Schematron (schematron_check_ui)
+                    errors = sum(1 for issue in rng_result.issues if issue.level not in ("WARNING", "INFO"))
+                    title = _t("file.save_schematron_invalid.title")
+                    message = _t("file.save_schematron_invalid.text", count=errors)
                 else:                                             # RELAX NG et Schematron
                     errors = sum(1 for issue in rng_result.issues if issue.level not in ("WARNING", "INFO"))
                     title = _t("file.save_rng_invalid.title")
