@@ -19,6 +19,7 @@ import pytest
 from lxml import etree
 
 import schematron
+from schema_resolution import SchematronSource
 from schematron import SCHXSLT_DIR, compiled, rules_text, validate
 from xml_assembly import assemble
 from xslt_scenarios import saxon_available
@@ -217,6 +218,50 @@ def test_only_the_default_phase_is_checked(tmp_path):
     assert len(validate(_tree(DOC), [sch]).issues) == 2
 
 
+PHASES = """
+  <phase id="vers"><active pattern="lg"/></phase>
+  <phase id="tout"><active pattern="lg"/><active pattern="p"/></phase>
+  <pattern id="lg"><rule context="tei:lg"><assert test="tei:l">Groupe sans vers.</assert></rule></pattern>
+  <pattern id="p"><rule context="tei:p"><report test="true()">Paragraphe.</report></rule></pattern>"""
+
+
+@needs_saxon
+def test_a_phase_chooses_its_patterns(tmp_path):
+    sch = _write(tmp_path, "phases.sch", _sch(PHASES, extra=' defaultPhase="vers"'))
+    assert len(validate(_tree(DOC), [SchematronSource(sch, "tout")]).issues) == 2
+    assert len(validate(_tree(DOC), [SchematronSource(sch, "#ALL")]).issues) == 2
+    for phase in ("", "#DEFAULT"):
+        assert _found(validate(_tree(DOC), [SchematronSource(sch, phase)])) == [(4, "ERROR", "Groupe sans vers.")]
+    # Une source peut aussi être un couple (chemin, phase).
+    assert len(validate(_tree(DOC), [(sch, "tout")]).issues) == 2
+
+
+@needs_saxon
+def test_an_unknown_phase_is_an_error_of_the_rules(tmp_path):
+    sch = _write(tmp_path, "phases.sch", _sch(PHASES))
+    report = validate(_tree(DOC), [SchematronSource(sch, "autre")])
+    assert report.issues == () and report.rules == ()
+    [error] = report.errors
+    # Le message : la phase demandée, puis (après une tabulation) celles du
+    # fichier ; l'interface le met en forme.
+    assert (error.file, error.type_name, error.message) == (str(sch), "phase", "autre\tvers, tout")
+    # Une phase par défaut qui n'existe pas, de même.
+    sch.write_text(_sch(PHASES, extra=' defaultPhase="absente"'), encoding="utf-8")
+    [error] = validate(_tree(DOC), [sch]).errors
+    assert (error.type_name, error.message) == ("phase", "absente\tvers, tout")
+
+
+@needs_saxon
+def test_each_phase_is_compiled_once(tmp_path):
+    sch = _write(tmp_path, "phases.sch", _sch(PHASES))
+    for _ in range(2):
+        validate(_tree(DOC), [SchematronSource(sch, "vers")])
+    assert schematron.cache_info()["compilations"] == 1
+    validate(_tree(DOC), [SchematronSource(sch, "tout")])
+    assert schematron.cache_info()["compilations"] == 2
+    assert compiled(sch, "vers") is compiled(sch, "vers") and compiled(sch, "vers") is not compiled(sch, "tout")
+
+
 @needs_saxon
 def test_role_and_severity_give_the_level(tmp_path):
     asserts = "".join(f'<report test="true()" {attribute}>{attribute}</report>' for attribute in (
@@ -297,10 +342,12 @@ def test_an_incorrect_rule_is_an_error_of_the_rules_not_of_the_document(tmp_path
     report = validate(_tree(DOC), [bad, tei_rng])
     # Les autres règles sont appliquées.
     assert len(report.issues) == 2 and report.rules == (str(tei_rng),)
-    [(source, detail)] = report.errors
-    # Le détail de Saxon (l'expression fautive) : sous Windows, il n'est que
-    # sur la sortie d'erreur (voir test_relaxng_worker).
-    assert source == str(bad) and detail and report.error == ""
+    [error] = report.errors
+    # Une erreur des règles : son fichier, un code ; le détail de Saxon
+    # (l'expression fautive), sous Windows, n'est que sur la sortie d'erreur
+    # (voir test_relaxng_worker).
+    assert error.domain == "SCHEMATRON_RULES" and error.level == "ERROR" and error.type_name == "xpath"
+    assert error.file == str(bad) and error.message and report.error == ""
 
 
 def test_the_detail_of_an_incorrect_rule_gives_its_file_and_line(tmp_path):
@@ -315,12 +362,16 @@ def test_the_detail_of_an_incorrect_rule_gives_its_file_and_line(tmp_path):
     sch = _write(tmp_path, "regles.sch", _sch('<include href="motif.sch"/>'))
     exc = Exception(" Error in {not(tei:l[)} at char 12 in if/@test on line 1 column 1705 of file:///x/:\n"
                     "  XPST0003  Unexpected token ) before ...\n")
-    assert schematron._saxon_text(exc, sch.resolve()) == "motif.sch:3: XPST0003 Unexpected token ) before ..."
-    # Expression introuvable dans la source : elle suit le message.
+    error = schematron._saxon_error(exc, sch.resolve())
+    assert (Path(error.file).name, error.line, error.type_name) == ("motif.sch", 3, "xpath")
+    assert error.message == "XPST0003 Unexpected token ) before ..."
+    # Expression introuvable dans la source : elle suit le message, au
+    # fichier de la source, sans ligne.
     other = Exception(" Error in {count()} at char 5 in if/@test on line 1 column 9 of file:///x/:\n"
                       "  XPST0017  Cannot find a 0-argument function named\n  Q{fn}count()\n")
-    assert schematron._saxon_text(other, sch.resolve()) == (
-        "XPST0017 Cannot find a 0-argument function named Q{fn}count() : count()")
+    error = schematron._saxon_error(other, sch.resolve())
+    assert (Path(error.file).name, error.line, error.type_name) == ("regles.sch", 0, "xpath")
+    assert error.message == "XPST0017 Cannot find a 0-argument function named Q{fn}count() : count()"
 
 
 def test_a_truncated_expression_still_gives_the_line_of_its_rule(tmp_path):
@@ -337,7 +388,8 @@ def test_a_truncated_expression_still_gives_the_line_of_its_rule(tmp_path):
     exc = Exception(" Error in {not(count(tei:lem | tei:rdg) g...} at char 33 in if/@test on line 1 column 2329"
                     " of file:///x/:\n  XPST0003  Unexpected token ) before ...\n")
     # La ligne est celle où finit la balise ouvrante (convention de lxml).
-    assert schematron._saxon_text(exc, sch.resolve()) == "apparat.sch:8: XPST0003 Unexpected token ) before ..."
+    error = schematron._saxon_error(exc, sch.resolve())
+    assert (Path(error.file).name, error.line) == ("apparat.sch", 8)
 
 
 @needs_saxon
@@ -357,8 +409,9 @@ def test_a_missing_or_malformed_source_is_an_error_of_the_rules(tmp_path):
     malformed = _write(tmp_path, "malformee.sch", "<schema xmlns='http://purl.oclc.org/dsdl/schematron'>")
     report = validate(_tree(DOC), [missing, malformed])
     assert report.issues == () and report.rules == ()
-    assert [source for source, _detail in report.errors] == [str(missing), str(malformed)]
-    assert all(detail for _source, detail in report.errors)
+    assert [(error.file, error.line, error.type_name) for error in report.errors] == [
+        (str(missing), 0, "missing"), (str(malformed), 1, "malformed")]
+    assert report.errors[1].message
 
 
 @needs_saxon
@@ -368,8 +421,8 @@ def test_a_dynamic_error_of_a_rule_is_an_error_of_the_rules(tmp_path):
         '<pattern><rule context="tei:date"><assert test="xs:integer(@when) gt 0">nombre</assert></rule></pattern>'))
     report = validate(_tree(DOC), [sch])
     assert report.issues == ()
-    [(source, detail)] = report.errors
-    assert source == str(sch) and "1290-03-01" in detail
+    [error] = report.errors
+    assert (error.file, error.type_name) == (str(sch), "runtime") and "1290-03-01" in error.message
 
 
 @needs_saxon

@@ -55,10 +55,11 @@ class ValidationResult:
     issues: tuple[ValidationIssue, ...]
     error: str = ""
     # V0.9.2.3, règles Schematron (voir validate_document) : sources
-    # appliquées, ``(source, détail)`` des règles incorrectes, et
+    # appliquées, règles incorrectes (V0.9.2.4 : ``ValidationIssue`` du
+    # domaine SCHEMATRON_RULES, voir schematron.SchematronReport), et
     # « saxon_missing » si Saxon manque.
     schematron_rules: tuple[str, ...] = ()
-    schematron_errors: tuple[tuple[str, str], ...] = ()
+    schematron_errors: tuple[ValidationIssue, ...] = ()
     schematron_error: str = ""
 
 

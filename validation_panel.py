@@ -360,9 +360,11 @@ class ValidationPanelMixin:
     @staticmethod
     def _schematron_problems(resolution, result):
         """``(source, détail)`` des règles incorrectes : déclaration
-        introuvable (résolution) ou règles que Saxon refuse (résultat)."""
-        return tuple(getattr(resolution, "schematron_errors", ()) or ()) + tuple(
-            getattr(result, "schematron_errors", ()) or ())
+        introuvable (résolution) ou règles que Saxon refuse (résultat : des
+        ``ValidationIssue``, « fichier:ligne: message »)."""
+        rules = tuple((issue.file, f"{Path(issue.file).name}:{issue.line}: {issue.message}" if issue.line
+                       else issue.message) for issue in (getattr(result, "schematron_errors", ()) or ()))
+        return tuple(getattr(resolution, "schematron_errors", ()) or ()) + rules
 
     def _show_schematron_result(self, resolution, result):
         """Étiquette Schematron d'après le résultat (None : règles non
@@ -412,8 +414,8 @@ class ValidationPanelMixin:
         ces fichiers ou de ceux qu'ils incluent change (None : inconnu)."""
         if resolution is None:
             return None
-        paths = [resolution.schema_path] if resolution.schema_path is not None else []
-        paths += [path for path in resolution.schematron_sources if path not in paths]
+        paths = [Path(resolution.schema_path)] if resolution.schema_path is not None else []
+        paths += [Path(source) for source in resolution.schematron_sources if Path(source) not in paths]
         try:
             return tuple(relaxng_schema_token(path) for path in paths)
         except Exception:

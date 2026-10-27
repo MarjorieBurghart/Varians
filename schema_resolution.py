@@ -46,6 +46,21 @@ class XmlModelDeclaration:
 
 
 @dataclass(frozen=True)
+class SchematronSource:
+    """Une source de règles Schematron (V0.9.2.4) : un fichier, et la phase
+    que demande sa déclaration (``phase`` de ``xml-model`` ; vide : celle
+    par défaut). Elle s'emploie comme un chemin (``Path(source)``)."""
+    path: Path
+    phase: str = ""
+
+    def __fspath__(self):
+        return os.fspath(self.path)
+
+    def __str__(self):
+        return str(self.path)
+
+
+@dataclass(frozen=True)
 class SchemaResolution:
     mode: str
     schema_path: Path | None
@@ -56,7 +71,7 @@ class SchemaResolution:
     schematron: tuple[XmlModelDeclaration, ...] = ()
     error: str = ""
     # V0.9.2.3 : voir resolve_schema.
-    schematron_sources: tuple[Path, ...] = ()
+    schematron_sources: tuple[SchematronSource, ...] = ()
     schematron_errors: tuple[tuple[str, str], ...] = ()
 
 
@@ -170,12 +185,15 @@ def _path_key(path) -> str:
 
 def _with_schematron_sources(resolution, declarations, xml_path, cache_root, force_refresh, fetched):
     """*resolution* complétée des sources Schematron (voir ``resolve_schema``)."""
-    sources, keys, errors = [], set(), []
+    sources, index, errors = [], {}, []
 
-    def add(path):
-        if _path_key(path) not in keys:
-            keys.add(_path_key(path))
-            sources.append(path)
+    def add(path, phase=""):
+        key = _path_key(path)
+        if key not in index:
+            index[key] = len(sources)
+            sources.append(SchematronSource(path, phase))
+        elif phase:                                  # la phase déclarée l'emporte
+            sources[index[key]] = SchematronSource(sources[index[key]].path, phase)
 
     if resolution.schema_path is not None:
         add(resolution.schema_path)
@@ -195,7 +213,7 @@ def _with_schematron_sources(resolution, declarations, xml_path, cache_root, for
         if not path.is_file():
             errors.append((href, f"Schematron file not found: {path}"))
             continue
-        add(path.resolve())
+        add(path.resolve(), declaration.phase)
     return replace(resolution, schematron_sources=tuple(sources), schematron_errors=tuple(errors))
 
 
@@ -214,8 +232,10 @@ def resolve_schema(
     Les déclarations Schematron sont toujours détectées (``schematron``).
 
     Depuis la V0.9.2.3, ``schematron_sources`` donne, en modes ``auto`` et
-    ``file``, les fichiers dont les règles Schematron seront appliquées, sans
-    doublon : le RNG employé (``schema_path``, ses règles intégrées), puis
+    ``file``, les fichiers dont les règles Schematron seront appliquées
+    (``SchematronSource`` : chemin et phase, V0.9.2.4), sans doublon ; une
+    déclaration qui donne une phase l'impose à la source du même fichier : le
+    RNG employé (``schema_path``, ses règles intégrées), puis
     chaque déclaration Schematron (RNG ou ``.sch``), locale ou distante (mise
     en cache comme un RNG distant, avec ses ``sch:include``). Une même adresse
     n'est téléchargée qu'une fois : la déclaration Schematron de la TEI

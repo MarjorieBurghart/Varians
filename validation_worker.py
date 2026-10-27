@@ -133,7 +133,9 @@ class RelaxNGWorkerClient(QObject):
         if parts is not None:
             request["parts"] = {str(path): text for path, text in parts.items()}
         if schematron:
-            request["schematron"] = [str(path) for path in schematron]
+            # Une source avec sa phase (SchematronSource) : [chemin, phase].
+            request["schematron"] = [[str(getattr(source, "path", source)), getattr(source, "phase", "")]
+                                     for source in schematron]
         entry = _Pending(request, owner, callback)
         if not self._ensure_process():
             self._deliver(request_id, entry, self._validate_here(request), was_pending=False)

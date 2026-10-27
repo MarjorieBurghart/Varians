@@ -156,8 +156,23 @@ def test_incorrect_rules_do_not_make_the_document_invalid(files):
     (files / "fautive.sch").write_text(SCH.replace('test="l"', 'test="l["'), encoding="utf-8")
     result = _validate(files, "<r><lg/></r>", sources=("fautive.sch",))
     assert result.valid and result.issues == () and result.schematron_rules == ()
-    [(source, detail)] = result.schematron_errors
-    assert source == str(files / "fautive.sch") and detail
+    [error] = result.schematron_errors
+    assert (error.domain, error.file, error.type_name) == ("SCHEMATRON_RULES", str(files / "fautive.sch"), "xpath")
+
+
+@needs_saxon
+def test_the_phase_of_a_source_is_used(files):
+    from schema_resolution import SchematronSource
+    (files / "phases.sch").write_text(SCH.replace("<pattern>", '<phase id="vers"><active pattern="vers"/></phase>'
+                                                  '<pattern id="vers">', 1), encoding="utf-8")
+    # Phase « vers » : la règle des paragraphes (un avertissement) est dans
+    # le même groupe ; « #ALL » : toutes.
+    result = validate_document("<r><lg/></r>", files / "essai.rng", files / "edition.xml",
+                               schematron=[SchematronSource(files / "phases.sch", "vers")])
+    assert not result.valid and result.schematron_rules == (str(files / "phases.sch"),)
+    result = validate_document("<r><lg/></r>", files / "essai.rng", files / "edition.xml",
+                               schematron=[SchematronSource(files / "phases.sch", "absente")])
+    assert result.valid and [error.type_name for error in result.schematron_errors] == ["phase"]
 
 
 def test_without_saxon_the_rng_validation_goes_on(files, monkeypatch):

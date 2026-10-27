@@ -162,8 +162,15 @@ def test_schematron_results_survive_a_json_round_trip():
     result = ValidationResult(True, True, True, False, (
         ValidationIssue(2, 0, "ERROR", "Paragraphe trop court.", "SCHEMATRON", "court", "/projet/s02.xml"),
     ), "", schematron_rules=("/projet/regles.sch", "/projet/tei_all.rng"),
-        schematron_errors=(("/projet/fautive.sch", "fautive.sch:3: XPST0003 …"),), schematron_error="")
+        schematron_errors=(ValidationIssue(3, 0, "ERROR", "XPST0003 …", "SCHEMATRON_RULES", "xpath",
+                                           "/projet/fautive.sch"),), schematron_error="")
     assert result_from_dict(json.loads(json.dumps(result_to_dict(result)))) == result
+    # La forme de la V0.9.2.3 : (source, détail).
+    data = result_to_dict(result)
+    data["schematron_errors"] = [["/projet/fautive.sch", "fautive.sch:3: XPST0003 …"]]
+    [error] = result_from_dict(data).schematron_errors
+    assert (error.file, error.message, error.domain) == ("/projet/fautive.sch", "fautive.sch:3: XPST0003 …",
+                                                         "SCHEMATRON_RULES")
     # Une réponse d'une version précédente, sans ces champs.
     old = result_to_dict(ValidationResult(True, True, True, True, ()))
     for name in ("schematron_rules", "schematron_errors", "schematron_error"):
@@ -185,7 +192,17 @@ def test_a_request_can_name_schematron_sources(tmp_path, schema):
     assert result_from_dict(handle_request(request)["result"]).issues[0].message == "Paragraphe trop court."
 
 
-@pytest.mark.parametrize("sources", ["regles.sch", [3], {"a": "b"}])
+@needs_saxon
+def test_a_source_can_name_its_phase(tmp_path, schema):
+    rules = tmp_path / "regles.sch"
+    rules.write_text(SCHEMATRON, encoding="utf-8")
+    request = {"id": 11, "op": "validate", "xml": "<root><p>a</p></root>", "schema": str(schema),
+               "schematron": [[str(rules), "inconnue"]]}
+    result = result_from_dict(handle_request(request)["result"])
+    assert result.valid and [error.type_name for error in result.schematron_errors] == ["phase"]
+
+
+@pytest.mark.parametrize("sources", ["regles.sch", [3], {"a": "b"}, [["a.sch"]], [["a.sch", 2]]])
 def test_schematron_sources_must_be_a_list_of_paths(schema, sources):
     response = handle_request({"id": 10, "op": "validate", "xml": "<root/>", "schema": str(schema),
                                "schematron": sources})
@@ -210,5 +227,6 @@ def test_the_worker_reports_where_an_incorrect_rule_is(tmp_path, schema):
     assert process.returncode == 0, log.read_text(encoding="utf-8", errors="replace")
     result = result_from_dict(json.loads(process.stdout.splitlines()[0])["result"])
     assert result.valid and result.issues == ()
-    [(source, detail)] = result.schematron_errors
-    assert source == str(rules) and detail.startswith("fautive.sch:5: XPST0003")
+    [error] = result.schematron_errors
+    assert (error.file, error.line, error.type_name) == (str(rules), 5, "xpath")
+    assert error.message.startswith("XPST0003")
