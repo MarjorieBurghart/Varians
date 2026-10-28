@@ -786,3 +786,38 @@ def test_each_help_announces_version_09281():
         for text in ('href="#lead-witness"', 'href="#app-without-lem"', "<kbd>Ctrl+E</kbd>"):
             assert text in version, (language, text)
         assert page.index('<section id="v0928">') < page.index('<section id="v09281">'), language
+
+
+def test_each_help_explains_the_witness_siglum():
+    """V0.9.2.8.2 : un sigle qui n'est pas un identifiant XML, et son <idno>."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        projects = '<h2 id="projets">' if language == "fr" else '<h2 id="projects">'
+        start = page.index('<p id="witness-siglum">')
+        assert page.index(projects) < start < page.index("<h2", page.index(projects) + 1), language
+        block = page[start:page.index("<h2", start)]
+        for text in ("<code>_1760</code>", "<code>T_2</code>", "<code>siglum</code>", "&lt;idno type=\"siglum\"&gt;",
+                     "#_1760", catalog["menu.project_settings"]):
+            assert text in block, (language, text)
+
+
+def test_each_help_explains_the_pencil_and_f2():
+    """V0.9.2.8.2 : le crayon garde la sélection ; F2 ouvre le paragraphe de la sélection."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        start = page.index('<p id="fragment-selection">')
+        paragraph = page[start:page.index("</p>", start)]
+        assert "✎" in paragraph and "<kbd>F2</kbd>" in paragraph, language
+        f8 = page.index("<tr><td>F8</td>")
+        assert page.rindex("<tr>", 0, f8) == page.index("<tr><td>F2</td>"), language
+
+
+def test_each_help_announces_version_09282():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = _help_section(page, "v09282")
+        for text in ('href="#witness-siglum"', 'href="#fragment-selection"', "<kbd>F2</kbd>", "<code>siglum</code>"):
+            assert text in version, (language, text)
+        assert page.index('<section id="v09281">') < page.index('<section id="v09282">'), language

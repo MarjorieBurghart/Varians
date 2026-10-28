@@ -22,6 +22,9 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Menu ▾ de tous les onglets (V0.9.2.8) | `document_tabs.py` | `gui/test_gui_document_tabs_menu.py` |
 | Bouton au livre : mener l'édition ou feuilleter (V0.9.2.8.1) | `manuscript_panel.py`, `witness_workspace.py`, `resources/icons/feuilleter.svg` | `gui/test_gui_witness_lead.py` |
 | Choix de l'élément de Ctrl+E (V0.9.2.8.1) | `completion_ui.CompletionDialog` | `gui/test_gui_ctrl_e_choice.py` |
+| Sigle et identifiant d'un témoin (V0.9.2.8.2) | `witness_ids.py`, `project_config.py`, `project_management.py`, `project_dialogs.py` | `test_witness_siglum.py`, `test_witness_siglum_outputs.py`, `gui/test_gui_witness_siglum.py`, `gui/test_gui_witness_siglum_display.py` |
+| Crayon ✎ et F2 de la vue XSLT / CSS (V0.9.2.8.2) | `formatted_view.py` | `gui/test_gui_pencil_selection.py` |
+| Contenu des publications (V0.9.2.8.2) | `.gitattributes`, `tests/data/exemple`, `web_viewer/generator.py` | `test_release_contents.py` |
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
@@ -320,3 +323,15 @@ Fonctionnement : aide, sections « Suivre un manuscrit dans son propre ordre » 
 - `witness_workspace` : `_load_leading_witnesses`, `_witness_lead_changed` (réglage local `projectView/…/witnessLeadsEdition`, état de chaque témoin) ; `editeur_tei` applique l'état à la création des panneaux, par défaut enfoncé pour le pivot seul. Les tests du parcours des témoins (`test_gui_witness_route.py`, `test_gui_witness_pages_route.py`) enfoncent le bouton de tous les panneaux.
 - `apparatus_xpath.app_without_lem_xpath` ; `apparatus_ui.ApparatusDebugDialog.no_lem_radio`, troisième choix, disponible sans `<listWit>`.
 - `completion_ui.CompletionDialog` (mode `allow_custom`, Ctrl+E) : pas de présélection ; `eventFilter` (Tab, ↓ : première entrée) ; `_accept_current` insère l'entrée sélectionnée, sinon le texte saisi. Ctrl+Espace (présélection de la première entrée) ne change pas.
+
+## V0.9.2.8.2 — sigles des témoins, crayon et F2, projet de test
+
+Fonctionnement : aide, « Sigle et identifiant d'un témoin » (`witness-siglum`, fin de la section Projets), paragraphe « Sélections partagées avec l'éditeur de fragment » (`fragment-selection`), raccourci F2.
+
+- `witness_ids.py` (nouveau, sans Qt) : `is_xml_id` (NCName, XML 1.0 5e éd.), `witness_id_for_siglum` (caractère interdit → « _ », « _ » devant un sigle qui ne commence pas par une lettre).
+- `WitnessConfig.siglum`, `WitnessDraft.siglum` (vides si le sigle est l'identifiant), `display_siglum` ; attribut facultatif `siglum` de `<witness>` dans `project.xml` ; `<idno type="siglum">` dans le `<listWit>` de `minimal_tei_text`.
+- `project_dialogs.WitnessEditDialog` : `witness_id()` (identifiant d'origine tant que le sigle n'a pas changé), `xml_id_hint` ; `WitnessTable` : sigle en colonne 0, identifiant et sigle en données (`UserRole + 1`, `UserRole + 2`), `_identity_conflict`.
+- Affichage : `MainWindow.witness_sigla`, `witness_siglum()` (barre d'état, structure, diagnostic, témoin détaché, menus, `transform_ui`, `apparatus_ui` avec `sigla`) ; `WitnessDiagnostic.siglum`.
+- Sorties : `f:sigle` dans `rendering/apparat-commun.xsl` (Édition critique, apparat en notes), modèle `sigles` dans `rendering/tei-to-html.xsl` ; `legacy_v11_core.extract_witness_labels` laisse l'`<idno>` de côté ; viewer : `siglum` dans les données d'un témoin s'il diffère, `siglumOf` dans les messages. `diagnostic_rows` accepte le sigle dans `meta.witness` et `meta.base_witness`.
+- `formatted_view` : `ClickablePreview.mousePressEvent` retient la sélection au clic sur le crayon (`take_selection_before_pencil`) ; `edit_paragraph_action` (F2, `WidgetShortcut` sur l'aperçu), `edit_selected_paragraph`, `_edit_paragraph` (ne recharge pas un fragment modifié).
+- Projet de test dans `tests/data/exemple` (`corpus_data.copy_example`) ; `.gitattributes` : `/tests export-ignore` ; `MainWindow(project_path)` sans projet par défaut ; `web_viewer.generator.main([])` rend 2.

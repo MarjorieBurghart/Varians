@@ -499,3 +499,30 @@ se régénère depuis le projet. Sans argument, `python -m web_viewer.generator`
 n'ouvre plus de projet par défaut : il rappelle qu'il faut lui donner un
 `project.xml` et rend le code 2. `generer_viewer_web.bat` passe au
 générateur le fichier qu'on dépose sur lui.
+
+## V0.9.2.8.2 — Sigle et identifiant d'un témoin
+
+L'attribut `id` de `<witness>` est l'identifiant XML du témoin : `xml:id` de
+son `<witness>` dans la TEI, cible de `@wit` et `@edRef`, clé du témoin dans
+Varians. Un attribut facultatif `siglum` garde le sigle saisi quand il n'est
+pas un identifiant XML ; Varians l'affiche à la place de l'identifiant :
+
+```xml
+<witness id="_1760" siglum="1760" label="Troyes 1760" alignment="alignments/_1760.json" />
+```
+
+La règle (`witness_ids.witness_id_for_siglum`, sans Qt) : un sigle qui est
+un NCName est l'identifiant lui-même ; sinon chaque caractère interdit
+devient « _ », et un « _ » est ajouté devant si le sigle ne commence pas par
+une lettre ou « _ » (« 1760 » → `_1760`, « T 2 » → `T_2`). La boîte du
+témoin montre l'identifiant tiré du sigle ; un sigle inchangé garde
+l'identifiant du témoin ; deux témoins ne peuvent avoir ni le même sigle, ni
+le même identifiant. Sans `siglum`, le sigle est l'identifiant : un projet
+existant ne change pas. Le libellé vide prend le sigle.
+
+Dans l'édition créée avec le projet, un tel témoin porte son sigle dans un
+`<idno type="siglum">`, que lisent les feuilles livrées et le viewer web :
+
+```xml
+<witness xml:id="_1760"><idno type="siglum">1760</idno>Troyes 1760</witness>
+```
