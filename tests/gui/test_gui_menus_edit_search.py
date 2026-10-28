@@ -42,7 +42,7 @@ def test_the_edit_and_search_menus_follow_the_file_menu(open_window, example_pro
     assert _entries(window.edit_menu) == [
         (_tr("edit.undo"), "Ctrl+Z"), (_tr("edit.redo"), "Ctrl+Y"),
         (_tr("edit.cut"), "Ctrl+X"), (_tr("edit.copy"), "Ctrl+C"), (_tr("edit.paste"), "Ctrl+V"),
-        (_tr("edit.select_all"), "Ctrl+A"), (_tr("edit.format_xml"), ""),
+        (_tr("edit.select_all"), "Ctrl+A"), (_tr("edit.format_xml"), ""), (_tr("references.action"), ""),
     ]
     assert window.action_format_xml in window.edit_menu.actions()
     assert _entries(window.search_menu) == [
@@ -50,8 +50,9 @@ def test_the_edit_and_search_menus_follow_the_file_menu(open_window, example_pro
         (_tr("search.replace"), "Ctrl+H"), (_tr("search.case"), ""), (_tr("search.regex"), ""), (_tr("search.xpath"), "Ctrl+Shift+F"),
     ]
     # La barre d'outils garde ses autres boutons, sous leur libellé court ;
-    # « Indenter » n'est plus que dans le menu Éditer.
+    # « Indenter » et « Références » ne sont plus que dans le menu Éditer.
     assert window.action_format_xml not in toolbar.actions()
+    assert window.action_check_references not in toolbar.actions()
     for action, key in ((window.action_xpath_search, "xpath.action"),
                         (window.action_search, "toolbar.search"), (window.action_find_next, "toolbar.next")):
         assert toolbar.widgetForAction(action).text() == _tr(key)

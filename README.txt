@@ -1,12 +1,13 @@
 VARIANS V0.9.2.8 — MENUS ÉDITER ET RECHERCHER, CHERCHER ET REMPLACER
 
 • Deux menus après « Fichier » : « Éditer » (Annuler Ctrl+Z, Refaire
-  Ctrl+Y, Couper, Copier, Coller, Sélectionner tout, Indenter le XML ; sur
-  le champ qui a le focus, sinon sur le XML) et « Rechercher » (Recherche
+  Ctrl+Y, Couper, Copier, Coller, Sélectionner tout, Indenter le XML,
+  Références ; sur le champ qui a le focus, sinon sur le XML) et « Rechercher » (Recherche
   simple Ctrl+F, Occurrence précédente Maj+F3, Occurrence suivante F3,
   Chercher et remplacer… Ctrl+H, Respecter la casse, Expressions
   régulières, Recherche XPath Ctrl+Maj+F). La barre d'outils garde ses
-  boutons, sauf « Indenter », qui n'est plus que dans le menu Éditer.
+  boutons, sauf « Indenter » et « Références », qui ne sont plus que dans
+  le menu Éditer.
 • Respecter la casse et Expressions régulières : options du menu, reprises
   par les boutons « Aa » et « .* » près des champs de recherche du XML et
   du fragment, retenues d'une session à l'autre. Expressions de Python

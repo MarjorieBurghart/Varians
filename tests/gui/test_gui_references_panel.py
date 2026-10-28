@@ -46,11 +46,11 @@ def _double_click(window, qtbot, row):
     qtbot.mouseDClick(table.viewport(), Qt.MouseButton.LeftButton, pos=rect.center())
 
 
-def test_toolbar_command_follows_xpath_and_reports_the_example_as_resolved(open_window, example_project):
+def test_the_edit_menu_command_reports_the_example_as_resolved(open_window, example_project):
     window = open_window(example_project)
-    actions = window.main_toolbar.actions()
-    index = actions.index(window.action_xpath_search)
-    assert actions[index + 1] is window.action_check_references
+    # V0.9.2.8 : la commande est à la fin du menu Éditer, plus dans la barre d'outils.
+    assert window.edit_menu.actions()[-1] is window.action_check_references
+    assert window.action_check_references not in window.main_toolbar.actions()
     assert window.action_check_references.text() == tr("references.action")
 
     window.action_check_references.trigger()

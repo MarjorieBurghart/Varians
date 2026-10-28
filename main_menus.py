@@ -97,13 +97,9 @@ class MainMenusMixin:
             _t("toolbar.validate_rng"), "F8", self.validate_relaxng_manual, _t("toolbar.validate_rng.tip")
         )
         # XPath vient du menu Rechercher (V0.9.2.8), sous son libellé court
-        # (iconText) ; Indenter n'est plus que dans le menu Éditer.
+        # (iconText) ; Indenter et Références ne sont plus que dans le menu Éditer.
         tb.addAction(self.action_validate_rng)
-        self.action_check_references = self._make_action(
-            _t("references.action"), "", self.check_references, _t("references.action.tip")
-        )
         tb.addAction(self.action_xpath_search)
-        tb.addAction(self.action_check_references)
         xml_gap = QWidget()
         xml_gap.setFixedWidth(12)
         tb.addWidget(xml_gap)
@@ -218,6 +214,9 @@ class MainMenusMixin:
         self.action_format_xml = self._make_action(
             _t("edit.format_xml"), "", self.format_xml_source, _t("toolbar.format_xml.tip")
         )
+        self.action_check_references = self._make_action(
+            _t("references.action"), "", self.check_references, _t("references.action.tip")
+        )
         menu.addAction(self.action_undo)
         menu.addAction(self.action_redo)
         menu.addSeparator()
@@ -228,6 +227,9 @@ class MainMenusMixin:
         menu.addAction(self.action_select_all)
         menu.addSeparator()
         menu.addAction(self.action_format_xml)
+        menu.addAction(self.action_check_references)
+        # Les infobulles disent ce que font Indenter et Références.
+        menu.setToolTipsVisible(True)
         menu.aboutToShow.connect(self._update_edit_actions)
 
     def _edit_action(self, key, shortcut, method):

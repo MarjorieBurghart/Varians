@@ -676,3 +676,19 @@ def test_each_help_has_a_quick_reference_of_regular_expressions():
                      "<code>mic?hi</code>", "<code>[uv]ox</code>",
                      'href="https://docs.python.org/3/library/re.html"'):
             assert text in table, (language, text)
+
+
+def test_each_help_names_references_as_a_command_of_the_edit_menu():
+    """V0.9.2.8 : « Références » est la dernière commande du menu Éditer,
+    plus un bouton de la barre d'outils."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        command = f"<strong>{catalog['menu.edit']} → {catalog['references.action']}</strong>"
+        references = _help_section(page, "references")
+        assert command in references, language
+        assert page.count(command) == 2, language
+        edit = _help_section(page, "search-replace").split("</li>")[0]
+        separator = "、" if language == "ja" else ", "
+        assert f"{catalog['edit.format_xml']}{separator}{catalog['references.action']}" in edit, language
