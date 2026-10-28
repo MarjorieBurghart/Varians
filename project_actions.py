@@ -248,7 +248,7 @@ class ProjectActionsMixin:
                     continue
                 choice = QMessageBox.question(
                     self, _t('iiif.prune.title'),
-                    _t('iiif.prune.question', witness=w.label, count=len(candidates),
+                    _t('iiif.prune.question', witness=w.display_title, count=len(candidates),
                        ids=', '.join(candidates[:8]) + ('…' if len(candidates) > 8 else '')),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                     QMessageBox.StandardButton.No,

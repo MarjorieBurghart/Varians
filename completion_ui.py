@@ -2,6 +2,7 @@
 """Complétion XML guidée par le schéma RELAX NG (Ctrl+Espace, attributs) dans la source."""
 from __future__ import annotations
 
+from witness_ids import witness_title
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, Qt
@@ -20,18 +21,6 @@ from xml_references import REFERENCE_ATTRIBUTES, parse_pointer, target_elements
 from xslt_completion import StylesheetCompletionModel
 
 
-
-def witness_description(witness_id, siglum, label):
-    """« sigle · nom affiché » (V0.9.2.8.2) ; le nom affiché seul s'il
-    commence déjà par le sigle ou l'identifiant (« T1 · Troyes 816 »), ou
-    s'il n'est que l'un d'eux."""
-    label = (label or "").strip()
-    if not label:
-        return siglum
-    for name in (siglum, witness_id):
-        if name and label.startswith(name) and not label[len(name):len(name) + 1].isalnum():
-            return label
-    return f"{siglum} · {label}"
 
 class CompletionDialog(QDialog):
     """Petit sélecteur filtrable pour Ctrl+Espace et Ctrl+E.
@@ -487,7 +476,7 @@ class CompletionMixin:
                 descriptions.setdefault(value, description)
         sigla = getattr(self, "witness_sigla", {})
         for witness_id, label in getattr(self, "witness_labels", {}).items():
-            descriptions[f"#{witness_id}"] = witness_description(witness_id, sigla.get(witness_id, witness_id), label)
+            descriptions[f"#{witness_id}"] = witness_title(witness_id, sigla.get(witness_id, witness_id), label)
         context, remaining_pointer_values = adapt_pointer_list_value_context(
             context, text, position, [value for value, _source in items]
         )

@@ -50,3 +50,17 @@ def witness_id_for_siglum(siglum: str) -> str:
         return ""
     value = "".join(ch if _name_char(ch) else "_" for ch in siglum)
     return value if _start_char(value[0]) else "_" + value
+
+
+def witness_title(witness_id: str, siglum: str, label: str) -> str:
+    """Titre d'un témoin à l'écran : « sigle · nom affiché » ; le nom affiché
+    seul s'il commence déjà par le sigle ou l'identifiant (« T1 · Troyes
+    816 »), ou s'il n'est que l'un d'eux ; le sigle seul sans nom affiché."""
+    label = (label or "").strip()
+    siglum = (siglum or "").strip() or witness_id
+    if not label:
+        return siglum
+    for name in (siglum, witness_id):
+        if name and label.startswith(name) and not label[len(name):len(name) + 1].isalnum():
+            return label
+    return f"{siglum} · {label}"

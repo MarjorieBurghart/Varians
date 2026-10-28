@@ -157,3 +157,18 @@ def test_the_viewer_messages_name_witnesses_by_their_siglum(tmp_path):
             assert not viewer.errors, viewer.errors
         finally:
             browser.close()
+
+
+def test_the_viewer_cards_are_titled_by_siglum_and_label(tmp_path):
+    """En-tête du panneau et titre de « Détails » : « sigle · nom affiché »,
+    sauf si le nom affiché commence déjà par le sigle (projet exemple)."""
+    from project_config import load_project
+    from web_viewer.generator import build_dataset
+    project_xml = copy_example(tmp_path / "exemple")
+    _siglum(project_xml, "P", "P 15940")
+    text = project_xml.read_text(encoding="utf-8").replace('label="P · Paris, BnF, Latin 15940"',
+                                                            'label="Paris, BnF, Latin 15940"')
+    project_xml.write_text(text, encoding="utf-8")
+    data = build_dataset(load_project(project_xml))[0]
+    labels = {w["id"]: w["label"] for w in data["witnesses"]}
+    assert labels == {"T1": "T1 · Troyes 816", "T2": "T2 · Troyes 1760", "P": "P 15940 · Paris, BnF, Latin 15940"}

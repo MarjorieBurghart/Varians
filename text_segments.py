@@ -380,7 +380,7 @@ class TextSegmentsMixin:
         self.action_reload_images.setEnabled(self.has_any_images)
         self.action_choose_witnesses.setEnabled(self.has_any_images)
         valid_pivot_keys = set(state.base_by_key)
-        base_label = self.witness_labels[base]
+        base_label = self.witness_titles[base]
         witnesses = project.witness_by_id
         for w in self.witness_configs:
             panel = self.panels[w.id]

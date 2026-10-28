@@ -96,3 +96,28 @@ def test_the_new_edition_declares_the_siglum_in_an_idno():
     assert witnesses["_1760"].find(f"{TEI}idno").tail == "Troyes 1760"
     assert witnesses["T1"].find(f"{TEI}idno") is None and witnesses["T1"].text == "T1 · Troyes 816"
     assert witnesses["P"].find(f"{TEI}idno") is None and witnesses["P"].text == "P"
+
+
+@pytest.mark.parametrize("wid, siglum, label, expected", [
+    ("T1", "T1", "T1 · Troyes 816", "T1 · Troyes 816"),
+    ("_1760", "1760", "Troyes 1760 (essai)", "1760 · Troyes 1760 (essai)"),
+    ("T", "T", "Troyes", "T · Troyes"),
+    ("T1", "T 1", "T1 · Troyes 816", "T1 · Troyes 816"),
+    ("P", "P", "", "P"),
+    ("_1760", "1760", "1760", "1760"),
+    ("A", "A", "A: Assisi", "A: Assisi"),
+])
+def test_the_title_of_a_witness_starts_with_its_siglum(wid, siglum, label, expected):
+    """« sigle · nom affiché », sauf si le nom affiché commence déjà par le
+    sigle ou l'identifiant, ou n'est que l'un d'eux."""
+    from witness_ids import witness_title
+    assert witness_title(wid, siglum, label) == expected
+
+
+def test_the_witness_config_gives_its_title(tmp_path):
+    path = write_project_xml(tmp_path / "project.xml", _draft(tmp_path, WITNESSES))
+    witnesses = {w.id: w for w in load_project(path).witnesses}
+    assert witnesses["_1760"].display_title == "1760 · Troyes 1760"
+    assert witnesses["T1"].display_title == "T1 · Troyes 816"
+    assert witnesses["P"].display_title == "P"
+    assert WITNESSES[1].display_title == "1760 · Troyes 1760"

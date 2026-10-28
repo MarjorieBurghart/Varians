@@ -355,7 +355,7 @@ def build_dataset(project, display_witness_ids=None):
         raw_pages = (raw_sync_caches.get(w.id) or {}).get('pages', []) or []
         witness_line_sync, diagnostic = _sync_state(w, raw_pages, normalized_pages, is_base,
                                                     base_has_alignment, valid_base_keys)
-        witnesses.append({"id": w.id, "label": w.label,
+        witnesses.append({"id": w.id, "label": w.display_title,
                           "role": "base" if is_base else "secondary",
                           "line_sync": witness_line_sync,
                           "sync_diagnostic": diagnostic,

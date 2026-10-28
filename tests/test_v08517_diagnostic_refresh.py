@@ -298,6 +298,7 @@ def _controller_for_project(proj):
         base_id=proj.base_witness,
         witness_labels={w.id:w.id for w in proj.witnesses},
         witness_siglum=lambda wid:wid,
+        witness_titles={w.id:w.id for w in proj.witnesses},
         _text_witness_ids=lambda:set(),
         # Segment affiché (V0.9.1.1) : l'édition.
         _segment_project=lambda:proj,

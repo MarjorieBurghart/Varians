@@ -336,6 +336,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.witness_labels = {w.id: w.label for w in self.witness_configs}
         # Sigles montrés à l'écran (V0.9.2.8.2) ; le XML garde les identifiants.
         self.witness_sigla = {w.id: w.display_siglum for w in self.witness_configs}
+        self.witness_titles = {w.id: w.display_title for w in self.witness_configs}
         self.lb_base_re = pivot_lb_pattern(self.base_id)
         # Segment des données des témoins : None pour l'édition, sinon un
         # texte synchronisé à part (V0.9.1.1, voir text_segments).
@@ -564,11 +565,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         for w in self.witness_configs:
             panel = ManuscriptPanel(
                 w.id,
-                w.label,
+                w.display_title,
                 self.witness_display_items[w.id],
                 self.base_maps.get(w.id),
                 is_base=w.is_base,
-                base_label=self.witness_labels[self.base_id],
+                base_label=self.witness_titles[self.base_id],
                 project_root=self.project.root_dir,
                 sync_enabled=((self.base_alignment_available and bool(self.base_items)) if w.is_base
                               else bool(self.base_alignment_available and self._secondary_sync_link_counts.get(w.id, 0) > 0)),

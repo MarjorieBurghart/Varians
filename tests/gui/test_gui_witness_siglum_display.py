@@ -150,3 +150,14 @@ def test_the_wit_values_are_described_by_siglum_and_label(open_window, siglum_pr
     assert seen["#P"].endswith("[P 15940 · Paris, BnF, Latin 15940]")
     assert seen["#T2"].endswith("[T2 · Troyes 1760]")
     assert seen["#T1"].endswith("[T1 · Troyes 816]")
+
+
+def test_the_image_viewer_is_titled_by_siglum_and_label(open_window, siglum_project):
+    text = siglum_project.read_text(encoding="utf-8").replace('label="P · Paris, BnF, Latin 15940"',
+                                                              'label="Paris, BnF, Latin 15940"')
+    siglum_project.write_text(text, encoding="utf-8")
+    window = open_window(siglum_project)
+    assert window.panels["P"].label == "P 15940 · Paris, BnF, Latin 15940"
+    assert window.panels["T2"].label == "T2 · Troyes 1760"
+    assert window.panels["T1"].label == "T1 · Troyes 816"
+    assert window.panels["P"].header.title.text() == "P 15940 · Paris, BnF, Latin 15940"

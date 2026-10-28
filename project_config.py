@@ -2,6 +2,7 @@
 """Chargement du fichier de projet de l'éditeur TEI/manuscrits générique."""
 from __future__ import annotations
 
+from witness_ids import witness_title
 from dataclasses import dataclass
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -95,6 +96,11 @@ class WitnessConfig:
     def display_siglum(self) -> str:
         """Sigle montré à l'utilisateur : le sigle saisi, sinon l'identifiant."""
         return self.siglum or self.id
+
+    @property
+    def display_title(self) -> str:
+        """« sigle · nom affiché » (witness_ids.witness_title)."""
+        return witness_title(self.id, self.display_siglum, self.label)
 
 
 @dataclass(frozen=True)

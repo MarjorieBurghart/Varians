@@ -1108,7 +1108,8 @@ def run_pivot_scaffold_dialog(tr, parent, witnesses, base_witness, project_root,
     message = QMessageBox(parent)
     message.setWindowTitle(tr('pivot.preview.title'))
     message.setIcon(QMessageBox.Icon.Question)
-    message.setText(tr('pivot.preview.summary', witness=plan.witness_id,
+    sigla = {w.id: getattr(w, 'display_siglum', w.id) for w in witnesses}
+    message.setText(tr('pivot.preview.summary', witness=sigla.get(plan.witness_id, plan.witness_id),
                        pages=len(plan.pages), lines=plan.line_count if include_lb else 0))
     overview = '\n'.join(f'{x.label} → #{x.surface_id} : {x.line_count if include_lb else 0} lb ({x.evidence})'
                          for x in plan.pages)

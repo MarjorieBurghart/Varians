@@ -71,6 +71,11 @@ class WitnessDraft:
     def display_siglum(self) -> str:
         return (self.siglum or "").strip() or self.id
 
+    @property
+    def display_title(self) -> str:
+        from witness_ids import witness_title
+        return witness_title(self.id, self.display_siglum, self.label)
+
 
 @dataclass
 class ProjectDraft:
@@ -654,7 +659,7 @@ def prepare_iiif_manifests_for_project(project_dir: str | Path, witnesses: list[
             result.append(witness); continue
         source=(getattr(witness, "image_source_value", None) or "").strip()
         if not source:
-            raise ValueError(f"Manifest IIIF manquant pour le témoin {witness.id}.")
+            raise ValueError(f"Manifest IIIF manquant pour le témoin {witness.display_siglum}.")
         raw=getattr(witness, "iiif_manifest_data", None)
         import_manifest(source, iiif_cache_path(project_dir, witness.id), raw=raw)
         result.append(replace(witness, iiif_manifest_data=None))
