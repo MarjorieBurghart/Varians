@@ -389,6 +389,28 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
     return problems
 
 
+# Paramètre du témoin des feuilles d'apparat (édition critique, apparat en
+# notes) : la boîte d'un scénario le propose dans une liste (V0.9.2.7).
+WITNESS_PARAM = "temoin-de-base"
+NO_WITNESS = "aucun"
+
+
+def witness_choices(project) -> list[str]:
+    """Les sigles proposés pour ``temoin-de-base`` : le témoin pivot d'abord,
+    puis les autres témoins du projet, puis ceux que déclare seulement le
+    ``<listWit>`` de l'édition (la feuille vérifie le témoin contre lui)."""
+    from lxml import etree
+    found = [project.base_witness] if project.base_witness else []
+    found += [witness.id for witness in project.witnesses]
+    try:
+        parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=True)
+        root = etree.parse(str(project.edition), parser).getroot()
+        found += root.xpath("//tei:listWit//tei:witness/@xml:id", namespaces={"tei": "http://www.tei-c.org/ns/1.0"})
+    except (OSError, etree.XMLSyntaxError):
+        pass
+    return list(dict.fromkeys(str(sigle).strip() for sigle in found if str(sigle).strip()))
+
+
 def substitute(value, project) -> str:
     """*value*, la valeur d'un paramètre, où ``${pivot}`` (V0.9.2.7) devient
     l'identifiant du témoin pivot du projet, et ``${tei}/`` l'adresse

@@ -187,6 +187,65 @@ def test_the_package_of_a_scenario_is_chosen_and_an_unknown_one_is_kept(open_win
     assert [s.package for s in load_project(sermons_project).transformations] == ["odt", "pdf"]
 
 
+def test_the_witness_parameter_is_chosen_in_a_list(open_window, sermons_project, dialogs):
+    from PySide6.QtWidgets import QComboBox
+    critique = TransformScenario("Critique", "${varians}/edition-critique.xsl", "publications/critique.html",
+                                 engine="saxon", params=(("temoin-de-base", "${pivot}"), ("montrer-folios", "true")))
+    inconnu = replace(critique, name="Inconnu", params=(("temoin-de-base", "#Z"),))
+    window = open_window(_with_scenarios(sermons_project, critique, inconnu))
+    seen = {}
+
+    def edit(row):
+        def action(dialog):
+            dialog.tree.setCurrentItem(dialog.project_group.child(row))
+            dialog.edit_scenario()
+        return action
+
+    def choose(dialog):
+        combo = dialog.params_table.cellWidget(0, 1)
+        seen["combo"] = isinstance(combo, QComboBox) and dialog.params_table.cellWidget(1, 1) is None
+        seen["items"] = [(combo.itemText(i), combo.itemData(i)) for i in range(combo.count())]
+        seen["current"] = combo.currentData()
+        combo.setCurrentIndex(combo.findData("C"))
+        # Un paramètre renommé en temoin-de-base reçoit la liste, et la perd s'il change de nom.
+        dialog.add_param_row("autre", "aucun")
+        dialog.params_table.item(2, 0).setText("temoin-de-base")
+        seen["renamed"] = isinstance(dialog.params_table.cellWidget(2, 1), QComboBox) \
+            and dialog.params_table.cellWidget(2, 1).currentData() == "aucun"
+        dialog.params_table.item(2, 0).setText("autre")
+        seen["back"] = dialog.params_table.cellWidget(2, 1) is None and dialog.params_table.item(2, 1).text() == "aucun"
+        dialog.remove_param_row(2)
+        # Un paramètre ajouté sans valeur puis nommé temoin-de-base : le pivot.
+        dialog.add_param_row("", "")
+        dialog.params_table.item(2, 0).setText("temoin-de-base")
+        seen["empty"] = dialog.params_table.cellWidget(2, 1).currentData()
+        dialog.remove_param_row(2)
+
+    def keep(dialog):
+        combo = dialog.params_table.cellWidget(0, 1)
+        seen["unknown"] = (combo.currentText(), combo.currentData())
+
+    answers = [] if saxon_available() else [("question", QMessageBox.StandardButton.Yes)]
+    dialogs.expect("dialog", _in_list(edit(0)))
+    dialogs.expect("dialog", _scenario(choose))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    dialogs.expect("dialog", _in_list(edit(1)))
+    dialogs.expect("dialog", _scenario(keep))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    assert seen["combo"] and seen["renamed"] and seen["back"]
+    # Le pivot en tête, enregistré ${pivot} ; les autres témoins ; « aucun ».
+    assert seen["items"] == [(tr("transform.param.pivot", witness="A"), "${pivot}"), ("B", "B"), ("C", "C"),
+                             ("D", "D"), ("E", "E"), (tr("transform.param.no_witness"), "aucun")]
+    assert seen["current"] == seen["empty"] == "${pivot}" and seen["unknown"] == ("#Z", "#Z")
+    saved = load_project(sermons_project).transformations
+    assert saved[0].params == (("temoin-de-base", "C"), ("montrer-folios", "true"))
+    assert saved[1].params == (("temoin-de-base", "#Z"),)
+
+
 def test_the_prepass_of_a_scenario_is_shown_and_kept(open_window, sermons_project, dialogs):
     (sermons_project.parent / "rendering" / "avant.xsl").write_text("<xsl:stylesheet/>", encoding="utf-8")
     book = TransformScenario("Livre", "rendering/personnes.xsl", "publications/livre.docx", engine="saxon",

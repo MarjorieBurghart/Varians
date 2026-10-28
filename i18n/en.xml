@@ -1005,6 +1005,8 @@ Save anyway?</string>
   <string key="transform.scenario.params">Parameters:</string>
   <string key="transform.param.name">Name</string>
   <string key="transform.param.value">Value</string>
+  <string key="transform.param.pivot">{witness} (pivot)</string>
+  <string key="transform.param.no_witness">aucun (lemmas only)</string>
   <string key="transform.param.add">Add a parameter</string>
   <string key="transform.param.remove">Remove the parameter</string>
   <string key="transform.browse.file">Source file of the scenario</string>

@@ -39,10 +39,10 @@ from tei_stylesheets_ui import TeiStylesheetsDialog
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
-from xslt_scenarios import (TEI_PREFIX, VARIANS_PREFIX, customization_name, customization_text, included_stylesheets,
-                            predefined_scenarios,
-                            project_sources, resolve_path, saxon_available, scenario_path, scenario_problems,
-                            scenario_request, scenario_source, stylesheet_path)
+from xslt_scenarios import (NO_WITNESS, PIVOT, TEI_PREFIX, VARIANS_PREFIX, WITNESS_PARAM, customization_name,
+                            customization_text, included_stylesheets, predefined_scenarios, project_sources,
+                            resolve_path, saxon_available, scenario_path, scenario_problems, scenario_request,
+                            scenario_source, stylesheet_path, witness_choices)
 
 # Problèmes qui empêchent d'enregistrer un scénario ; les autres (fichier
 # absent, Saxon non installé…) sont signalés, et l'enregistrement reste possible.
@@ -186,8 +186,10 @@ class ScenarioDialog(QDialog):
         self.params_table.setHorizontalHeaderLabels([_t("transform.param.name"), _t("transform.param.value")])
         self.params_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.params_table.verticalHeader().setVisible(False)
+        self._witnesses = None
         for name, value in scenario.params:
             self.add_param_row(name, value)
+        self.params_table.itemChanged.connect(self._param_changed)
         param_buttons = QHBoxLayout()
         self.add_param_btn = QPushButton(_t("transform.param.add"), self)
         self.remove_param_btn = QPushButton(_t("transform.param.remove"), self)
@@ -253,7 +255,47 @@ class ScenarioDialog(QDialog):
         self.params_table.insertRow(row)
         self.params_table.setItem(row, 0, QTableWidgetItem(name))
         self.params_table.setItem(row, 1, QTableWidgetItem(value))
+        self._update_value_widget(row)
         self.params_table.setCurrentCell(row, 0)
+
+    def _param_changed(self, item):
+        if item.column() == 0:
+            self._update_value_widget(item.row())
+
+    def _update_value_widget(self, row):
+        """La valeur de ``temoin-de-base`` se choisit dans une liste (V0.9.2.7) :
+        le témoin pivot en tête (enregistré ``${pivot}``), les autres témoins,
+        « aucun » ; sans valeur, le pivot ; une autre valeur est gardée telle
+        quelle."""
+        name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
+        if name_item is None or value_item is None:
+            return
+        combo = self.params_table.cellWidget(row, 1)
+        if name_item.text().strip() != WITNESS_PARAM:
+            if combo is not None:
+                value_item.setText(combo.currentData())
+                self.params_table.removeCellWidget(row, 1)
+            return
+        if combo is not None:
+            return
+        if self._witnesses is None:
+            self._witnesses = witness_choices(self._project)
+        pivot = self._project.base_witness
+        combo = QComboBox(self.params_table)
+        for witness in self._witnesses:
+            if witness == pivot:
+                combo.addItem(_t("transform.param.pivot", witness=witness), PIVOT)
+            else:
+                combo.addItem(witness, witness)
+        combo.addItem(_t("transform.param.no_witness"), NO_WITNESS)
+        value = value_item.text().strip()
+        if pivot and value in ("", pivot):                    # sans valeur : le pivot
+            value = PIVOT
+        if combo.findData(value) < 0:                         # valeur inconnue : gardée
+            combo.addItem(value, value)
+        combo.setCurrentIndex(combo.findData(value))
+        combo.currentIndexChanged.connect(lambda _index, item=value_item, box=combo: item.setText(box.currentData()))
+        self.params_table.setCellWidget(row, 1, combo)
 
     def remove_param_row(self, row):
         if 0 <= row < self.params_table.rowCount():
@@ -266,8 +308,9 @@ class ScenarioDialog(QDialog):
         for row in range(self.params_table.rowCount()):
             name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
             name = (name_item.text() if name_item else "").strip()
+            combo = self.params_table.cellWidget(row, 1)
             if name and name not in params:
-                params[name] = value_item.text() if value_item else ""
+                params[name] = combo.currentData() if combo is not None else (value_item.text() if value_item else "")
         return tuple(params.items())
 
     def scenario(self):

@@ -1019,6 +1019,8 @@ Přesto uložit?</string>
   <string key="transform.scenario.params">Parametry:</string>
   <string key="transform.param.name">Název</string>
   <string key="transform.param.value">Hodnota</string>
+  <string key="transform.param.pivot">{witness} (pivotní)</string>
+  <string key="transform.param.no_witness">aucun (jen lemmata)</string>
   <string key="transform.param.add">Přidat parametr</string>
   <string key="transform.param.remove">Odebrat parametr</string>
   <string key="transform.browse.file">Zdrojový soubor scénáře</string>

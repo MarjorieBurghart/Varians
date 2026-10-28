@@ -25,8 +25,10 @@ VARIANS V0.9.2.7 — DOCX, ODT, EPUB, HTML EN PLUSIEURS FICHIERS, ÉDITION CRITI
   « Pré-passage TEI → TEI » dans la boîte d'un scénario, écrits dans
   project.xml (attributs package et prepare) ; avec Saxon, les paramètres
   sont passés sans type (« false » pour un xs:boolean) ; ${pivot} et
-  ${tei}/ dans leurs valeurs. Une feuille de Varians copiée dans le projet
-  emporte les feuilles qu'elle inclut.
+  ${tei}/ dans leurs valeurs. Le paramètre temoin-de-base se choisit dans
+  une liste : le témoin pivot en tête (« T1 (pivot) », enregistré
+  ${pivot}), les autres témoins, « aucun ». Une feuille de Varians copiée
+  dans le projet emporte les feuilles qu'elle inclut.
 • Voir XSLT_SCENARIOS.md et l'aide (Édition critique, TEI Stylesheets).
 
 VARIANS V0.9.2.6 — RÈGLES SCHEMATRON : FICHIERS INCLUS NON ENREGISTRÉS

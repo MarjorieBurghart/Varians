@@ -320,6 +320,21 @@ def test_a_stylesheet_names_the_stylesheets_it_includes(tmp_path):
     assert included_stylesheets(tmp_path / "absente.xsl") == []
 
 
+def test_the_witnesses_offered_for_temoin_de_base_start_with_the_pivot(project):
+    from xslt_scenarios import NO_WITNESS, WITNESS_PARAM, witness_choices
+    assert (WITNESS_PARAM, NO_WITNESS) == ("temoin-de-base", "aucun")
+    # Le pivot d'abord, puis les témoins du projet, puis ceux du seul <listWit>.
+    assert witness_choices(project) == ["A", "B", "C", "D", "E"]
+    edition = project.edition
+    text = edition.read_text(encoding="utf-8")
+    edition.write_text(text.replace('<witness xml:id="D">', '<witness xml:id="F">Fictif F.</witness><witness xml:id="D">'),
+                       encoding="utf-8")
+    assert witness_choices(replace(project, base_witness="C")) == ["C", "A", "B", "D", "E", "F"]
+    # Une édition illisible : les témoins du projet.
+    edition.write_text("<TEI", encoding="utf-8")
+    assert witness_choices(project) == ["A", "B", "C", "D", "E"]
+
+
 def test_the_tei_folder_is_substituted_in_the_parameters(project):
     from xslt_scenarios import tei_library
     folder = tei_library().folder

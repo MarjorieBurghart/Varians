@@ -1005,6 +1005,8 @@ Enregistrer quand même ?</string>
   <string key="transform.scenario.params">Paramètres :</string>
   <string key="transform.param.name">Nom</string>
   <string key="transform.param.value">Valeur</string>
+  <string key="transform.param.pivot">{witness} (pivot)</string>
+  <string key="transform.param.no_witness">aucun (lemmes seuls)</string>
   <string key="transform.param.add">Ajouter un paramètre</string>
   <string key="transform.param.remove">Retirer le paramètre</string>
   <string key="transform.browse.file">Fichier source du scénario</string>

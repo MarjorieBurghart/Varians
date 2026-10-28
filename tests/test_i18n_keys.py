@@ -576,6 +576,17 @@ def test_the_apparatus_is_called_by_numbers_and_the_notes_by_letters():
         assert letters > section.index(anchor), language
 
 
+def test_each_help_shows_the_list_of_witnesses_of_the_critical_edition():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="critical-edition">'):]
+        section = section[:section.index("</section>")]
+        assert catalog["transform.param.pivot"].format(witness="T1") in section, language
+        assert catalog["transform.param.no_witness"] in section, language
+
+
 def test_each_help_announces_version_0927():
     for language in LANGUAGES:
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")

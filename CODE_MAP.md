@@ -287,3 +287,4 @@ Fonctionnement : `XSLT_SCENARIOS.md` (« V0.9.2.7 »).
 - `xslt_engines._run_saxon` : paramètres sans type, dossier de travail, pré-passage, deux passes selon le format ; journal `image_skipped`.
 - `transform_ui.py` : sous-groupe `tei_group` (clé `(groupe, rang)` en `UserRole`, `item_for`), sous-menu TEI du bouton Transformer, champs « Format du résultat » et « Pré-passage » de la boîte d'un scénario, copie des feuilles incluses.
 - `rendering/apparat-commun.xsl`, `rendering/apparat-en-notes.xsl`, `rendering/edition-critique.xsl` (nouveaux).
+- `xslt_scenarios.witness_choices`, `WITNESS_PARAM`, `NO_WITNESS` ; `transform_ui.ScenarioDialog._update_value_widget` : liste du paramètre `temoin-de-base`.

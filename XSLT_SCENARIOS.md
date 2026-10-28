@@ -345,6 +345,11 @@ servent aux scénarios prédéfinis « TEI : … ».
   `f:texte-net`, `f:verifier`). Deux séries par division : apparat
   (chiffres) et notes, moins nombreuses (lettres :
   `format-integer(…, 'a')`).
+- **Témoin des feuilles d'apparat** : dans la boîte d'un scénario, la valeur
+  du paramètre `temoin-de-base` (`WITNESS_PARAM`) se choisit dans une liste
+  (`witness_choices` : le pivot, enregistré `${pivot}`, puis les témoins du
+  projet et du `<listWit>` de l'édition ; `aucun`) ; une autre valeur est
+  gardée.
 - **Copie d'une feuille de Varians** (« Ouvrir la feuille ») : avec les
   feuilles qu'elle inclut ou importe par un chemin relatif
   (`xslt_scenarios.included_stylesheets`), sans remplacer un fichier.
