@@ -178,6 +178,16 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="viewer.info.no_line">Žádný řádek.</string>
   <string key="viewer.stats">{witnesses} svědků · {lines} základních řádků · {variants} variant</string>
   <string key="viewer.toc">Obsah</string>
+  <string key="viewer.part.front">Úvodní části</string>
+  <string key="viewer.part.back">Přílohy</string>
+  <string key="viewer.form.sic">Dochované čtení</string>
+  <string key="viewer.form.corr">Oprava</string>
+  <string key="viewer.form.orig">Původní pravopis</string>
+  <string key="viewer.form.reg">Normalizovaný pravopis</string>
+  <string key="viewer.form.abbr">Zkratka</string>
+  <string key="viewer.form.expan">Rozvedení</string>
+  <string key="viewer.form.detail">{label}: {value}</string>
+  <string key="viewer.form.gap">Mezera</string>
   <string key="viewer.language">Jazyk</string>
   <string key="viewer.variant">varianta</string>
   <string key="viewer.note">poznámka</string>

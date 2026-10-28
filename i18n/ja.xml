@@ -178,6 +178,16 @@
   <string key="viewer.info.no_line">行なし。</string>
   <string key="viewer.stats">伝本 {witnesses}件 · ピボット伝本行 {lines}行 · 異読 {variants}件</string>
   <string key="viewer.toc">目次</string>
+  <string key="viewer.part.front">前付け</string>
+  <string key="viewer.part.back">後付け</string>
+  <string key="viewer.form.sic">伝承の読み</string>
+  <string key="viewer.form.corr">訂正</string>
+  <string key="viewer.form.orig">原綴り</string>
+  <string key="viewer.form.reg">正規化された綴り</string>
+  <string key="viewer.form.abbr">略記</string>
+  <string key="viewer.form.expan">展開形</string>
+  <string key="viewer.form.detail">{label}：{value}</string>
+  <string key="viewer.form.gap">欠落</string>
   <string key="viewer.language">言語</string>
   <string key="viewer.variant">異読</string>
   <string key="viewer.note">注記</string>

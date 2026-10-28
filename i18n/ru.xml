@@ -178,6 +178,16 @@
   <string key="viewer.info.no_line">Строки нет.</string>
   <string key="viewer.stats">свидетелей: {witnesses} · строк опорного свидетеля: {lines} · разночтений: {variants}</string>
   <string key="viewer.toc">Содержание</string>
+  <string key="viewer.part.front">Вступительная часть</string>
+  <string key="viewer.part.back">Приложения</string>
+  <string key="viewer.form.sic">Переданное чтение</string>
+  <string key="viewer.form.corr">Исправление</string>
+  <string key="viewer.form.orig">Исходное написание</string>
+  <string key="viewer.form.reg">Нормализованное написание</string>
+  <string key="viewer.form.abbr">Сокращение</string>
+  <string key="viewer.form.expan">Раскрытие</string>
+  <string key="viewer.form.detail">{label}: {value}</string>
+  <string key="viewer.form.gap">Лакуна</string>
   <string key="viewer.language">Язык</string>
   <string key="viewer.variant">разночтение</string>
   <string key="viewer.note">примечание</string>

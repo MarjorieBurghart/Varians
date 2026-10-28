@@ -164,6 +164,16 @@
   <string key="viewer.info.no_line">No line.</string>
   <string key="viewer.stats">{witnesses} witness(es) · {lines} pivot-witness lines · {variants} variants</string>
   <string key="viewer.toc">Contents</string>
+  <string key="viewer.part.front">Front matter</string>
+  <string key="viewer.part.back">Back matter</string>
+  <string key="viewer.form.sic">Transmitted reading</string>
+  <string key="viewer.form.corr">Correction</string>
+  <string key="viewer.form.orig">Original spelling</string>
+  <string key="viewer.form.reg">Regularized spelling</string>
+  <string key="viewer.form.abbr">Abbreviation</string>
+  <string key="viewer.form.expan">Expansion</string>
+  <string key="viewer.form.detail">{label}: {value}</string>
+  <string key="viewer.form.gap">Gap</string>
   <string key="viewer.language">Language</string>
   <string key="viewer.variant">variant</string>
   <string key="viewer.note">note</string>

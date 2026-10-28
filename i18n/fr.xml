@@ -164,6 +164,16 @@
   <string key="viewer.info.no_line">Aucune ligne.</string>
   <string key="viewer.stats">{witnesses} témoin(s) · {lines} lignes du témoin pivot · {variants} variantes</string>
   <string key="viewer.toc">Sommaire</string>
+  <string key="viewer.part.front">Préliminaires</string>
+  <string key="viewer.part.back">Annexes</string>
+  <string key="viewer.form.sic">Leçon transmise</string>
+  <string key="viewer.form.corr">Correction</string>
+  <string key="viewer.form.orig">Graphie originale</string>
+  <string key="viewer.form.reg">Graphie normalisée</string>
+  <string key="viewer.form.abbr">Abréviation</string>
+  <string key="viewer.form.expan">Développement</string>
+  <string key="viewer.form.detail">{label} : {value}</string>
+  <string key="viewer.form.gap">Lacune</string>
   <string key="viewer.language">Langue</string>
   <string key="viewer.variant">variante</string>
   <string key="viewer.note">note</string>
