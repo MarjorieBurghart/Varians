@@ -7,7 +7,6 @@ l'enregistrement.
 """
 from __future__ import annotations
 
-import shutil
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import replace
@@ -26,15 +25,8 @@ from project_management import (  # noqa: E402
 
 
 def _copy_example(tmp_path) -> Path:
-    root = tmp_path / "exemple"
-    root.mkdir()
-    for name in ("project.xml", "xml", "alignments", "rendering", "i18n"):
-        src = ROOT / name
-        if src.is_dir():
-            shutil.copytree(src, root / name)
-        else:
-            shutil.copy2(src, root / name)
-    return root / "project.xml"
+    from corpus_data import copy_example
+    return copy_example(tmp_path / "exemple")
 
 
 def _draft(root: Path, **extra) -> ProjectDraft:

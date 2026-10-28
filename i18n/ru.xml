@@ -181,6 +181,7 @@
   <string key="viewer.language">Язык</string>
   <string key="viewer.variant">разночтение</string>
   <string key="viewer.note">примечание</string>
+  <string key="console.usage">Использование: {command} путь/к/project.xml</string>
   <string key="console.viewer_generated">Просмотрщик создан: {path}</string>
   <string key="console.viewer_stats">Свидетелей: {witnesses} · строк опорного свидетеля: {lines}</string>
   <string key="console.missing_pages">Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>
@@ -271,7 +272,8 @@
   <string key="project.new.info">Новый проект включает копии TEI, файлов выравнивания, CSS, конфигурации Ctrl+E и переводов. XSLT по умолчанию остаётся в приложении; пользовательский XSLT копируется в проект. Выберите пустую папку.</string>
   <string key="project.new.info.blank">Varians автоматически создаст минимальный файл TEI в xml/edition.xml. Добавьте хотя бы одного свидетеля и явно выберите «Пока без изображений», если начинаете транскрипцию без факсимиле. ALTO и синхронизацию можно добавить позже. В автоматическом режиме схемы новый TEI ссылается на TEI All через xml-model. Выберите пустую папку.</string>
   <string key="project.witness.edit.title">Свидетель проекта</string>
-  <string key="project.witness.id">Сигла / идентификатор</string>
+  <string key="project.witness.id">Сигла</string>
+  <string key="project.witness.xml_id">XML-идентификатор: {id}</string>
   <string key="project.witness.label">Отображаемое название</string>
   <string key="project.witness.images">Источник изображений</string>
   <string key="project.witness.images.none">Пока без изображений</string>
@@ -286,10 +288,11 @@
   <string key="project.witness.base">Опорный</string>
   <string key="project.witness.secondary">Вторичный</string>
   <string key="project.validation.title">Недопустимый проект</string>
-  <string key="project.validation.witness_id">Идентификатор свидетеля обязателен, не должен содержать пробелов и начинаться с #.</string>
+  <string key="project.validation.witness_id">Сигла свидетеля обязательна.</string>
   <string key="project.validation.alignment_missing">Файл выравнивания не найден:
 {path}</string>
-  <string key="project.validation.duplicate_witness">Идентификатор {id} уже используется.</string>
+  <string key="project.validation.duplicate_witness">Сигла {id} уже используется.</string>
+  <string key="project.validation.witness_id_collision">Сигла {siglum} даёт XML-идентификатор {id}, который уже принадлежит свидетелю {other}.</string>
   <string key="project.validation.folder_required">Выберите папку для нового проекта.</string>
   <string key="project.validation.folder_not_empty">Выбранная папка не пуста. Выберите пустую или новую папку.</string>
   <string key="project.validation.edition_missing">Файл TEI не найден:
@@ -307,6 +310,10 @@
   <string key="project.settings.error.title">Не удалось сохранить параметры проекта</string>
   <string key="project.settings.saved.title">Проект обновлён</string>
   <string key="project.settings.saved">Параметры проекта сохранены. Сейчас проект будет перезагружен.</string>
+  <string key="project.listwit.added">Добавлено в &lt;listWit&gt; издания: {witnesses}.</string>
+  <string key="project.listwit.no_listwit">В заголовке издания нет &lt;listWit&gt;: объявите {witnesses} сами.</string>
+  <string key="project.listwit.id_used">Не добавлено в &lt;listWit&gt;: идентификатор {witnesses} уже принадлежит другому элементу издания.</string>
+  <string key="project.listwit.malformed">Не добавлено в &lt;listWit&gt;: издание не является правильно построенным XML ({witnesses}).</string>
   <string key="project.xslt">Таблица стилей XSLT</string>
   <string key="project.xslt.choose">Выбрать таблицу стилей XSLT</string>
   <string key="project.css">Таблица стилей CSS</string>

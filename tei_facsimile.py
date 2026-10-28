@@ -16,10 +16,11 @@ import re
 import shutil
 import xml.etree.ElementTree as ET
 
+from witness_ids import is_xml_id
+
 XML_NS = "http://www.w3.org/XML/1998/namespace"
 TEI_NS = "http://www.tei-c.org/ns/1.0"
 
-_XML_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9._-]*$")
 _PB_RE = re.compile(r"<(?:[A-Za-z_][\w.-]*:)?pb\b[^>]*?/?>", re.I | re.S)
 _ATTR_RE_TEMPLATE = r"(?<![\w:.-]){name}\s*=\s*(['\"])(.*?)\1"
 _XML_ID_ATTR_RE = re.compile(r"(?<![\w:.-])xml:id\s*=\s*(['\"])(.*?)\1", re.I | re.S)
@@ -30,14 +31,24 @@ _XML_ID_ANY_RE = re.compile(r"(?<![\w:.-])xml:id\s*=\s*(['\"])(.*?)\1", re.I | r
 
 
 def valid_xml_id(value: str) -> bool:
-    return bool(_XML_ID_RE.match(str(value or "").strip()))
+    """Tout identifiant permis par XML (NCName, toutes écritures) : voir
+    witness_ids.is_xml_id (V0.9.2.8.2 ; auparavant, lettres latines de base)."""
+    return is_xml_id(str(value or "").strip())
 
 
 def safe_id_component(value: str) -> str:
-    value = re.sub(r"[^A-Za-z0-9._-]+", "-", str(value or "").strip()).strip(".-")
+    """Partie d'identifiant tirée de ``value`` : ses caractères permis dans un
+    nom XML sont gardés (« Σ » reste « Σ »), les autres deviennent « - »."""
+    parts = []
+    for ch in str(value or "").strip():
+        if is_xml_id("_" + ch):
+            parts.append(ch)
+        elif not parts or parts[-1] != "\0":
+            parts.append("\0")          # une suite de caractères interdits : un « - »
+    value = "".join(parts).replace("\0", "-").strip(".-")
     if not value:
         value = "W"
-    if not re.match(r"[A-Za-z_]", value[0]):
+    if not is_xml_id(value[0]):
         value = "W-" + value
     return value
 

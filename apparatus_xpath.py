@@ -17,7 +17,7 @@ Un ``<lem>`` sans ``@wit`` est réputé couvrir les témoins absents des
 """
 from __future__ import annotations
 
-import re
+from witness_ids import is_xml_id
 
 TEI_NS = "http://www.tei-c.org/ns/1.0"
 XML_NS = "http://www.w3.org/XML/1998/namespace"
@@ -28,8 +28,6 @@ _RDGS = "(tei:rdg|tei:rdgGrp/tei:rdg)"
 _LEMS_WITHOUT_WIT = "(tei:lem|tei:rdgGrp/tei:lem)[not(@wit)]"
 # Leçon qui contient un <app> imbriqué.
 _ENCLOSING = "ancestor::*[self::tei:lem or self::tei:rdg][1]"
-# Nom XML sans deux-points (xml:id) : ni espace, ni guillemet, ni « # ».
-_NCNAME = re.compile(r"^[^\W\d][\w.\-]*$")
 
 
 def _parse(xml_text):
@@ -94,7 +92,9 @@ def part_witnesses(part_text, edition_text):
 
 def _cites(witness_id):
     """La leçon courante cite ``witness_id`` dans ``@wit`` (jeton exact)."""
-    if not _NCNAME.match(witness_id or ""):
+    # Un identifiant XML (NCName, toutes écritures) : ni espace, ni
+    # guillemet, ni « # » ne peuvent entrer dans la requête.
+    if not is_xml_id(witness_id or ""):
         raise ValueError(witness_id)
     return f"contains(concat(' ', normalize-space(@wit), ' '), ' #{witness_id} ')"
 

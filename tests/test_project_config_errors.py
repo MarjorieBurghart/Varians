@@ -18,7 +18,7 @@ LANGUAGES = ("fr", "en", "de", "ja", "cs", "it", "ru")
 
 def _project_with_pivot(tmp_path, pivot):
     path = tmp_path / "project.xml"
-    shutil.copy2(ROOT / "project.xml", path)
+    shutil.copy2(ROOT / "tests" / "data" / "exemple" / "project.xml", path)
     path.write_text(path.read_text(encoding="utf-8").replace('<witnesses base="T1">', f'<witnesses base="{pivot}">'),
                     encoding="utf-8")
     return path

@@ -347,7 +347,7 @@ class MainMenusMixin:
         self.detach_witness_menu = self.workspace_layout_menu.addMenu(_t('workspace.detach.menu'))
         self._detach_actions = {}
         for w in self.witness_configs:
-            action = QAction(f'{w.id} — {w.label}' if w.label else str(w.id), self)
+            action = QAction(f'{w.display_siglum} — {w.label}' if w.label else w.display_siglum, self)
             action.setCheckable(True)
             action.triggered.connect(lambda checked=False, wid=w.id:
                                      self._toggle_detached_witness(wid))

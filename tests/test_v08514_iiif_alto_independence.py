@@ -152,7 +152,7 @@ def test_non_sync_iiif_with_alto_works_in_web_dataset(tmp_path):
     m = manifest(4)
     add_copy(tmp_path,m,2)
     ocr = alto(tmp_path/'mysterious.xml', 'entirely_different.jpg')
-    template = load_project(Path(__file__).resolve().parents[1]/'project.xml')
+    template = load_project(Path(__file__).resolve().parent/'data'/'exemple'/'project.xml')
     from project_config import AltoFileConfig
     manuscript = replace(template.witnesses[1], id='L', label='L', alignment=None,
         role='secondary', image_source_type='iiif', image_source_value=m.source,

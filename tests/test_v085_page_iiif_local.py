@@ -151,7 +151,7 @@ def test_web_export_option_overrides_desktop_choice_independently(tmp_path, monk
     from pathlib import Path
 
     package_root=Path(__file__).resolve().parents[1]
-    original=load_project(package_root/'project.xml')
+    original=load_project(package_root/'tests'/'data'/'exemple'/'project.xml')
     witness=original.base
     manifest_url='https://example.test/manifest.json'
     w=replace(witness, alignment=None, image_source_type='iiif',

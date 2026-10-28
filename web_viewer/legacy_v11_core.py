@@ -188,7 +188,17 @@ def extract_witness_labels(root: ET.Element):
             continue
         wid = wit.attrib.get(XML_ID) or wit.attrib.get("id")
         if wid:
-            labels[wid] = clean_text("".join(wit.itertext())) or wid
+            # Le <idno type="siglum"> (V0.9.2.8.2) n'est pas du libellé ; il
+            # le remplace s'il est seul.
+            siglum = ""
+            parts = [wit.text or ""]
+            for child in wit:
+                if lname(child.tag) == "idno" and child.attrib.get("type") == "siglum":
+                    siglum = siglum or clean_text("".join(child.itertext()))
+                else:
+                    parts.append("".join(child.itertext()))
+                parts.append(child.tail or "")
+            labels[wid] = clean_text("".join(parts)) or siglum or wid
     return labels
 
 

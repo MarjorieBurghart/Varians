@@ -20,7 +20,11 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SERMONS = Path(__file__).resolve().parent / "data" / "sermons"
-EXAMPLE_ITEMS = ("project.xml", "xml", "alignments", "rendering", "i18n", "resources")
+# Projet de test (exclu des publications) et fichiers de Varians qu'il
+# emploie : feuilles de rendu, traductions, ressources.
+EXAMPLE = Path(__file__).resolve().parent / "data" / "exemple"
+EXAMPLE_ITEMS = ((EXAMPLE, "project.xml"), (EXAMPLE, "xml"), (EXAMPLE, "alignments"),
+                 (REPO, "rendering"), (REPO, "i18n"), (REPO, "resources"))
 
 
 def alignment(witness, base, page, count, *, secondary_of=None):
@@ -134,11 +138,11 @@ def insert_at(text, inserts):
 
 
 def copy_example(root: Path) -> Path:
-    """Copie le projet exemple de Varians dans ``root`` ; renvoie le chemin
-    de project.xml."""
+    """Copie le projet de test (tests/data/exemple) dans ``root``, avec les
+    fichiers de Varians qu'il emploie ; renvoie le chemin de project.xml."""
     root.mkdir(parents=True, exist_ok=True)
-    for name in EXAMPLE_ITEMS:
-        source = REPO / name
+    for folder, name in EXAMPLE_ITEMS:
+        source = folder / name
         if source.is_dir():
             shutil.copytree(source, root / name)
         else:

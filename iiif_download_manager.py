@@ -65,7 +65,7 @@ class IIIFDownloadManager(QDialog):
         self.witness = QComboBox()
         for w in project.witnesses:
             if w.image_source_type == 'iiif':
-                self.witness.addItem(w.label, w.id)
+                self.witness.addItem(w.display_title, w.id)
         top.addWidget(self.witness, 1)
         layout.addLayout(top)
         self.summary = QLabel()

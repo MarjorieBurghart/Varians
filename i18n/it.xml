@@ -181,6 +181,7 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="viewer.language">Lingua</string>
   <string key="viewer.variant">variante</string>
   <string key="viewer.note">nota</string>
+  <string key="console.usage">Uso: {command} percorso/di/project.xml</string>
   <string key="console.viewer_generated">Viewer generato: {path}</string>
   <string key="console.viewer_stats">Testimoni: {witnesses} · righe del testimone pivot: {lines}</string>
   <string key="console.missing_pages">Pagine mancanti nella cache del testimone pivot: {pages}</string>
@@ -271,7 +272,8 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="project.new.info">Il nuovo progetto include copie della TEI, degli allineamenti, del CSS, della configurazione Ctrl+E e delle traduzioni. L’XSLT predefinito resta nell’applicazione; un XSLT personalizzato viene copiato nel progetto. Scegli una cartella vuota.</string>
   <string key="project.new.info.blank">Varians creerà automaticamente un file TEI minimo in xml/edition.xml. Aggiungi almeno un testimone e scegli esplicitamente «Nessuna immagine per ora» se inizi la trascrizione senza facsimile. ALTO e sincronizzazione possono essere aggiunti in seguito. In modalità schema automatica, il nuovo TEI fa riferimento a TEI All tramite xml-model. Scegli una cartella vuota.</string>
   <string key="project.witness.edit.title">Testimone del progetto</string>
-  <string key="project.witness.id">Sigla / identificatore</string>
+  <string key="project.witness.id">Sigla</string>
+  <string key="project.witness.xml_id">Identificatore XML: {id}</string>
   <string key="project.witness.label">Nome visualizzato</string>
   <string key="project.witness.images">Sorgente immagini</string>
   <string key="project.witness.images.none">Nessuna immagine per ora</string>
@@ -286,10 +288,11 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="project.witness.base">Pivot</string>
   <string key="project.witness.secondary">Secondario</string>
   <string key="project.validation.title">Progetto non valido</string>
-  <string key="project.validation.witness_id">L’identificatore del testimone è obbligatorio, non deve contenere spazi né iniziare con #.</string>
+  <string key="project.validation.witness_id">La sigla del testimone è obbligatoria.</string>
   <string key="project.validation.alignment_missing">File di allineamento non trovato:
 {path}</string>
-  <string key="project.validation.duplicate_witness">L’identificatore {id} è già in uso.</string>
+  <string key="project.validation.duplicate_witness">La sigla {id} è già in uso.</string>
+  <string key="project.validation.witness_id_collision">La sigla {siglum} dà l’identificatore XML {id}, già usato dal testimone {other}.</string>
   <string key="project.validation.folder_required">Scegli una cartella per il nuovo progetto.</string>
   <string key="project.validation.folder_not_empty">La cartella selezionata non è vuota. Scegli una cartella vuota o nuova.</string>
   <string key="project.validation.edition_missing">File TEI non trovato:
@@ -307,6 +310,10 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="project.settings.error.title">Impossibile salvare le impostazioni del progetto</string>
   <string key="project.settings.saved.title">Progetto aggiornato</string>
   <string key="project.settings.saved">Le impostazioni del progetto sono state salvate. Il progetto verrà ora ricaricato.</string>
+  <string key="project.listwit.added">Aggiunto alla &lt;listWit&gt; dell’edizione: {witnesses}.</string>
+  <string key="project.listwit.no_listwit">L’intestazione dell’edizione non ha una &lt;listWit&gt;: dichiarate voi stessi {witnesses}.</string>
+  <string key="project.listwit.id_used">Non aggiunto alla &lt;listWit&gt;: l’identificatore di {witnesses} appartiene già a un altro elemento dell’edizione.</string>
+  <string key="project.listwit.malformed">Non aggiunto alla &lt;listWit&gt;: l’edizione non è ben formata ({witnesses}).</string>
   <string key="project.xslt">Foglio di stile XSLT</string>
   <string key="project.xslt.choose">Scegli un foglio di stile XSLT</string>
   <string key="project.css">Foglio di stile CSS</string>

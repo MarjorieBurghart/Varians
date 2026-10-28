@@ -2,6 +2,7 @@
 """Complétion XML guidée par le schéma RELAX NG (Ctrl+Espace, attributs) dans la source."""
 from __future__ import annotations
 
+from witness_ids import witness_title
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, Qt
@@ -18,6 +19,7 @@ from schema_resolution import resolve_schema
 from schematron_completion import SchematronCompletionModel
 from xml_references import REFERENCE_ATTRIBUTES, parse_pointer, target_elements
 from xslt_completion import StylesheetCompletionModel
+
 
 
 class CompletionDialog(QDialog):
@@ -472,8 +474,9 @@ class CompletionMixin:
         for found in entries_by_targets.values():
             for value, description, _element in found:
                 descriptions.setdefault(value, description)
+        sigla = getattr(self, "witness_sigla", {})
         for witness_id, label in getattr(self, "witness_labels", {}).items():
-            descriptions[f"#{witness_id}"] = label
+            descriptions[f"#{witness_id}"] = witness_title(witness_id, sigla.get(witness_id, witness_id), label)
         context, remaining_pointer_values = adapt_pointer_list_value_context(
             context, text, position, [value for value, _source in items]
         )

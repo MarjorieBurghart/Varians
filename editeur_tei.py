@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.9.2.8.1.
+"""Varians — éditeur TEI/manuscrits générique — V0.9.2.8.2.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -130,7 +130,6 @@ except ImportError:
     raise
 
 HERE = Path(__file__).resolve().parent
-DEMO_PROJECT = HERE / "project.xml"
 WELCOME_PROJECT_NAME = "Varians"
 
 # Palette de sélection commune à toute l'application. Le bleu système Windows
@@ -315,12 +314,12 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
     _schema_mode = _document_attribute("schema_mode")
     _schema_file = _document_attribute("schema_file")
 
-    def __init__(self, project_path=None):
+    def __init__(self, project_path):
         super().__init__()
         # Document ouvert : doit exister avant toute affectation des attributs
         # de compatibilité ci-dessus.
         self.document = DocumentSession()
-        self.project = load_project(project_path or DEMO_PROJECT)
+        self.project = load_project(project_path)
         self.document.schema_mode = self.project.schema_mode
         self.document.schema_file = self.project.schema
         self._init_documents()
@@ -335,6 +334,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.base_id = self.project.base_witness
         self.witness_configs = list(self.project.witnesses)
         self.witness_labels = {w.id: w.label for w in self.witness_configs}
+        # Sigles montrés à l'écran (V0.9.2.8.2) ; le XML garde les identifiants.
+        self.witness_sigla = {w.id: w.display_siglum for w in self.witness_configs}
+        self.witness_titles = {w.id: w.display_title for w in self.witness_configs}
         self.lb_base_re = pivot_lb_pattern(self.base_id)
         # Segment des données des témoins : None pour l'édition, sinon un
         # texte synchronisé à part (V0.9.1.1, voir text_segments).
@@ -563,11 +565,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         for w in self.witness_configs:
             panel = ManuscriptPanel(
                 w.id,
-                w.label,
+                w.display_title,
                 self.witness_display_items[w.id],
                 self.base_maps.get(w.id),
                 is_base=w.is_base,
-                base_label=self.witness_labels[self.base_id],
+                base_label=self.witness_titles[self.base_id],
                 project_root=self.project.root_dir,
                 sync_enabled=((self.base_alignment_available and bool(self.base_items)) if w.is_base
                               else bool(self.base_alignment_available and self._secondary_sync_link_counts.get(w.id, 0) > 0)),
@@ -681,9 +683,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self._build_toolbar()
         self.xml_status = QLabel(_t("status.xml.initial")); self.cursor_status = QLabel(_t("status.cursor", line=1, column=1))
         self.structure_status = QLabel(
-            _t("status.structure.expected", base=self.base_id, count=self.expected_base_lines)
+            _t("status.structure.expected", base=self.witness_siglum(self.base_id), count=self.expected_base_lines)
             if self.expected_base_lines is not None
-            else _t("status.structure.no_alignment", base=self.base_id)
+            else _t("status.structure.no_alignment", base=self.witness_siglum(self.base_id))
         )
         self.rng_status = QLabel(_t("rng.status.none") if self._schema_mode == "none" else _t("rng.status.pending"))
         # Lueur qui tourne pendant une validation dans le processus séparé.
@@ -722,6 +724,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.editor.document().contentsChanged.connect(self._assembly_changed)
         self.open_path(self.project.edition)
         remember_open_project(self.project.path)
+
+    def witness_siglum(self, witness_id):
+        """Sigle du témoin ``witness_id`` pour l'affichage : le sigle saisi
+        dans les paramètres du projet, sinon l'identifiant lui-même."""
+        return getattr(self, "witness_sigla", {}).get(witness_id, witness_id)
 
     def _track_edit_focus(self, old, new):
         if new is None:
@@ -964,17 +971,17 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         n = self._base_line_count()
         sync = self._text_sync_of(self._active_segment) if self._active_segment is not None else None
         if sync is not None:
-            tip = _t("status.structure.text.tip", base=self.base_id, name=sync.name)
+            tip = _t("status.structure.text.tip", base=self.witness_siglum(self.base_id), name=sync.name)
         else:
             tip = _t("status.structure.assembled.tip") if self._edition_has_parts() else ""
         self.structure_status.setToolTip(tip)
         if self.expected_base_lines is None:
-            self.structure_status.setText(_t("status.structure.free", base=self.base_id, count=n))
+            self.structure_status.setText(_t("status.structure.free", base=self.witness_siglum(self.base_id), count=n))
             self.structure_status.setStyleSheet("color:#746b61")
         elif n == self.expected_base_lines:
-            self.structure_status.setText(_t("status.structure.ok", base=self.base_id, count=n)); self.structure_status.setStyleSheet("color:#376b3c")
+            self.structure_status.setText(_t("status.structure.ok", base=self.witness_siglum(self.base_id), count=n)); self.structure_status.setStyleSheet("color:#376b3c")
         else:
-            self.structure_status.setText(_t("status.structure.changed", base=self.base_id, count=n, expected=self.expected_base_lines)); self.structure_status.setStyleSheet("color:#a14b2f;font-weight:600")
+            self.structure_status.setText(_t("status.structure.changed", base=self.witness_siglum(self.base_id), count=n, expected=self.expected_base_lines)); self.structure_status.setStyleSheet("color:#a14b2f;font-weight:600")
 
     def _rebuild_lb_cache(self, text=None):
         if text is None:

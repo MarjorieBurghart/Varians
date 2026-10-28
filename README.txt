@@ -1,3 +1,37 @@
+VARIANS V0.9.2.8.2 — SIGLES DES TÉMOINS, CRAYON ET F2, PROJET DE TEST
+
+• Sigle d'un témoin : Fichier ▸ Paramètres du projet accepte un sigle qui
+  n'est pas un identifiant XML (« 1760 », « T 2 »). Varians en tire
+  l'identifiant (xml:id, cible de @wit et @edRef), montré sous le champ :
+  chaque caractère interdit devient « _ », et un « _ » précède un sigle
+  qui ne commence pas par une lettre (« 1760 » → _1760, « T 2 » → T_2).
+  Le sigle est ce que Varians affiche partout ; il est gardé dans
+  project.xml (attribut facultatif siglum, seulement pour un tel témoin)
+  et, dans la TEI créée avec le projet, dans <idno type="siglum">. Les
+  feuilles livrées (aperçu, Édition critique, apparat en notes) et le
+  viewer web montrent ce sigle à la place de l'identifiant. Deux sigles
+  qui donnent le même identifiant sont refusés. Un projet existant ne
+  change pas.
+• Un témoin ajouté dans Fichier ▸ Paramètres du projet reçoit son
+  <witness> (et, s'il y a lieu, son <idno type="siglum">) à la fin de la
+  <listWit> existante de l'édition, dans le style de celle-ci, avec une
+  copie .bak. Varians ne crée jamais de <listWit> : sans elle, l'édition
+  ne change pas. La boîte « paramètres enregistrés » dit ce qui a été
+  ajouté, ou pourquoi rien ne l'a été.
+• Marquer la page (et la couche <facsimile>, le découpage des folios, la
+  préparation du pivot) accepte tout identifiant XML, en toute écriture
+  (« Σ », « 伝本 ») ; l'identifiant de surface proposé garde ces
+  caractères (« Σ-p0001 »). Débugger l'apparat suit la même règle.
+• Vue XSLT / CSS : le crayon ✎ garde la sélection en cours de l'aperçu ;
+  si elle est dans son paragraphe, elle est aussi sélectionnée dans
+  l'éditeur de fragment. F2, dans l'aperçu, ouvre le paragraphe de la
+  sélection (ou du curseur) dans l'éditeur de fragment. Un paragraphe
+  ouvert dont les corrections ne sont pas appliquées n'est plus rechargé.
+• Le projet de test passe dans tests/data/exemple ; tests/ est exclu des
+  archives des publications GitHub (.gitattributes). Sans argument, le
+  générateur du viewer demande un project.xml ; generer_viewer_web.bat
+  reçoit le project.xml qu'on dépose sur lui.
+
 VARIANS V0.9.2.8.1 — MENER L'ÉDITION OU FEUILLETER, DÉBUGGER L'APPARAT, CTRL+E
 
 • Viewers des manuscrits : un bouton au livre ouvert, juste après ← → ⤺,

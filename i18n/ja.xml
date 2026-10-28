@@ -181,6 +181,7 @@
   <string key="viewer.language">言語</string>
   <string key="viewer.variant">異読</string>
   <string key="viewer.note">注記</string>
+  <string key="console.usage">使い方：{command} &lt;project.xml のパス&gt;</string>
   <string key="console.viewer_generated">ビューアを生成しました：{path}</string>
   <string key="console.viewer_stats">伝本：{witnesses} · ピボット伝本行：{lines}</string>
   <string key="console.missing_pages">ピボット伝本キャッシュにないページ：{pages}</string>
@@ -271,7 +272,8 @@
   <string key="project.new.info">新規プロジェクトにはTEI、アラインメント、CSS、Ctrl+E設定、翻訳のコピーが含まれます。既定のXSLTはアプリ側を使用し、カスタムXSLTはプロジェクトへコピーされます。空のフォルダを選択してください。</string>
   <string key="project.new.info.blank">Variansはxml/edition.xmlに最小限のTEIファイルを自動作成します。少なくとも1つの伝本を追加し、画像なしで翻刻を始める場合は「当面画像なし」を明示的に選んでください。ALTOと同期は後から追加できます。スキーマ自動モードでは、新しいTEIはxml-modelでTEI Allを参照します。空のフォルダを選択してください。</string>
   <string key="project.witness.edit.title">プロジェクトの伝本</string>
-  <string key="project.witness.id">シグラム／識別子</string>
+  <string key="project.witness.id">シグラム</string>
+  <string key="project.witness.xml_id">XML 識別子：{id}</string>
   <string key="project.witness.label">表示名</string>
   <string key="project.witness.images">画像ソース</string>
   <string key="project.witness.images.none">当面画像なし</string>
@@ -286,10 +288,11 @@
   <string key="project.witness.base">ピボット</string>
   <string key="project.witness.secondary">対校本</string>
   <string key="project.validation.title">無効なプロジェクト</string>
-  <string key="project.validation.witness_id">伝本の識別子は必須です。空白を含めず、#で始めないでください。</string>
+  <string key="project.validation.witness_id">伝本のシグラムは必須です。</string>
   <string key="project.validation.alignment_missing">アラインメントファイルが見つかりません：
 {path}</string>
-  <string key="project.validation.duplicate_witness">識別子 {id} は既に使用されています。</string>
+  <string key="project.validation.duplicate_witness">シグラム {id} は既に使用されています。</string>
+  <string key="project.validation.witness_id_collision">シグラム {siglum} から得られる XML 識別子 {id} は、すでに伝本 {other} が使用しています。</string>
   <string key="project.validation.folder_required">新規プロジェクト用のフォルダを選択してください。</string>
   <string key="project.validation.folder_not_empty">選択したフォルダは空ではありません。空のフォルダまたは新規フォルダを選択してください。</string>
   <string key="project.validation.edition_missing">TEIファイルが見つかりません：
@@ -307,6 +310,10 @@
   <string key="project.settings.error.title">プロジェクト設定を保存できません</string>
   <string key="project.settings.saved.title">プロジェクトを更新しました</string>
   <string key="project.settings.saved">プロジェクト設定を保存しました。プロジェクトを再読み込みします。</string>
+  <string key="project.listwit.added">エディションの &lt;listWit&gt; に追加しました：{witnesses}。</string>
+  <string key="project.listwit.no_listwit">エディションのヘッダーに &lt;listWit&gt; がありません。{witnesses} をご自分で宣言してください。</string>
+  <string key="project.listwit.id_used">&lt;listWit&gt; に追加しませんでした：{witnesses} の識別子は、エディションの別の要素がすでに使っています。</string>
+  <string key="project.listwit.malformed">&lt;listWit&gt; に追加しませんでした：エディションが整形式ではありません（{witnesses}）。</string>
   <string key="project.xslt">XSLTスタイルシート</string>
   <string key="project.xslt.choose">XSLTスタイルシートを選択</string>
   <string key="project.css">CSSスタイルシート</string>

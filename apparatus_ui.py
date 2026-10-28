@@ -96,22 +96,25 @@ class ApparatusDebugDialog(QDialog):
     _WITNESS_SOURCES = {"document": "apparatus.witnesses", "part": "apparatus.witnesses.part",
                         "locus": "apparatus.witnesses.locus", "wit": "apparatus.witnesses.wit"}
 
-    def __init__(self, ids, queries, proposed_expression, save, parent=None, source="document", lacunose=()):
+    def __init__(self, ids, queries, proposed_expression, save, parent=None, source="document", lacunose=(),
+                 sigla=None):
         """``source`` : d'où vient la liste ``ids`` (« document » : le
         ``<listWit>`` du document affiché ; pour une partie d'une édition
         assemblée, voir ``part_witnesses``). ``lacunose`` : témoins qui ont
-        des lacunes dans le document (V0.9.1.3)."""
+        des lacunes dans le document (V0.9.1.3). ``sigla`` : sigle montré
+        pour un identifiant, s'il en diffère (V0.9.2.8.2)."""
         super().__init__(parent)
         self.setWindowTitle(_t("apparatus.title"))
         self.resize(640, 520)
         self._ids = list(ids)
+        self._sigla = dict(sigla or {})
         self._lacunose = tuple(lacunose)
         self._queries = list(queries)
         self._proposed = proposed_expression
         self._save = save
         root = QVBoxLayout(self)
         root.addWidget(_label(_t("apparatus.hint"), self))
-        self.witnesses_label = _label(_t(self._WITNESS_SOURCES[source], ids=", ".join(self._ids)) if self._ids
+        self.witnesses_label = _label(_t(self._WITNESS_SOURCES[source], ids=", ".join(self._sigla.get(wid, wid) for wid in self._ids)) if self._ids
                                       else _t("apparatus.no_witness"), self)
         root.addWidget(self.witnesses_label)
 
@@ -131,7 +134,8 @@ class ApparatusDebugDialog(QDialog):
 
         witness_row = QHBoxLayout()
         self.witness_combo = QComboBox(self)
-        self.witness_combo.addItems(self._ids)
+        for wid in self._ids:
+            self.witness_combo.addItem(self._sigla.get(wid, wid), wid)
         self.presence_combo = QComboBox(self)
         self.presence_combo.addItems([_t("apparatus.present"), _t("apparatus.absent")])
         self.scope_combo = QComboBox(self)
@@ -189,7 +193,7 @@ class ApparatusDebugDialog(QDialog):
             return repeated_witness_xpath(self._ids)
         if self.incomplete_radio.isChecked():
             return incomplete_app_xpath(self._ids, self._lacunose)
-        return witness_xpath(self.witness_combo.currentText(), present=self.presence_combo.currentIndex() == 0,
+        return witness_xpath(self.witness_combo.currentData(), present=self.presence_combo.currentIndex() == 0,
                              rdg_only=self.scope_combo.currentIndex() == 1)
 
     def _update_search_button(self, *_args):
@@ -269,7 +273,8 @@ class ApparatusDebugMixin:
         # Un témoin en lacune n'a pas de leçon dans le passage (V0.9.1.3).
         lacunose = sorted({w for event in lacuna_events(text) for w in event.witnesses} & set(ids))
         dialog = ApparatusDebugDialog(ids, self.project.xpath_queries, self.xpath_query.text().strip(),
-                                      self._save_xpath_queries, self, source=source, lacunose=lacunose)
+                                      self._save_xpath_queries, self, source=source, lacunose=lacunose,
+                                      sigla=getattr(self, "witness_sigla", {}))
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return False
         expression = dialog.selected_expression()

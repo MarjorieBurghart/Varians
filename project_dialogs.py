@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
 from project_management import ProjectDraft, WitnessDraft, LocalImageDraft, AltoFileDraft
 from iiif_manifest import fetch_manifest, parse_manifest
 from tei_facsimile import default_surface_id, valid_xml_id
+from witness_ids import witness_id_for_siglum
 from iiif_page_selection import canvas_key, natural_key, propose_exact_ocr_links
 
 
@@ -322,7 +323,14 @@ class WitnessEditDialog(QDialog):
                 self._original_alignment = Path(witness.alignment).expanduser()
         root = QVBoxLayout(self)
         form = QFormLayout()
-        self.id_edit = QLineEdit(getattr(witness, "id", ""))
+        # Le champ « Sigle » reçoit le sigle tel quel (V0.9.2.8.2) ; quand il
+        # n'est pas un identifiant XML, le témoin reçoit l'identifiant qui en
+        # est tiré, montré sous le champ. Un sigle inchangé garde l'identifiant
+        # du témoin.
+        self._original_id = getattr(witness, "id", "")
+        self._original_siglum = getattr(witness, "display_siglum", None) or self._original_id
+        self.id_edit = QLineEdit(self._original_siglum)
+        self.xml_id_hint = QLabel()
         self.label_edit = QLineEdit(getattr(witness, "label", ""))
         self.image_source = QComboBox()
         self.image_source.addItem(tr("project.witness.images.none"), "none")
@@ -339,6 +347,9 @@ class WitnessEditDialog(QDialog):
             tr("project.witness.alignment.choose"), f"JSON (*.json);;{tr('common.all_files')} (*)"
         )
         form.addRow(tr("project.witness.id"), self.id_edit)
+        form.addRow("", self.xml_id_hint)
+        self.id_edit.textChanged.connect(self._siglum_changed)
+        self._siglum_changed()
         form.addRow(tr("project.witness.label"), self.label_edit)
         form.addRow(tr("project.witness.images"), self.image_source)
         form.addRow(tr("project.witness.alignment"), self.alignment)
@@ -541,7 +552,7 @@ class WitnessEditDialog(QDialog):
         label_item = QTableWidgetItem(label or path.stem)
         # L'identifiant est stable : une fois enregistré dans project.xml, il
         # n'est jamais recalculé à partir du foliotage ou du nom de fichier.
-        sid = str(surface_id or default_surface_id(self.id_edit.text().strip() or "W", row + 1))
+        sid = str(surface_id or default_surface_id(self.witness_id() or "W", row + 1))
         surface_item = QTableWidgetItem(sid)
         path_item = QTableWidgetItem(str(path))
         path_item.setFlags(path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
@@ -677,7 +688,7 @@ class WitnessEditDialog(QDialog):
                 manifest = parse_manifest(self._iiif_manifest_data, source)
             else:
                 from iiif_manifest import read_cache, cache_path
-                wid = self.id_edit.text().strip()
+                wid = self.witness_id()
                 manifest = (read_cache(cache_path(self.project_root, wid), source)
                             if self.project_root and wid else None)
                 if manifest is None:
@@ -703,7 +714,7 @@ class WitnessEditDialog(QDialog):
         dlg = IIIFCanvasPicker(self.tr, manifest, self._alto_files(),
                  self._iiif_selected_canvases, self._iiif_ocr_links, self,
                  sync_pages=sync_pages, page_links=self._iiif_page_links,
-                 project_root=self.project_root, witness_id=self.id_edit.text().strip(),
+                 project_root=self.project_root, witness_id=self.witness_id(),
                  use_local=self.iiif_local_copy.isChecked())
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self._iiif_selected_canvases, self._iiif_ocr_links = dlg.selection()
@@ -717,9 +728,23 @@ class WitnessEditDialog(QDialog):
         self.local_group.setVisible(kind == "files")
         self.iiif_group.setVisible(kind == "iiif")
 
+    def witness_id(self):
+        """Identifiant XML du témoin : celui d'origine tant que le sigle n'a
+        pas changé, sinon celui qui est tiré du sigle."""
+        siglum = self.id_edit.text().strip()
+        if self._original_id and siglum == self._original_siglum:
+            return self._original_id
+        return witness_id_for_siglum(siglum)
+
+    def _siglum_changed(self, *_):
+        wid = self.witness_id()
+        differs = bool(wid) and wid != self.id_edit.text().strip()
+        self.xml_id_hint.setText(self.tr("project.witness.xml_id", id=wid) if differs else "")
+        self.xml_id_hint.setVisible(differs)
+
     def _accept(self):
-        wid = self.id_edit.text().strip()
-        if not wid or any(c.isspace() for c in wid) or wid.startswith("#"):
+        wid = self.witness_id()
+        if not wid:
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.witness_id"))
             return
         raw = self.alignment.text().strip()
@@ -819,9 +844,11 @@ class WitnessEditDialog(QDialog):
             copy_changed = self.copy_alignment.isChecked() != self._alignment_copy_default
             if not same_as_original or copy_changed or self._original_alignment is None:
                 alignment_mode = "copy" if self.copy_alignment.isChecked() else "reference"
+        wid = self.witness_id()
+        siglum = self.id_edit.text().strip()
         return WitnessDraft(
-            self.id_edit.text().strip(),
-            self.label_edit.text().strip() or self.id_edit.text().strip(),
+            wid,
+            self.label_edit.text().strip() or siglum,
             alignment_path,
             "secondary",
             image_type,
@@ -840,6 +867,7 @@ class WitnessEditDialog(QDialog):
             list(self._iiif_selected_canvases) if image_type == 'iiif' else [],
             list(self._iiif_ocr_links) if image_type == 'iiif' else [],
             list(self._iiif_page_links) if image_type == 'iiif' else [],
+            siglum if siglum != wid else "",
         )
 
 
@@ -901,7 +929,7 @@ class WitnessTable(QWidget):
         alto_type = getattr(w, "alto_source_type", "auto") or "auto"
         alto_files = list(getattr(w, "alto_files", ()) or ())
         vals = [
-            w.id, w.label,
+            getattr(w, "display_siglum", w.id), w.label,
             self.tr("project.witness.base") if is_base else self.tr("project.witness.secondary"),
             self._image_source_label(image_type, len(image_files)),
             self._alto_source_label(alto_type, len(alto_files)),
@@ -912,6 +940,7 @@ class WitnessTable(QWidget):
             item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.table.setItem(r, c, item)
         self.table.item(r, 0).setData(Qt.ItemDataRole.UserRole, bool(is_base))
+        self._set_identity(r, w)
         self.table.item(r, 3).setData(Qt.ItemDataRole.UserRole, image_type)
         self.table.item(r, 3).setData(Qt.ItemDataRole.UserRole + 1, image_files)
         self.table.item(r, 3).setData(Qt.ItemDataRole.UserRole + 2, getattr(w, "image_import_mode", "keep"))
@@ -929,12 +958,36 @@ class WitnessTable(QWidget):
         self.table.item(r, 3).setData(Qt.ItemDataRole.UserRole + 13, list(getattr(w, 'iiif_ocr_links', ()) or ()))
         self.table.item(r, 3).setData(Qt.ItemDataRole.UserRole + 14, list(getattr(w, 'iiif_page_links', ()) or ()))
 
+    def _set_identity(self, r, w):
+        """Colonne 0 : le sigle ; l'identifiant XML est gardé à part, et
+        montré en infobulle quand il diffère du sigle (V0.9.2.8.2)."""
+        item = self.table.item(r, 0)
+        siglum = getattr(w, "display_siglum", w.id)
+        item.setText(siglum)
+        item.setData(Qt.ItemDataRole.UserRole + 1, w.id)
+        item.setData(Qt.ItemDataRole.UserRole + 2, siglum if siglum != w.id else "")
+        item.setToolTip(self.tr("project.witness.xml_id", id=w.id) if siglum != w.id else "")
+
+    def _identity_conflict(self, new, skip_row=None):
+        """Message si le sigle de ``new``, ou l'identifiant qui en est tiré,
+        est déjà celui d'un autre témoin ; None sinon."""
+        for r, other in enumerate(self.witnesses()):
+            if r == skip_row:
+                continue
+            if other.display_siglum == new.display_siglum:
+                return self.tr("project.validation.duplicate_witness", id=new.display_siglum)
+            if other.id == new.id:
+                return self.tr("project.validation.witness_id_collision",
+                               siglum=new.display_siglum, id=new.id, other=other.display_siglum)
+        return None
+
     def add_witness(self):
         dlg = WitnessEditDialog(self.tr, parent=self, project_root=self.project_root)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             w = dlg.witness()
-            if w.id in {x.id for x in self.witnesses()}:
-                QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.duplicate_witness", id=w.id))
+            conflict = self._identity_conflict(w)
+            if conflict:
+                QMessageBox.warning(self, self.tr("project.validation.title"), conflict)
                 return
             self._append(w, self.table.rowCount() == 0)
 
@@ -945,12 +998,12 @@ class WitnessTable(QWidget):
         dlg = WitnessEditDialog(self.tr, old, self, project_root=self.project_root)
         if dlg.exec() != QDialog.DialogCode.Accepted: return
         new = dlg.witness()
-        existing = {self.table.item(i, 0).text() for i in range(self.table.rowCount()) if i != r}
-        if new.id in existing:
-            QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.duplicate_witness", id=new.id))
+        conflict = self._identity_conflict(new, skip_row=r)
+        if conflict:
+            QMessageBox.warning(self, self.tr("project.validation.title"), conflict)
             return
         is_base = bool(self.table.item(r, 0).data(Qt.ItemDataRole.UserRole))
-        self.table.item(r, 0).setText(new.id); self.table.item(r, 0).setData(Qt.ItemDataRole.UserRole, is_base)
+        self._set_identity(r, new); self.table.item(r, 0).setData(Qt.ItemDataRole.UserRole, is_base)
         self.table.item(r, 1).setText(new.label)
         image_type = getattr(new, "image_source_type", "none") or "none"
         images = list(getattr(new, "image_files", []) or [])
@@ -1008,8 +1061,9 @@ class WitnessTable(QWidget):
         alto_files = [AltoFileDraft(Path(x.path), getattr(x, "label", "")) for x in raw_alto]
         alto_mode = self.table.item(r, 3).data(Qt.ItemDataRole.UserRole + 7) or "keep"
         alignment_mode = self.table.item(r, 5).data(Qt.ItemDataRole.UserRole) or "keep"
+        identity = self.table.item(r, 0)
         return WitnessDraft(
-            self.table.item(r, 0).text(), self.table.item(r, 1).text(),
+            identity.data(Qt.ItemDataRole.UserRole + 1) or identity.text(), self.table.item(r, 1).text(),
             alignment,
             "base" if self.table.item(r, 0).data(Qt.ItemDataRole.UserRole) else "secondary",
             image_type, image_value, images, import_mode, manifest_data,
@@ -1021,6 +1075,7 @@ class WitnessTable(QWidget):
             self.table.item(r, 3).data(Qt.ItemDataRole.UserRole + 12) or [],
             self.table.item(r, 3).data(Qt.ItemDataRole.UserRole + 13) or [],
             self.table.item(r, 3).data(Qt.ItemDataRole.UserRole + 14) or [],
+            identity.data(Qt.ItemDataRole.UserRole + 2) or "",
         )
 
     def witnesses(self):
@@ -1029,7 +1084,7 @@ class WitnessTable(QWidget):
     def base_witness(self):
         for r in range(self.table.rowCount()):
             if self.table.item(r, 0).data(Qt.ItemDataRole.UserRole):
-                return self.table.item(r, 0).text()
+                return self.table.item(r, 0).data(Qt.ItemDataRole.UserRole + 1) or self.table.item(r, 0).text()
         return ""
 
 
@@ -1053,7 +1108,8 @@ def run_pivot_scaffold_dialog(tr, parent, witnesses, base_witness, project_root,
     message = QMessageBox(parent)
     message.setWindowTitle(tr('pivot.preview.title'))
     message.setIcon(QMessageBox.Icon.Question)
-    message.setText(tr('pivot.preview.summary', witness=plan.witness_id,
+    sigla = {w.id: getattr(w, 'display_siglum', w.id) for w in witnesses}
+    message.setText(tr('pivot.preview.summary', witness=sigla.get(plan.witness_id, plan.witness_id),
                        pages=len(plan.pages), lines=plan.line_count if include_lb else 0))
     overview = '\n'.join(f'{x.label} → #{x.surface_id} : {x.line_count if include_lb else 0} lb ({x.evidence})'
                          for x in plan.pages)

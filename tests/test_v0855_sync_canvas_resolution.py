@@ -177,7 +177,7 @@ def test_orphan_canvas_does_not_use_index():
 def test_web_dataset_preserves_secondary_json_links_with_469_canvas_subset(tmp_path):
     from web_viewer.generator import build_dataset
     from dataclasses import replace
-    template = load_project(Path(__file__).resolve().parents[1] / 'project.xml')
+    template = load_project(Path(__file__).resolve().parent / 'data' / 'exemple' / 'project.xml')
     m = v2_manifest()
     raw, indices = sync_five(m)
     # Give all secondary lines a real base key as Varians-Synchro would.

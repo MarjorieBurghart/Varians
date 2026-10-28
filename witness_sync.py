@@ -256,7 +256,7 @@ class WitnessDiagnosticDialog(QDialog):
             issue_text = self._issue_text(row)
             status = (_t('diagnostics.mode.active') if row.active
                       else _t('diagnostics.mode.page'))
-            cells = (f'{row.id} — {row.label}', status, str(row.pages), str(row.images),
+            cells = (f'{row.siglum or row.id} — {row.label}', status, str(row.pages), str(row.images),
                      str(row.geometry_lines),
                      str(row.usable_links) if not row.is_base else '—',
                      issue_text or _t('diagnostics.no_issues'))
@@ -290,7 +290,7 @@ class WitnessDiagnosticDialog(QDialog):
     def copy_report(self):
         lines = [_t('diagnostics.title')] + [text for text in (self._scope, self._notes) if text]
         for row in self._rows:
-            lines.append(f'{row.id} — {row.label}: '
+            lines.append(f'{row.siglum or row.id} — {row.label}: '
                          f'{row.pages} {_t("diagnostics.column.pages")}; '
                          f'{row.images} {_t("diagnostics.column.images")}; '
                          f'{row.geometry_lines} {_t("diagnostics.column.geometry")}; '
@@ -713,9 +713,9 @@ class WitnessSyncMixin:
 
     def _show_base_line_status(self, ordinal, lacunae):
         if self.base_id in lacunae:
-            self.statusBar().showMessage(_t("status.base_lacuna", base=self.base_id), 4000)
+            self.statusBar().showMessage(_t("status.base_lacuna", base=self.witness_siglum(self.base_id)), 4000)
         else:
-            self.statusBar().showMessage(_t("status.base_line", base=self.base_id, line=ordinal+1,
+            self.statusBar().showMessage(_t("status.base_line", base=self.witness_siglum(self.base_id), line=ordinal+1,
                                             total=len(self.base_items)), 1500)
 
     def navigate_to_base_ordinal(self, ordinal, move_xml_cursor=True):
@@ -835,12 +835,12 @@ class WitnessSyncMixin:
                 if a:
                     annotation = (_t('diagnostics.refresh.mapping_changed')
                                   if a.fingerprint != b.fingerprint else '')
-                    lines.append(f'{wid}: {a.geometry_lines} → {b.geometry_lines} '
+                    lines.append(f'{self.witness_siglum(wid)}: {a.geometry_lines} → {b.geometry_lines} '
                                  f'{_t("diagnostics.column.geometry")}; '
                                  f'{a.usable_links} → {b.usable_links} '
                                  f'{_t("diagnostics.column.links")} {annotation}')
                 else:
-                    lines.append(wid)
+                    lines.append(self.witness_siglum(wid))
             result = QMessageBox.question(
                 self, _t('diagnostics.refresh.title'),
                 _t('diagnostics.refresh.confirm', changes='\n'.join(lines)),
@@ -942,11 +942,11 @@ class WitnessSyncMixin:
         self._go_to_witness_stop(wid, stop)
         if stop.segment != segment and stop.segment in route.uncertain:
             self.statusBar().showMessage(
-                _t("status.route_uncertain", witness=wid, text=self._segment_name(stop.segment)), 6000)
+                _t("status.route_uncertain", witness=self.witness_siglum(wid), text=self._segment_name(stop.segment)), 6000)
 
     def _show_witness_end(self, wid, step):
         self.statusBar().showMessage(
-            _t("status.witness_end" if step > 0 else "status.witness_start", witness=wid), 4000)
+            _t("status.witness_end" if step > 0 else "status.witness_start", witness=self.witness_siglum(wid)), 4000)
 
     def _lead_to_page(self, wid, panel):
         """Témoin par pages : l'édition va à la page affichée par ``panel`` :
@@ -967,7 +967,7 @@ class WitnessSyncMixin:
             return
         segment = self._locus_text(wid, folio)
         if segment is None:
-            self.statusBar().showMessage(_t("status.page_unmarked", witness=wid, folio=folio.label), 5000)
+            self.statusBar().showMessage(_t("status.page_unmarked", witness=self.witness_siglum(wid), folio=folio.label), 5000)
             return
         self._sync_from_panel = True
         try:
@@ -1087,7 +1087,7 @@ class WitnessSyncMixin:
             if stop.linked:
                 self._show_base_line_status(reached, lacunae)
             else:
-                self.statusBar().showMessage(_t("status.witness_unlinked", witness=wid, line=reached + 1), 4000)
+                self.statusBar().showMessage(_t("status.witness_unlinked", witness=self.witness_siglum(wid), line=reached + 1), 4000)
         finally:
             call_later(90, self, self._release_panel_sync)
 

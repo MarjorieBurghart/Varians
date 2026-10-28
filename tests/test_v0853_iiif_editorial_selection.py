@@ -172,7 +172,7 @@ def test_web_export_respects_exact_selected_canvases_and_local_choice(tmp_path,m
     from project_config import load_project
     from web_viewer.generator import build_dataset
     from iiif_local import download_witness_copy
-    source_project=load_project(Path(__file__).resolve().parents[1]/'project.xml')
+    source_project=load_project(Path(__file__).resolve().parent/'data'/'exemple'/'project.xml')
     src,m,p1,p2,selected,links=setup(tmp_path)
     w=replace(source_project.base, alignment=None, image_source_type='iiif',
         image_source_value=src, alto_source_type='files',

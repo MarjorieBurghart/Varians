@@ -18,6 +18,8 @@
     « aucun », tous.
   - Sauts de ligne : des <lb> contigus (de plusieurs témoins) sont une
     seule coupure, qui soude un mot si l'un d'eux porte break="no".
+  - Sigles (Varians 0.9.2.8.2) : celui du <idno type="siglum"> du témoin
+    dans <listWit>, sinon son identifiant.
 
   Les deux feuilles mettent en forme ce que donne f:apparat (une map) :
   retenue (la leçon retenue, ou rien), lemme (montrer « leçon ] »),
@@ -61,6 +63,15 @@
     </xsl:if>
   </xsl:template>
 
+  <!-- Le sigle d'un témoin : son <idno type="siglum"> dans <listWit>, sinon
+       son identifiant (« _1760 » pour le sigle « 1760 »). -->
+  <xsl:variable name="f:racine" select="/"/>
+  <xsl:function name="f:sigle" as="xs:string">
+    <xsl:param name="id" as="xs:string"/>
+    <xsl:sequence select="string(($f:racine/tei:TEI/tei:teiHeader//tei:listWit//tei:witness[@xml:id = $id]
+                                   /tei:idno[@type = 'siglum'][normalize-space()], $id)[1]) => normalize-space()"/>
+  </xsl:function>
+
   <!-- Les témoins d'une leçon : son @wit, sinon celui de son <rdgGrp>. -->
   <xsl:function name="f:wit" as="xs:string*">
     <xsl:param name="lecon" as="element()?"/>
@@ -102,7 +113,7 @@
   <xsl:function name="f:sigles" as="xs:string">
     <xsl:param name="lecon" as="element()?"/>
     <xsl:variable name="sigles" select="f:wit($lecon)"/>
-    <xsl:sequence select="if (empty($sigles)) then 'éd.' else string-join($sigles, ' ')"/>
+    <xsl:sequence select="if (empty($sigles)) then 'éd.' else string-join($sigles ! f:sigle(.), ' ')"/>
   </xsl:function>
 
   <!-- Le texte d'une leçon, hors des notes qu'elle contient (elle peut
@@ -135,7 +146,7 @@
     <xsl:variable name="propres" select="tokenize(normalize-space(string($balise/@wit)), '\s+') ! replace(., '^.*#', '')"/>
     <xsl:variable name="lecon" select="$balise/ancestor::*[self::tei:lem or self::tei:rdg][1]"/>
     <xsl:sequence select="if (empty($propres) or (exists($lecon) and deep-equal(sort($propres), sort(f:wit($lecon)))))
-                          then '' else string-join($propres, ' ')"/>
+                          then '' else string-join($propres ! f:sigle(.), ' ')"/>
   </xsl:function>
 
   <xsl:function name="f:apparat" as="map(*)">

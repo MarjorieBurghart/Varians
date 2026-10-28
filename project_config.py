@@ -2,6 +2,7 @@
 """Chargement du fichier de projet de l'éditeur TEI/manuscrits générique."""
 from __future__ import annotations
 
+from witness_ids import witness_title
 from dataclasses import dataclass
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -83,10 +84,23 @@ class WitnessConfig:
     iiif_selected_canvases: tuple[str, ...] = ()
     iiif_ocr_links: tuple[tuple[str, str], ...] = ()
     iiif_page_links: tuple[tuple[str, str], ...] = ()  # synchronization page ID -> IIIF canvas URI
+    # V0.9.2.8.2 : sigle saisi, quand il n'est pas un identifiant XML valide
+    # (``id`` en est alors tiré, voir witness_ids) ; vide sinon.
+    siglum: str = ""
 
     @property
     def is_base(self) -> bool:
         return self.role == "base"
+
+    @property
+    def display_siglum(self) -> str:
+        """Sigle montré à l'utilisateur : le sigle saisi, sinon l'identifiant."""
+        return self.siglum or self.id
+
+    @property
+    def display_title(self) -> str:
+        """« sigle · nom affiché » (witness_ids.witness_title)."""
+        return witness_title(self.id, self.display_siglum, self.label)
 
 
 @dataclass(frozen=True)
@@ -410,7 +424,8 @@ def load_project(path: str | Path) -> ProjectConfig:
         wid = (w.get("id") or "").strip()
         if not wid:
             raise _missing_attribute("<witness>", 'id="…"')
-        label = (w.get("label") or wid).strip()
+        siglum = (w.get("siglum") or "").strip()
+        label = (w.get("label") or siglum or wid).strip()
         raw_alignment = (w.get("alignment") or "").strip()
         if raw_alignment:
             alignment = _resolve(root_dir, raw_alignment, f"alignments/{wid}.json")
@@ -508,7 +523,8 @@ def load_project(path: str | Path) -> ProjectConfig:
         witnesses.append(WitnessConfig(
             wid, label, alignment, role, image_source_type, image_source_value, tuple(image_files),
             alto_source_type, tuple(alto_files), iiif_local_copy, iiif_web_local_copy, iiif_download_scope,
-            iiif_selection_mode, iiif_selected_canvases, iiif_ocr_links, iiif_page_links
+            iiif_selection_mode, iiif_selected_canvases, iiif_ocr_links, iiif_page_links,
+            siglum if siglum != wid else "",
         ))
 
     if not witnesses:
@@ -538,6 +554,7 @@ def load_project(path: str | Path) -> ProjectConfig:
             w.alto_source_type, w.alto_files,
             w.iiif_local_copy, w.iiif_web_local_copy, w.iiif_download_scope,
             w.iiif_selection_mode, w.iiif_selected_canvases, w.iiif_ocr_links, w.iiif_page_links,
+            w.siglum,
         )
         for w in witnesses
     ]

@@ -113,3 +113,11 @@ correspondent aux `<lb edRef="#pivot"/>` du texte seul ; les `base_keys` des
 autres témoins désignent ces lignes. VariansSynchro les produit sur le
 fichier du texte. Le nom du fichier JSON est le sigle déclaré dans
 `project.xml` ; un JSON d'un témoin non déclaré est ignoré et signalé.
+
+## V0.9.2.8.2 — témoin nommé par son sigle
+
+`meta.witness` et `meta.base_witness` peuvent nommer le témoin et le pivot
+par leur identifiant (attribut `id` de `<witness>` dans `project.xml`) ou par
+leur sigle (attribut `siglum`, quand le sigle n'est pas un identifiant XML :
+voir PROJECT_MANAGEMENT.md). Le diagnostic ne signale une discordance que si
+la valeur n'est ni l'un ni l'autre.

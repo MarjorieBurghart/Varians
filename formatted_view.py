@@ -343,6 +343,9 @@ class ClickablePreview(QTextBrowser):
         # comportement différent de la source XML / de l’éditeur de fragment.
         self._search_match = None
         self._search_last = None
+        # Sélection en cours au moment d'un clic sur le crayon ✎, que le clic
+        # efface : (début, fin), reprise par take_selection_before_pencil().
+        self._selection_before_pencil = None
 
     def setSearchMatch(self, start, end, query):
         self._search_match = (int(start), int(end))
@@ -554,6 +557,18 @@ class ClickablePreview(QTextBrowser):
         if line is not None:
             self.active_line_ordinal = line
         return True
+
+    def mousePressEvent(self, event):
+        cursor = self.textCursor()
+        on_pencil = self._paragraph_from_href(self.anchorAt(event.position().toPoint())) is not None
+        self._selection_before_pencil = (
+            (cursor.selectionStart(), cursor.selectionEnd()) if on_pencil and cursor.hasSelection() else None)
+        super().mousePressEvent(event)
+
+    def take_selection_before_pencil(self):
+        """Sélection effacée par le dernier clic sur un crayon, ou None."""
+        selection, self._selection_before_pencil = self._selection_before_pencil, None
+        return selection
 
     def mouseReleaseEvent(self, event):
         # Les vrais liens de l'aperçu (notamment le crayon ✎) gardent leur
@@ -774,6 +789,13 @@ class FormattedEditionWidget(QWidget):
         self.preview.anchorClicked.connect(self._anchor_clicked)
         self.preview.lineActivated.connect(self._line_clicked)
         self.preview.textSelected.connect(self._preview_selection_to_fragment)
+        # F2 : ouvre dans l'éditeur de fragment le paragraphe de la sélection
+        # (ou du curseur) de l'aperçu, la sélection reportée.
+        self.edit_paragraph_action = QAction(_t("preview.edit_paragraph"), self.preview)
+        self.edit_paragraph_action.setShortcut(QKeySequence(Qt.Key.Key_F2))
+        self.edit_paragraph_action.setShortcutContext(Qt.ShortcutContext.WidgetShortcut)
+        self.edit_paragraph_action.triggered.connect(self.edit_selected_paragraph)
+        self.preview.addAction(self.edit_paragraph_action)
 
         frag_box = QWidget()
         self.frag_box = frag_box
@@ -1532,8 +1554,40 @@ class FormattedEditionWidget(QWidget):
         except Exception:
             return
         # Le crayon ouvre seulement le paragraphe : la source et les témoins
-        # restent où ils sont (seul un clic sur le texte les déplace).
-        self.load_fragment(idx)
+        # restent où ils sont (seul un clic sur le texte les déplace). La
+        # sélection en cours, effacée par le clic, est rétablie.
+        self._edit_paragraph(idx, self.preview.take_selection_before_pencil())
+
+    def edit_selected_paragraph(self):
+        """F2 : ouvre le paragraphe de la sélection, ou du curseur, de
+        l'aperçu ; la sélection est reportée dans le fragment."""
+        cursor = self.preview.textCursor()
+        idx = self.preview.paragraph_for_position(cursor.selectionStart())
+        if idx is None:
+            return False
+        selection = (cursor.selectionStart(), cursor.selectionEnd()) if cursor.hasSelection() else None
+        return self._edit_paragraph(idx, selection, focus=True)
+
+    def _edit_paragraph(self, idx, selection=None, focus=False):
+        """Ouvre le paragraphe ``idx`` dans l'éditeur de fragment, puis y
+        sélectionne ``selection`` (début, fin dans l'aperçu) si elle est dans
+        ce paragraphe ; le fragment prend alors le focus, comme avec
+        ``focus``. Le paragraphe déjà ouvert et modifié n'est pas rechargé :
+        ses corrections non appliquées restent."""
+        already_open = (idx == self.current_paragraph and not self.frag_box.isHidden()
+                        and self.fragment_has_unapplied_changes())
+        if not already_open and not self.load_fragment(idx):
+            return False
+        if selection is not None:
+            cursor = QTextCursor(self.preview.document())
+            cursor.setPosition(selection[0])
+            cursor.setPosition(selection[1], QTextCursor.MoveMode.KeepAnchor)
+            self.preview.setTextCursor(cursor)
+            if self._preview_selection_to_fragment():
+                return True
+        if focus:
+            self.fragment_editor.setFocus()
+        return True
 
     def _confirm_fragment_switch(self, new_idx):
         """Protège un fragment modifié avant d'en ouvrir un autre.

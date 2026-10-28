@@ -173,6 +173,8 @@ class WitnessDiagnostic:
     issue_codes: tuple[str, ...]
     active: bool
     fingerprint: str
+    # Sigle montré à l'écran, s'il diffère de l'identifiant (V0.9.2.8.2).
+    siglum: str = ""
 
 
 def diagnostic_rows(project, state):
@@ -196,9 +198,13 @@ def diagnostic_rows(project, state):
         if configured and not path_ok:
             issues.append('alignment_missing')
         if path_ok:
-            if meta.get('witness') and str(meta['witness']) != w.id:
+            # Le JSON peut nommer un témoin par son identifiant ou par son
+            # sigle (V0.9.2.8.2).
+            if meta.get('witness') and str(meta['witness']) not in {w.id, getattr(w, 'display_siglum', w.id)}:
                 issues.append('witness_mismatch')
-            if not w.is_base and meta.get('base_witness') and str(meta['base_witness']) != project.base_witness:
+            pivot = next((x for x in project.witnesses if x.id == project.base_witness), None)
+            pivot_names = {project.base_witness, getattr(pivot, 'display_siglum', project.base_witness)}
+            if not w.is_base and meta.get('base_witness') and str(meta['base_witness']) not in pivot_names:
                 issues.append('pivot_mismatch')
         line_count = sum(len(p.get('lines', [])) for p in cache.get('pages', []))
         image_count = 0
@@ -243,7 +249,7 @@ def diagnostic_rows(project, state):
         rows.append(WitnessDiagnostic(
             w.id, w.label, w.is_base, len(cache.get('pages', [])),
             line_count, image_count, missing_images, linked, usable, unknown,
-            tuple(issues), active, sync_fingerprint(raw),
+            tuple(issues), active, sync_fingerprint(raw), getattr(w, "siglum", ""),
         ))
     return tuple(rows)
 
