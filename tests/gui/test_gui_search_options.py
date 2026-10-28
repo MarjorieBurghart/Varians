@@ -24,7 +24,7 @@ def test_the_options_are_in_the_menu_the_toolbar_and_the_fragment_bar(open_windo
     case, regex = window.action_search_case, window.action_search_regex
     entries = [action for action in window.search_menu.actions() if not action.isSeparator()]
     assert entries == [window.action_search, window.action_find_prev, window.action_find_next,
-                       window.action_replace, case, regex, window.action_xpath_search]
+                       window.action_search_list, window.action_replace, case, regex, window.action_xpath_search]
     assert (case.text(), regex.text()) == (_tr("search.case"), _tr("search.regex"))
     assert case.isCheckable() and regex.isCheckable()
     assert not case.isChecked() and not regex.isChecked()

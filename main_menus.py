@@ -133,6 +133,8 @@ class MainMenusMixin:
         tb.addAction(self.action_search)
         tb.addAction(self.action_find_prev)
         tb.addAction(self.action_find_next)
+        tb.addAction(self.action_search_list)
+        self.connect_search_results()
 
     def _build_file_menu(self):
         # QMenu autonome : contrairement à menuBar().addMenu(), aucun bandeau
@@ -270,6 +272,9 @@ class MainMenusMixin:
         self.action_find_prev.setIconText(_t("toolbar.previous"))
         self.action_find_next = self._make_action(_t("search.next"), "F3", self.find_next)
         self.action_find_next.setIconText(_t("toolbar.next"))
+        # « Tout lister » : le panneau des occurrences en contexte (search_results).
+        self.action_search_list = self._make_action(_t("search.list.menu"), "Ctrl+Shift+L", self.list_search_results)
+        self.action_search_list.setIconText(_t("search.list"))
         self.action_xpath_search = self._make_action(
             _t("search.xpath"), "Ctrl+Shift+F", self.focus_xpath_search
         )
@@ -283,6 +288,7 @@ class MainMenusMixin:
         menu.addAction(self.action_search)
         menu.addAction(self.action_find_prev)
         menu.addAction(self.action_find_next)
+        menu.addAction(self.action_search_list)
         menu.addAction(self.action_replace)
         menu.addSeparator()
         menu.addAction(self.action_search_case)
@@ -552,6 +558,7 @@ class MainMenusMixin:
         for action, key, short in ((self.action_search, "search.find", "toolbar.search"),
                                    (self.action_find_prev, "search.previous", "toolbar.previous"),
                                    (self.action_find_next, "search.next", "toolbar.next"),
+                                   (self.action_search_list, "search.list.menu", "search.list"),
                                    (self.action_xpath_search, "search.xpath", "xpath.action")):
             action.setText(_t(key))
             action.setIconText(_t(short))
@@ -560,6 +567,7 @@ class MainMenusMixin:
             action.setToolTip(_t(key))
         self.action_replace.setText(_t("search.replace"))
         self._retranslate_replace_bar()
+        self._retranslate_search_results()
         self._retranslate_references()
         self.source_visual_wrap.setText(_t("source.visual_wrap"))
         self.xpath_title.setText(_t("xpath.panel.title"))

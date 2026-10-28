@@ -146,11 +146,16 @@ def test_bottom_panels_remain_exclusive(open_window, example_project):
     assert window.references_panel.isVisible() and not window.xpath_panel.isVisible()
     window.validate_relaxng_manual()
     assert window.validation_panel.isVisible() and not window.references_panel.isVisible()
+    # Le panneau des résultats de la recherche (V0.9.2.8) aussi.
+    window.find_box.setText("TEI")
+    window.list_search_results()
+    assert window.search_results_panel.isVisible() and not window.validation_panel.isVisible()
     window.check_references()
+    assert not window.search_results_panel.isVisible()
     window.hide_references_panel()
     assert not any(panel.isVisible() for panel in (
-        window.validation_panel, window.xpath_panel, window.references_panel))
-    assert window.left_splitter.sizes()[1:] == [0, 0, 0]
+        window.validation_panel, window.xpath_panel, window.references_panel, window.search_results_panel))
+    assert window.left_splitter.sizes()[1:] == [0, 0, 0, 0]
 
 
 def test_reference_commands_follow_the_interface_language(open_window, example_project):

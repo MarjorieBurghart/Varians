@@ -34,7 +34,7 @@ def test_ctrl_h_opens_the_replace_bar_under_the_xml(open_window, example_project
     assert window.action_replace.shortcut().toString() == "Ctrl+H"
     assert window.action_replace.text() == _tr("search.replace")
     entries = [action for action in window.search_menu.actions() if not action.isSeparator()]
-    assert entries.index(window.action_replace) == entries.index(window.action_find_next) + 1
+    assert entries.index(window.action_replace) == entries.index(window.action_search_list) + 1
     assert not window.replace_bar.isVisible()
     window.editor.setPlainText(TEXT)
     cursor = window.editor.textCursor()

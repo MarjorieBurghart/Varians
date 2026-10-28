@@ -567,6 +567,7 @@ class DocumentTabsMixin:
         self._update_segment()
         self._apply_edition_ui()
         self._restore_document_view(session)
+        self.search_results_document_changed()
 
     def _remember_document_view(self, session):
         cursor = self.editor.textCursor()
