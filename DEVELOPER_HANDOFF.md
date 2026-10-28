@@ -436,9 +436,9 @@ Générateur moderne, piloté par `project.xml`. Il :
 
 ### `web_viewer/legacy_v11_core.py`
 
-Contient le cœur historique d'extraction TEI et certaines fonctions de compatibilité. Il conserve également beaucoup de code ancien lié au prototype de trois manuscrits. Le générateur moderne n'importe qu'un sous-ensemble de fonctions.
+Extracteurs TEI de l'export web : `extract_corrected_pages` (lignes du pivot pour les fac-similés) et `extract_reading_document` (texte de lecture en blocs : divisions, titres, paragraphes, vers, entrées de liste, cellules, légendes, notes ; V0.9.3.0). Le code propre au prototype de Troyes en a été retiré en V0.9.3.0.
 
-**À ne pas faire :** réintroduire dans le code moderne des constantes ou chemins historiques de ce fichier. Pour une future refactorisation, extraire progressivement les fonctions réellement utilisées dans des modules génériques, accompagnées de tests, puis réduire ce fichier.
+**À ne pas faire :** compter les positions du texte de lecture ailleurs qu'à partir de `RENDERED_BLOCKS` : le rendu (`renderDocument`), la recherche, la synchronisation et `segment_views` doivent rester d'accord (`test_v0916_sync_model.py`).
 
 ---
 
@@ -689,7 +689,7 @@ Candidats :
 
 ### `legacy_v11_core.py`
 
-Il contient de l'historique spécifique au prototype initial. Le code moderne en utilise encore quelques extracteurs. À terme, extraire seulement les fonctions nécessaires dans des modules génériques et réduire ce fichier.
+Ne contient plus, depuis la V0.9.3.0, que les extracteurs de l'export web et leurs règles communes ; le nom est historique.
 
 ### Schematron
 
@@ -701,7 +701,7 @@ Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus 
 
 ### Recherche et remplacement
 
-Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), moteur sans Qt `text_search` (casse, expressions régulières de Python, remplacements, positions UTF-16), remplacement dans l'éditeur sous la garde des paires de balises (`code_editor`), barre de remplacement du XML (`replace_bar`) et ligne « Remplacer par » du fragment (`formatted_view`), recherche dans l'aide (`help_search`, `help_dialogs.SoftwareHelpDialog`), panneau « Tout lister » des occurrences en contexte (`text_search.kwic`, `search_results`), flèche ▾ de la rangée d'onglets (`document_tabs`). Depuis la V0.9.2.8.1 : bouton au livre des viewers (`manuscript_panel.lead_btn` ; enfoncé, les flèches mènent l'édition ; par défaut, le pivot seul ; réglage local par projet), recherche des `<app>` sans `<lem>` (`apparatus_xpath`), choix explicite dans la liste de Ctrl+E (`completion_ui`). Depuis la V0.9.2.8.2 : sigle d'un témoin distinct de son identifiant XML (`witness_ids`, attribut `siglum` de `project.xml`, `<idno type="siglum">`, affichage par `witness_siglum`), crayon ✎ qui garde la sélection et F2 dans la vue XSLT / CSS (`formatted_view`), témoin ajouté déclaré dans la `<listWit>` existante (`tei_listwit`), identifiants XML de toute écriture pour « Marquer la page » (`tei_facsimile.valid_xml_id`), projet de test dans `tests/data/exemple`, exclu des publications avec tout `tests/`. Depuis la V0.9.2.9 : le crayon ✎ de la vue XSLT / CSS ouvre tout élément modifiable (`fragment_units` : `model.divPart`, `model.inter`, `<head>`, `<figure>`, `<note>`, classes lues dans le schéma du projet), placé par une feuille enveloppe quelle que soit la XSLT de la vue ; la feuille livrée affiche vers, titres, listes et figures. Restent hors champ : expressions régulières dans la recherche de la vue XSLT / CSS et dans le viewer web, remplacement dans plusieurs documents à la fois.
+Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), moteur sans Qt `text_search` (casse, expressions régulières de Python, remplacements, positions UTF-16), remplacement dans l'éditeur sous la garde des paires de balises (`code_editor`), barre de remplacement du XML (`replace_bar`) et ligne « Remplacer par » du fragment (`formatted_view`), recherche dans l'aide (`help_search`, `help_dialogs.SoftwareHelpDialog`), panneau « Tout lister » des occurrences en contexte (`text_search.kwic`, `search_results`), flèche ▾ de la rangée d'onglets (`document_tabs`). Depuis la V0.9.2.8.1 : bouton au livre des viewers (`manuscript_panel.lead_btn` ; enfoncé, les flèches mènent l'édition ; par défaut, le pivot seul ; réglage local par projet), recherche des `<app>` sans `<lem>` (`apparatus_xpath`), choix explicite dans la liste de Ctrl+E (`completion_ui`). Depuis la V0.9.2.8.2 : sigle d'un témoin distinct de son identifiant XML (`witness_ids`, attribut `siglum` de `project.xml`, `<idno type="siglum">`, affichage par `witness_siglum`), crayon ✎ qui garde la sélection et F2 dans la vue XSLT / CSS (`formatted_view`), témoin ajouté déclaré dans la `<listWit>` existante (`tei_listwit`), identifiants XML de toute écriture pour « Marquer la page » (`tei_facsimile.valid_xml_id`), projet de test dans `tests/data/exemple`, exclu des publications avec tout `tests/`. Depuis la V0.9.2.9 : le crayon ✎ de la vue XSLT / CSS ouvre tout élément modifiable (`fragment_units` : `model.divPart`, `model.inter`, `<head>`, `<figure>`, `<note>`, classes lues dans le schéma du projet), placé par une feuille enveloppe quelle que soit la XSLT de la vue ; la feuille livrée affiche vers, titres, listes et figures. Depuis la V0.9.3.0 : texte de lecture du viewer web structuré (`legacy_v11_core.extract_reading_document` : tous les textes, blocs `div` titrés par `<head>` ou `@n`, `RENDERED_BLOCKS` comptés de la même façon par `renderDocument`, `sync_model.js`, `fulltext_search.js` et `segment_views`), phénomènes éditoriaux comme « Édition critique », `<rdgGrp>`, tableaux dans les feuilles livrées ; code du corpus de Troyes retiré. Restent hors champ : expressions régulières dans la recherche de la vue XSLT / CSS et dans le viewer web, remplacement dans plusieurs documents à la fois.
 
 ### Outil tiers d'alignement
 

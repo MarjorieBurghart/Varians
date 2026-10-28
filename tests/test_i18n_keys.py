@@ -887,3 +887,31 @@ def test_each_help_announces_version_0929():
                      "<code>@n</code>", "<code>@xml:id</code>"):
             assert text in version, (language, text)
         assert page.index('<section id="v09282">') < page.index('<section id="v0929">'), language
+
+
+def test_each_help_explains_the_reading_text_of_the_web_viewer():
+    """V0.9.3.0 : le texte de lecture du viewer web (titres, sommaire,
+    préliminaires et annexes, textes d'un groupe, vers, listes, tableaux,
+    notes, choix, ratures, lacunes, groupes de leçons, langue)."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        viewer = page[page.index('<h2 id="viewer">'):]
+        viewer = viewer[:viewer.index("<h2 ", 1)]
+        paragraph = viewer[viewer.index('<p id="viewer-text">'):]
+        paragraph = paragraph[:paragraph.index("</p>")]
+        for name in ("head", "front", "back", "group", "lg", "l", "table", "note", "choice", "del", "add",
+                     "supplied", "gap", "rdgGrp"):
+            assert f"<code>&lt;{name}&gt;</code>" in paragraph, (language, name)
+        for attribute in ("@n", "@xml:id", "@xml:lang", '@role="label"', "@cols", "@rows"):
+            assert f"<code>{attribute}</code>" in paragraph, (language, attribute)
+        assert "[…]" in paragraph, language
+
+
+def test_each_help_announces_version_0930():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = _help_section(page, "v0930")
+        for text in ('href="#viewer-text"', "<code>&lt;table&gt;</code>", "<code>&lt;rdgGrp&gt;</code>",
+                     "<code>@xml:id</code>", "<code>project.xml</code>"):
+            assert text in version, (language, text)
+        assert page.index('<section id="v0929">') < page.index('<section id="v0930">'), language
