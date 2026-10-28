@@ -19,6 +19,11 @@ VARIANS V0.9.2.8 — MENUS ÉDITER ET RECHERCHER, CHERCHER ET REMPLACER
   remplacer » s'annule d'un seul Ctrl+Z ; \1, \g<nom> et \n avec une
   expression régulière. Le texte cherché est pris tel quel, espaces
   compris ; remplacer une balise ouvrante ne touche pas sa fermante.
+• Recherche dans l'aide : un champ en haut de la fenêtre d'aide (Ctrl+F),
+  sans tenir compte des accents ni de la casse ; plusieurs mots : les
+  sections qui les contiennent tous ; entre guillemets, l'expression
+  exacte. La liste des sections trouvées, avec un extrait, mène à chacune ;
+  les occurrences sont surlignées et se parcourent (◀ ▶, Entrée, F3).
 • Correction : l'occurrence trouvée est surlignée exactement, même après
   un caractère au-delà de U+FFFF.
 • Voir l'aide (Rechercher et remplacer), avec un aide-mémoire des

@@ -692,3 +692,22 @@ def test_each_help_names_references_as_a_command_of_the_edit_menu():
         edit = _help_section(page, "search-replace").split("</li>")[0]
         separator = "、" if language == "ja" else ", "
         assert f"{catalog['edit.format_xml']}{separator}{catalog['references.action']}" in edit, language
+
+
+def test_each_help_explains_how_to_search_the_help():
+    """V0.9.2.8 : la recherche dans l'aide, et la version qui l'annonce avec
+    les commandes passées dans le menu Éditer."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        item = section[section.index('<li id="help-search">'):]
+        item = item[:item.index("</li>")]
+        for text in ("<kbd>Ctrl+F</kbd>", "<kbd>F3</kbd>", '<code>"'):
+            assert text in item, (language, text)
+        assert item.index('<li id="help-search">') == 0 and section.index(item) < section.index("</ul>"), language
+        version = _help_section(page, "v0928")
+        assert 'href="#help-search"' in version, language
+        for key in ("edit.format_xml", "references.action"):
+            assert catalog[key] in version, (language, key)

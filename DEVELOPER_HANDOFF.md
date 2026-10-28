@@ -701,7 +701,7 @@ Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus 
 
 ### Recherche et remplacement
 
-Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), moteur sans Qt `text_search` (casse, expressions régulières de Python, remplacements, positions UTF-16), remplacement dans l'éditeur sous la garde des paires de balises (`code_editor`), barre de remplacement du XML (`replace_bar`) et ligne « Remplacer par » du fragment (`formatted_view`). Restent hors champ : expressions régulières dans la recherche de la vue XSLT / CSS et dans le viewer web, remplacement dans plusieurs documents à la fois.
+Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), moteur sans Qt `text_search` (casse, expressions régulières de Python, remplacements, positions UTF-16), remplacement dans l'éditeur sous la garde des paires de balises (`code_editor`), barre de remplacement du XML (`replace_bar`) et ligne « Remplacer par » du fragment (`formatted_view`), recherche dans l'aide (`help_search`, `help_dialogs.SoftwareHelpDialog`). Restent hors champ : expressions régulières dans la recherche de la vue XSLT / CSS et dans le viewer web, remplacement dans plusieurs documents à la fois.
 
 ### Outil tiers d'alignement
 
