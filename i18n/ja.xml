@@ -310,6 +310,10 @@
   <string key="project.settings.error.title">プロジェクト設定を保存できません</string>
   <string key="project.settings.saved.title">プロジェクトを更新しました</string>
   <string key="project.settings.saved">プロジェクト設定を保存しました。プロジェクトを再読み込みします。</string>
+  <string key="project.listwit.added">エディションの &lt;listWit&gt; に追加しました：{witnesses}。</string>
+  <string key="project.listwit.no_listwit">エディションのヘッダーに &lt;listWit&gt; がありません。{witnesses} をご自分で宣言してください。</string>
+  <string key="project.listwit.id_used">&lt;listWit&gt; に追加しませんでした：{witnesses} の識別子は、エディションの別の要素がすでに使っています。</string>
+  <string key="project.listwit.malformed">&lt;listWit&gt; に追加しませんでした：エディションが整形式ではありません（{witnesses}）。</string>
   <string key="project.xslt">XSLTスタイルシート</string>
   <string key="project.xslt.choose">XSLTスタイルシートを選択</string>
   <string key="project.css">CSSスタイルシート</string>

@@ -296,6 +296,10 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="project.settings.error.title">Impossible d’enregistrer les paramètres du projet</string>
   <string key="project.settings.saved.title">Projet mis à jour</string>
   <string key="project.settings.saved">Les paramètres du projet ont été enregistrés. Le projet va être rechargé.</string>
+  <string key="project.listwit.added">Ajouté à la &lt;listWit&gt; de l’édition : {witnesses}.</string>
+  <string key="project.listwit.no_listwit">L’en-tête de l’édition n’a pas de &lt;listWit&gt; : déclarez-y vous-même {witnesses}.</string>
+  <string key="project.listwit.id_used">Non ajouté à la &lt;listWit&gt; : l’identifiant de {witnesses} est déjà celui d’un autre élément de l’édition.</string>
+  <string key="project.listwit.malformed">Non ajouté à la &lt;listWit&gt; : l’édition n’est pas bien formée ({witnesses}).</string>
   <string key="project.xslt">Feuille XSLT</string>
   <string key="project.xslt.choose">Choisir une feuille XSLT</string>
   <string key="project.css">Feuille CSS</string>

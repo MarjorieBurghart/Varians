@@ -296,6 +296,10 @@ It has been removed from the recent-project list.</string>
   <string key="project.settings.error.title">Could not save project settings</string>
   <string key="project.settings.saved.title">Project updated</string>
   <string key="project.settings.saved">The project settings were saved. The project will now reload.</string>
+  <string key="project.listwit.added">Added to the &lt;listWit&gt; of the edition: {witnesses}.</string>
+  <string key="project.listwit.no_listwit">The header of the edition has no &lt;listWit&gt;: declare {witnesses} there yourself.</string>
+  <string key="project.listwit.id_used">Not added to the &lt;listWit&gt;: the identifier of {witnesses} already belongs to another element of the edition.</string>
+  <string key="project.listwit.malformed">Not added to the &lt;listWit&gt;: the edition is not well-formed ({witnesses}).</string>
   <string key="project.xslt">XSLT stylesheet</string>
   <string key="project.xslt.choose">Choose an XSLT stylesheet</string>
   <string key="project.css">CSS stylesheet</string>

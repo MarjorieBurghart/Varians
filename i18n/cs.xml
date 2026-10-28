@@ -310,6 +310,10 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.settings.error.title">Nastavení projektu se nepodařilo uložit</string>
   <string key="project.settings.saved.title">Projekt aktualizován</string>
   <string key="project.settings.saved">Nastavení projektu bylo uloženo. Projekt se nyní znovu načte.</string>
+  <string key="project.listwit.added">Přidáno do &lt;listWit&gt; edice: {witnesses}.</string>
+  <string key="project.listwit.no_listwit">Záhlaví edice nemá &lt;listWit&gt;: deklarujte {witnesses} sami.</string>
+  <string key="project.listwit.id_used">Nepřidáno do &lt;listWit&gt;: identifikátor {witnesses} už patří jinému prvku edice.</string>
+  <string key="project.listwit.malformed">Nepřidáno do &lt;listWit&gt;: edice není správně utvořená ({witnesses}).</string>
   <string key="project.xslt">Styl XSLT</string>
   <string key="project.xslt.choose">Vybrat styl XSLT</string>
   <string key="project.css">Styl CSS</string>

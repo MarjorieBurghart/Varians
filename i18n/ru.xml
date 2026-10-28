@@ -310,6 +310,10 @@
   <string key="project.settings.error.title">Не удалось сохранить параметры проекта</string>
   <string key="project.settings.saved.title">Проект обновлён</string>
   <string key="project.settings.saved">Параметры проекта сохранены. Сейчас проект будет перезагружен.</string>
+  <string key="project.listwit.added">Добавлено в &lt;listWit&gt; издания: {witnesses}.</string>
+  <string key="project.listwit.no_listwit">В заголовке издания нет &lt;listWit&gt;: объявите {witnesses} сами.</string>
+  <string key="project.listwit.id_used">Не добавлено в &lt;listWit&gt;: идентификатор {witnesses} уже принадлежит другому элементу издания.</string>
+  <string key="project.listwit.malformed">Не добавлено в &lt;listWit&gt;: издание не является правильно построенным XML ({witnesses}).</string>
   <string key="project.xslt">Таблица стилей XSLT</string>
   <string key="project.xslt.choose">Выбрать таблицу стилей XSLT</string>
   <string key="project.css">Таблица стилей CSS</string>

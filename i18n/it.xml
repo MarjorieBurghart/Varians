@@ -310,6 +310,10 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="project.settings.error.title">Impossibile salvare le impostazioni del progetto</string>
   <string key="project.settings.saved.title">Progetto aggiornato</string>
   <string key="project.settings.saved">Le impostazioni del progetto sono state salvate. Il progetto verrà ora ricaricato.</string>
+  <string key="project.listwit.added">Aggiunto alla &lt;listWit&gt; dell’edizione: {witnesses}.</string>
+  <string key="project.listwit.no_listwit">L’intestazione dell’edizione non ha una &lt;listWit&gt;: dichiarate voi stessi {witnesses}.</string>
+  <string key="project.listwit.id_used">Non aggiunto alla &lt;listWit&gt;: l’identificatore di {witnesses} appartiene già a un altro elemento dell’edizione.</string>
+  <string key="project.listwit.malformed">Non aggiunto alla &lt;listWit&gt;: l’edizione non è ben formata ({witnesses}).</string>
   <string key="project.xslt">Foglio di stile XSLT</string>
   <string key="project.xslt.choose">Scegli un foglio di stile XSLT</string>
   <string key="project.css">Foglio di stile CSS</string>

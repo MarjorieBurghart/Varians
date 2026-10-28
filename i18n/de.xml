@@ -310,6 +310,10 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.settings.error.title">Projekteinstellungen konnten nicht gespeichert werden</string>
   <string key="project.settings.saved.title">Projekt aktualisiert</string>
   <string key="project.settings.saved">Die Projekteinstellungen wurden gespeichert. Das Projekt wird jetzt neu geladen.</string>
+  <string key="project.listwit.added">Zur &lt;listWit&gt; der Edition hinzugefügt: {witnesses}.</string>
+  <string key="project.listwit.no_listwit">Der Header der Edition hat keine &lt;listWit&gt;: Deklarieren Sie {witnesses} dort selbst.</string>
+  <string key="project.listwit.id_used">Nicht zur &lt;listWit&gt; hinzugefügt: Die Kennung von {witnesses} gehört bereits einem anderen Element der Edition.</string>
+  <string key="project.listwit.malformed">Nicht zur &lt;listWit&gt; hinzugefügt: Die Edition ist nicht wohlgeformt ({witnesses}).</string>
   <string key="project.xslt">XSLT-Stylesheet</string>
   <string key="project.xslt.choose">XSLT-Stylesheet auswählen</string>
   <string key="project.css">CSS-Stylesheet</string>

@@ -22,6 +22,7 @@ from project_management import (
     prepare_iiif_manifests_for_project, prepare_local_images_for_project,
     write_project_xml,
 )
+from tei_listwit import add_witnesses_to_listwit_file
 from tei_facsimile import (
     previous_surface_labels, project_facsimile_pages, removable_generated_iiif_surfaces,
     sync_facsimile_file,
@@ -201,6 +202,11 @@ class ProjectActionsMixin:
             facsimile_report = sync_facsimile_file(
                 draft.edition, facsimile_pages, previous_surface_labels(self.project.witnesses)
             ) if facsimile_pages else None
+            # Témoins ajoutés au projet : déclarés dans la <listWit> existante
+            # de l'édition (V0.9.2.8.2) ; Varians n'en crée jamais.
+            known = {w.id for w in self.project.witnesses}
+            listwit_report = add_witnesses_to_listwit_file(
+                draft.edition, [w for w in draft.witnesses if w.id not in known])
             # En passant du mode « XSLT application » au mode « personnalisée »,
             # initialiser une copie locale si elle n'existe pas, sans jamais
             # remplacer un fichier personnalisé déjà présent.
@@ -278,7 +284,13 @@ class ProjectActionsMixin:
                 self, _t("facsimile.warning.title"),
                 _t("facsimile.warning.preserved") + "\n\n" + "\n".join(facsimile_report.conflicts),
             )
-        QMessageBox.information(self, _t("project.settings.saved.title"), _t("project.settings.saved"))
+        notes = [_t(key, witnesses=", ".join(sigla)) for key, sigla in (
+            ("project.listwit.added", listwit_report.added),
+            ("project.listwit.no_listwit", listwit_report.no_listwit),
+            ("project.listwit.id_used", listwit_report.id_used),
+            ("project.listwit.malformed", listwit_report.malformed)) if sigla]
+        QMessageBox.information(self, _t("project.settings.saved.title"),
+                                "\n\n".join([_t("project.settings.saved"), *notes]))
         # maybe_save() a déjà été exécuté ; on recharge immédiatement les chemins,
         # témoins et ressources qui viennent d'être modifiés.
         try:
