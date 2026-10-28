@@ -856,6 +856,7 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="apparatus.no_witness">V &lt;listWit&gt; zobrazeného dokumentu není žádný svědek (&lt;witness xml:id&gt;), nebo XML není správně utvořené: k dispozici jsou jen vaše dotazy.</string>
   <string key="apparatus.check.repeated">&lt;app&gt;, v nichž je některý svědek uveden vícekrát (nejednoznačné čtení)</string>
   <string key="apparatus.check.incomplete">Neúplné &lt;app&gt; (některý svědek nemá čtení)</string>
+  <string key="apparatus.check.no_lem">&lt;app&gt; bez &lt;lem&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt;, v nichž se svědek</string>
   <string key="apparatus.present">vyskytuje</string>
   <string key="apparatus.absent">nevyskytuje</string>

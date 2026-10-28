@@ -856,6 +856,7 @@
   <string key="apparatus.no_witness">В &lt;listWit&gt; отображаемого документа нет свидетелей (&lt;witness xml:id&gt;) или XML не является корректным: доступны только ваши запросы.</string>
   <string key="apparatus.check.repeated">&lt;app&gt;, где свидетель указан несколько раз (неоднозначное чтение)</string>
   <string key="apparatus.check.incomplete">Неполные &lt;app&gt; (у свидетеля нет чтения)</string>
+  <string key="apparatus.check.no_lem">&lt;app&gt; без &lt;lem&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt;, где свидетель</string>
   <string key="apparatus.present">встречается</string>
   <string key="apparatus.absent">не встречается</string>

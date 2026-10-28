@@ -154,6 +154,12 @@ def incomplete_app_xpath(ids, lacunose=()):
             " and (" + " or ".join(missing) + ")]")
 
 
+def app_without_lem_xpath():
+    """``<app>`` qui n'a pas de ``<lem>`` (V0.9.2.8.1) ; un ``<lem>`` placé
+    dans un ``<rdgGrp>`` de l'``<app>`` compte. Ne dépend pas des témoins."""
+    return "//tei:app[not(tei:lem) and not(tei:rdgGrp/tei:lem)]"
+
+
 def witness_xpath(witness_id, present, rdg_only):
     """``<app>`` où ``witness_id`` est cité (``present``) ou non. Dans les
     ``<rdg>`` seulement si ``rdg_only`` (citation explicite) ; sinon dans

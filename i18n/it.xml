@@ -856,6 +856,7 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="apparatus.no_witness">Nessun testimone (&lt;witness xml:id&gt;) in un &lt;listWit&gt; del documento visualizzato, oppure XML non ben formato: sono disponibili solo le vostre query.</string>
   <string key="apparatus.check.repeated">&lt;app&gt; in cui un testimone è citato più volte (lezione ambigua)</string>
   <string key="apparatus.check.incomplete">&lt;app&gt; incompleti (un testimone non vi ha lezione)</string>
+  <string key="apparatus.check.no_lem">&lt;app&gt; senza &lt;lem&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt; in cui il testimone</string>
   <string key="apparatus.present">compare</string>
   <string key="apparatus.absent">non compare</string>

@@ -16,7 +16,8 @@ from PySide6.QtWidgets import (
     QListWidget, QMessageBox, QPushButton, QRadioButton, QVBoxLayout,
 )
 from app_context import tr as _t
-from apparatus_xpath import incomplete_app_xpath, part_witnesses, repeated_witness_xpath, witness_ids, witness_xpath
+from apparatus_xpath import (app_without_lem_xpath, incomplete_app_xpath, part_witnesses, repeated_witness_xpath,
+                             witness_ids, witness_xpath)
 from lacunae import lacuna_events
 from project_config import XPathQuery
 from project_management import update_project_xpath_queries
@@ -117,13 +118,16 @@ class ApparatusDebugDialog(QDialog):
         self.choices = QButtonGroup(self)
         self.repeated_radio = QRadioButton(_t("apparatus.check.repeated"), self)
         self.incomplete_radio = QRadioButton(_t("apparatus.check.incomplete"), self)
+        self.no_lem_radio = QRadioButton(_t("apparatus.check.no_lem"), self)
         self.witness_radio = QRadioButton(_t("apparatus.check.witness"), self)
         self.query_radio = QRadioButton(_t("apparatus.check.query"), self)
-        for button in (self.repeated_radio, self.incomplete_radio, self.witness_radio, self.query_radio):
+        for button in (self.repeated_radio, self.incomplete_radio, self.no_lem_radio, self.witness_radio,
+                       self.query_radio):
             self.choices.addButton(button)
             button.toggled.connect(self._update_search_button)
         root.addWidget(self.repeated_radio)
         root.addWidget(self.incomplete_radio)
+        root.addWidget(self.no_lem_radio)
 
         witness_row = QHBoxLayout()
         self.witness_combo = QComboBox(self)
@@ -162,7 +166,8 @@ class ApparatusDebugDialog(QDialog):
         buttons.rejected.connect(self.reject)
         root.addWidget(buttons)
 
-        # Sans <listWit>, seules les requêtes personnelles restent utilisables.
+        # Sans <listWit>, restent utilisables les requêtes personnelles et
+        # « <app> qui n'a pas de <lem> », qui ne dépend pas des témoins.
         for widget in (self.repeated_radio, self.incomplete_radio, self.witness_radio,
                        self.witness_combo, self.presence_combo, self.scope_combo):
             widget.setEnabled(bool(self._ids))
@@ -176,6 +181,8 @@ class ApparatusDebugDialog(QDialog):
         if self.query_radio.isChecked():
             row = self.queries_list.currentRow()
             return self._queries[row].expression if 0 <= row < len(self._queries) else None
+        if self.no_lem_radio.isChecked():
+            return app_without_lem_xpath()
         if not self._ids:
             return None
         if self.repeated_radio.isChecked():

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Requêtes XPath de contrôle de l'apparat critique (parallel segmentation),
 sans Qt : témoins du <listWit>, témoin cité plusieurs fois, <app> incomplets,
-témoin donné."""
+<app> sans <lem> (V0.9.2.8.1), témoin donné."""
 from __future__ import annotations
 
 import re
@@ -9,7 +9,8 @@ import re
 import pytest
 from lxml import etree
 
-from apparatus_xpath import incomplete_app_xpath, repeated_witness_xpath, witness_ids, witness_xpath
+from apparatus_xpath import (app_without_lem_xpath, incomplete_app_xpath, repeated_witness_xpath, witness_ids,
+                             witness_xpath)
 from xpath_search import search_xpath
 
 # Un <app> par ligne, nommé par @n : les résultats sont identifiés par leur ligne.
@@ -83,6 +84,27 @@ def test_incomplete_apps():
     assert _found(incomplete_app_xpath(["A", "B", "C"])) == ["incomplet", "prefixe", "imbrique-incomplet"]
 
 
+LEMS = """<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><body><p>
+<app n="avec-lem"><lem wit="#A">a</lem><rdg wit="#B">b</rdg></app>
+<app n="sans-lem"><rdg wit="#A">a</rdg><rdg wit="#B">b</rdg></app>
+<app n="lem-dans-un-groupe"><rdgGrp><lem wit="#A">a</lem><rdg wit="#B">b</rdg></rdgGrp></app>
+<app n="groupe-sans-lem"><rdgGrp><rdg wit="#A">a</rdg></rdgGrp><rdg wit="#B">b</rdg></app>
+<app n="englobant"><lem wit="#A">x
+<app n="imbrique-sans-lem"><rdg wit="#A">y</rdg></app>
+</lem></app>
+<app n="vide"/>
+</p></body></text></TEI>"""
+
+
+def test_apps_without_lem():
+    """Un <lem> placé dans un <rdgGrp> de l'<app> compte."""
+    names = {number: match.group(1) for number, line in enumerate(LEMS.splitlines(), 1)
+             for match in [re.search(r'<app n="([^"]+)"', line)] if match}
+    result = search_xpath(LEMS, app_without_lem_xpath())
+    assert [names[match.line] for match in result.matches] == [
+        "sans-lem", "groupe-sans-lem", "imbrique-sans-lem", "vide"]
+
+
 def test_a_given_witness_cited_in_lem_or_rdg():
     found = _found(witness_xpath("A", present=True, rdg_only=False))
     assert "lem-sans-wit" in found                              # A absent des <rdg> : dans le <lem>
@@ -102,7 +124,7 @@ def test_a_given_witness_cited_in_rdg_only():
 def test_generated_expressions_are_plain_xpath_1():
     namespaces = {"tei": "http://www.tei-c.org/ns/1.0"}
     for expression in (repeated_witness_xpath(["A", "B"]), incomplete_app_xpath(["A", "B"]),
-                       witness_xpath("A", present=False, rdg_only=True)):
+                       app_without_lem_xpath(), witness_xpath("A", present=False, rdg_only=True)):
         assert expression.startswith("//tei:app[")
         etree.XPath(expression, namespaces=namespaces)          # compile en XPath 1.0
 

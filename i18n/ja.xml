@@ -856,6 +856,7 @@
   <string key="apparatus.no_witness">表示中の文書の &lt;listWit&gt; に伝本（&lt;witness xml:id&gt;）がないか、XML が整形式ではありません。使えるのは保存済みのクエリだけです。</string>
   <string key="apparatus.check.repeated">同じ伝本が複数回挙げられている &lt;app&gt;（読みが曖昧）</string>
   <string key="apparatus.check.incomplete">不完全な &lt;app&gt;（読みのない伝本がある）</string>
+  <string key="apparatus.check.no_lem">&lt;lem&gt; のない &lt;app&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt; で伝本</string>
   <string key="apparatus.present">が現れる</string>
   <string key="apparatus.absent">が現れない</string>
