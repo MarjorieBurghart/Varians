@@ -1,3 +1,45 @@
+VARIANS V0.9.2.8 — MENUS ÉDITER ET RECHERCHER, CHERCHER ET REMPLACER
+
+• Deux menus après « Fichier » : « Éditer » (Annuler Ctrl+Z, Refaire
+  Ctrl+Y, Couper, Copier, Coller, Sélectionner tout, Indenter le XML,
+  Références ; sur le champ qui a le focus, sinon sur le XML) et « Rechercher » (Recherche
+  simple Ctrl+F, Occurrence précédente Maj+F3, Occurrence suivante F3,
+  Chercher et remplacer… Ctrl+H, Respecter la casse, Expressions
+  régulières, Recherche XPath Ctrl+Maj+F). La barre d'outils garde ses
+  boutons, sauf « Indenter » et « Références », qui ne sont plus que dans
+  le menu Éditer.
+• Respecter la casse et Expressions régulières : options du menu, reprises
+  par les boutons « Aa » et « .* » près des champs de recherche du XML et
+  du fragment, retenues d'une session à l'autre. Expressions de Python
+  (module re), ^ et $ pour chaque ligne ; une expression incorrecte est
+  signalée. La recherche de la vue XSLT / CSS ne change pas.
+• Chercher et remplacer (Ctrl+H) : une barre sous l'éditeur XML, ou la
+  ligne « Remplacer par » sous la recherche du fragment. « Remplacer »
+  change l'occurrence surlignée puis passe à la suivante ; « Tout
+  remplacer » s'annule d'un seul Ctrl+Z ; \1, \g<nom> et \n avec une
+  expression régulière. Le texte cherché est pris tel quel, espaces
+  compris ; remplacer une balise ouvrante ne touche pas sa fermante.
+• Recherche dans l'aide : un champ en haut de la fenêtre d'aide (Ctrl+F),
+  sans tenir compte des accents ni de la casse ; plusieurs mots : les
+  sections qui les contiennent tous ; entre guillemets, l'expression
+  exacte. La liste des sections trouvées, avec un extrait, mène à chacune ;
+  les occurrences sont surlignées et se parcourent (◀ ▶, Entrée, F3).
+• Tout lister (bouton près du champ de recherche, Rechercher ▸ Lister
+  toutes les occurrences, Ctrl+Maj+L) : un panneau sous l'éditeur liste
+  toutes les occurrences de la recherche du XML, avec ses options, chacune
+  avec sa ligne et son contexte, le résultat surligné et centré (KWIC). Le
+  document affiché, ou tout le projet (case « Tout le projet », colonne
+  Document). Un clic mène à l'occurrence ; le panneau ouvert suit les
+  recherches, les options, le texte et le document affiché.
+• Onglets de documents : quand ils ne tiennent plus dans leur rangée, une
+  flèche ▾ à sa droite déroule la liste de tous les onglets (le document
+  affiché coché), puis « Choisir les documents affichés… ».
+• Correction : l'occurrence trouvée est surlignée exactement, même après
+  un caractère au-delà de U+FFFF.
+• Voir l'aide (Rechercher et remplacer), avec un aide-mémoire des
+  expressions régulières (., \d, \w, [...], *, +, ?, {2,4}, *?, |, (...),
+  ^, $, \b, échappement par \) et des exemples pour la TEI.
+
 VARIANS V0.9.2.7 — DOCX, ODT, EPUB, HTML EN PLUSIEURS FICHIERS, ÉDITION CRITIQUE
 
 • Scénarios prédéfinis : les scénarios des TEI Stylesheets sont réunis

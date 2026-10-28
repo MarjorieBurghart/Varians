@@ -699,6 +699,10 @@ Appliqué depuis la V0.9.2.3 (`schematron.py`, SchXslt2 livré dans `resources/s
 
 Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus `transform_worker`, interface `transform_ui`), TEI Stylesheets depuis la V0.9.2.2 (`tei_stylesheets`). Depuis la V0.9.2.7 : formats en plusieurs fichiers (`xslt_packages` : pages HTML, DOCX, ODT, EPUB, archive faite par Varians), pré-passage TEI → TEI (`TransformScenario.prepare`), paramètres sans type pour Saxon, `${pivot}`, sous-groupe « TEI Stylesheets », scénario « Édition critique (HTML) » (`rendering/edition-critique.xsl`, règles communes avec le pré-passage DOCX/ODT dans `rendering/apparat-commun.xsl`). Restent hors champ : PDF, images des pages HTML, notes de l'éditeur appelées par des lettres dans Word et LibreOffice (chiffres romains, i, ii…, comme ces logiciels numérotent les notes de fin), textes de l'édition critique dans d'autres langues que le français.
 
+### Recherche et remplacement
+
+Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), moteur sans Qt `text_search` (casse, expressions régulières de Python, remplacements, positions UTF-16), remplacement dans l'éditeur sous la garde des paires de balises (`code_editor`), barre de remplacement du XML (`replace_bar`) et ligne « Remplacer par » du fragment (`formatted_view`), recherche dans l'aide (`help_search`, `help_dialogs.SoftwareHelpDialog`), panneau « Tout lister » des occurrences en contexte (`text_search.kwic`, `search_results`), flèche ▾ de la rangée d'onglets (`document_tabs`). Restent hors champ : expressions régulières dans la recherche de la vue XSLT / CSS et dans le viewer web, remplacement dans plusieurs documents à la fois.
+
 ### Outil tiers d'alignement
 
 Varians exploite les synchronisations mais ne doit pas devenir l'atelier complet qui les construit. Un outil compagnon est prévu pour :

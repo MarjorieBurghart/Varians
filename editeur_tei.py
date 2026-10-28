@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.9.2.7.
+"""Varians — éditeur TEI/manuscrits générique — V0.9.2.8.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -38,7 +38,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -80,6 +80,9 @@ from formatted_view import (
 )
 from manuscript_panel import ManuscriptPanel
 from code_editor import CodeEditor, find_in_plain_editor, XMLHighlighter
+from text_search import SearchError
+from replace_bar import ReplaceBarMixin
+from search_results import SearchResultsMixin
 from witness_sync import WitnessSyncMixin, flatten_primary, flatten_secondary
 from project_actions import ProjectActionsMixin
 from main_menus import MainMenusMixin
@@ -284,7 +287,7 @@ def _document_attribute(path):
     )
 
 
-class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, TransformScenariosMixin, StylesheetCheckMixin, SchematronCheckMixin, SchematronRulesMixin, QMainWindow):
+class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, TransformScenariosMixin, StylesheetCheckMixin, SchematronCheckMixin, SchematronRulesMixin, ReplaceBarMixin, SearchResultsMixin, QMainWindow):
     # --- État du document ouvert (voir document_session.DocumentSession) ---
     current_path = _document_attribute("path")
     modified = _document_attribute("modified")
@@ -512,6 +515,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         source_options.addStretch(1)
         source_layout.addLayout(source_options)
         source_layout.addWidget(self.editor, 1)
+        # Chercher et remplacer (Ctrl+H, V0.9.2.8) : sous l'éditeur, fermée au départ.
+        source_layout.addWidget(self._build_replace_bar())
 
         self.left_tabs.addTab(self.source_tab, _t("tab.xml_source"))
         self.left_tabs.addTab(self.formatted_view, _t("tab.preview"))
@@ -634,7 +639,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.validation_panel = self._build_validation_panel()
         self.xpath_panel = self._build_xpath_panel()
         self.references_panel = self._build_references_panel()
-        self._bottom_panels = [self.validation_panel, self.xpath_panel, self.references_panel]
+        self.search_results_panel = self._build_search_results_panel()
+        self._bottom_panels = [self.validation_panel, self.xpath_panel, self.references_panel,
+                               self.search_results_panel]
         self.left_splitter = QSplitter(Qt.Orientation.Vertical)
         self.left_splitter.addWidget(self._build_document_area(self.left_tabs))
         self.left_splitter.setStretchFactor(0, 1)
@@ -1277,20 +1284,35 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.find_box.setFocus()
         self.find_box.selectAll()
 
-    def _find_source(self, backwards=False):
-        q = self.find_box.text()
+    def _find_source(self, backwards=False, field=None):
+        # *field* : le champ de la recherche, celui de la barre d'outils ou
+        # celui de la barre de remplacement (V0.9.2.8), qui garde le focus.
+        box = field or self.find_box
+        q = box.text()
         if not q:
-            self.find_box.setFocus()
+            box.setFocus()
             return
-        found, n, total = find_in_plain_editor(self.editor, q, backwards=backwards)
+        try:
+            found, n, total = find_in_plain_editor(self.editor, q, backwards=backwards,
+                                                   options=self.search_options(), exact=field is not None)
+        except SearchError as error:
+            self.statusBar().showMessage(_t("search.error.pattern", detail=error.detail), 5000)
+            self.replace_status.setText("!")
+            box.setFocus()
+            return
         if found:
             self.left_tabs.setCurrentIndex(0)
             self.statusBar().showMessage(_t("status.search.xml.found", n=n, total=total, query=q), 2500)
         else:
             self.statusBar().showMessage(_t("status.search.xml.none", query=q), 3000)
+        self.replace_status.setText(f"{n}/{total}" if found else "0/0")
+        self.search_results_follow()
         # Entrée reste associée à la recherche suivante, jamais à l'édition XML.
         # La mise en évidence fluo demeure visible dans l'éditeur sans focus.
-        self.find_box.setFocus()
+        if field is None:
+            self.find_box.setFocus()
+        else:
+            field.setFocus()
 
     def find_source_next(self):
         self._find_source(False)

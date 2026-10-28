@@ -605,3 +605,142 @@ def test_the_documents_menu_names_xml_and_xslt():
         root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
         label = next(string.text for string in root.findall("string") if string.get("key") == "documents.menu")
         assert "XSLT" in label, language
+
+
+def _help_section(page, section_id):
+    section = page[page.index(f'<section id="{section_id}">'):]
+    return section[:section.index("</section>")]
+
+
+def test_each_help_explains_search_and_replace():
+    """V0.9.2.8 : menus Éditer et Rechercher, casse, expressions régulières,
+    chercher et remplacer."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        for key in ("menu.edit", "menu.search", "edit.format_xml", "search.find", "search.case", "search.regex",
+                    "replace.one", "replace.all"):
+            assert catalog[key] in section, (language, key)
+        assert catalog["search.replace"].rstrip("…") in section, language
+        assert catalog["replace.with.label"].rstrip(" :：") in section, language
+        for text in ("Ctrl+H", "Ctrl+F", "F3", "Ctrl+Z", "<strong>Aa</strong>", "<strong>.*</strong>",
+                     "<code>\\1</code>", "<code>\\g&lt;", "<code>re</code>", 'href="#xpath"',
+                     '<code>wit="#(\\w+)"</code>'):
+            assert text in section, (language, text)
+        assert page.index('<section id="critical-edition">') < page.index('<section id="search-replace">') \
+            < page.index('<section id="v0900">'), language
+
+
+def test_each_help_lists_ctrl_h_among_the_shortcuts():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        ctrl_f = page.index("<tr><td>Ctrl+F</td>")
+        assert page.index("<tr>", ctrl_f + 1) == page.index("<tr><td>Ctrl+H</td>"), language
+
+
+def test_each_help_announces_version_0928():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = _help_section(page, "v0928")
+        assert 'href="#search-replace"' in version, language
+        assert page.index('<section id="v0927">') < page.index('<section id="v0928">'), language
+
+
+def test_each_help_names_indent_as_a_command_of_the_edit_menu():
+    """V0.9.2.8 : « Indenter le XML » n'est plus un bouton de la barre
+    d'outils, mais une commande du menu Éditer."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        command = f"<strong>{catalog['menu.edit']} → {catalog['edit.format_xml']}</strong>"
+        heading = page.index('<h2 id="formatage">' if language == "fr" else '<h2 id="formatting">')
+        assert command in page[heading:page.index("<h2", heading + 1)], language
+        assert f"<strong>{catalog['toolbar.format_xml']}</strong>" not in page, language
+
+
+def test_each_help_has_a_quick_reference_of_regular_expressions():
+    """V0.9.2.8 : la syntaxe des expressions régulières, dans un tableau de
+    la section « Rechercher et remplacer »."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        assert '<h3 id="regex-syntax">' in section and "<table>" in section, language
+        table = section[section.index('<h3 id="regex-syntax">'):]
+        for text in ("<code>.</code>", "<code>\\d</code>", "<code>\\w</code>", "<code>\\s</code>",
+                     "<code>[^&lt;]</code>", "<code>*</code>", "<code>+</code>", "<code>?</code>",
+                     "<code>{2,4}</code>", "<code>*?</code>", "<code>a|b</code>", "<code>(…)</code>",
+                     "<code>^</code>", "<code>$</code>", "<code>\\b</code>", "<code>\\.</code>",
+                     "<code>mic?hi</code>", "<code>[uv]ox</code>",
+                     'href="https://docs.python.org/3/library/re.html"'):
+            assert text in table, (language, text)
+
+
+def test_each_help_names_references_as_a_command_of_the_edit_menu():
+    """V0.9.2.8 : « Références » est la dernière commande du menu Éditer,
+    plus un bouton de la barre d'outils."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        command = f"<strong>{catalog['menu.edit']} → {catalog['references.action']}</strong>"
+        references = _help_section(page, "references")
+        assert command in references, language
+        assert page.count(command) == 2, language
+        edit = _help_section(page, "search-replace").split("</li>")[0]
+        separator = "、" if language == "ja" else ", "
+        assert f"{catalog['edit.format_xml']}{separator}{catalog['references.action']}" in edit, language
+
+
+def test_each_help_explains_how_to_search_the_help():
+    """V0.9.2.8 : la recherche dans l'aide, et la version qui l'annonce avec
+    les commandes passées dans le menu Éditer."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        item = section[section.index('<li id="help-search">'):]
+        item = item[:item.index("</li>")]
+        for text in ("<kbd>Ctrl+F</kbd>", "<kbd>F3</kbd>", '<code>"'):
+            assert text in item, (language, text)
+        assert item.index('<li id="help-search">') == 0 and section.index(item) < section.index("</ul>"), language
+        version = _help_section(page, "v0928")
+        assert 'href="#help-search"' in version, language
+        for key in ("edit.format_xml", "references.action"):
+            assert catalog[key] in version, (language, key)
+
+
+def test_each_help_explains_the_list_of_all_occurrences():
+    """V0.9.2.8 : « Tout lister » (Ctrl+Maj+L), le panneau des occurrences
+    en contexte, dans la section « Rechercher et remplacer », le tableau des
+    raccourcis et la version."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        item = section[section.index('<li id="search-results">'):]
+        item = item[:item.index("</li>")]
+        for key in ("search.list", "search.list.menu", "results.all_project"):
+            assert catalog[key] in item, (language, key)
+        assert ("<kbd>Ctrl+Maj+L</kbd>" if language == "fr" else "<kbd>Ctrl+Shift+L</kbd>") in item, language
+        assert section.index("<kbd>Ctrl+F</kbd>") < section.index(item) < section.index("<kbd>Ctrl+H</kbd>"), language
+        ctrl_h = page.index("<tr><td>Ctrl+H</td>")
+        assert page.index("<tr>", ctrl_h + 1) == page.index("<tr><td>Ctrl+Shift+L</td>"), language
+        version = _help_section(page, "v0928")
+        assert 'href="#search-results"' in version and catalog["search.list"] in version, language
+
+
+def test_each_help_explains_the_menu_of_all_tabs():
+    """V0.9.2.8 : la flèche ▾ à droite des onglets trop nombreux."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        documents = _help_section(page, "auxiliary-documents")
+        assert "<strong>▾</strong>" in documents and catalog["documents.tabs.menu"] in documents, language
+        version = _help_section(page, "v0928")
+        assert "<strong>▾</strong>" in version and 'href="#auxiliary-documents"' in version, language

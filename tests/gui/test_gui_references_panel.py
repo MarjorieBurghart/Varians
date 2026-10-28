@@ -46,11 +46,11 @@ def _double_click(window, qtbot, row):
     qtbot.mouseDClick(table.viewport(), Qt.MouseButton.LeftButton, pos=rect.center())
 
 
-def test_toolbar_command_follows_xpath_and_reports_the_example_as_resolved(open_window, example_project):
+def test_the_edit_menu_command_reports_the_example_as_resolved(open_window, example_project):
     window = open_window(example_project)
-    actions = window.main_toolbar.actions()
-    index = actions.index(window.action_xpath_search)
-    assert actions[index + 1] is window.action_check_references
+    # V0.9.2.8 : la commande est à la fin du menu Éditer, plus dans la barre d'outils.
+    assert window.edit_menu.actions()[-1] is window.action_check_references
+    assert window.action_check_references not in window.main_toolbar.actions()
     assert window.action_check_references.text() == tr("references.action")
 
     window.action_check_references.trigger()
@@ -146,11 +146,16 @@ def test_bottom_panels_remain_exclusive(open_window, example_project):
     assert window.references_panel.isVisible() and not window.xpath_panel.isVisible()
     window.validate_relaxng_manual()
     assert window.validation_panel.isVisible() and not window.references_panel.isVisible()
+    # Le panneau des résultats de la recherche (V0.9.2.8) aussi.
+    window.find_box.setText("TEI")
+    window.list_search_results()
+    assert window.search_results_panel.isVisible() and not window.validation_panel.isVisible()
     window.check_references()
+    assert not window.search_results_panel.isVisible()
     window.hide_references_panel()
     assert not any(panel.isVisible() for panel in (
-        window.validation_panel, window.xpath_panel, window.references_panel))
-    assert window.left_splitter.sizes()[1:] == [0, 0, 0]
+        window.validation_panel, window.xpath_panel, window.references_panel, window.search_results_panel))
+    assert window.left_splitter.sizes()[1:] == [0, 0, 0, 0]
 
 
 def test_reference_commands_follow_the_interface_language(open_window, example_project):

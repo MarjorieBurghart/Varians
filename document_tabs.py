@@ -19,10 +19,10 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QTextCursor, QTextDocument
-from PySide6.QtWidgets import (QMessageBox, QPlainTextDocumentLayout, QStyle, QStyleOptionTab, QStylePainter,
-                               QTabBar, QVBoxLayout, QWidget)
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QActionGroup, QColor, QFont, QFontMetrics, QTextCursor, QTextDocument
+from PySide6.QtWidgets import (QHBoxLayout, QMenu, QMessageBox, QPlainTextDocumentLayout, QStyle, QStyleOptionTab,
+                               QStylePainter, QTabBar, QToolButton, QVBoxLayout, QWidget)
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
@@ -56,9 +56,20 @@ class DocumentTabBar(QTabBar):
     dans la couleur de l'état XML de chaque document (``setTabTextColor``),
     qu'une feuille de style ferait oublier."""
 
+    # Taille de la rangée ou place des onglets changée (flèche ▾, V0.9.2.8).
+    layoutChanged = Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setStyleSheet(_DOCUMENT_TAB_QSS)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.layoutChanged.emit()
+
+    def tabLayoutChange(self):
+        super().tabLayoutChange()
+        self.layoutChanged.emit()
 
     def _label_font(self, bold):
         font = QFont(self.font())
@@ -380,6 +391,26 @@ class DocumentTabsMixin:
         bar.setExpanding(False)
         bar.setUsesScrollButtons(True)
         self.document_tab_bar = bar
+        # Onglets trop nombreux pour leur rangée (V0.9.2.8) : une flèche ▾ à
+        # sa droite déroule le menu de tous les onglets.
+        button = QToolButton(self)
+        button.setArrowType(Qt.ArrowType.DownArrow)
+        button.setAutoRaise(True)
+        button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        button.setStyleSheet("QToolButton::menu-indicator { image: none; }")
+        button.setToolTip(_t("documents.tabs.menu"))
+        menu = QMenu(button)
+        menu.aboutToShow.connect(self._fill_document_tabs_menu)
+        button.setMenu(menu)
+        button.setVisible(False)
+        self.document_tabs_button = button
+        row = QWidget(self)
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(0)
+        row_layout.addWidget(bar, 1)
+        row_layout.addWidget(button)
+        self.document_tab_row = row
         self._normal_tab_color = bar.tabTextColor(0)
         for session in self._tab_sessions:
             bar.addTab("")
@@ -387,6 +418,8 @@ class DocumentTabsMixin:
         # L'onglet de l'édition n'est pas forcément le premier.
         self._select_document_tab()
         bar.setVisible(len(self.documents) > 1)
+        self._update_document_tabs_button()
+        bar.layoutChanged.connect(self._update_document_tabs_button)
         bar.currentChanged.connect(self._document_tab_changed)
         bar.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         bar.customContextMenuRequested.connect(self._document_tab_context_menu)
@@ -394,9 +427,38 @@ class DocumentTabsMixin:
         layout = QVBoxLayout(area)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        layout.addWidget(bar)
+        layout.addWidget(row)
         layout.addWidget(views, 1)
         return area
+
+    def _update_document_tabs_button(self):
+        """La rangée d'onglets suit la barre (masquée tant que le projet ne
+        compte que l'édition) ; la flèche ▾ s'y affiche quand les onglets
+        n'y tiennent pas."""
+        bar = self.document_tab_bar
+        shown = not bar.isHidden()
+        self.document_tab_row.setVisible(shown)
+        needed = sum(bar.tabSizeHint(index).width() for index in range(bar.count()))
+        self.document_tabs_button.setVisible(shown and needed > self.document_tab_row.width())
+
+    def _fill_document_tabs_menu(self):
+        """Menu de la flèche ▾ : tous les onglets, celui du document affiché
+        coché, puis « Choisir les documents affichés… »."""
+        menu = self.document_tabs_button.menu()
+        menu.clear()
+        for group in menu.findChildren(QActionGroup):
+            group.deleteLater()
+        bar = self.document_tab_bar
+        group = QActionGroup(menu)
+        for index in range(bar.count()):
+            action = menu.addAction(bar.tabText(index))
+            action.setActionGroup(group)
+            action.setCheckable(True)
+            action.setChecked(index == bar.currentIndex())
+            action.setToolTip(bar.tabToolTip(index))
+            action.triggered.connect(lambda _checked=False, index=index: bar.setCurrentIndex(index))
+        menu.addSeparator()
+        menu.addAction(self.action_choose_documents)
 
     def _register_document(self, config):
         """Déclare ``config`` dans project.xml, l'ajoute aux onglets et l'affiche."""
@@ -448,6 +510,7 @@ class DocumentTabsMixin:
         for session in self._tab_sessions:
             self._refresh_document_tab(session)
         bar.setVisible(len(self.documents) > 1)
+        self._update_document_tabs_button()
         self.action_choose_documents.setEnabled(len(self.documents) > 1)
         self._select_document_tab()
 
@@ -567,6 +630,7 @@ class DocumentTabsMixin:
         self._update_segment()
         self._apply_edition_ui()
         self._restore_document_view(session)
+        self.search_results_document_changed()
 
     def _remember_document_view(self, session):
         cursor = self.editor.textCursor()

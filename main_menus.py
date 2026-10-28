@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QActionGroup, QKeySequence
 from PySide6.QtWidgets import (
-    QApplication, QLabel, QLineEdit, QMenu, QSizePolicy, QToolBar, QToolButton, QWidget,
+    QApplication, QLabel, QLineEdit, QMenu, QPlainTextEdit, QSizePolicy, QTextEdit, QToolBar, QToolButton,
+    QWidget,
 )
 from app_context import (
     _settings, apply_qt_language, clear_recent_projects, current_i18n, recent_project_paths,
@@ -16,6 +18,14 @@ from help_dialogs import (
     _open_external, _open_latin_dictionary, _show_about, _show_software_help,
 )
 from project_config import load_project, update_project_language
+from text_search import SearchOptions
+
+
+def _setting_flag(name):
+    value = _settings().value(name, False)
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
 
 
 class MainMenusMixin:
@@ -23,7 +33,10 @@ class MainMenusMixin:
 
     def _build_toolbar(self):
         # V0.8.3 : menus à gauche, commandes XML regroupées, recherche à droite.
+        # V0.9.2.8 : « Éditer » et « Rechercher » juste après « Fichier ».
         self._build_file_menu()
+        self._build_edit_menu()
+        self._build_search_menu()
         self._build_display_menu()
         self._build_help_menu()
 
@@ -38,6 +51,20 @@ class MainMenusMixin:
         self.file_menu_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.file_menu_button.setAutoRaise(True)
         tb.addWidget(self.file_menu_button)
+
+        self.edit_menu_button = QToolButton(self)
+        self.edit_menu_button.setText(_t("menu.edit"))
+        self.edit_menu_button.setMenu(self.edit_menu)
+        self.edit_menu_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.edit_menu_button.setAutoRaise(True)
+        tb.addWidget(self.edit_menu_button)
+
+        self.search_menu_button = QToolButton(self)
+        self.search_menu_button.setText(_t("menu.search"))
+        self.search_menu_button.setMenu(self.search_menu)
+        self.search_menu_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.search_menu_button.setAutoRaise(True)
+        tb.addWidget(self.search_menu_button)
 
         self.display_menu_button = QToolButton(self)
         self.display_menu_button.setText(_t("menu.display"))
@@ -69,19 +96,10 @@ class MainMenusMixin:
         self.action_validate_rng = self._make_action(
             _t("toolbar.validate_rng"), "F8", self.validate_relaxng_manual, _t("toolbar.validate_rng.tip")
         )
-        self.action_format_xml = self._make_action(
-            _t("toolbar.format_xml"), "", self.format_xml_source, _t("toolbar.format_xml.tip")
-        )
-        self.action_xpath_search = self._make_action(
-            _t("xpath.action"), "Ctrl+Shift+F", self.focus_xpath_search
-        )
+        # XPath vient du menu Rechercher (V0.9.2.8), sous son libellé court
+        # (iconText) ; Indenter et Références ne sont plus que dans le menu Éditer.
         tb.addAction(self.action_validate_rng)
-        tb.addAction(self.action_format_xml)
-        self.action_check_references = self._make_action(
-            _t("references.action"), "", self.check_references, _t("references.action.tip")
-        )
         tb.addAction(self.action_xpath_search)
-        tb.addAction(self.action_check_references)
         xml_gap = QWidget()
         xml_gap.setFixedWidth(12)
         tb.addWidget(xml_gap)
@@ -106,12 +124,17 @@ class MainMenusMixin:
         self.find_box.setPlaceholderText("Ctrl+F")
         self.find_box.returnPressed.connect(self.find_source_next)
         tb.addWidget(self.find_box)
-        self.action_search = self._make_action(_t("toolbar.search"), "Ctrl+F", self.focus_find)
-        self.action_find_prev = self._make_action(_t("toolbar.previous"), "Shift+F3", self.find_previous)
-        self.action_find_next = self._make_action(_t("toolbar.next"), "F3", self.find_next)
+        # « Aa » et « .* » (V0.9.2.8) : les options du menu Rechercher, aussi
+        # dans la barre de recherche du fragment.
+        tb.addAction(self.action_search_case)
+        tb.addAction(self.action_search_regex)
+        self.formatted_view.add_fragment_find_options((self.action_search_case, self.action_search_regex))
+        self.connect_replace_bar(self.find_box, (self.action_search_case, self.action_search_regex))
         tb.addAction(self.action_search)
         tb.addAction(self.action_find_prev)
         tb.addAction(self.action_find_next)
+        tb.addAction(self.action_search_list)
+        self.connect_search_results()
 
     def _build_file_menu(self):
         # QMenu autonome : contrairement à menuBar().addMenu(), aucun bandeau
@@ -176,6 +199,116 @@ class MainMenusMixin:
         ):
             self.addAction(action)
         self.update_recent_projects_menu()
+
+    def _build_edit_menu(self):
+        """Menu « Éditer » (V0.9.2.8). Les commandes agissent sur le champ qui
+        a le focus (XML, fragment, champ de texte), sinon sur le XML. Leurs
+        raccourcis restent ceux de chaque champ : le menu les affiche sans les
+        reprendre (contexte WidgetShortcut : inactifs menu fermé)."""
+        menu = QMenu(_t("menu.edit"), self)
+        self.edit_menu = menu
+        self.action_undo = self._edit_action("edit.undo", "Ctrl+Z", "undo")
+        self.action_redo = self._edit_action("edit.redo", "Ctrl+Y", "redo")
+        self.action_cut = self._edit_action("edit.cut", "Ctrl+X", "cut")
+        self.action_copy = self._edit_action("edit.copy", "Ctrl+C", "copy")
+        self.action_paste = self._edit_action("edit.paste", "Ctrl+V", "paste")
+        self.action_select_all = self._edit_action("edit.select_all", "Ctrl+A", "selectAll")
+        self.action_format_xml = self._make_action(
+            _t("edit.format_xml"), "", self.format_xml_source, _t("toolbar.format_xml.tip")
+        )
+        self.action_check_references = self._make_action(
+            _t("references.action"), "", self.check_references, _t("references.action.tip")
+        )
+        menu.addAction(self.action_undo)
+        menu.addAction(self.action_redo)
+        menu.addSeparator()
+        menu.addAction(self.action_cut)
+        menu.addAction(self.action_copy)
+        menu.addAction(self.action_paste)
+        menu.addSeparator()
+        menu.addAction(self.action_select_all)
+        menu.addSeparator()
+        menu.addAction(self.action_format_xml)
+        menu.addAction(self.action_check_references)
+        # Les infobulles disent ce que font Indenter et Références.
+        menu.setToolTipsVisible(True)
+        menu.aboutToShow.connect(self._update_edit_actions)
+
+    def _edit_action(self, key, shortcut, method):
+        action = self._make_action(_t(key), shortcut, lambda checked=False: getattr(self._edit_target(), method)())
+        action.setShortcutContext(Qt.ShortcutContext.WidgetShortcut)
+        return action
+
+    def _edit_target(self):
+        widget = QApplication.focusWidget()
+        if isinstance(widget, (QLineEdit, QPlainTextEdit, QTextEdit)):
+            return widget
+        return self.editor
+
+    def _update_edit_actions(self):
+        target = self._edit_target()
+        if isinstance(target, QLineEdit):
+            undo, redo, selection = target.isUndoAvailable(), target.isRedoAvailable(), target.hasSelectedText()
+        else:
+            document = target.document()
+            undo, redo = document.isUndoAvailable(), document.isRedoAvailable()
+            selection = target.textCursor().hasSelection()
+        writable = not target.isReadOnly()
+        self.action_undo.setEnabled(writable and undo)
+        self.action_redo.setEnabled(writable and redo)
+        self.action_cut.setEnabled(writable and selection)
+        self.action_copy.setEnabled(selection)
+        self.action_paste.setEnabled(writable and bool(QApplication.clipboard().text()))
+
+    def _build_search_menu(self):
+        """Menu « Rechercher » (V0.9.2.8) : recherche simple, occurrences
+        précédente et suivante, recherche XPath. La barre d'outils garde ses
+        boutons, sous leur libellé court (iconText)."""
+        menu = QMenu(_t("menu.search"), self)
+        self.search_menu = menu
+        self.action_search = self._make_action(_t("search.find"), "Ctrl+F", self.focus_find)
+        self.action_search.setIconText(_t("toolbar.search"))
+        self.action_find_prev = self._make_action(_t("search.previous"), "Shift+F3", self.find_previous)
+        self.action_find_prev.setIconText(_t("toolbar.previous"))
+        self.action_find_next = self._make_action(_t("search.next"), "F3", self.find_next)
+        self.action_find_next.setIconText(_t("toolbar.next"))
+        # « Tout lister » : le panneau des occurrences en contexte (search_results).
+        self.action_search_list = self._make_action(_t("search.list.menu"), "Ctrl+Shift+L", self.list_search_results)
+        self.action_search_list.setIconText(_t("search.list"))
+        self.action_xpath_search = self._make_action(
+            _t("search.xpath"), "Ctrl+Shift+F", self.focus_xpath_search
+        )
+        self.action_xpath_search.setIconText(_t("xpath.action"))
+        # Ctrl+H : barre de remplacement du XML ou du fragment (replace_bar).
+        self.action_replace = self._make_action(_t("search.replace"), "Ctrl+H", self.show_replace)
+        self.addAction(self.action_replace)
+        # Options communes au XML et au fragment, retenues d'une session à l'autre.
+        self.action_search_case = self._search_option_action("search.case", "Aa", "search/caseSensitive")
+        self.action_search_regex = self._search_option_action("search.regex", ".*", "search/regex")
+        menu.addAction(self.action_search)
+        menu.addAction(self.action_find_prev)
+        menu.addAction(self.action_find_next)
+        menu.addAction(self.action_search_list)
+        menu.addAction(self.action_replace)
+        menu.addSeparator()
+        menu.addAction(self.action_search_case)
+        menu.addAction(self.action_search_regex)
+        menu.addSeparator()
+        menu.addAction(self.action_xpath_search)
+
+    def _search_option_action(self, key, short, setting):
+        action = QAction(_t(key), self)
+        action.setIconText(short)
+        action.setToolTip(_t(key))
+        action.setCheckable(True)
+        action.setChecked(_setting_flag(setting))
+        action.toggled.connect(lambda checked: _settings().setValue(setting, bool(checked)))
+        return action
+
+    def search_options(self):
+        """Options de la recherche du XML et du fragment (V0.9.2.8)."""
+        return SearchOptions(case_sensitive=self.action_search_case.isChecked(),
+                             regex=self.action_search_regex.isChecked())
 
     def _build_display_menu(self):
         I18N = current_i18n()
@@ -349,6 +482,14 @@ class MainMenusMixin:
         self.main_toolbar.setWindowTitle(_t("toolbar.title"))
         self.file_menu.setTitle(_t("menu.file"))
         self.file_menu_button.setText(_t("menu.file"))
+        self.edit_menu.setTitle(_t("menu.edit"))
+        self.edit_menu_button.setText(_t("menu.edit"))
+        self.search_menu.setTitle(_t("menu.search"))
+        self.search_menu_button.setText(_t("menu.search"))
+        for action, key in ((self.action_undo, "edit.undo"), (self.action_redo, "edit.redo"),
+                            (self.action_cut, "edit.cut"), (self.action_copy, "edit.copy"),
+                            (self.action_paste, "edit.paste"), (self.action_select_all, "edit.select_all")):
+            action.setText(_t(key))
         self.display_menu.setTitle(_t("menu.display"))
         self.display_menu_button.setText(_t("menu.display"))
         self.help_menu.setTitle(_t("menu.help"))
@@ -390,6 +531,7 @@ class MainMenusMixin:
         self.action_choose_witnesses.setToolTip(_t("view.witnesses.choose.tip"))
         self.action_choose_documents.setText(_t("documents.view.choose"))
         self.action_choose_documents.setToolTip(_t("documents.view.choose.tip"))
+        self.document_tabs_button.setToolTip(_t("documents.tabs.menu"))
         self.workspace_layout_menu.setTitle(_t('workspace.menu'))
         self.detach_witness_menu.setTitle(_t('workspace.detach.menu'))
         for mode, key in (('vertical', 'workspace.vertical'), ('horizontal', 'workspace.horizontal'), ('grid', 'workspace.grid')):
@@ -411,13 +553,22 @@ class MainMenusMixin:
             action.setChecked(code == I18N.language)
         self.rng_busy.setToolTip(_t("rng.status.running.tip"))
         self._update_check_labels()
-        self.action_format_xml.setText(_t("toolbar.format_xml"))
+        self.action_format_xml.setText(_t("edit.format_xml"))
         self.action_format_xml.setToolTip(_t("toolbar.format_xml.tip"))
         self.search_source_label.setText(" " + _t("toolbar.search_source") + " ")
-        self.action_search.setText(_t("toolbar.search"))
-        self.action_find_prev.setText(_t("toolbar.previous"))
-        self.action_find_next.setText(_t("toolbar.next"))
-        self.action_xpath_search.setText(_t("xpath.action"))
+        for action, key, short in ((self.action_search, "search.find", "toolbar.search"),
+                                   (self.action_find_prev, "search.previous", "toolbar.previous"),
+                                   (self.action_find_next, "search.next", "toolbar.next"),
+                                   (self.action_search_list, "search.list.menu", "search.list"),
+                                   (self.action_xpath_search, "search.xpath", "xpath.action")):
+            action.setText(_t(key))
+            action.setIconText(_t(short))
+        for action, key in ((self.action_search_case, "search.case"), (self.action_search_regex, "search.regex")):
+            action.setText(_t(key))
+            action.setToolTip(_t(key))
+        self.action_replace.setText(_t("search.replace"))
+        self._retranslate_replace_bar()
+        self._retranslate_search_results()
         self._retranslate_references()
         self.source_visual_wrap.setText(_t("source.visual_wrap"))
         self.xpath_title.setText(_t("xpath.panel.title"))
