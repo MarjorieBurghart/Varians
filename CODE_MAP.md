@@ -16,6 +16,7 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Paires XML | `xml_tag_pairs.py` | `test_v080_xml_tag_pairs.py` |
 | Indentation sûre | `tei_formatter.py` | `test_v081_tei_formatter.py` |
 | XPath | `xpath_search.py` | `test_xpath_search.py`, `test_v0841_xpath_help.py` |
+| Rechercher et remplacer (V0.9.2.8) | `text_search.py`, `code_editor.py` | `test_text_search.py` |
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
