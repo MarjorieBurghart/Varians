@@ -767,20 +767,22 @@ def test_each_help_explains_the_apps_without_lem():
             assert text in item, (language, text)
 
 
-def test_each_help_explains_the_browse_button():
-    """V0.9.2.8.1 : le bouton « feuilleter » des panneaux de témoins."""
+def test_each_help_explains_the_lead_button():
+    """V0.9.2.8.1 : le bouton au livre des panneaux de témoins ; enfoncé,
+    les flèches mènent l'édition (par défaut, celles du pivot)."""
     for language in LANGUAGES:
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
         section = _help_section(page, "witness-route")
-        paragraph = section[section.index('<p id="browse-witness">'):]
+        paragraph = section[section.index('<p id="lead-witness">'):]
         paragraph = paragraph[:paragraph.index("</p>")]
         assert "⤺" in paragraph and "<code>project.xml</code>" in paragraph, language
+        assert "browse-witness" not in page, language
 
 
 def test_each_help_announces_version_09281():
     for language in LANGUAGES:
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
         version = _help_section(page, "v09281")
-        for text in ('href="#browse-witness"', 'href="#app-without-lem"', "<kbd>Ctrl+E</kbd>"):
+        for text in ('href="#lead-witness"', 'href="#app-without-lem"', "<kbd>Ctrl+E</kbd>"):
             assert text in version, (language, text)
         assert page.index('<section id="v0928">') < page.index('<section id="v09281">'), language

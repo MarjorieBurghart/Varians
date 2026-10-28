@@ -16,6 +16,18 @@ from corpus_data import PB_12V, PB_13R, add_text_pages
 
 
 @pytest.fixture
+def open_window(open_window):
+    """Les flèches de tous les témoins mènent l'édition : bouton au livre
+    enfoncé partout (V0.9.2.8.1 ; par défaut, seul celui du pivot l'est)."""
+    def _open(*args, **kwargs):
+        window = open_window(*args, **kwargs)
+        for panel in window.panels.values():
+            panel.set_leads_edition(True)
+        return window
+    return _open
+
+
+@pytest.fixture
 def text_with_pages(example_with_text):
     add_text_pages(example_with_text, y_locus=True)
     return example_with_text

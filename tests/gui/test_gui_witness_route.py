@@ -12,7 +12,21 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from app_context import tr
+
+
+@pytest.fixture
+def open_window(open_window):
+    """Les flèches de tous les témoins mènent l'édition : bouton au livre
+    enfoncé partout (V0.9.2.8.1 ; par défaut, seul celui du pivot l'est)."""
+    def _open(*args, **kwargs):
+        window = open_window(*args, **kwargs)
+        for panel in window.panels.values():
+            panel.set_leads_edition(True)
+        return window
+    return _open
 
 
 def _doc(window, name):

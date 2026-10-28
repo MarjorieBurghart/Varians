@@ -51,7 +51,7 @@
   <string key="status.search.xml.none">Ricerca XML: nessuna occorrenza — {query}</string>
   <string key="status.ctrl_e.config">Configurazione Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Torna alla corrispondenza del passo XML</string>
-  <string key="manuscript.browse.tip">Sfogliare: se premuto, le frecce e la scelta del foglio scorrono questo manoscritto senza spostare il cursore nell’edizione.</string>
+  <string key="manuscript.lead.tip">Guidare l’edizione: se premuto, le frecce e la scelta del foglio di questo manoscritto spostano anche il cursore nell’edizione; se rilasciato, sfogliano soltanto il manoscritto.</string>
   <string key="manuscript.no_direct">nessuna corrispondenza diretta</string>
   <string key="manuscript.no_match">Nessuna corrispondenza proposta per questa riga del testimone pivot.</string>
   <string key="manuscript.no_line">nessuna riga</string>

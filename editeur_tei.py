@@ -559,7 +559,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         # Stable viewport widget: changing orientation never calls
         # QScrollArea.setWidget() again (which would DELETE the old widget).
         self.witness_scroll.setWidget(self.workspace_root)
-        browse_only = self._load_browse_only_witnesses()
+        leading = self._load_leading_witnesses()
         for w in self.witness_configs:
             panel = ManuscriptPanel(
                 w.id,
@@ -573,9 +573,10 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                               else bool(self.base_alignment_available and self._secondary_sync_link_counts.get(w.id, 0) > 0)),
             )
             self.panels[w.id] = panel
-            # Feuilletage libre retenu pour le projet (V0.9.2.8.1).
-            panel.set_browse_only(w.id in browse_only)
-            panel.browseOnlyChanged.connect(self._witness_browse_only_changed)
+            # Les flèches de ce manuscrit mènent-elles l'édition (V0.9.2.8.1) ?
+            # Retenu pour le projet ; par défaut, celles du pivot seulement.
+            panel.set_leads_edition(leading.get(w.id, w.is_base))
+            panel.leadsEditionChanged.connect(self._witness_lead_changed)
             if not w.is_base and has_line_synchronization(w) and self.base_alignment_available:
                 # A configured JSON is not necessarily a line synchronization.
                 # Make the fallback visible instead of letting the user infer

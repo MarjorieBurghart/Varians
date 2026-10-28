@@ -1,9 +1,12 @@
-VARIANS V0.9.2.8.1 — FEUILLETER UN MANUSCRIT, DÉBUGGER L'APPARAT, CTRL+E
+VARIANS V0.9.2.8.1 — MENER L'ÉDITION OU FEUILLETER, DÉBUGGER L'APPARAT, CTRL+E
 
-• Viewers des manuscrits : un bouton au livre ouvert, juste après ← → ⤺.
-  Enfoncé, les flèches et le choix du folio feuillettent ce manuscrit
-  sans déplacer le curseur dans l'édition ; relâché, ils la mènent comme
-  avant. Le viewer suit toujours l'édition quand le curseur y bouge.
+• Viewers des manuscrits : un bouton au livre ouvert, juste après ← → ⤺,
+  décide si les flèches et le choix du folio de ce manuscrit mènent
+  l'édition. Enfoncé (fond bleu-gris), ils déplacent aussi le curseur dans
+  l'édition ; relâché, ils ne font que feuilleter le manuscrit. Par
+  défaut, seul le bouton du témoin pivot est enfoncé : les flèches des
+  autres témoins ne mènent plus l'édition (elles la menaient depuis la
+  0.9.1.4). Le viewer suit toujours l'édition quand le curseur y bouge.
   L'état est retenu pour chaque manuscrit du projet (réglage local,
   project.xml inchangé).
 • Aide ▸ Débugger l'apparat : troisième recherche, les <app> qui n'ont

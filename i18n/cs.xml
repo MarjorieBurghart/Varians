@@ -51,7 +51,7 @@
   <string key="status.search.xml.none">Hledání v XML: bez výskytu — {query}</string>
   <string key="status.ctrl_e.config">Nastavení Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Vrátit se ke korespondenci aktuální pasáže XML</string>
-  <string key="manuscript.browse.tip">Listovat: je-li stisknuto, šipky a výběr folia procházejí tento rukopis, aniž by se pohnul kurzor v edici.</string>
+  <string key="manuscript.lead.tip">Vést edici: je-li stisknuto, šipky a výběr folia tohoto rukopisu posouvají také kurzor v edici; po uvolnění jen listují rukopisem.</string>
   <string key="manuscript.no_direct">bez přímé korespondence</string>
   <string key="manuscript.no_match">Pro tento řádek pivotního svědka nebyla navržena žádná korespondence.</string>
   <string key="manuscript.no_line">žádný řádek</string>

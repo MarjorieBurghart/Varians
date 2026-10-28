@@ -51,7 +51,7 @@
   <string key="status.search.xml.none">Поиск в XML: совпадений нет — {query}</string>
   <string key="status.ctrl_e.config">Настройка Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Вернуться к соответствию для текущего фрагмента XML</string>
-  <string key="manuscript.browse.tip">Листать: когда кнопка нажата, стрелки и выбор листа перемещают по этой рукописи, не сдвигая курсор в издании.</string>
+  <string key="manuscript.lead.tip">Вести издание: когда кнопка нажата, стрелки и выбор листа этой рукописи перемещают и курсор в издании; когда отпущена, они только листают рукопись.</string>
   <string key="manuscript.no_direct">нет прямого соответствия</string>
   <string key="manuscript.no_match">Для этой строки опорного свидетеля соответствие не предложено.</string>
   <string key="manuscript.no_line">нет строки</string>

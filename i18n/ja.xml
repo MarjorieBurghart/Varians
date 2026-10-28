@@ -51,7 +51,7 @@
   <string key="status.search.xml.none">XML検索：該当なし — {query}</string>
   <string key="status.ctrl_e.config">Ctrl+E 設定：{path}</string>
   <string key="manuscript.home.tip">XMLの現在箇所に対応する位置へ戻る</string>
-  <string key="manuscript.browse.tip">めくる：押した状態では、矢印とフォリオの選択でこの写本をたどり、エディションのカーソルは動きません。</string>
+  <string key="manuscript.lead.tip">エディションを導く：押した状態では、この写本の矢印とフォリオの選択でエディションのカーソルも移動します。戻すと、写本をめくるだけになります。</string>
   <string key="manuscript.no_direct">直接の対応なし</string>
   <string key="manuscript.no_match">このピボット伝本行に対応する行は提案されていません。</string>
   <string key="manuscript.no_line">行なし</string>

@@ -192,19 +192,23 @@ class WitnessWorkspaceMixin:
             saved = []
         return normalized_witness_order([w.id for w in self.witness_configs], saved)
 
-    def _load_browse_only_witnesses(self):
-        """Témoins en feuilletage libre (V0.9.2.8.1) : réglage local du projet."""
-        raw = _settings().value(self._view_settings_key("witnessBrowseOnly"), "")
+    def _load_leading_witnesses(self):
+        """Bouton au livre de chaque témoin (V0.9.2.8.1) : ses flèches
+        mènent-elles l'édition ? Réglage local du projet ; un témoin absent
+        prend l'état par défaut (enfoncé pour le pivot seul)."""
+        raw = _settings().value(self._view_settings_key("witnessLeadsEdition"), "")
         try:
             saved = json.loads(raw) if isinstance(raw, str) and raw else raw
         except (TypeError, ValueError):
-            saved = []
-        return {str(witness) for witness in saved} if isinstance(saved, (list, tuple)) else set()
+            saved = {}
+        if not isinstance(saved, dict):
+            return {}
+        return {str(witness): bool(leads) for witness, leads in saved.items()}
 
-    def _witness_browse_only_changed(self, _witness, _browse_only):
+    def _witness_lead_changed(self, _witness, _leads):
         _settings().setValue(
-            self._view_settings_key("witnessBrowseOnly"),
-            json.dumps([witness for witness, panel in self.panels.items() if panel.browse_only], ensure_ascii=False),
+            self._view_settings_key("witnessLeadsEdition"),
+            json.dumps({witness: panel.leads_edition for witness, panel in self.panels.items()}, ensure_ascii=False),
         )
 
     def _save_witness_display_order(self):
