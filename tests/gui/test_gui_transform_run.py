@@ -89,7 +89,7 @@ def test_a_tei_scenario_runs_from_the_list_and_names_the_library(open_window, se
     monkeypatch.setattr(QMessageBox, "setDetailedText", lambda box, text: details.append(text))
     window = open_window(sermons_project)
     output = sermons_project.parent / "publications" / "tei" / "edition.html"
-    dialogs.expect("dialog", _choose("predefined", 1, "run_btn"))                # « TEI : HTML »
+    dialogs.expect("dialog", _choose("predefined", 2, "run_btn"))                # « TEI : HTML »
     dialogs.expect("box", ROLE.RejectRole)
     _finish(qtbot, window, window.transform_scenarios_dialog)
     assert "Sermo in adventu Domini" in output.read_text(encoding="utf-8")
@@ -107,8 +107,8 @@ def test_the_toolbar_button_lists_the_scenarios_and_reruns_the_last_one(open_win
     assert window.action_transform.shortcut() == QKeySequence("Ctrl+Shift+T")
     window.transform_menu.aboutToShow.emit()
     labels = [action.text() for action in window.transform_menu.actions() if not action.isSeparator()]
-    assert labels == ["Noms", tr("transform.predefined.varians-html"), tr("transform.group.tei"),
-                      tr("menu.transform_scenarios")]
+    assert labels == ["Noms", tr("transform.predefined.varians-html"), tr("transform.predefined.edition-critique"),
+                      tr("transform.group.tei"), tr("menu.transform_scenarios")]
     # V0.9.2.7 : les scénarios des TEI Stylesheets, dans un sous-menu.
     tei = next(action.menu() for action in window.transform_menu.actions() if action.menu() is not None)
     assert [action.text() for action in tei.actions()] == [tr(f"transform.predefined.{key}") for key in (

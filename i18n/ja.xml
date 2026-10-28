@@ -993,6 +993,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.engine.saxon">XSLT 3.0（Saxon）</string>
   <string key="transform.engine.missing">{engine} — 未インストール</string>
   <string key="transform.predefined.varians-html">HTML 版（Varians のスタイルシート）</string>
+  <string key="transform.predefined.edition-critique">校訂版（HTML）</string>
   <string key="transform.predefined.tei-html">TEI：HTML</string>
   <string key="transform.predefined.tei-pages">TEI：複数ファイルの HTML</string>
   <string key="transform.predefined.tei-docx">TEI：DOCX（Word）</string>

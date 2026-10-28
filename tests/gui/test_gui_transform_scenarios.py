@@ -61,10 +61,12 @@ def test_the_file_menu_lists_the_scenarios_of_the_project_and_the_predefined_one
     dialog = listing.dialog
     assert _rows(dialog, "project") == [["Personnes", tr("transform.source.file", file="xml/personnes.xml"),
                                          tr("transform.engine.lxml"), ""]]
-    assert _rows(dialog, "predefined") == [[tr("transform.predefined.varians-html"), tr("transform.source.edition"),
-                                            tr("transform.engine.lxml"), ""], [tr("transform.group.tei"), "", "", ""]]
+    assert _rows(dialog, "predefined") == [
+        [tr("transform.predefined.varians-html"), tr("transform.source.edition"), tr("transform.engine.lxml"), ""],
+        [tr("transform.predefined.edition-critique"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""],
+        [tr("transform.group.tei"), "", "", ""]]
     # V0.9.2.7 : les scénarios des TEI Stylesheets, dans un sous-groupe replié.
-    assert dialog.predefined_group.child(1) is dialog.tei_group and not dialog.tei_group.isExpanded()
+    assert dialog.predefined_group.child(2) is dialog.tei_group and not dialog.tei_group.isExpanded()
     assert _rows(dialog, "tei") == [
         [tr(f"transform.predefined.{key}"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""]
         for key in ("tei-html", "tei-pages", "tei-docx", "tei-odt", "tei-epub", "tei-txt", "tei-markdown",
@@ -432,6 +434,31 @@ def test_a_stylesheet_of_varians_is_copied_before_it_is_opened(open_window, serm
         PERSONS, TransformScenario("Édition", "xslt/tei-to-html.xsl", "publications/edition.html",
                                    css="${varians}/tei.css"))
     assert window.document.path == copy
+
+
+def test_the_stylesheets_included_by_a_stylesheet_of_varians_are_copied_with_it(open_window, sermons_project,
+                                                                                  dialogs):
+    from xslt_scenarios import VARIANS_STYLESHEETS
+    critique = TransformScenario("Critique", "${varians}/edition-critique.xsl", "publications/critique.html",
+                                 engine="saxon")
+    window = open_window(_with_scenarios(sermons_project, PERSONS, critique))
+    folder = sermons_project.parent / "xslt"
+    dialogs.expect("dialog", _keep_open(_open_row("project", 1)))
+    dialogs.expect("box", ROLE.AcceptRole)                                     # « Copier »
+    window.transform_scenarios_dialog()
+    assert sorted(p.name for p in folder.iterdir()) == ["apparat-commun.xsl", "edition-critique.xsl"]
+    assert (folder / "apparat-commun.xsl").read_bytes() == (VARIANS_STYLESHEETS / "apparat-commun.xsl").read_bytes()
+    assert load_project(sermons_project).transformations[1].xslt == "xslt/edition-critique.xsl"
+    # Une feuille incluse déjà là n'est pas remplacée : la nouvelle copie l'inclut telle quelle.
+    (folder / "apparat-commun.xsl").write_text("<!-- retouchée -->", encoding="utf-8")
+    update_project_transformations(sermons_project, [PERSONS, critique])
+    window = open_window(sermons_project)
+    dialogs.expect("dialog", _keep_open(_open_row("project", 1)))
+    dialogs.expect("box", ROLE.AcceptRole)
+    window.transform_scenarios_dialog()
+    assert sorted(p.name for p in folder.iterdir()) == ["apparat-commun.xsl", "edition-critique.xsl",
+                                                        "edition-critique_2.xsl"]
+    assert (folder / "apparat-commun.xsl").read_text(encoding="utf-8") == "<!-- retouchée -->"
 
 
 def test_the_scenario_dialog_saves_the_scenario_then_opens_its_stylesheet(open_window, sermons_project, dialogs):

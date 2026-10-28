@@ -39,7 +39,8 @@ from tei_stylesheets_ui import TeiStylesheetsDialog
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
-from xslt_scenarios import (TEI_PREFIX, VARIANS_PREFIX, customization_name, customization_text, predefined_scenarios,
+from xslt_scenarios import (TEI_PREFIX, VARIANS_PREFIX, customization_name, customization_text, included_stylesheets,
+                            predefined_scenarios,
                             project_sources, resolve_path, saxon_available, scenario_path, scenario_problems,
                             scenario_request, scenario_source, stylesheet_path)
 
@@ -597,7 +598,8 @@ class TransformScenariosMixin:
     def open_scenario_stylesheet(self, scenario):
         """« Ouvrir la feuille » : affiche la feuille du scénario comme un
         document du projet (inscrit au besoin). Une feuille de Varians est
-        d'abord copiée dans ``xslt/`` ; une feuille hors du projet peut l'être,
+        d'abord copiée dans ``xslt/``, avec les feuilles qu'elle inclut ; une
+        feuille hors du projet peut l'être,
         ou s'ouvrir sur place. Après une copie, le scénario emploie la copie.
         Une feuille des TEI Stylesheets n'est pas copiée : une feuille de
         personnalisation qui l'importe est créée (``_customize``)."""
@@ -633,6 +635,13 @@ class TransformScenariosMixin:
                 try:
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(path, target)
+                    # Les feuilles qu'elle inclut, si elles n'y sont pas déjà
+                    # (apparat-commun.xsl pour edition-critique.xsl).
+                    for relative in included_stylesheets(path):
+                        included = target.parent / relative
+                        if not included.exists():
+                            included.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(path.parent / relative, included)
                 except OSError as exc:
                     QMessageBox.critical(self, title, str(exc))
                     return False

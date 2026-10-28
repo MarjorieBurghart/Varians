@@ -979,6 +979,7 @@ Enregistrer quand même ?</string>
   <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
   <string key="transform.engine.missing">{engine} — non installé</string>
   <string key="transform.predefined.varians-html">Édition HTML (feuille de Varians)</string>
+  <string key="transform.predefined.edition-critique">Édition critique (HTML)</string>
   <string key="transform.predefined.tei-html">TEI : HTML</string>
   <string key="transform.predefined.tei-pages">TEI : HTML en plusieurs fichiers</string>
   <string key="transform.predefined.tei-docx">TEI : DOCX (Word)</string>

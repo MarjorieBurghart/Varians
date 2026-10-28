@@ -191,6 +191,37 @@ def scenario_path(project, path) -> str:
     return path.as_posix()
 
 
+def included_stylesheets(path) -> list[str]:
+    """Les feuilles que la feuille ``path`` inclut ou importe (xsl:include,
+    xsl:import), de proche en proche, par un chemin relatif qui reste dans
+    son dossier : leurs chemins relatifs à ce dossier (« apparat-commun.xsl »
+    pour edition-critique.xsl). Une feuille copiée les emporte avec elle."""
+    from lxml import etree
+    folder = Path(path).resolve().parent
+    found, queue, seen = [], [Path(path).resolve()], set()
+    while queue:
+        current = queue.pop(0)
+        if current in seen:
+            continue
+        seen.add(current)
+        try:
+            root = etree.parse(str(current)).getroot()
+        except (OSError, etree.XMLSyntaxError):
+            continue
+        for element in root.iter(f"{{{XSL_NAMESPACE}}}include", f"{{{XSL_NAMESPACE}}}import"):
+            href = (element.get("href") or "").strip()
+            if not href or re.match(r"^[A-Za-z][\w+.-]*:", href) or href.startswith("/"):
+                continue
+            target = (current.parent / href).resolve()
+            if not target.is_relative_to(folder) or target == Path(path).resolve():
+                continue
+            relative = target.relative_to(folder).as_posix()
+            if relative not in found:
+                found.append(relative)
+            queue.append(target)
+    return found
+
+
 def stylesheet_path(scenario, project) -> Path | None:
     """La feuille XSLT du scénario."""
     return resolve_path(project, scenario.xslt)
@@ -210,7 +241,8 @@ TEI_SCENARIOS = (("tei-html", "html", "publications/tei/edition.html", ""),
 
 def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenario, ...]:
     """Scénarios fournis par Varians, non écrits dans project.xml : l'édition
-    HTML de Varians, puis les scénarios « TEI : … » (``TEI_SCENARIOS``).
+    HTML de Varians, l'édition critique (V0.9.2.7), puis les scénarios
+    « TEI : … » (``TEI_SCENARIOS``).
     ``translate`` donne, dans la langue de l'interface, le nom d'après la clé
     du scénario, et le titre du sommaire d'après la clé ``toc`` (sinon : la
     clé, et « Contents » comme la feuille de Varians). ``language`` : code
@@ -223,6 +255,11 @@ def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenar
     scenarios = [TransformScenario(name(key), VARIANS_PREFIX + "tei-to-html.xsl", "publications/edition.html",
                                    css=VARIANS_PREFIX + "tei.css",
                                    params=(("tocTitle", translate("toc") if translate else "Contents"),))]
+    # L'édition critique (V0.9.2.7), d'après le témoin pivot du projet.
+    scenarios.append(TransformScenario(name("edition-critique"), VARIANS_PREFIX + "edition-critique.xsl",
+                                       "publications/edition-critique.html", engine="saxon",
+                                       params=(("temoin-de-base", PIVOT), ("montrer-folios", "true"),
+                                               ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false"))))
     languages = (("lang", language), ("documentationLanguage", language)) if language else ()
     for key, profile, output, package in TEI_SCENARIOS:
         css, params = "", ()

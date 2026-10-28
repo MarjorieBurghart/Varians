@@ -993,6 +993,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="transform.engine.saxon">XSLT 3.0 (Saxon)</string>
   <string key="transform.engine.missing">{engine} — не установлен</string>
   <string key="transform.predefined.varians-html">HTML-издание (таблица стилей Varians)</string>
+  <string key="transform.predefined.edition-critique">Критическое издание (HTML)</string>
   <string key="transform.predefined.tei-html">TEI: HTML</string>
   <string key="transform.predefined.tei-pages">TEI: HTML в нескольких файлах</string>
   <string key="transform.predefined.tei-docx">TEI: DOCX (Word)</string>
