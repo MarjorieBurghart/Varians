@@ -46,7 +46,8 @@ def test_the_pencil_opens_the_paragraph_in_its_part(open_window, sermons_project
     assert view.fragment_editor.toPlainText().startswith('<p xml:id="s03_p1">')
     assert view.fragment_editor.toPlainText().endswith("</p>")
     assert view.fragment_session is _doc(window, "s03.xml")
-    assert view.frag_label.text() == tr("fragment.label.file", index=S03_FIRST + 1, total=16, file="s03.xml")
+    assert view.frag_label.text() == tr("fragment.label.file", element="<p>", index=S03_FIRST + 1, total=16,
+                                                file="s03.xml")
     assert window.document is window.edition_session                 # le ✎ ne déplace pas la source
 
 

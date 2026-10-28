@@ -69,7 +69,7 @@
   <string key="preview.font_plus.tip">プレビューの文字を大きくする</string>
   <string key="preview.search.label">プレビュー内を検索：</string>
   <string key="preview.search.placeholder">語句</string>
-  <string key="preview.info.default">このビューはXSLT + CSSで生成されます。変更はXML検証後、段落単位でソースへ反映されます。</string>
+  <string key="preview.info.default">このビューはXSLT + CSSで生成されます。変更はXML検証後、要素単位でソースへ反映されます。</string>
   <string key="preview.search.found">プレビュー検索：{n}/{total}件目 — {query}</string>
   <string key="preview.search.none">プレビュー検索：該当なし — {query}</string>
   <string key="preview.files_missing">XSLTまたはCSSファイルが見つかりません。上のボタンからファイルを選択してください。</string>
@@ -80,9 +80,9 @@
   <string key="preview.transform_error">XSLT変換エラー：{error}</string>
   <string key="preview.base_selected">ピボット伝本の{line}行目を選択 · 伝本を同期しました。</string>
   <string key="preview.toc">目次</string>
-  <string key="preview.edit_paragraph">このTEI段落を編集</string>
+  <string key="preview.edit_paragraph">このTEI要素を編集</string>
   <string key="fragment.initial">TEI断片：プレビューの✎をクリックしてください</string>
-  <string key="fragment.label">TEI断片 · 段落 {index}/{total}</string>
+  <string key="fragment.label">TEI断片 · {element} {index}/{total}</string>
   <string key="fragment.apply_xml">XMLに適用</string>
   <string key="fragment.reload">断片を再読み込み</string>
   <string key="fragment.close">閉じる</string>
@@ -92,19 +92,19 @@
   <string key="fragment.search.prev.tip">前の一致（Shift+F3）</string>
   <string key="fragment.search.next.tip">次の一致（F3）</string>
   <string key="fragment.search.close.tip">検索を閉じる</string>
-  <string key="fragment.placeholder">選択したTEI段落がここに表示されます。</string>
+  <string key="fragment.placeholder">選択したTEI要素がここに表示されます。</string>
   <string key="fragment.wrap">要素で囲む／挿入…</string>
   <string key="fragment.unapplied.title">未適用の変更</string>
   <string key="fragment.unapplied.text">現在のTEI断片には、まだXMLへ適用されていない変更があります。</string>
-  <string key="fragment.unapplied.question">別の段落を開く前に、どの操作を行いますか？</string>
+  <string key="fragment.unapplied.question">別の要素を開く前に、どの操作を行いますか？</string>
   <string key="fragment.apply_continue">適用して続行</string>
   <string key="fragment.ignore_continue">破棄して続行</string>
   <string key="fragment.close.title">断片を閉じる</string>
   <string key="fragment.close.text">この断片には、まだXMLへ適用されていない変更があります。</string>
   <string key="fragment.moved.title">断片の位置が変わりました</string>
-  <string key="fragment.moved.text">段落構造が変更されています。プレビューを更新し、段落をもう一度選択してください。</string>
+  <string key="fragment.moved.text">エディションの構造が変更されています。プレビューを更新し、要素をもう一度選択してください。</string>
   <string key="fragment.source_changed.title">XMLソースが変更されました</string>
-  <string key="fragment.source_changed.text">この段落は読み込み後にXMLタブで変更されています。それでも現在の内容を置き換えますか？</string>
+  <string key="fragment.source_changed.text">この要素は読み込み後にXMLタブで変更されています。それでも現在の内容を置き換えますか？</string>
   <string key="fragment.invalid.title">無効なXML断片</string>
   <string key="fragment.invalid.text">文書が整形式でなくなるため、変更は適用されませんでした：
 
@@ -187,8 +187,8 @@
   <string key="console.missing_pages">ピボット伝本キャッシュにないページ：{pages}</string>
   <string key="preview.choose_xslt">XSLTスタイルシートを選択</string>
   <string key="preview.choose_css">CSSスタイルシートを選択</string>
-  <string key="preview.updated.timed.lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な段落 {marked}/{paragraphs}件 · クリック可能なピボット伝本行 {lines}行。</string>
-  <string key="preview.updated.timed.no_lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な段落 {marked}/{paragraphs}件。このXSLTはピボット伝本の行マーカーを生成しません。</string>
+  <string key="preview.updated.timed.lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な要素 {marked}/{paragraphs}件 · クリック可能なピボット伝本行 {lines}行。</string>
+  <string key="preview.updated.timed.no_lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な要素 {marked}/{paragraphs}件。このXSLTはピボット伝本の行マーカーを生成しません。</string>
   <string key="viewer.image_unavailable">IIIF画像を利用できません</string>
   <string key="status.base_line">{base} {line}/{total}行</string>
   <string key="common.all_files">すべてのファイル</string>
@@ -927,7 +927,7 @@
   <string key="diagnostics.route.uncertain">{witness} におけるテキストの順序：{runs}。{texts} の位置は不確かなため、校訂版の順序のままです。</string>
   <string key="diagnostics.route.edition">校訂版</string>
   <string key="status.route_uncertain">{witness} における {text} の位置は不確かです：校訂版の順序に従います。</string>
-  <string key="fragment.label.file">TEI断片 · 段落 {index}/{total} · {file}</string>
+  <string key="fragment.label.file">TEI断片 · {element} {index}/{total} · {file}</string>
   <string key="menu.transform_scenarios">変換シナリオ…</string>
   <string key="transform.title">変換シナリオ</string>
   <string key="transform.group.project">プロジェクトのシナリオ</string>

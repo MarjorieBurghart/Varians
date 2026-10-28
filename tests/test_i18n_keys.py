@@ -240,7 +240,9 @@ def test_each_help_explains_the_preview_of_an_assembled_edition():
         parts = page[page.index('<section id="xinclude">'):page.index('<section id="v0900">')]
         section = parts[parts.index('<h3 id="xinclude-preview">'):]
         section = section[:section.index("<h3", 1)]
-        label = catalog["fragment.label.file"].format(index=7, total=12, file="s03.xml")
+        # V0.9.2.9 : l'étiquette nomme l'élément ; le titre de chaque sermon
+        # est aussi modifiable.
+        label = catalog["fragment.label.file"].format(element="<p>", index=10, total=16, file="s03.xml")
         for text in ("✎", html.escape(label, quote=False), "<kbd>Ctrl+S</kbd>", "xi:include"):
             assert text in section, (language, text)
         # Les parties et le mode d'emploi renvoient à cette sous-section.
@@ -822,3 +824,21 @@ def test_each_help_announces_version_09282():
                      "<code>&lt;listWit&gt;</code>", "Σ"):
             assert text in version, (language, text)
         assert page.index('<section id="v09281">') < page.index('<section id="v09282">'), language
+
+
+def test_the_fragment_messages_speak_of_elements():
+    """V0.9.2.9 : le crayon ✎ ouvre tout élément modifiable, plus seulement
+    un paragraphe ; l'étiquette du fragment nomme l'élément ouvert."""
+    paragraph = {"fr": ("paragraphe",), "en": ("paragraph",), "de": ("absatz", "absätz"), "ja": ("段落",),
+                 "cs": ("odstav",), "it": ("paragraf",), "ru": ("абзац",)}
+    keys = ("preview.edit_paragraph", "preview.info.default", "preview.updated.timed.lines",
+            "preview.updated.timed.no_lines", "fragment.label", "fragment.label.file", "fragment.placeholder",
+            "fragment.unapplied.question", "fragment.moved.text", "fragment.source_changed.text")
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        for key in ("fragment.label", "fragment.label.file"):
+            assert "{element} {index}/{total}" in catalog[key], (language, key)
+        for key in keys:
+            text = re.sub(r"\{\w+\}", "", catalog[key]).lower()          # hors noms de paramètres
+            assert not any(word in text for word in paragraph[language]), (language, key)

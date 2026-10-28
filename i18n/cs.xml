@@ -69,7 +69,7 @@
   <string key="preview.font_plus.tip">Zvětšit text v náhledu</string>
   <string key="preview.search.label">Hledat v náhledu:</string>
   <string key="preview.search.placeholder">slovo nebo výraz</string>
-  <string key="preview.info.default">Zobrazení je generováno pomocí XSLT + CSS. Změny se po ověření XML zapisují zpět po jednotlivých odstavcích.</string>
+  <string key="preview.info.default">Zobrazení je generováno pomocí XSLT + CSS. Změny se po ověření XML zapisují zpět po jednotlivých prvcích.</string>
   <string key="preview.search.found">Hledání v náhledu: výskyt {n}/{total} — {query}</string>
   <string key="preview.search.none">Hledání v náhledu: bez výskytu — {query}</string>
   <string key="preview.files_missing">Soubor XSLT nebo CSS nebyl nalezen. Vyberte soubory tlačítky výše.</string>
@@ -80,9 +80,9 @@
   <string key="preview.transform_error">Chyba transformace XSLT: {error}</string>
   <string key="preview.base_selected">Vybrán řádek {line} pivotního svědka · svědci synchronizováni.</string>
   <string key="preview.toc">Obsah</string>
-  <string key="preview.edit_paragraph">Upravit tento odstavec TEI</string>
+  <string key="preview.edit_paragraph">Upravit tento prvek TEI</string>
   <string key="fragment.initial">Fragment TEI: klikněte v náhledu na ✎</string>
-  <string key="fragment.label">Fragment TEI · odstavec {index}/{total}</string>
+  <string key="fragment.label">Fragment TEI · {element} {index}/{total}</string>
   <string key="fragment.apply_xml">Použít v XML</string>
   <string key="fragment.reload">Znovu načíst fragment</string>
   <string key="fragment.close">Zavřít</string>
@@ -92,19 +92,19 @@
   <string key="fragment.search.prev.tip">Předchozí výskyt (Shift+F3)</string>
   <string key="fragment.search.next.tip">Další výskyt (F3)</string>
   <string key="fragment.search.close.tip">Zavřít hledání</string>
-  <string key="fragment.placeholder">Vybraný odstavec TEI se zobrazí zde.</string>
+  <string key="fragment.placeholder">Vybraný prvek TEI se zobrazí zde.</string>
   <string key="fragment.wrap">Obalit nebo vložit prvek…</string>
   <string key="fragment.unapplied.title">Nepoužité změny</string>
   <string key="fragment.unapplied.text">Aktuální fragment TEI obsahuje změny, které dosud nebyly použity v XML.</string>
-  <string key="fragment.unapplied.question">Co chcete udělat před otevřením jiného odstavce?</string>
+  <string key="fragment.unapplied.question">Co chcete udělat před otevřením jiného prvku?</string>
   <string key="fragment.apply_continue">Použít a pokračovat</string>
   <string key="fragment.ignore_continue">Zahodit a pokračovat</string>
   <string key="fragment.close.title">Zavřít fragment</string>
   <string key="fragment.close.text">Fragment obsahuje změny, které dosud nebyly použity v XML.</string>
   <string key="fragment.moved.title">Fragment byl přesunut</string>
-  <string key="fragment.moved.text">Struktura odstavců se změnila. Aktualizujte náhled a odstavec znovu vyberte.</string>
+  <string key="fragment.moved.text">Struktura edice se změnila. Aktualizujte náhled a prvek znovu vyberte.</string>
   <string key="fragment.source_changed.title">Zdroj XML se změnil</string>
-  <string key="fragment.source_changed.text">Tento odstavec byl od načtení upraven na kartě XML. Přesto nahradit jeho aktuální verzi?</string>
+  <string key="fragment.source_changed.text">Tento prvek byl od načtení upraven na kartě XML. Přesto nahradit jeho aktuální verzi?</string>
   <string key="fragment.invalid.title">Neplatný fragment XML</string>
   <string key="fragment.invalid.text">Změna nebyla použita, protože by dokument přestal být správně utvořený:
 
@@ -187,8 +187,8 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="console.missing_pages">Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="preview.choose_xslt">Vybrat styl XSLT</string>
   <string key="preview.choose_css">Vybrat styl CSS</string>
-  <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných odstavců · {lines} klikacích řádků pivotního svědka.</string>
-  <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných odstavců. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
+  <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných prvků · {lines} klikacích řádků pivotního svědka.</string>
+  <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných prvků. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
   <string key="viewer.image_unavailable">Obrázek IIIF není dostupný</string>
   <string key="status.base_line">{base} řádek {line}/{total}</string>
   <string key="common.all_files">Všechny soubory</string>
@@ -927,7 +927,7 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="diagnostics.route.uncertain">Pořadí textů ve svědkovi {witness}: {runs}; nejisté místo textů {texts}, ponechaných v pořadí edice.</string>
   <string key="diagnostics.route.edition">edice</string>
   <string key="status.route_uncertain">Nejisté místo textu {text} ve svědkovi {witness}: pořadí edice.</string>
-  <string key="fragment.label.file">Fragment TEI · odstavec {index}/{total} · {file}</string>
+  <string key="fragment.label.file">Fragment TEI · {element} {index}/{total} · {file}</string>
   <string key="menu.transform_scenarios">Scénáře transformace…</string>
   <string key="transform.title">Scénáře transformace</string>
   <string key="transform.group.project">Scénáře projektu</string>

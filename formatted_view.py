@@ -778,6 +778,8 @@ class FormattedEditionWidget(QWidget):
         frag_layout.setContentsMargins(0, 4, 0, 0)
         frag_head = QHBoxLayout()
         self.frag_label = QLabel(_t("fragment.initial"))
+        # L'étiquette nomme l'élément ouvert (« <p> ») : jamais du HTML.
+        self.frag_label.setTextFormat(Qt.TextFormat.PlainText)
         self.fragment_visual_wrap = QCheckBox(_t("source.visual_wrap"), frag_box)
         _fragment_wrap_setting = _settings().value(
             "fragmentVisualWrap", _settings().value("sourceVisualWrap", False)
@@ -1639,11 +1641,15 @@ class FormattedEditionWidget(QWidget):
     def _update_fragment_label(self):
         if self.current_paragraph is None:
             self.frag_label.setText(_t("fragment.initial"))
-        elif self.main._edition_has_parts() and self.fragment_session is not None:
-            self.frag_label.setText(_t("fragment.label.file", index=self.current_paragraph + 1,
+            return
+        # Nom de l'élément ouvert (V0.9.2.9), sans préfixe : « <lg> ».
+        name = re.match(r"\s*<(?:[^\s/>:!?]+:)?([^\s/>:!?]+)", self.fragment_original or "")
+        element = f"<{name.group(1)}>" if name else ""
+        if self.main._edition_has_parts() and self.fragment_session is not None:
+            self.frag_label.setText(_t("fragment.label.file", element=element, index=self.current_paragraph + 1,
                                        total=self._fragment_total, file=Path(self.fragment_session.path).name))
         else:
-            self.frag_label.setText(_t("fragment.label", index=self.current_paragraph + 1,
+            self.frag_label.setText(_t("fragment.label", element=element, index=self.current_paragraph + 1,
                                        total=self._fragment_total))
 
     def load_fragment(self, idx):

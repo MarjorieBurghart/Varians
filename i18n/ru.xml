@@ -69,7 +69,7 @@
   <string key="preview.font_plus.tip">Увеличить размер текста в предпросмотре</string>
   <string key="preview.search.label">Поиск в предпросмотре:</string>
   <string key="preview.search.placeholder">слово или выражение</string>
-  <string key="preview.info.default">Представление создаётся с помощью XSLT + CSS. После проверки XML изменения переносятся обратно по абзацам.</string>
+  <string key="preview.info.default">Представление создаётся с помощью XSLT + CSS. После проверки XML изменения переносятся обратно по элементам.</string>
   <string key="preview.search.found">Поиск в предпросмотре: совпадение {n}/{total} — {query}</string>
   <string key="preview.search.none">Поиск в предпросмотре: совпадений нет — {query}</string>
   <string key="preview.files_missing">Файл XSLT или CSS не найден. Выберите файлы кнопками выше.</string>
@@ -80,9 +80,9 @@
   <string key="preview.transform_error">Ошибка преобразования XSLT: {error}</string>
   <string key="preview.base_selected">Выбрана строка {line} опорного свидетеля · свидетели синхронизированы.</string>
   <string key="preview.toc">Содержание</string>
-  <string key="preview.edit_paragraph">Редактировать этот абзац TEI</string>
+  <string key="preview.edit_paragraph">Редактировать этот элемент TEI</string>
   <string key="fragment.initial">Фрагмент TEI: нажмите ✎ в предпросмотре</string>
-  <string key="fragment.label">Фрагмент TEI · абзац {index}/{total}</string>
+  <string key="fragment.label">Фрагмент TEI · {element} {index}/{total}</string>
   <string key="fragment.apply_xml">Применить к XML</string>
   <string key="fragment.reload">Перезагрузить фрагмент</string>
   <string key="fragment.close">Закрыть</string>
@@ -92,19 +92,19 @@
   <string key="fragment.search.prev.tip">Предыдущее совпадение (Shift+F3)</string>
   <string key="fragment.search.next.tip">Следующее совпадение (F3)</string>
   <string key="fragment.search.close.tip">Закрыть поиск</string>
-  <string key="fragment.placeholder">Здесь появится выбранный абзац TEI.</string>
+  <string key="fragment.placeholder">Здесь появится выбранный элемент TEI.</string>
   <string key="fragment.wrap">Обернуть или вставить элемент…</string>
   <string key="fragment.unapplied.title">Неприменённые изменения</string>
   <string key="fragment.unapplied.text">Текущий фрагмент TEI содержит изменения, которые ещё не применены к XML.</string>
-  <string key="fragment.unapplied.question">Что сделать перед открытием другого абзаца?</string>
+  <string key="fragment.unapplied.question">Что сделать перед открытием другого элемента?</string>
   <string key="fragment.apply_continue">Применить и продолжить</string>
   <string key="fragment.ignore_continue">Отбросить и продолжить</string>
   <string key="fragment.close.title">Закрыть фрагмент</string>
   <string key="fragment.close.text">Фрагмент содержит изменения, которые ещё не применены к XML.</string>
   <string key="fragment.moved.title">Фрагмент перемещён</string>
-  <string key="fragment.moved.text">Структура абзацев изменилась. Обновите предпросмотр и снова выберите абзац.</string>
+  <string key="fragment.moved.text">Структура издания изменилась. Обновите предпросмотр и снова выберите элемент.</string>
   <string key="fragment.source_changed.title">Исходный XML изменён</string>
-  <string key="fragment.source_changed.text">После загрузки этот абзац был изменён на вкладке XML. Всё равно заменить его текущую версию?</string>
+  <string key="fragment.source_changed.text">После загрузки этот элемент был изменён на вкладке XML. Всё равно заменить его текущую версию?</string>
   <string key="fragment.invalid.title">Недопустимый фрагмент XML</string>
   <string key="fragment.invalid.text">Изменение не применено, поскольку документ перестал бы быть корректно сформированным:
 
@@ -187,8 +187,8 @@
   <string key="console.missing_pages">Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>
   <string key="preview.choose_xslt">Выбрать таблицу стилей XSLT</string>
   <string key="preview.choose_css">Выбрать таблицу стилей CSS</string>
-  <string key="preview.updated.timed.lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых абзацев {marked}/{paragraphs} · кликабельных строк опорного свидетеля {lines}.</string>
-  <string key="preview.updated.timed.no_lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых абзацев {marked}/{paragraphs}. Этот XSLT не создаёт маркеры строк опорного свидетеля.</string>
+  <string key="preview.updated.timed.lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs} · кликабельных строк опорного свидетеля {lines}.</string>
+  <string key="preview.updated.timed.no_lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs}. Этот XSLT не создаёт маркеры строк опорного свидетеля.</string>
   <string key="viewer.image_unavailable">Изображение IIIF недоступно</string>
   <string key="status.base_line">{base} строка {line}/{total}</string>
   <string key="common.all_files">Все файлы</string>
@@ -927,7 +927,7 @@
   <string key="diagnostics.route.uncertain">Порядок текстов в {witness}: {runs}; место {texts} не установлено, оставлено в порядке издания.</string>
   <string key="diagnostics.route.edition">издание</string>
   <string key="status.route_uncertain">Место {text} в {witness} не установлено: порядок издания.</string>
-  <string key="fragment.label.file">Фрагмент TEI · абзац {index}/{total} · {file}</string>
+  <string key="fragment.label.file">Фрагмент TEI · {element} {index}/{total} · {file}</string>
   <string key="menu.transform_scenarios">Сценарии преобразования…</string>
   <string key="transform.title">Сценарии преобразования</string>
   <string key="transform.group.project">Сценарии проекта</string>

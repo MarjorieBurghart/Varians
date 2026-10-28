@@ -16,6 +16,7 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 
+from app_context import tr
 from fragment_units import unit_spans
 from test_gui_pencil_selection import _click_pencil
 from test_gui_selection_transfer import WJ, _select, _selection, _show_preview
@@ -65,6 +66,9 @@ def test_the_pencil_of_a_verse_group_opens_it(open_window, verse_project, qtbot)
     _click_pencil(qtbot, view, 1)
     qtbot.waitUntil(lambda: view.current_paragraph == 1, timeout=3000)
     assert view.fragment_editor.toPlainText() == "<lg><l>Uersus primus</l>\n<l>uersus secundus</l></lg>"
+    total = len(unit_spans(window.editor.toPlainText()))
+    assert view.frag_label.text() == tr("fragment.label", element="<lg>", index=2, total=total)
+    assert view.frag_label.textFormat() == Qt.TextFormat.PlainText            # « <p> » n'est pas du HTML
     view.fragment_editor.setPlainText(view.fragment_editor.toPlainText().replace("primus", "prior"))
     assert view.apply_fragment()
     assert "<l>Uersus prior</l>" in window.editor.toPlainText()
@@ -79,6 +83,8 @@ def test_a_paragraph_after_the_new_elements_opens_as_before(open_window, verse_p
     qtbot.waitUntil(lambda: view.current_paragraph == 3, timeout=3000)
     fragment = view.fragment_editor.toPlainText()
     assert fragment.startswith("<p>") and fragment.endswith("</p>") and "Commune sanctorum" in fragment
+    total = len(unit_spans(window.editor.toPlainText()))
+    assert view.frag_label.text() == tr("fragment.label", element="<p>", index=4, total=total)
 
 
 def test_f2_in_a_verse_opens_its_verse_group(open_window, verse_project, qtbot):
