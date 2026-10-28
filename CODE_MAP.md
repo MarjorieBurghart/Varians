@@ -18,6 +18,8 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | XPath | `xpath_search.py` | `test_xpath_search.py`, `test_v0841_xpath_help.py` |
 | Rechercher et remplacer (V0.9.2.8) | `text_search.py`, `code_editor.py`, `replace_bar.py`, `main_menus.py` | `test_text_search.py`, `gui/test_gui_search_replace.py`, `gui/test_gui_search_options.py`, `gui/test_gui_replace_bar.py`, `gui/test_gui_menus_edit_search.py` |
 | Recherche dans l'aide (V0.9.2.8) | `help_search.py`, `help_dialogs.py` | `test_help_search.py`, `gui/test_gui_help_search.py` |
+| Tout lister : occurrences en contexte (V0.9.2.8) | `text_search.py` (`kwic`), `search_results.py` | `test_text_search.py`, `gui/test_gui_search_results.py` |
+| Menu ▾ de tous les onglets (V0.9.2.8) | `document_tabs.py` | `gui/test_gui_document_tabs_menu.py` |
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
@@ -304,3 +306,6 @@ Fonctionnement : aide, section « Rechercher et remplacer » (`search-replace`).
 - `main_menus._build_edit_menu` : « Indenter le XML » et « Références » (`action_check_references`) à la fin du menu Éditer, plus dans la barre d'outils.
 - `help_search.py` (sans Qt, nouveau) : `fold` (sans accents, casse ni signes typographiques, avec les positions d'origine), `query_terms` (mots, expressions entre guillemets), `search` (sections qui contiennent tous les termes, occurrences, extrait), `Section`, `Hit`.
 - `help_dialogs.SoftwareHelpDialog` : champ de recherche (Ctrl+F), liste des sections (`results`), occurrences surlignées (`occurrences`, `current`, ◀ ▶, F3) ; sections tirées des titres du `QTextDocument`, sommaire écarté (`_links_only`).
+- `text_search.kwic` / `Kwic` : chaque occurrence avec sa ligne et ses contextes avant et après, sur une ligne (blancs réduits à une espace).
+- `search_results.py` (nouveau) : `SearchResultsMixin`, panneau du bas « Tout lister » (`action_search_list` Ctrl+Maj+L, `list_search_results`, `refresh_search_results`, case `search_results_project`, `goto_search_result`, au plus `MAX_RESULTS` lignes) ; suivi par `search_results_follow` (`_find_source`), `search_results_document_changed` (`_attach_document`), les options et le texte (minuterie de 400 ms).
+- `document_tabs.py` : rangée `document_tab_row` (barre et flèche `document_tabs_button`), `DocumentTabBar.layoutChanged`, `_update_document_tabs_button` (flèche visible quand la somme des `tabSizeHint` dépasse la rangée), `_fill_document_tabs_menu`.

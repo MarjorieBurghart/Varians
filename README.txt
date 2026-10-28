@@ -24,6 +24,16 @@ VARIANS V0.9.2.8 — MENUS ÉDITER ET RECHERCHER, CHERCHER ET REMPLACER
   sections qui les contiennent tous ; entre guillemets, l'expression
   exacte. La liste des sections trouvées, avec un extrait, mène à chacune ;
   les occurrences sont surlignées et se parcourent (◀ ▶, Entrée, F3).
+• Tout lister (bouton près du champ de recherche, Rechercher ▸ Lister
+  toutes les occurrences, Ctrl+Maj+L) : un panneau sous l'éditeur liste
+  toutes les occurrences de la recherche du XML, avec ses options, chacune
+  avec sa ligne et son contexte, le résultat surligné et centré (KWIC). Le
+  document affiché, ou tout le projet (case « Tout le projet », colonne
+  Document). Un clic mène à l'occurrence ; le panneau ouvert suit les
+  recherches, les options, le texte et le document affiché.
+• Onglets de documents : quand ils ne tiennent plus dans leur rangée, une
+  flèche ▾ à sa droite déroule la liste de tous les onglets (le document
+  affiché coché), puis « Choisir les documents affichés… ».
 • Correction : l'occurrence trouvée est surlignée exactement, même après
   un caractère au-delà de U+FFFF.
 • Voir l'aide (Rechercher et remplacer), avec un aide-mémoire des

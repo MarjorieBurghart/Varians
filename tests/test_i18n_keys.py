@@ -711,3 +711,36 @@ def test_each_help_explains_how_to_search_the_help():
         assert 'href="#help-search"' in version, language
         for key in ("edit.format_xml", "references.action"):
             assert catalog[key] in version, (language, key)
+
+
+def test_each_help_explains_the_list_of_all_occurrences():
+    """V0.9.2.8 : « Tout lister » (Ctrl+Maj+L), le panneau des occurrences
+    en contexte, dans la section « Rechercher et remplacer », le tableau des
+    raccourcis et la version."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        item = section[section.index('<li id="search-results">'):]
+        item = item[:item.index("</li>")]
+        for key in ("search.list", "search.list.menu", "results.all_project"):
+            assert catalog[key] in item, (language, key)
+        assert ("<kbd>Ctrl+Maj+L</kbd>" if language == "fr" else "<kbd>Ctrl+Shift+L</kbd>") in item, language
+        assert section.index("<kbd>Ctrl+F</kbd>") < section.index(item) < section.index("<kbd>Ctrl+H</kbd>"), language
+        ctrl_h = page.index("<tr><td>Ctrl+H</td>")
+        assert page.index("<tr>", ctrl_h + 1) == page.index("<tr><td>Ctrl+Shift+L</td>"), language
+        version = _help_section(page, "v0928")
+        assert 'href="#search-results"' in version and catalog["search.list"] in version, language
+
+
+def test_each_help_explains_the_menu_of_all_tabs():
+    """V0.9.2.8 : la flèche ▾ à droite des onglets trop nombreux."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        documents = _help_section(page, "auxiliary-documents")
+        assert "<strong>▾</strong>" in documents and catalog["documents.tabs.menu"] in documents, language
+        version = _help_section(page, "v0928")
+        assert "<strong>▾</strong>" in version and 'href="#auxiliary-documents"' in version, language
