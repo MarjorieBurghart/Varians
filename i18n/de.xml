@@ -837,6 +837,7 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="references.problem.other_document">Kurzform, Ziel in einem anderen Dokument: {suggestions} schreiben</string>
   <string key="documents.view.choose">Angezeigte Dokumente auswählen…</string>
   <string key="documents.view.choose.tip">Sichtbare Dokument-Registerkarten und deren Reihenfolge auswählen.</string>
+  <string key="documents.tabs.menu">Alle Registerkarten</string>
   <string key="documents.view.title">Angezeigte Dokumente und Reihenfolge</string>
   <string key="documents.view.hint">Markieren Sie die Dokumente, deren Registerkarte angezeigt werden soll, und legen Sie ihre Reihenfolge fest. Ein ausgeblendetes Dokument bleibt im Projekt. Diese Einstellung wird lokal für das Projekt gespeichert und ändert project.xml nicht.</string>
   <string key="documents.view.all">Alle auswählen</string>

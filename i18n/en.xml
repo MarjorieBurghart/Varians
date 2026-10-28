@@ -823,6 +823,7 @@ The file is not deleted: it stays on disk.</string>
   <string key="references.problem.other_document">Short form, target in another document: write {suggestions}</string>
   <string key="documents.view.choose">Choose displayed documents…</string>
   <string key="documents.view.choose.tip">Choose which document tabs are shown and their order.</string>
+  <string key="documents.tabs.menu">All tabs</string>
   <string key="documents.view.title">Displayed documents and order</string>
   <string key="documents.view.hint">Check the documents whose tab should be shown and arrange their order. A hidden document stays in the project. This preference is saved locally for the project and does not change project.xml.</string>
   <string key="documents.view.all">Select all</string>

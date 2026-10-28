@@ -837,6 +837,7 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="references.problem.other_document">Forma breve, destinazione in un altro documento: scrivi {suggestions}</string>
   <string key="documents.view.choose">Scegli i documenti visualizzati…</string>
   <string key="documents.view.choose.tip">Scegli le schede dei documenti visibili e il loro ordine.</string>
+  <string key="documents.tabs.menu">Tutte le schede</string>
   <string key="documents.view.title">Documenti visualizzati e ordine</string>
   <string key="documents.view.hint">Seleziona i documenti di cui mostrare la scheda e modifica il loro ordine. Un documento nascosto resta nel progetto. Questa preferenza viene salvata localmente per progetto e non modifica project.xml.</string>
   <string key="documents.view.all">Seleziona tutto</string>

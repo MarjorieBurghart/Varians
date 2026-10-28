@@ -29,7 +29,9 @@ def test_tabs_list_the_edition_then_the_auxiliary_documents(open_window, project
     window = open_window(project_with_documents)
     bar = window.document_tab_bar
     assert not bar.isHidden()
-    assert bar.parentWidget() is window.left_tabs.parentWidget()     # au-dessus des vues
+    # Au-dessus des vues, dans sa rangée avec la flèche ▾ (V0.9.2.8).
+    assert bar.parentWidget() is window.document_tab_row
+    assert window.document_tab_row.parentWidget() is window.left_tabs.parentWidget()
     assert [bar.tabText(i) for i in range(bar.count())] == [tr("documents.edition_tab"), "Personnes"]
     assert str(window.edition_session.path) in bar.tabToolTip(0)
     assert str(_aux(window).path) in bar.tabToolTip(1)

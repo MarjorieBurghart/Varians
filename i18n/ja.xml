@@ -837,6 +837,7 @@
   <string key="references.problem.other_document">短い形式（参照先は別の文書）：{suggestions} と書いてください</string>
   <string key="documents.view.choose">表示する文書を選択…</string>
   <string key="documents.view.choose.tip">表示する文書タブとその順序を選択します。</string>
+  <string key="documents.tabs.menu">すべてのタブ</string>
   <string key="documents.view.title">表示する文書と並び順</string>
   <string key="documents.view.hint">タブを表示する文書を選び、順序を設定します。非表示にした文書もプロジェクトに残ります。この設定はプロジェクトごとにローカル保存され、project.xmlは変更されません。</string>
   <string key="documents.view.all">すべて選択</string>

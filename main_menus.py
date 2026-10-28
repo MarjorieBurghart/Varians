@@ -531,6 +531,7 @@ class MainMenusMixin:
         self.action_choose_witnesses.setToolTip(_t("view.witnesses.choose.tip"))
         self.action_choose_documents.setText(_t("documents.view.choose"))
         self.action_choose_documents.setToolTip(_t("documents.view.choose.tip"))
+        self.document_tabs_button.setToolTip(_t("documents.tabs.menu"))
         self.workspace_layout_menu.setTitle(_t('workspace.menu'))
         self.detach_witness_menu.setTitle(_t('workspace.detach.menu'))
         for mode, key in (('vertical', 'workspace.vertical'), ('horizontal', 'workspace.horizontal'), ('grid', 'workspace.grid')):

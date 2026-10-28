@@ -837,6 +837,7 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="references.problem.other_document">Krátký tvar, cíl v jiném dokumentu: napište {suggestions}</string>
   <string key="documents.view.choose">Vybrat zobrazené dokumenty…</string>
   <string key="documents.view.choose.tip">Vyberte zobrazené karty dokumentů a jejich pořadí.</string>
+  <string key="documents.tabs.menu">Všechny karty</string>
   <string key="documents.view.title">Zobrazené dokumenty a pořadí</string>
   <string key="documents.view.hint">Zaškrtněte dokumenty, jejichž karta se má zobrazit, a upravte jejich pořadí. Skrytý dokument zůstává v projektu. Nastavení se ukládá lokálně pro projekt a nemění soubor project.xml.</string>
   <string key="documents.view.all">Vybrat vše</string>
