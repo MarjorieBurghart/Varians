@@ -17,11 +17,11 @@ import re
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor, QFont, QTextCursor
 from PySide6.QtWidgets import (
-    QAbstractItemView, QCheckBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QTableWidget, QTableWidgetItem,
-    QToolButton, QVBoxLayout,
+    QAbstractItemView, QCheckBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QStyledItemDelegate, QTableWidget,
+    QTableWidgetItem, QToolButton, QVBoxLayout,
 )
 
-from app_context import tr as _t
+from app_context import call_later, tr as _t
 from code_editor import _search_query
 from replace_bar import search_error_text
 from text_search import SearchError, Utf16Positions, find_spans, kwic
@@ -29,6 +29,18 @@ from text_search import SearchError, Utf16Positions, find_spans, kwic
 # Au-delà, le panneau n'affiche que les premières occurrences.
 MAX_RESULTS = 2000
 _BLANKS = re.compile(r"\s+")
+
+
+class _ClippedCells(QStyledItemDelegate):
+    """Le texte de chaque case coupé à son bord : le style Windows 11 ne le
+    coupe pas, et le contexte avant, aligné à droite, recouvrirait la case
+    de la ligne."""
+
+    def paint(self, painter, option, index):
+        painter.save()
+        painter.setClipRect(option.rect)
+        super().paint(painter, option, index)
+        painter.restore()
 
 
 class SearchResultsMixin:
@@ -74,6 +86,7 @@ class SearchResultsMixin:
         # après, à droite : le résultat reste au centre.
         table.setTextElideMode(Qt.TextElideMode.ElideNone)
         table.setWordWrap(False)
+        table.setItemDelegate(_ClippedCells(table))
         table.setColumnHidden(0, True)
         table.cellClicked.connect(self.goto_search_result)
         root.addWidget(table, 1)
@@ -81,10 +94,12 @@ class SearchResultsMixin:
 
         self._search_results = []
         self._search_results_query = ""
+        # (document, empreinte de son texte) de chaque document listé.
+        self._search_results_listed = []
         self._search_results_timer = QTimer(self)
         self._search_results_timer.setSingleShot(True)
         self._search_results_timer.setInterval(400)
-        self._search_results_timer.timeout.connect(self._refresh_visible_search_results)
+        self._search_results_timer.timeout.connect(self._search_results_text_settled)
         panel.setVisible(False)
         return panel
 
@@ -120,6 +135,16 @@ class SearchResultsMixin:
         if self.search_results_panel.isVisible():
             self._search_results_timer.start()
 
+    def _search_results_text_settled(self):
+        """Le texte de l'éditeur a changé : la liste est refaite, sauf s'il
+        est celui qui a été listé (l'éditeur affiche un autre document)."""
+        if not self.search_results_panel.isVisible():
+            return
+        listed = hash(self.editor.toPlainText())
+        if any(session is self.document and text == listed for session, text in self._search_results_listed):
+            return
+        self.refresh_search_results()
+
     def search_results_document_changed(self):
         """Un autre document affiché : la liste du document affiché le suit."""
         if not self.search_results_project.isChecked():
@@ -138,11 +163,13 @@ class SearchResultsMixin:
         project = self.search_results_project.isChecked()
         sessions = list(self.documents) if project else [self.document]
         results, error, documents = [], None, 0
+        self._search_results_listed = []
         if query:
             for session in sessions:
                 text = self._session_text(session)
                 if text is None:
                     continue
+                self._search_results_listed.append((session, hash(text)))
                 try:
                     rows = kwic(text, find_spans(text, query, options))
                 except SearchError as exc:
@@ -192,16 +219,27 @@ class SearchResultsMixin:
         session, result = self._search_results[row]
         if session is not self.document and not self.show_document(session):
             return
+        # Un document masqué retrouve son onglet, comme avec les références.
+        self.show_document_tab(session)
         self.left_tabs.setCurrentIndex(0)
         text = self.editor.toPlainText()
         if _BLANKS.sub(" ", text[result.start:result.end]) != result.match:
-            # Le texte a changé depuis : la liste est refaite.
-            self.refresh_search_results()
+            # Le texte a changé depuis : la liste est refaite, hors du clic.
+            call_later(0, self, self.refresh_search_results)
             return
         positions = Utf16Positions(text)
         start, end = positions.qt(result.start), positions.qt(result.end)
-        cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(end)
-        self.editor.setTextCursor(cursor)
-        self.editor.centerCursor()
-        self.editor.setSearchMatch(start, end, self.find_box.text())
+        query = self.find_box.text()
+
+        def show(shown=session):
+            if self.document is not shown:
+                return
+            cursor = QTextCursor(self.editor.document())
+            cursor.setPosition(end)
+            self.editor.setTextCursor(cursor)
+            self.editor.centerCursor()
+            self.editor.setSearchMatch(start, end, query)
+
+        show()
+        # Le défilement du document affiché est restauré juste après.
+        call_later(0, self, show)

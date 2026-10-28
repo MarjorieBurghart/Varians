@@ -115,3 +115,105 @@ def test_the_panel_is_translated(open_window, example_project):
     assert window.search_results_title.text() == "Search results"
     assert window.search_results_table.horizontalHeaderItem(3).text() == "Match"
     assert window.main_toolbar.widgetForAction(window.action_search_list).text() == current_i18n().tr("search.list")
+
+
+def _long_notes(project, lines=400):
+    """Document auxiliaire xml/notes.xml de *lines* lignes, « persName »
+    tout à la fin."""
+    from project_config import DocumentConfig
+    from project_management import update_project_documents
+    notes = project.parent / "xml" / "notes.xml"
+    body = "\n".join(f"<p>ligne {number}</p>" for number in range(lines))
+    notes.write_text(f'<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><body>\n{body}\n'
+                     f'<p><persName>Petrus</persName></p></body></text></TEI>', encoding="utf-8")
+    update_project_documents(project, [DocumentConfig(notes, "Notes")])
+    return notes
+
+
+def _row_of(window, document):
+    return next(row for row in range(window.search_results_table.rowCount())
+                if window.search_results_table.item(row, DOCUMENT).text() == document)
+
+
+def test_a_click_in_another_document_shows_the_occurrence(open_window, example_project, qtbot):
+    """Le défilement mémorisé du document affiché, restauré juste après
+    son affichage, ne cache pas l'occurrence."""
+    _long_notes(example_project)
+    window = open_window(example_project)
+    _list(window, "persName")
+    window.search_results_project.setChecked(True)
+    window.search_results_table.cellClicked.emit(_row_of(window, "Notes"), MATCH)
+    qtbot.wait(100)
+    assert window.document.path.name == "notes.xml"
+    editor = window.editor
+    assert editor.viewport().rect().contains(editor.cursorRect().center())
+
+
+def test_the_list_is_not_rebuilt_when_only_the_document_changes(open_window, project_with_documents, qtbot):
+    """Afficher un autre document ne change aucun texte : la liste de tout
+    le projet reste telle quelle (ni reconstruite ni défilée)."""
+    from PySide6.QtCore import Qt
+    window = open_window(project_with_documents)
+    window.editor.setPlainText("<TEI><p><persName>Bernardus</persName></p></TEI>")
+    _list(window, "persName")
+    window.search_results_project.setChecked(True)
+    table = window.search_results_table
+    table.item(4, MATCH).setData(Qt.ItemDataRole.UserRole + 7, "marque")
+    table.cellClicked.emit(4, MATCH)
+    assert window.document.path.name == "personnes.xml"
+    qtbot.wait(700)
+    assert table.item(4, MATCH).data(Qt.ItemDataRole.UserRole + 7) == "marque"
+    # Une vraie modification du texte refait la liste.
+    cursor = window.editor.textCursor()
+    cursor.movePosition(cursor.MoveOperation.End)
+    cursor.insertText("<persName/>")
+    qtbot.waitUntil(lambda: table.rowCount() == 7, timeout=3000)
+
+
+def test_a_click_gives_a_hidden_document_its_tab_back(open_window, project_with_documents):
+    window = open_window(project_with_documents)
+    people = next(session for session in window.documents if session.path.name == "personnes.xml")
+    assert window.hide_document_tab(people)
+    window.editor.setPlainText("<TEI><p><persName>Bernardus</persName></p></TEI>")
+    _list(window, "persName")
+    window.search_results_project.setChecked(True)
+    window.search_results_table.cellClicked.emit(_row_of(window, "Personnes"), MATCH)
+    assert window.document is people
+    bar = window.document_tab_bar
+    assert people in window._visible_document_sessions()
+    assert bar.tabText(bar.currentIndex()).startswith("Personnes")
+
+
+def test_each_cell_is_clipped_to_its_own_box(open_window, example_project):
+    """Le contexte trop long d'une case ne déborde pas sur la case voisine,
+    même avec un style qui ne coupe pas le texte (Windows 11)."""
+    from PySide6.QtCore import QRect, Qt
+    from PySide6.QtGui import QColor, QImage, QPainter
+    from PySide6.QtWidgets import QProxyStyle, QStyle, QStyleOptionViewItem
+
+    class NoClipStyle(QProxyStyle):
+        def drawControl(self, element, option, painter, widget=None):
+            if element == QStyle.ControlElement.CE_ItemViewItem:
+                painter.drawText(option.rect, int(option.displayAlignment | Qt.TextFlag.TextDontClip), option.text)
+                return
+            super().drawControl(element, option, painter, widget)
+
+    window = open_window(example_project)
+    window.editor.setPlainText("x" * 60 + "beta")
+    _list(window, "beta")
+    table = window.search_results_table
+    style = NoClipStyle()
+    table.setStyle(style)
+    image = QImage(300, 30, QImage.Format.Format_ARGB32)
+    image.fill(QColor("white"))
+    painter = QPainter(image)
+    option = QStyleOptionViewItem()
+    option.initFrom(table)
+    option.widget = table                                # le style de la table
+    option.rect = QRect(200, 0, 60, 30)                  # case « Avant », étroite
+    index = table.model().index(0, BEFORE)
+    table.itemDelegateForIndex(index).paint(painter, option, index)
+    painter.end()
+    table.setStyle(None)
+    outside = [image.pixelColor(x, y) for x in range(0, 200, 2) for y in range(0, 30, 2)]
+    assert all(colour == QColor("white") for colour in outside)
