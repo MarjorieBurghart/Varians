@@ -29,6 +29,7 @@ from selection_sync import choose_occurrence, occurrence_index_for_position
 from tei_facsimile import position_inside_xml_markup
 from text_search import SearchError
 from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
+from fragment_units import edit_stylesheet, edit_stylesheet_url
 from replace_bar import search_error_text
 from xslt_engines import xslt_error_text as _xslt_error_text
 
@@ -599,32 +600,41 @@ def lxml_available():
         return False
 
 
-def transform_with_xslt(xml_text, xsl_path, params=None):
+def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
     """Transformation XSLT 1.0 optimisée.
 
     Avec lxml, la feuille XSLT compilée est mise en cache tant que le fichier
     n'a pas changé ; une erreur de la feuille ou de la transformation est
     signalée telle quelle. Le moteur .NET/PowerShell ne sert que de secours si
     lxml n'est pas installé.
+
+    Avec ``edit_markers`` (V0.9.2.9), la feuille est importée par l'enveloppe
+    de ``fragment_units.edit_stylesheet`` : les éléments numérotés par
+    ``mark_units`` reçoivent leur crayon ✎, quelle que soit la feuille.
     """
     try:
         from lxml import etree as LET
     except ImportError as exc:
-        return _transform_without_lxml(xml_text, xsl_path, params, exc)
+        return _transform_without_lxml(xml_text, xsl_path, params, exc, edit_markers)
     try:
         parser = LET.XMLParser(resolve_entities=False, no_network=True, recover=False)
         xml_doc = LET.fromstring(xml_text.encode("utf-8"), parser=parser)
         xp = Path(xsl_path).resolve()
         st = xp.stat()
-        cache_key = (str(xp), st.st_mtime_ns, st.st_size)
+        cache_key = (str(xp), st.st_mtime_ns, st.st_size, bool(edit_markers))
         transform = _LXML_TRANSFORM_CACHE.get(cache_key)
         if transform is None:
-            # Une seule version compilée par chemin suffit ; jeter les anciennes
-            # entrées si la feuille a été modifiée sur disque.
+            # Une seule version compilée par chemin (avec ou sans crayons)
+            # suffit ; jeter les anciennes si la feuille a été modifiée sur
+            # disque.
             for k in list(_LXML_TRANSFORM_CACHE):
-                if k[0] == str(xp):
+                if k[0] == str(xp) and k[3] == cache_key[3]:
                     _LXML_TRANSFORM_CACHE.pop(k, None)
-            xsl_doc = LET.parse(str(xp), parser=parser)
+            if edit_markers:
+                xsl_doc = LET.fromstring(edit_stylesheet(xp).encode("utf-8"), parser=parser,
+                                         base_url=edit_stylesheet_url(xp))
+            else:
+                xsl_doc = LET.parse(str(xp), parser=parser)
             # Une feuille peut lire des fichiers locaux (document(), import),
             # mais jamais écrire de fichier, créer de dossier ni accéder au
             # réseau.
@@ -644,13 +654,17 @@ def transform_with_xslt(xml_text, xsl_path, params=None):
         raise RuntimeError(_xslt_error_text(exc, xsl_path, log)) from exc
 
 
-def _transform_without_lxml(xml_text, xsl_path, params, first_error):
+def _transform_without_lxml(xml_text, xsl_path, params, first_error, edit_markers=False):
     """Secours sans lxml : moteur .NET via PowerShell (Windows)."""
     ps = shutil.which("powershell.exe") or shutil.which("powershell") or shutil.which("pwsh")
     if ps:
         try:
             with tempfile.TemporaryDirectory(prefix="tei_xslt_") as td:
                 td = Path(td)
+                if edit_markers:
+                    wrapper = td / "varians-edit.xsl"
+                    wrapper.write_text(edit_stylesheet(xsl_path), encoding="utf-8")
+                    xsl_path = wrapper
                 xmlf = td / "edition.xml"
                 outf = td / "edition.html"
                 psf = td / "transform.ps1"

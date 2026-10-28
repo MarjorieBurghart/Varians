@@ -124,3 +124,61 @@ def test_stylesheet_can_still_read_local_files(tmp_path, fv):
                          '<xsl:value-of select="document(\'autorites.xml\')//p"/></xsl:template>')
     html, _engine = fv.transform_with_xslt(TEI, xsl)
     assert html.strip() == "Abélard"
+
+
+# --- Crayons ✎ des éléments modifiables (V0.9.2.9) ------------------------------
+
+TEI_UNITS = ('<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader/><text><body><div>'
+             '<p><lb edRef="#T1"/>In principio</p><lg><l>erat verbum</l></lg></div></body></text></TEI>')
+
+
+def test_edit_markers_wrap_the_view_stylesheet(fv):
+    """Avec edit_markers, la feuille de la vue est importée par l'enveloppe
+    de fragment_units : chaque élément numéroté reçoit son crayon ; sans,
+    la même feuille ne produit aucun crayon (compilations distinctes)."""
+    from fragment_units import mark_units
+    marked, _spans = mark_units(TEI_UNITS)
+    xsl = ROOT / "rendering" / "tei-to-html.xsl"
+    html, engine = fv.transform_with_xslt(marked, xsl, {"baseWitness": "T1"}, edit_markers=True)
+    assert 'href="tei-edit://p/0"' in html and 'href="tei-edit://p/1"' in html
+    assert 'href="tei-line://base/INDEX"' in html
+    assert engine.startswith("lxml")
+    plain, _engine = fv.transform_with_xslt(marked, xsl, {"baseWitness": "T1"})
+    assert "tei-edit://" not in plain
+    again, _engine = fv.transform_with_xslt(marked, xsl, {"baseWitness": "T1"}, edit_markers=True)
+    assert again == html
+
+
+def test_edit_markers_keep_the_access_control(tmp_path, fv):
+    target = tmp_path / "ecrit_par_la_feuille.txt"
+    xsl = _xsl(tmp_path, f'<xsl:template match="/"><exsl:document href="{target.as_uri()}" '
+                         'method="text">contenu</exsl:document><p/></xsl:template>')
+    with pytest.raises(RuntimeError) as info:
+        fv.transform_with_xslt(TEI, xsl, edit_markers=True)
+    assert not target.exists()
+    assert "write" in str(info.value).lower()
+
+
+def test_edit_markers_report_the_view_stylesheet_errors(tmp_path, fv, fake_powershell):
+    xsl = _xsl(tmp_path, '<xsl:template match="/"><xsl:value-of select="///"/></xsl:template>')
+    with pytest.raises(RuntimeError) as info:
+        fv.transform_with_xslt(TEI, xsl, edit_markers=True)
+    assert "feuille.xsl" in str(info.value) and "///" in str(info.value)
+    assert fake_powershell == []
+
+
+def test_without_lxml_powershell_receives_the_wrapper(fv, monkeypatch):
+    seen = {}
+
+    def run(args, **kwargs):
+        seen["xsl"] = Path(args[7]).read_text(encoding="utf-8")
+        Path(args[8]).write_text("<html>via PowerShell</html>", encoding="utf-8")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setitem(sys.modules, "lxml", None)
+    monkeypatch.setattr(fv.shutil, "which", lambda name: "C:/Windows/powershell.exe")
+    monkeypatch.setattr(fv.subprocess, "run", run)
+    xsl = ROOT / "rendering" / "tei-to-html.xsl"
+    html, engine = fv.transform_with_xslt(TEI, xsl, edit_markers=True)
+    assert (html, engine) == ("<html>via PowerShell</html>", "PowerShell/.NET")
+    assert f'<xsl:import href="{xsl.resolve().as_uri()}"/>' in seen["xsl"]

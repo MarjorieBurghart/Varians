@@ -18,9 +18,17 @@ assemblée). Seul le ``<body>`` compte, ou tout le document s'il n'en a pas
 (une partie, par exemple). :func:`mark_units` numérote les éléments
 modifiables dans le texte donné à la XSLT de l'aperçu (attribut ``edit``
 de l'espace de noms :data:`EDIT_NS`) : ce texte n'est ni validé ni
-enregistré."""
+enregistré.
+
+La XSLT de la vue n'a pas à connaître ces éléments : la feuille enveloppe
+(:func:`edit_stylesheet`) l'importe et écrit un crayon devant ce qu'elle
+produit pour chaque élément numéroté, puis :func:`place_edit_markers` met
+chaque crayon au début du premier bloc qui le suit. Le crayon porte le rang
+de l'élément : il ouvre le bon élément même si la feuille en omet ou en
+déplace."""
 from __future__ import annotations
 
+import html
 import re
 from pathlib import Path
 
@@ -206,3 +214,66 @@ def unit_names_from_schema(schema_path):
         del _SCHEMA_CACHE[old]
     _SCHEMA_CACHE[key] = names
     return names
+
+
+def edit_stylesheet(xsl_path):
+    """Feuille enveloppe de la XSLT ``xsl_path`` : celle-ci est importée, et
+    chaque élément numéroté par :func:`mark_units` reçoit un crayon
+    ``<a class="tei-edit-marker" href="tei-edit://p/N">`` devant ce qu'elle
+    produit pour lui ; rien si elle ne produit rien (élément masqué). Les
+    paramètres de la feuille importée restent ceux de la transformation."""
+    href = html.escape(Path(xsl_path).expanduser().resolve().as_uri(), quote=True)
+    return f'''<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:vx="{EDIT_NS}" xmlns:exsl="http://exslt.org/common" exclude-result-prefixes="vx exsl">
+  <xsl:import href="{href}"/>
+  <xsl:template match="*[@vx:edit]">
+    <xsl:variable name="out"><xsl:apply-imports/></xsl:variable>
+    <xsl:if test="normalize-space($out) or exsl:node-set($out)//*">
+      <a class="tei-edit-marker" href="tei-edit://p/{{@vx:edit}}">&#x270E;</a>
+    </xsl:if>
+    <xsl:copy-of select="$out"/>
+  </xsl:template>
+</xsl:stylesheet>
+'''
+
+
+def edit_stylesheet_url(xsl_path):
+    """Adresse de base de la feuille enveloppe : à côté de ``xsl_path``,
+    sous un autre nom (une feuille ne peut s'importer elle-même)."""
+    path = Path(xsl_path).expanduser().resolve()
+    return path.with_name(path.name + ".varians-edit.xsl").as_uri()
+
+
+_MARKER = (r'<a\b(?=[^>]*\bclass="tei-edit-marker")(?=[^>]*\bhref="tei-edit://p/(\d+)")[^>]*>'
+           r'(?:\u270e|&#9998;|&#x270[eE];)</a>')
+_MARKER_RE = re.compile(_MARKER)
+# Le crayon passe les blancs et les ancres vides (<a name="…"></a>) pour
+# entrer dans le bloc qui suit, puis dans le premier bloc de celui-ci, etc.
+_DIVE_RE = re.compile(
+    r"(?P<marker>" + _MARKER.replace("(\\d+)", "\\d+") + r")(?P<gap>(?:\s|<a\b[^>]*>\s*</a>)*)"
+    r"(?P<block><(?:p|div|h[1-6]|li|ul|ol|dl|dt|dd|blockquote|figure|figcaption|section|article|header"
+    r"|footer|aside|nav|table|thead|tbody|tfoot|tr|td|th|pre|center|address)\b[^>]*>)",
+    re.I,
+)
+
+
+def place_edit_markers(html_text, title=""):
+    """Met chaque crayon écrit par la feuille enveloppe au début du premier
+    bloc qui le suit, avec l'infobulle ``title`` et une espace après lui.
+    Retourne le HTML et le nombre de crayons."""
+    for _ in range(64):
+        moved = _DIVE_RE.sub(r"\g<gap>\g<block>\g<marker>", html_text)
+        if moved == html_text:
+            break
+        html_text = moved
+    title = html.escape(title or "", quote=True)
+    count = 0
+
+    def final(match):
+        nonlocal count
+        count += 1
+        return (f'<a href="tei-edit://p/{match.group(1)}" class="tei-edit-marker" title="{title}">'
+                '\u270e</a> ')
+
+    return _MARKER_RE.sub(final, html_text), count
