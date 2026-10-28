@@ -10,7 +10,9 @@
     les sigles en italique, avec om., add., lacuna incipit et lacuna
     desinit, comme dans l'édition critique HTML.
   - Une note de l'éditeur sans @place devient une note de fin
-    (place="end") : une autre série que celle de l'apparat.
+    (place="end") : une autre série que celle de l'apparat. Dans une
+    note, une note devient « (…) » et l'entrée d'un apparat se met entre
+    crochets : Word et LibreOffice n'admettent pas une note dans une note.
   - Les <pb> du témoin deviennent des repères de folio ⟨12r⟩ dans le texte
     (<seg type="folio">), les autres disparaissent : pas de saut de page.
   - Les <lb> deviennent des espaces (des <lb> contigus sont une seule
@@ -58,31 +60,54 @@
       <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
     </xsl:choose>
     <xsl:if test="array:size($apparat?variantes) gt 0">
-      <note place="foot" type="apparatus">
-        <xsl:if test="$apparat?lemme">
-          <xsl:choose>
-            <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()" mode="note"/></xsl:when>
-            <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
-          </xsl:choose>
-          <xsl:text> ] </xsl:text>
-        </xsl:if>
-        <xsl:for-each select="$apparat?variantes?*">
-          <xsl:if test="position() gt 1"><xsl:text> ; </xsl:text></xsl:if>
-          <xsl:choose>
-            <xsl:when test="?genre = 'om'">
-              <xsl:value-of select="$f:om"/>
-              <xsl:apply-templates select="?lecon//tei:note" mode="note"/>
-            </xsl:when>
-            <xsl:otherwise>
-              <xsl:apply-templates select="?lecon/node()" mode="note"/>
-              <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><xsl:value-of select="$f:add"/></xsl:if>
-            </xsl:otherwise>
-          </xsl:choose>
-          <xsl:text> </xsl:text>
-          <hi rend="italic"><xsl:value-of select="?sigles"/></hi>
-        </xsl:for-each>
-      </note>
+      <xsl:choose>
+        <!-- Dans une note (Word et LibreOffice n'admettent pas une note
+             dans une note) : l'entrée entre crochets. -->
+        <xsl:when test="ancestor::tei:note">
+          <xsl:text> [</xsl:text>
+          <xsl:call-template name="entree"><xsl:with-param name="apparat" select="$apparat"/></xsl:call-template>
+          <xsl:text>]</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <note place="foot" type="apparatus">
+            <xsl:call-template name="entree"><xsl:with-param name="apparat" select="$apparat"/></xsl:call-template>
+          </note>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:if>
+  </xsl:template>
+
+  <!-- « leçon ] variante sigles ; … » -->
+  <xsl:template name="entree">
+    <xsl:param name="apparat" as="map(*)"/>
+    <xsl:variable name="retenue" select="$apparat?retenue"/>
+    <xsl:if test="$apparat?lemme">
+      <xsl:choose>
+        <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()" mode="note"/></xsl:when>
+        <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
+      </xsl:choose>
+      <xsl:text> ] </xsl:text>
+    </xsl:if>
+    <xsl:for-each select="$apparat?variantes?*">
+      <xsl:if test="position() gt 1"><xsl:text> ; </xsl:text></xsl:if>
+      <xsl:choose>
+        <xsl:when test="?genre = 'om'">
+          <xsl:value-of select="$f:om"/>
+          <xsl:apply-templates select="?lecon//tei:note" mode="note"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:apply-templates select="?lecon/node()" mode="note"/>
+          <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><xsl:value-of select="$f:add"/></xsl:if>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:text> </xsl:text>
+      <hi rend="italic"><xsl:value-of select="?sigles"/></hi>
+    </xsl:for-each>
+  </xsl:template>
+
+  <!-- Une note dans une note : « (…) » dans le texte de la première. -->
+  <xsl:template match="tei:text//tei:note[ancestor::tei:note]" priority="2">
+    <xsl:text> (</xsl:text><xsl:apply-templates/><xsl:text>)</xsl:text>
   </xsl:template>
 
   <xsl:template match="tei:text//tei:note[not(@place)]">

@@ -161,3 +161,18 @@ def test_a_note_call_follows_its_word_without_double_spaces(project):
                      if isinstance(node, etree._Element) else str(node)
                      for node in p.xpath(".//text()[not(ancestor::t:note)] | .//t:note", namespaces=NS))
     assert "Egyptii¹ sunt uos permansistis¹, etc." in marked
+
+
+def test_no_note_is_left_inside_another_note(project):
+    # Word et LibreOffice n'admettent pas une note dans une note : une note
+    # dans une note devient « (…) », un apparat garde sa leçon et son entrée
+    # entre crochets.
+    source = SOURCE.replace("<note>Une note.</note>",
+                            '<note>Une note <note>interne</note> sur <app><rdg wit="#A">hoc</rdg><rdg wit="#B">hic'
+                            '</rdg></app>.</note>')
+    (project.root_dir / "xml" / "imbriquees.xml").write_text(source, encoding="utf-8")
+    result, tree = _notes(project, "A", "xml/imbriquees.xml")
+    assert result.ok, result.error
+    assert not tree.xpath("//t:note[ancestor::t:note]", namespaces=NS)
+    end = tree.find(".//t:note[@place='end']", NS)
+    assert _text(end) == "Une note (interne) sur hoc [hoc ] hic B]."

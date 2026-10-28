@@ -105,10 +105,12 @@
     <xsl:sequence select="if (empty($sigles)) then 'éd.' else string-join($sigles, ' ')"/>
   </xsl:function>
 
-  <!-- Le texte d'une leçon, hors notes. -->
+  <!-- Le texte d'une leçon, hors des notes qu'elle contient (elle peut
+       elle-même être dans une note). -->
   <xsl:function name="f:texte" as="xs:string">
     <xsl:param name="lecon" as="element()?"/>
-    <xsl:sequence select="normalize-space(string-join($lecon/descendant::text()[not(ancestor::tei:note)], ''))"/>
+    <xsl:variable name="notes" select="$lecon/descendant::tei:note"/>
+    <xsl:sequence select="normalize-space(string-join($lecon/descendant::text()[empty(ancestor::tei:note intersect $notes)], ''))"/>
   </xsl:function>
 
   <!-- Une omission : ni texte, ni lacune, ni rien qui ait valeur de leçon. -->
