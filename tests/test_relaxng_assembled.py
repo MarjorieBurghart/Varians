@@ -125,6 +125,18 @@ def test_a_malformed_edition_is_not_well_formed(tmp_path, schema):
     assert result == expected and not result.well_formed
 
 
+def test_a_malformed_edition_reports_only_its_own_errors(tmp_path, schema):
+    # Le journal global de lxml garde les erreurs des analyses précédentes
+    # (sous Windows, celles des pages HTML5 lues par d'autres tests) : elles
+    # ne sont pas celles du document.
+    from lxml import etree
+    for n in range(3):
+        etree.fromstring(f"<a><b>{n}</a>".encode(), etree.XMLParser(recover=True))
+    result = validate_relaxng("<TEI>\n<text>", schema)
+    assert not result.well_formed and result.issues
+    assert not [issue for issue in result.issues if "b line 1 and a" in issue.message], result.issues
+
+
 def test_a_missing_schema(sermons, tmp_path):
     result = _validate(sermons, tmp_path / "absent.rng")
     assert not result.schema_loaded and "absent.rng" in result.error
