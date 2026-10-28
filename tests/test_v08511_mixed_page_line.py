@@ -131,6 +131,8 @@ class StubWindow:
         return self.ordinal
     def statusBar(self):
         return SimpleNamespace(showMessage=lambda *args: None)
+    def witness_siglum(self, wid):
+        return wid
 
 
 def test_real_editor_methods_mix_modes_and_update_pages_even_on_same_line():

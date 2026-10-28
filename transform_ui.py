@@ -283,12 +283,14 @@ class ScenarioDialog(QDialog):
         if self._witnesses is None:
             self._witnesses = witness_choices(self._project)
         pivot = self._project.base_witness
+        # Sigles à l'écran, identifiants dans la valeur (V0.9.2.8.2).
+        sigla = {w.id: w.display_siglum for w in self._project.witnesses}
         combo = QComboBox(self.params_table)
         for witness in self._witnesses:
             if witness == pivot:
-                combo.addItem(_t("transform.param.pivot", witness=witness), PIVOT)
+                combo.addItem(_t("transform.param.pivot", witness=sigla.get(witness, witness)), PIVOT)
             else:
-                combo.addItem(witness, witness)
+                combo.addItem(sigla.get(witness, witness), witness)
         combo.addItem(_t("transform.param.no_witness"), NO_WITNESS)
         value = value_item.text().strip()
         if pivot and value in ("", pivot):                    # sans valeur : le pivot

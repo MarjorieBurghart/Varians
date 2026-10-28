@@ -173,6 +173,8 @@ class WitnessDiagnostic:
     issue_codes: tuple[str, ...]
     active: bool
     fingerprint: str
+    # Sigle montré à l'écran, s'il diffère de l'identifiant (V0.9.2.8.2).
+    siglum: str = ""
 
 
 def diagnostic_rows(project, state):
@@ -243,7 +245,7 @@ def diagnostic_rows(project, state):
         rows.append(WitnessDiagnostic(
             w.id, w.label, w.is_base, len(cache.get('pages', [])),
             line_count, image_count, missing_images, linked, usable, unknown,
-            tuple(issues), active, sync_fingerprint(raw),
+            tuple(issues), active, sync_fingerprint(raw), getattr(w, "siglum", ""),
         ))
     return tuple(rows)
 

@@ -115,7 +115,7 @@ class DocumentIOMixin:
         # pour une édition en parties, il est compté dans l'édition assemblée.
         count = self._base_line_count() if self.document.in_edition else None
         if count is not None and self.expected_base_lines is not None and count != self.expected_base_lines:
-            r=QMessageBox.warning(self,_t("file.structure.title", base=self.base_id),_t("file.structure.text", count=count, base=self.base_id, expected=self.expected_base_lines),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Cancel)
+            r=QMessageBox.warning(self,_t("file.structure.title", base=self.witness_siglum(self.base_id)),_t("file.structure.text", count=count, base=self.witness_siglum(self.base_id), expected=self.expected_base_lines),QMessageBox.StandardButton.Save|QMessageBox.StandardButton.Cancel,QMessageBox.StandardButton.Cancel)
             if r==QMessageBox.StandardButton.Cancel: return False
         try:
             path=Path(path)

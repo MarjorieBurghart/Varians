@@ -28,7 +28,7 @@ class DetachedWitnessWindow(QWidget):
         self.witness_id = str(witness_id)
         self.panel = panel
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
-        self.setWindowTitle(_t('workspace.detached.title', witness=self.witness_id))
+        self.setWindowTitle(_t('workspace.detached.title', witness=self._siglum()))
         root = QVBoxLayout(self)
         root.setContentsMargins(5, 5, 5, 5)
         root.setSpacing(3)
@@ -61,8 +61,12 @@ class DetachedWitnessWindow(QWidget):
         self.restoreGeometry(geometry)
         self.raise_()
 
+    def _siglum(self):
+        siglum = getattr(self.main, "witness_siglum", None)
+        return siglum(self.witness_id) if siglum else self.witness_id
+
     def retranslate_ui(self):
-        self.setWindowTitle(_t('workspace.detached.title', witness=self.witness_id))
+        self.setWindowTitle(_t('workspace.detached.title', witness=self._siglum()))
         self.always_on_top.setText(_t('workspace.always_on_top'))
         self.dock_button.setText(_t('workspace.attach'))
 
@@ -94,7 +98,8 @@ class WitnessVisibilityDialog(QDialog):
         by_id = {str(w.id): w for w in witnesses}
         for wid in normalized_witness_order(by_id, order_ids):
             w = by_id[wid]
-            label = f"{w.id} — {w.label}" if getattr(w, "label", "") else str(w.id)
+            siglum = getattr(w, "display_siglum", w.id)
+            label = f"{siglum} — {w.label}" if getattr(w, "label", "") else str(siglum)
             item = QListWidgetItem(label)
             item.setData(Qt.ItemDataRole.UserRole, wid)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)

@@ -259,8 +259,8 @@ class TextSegmentsMixin:
         """Portée du diagnostic des témoins : l'édition, ou le texte affiché."""
         sync = self._text_sync_of(self._active_segment) if self._active_segment is not None else None
         if sync is None:
-            return _t("diagnostics.scope.edition", base=self.base_id)
-        return _t("diagnostics.scope.text", name=sync.name, base=sync.base)
+            return _t("diagnostics.scope.edition", base=self.witness_siglum(self.base_id))
+        return _t("diagnostics.scope.text", name=sync.name, base=self.witness_siglum(sync.base))
 
     def _diagnostic_notes(self):
         """Textes synchronisés à part (pivot, témoins) et problèmes de leurs
@@ -270,12 +270,12 @@ class TextSegmentsMixin:
         if syncs:
             items = []
             for sync in syncs:
-                witnesses = ", ".join(w.id for w in self.witness_configs if w.id in sync.alignments)
+                witnesses = ", ".join(w.display_siglum for w in self.witness_configs if w.id in sync.alignments)
                 pages = text_project(self.project, sync, self._text_page_witnesses(sync)).page_witnesses
-                pages = ", ".join(w.id for w in self.witness_configs if w.id in pages)
-                items.append(_t("diagnostics.text_item.pages", name=sync.name, base=sync.base,
+                pages = ", ".join(w.display_siglum for w in self.witness_configs if w.id in pages)
+                items.append(_t("diagnostics.text_item.pages", name=sync.name, base=self.witness_siglum(sync.base),
                                 witnesses=witnesses, pages=pages) if pages else
-                             _t("diagnostics.text_item", name=sync.name, base=sync.base, witnesses=witnesses))
+                             _t("diagnostics.text_item", name=sync.name, base=self.witness_siglum(sync.base), witnesses=witnesses))
             notes.append(_t("diagnostics.texts", texts="; ".join(items)))
             # Ordre des textes dans chaque manuscrit (V0.9.1.4).
             for w in self.witness_configs:
@@ -283,9 +283,9 @@ class TextSegmentsMixin:
                 runs = self._route_runs(route)
                 if len(runs) > 1:
                     uncertain = ", ".join(self._segment_name(segment) for segment in route.uncertain)
-                    notes.append(_t("diagnostics.route.uncertain", witness=w.id, runs=" → ".join(runs),
+                    notes.append(_t("diagnostics.route.uncertain", witness=w.display_siglum, runs=" → ".join(runs),
                                     texts=uncertain) if uncertain else
-                                 _t("diagnostics.route", witness=w.id, runs=" → ".join(runs)))
+                                 _t("diagnostics.route", witness=w.display_siglum, runs=" → ".join(runs)))
         notes.extend(_t("text_sync.problem." + problem.code, name=problem.name, detail=problem.detail)
                      for problem in problems)
         return "\n".join(notes)
