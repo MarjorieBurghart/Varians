@@ -181,6 +181,7 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="viewer.language">Jazyk</string>
   <string key="viewer.variant">varianta</string>
   <string key="viewer.note">poznámka</string>
+  <string key="console.usage">Použití: {command} cesta/k/project.xml</string>
   <string key="console.viewer_generated">Prohlížeč vygenerován: {path}</string>
   <string key="console.viewer_stats">Svědci: {witnesses} · základní řádky: {lines}</string>
   <string key="console.missing_pages">Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>

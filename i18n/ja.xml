@@ -181,6 +181,7 @@
   <string key="viewer.language">言語</string>
   <string key="viewer.variant">異読</string>
   <string key="viewer.note">注記</string>
+  <string key="console.usage">使い方：{command} &lt;project.xml のパス&gt;</string>
   <string key="console.viewer_generated">ビューアを生成しました：{path}</string>
   <string key="console.viewer_stats">伝本：{witnesses} · ピボット伝本行：{lines}</string>
   <string key="console.missing_pages">ピボット伝本キャッシュにないページ：{pages}</string>

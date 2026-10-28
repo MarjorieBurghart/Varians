@@ -6,7 +6,7 @@ from project_config import load_project
 from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]
-PROJECT = ROOT / 'project.xml'
+PROJECT = ROOT / 'tests' / 'data' / 'exemple' / 'project.xml'
 
 
 def test_default_cli_exports_all_project_witnesses():

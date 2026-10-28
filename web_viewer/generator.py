@@ -935,7 +935,12 @@ def generate(project_path: str | Path, output: str | Path | None = None,
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
-    project_path = Path(argv[0]).resolve() if argv else ROOT / "project.xml"
+    if not argv:
+        # Aucun projet n'est livré avec Varians : il faut en désigner un.
+        i18n = I18nManager(ROOT / "i18n", "fr", "en")
+        print(i18n.tr("console.usage", command="python -m web_viewer.generator"), file=sys.stderr)
+        return 2
+    project_path = Path(argv[0]).resolve()
     out, missing, data = generate(project_path)
     project = load_project(project_path)
     i18n = I18nManager(project.translations_dir, project.language, project.fallback_language)

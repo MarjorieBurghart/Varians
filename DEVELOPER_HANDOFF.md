@@ -85,7 +85,7 @@ Sous Windows, les scripts fournis sont :
 - `lancer_editeur.bat` : lancement de Varians ;
 - `installer_pyside6.bat` : aide à l'installation de PySide6 ;
 - `installer_lxml_optionnel.bat` : installation de lxml ;
-- `generer_viewer_web.bat` : génération directe du viewer de démonstration/projet.
+- `generer_viewer_web.bat` : génération directe du viewer d'un projet (déposer son `project.xml` sur le fichier).
 
 Point d'entrée principal :
 

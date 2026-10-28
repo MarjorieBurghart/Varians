@@ -114,7 +114,7 @@ l'application et n'est pas placé dans le dossier du projet.
 
 L'application ne charge plus automatiquement le `project.xml` d'exemple au démarrage. Sans argument de ligne de commande, elle ouvre une fenêtre d'accueil légère ; les commandes **Nouveau projet…**, **Ouvrir un projet…** et **Réouvrir un projet récent…** restent immédiatement disponibles dans le menu **Fichier**.
 
-Le `project.xml` livré à la racine reste le projet de démonstration historique et peut être ouvert explicitement. Il n'est plus ajouté à la liste des projets récents par un simple démarrage de l'application.
+Le `project.xml` livré à la racine reste le projet de démonstration historique et peut être ouvert explicitement. Il n'est plus ajouté à la liste des projets récents par un simple démarrage de l'application. (Depuis la V0.9.2.8.2, ce projet n'est plus livré : voir la dernière section.)
 
 L'ouverture d'un projet remplace la fenêtre d'accueil par la fenêtre de travail maximisée. L'ouverture directe par ligne de commande reste possible :
 
@@ -480,3 +480,22 @@ signalé dans la liste des scénarios, n’est pas exécuté, et reste dans le
 fichier. La fenêtre « Paramètres du projet » conserve les scénarios, et
 `project_management.update_project_transformations` ne réécrit que cet
 élément (copie `.bak` préalable).
+
+## V0.9.2.8.2 — Projet de test hors des publications
+
+Le projet de test (`project.xml`, `xml/edition.xml`, `alignments/T1.json`,
+`T2.json`, `P.json`) n'est plus à la racine de Varians : il est dans
+`tests/data/exemple/`, avec les autres jeux d'essai. Les tests le copient
+dans un dossier temporaire avec les dossiers `rendering`, `i18n` et
+`resources` de l'application (`tests/corpus_data.copy_example`).
+
+Le fichier `.gitattributes` exclut tout le dossier `tests/`
+(`/tests export-ignore`, `/tests/** export-ignore`) des archives des publications GitHub et du
+téléchargement « Download ZIP » : on n'y trouve que l'application. Le dépôt,
+lui, garde les tests et leurs données.
+
+Le viewer qui en avait été généré (`web_output/viewer.html`) est retiré : il
+se régénère depuis le projet. Sans argument, `python -m web_viewer.generator`
+n'ouvre plus de projet par défaut : il rappelle qu'il faut lui donner un
+`project.xml` et rend le code 2. `generer_viewer_web.bat` passe au
+générateur le fichier qu'on dépose sur lui.

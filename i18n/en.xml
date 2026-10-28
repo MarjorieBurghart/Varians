@@ -167,6 +167,7 @@
   <string key="viewer.language">Language</string>
   <string key="viewer.variant">variant</string>
   <string key="viewer.note">note</string>
+  <string key="console.usage">Usage: {command} path/to/project.xml</string>
   <string key="console.viewer_generated">Viewer generated: {path}</string>
   <string key="console.viewer_stats">Witnesses: {witnesses} · pivot-witness lines: {lines}</string>
   <string key="console.missing_pages">Pages missing from pivot-witness cache: {pages}</string>

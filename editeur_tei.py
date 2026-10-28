@@ -130,7 +130,6 @@ except ImportError:
     raise
 
 HERE = Path(__file__).resolve().parent
-DEMO_PROJECT = HERE / "project.xml"
 WELCOME_PROJECT_NAME = "Varians"
 
 # Palette de sélection commune à toute l'application. Le bleu système Windows
@@ -315,12 +314,12 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
     _schema_mode = _document_attribute("schema_mode")
     _schema_file = _document_attribute("schema_file")
 
-    def __init__(self, project_path=None):
+    def __init__(self, project_path):
         super().__init__()
         # Document ouvert : doit exister avant toute affectation des attributs
         # de compatibilité ci-dessus.
         self.document = DocumentSession()
-        self.project = load_project(project_path or DEMO_PROJECT)
+        self.project = load_project(project_path)
         self.document.schema_mode = self.project.schema_mode
         self.document.schema_file = self.project.schema
         self._init_documents()

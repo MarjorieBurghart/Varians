@@ -14,7 +14,7 @@ from pathlib import Path
 import xml_tag_pairs as X
 
 ROOT = Path(__file__).resolve().parents[1]
-EDITION = (ROOT / "xml" / "edition.xml").read_text(encoding="utf-8")
+EDITION = (ROOT / "tests" / "data" / "exemple" / "xml" / "edition.xml").read_text(encoding="utf-8")
 
 
 def _reference_find_markup_end(text: str, start: int) -> int:

@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_exported_reading_click_keys_resolve_in_pivot():
-    project = load_project(ROOT / 'project.xml')
+    project = load_project(ROOT / 'tests' / 'data' / 'exemple' / 'project.xml')
     data, _ = build_dataset(project)
     w = next(w for w in data['witnesses'] if w['id'] == data['meta']['base_witness'])
     keys = {f"{p['id']}::{l['line']}" for p in w['pages'] for l in p['lines']}
@@ -21,7 +21,7 @@ def test_exported_reading_click_keys_resolve_in_pivot():
 
 
 def test_markup_and_event_handler_keep_trustworthy_keys():
-    data, _ = build_dataset(load_project(ROOT / 'project.xml'))
+    data, _ = build_dataset(load_project(ROOT / 'tests' / 'data' / 'exemple' / 'project.xml'))
     html = make_html(data)
     assert 'function selectLine(k,scroll=false)' in html
     assert 'data-no-line' in html

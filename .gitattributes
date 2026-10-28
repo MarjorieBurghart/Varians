@@ -1,3 +1,8 @@
 # Fichiers tiers livrés tels quels, sans conversion des fins de ligne : leur
 # empreinte est notée dans leur LISEZMOI.
 resources/schxslt2/transpile.xsl -text
+
+# Les tests et leurs données (dont le projet de test, tests/data/exemple) ne
+# sont pas livrés dans les archives des publications GitHub.
+/tests export-ignore
+/tests/** export-ignore

@@ -181,6 +181,7 @@
   <string key="viewer.language">Язык</string>
   <string key="viewer.variant">разночтение</string>
   <string key="viewer.note">примечание</string>
+  <string key="console.usage">Использование: {command} путь/к/project.xml</string>
   <string key="console.viewer_generated">Просмотрщик создан: {path}</string>
   <string key="console.viewer_stats">Свидетелей: {witnesses} · строк опорного свидетеля: {lines}</string>
   <string key="console.missing_pages">Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>

@@ -176,7 +176,7 @@ def test_explicit_pointer_is_relative_to_the_citing_document(tmp_path):
 
 
 def test_example_project_has_no_reference_problem():
-    edition = ROOT / "xml" / "edition.xml"
+    edition = ROOT / "tests" / "data" / "exemple" / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")
     assert len(collect_references(text)) > 10000                 # edRef, wit…
     assert ReferenceResolver([(edition, text)]).problems() == []
@@ -185,7 +185,7 @@ def test_example_project_has_no_reference_problem():
 def test_paths_are_resolved_once_per_file_not_per_reference(monkeypatch):
     # Path.resolve() est coûteux, surtout sous Windows : 10 000 références
     # ne doivent pas donner 30 000 résolutions.
-    edition = ROOT / "xml" / "edition.xml"
+    edition = ROOT / "tests" / "data" / "exemple" / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")
     calls = []
     original = Path.resolve
@@ -198,7 +198,7 @@ def test_paths_are_resolved_once_per_file_not_per_reference(monkeypatch):
 def test_checking_the_example_project_is_fast():
     # Temps de calcul du processus (environ 0,15 s), insensible à la charge
     # de la machine ; la marge couvre les postes lents.
-    edition = ROOT / "xml" / "edition.xml"
+    edition = ROOT / "tests" / "data" / "exemple" / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")
     started = time.process_time()
     ReferenceResolver([(edition, text)]).problems()
