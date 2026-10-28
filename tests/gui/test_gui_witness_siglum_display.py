@@ -131,3 +131,22 @@ def test_the_witness_parameter_lists_the_sigla_and_keeps_the_identifiers(open_wi
     assert seen["items"] == [(_tr("transform.param.pivot", witness="T 1"), "${pivot}"), ("T2", "T2"),
                              ("P 15940", "P"), (_tr("transform.param.no_witness"), "aucun")]
     assert load_project(siglum_project).transformations[0].params == (("temoin-de-base", "P"),)
+
+
+def test_the_wit_values_are_described_by_siglum_and_label(open_window, siglum_project, dialogs):
+    """Ctrl+Espace dans @wit : « #id    [sigle · nom affiché] », sauf si le
+    nom affiché commence déjà par le sigle (« T1 · Troyes 816 »)."""
+    from test_gui_reference_completion import _proposals, _type_in_body
+    text = siglum_project.read_text(encoding="utf-8")
+    for old, new in (('label="P · Paris, BnF, Latin 15940"', 'label="Paris, BnF, Latin 15940"'),
+                     ('label="T2 · Troyes 1760"', 'label="Troyes 1760"')):
+        assert old in text
+        text = text.replace(old, new)
+    siglum_project.write_text(text, encoding="utf-8")
+    window = open_window(siglum_project)
+    _type_in_body(window, '<app><rdg wit=""></rdg></app>', 'wit="')
+    seen = _proposals(dialogs)
+    window.show_rng_completion(window.editor)
+    assert seen["#P"].endswith("[P 15940 · Paris, BnF, Latin 15940]")
+    assert seen["#T2"].endswith("[T2 · Troyes 1760]")
+    assert seen["#T1"].endswith("[T1 · Troyes 816]")
