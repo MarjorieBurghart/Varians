@@ -207,6 +207,9 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="search.previous">Předchozí výskyt</string>
   <string key="search.next">Další výskyt</string>
   <string key="search.xpath">Hledání XPath</string>
+  <string key="search.case">Rozlišovat velká a malá písmena</string>
+  <string key="search.regex">Regulární výrazy</string>
+  <string key="search.error.pattern">Chybný regulární výraz: {detail}</string>
   <string key="menu.open_project">Otevřít projekt…</string>
   <string key="menu.save_edition">Uložit edici</string>
   <string key="menu.save_edition_as">Uložit edici jako…</string>

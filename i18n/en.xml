@@ -193,6 +193,9 @@
   <string key="search.previous">Previous occurrence</string>
   <string key="search.next">Next occurrence</string>
   <string key="search.xpath">XPath search</string>
+  <string key="search.case">Match case</string>
+  <string key="search.regex">Regular expressions</string>
+  <string key="search.error.pattern">Incorrect regular expression: {detail}</string>
   <string key="menu.open_project">Open project…</string>
   <string key="menu.save_edition">Save edition</string>
   <string key="menu.save_edition_as">Save edition as…</string>

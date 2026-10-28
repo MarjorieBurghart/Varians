@@ -193,6 +193,9 @@
   <string key="search.previous">Occurrence précédente</string>
   <string key="search.next">Occurrence suivante</string>
   <string key="search.xpath">Recherche XPath</string>
+  <string key="search.case">Respecter la casse</string>
+  <string key="search.regex">Expressions régulières</string>
+  <string key="search.error.pattern">Expression régulière incorrecte : {detail}</string>
   <string key="menu.open_project">Ouvrir un projet…</string>
   <string key="menu.save_edition">Enregistrer l’édition</string>
   <string key="menu.save_edition_as">Enregistrer l’édition sous…</string>

@@ -207,6 +207,9 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="search.previous">Vorheriger Treffer</string>
   <string key="search.next">Nächster Treffer</string>
   <string key="search.xpath">XPath-Suche</string>
+  <string key="search.case">Groß-/Kleinschreibung beachten</string>
+  <string key="search.regex">Reguläre Ausdrücke</string>
+  <string key="search.error.pattern">Fehlerhafter regulärer Ausdruck: {detail}</string>
   <string key="menu.open_project">Projekt öffnen…</string>
   <string key="menu.save_edition">Edition speichern</string>
   <string key="menu.save_edition_as">Edition speichern unter…</string>

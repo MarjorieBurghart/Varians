@@ -18,6 +18,14 @@ from help_dialogs import (
     _open_external, _open_latin_dictionary, _show_about, _show_software_help,
 )
 from project_config import load_project, update_project_language
+from text_search import SearchOptions
+
+
+def _setting_flag(name):
+    value = _settings().value(name, False)
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(value)
 
 
 class MainMenusMixin:
@@ -121,6 +129,11 @@ class MainMenusMixin:
         self.find_box.setPlaceholderText("Ctrl+F")
         self.find_box.returnPressed.connect(self.find_source_next)
         tb.addWidget(self.find_box)
+        # « Aa » et « .* » (V0.9.2.8) : les options du menu Rechercher, aussi
+        # dans la barre de recherche du fragment.
+        tb.addAction(self.action_search_case)
+        tb.addAction(self.action_search_regex)
+        self.formatted_view.add_fragment_find_options((self.action_search_case, self.action_search_regex))
         tb.addAction(self.action_search)
         tb.addAction(self.action_find_prev)
         tb.addAction(self.action_find_next)
@@ -260,11 +273,31 @@ class MainMenusMixin:
             _t("search.xpath"), "Ctrl+Shift+F", self.focus_xpath_search
         )
         self.action_xpath_search.setIconText(_t("xpath.action"))
+        # Options communes au XML et au fragment, retenues d'une session à l'autre.
+        self.action_search_case = self._search_option_action("search.case", "Aa", "search/caseSensitive")
+        self.action_search_regex = self._search_option_action("search.regex", ".*", "search/regex")
         menu.addAction(self.action_search)
         menu.addAction(self.action_find_prev)
         menu.addAction(self.action_find_next)
         menu.addSeparator()
+        menu.addAction(self.action_search_case)
+        menu.addAction(self.action_search_regex)
+        menu.addSeparator()
         menu.addAction(self.action_xpath_search)
+
+    def _search_option_action(self, key, short, setting):
+        action = QAction(_t(key), self)
+        action.setIconText(short)
+        action.setToolTip(_t(key))
+        action.setCheckable(True)
+        action.setChecked(_setting_flag(setting))
+        action.toggled.connect(lambda checked: _settings().setValue(setting, bool(checked)))
+        return action
+
+    def search_options(self):
+        """Options de la recherche du XML et du fragment (V0.9.2.8)."""
+        return SearchOptions(case_sensitive=self.action_search_case.isChecked(),
+                             regex=self.action_search_regex.isChecked())
 
     def _build_display_menu(self):
         I18N = current_i18n()
@@ -518,6 +551,9 @@ class MainMenusMixin:
                                    (self.action_xpath_search, "search.xpath", "xpath.action")):
             action.setText(_t(key))
             action.setIconText(_t(short))
+        for action, key in ((self.action_search_case, "search.case"), (self.action_search_regex, "search.regex")):
+            action.setText(_t(key))
+            action.setToolTip(_t(key))
         self._retranslate_references()
         self.source_visual_wrap.setText(_t("source.visual_wrap"))
         self.xpath_title.setText(_t("xpath.panel.title"))

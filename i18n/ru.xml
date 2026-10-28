@@ -207,6 +207,9 @@
   <string key="search.previous">Предыдущее совпадение</string>
   <string key="search.next">Следующее совпадение</string>
   <string key="search.xpath">Поиск XPath</string>
+  <string key="search.case">Учитывать регистр</string>
+  <string key="search.regex">Регулярные выражения</string>
+  <string key="search.error.pattern">Неверное регулярное выражение: {detail}</string>
   <string key="menu.open_project">Открыть проект…</string>
   <string key="menu.save_edition">Сохранить издание</string>
   <string key="menu.save_edition_as">Сохранить издание как…</string>

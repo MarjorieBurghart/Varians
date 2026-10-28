@@ -18,8 +18,8 @@ from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QColor, QKeySequence, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QInputDialog, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QSizePolicy, QSplitter, QTextBrowser, QTextEdit, QVBoxLayout,
-    QWidget,
+    QLineEdit, QMessageBox, QPushButton, QSizePolicy, QSplitter, QTextBrowser, QTextEdit, QToolButton,
+    QVBoxLayout, QWidget,
 )
 from app_context import _settings, call_later, tr as _t
 from code_editor import CodeEditor, find_in_plain_editor
@@ -27,6 +27,7 @@ from completion_ui import CompletionDialog
 from custom_completion import load_custom_completion
 from selection_sync import choose_occurrence, occurrence_index_for_position
 from tei_facsimile import position_inside_xml_markup
+from text_search import SearchError
 from xslt_engines import xslt_error_text as _xslt_error_text
 
 
@@ -807,6 +808,7 @@ class FormattedEditionWidget(QWidget):
         # lorsque le focus est dans l’éditeur de paragraphe.
         self.fragment_find_bar = QWidget()
         ff = QHBoxLayout(self.fragment_find_bar)
+        self._fragment_find_layout = ff
         ff.setContentsMargins(0, 0, 0, 2)
         ff.setSpacing(5)
         self.fragment_find_label = QLabel(_t("fragment.search.label"))
@@ -1205,6 +1207,17 @@ class FormattedEditionWidget(QWidget):
         self.fragment_find_box.setFocus()
         self.fragment_find_box.selectAll()
 
+    def add_fragment_find_options(self, actions):
+        """Boutons des options de recherche de la fenêtre (« Aa », « .* »),
+        après le champ de recherche du fragment (V0.9.2.8)."""
+        layout = self._fragment_find_layout
+        index = layout.indexOf(self.fragment_find_box) + 1
+        for offset, action in enumerate(actions):
+            button = QToolButton(self.fragment_find_bar)
+            button.setDefaultAction(action)
+            button.setAutoRaise(True)
+            layout.insertWidget(index + offset, button)
+
     def hide_fragment_find(self):
         self.fragment_find_bar.setVisible(False)
         self.fragment_find_status.setText("")
@@ -1215,7 +1228,15 @@ class FormattedEditionWidget(QWidget):
         if not q:
             self.show_fragment_find()
             return
-        found, n, total = find_in_plain_editor(self.fragment_editor, q, backwards=backwards)
+        try:
+            found, n, total = find_in_plain_editor(self.fragment_editor, q, backwards=backwards,
+                                                   options=self.main.search_options())
+        except SearchError as error:
+            self.fragment_find_status.setText("!")
+            self.fragment_find_status.setStyleSheet("color:#a13d32;font-weight:600")
+            self.main.statusBar().showMessage(_t("search.error.pattern", detail=error.detail), 5000)
+            self.fragment_find_box.setFocus()
+            return
         if found:
             self.fragment_find_status.setText(f"{n}/{total}")
             self.fragment_find_status.setStyleSheet("color:#5f574f")

@@ -207,6 +207,9 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="search.previous">Occorrenza precedente</string>
   <string key="search.next">Occorrenza successiva</string>
   <string key="search.xpath">Ricerca XPath</string>
+  <string key="search.case">Rispetta maiuscole/minuscole</string>
+  <string key="search.regex">Espressioni regolari</string>
+  <string key="search.error.pattern">Espressione regolare non corretta: {detail}</string>
   <string key="menu.open_project">Apri progetto…</string>
   <string key="menu.save_edition">Salva edizione</string>
   <string key="menu.save_edition_as">Salva edizione con nome…</string>

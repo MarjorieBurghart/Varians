@@ -207,6 +207,9 @@
   <string key="search.previous">前の一致</string>
   <string key="search.next">次の一致</string>
   <string key="search.xpath">XPath 検索</string>
+  <string key="search.case">大文字と小文字を区別</string>
+  <string key="search.regex">正規表現</string>
+  <string key="search.error.pattern">正規表現が正しくありません：{detail}</string>
   <string key="menu.open_project">プロジェクトを開く…</string>
   <string key="menu.save_edition">校訂本文を保存</string>
   <string key="menu.save_edition_as">校訂本文を別名で保存…</string>
