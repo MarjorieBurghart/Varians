@@ -252,12 +252,10 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
     })
     witnesses_el = ET.SubElement(root, "witnesses", {"base": draft.base_witness})
     for w in draft.witnesses:
-        attrs = {
-            "id": w.id.strip(),
-            "label": w.label.strip() or w.display_siglum,
-        }
+        attrs = {"id": w.id.strip()}
         if w.display_siglum != w.id.strip():
-            attrs["siglum"] = w.display_siglum
+            attrs["siglum"] = w.display_siglum           # juste après l'identifiant
+        attrs["label"] = w.label.strip() or w.display_siglum
         if w.alignment is not None:
             attrs["alignment"] = portable_path(root_dir, Path(w.alignment))
         if w.id == draft.base_witness:

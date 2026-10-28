@@ -62,6 +62,8 @@ def test_project_xml_keeps_the_siglum_only_when_it_differs(tmp_path):
     assert elements["_1760"].get("siglum") == "1760"
     assert elements["T1"].get("siglum") is None and elements["P"].get("siglum") is None
     assert elements["P"].get("label") == "P"
+    # Le sigle se lit juste après l'identifiant.
+    assert '<witness id="_1760" siglum="1760" label="Troyes 1760"' in path.read_text(encoding="utf-8")
 
 
 def test_the_siglum_is_read_back_and_shown(tmp_path):
