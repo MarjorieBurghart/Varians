@@ -28,6 +28,8 @@ from custom_completion import load_custom_completion
 from selection_sync import choose_occurrence, occurrence_index_for_position
 from tei_facsimile import position_inside_xml_markup
 from text_search import SearchError
+from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
+from replace_bar import search_error_text
 from xslt_engines import xslt_error_text as _xslt_error_text
 
 
@@ -835,6 +837,25 @@ class FormattedEditionWidget(QWidget):
         ff.addWidget(self.fragment_find_close_btn)
         self.fragment_find_bar.setVisible(False)
         frag_layout.addWidget(self.fragment_find_bar)
+        # Ligne « Remplacer par » (Ctrl+H, V0.9.2.8), sous la recherche.
+        self.fragment_replace_row = QWidget()
+        fr = QHBoxLayout(self.fragment_replace_row)
+        fr.setContentsMargins(0, 0, 0, 2)
+        fr.setSpacing(5)
+        self.fragment_replace_label = QLabel(_t("replace.with.label"))
+        self.fragment_replace_box = QLineEdit()
+        self.fragment_replace_box.setClearButtonEnabled(True)
+        self.fragment_replace_box.returnPressed.connect(self.replace_fragment_next)
+        self.fragment_replace_one_button = QPushButton(_t("replace.one"))
+        self.fragment_replace_all_button = QPushButton(_t("replace.all"))
+        self.fragment_replace_one_button.clicked.connect(self.replace_fragment_next)
+        self.fragment_replace_all_button.clicked.connect(self.replace_fragment_all)
+        fr.addWidget(self.fragment_replace_label)
+        fr.addWidget(self.fragment_replace_box, 1)
+        fr.addWidget(self.fragment_replace_one_button)
+        fr.addWidget(self.fragment_replace_all_button)
+        self.fragment_replace_row.setVisible(False)
+        frag_layout.addWidget(self.fragment_replace_row)
 
         self.fragment_editor = CodeEditor()
         self.fragment_editor.setMaximumHeight(235)
@@ -929,6 +950,9 @@ class FormattedEditionWidget(QWidget):
         self.fragment_find_prev_btn.setToolTip(_t("fragment.search.prev.tip"))
         self.fragment_find_next_btn.setToolTip(_t("fragment.search.next.tip"))
         self.fragment_find_close_btn.setToolTip(_t("fragment.search.close.tip"))
+        self.fragment_replace_label.setText(_t("replace.with.label"))
+        self.fragment_replace_one_button.setText(_t("replace.one"))
+        self.fragment_replace_all_button.setText(_t("replace.all"))
         self.fragment_editor.setPlaceholderText(_t("fragment.placeholder"))
         self.fragment_visual_wrap.setText(_t("source.visual_wrap"))
         self.fragment_visual_wrap.setToolTip(_t("source.visual_wrap"))
@@ -1016,6 +1040,7 @@ class FormattedEditionWidget(QWidget):
             or (focus is not None and self.fragment_editor.isAncestorOf(focus))
             or focus is self.fragment_find_box
             or (focus is not None and self.fragment_find_bar.isAncestorOf(focus))
+            or (focus is not None and self.fragment_replace_row.isAncestorOf(focus))
         )
 
     @staticmethod
@@ -1198,8 +1223,10 @@ class FormattedEditionWidget(QWidget):
             msg = _t("ctrl_e.inserted", element=element)
         self.main.statusBar().showMessage(msg, 2600)
 
-    def show_fragment_find(self):
+    def show_fragment_find(self, replace=False):
+        # Ctrl+F : la recherche seule ; Ctrl+H (replace) : avec « Remplacer par ».
         self.fragment_find_bar.setVisible(True)
+        self.fragment_replace_row.setVisible(bool(replace))
         # Si du texte est sélectionné, il devient naturellement la recherche.
         selected = self.fragment_editor.textCursor().selectedText().strip()
         if selected and "\u2029" not in selected and len(selected) <= 120:
@@ -1220,6 +1247,7 @@ class FormattedEditionWidget(QWidget):
 
     def hide_fragment_find(self):
         self.fragment_find_bar.setVisible(False)
+        self.fragment_replace_row.setVisible(False)
         self.fragment_find_status.setText("")
         self.fragment_editor.setFocus()
 
@@ -1229,12 +1257,12 @@ class FormattedEditionWidget(QWidget):
             self.show_fragment_find()
             return
         try:
+            # Avec la ligne « Remplacer par », le texte cherché est pris tel quel.
             found, n, total = find_in_plain_editor(self.fragment_editor, q, backwards=backwards,
-                                                   options=self.main.search_options())
+                                                   options=self.main.search_options(),
+                                                   exact=not self.fragment_replace_row.isHidden())
         except SearchError as error:
-            self.fragment_find_status.setText("!")
-            self.fragment_find_status.setStyleSheet("color:#a13d32;font-weight:600")
-            self.main.statusBar().showMessage(_t("search.error.pattern", detail=error.detail), 5000)
+            self._fragment_search_error(error)
             self.fragment_find_box.setFocus()
             return
         if found:
@@ -1248,6 +1276,38 @@ class FormattedEditionWidget(QWidget):
 
     def find_fragment_next(self):
         self._find_fragment(False)
+
+    def replace_fragment_next(self):
+        query = self.fragment_find_box.text()
+        if not query:
+            self.fragment_find_box.setFocus()
+            return
+        try:
+            _replaced, (found, n, total) = replace_in_plain_editor(
+                self.fragment_editor, query, self.fragment_replace_box.text(), self.main.search_options())
+        except SearchError as error:
+            self._fragment_search_error(error)
+            return
+        self.fragment_find_status.setText(f"{n}/{total}" if found else "0/0")
+
+    def replace_fragment_all(self):
+        query = self.fragment_find_box.text()
+        if not query:
+            self.fragment_find_box.setFocus()
+            return
+        try:
+            count = replace_all_in_plain_editor(
+                self.fragment_editor, query, self.fragment_replace_box.text(), self.main.search_options())
+        except SearchError as error:
+            self._fragment_search_error(error)
+            return
+        self.fragment_find_status.setText("")
+        self.main.statusBar().showMessage(_t("replace.done", count=count), 5000)
+
+    def _fragment_search_error(self, error):
+        self.fragment_find_status.setText("!")
+        self.fragment_find_status.setStyleSheet("color:#a13d32;font-weight:600")
+        self.main.statusBar().showMessage(search_error_text(error), 5000)
 
     def find_fragment_previous(self):
         self._find_fragment(True)

@@ -210,6 +210,14 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="search.case">Groß-/Kleinschreibung beachten</string>
   <string key="search.regex">Reguläre Ausdrücke</string>
   <string key="search.error.pattern">Fehlerhafter regulärer Ausdruck: {detail}</string>
+  <string key="search.replace">Suchen und ersetzen…</string>
+  <string key="replace.find.label">Suchen:</string>
+  <string key="replace.with.label">Ersetzen durch:</string>
+  <string key="replace.one">Ersetzen</string>
+  <string key="replace.all">Alle ersetzen</string>
+  <string key="replace.close.tip">Schließen (Esc)</string>
+  <string key="replace.done">{count} Ersetzung(en)</string>
+  <string key="replace.error.template">Fehlerhafter Ersetzungstext: {detail}</string>
   <string key="menu.open_project">Projekt öffnen…</string>
   <string key="menu.save_edition">Edition speichern</string>
   <string key="menu.save_edition_as">Edition speichern unter…</string>

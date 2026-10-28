@@ -47,7 +47,7 @@ def test_the_edit_and_search_menus_follow_the_file_menu(open_window, example_pro
     assert window.action_format_xml in window.edit_menu.actions()
     assert _entries(window.search_menu) == [
         (_tr("search.find"), "Ctrl+F"), (_tr("search.previous"), "Shift+F3"), (_tr("search.next"), "F3"),
-        (_tr("search.case"), ""), (_tr("search.regex"), ""), (_tr("search.xpath"), "Ctrl+Shift+F"),
+        (_tr("search.replace"), "Ctrl+H"), (_tr("search.case"), ""), (_tr("search.regex"), ""), (_tr("search.xpath"), "Ctrl+Shift+F"),
     ]
     # La barre d'outils garde ses boutons et leurs libellés courts.
     for action, key in ((window.action_format_xml, "toolbar.format_xml"), (window.action_xpath_search, "xpath.action"),

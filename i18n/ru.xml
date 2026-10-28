@@ -210,6 +210,14 @@
   <string key="search.case">Учитывать регистр</string>
   <string key="search.regex">Регулярные выражения</string>
   <string key="search.error.pattern">Неверное регулярное выражение: {detail}</string>
+  <string key="search.replace">Найти и заменить…</string>
+  <string key="replace.find.label">Найти:</string>
+  <string key="replace.with.label">Заменить на:</string>
+  <string key="replace.one">Заменить</string>
+  <string key="replace.all">Заменить все</string>
+  <string key="replace.close.tip">Закрыть (Esc)</string>
+  <string key="replace.done">Замен: {count}</string>
+  <string key="replace.error.template">Неверный текст замены: {detail}</string>
   <string key="menu.open_project">Открыть проект…</string>
   <string key="menu.save_edition">Сохранить издание</string>
   <string key="menu.save_edition_as">Сохранить издание как…</string>

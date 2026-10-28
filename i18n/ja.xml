@@ -210,6 +210,14 @@
   <string key="search.case">大文字と小文字を区別</string>
   <string key="search.regex">正規表現</string>
   <string key="search.error.pattern">正規表現が正しくありません：{detail}</string>
+  <string key="search.replace">検索と置換…</string>
+  <string key="replace.find.label">検索：</string>
+  <string key="replace.with.label">置換後：</string>
+  <string key="replace.one">置換</string>
+  <string key="replace.all">すべて置換</string>
+  <string key="replace.close.tip">閉じる（Esc）</string>
+  <string key="replace.done">{count} 件を置換しました</string>
+  <string key="replace.error.template">置換テキストが正しくありません：{detail}</string>
   <string key="menu.open_project">プロジェクトを開く…</string>
   <string key="menu.save_edition">校訂本文を保存</string>
   <string key="menu.save_edition_as">校訂本文を別名で保存…</string>

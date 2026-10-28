@@ -196,6 +196,14 @@
   <string key="search.case">Match case</string>
   <string key="search.regex">Regular expressions</string>
   <string key="search.error.pattern">Incorrect regular expression: {detail}</string>
+  <string key="search.replace">Find and replace…</string>
+  <string key="replace.find.label">Find:</string>
+  <string key="replace.with.label">Replace with:</string>
+  <string key="replace.one">Replace</string>
+  <string key="replace.all">Replace all</string>
+  <string key="replace.close.tip">Close (Esc)</string>
+  <string key="replace.done">{count} replacement(s)</string>
+  <string key="replace.error.template">Incorrect replacement text: {detail}</string>
   <string key="menu.open_project">Open project…</string>
   <string key="menu.save_edition">Save edition</string>
   <string key="menu.save_edition_as">Save edition as…</string>

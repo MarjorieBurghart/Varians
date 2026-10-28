@@ -210,6 +210,14 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="search.case">Rozlišovat velká a malá písmena</string>
   <string key="search.regex">Regulární výrazy</string>
   <string key="search.error.pattern">Chybný regulární výraz: {detail}</string>
+  <string key="search.replace">Najít a nahradit…</string>
+  <string key="replace.find.label">Hledat:</string>
+  <string key="replace.with.label">Nahradit čím:</string>
+  <string key="replace.one">Nahradit</string>
+  <string key="replace.all">Nahradit vše</string>
+  <string key="replace.close.tip">Zavřít (Esc)</string>
+  <string key="replace.done">Počet nahrazení: {count}</string>
+  <string key="replace.error.template">Chybný text náhrady: {detail}</string>
   <string key="menu.open_project">Otevřít projekt…</string>
   <string key="menu.save_edition">Uložit edici</string>
   <string key="menu.save_edition_as">Uložit edici jako…</string>

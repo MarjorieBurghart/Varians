@@ -134,6 +134,7 @@ class MainMenusMixin:
         tb.addAction(self.action_search_case)
         tb.addAction(self.action_search_regex)
         self.formatted_view.add_fragment_find_options((self.action_search_case, self.action_search_regex))
+        self.connect_replace_bar(self.find_box, (self.action_search_case, self.action_search_regex))
         tb.addAction(self.action_search)
         tb.addAction(self.action_find_prev)
         tb.addAction(self.action_find_next)
@@ -273,12 +274,16 @@ class MainMenusMixin:
             _t("search.xpath"), "Ctrl+Shift+F", self.focus_xpath_search
         )
         self.action_xpath_search.setIconText(_t("xpath.action"))
+        # Ctrl+H : barre de remplacement du XML ou du fragment (replace_bar).
+        self.action_replace = self._make_action(_t("search.replace"), "Ctrl+H", self.show_replace)
+        self.addAction(self.action_replace)
         # Options communes au XML et au fragment, retenues d'une session à l'autre.
         self.action_search_case = self._search_option_action("search.case", "Aa", "search/caseSensitive")
         self.action_search_regex = self._search_option_action("search.regex", ".*", "search/regex")
         menu.addAction(self.action_search)
         menu.addAction(self.action_find_prev)
         menu.addAction(self.action_find_next)
+        menu.addAction(self.action_replace)
         menu.addSeparator()
         menu.addAction(self.action_search_case)
         menu.addAction(self.action_search_regex)
@@ -554,6 +559,8 @@ class MainMenusMixin:
         for action, key in ((self.action_search_case, "search.case"), (self.action_search_regex, "search.regex")):
             action.setText(_t(key))
             action.setToolTip(_t(key))
+        self.action_replace.setText(_t("search.replace"))
+        self._retranslate_replace_bar()
         self._retranslate_references()
         self.source_visual_wrap.setText(_t("source.visual_wrap"))
         self.xpath_title.setText(_t("xpath.panel.title"))

@@ -196,6 +196,14 @@
   <string key="search.case">Respecter la casse</string>
   <string key="search.regex">Expressions régulières</string>
   <string key="search.error.pattern">Expression régulière incorrecte : {detail}</string>
+  <string key="search.replace">Chercher et remplacer…</string>
+  <string key="replace.find.label">Rechercher :</string>
+  <string key="replace.with.label">Remplacer par :</string>
+  <string key="replace.one">Remplacer</string>
+  <string key="replace.all">Tout remplacer</string>
+  <string key="replace.close.tip">Fermer (Échap)</string>
+  <string key="replace.done">{count} remplacement(s)</string>
+  <string key="replace.error.template">Texte de remplacement incorrect : {detail}</string>
   <string key="menu.open_project">Ouvrir un projet…</string>
   <string key="menu.save_edition">Enregistrer l’édition</string>
   <string key="menu.save_edition_as">Enregistrer l’édition sous…</string>

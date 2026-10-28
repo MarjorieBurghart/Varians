@@ -777,13 +777,14 @@ class CodeEditor(QPlainTextEdit):
         self.highlightCurrentLine()
 
 
-def _search_query(query, options):
+def _search_query(query, options, exact=False):
     """La recherche littérale ignore les blancs du début et de la fin, comme
-    avant la 0.9.2.8 ; une expression régulière est prise telle quelle."""
-    return (query or "") if options.regex else (query or "").strip()
+    avant la 0.9.2.8 ; une expression régulière, et le texte cherché pour un
+    remplacement (*exact*), sont pris tels quels."""
+    return (query or "") if options.regex or exact else (query or "").strip()
 
 
-def find_in_plain_editor(editor, query, backwards=False, options=None):
+def find_in_plain_editor(editor, query, backwards=False, options=None, exact=False):
     """Recherche robuste dans un QPlainTextEdit (V0.9.2.8 : *options*,
     ``text_search.SearchOptions``, casse respectée ou non, expression
     régulière ; par défaut, recherche littérale insensible à la casse).
@@ -791,10 +792,11 @@ def find_in_plain_editor(editor, query, backwards=False, options=None):
     La recherche avance à partir du résultat précédent et boucle en début/fin.
     Le résultat est mis en évidence sans devenir une sélection éditable.
     Retourne (trouve, numero_occurrence, total_occurrences) ; une expression
-    incorrecte lève ``text_search.SearchError``.
+    incorrecte lève ``text_search.SearchError``. Avec *exact*, le texte
+    cherché garde ses blancs du début et de la fin (remplacement).
     """
     options = options or SearchOptions()
-    query = _search_query(query, options)
+    query = _search_query(query, options, exact)
     if not query:
         return False, 0, 0
 
@@ -861,7 +863,7 @@ def replace_in_plain_editor(editor, query, template, options=None):
     valable, cherche seulement. Retourne (remplacée, résultat de
     ``find_in_plain_editor``)."""
     options = options or SearchOptions()
-    query = _search_query(query, options)
+    query = _search_query(query, options, exact=True)
     replaced = False
     current = editor._search_match
     if query and current is not None:
@@ -877,14 +879,14 @@ def replace_in_plain_editor(editor, query, template, options=None):
             editor.setTextCursor(after)
             editor.clearSearchMatch()
             replaced = True
-    return replaced, find_in_plain_editor(editor, query, options=options)
+    return replaced, find_in_plain_editor(editor, query, options=options, exact=True)
 
 
 def replace_all_in_plain_editor(editor, query, template, options=None):
     """Remplace toutes les occurrences de *query* par *template*, en une
     seule étape d'annulation ; retourne leur nombre."""
     options = options or SearchOptions()
-    query = _search_query(query, options)
+    query = _search_query(query, options, exact=True)
     text = editor.toPlainText()
     found = replacements(text, query, template, options)
     if not found:
