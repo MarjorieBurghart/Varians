@@ -1,3 +1,34 @@
+VARIANS V0.9.2.7 — DOCX, ODT, EPUB, HTML EN PLUSIEURS FICHIERS, ÉDITION CRITIQUE
+
+• Scénarios prédéfinis : les scénarios des TEI Stylesheets sont réunis
+  dans un sous-groupe dépliable « TEI Stylesheets », replié au départ
+  (sous-menu du bouton Transformer).
+• Quatre formats de plus, avec les TEI Stylesheets : « TEI : HTML en
+  plusieurs fichiers » (publications/tei/pages/index.html et une page par
+  division et sous-division, splitLevel=1), « TEI : DOCX (Word) », « TEI :
+  ODT (LibreOffice) » et « TEI : EPUB » (publications/tei/edition.docx,
+  .odt, .epub). Varians fait l'archive (modèle du TEI-C, images locales
+  avec leurs dimensions ; l'EPUB lit ses CSS dans la bibliothèque).
+• DOCX et ODT : un pré-passage (rendering/apparat-en-notes.xsl) met
+  l'apparat en notes de bas de page, d'après le témoin pivot :
+  « leçon ] variante sigles », om., add., lacuna incipit, lacuna desinit ;
+  les notes de l'éditeur sans @place deviennent des notes de fin ; seuls
+  les folios du pivot restent (⟨12r⟩) ; les sauts de ligne des témoins se
+  fondent dans le texte.
+• Nouveau scénario prédéfini « Édition critique (HTML) »
+  (rendering/edition-critique.xsl, Saxon, publications/edition-critique.html),
+  d'après la feuille du kit d'édition critique, retouchée : témoin pivot
+  par défaut (temoin-de-base=${pivot}), titres tirés du seul @n, folios du
+  témoin choisi, lacunes nommées, apparat (lettres) et notes (chiffres) en
+  deux séries, leçons des rdgGrp, une coupure par groupe de <lb>.
+• Scénarios : « Format du résultat » (pages, docx, odt, epub) et
+  « Pré-passage TEI → TEI » dans la boîte d'un scénario, écrits dans
+  project.xml (attributs package et prepare) ; avec Saxon, les paramètres
+  sont passés sans type (« false » pour un xs:boolean) ; ${pivot} et
+  ${tei}/ dans leurs valeurs. Une feuille de Varians copiée dans le projet
+  emporte les feuilles qu'elle inclut.
+• Voir XSLT_SCENARIOS.md et l'aide (Édition critique, TEI Stylesheets).
+
 VARIANS V0.9.2.6 — RÈGLES SCHEMATRON : FICHIERS INCLUS NON ENREGISTRÉS
 
 • Fichiers inclus : un fichier inclus par un fichier de règles
