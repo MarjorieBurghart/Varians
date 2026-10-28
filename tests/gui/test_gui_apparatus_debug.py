@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
-from apparatus_xpath import incomplete_app_xpath, repeated_witness_xpath, witness_xpath
+from apparatus_xpath import app_without_lem_xpath, incomplete_app_xpath, repeated_witness_xpath, witness_xpath
 from app_context import tr
 from project_config import XPathQuery, load_project
 from project_management import update_project_xpath_queries
@@ -80,6 +80,32 @@ def test_incomplete_check_lists_the_apps_and_a_click_selects_one(open_window, ex
     assert window.editor.textCursor().selectedText().startswith("<app>")
 
 
+def test_apps_without_lem_come_third(open_window, example_project, dialogs):
+    """V0.9.2.8.1 : « <app> qui n'a pas de <lem> », troisième recherche."""
+    window = open_window(example_project)
+    seen = {}
+
+    def setup(dialog):
+        items = [dialog.layout().itemAt(index) for index in range(dialog.layout().count())]
+
+        def place(widget):
+            return next(index for index, item in enumerate(items) if item.widget() is widget
+                        or (item.layout() is not None and item.layout().indexOf(widget) >= 0))
+
+        seen.update(order=[place(radio) for radio in (dialog.repeated_radio, dialog.incomplete_radio,
+                                                      dialog.no_lem_radio, dialog.witness_radio,
+                                                      dialog.query_radio)],
+                    label=dialog.no_lem_radio.text())
+        dialog.no_lem_radio.setChecked(True)
+
+    dialogs.expect("dialog", _choose(setup))
+    assert window.debug_apparatus()
+    assert seen["order"] == sorted(set(seen["order"]))           # dans cet ordre, chacun à sa place
+    assert seen["label"] == tr("apparatus.check.no_lem")
+    assert window.xpath_query.text() == app_without_lem_xpath()
+    assert window.xpath_panel.isVisible()
+
+
 def test_a_witness_in_lacuna_is_not_expected_in_its_apps(open_window, example_project, dialogs):
     """V0.9.1.3 : P, en lacune dans le sermon RLS_184, n'y est plus attendu ;
     les <app> de ce sermon ne sont plus incomplets."""
@@ -143,14 +169,16 @@ def test_checks_are_unavailable_without_a_list_wit(open_window, project_with_doc
         seen.update(label=dialog.witnesses_label.text(),
                     checks=[dialog.repeated_radio.isEnabled(), dialog.incomplete_radio.isEnabled(),
                             dialog.witness_radio.isEnabled()],
-                    queries=dialog.query_radio.isEnabled(), search=dialog.search_btn.isEnabled())
+                    queries=dialog.query_radio.isEnabled(), search=dialog.search_btn.isEnabled(),
+                    # <app> sans <lem> ne dépend pas des témoins (V0.9.2.8.1).
+                    no_lem=dialog.no_lem_radio.isEnabled())
         dialog.reject()
         return dialog.result()
 
     dialogs.expect("dialog", look)
     window.debug_apparatus()
     assert seen == {"label": tr("apparatus.no_witness"), "checks": [False, False, False],
-                    "queries": True, "search": False}
+                    "queries": True, "search": False, "no_lem": True}
 
 
 def test_a_saved_query_is_written_to_the_project_and_found_after_reopening(

@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">XML search: no match — {query}</string>
   <string key="status.ctrl_e.config">Ctrl+E configuration: {path}</string>
   <string key="manuscript.home.tip">Return to the correspondence for the XML passage</string>
+  <string key="manuscript.lead.tip">Lead the edition: when pressed, the arrows and the folio list of this manuscript also move the cursor in the edition; when released, they only browse the manuscript.</string>
   <string key="manuscript.no_direct">no direct correspondence</string>
   <string key="manuscript.no_match">No correspondence proposed for this pivot-witness line.</string>
   <string key="manuscript.no_line">no line</string>
@@ -842,6 +843,7 @@ The file is not deleted: it stays on disk.</string>
   <string key="apparatus.no_witness">No witness (&lt;witness xml:id&gt;) in a &lt;listWit&gt; of the displayed document, or malformed XML: only your queries are available.</string>
   <string key="apparatus.check.repeated">&lt;app&gt; where a witness is cited more than once (ambiguous reading)</string>
   <string key="apparatus.check.incomplete">Incomplete &lt;app&gt; (a witness has no reading)</string>
+  <string key="apparatus.check.no_lem">&lt;app&gt; without a &lt;lem&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt; where the witness</string>
   <string key="apparatus.present">appears</string>
   <string key="apparatus.absent">does not appear</string>

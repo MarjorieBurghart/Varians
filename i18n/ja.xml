@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">XML検索：該当なし — {query}</string>
   <string key="status.ctrl_e.config">Ctrl+E 設定：{path}</string>
   <string key="manuscript.home.tip">XMLの現在箇所に対応する位置へ戻る</string>
+  <string key="manuscript.lead.tip">エディションを導く：押した状態では、この写本の矢印とフォリオの選択でエディションのカーソルも移動します。戻すと、写本をめくるだけになります。</string>
   <string key="manuscript.no_direct">直接の対応なし</string>
   <string key="manuscript.no_match">このピボット伝本行に対応する行は提案されていません。</string>
   <string key="manuscript.no_line">行なし</string>
@@ -856,6 +857,7 @@
   <string key="apparatus.no_witness">表示中の文書の &lt;listWit&gt; に伝本（&lt;witness xml:id&gt;）がないか、XML が整形式ではありません。使えるのは保存済みのクエリだけです。</string>
   <string key="apparatus.check.repeated">同じ伝本が複数回挙げられている &lt;app&gt;（読みが曖昧）</string>
   <string key="apparatus.check.incomplete">不完全な &lt;app&gt;（読みのない伝本がある）</string>
+  <string key="apparatus.check.no_lem">&lt;lem&gt; のない &lt;app&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt; で伝本</string>
   <string key="apparatus.present">が現れる</string>
   <string key="apparatus.absent">が現れない</string>

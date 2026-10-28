@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">Поиск в XML: совпадений нет — {query}</string>
   <string key="status.ctrl_e.config">Настройка Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Вернуться к соответствию для текущего фрагмента XML</string>
+  <string key="manuscript.lead.tip">Вести издание: когда кнопка нажата, стрелки и выбор листа этой рукописи перемещают и курсор в издании; когда отпущена, они только листают рукопись.</string>
   <string key="manuscript.no_direct">нет прямого соответствия</string>
   <string key="manuscript.no_match">Для этой строки опорного свидетеля соответствие не предложено.</string>
   <string key="manuscript.no_line">нет строки</string>
@@ -856,6 +857,7 @@
   <string key="apparatus.no_witness">В &lt;listWit&gt; отображаемого документа нет свидетелей (&lt;witness xml:id&gt;) или XML не является корректным: доступны только ваши запросы.</string>
   <string key="apparatus.check.repeated">&lt;app&gt;, где свидетель указан несколько раз (неоднозначное чтение)</string>
   <string key="apparatus.check.incomplete">Неполные &lt;app&gt; (у свидетеля нет чтения)</string>
+  <string key="apparatus.check.no_lem">&lt;app&gt; без &lt;lem&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt;, где свидетель</string>
   <string key="apparatus.present">встречается</string>
   <string key="apparatus.absent">не встречается</string>

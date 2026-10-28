@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">Ricerca XML: nessuna occorrenza — {query}</string>
   <string key="status.ctrl_e.config">Configurazione Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Torna alla corrispondenza del passo XML</string>
+  <string key="manuscript.lead.tip">Guidare l’edizione: se premuto, le frecce e la scelta del foglio di questo manoscritto spostano anche il cursore nell’edizione; se rilasciato, sfogliano soltanto il manoscritto.</string>
   <string key="manuscript.no_direct">nessuna corrispondenza diretta</string>
   <string key="manuscript.no_match">Nessuna corrispondenza proposta per questa riga del testimone pivot.</string>
   <string key="manuscript.no_line">nessuna riga</string>
@@ -856,6 +857,7 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="apparatus.no_witness">Nessun testimone (&lt;witness xml:id&gt;) in un &lt;listWit&gt; del documento visualizzato, oppure XML non ben formato: sono disponibili solo le vostre query.</string>
   <string key="apparatus.check.repeated">&lt;app&gt; in cui un testimone è citato più volte (lezione ambigua)</string>
   <string key="apparatus.check.incomplete">&lt;app&gt; incompleti (un testimone non vi ha lezione)</string>
+  <string key="apparatus.check.no_lem">&lt;app&gt; senza &lt;lem&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt; in cui il testimone</string>
   <string key="apparatus.present">compare</string>
   <string key="apparatus.absent">non compare</string>

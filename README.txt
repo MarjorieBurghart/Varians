@@ -1,3 +1,24 @@
+VARIANS V0.9.2.8.1 — MENER L'ÉDITION OU FEUILLETER, DÉBUGGER L'APPARAT, CTRL+E
+
+• Viewers des manuscrits : un bouton au livre ouvert, juste après ← → ⤺,
+  décide si les flèches et le choix du folio de ce manuscrit mènent
+  l'édition. Enfoncé (fond bleu-gris), ils déplacent aussi le curseur dans
+  l'édition ; relâché, ils ne font que feuilleter le manuscrit. Par
+  défaut, seul le bouton du témoin pivot est enfoncé : les flèches des
+  autres témoins ne mènent plus l'édition (elles la menaient depuis la
+  0.9.1.4). Le viewer suit toujours l'édition quand le curseur y bouge.
+  L'état est retenu pour chaque manuscrit du projet (réglage local,
+  project.xml inchangé).
+• Aide ▸ Débugger l'apparat : troisième recherche, les <app> qui n'ont
+  pas de <lem> (un <lem> dans un <rdgGrp> compte) ; elle reste
+  disponible sans <listWit>.
+• Ctrl+E : dans la liste, une entrée n'est surlignée que si on la choisit
+  (clic, flèches, ou Tab / ↓ depuis le champ, qui sélectionnent la
+  première). Entrée insère l'entrée surlignée, sinon le texte saisi ;
+  retaper dans le champ efface le choix. Auparavant, le texte saisi
+  l'emportait même quand une entrée était surlignée. Ctrl+Espace ne
+  change pas.
+
 VARIANS V0.9.2.8 — MENUS ÉDITER ET RECHERCHER, CHERCHER ET REMPLACER
 
 • Deux menus après « Fichier » : « Éditer » (Annuler Ctrl+Z, Refaire

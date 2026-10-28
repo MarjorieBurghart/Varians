@@ -744,3 +744,45 @@ def test_each_help_explains_the_menu_of_all_tabs():
         assert "<strong>▾</strong>" in documents and catalog["documents.tabs.menu"] in documents, language
         version = _help_section(page, "v0928")
         assert "<strong>▾</strong>" in version and 'href="#auxiliary-documents"' in version, language
+
+
+def test_each_help_explains_the_choice_in_the_ctrl_e_list():
+    """V0.9.2.8.1 : l'entrée surlignée est insérée, sinon le texte saisi."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        start = page.index("<kbd>Ctrl+E</kbd>")
+        paragraph = page[start:page.index("</p>", start)]
+        assert "<kbd>Tab</kbd>" in paragraph and "<kbd>↓</kbd>" in paragraph, language
+
+
+def test_each_help_explains_the_apps_without_lem():
+    """V0.9.2.8.1 : troisième recherche de « Débugger l'apparat »."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "apparatus-debug")
+        assert section.split("<li")[3].startswith(' id="app-without-lem">'), language
+        item = section[section.index('<li id="app-without-lem">'):]
+        item = item[:item.index("</li>")]
+        for text in ("<code>&lt;app&gt;</code>", "<code>&lt;lem&gt;</code>", "&lt;rdgGrp&gt;", "&lt;listWit&gt;"):
+            assert text in item, (language, text)
+
+
+def test_each_help_explains_the_lead_button():
+    """V0.9.2.8.1 : le bouton au livre des panneaux de témoins ; enfoncé,
+    les flèches mènent l'édition (par défaut, celles du pivot)."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "witness-route")
+        paragraph = section[section.index('<p id="lead-witness">'):]
+        paragraph = paragraph[:paragraph.index("</p>")]
+        assert "⤺" in paragraph and "<code>project.xml</code>" in paragraph, language
+        assert "browse-witness" not in page, language
+
+
+def test_each_help_announces_version_09281():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = _help_section(page, "v09281")
+        for text in ('href="#lead-witness"', 'href="#app-without-lem"', "<kbd>Ctrl+E</kbd>"):
+            assert text in version, (language, text)
+        assert page.index('<section id="v0928">') < page.index('<section id="v09281">'), language

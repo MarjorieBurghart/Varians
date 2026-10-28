@@ -192,6 +192,25 @@ class WitnessWorkspaceMixin:
             saved = []
         return normalized_witness_order([w.id for w in self.witness_configs], saved)
 
+    def _load_leading_witnesses(self):
+        """Bouton au livre de chaque témoin (V0.9.2.8.1) : ses flèches
+        mènent-elles l'édition ? Réglage local du projet ; un témoin absent
+        prend l'état par défaut (enfoncé pour le pivot seul)."""
+        raw = _settings().value(self._view_settings_key("witnessLeadsEdition"), "")
+        try:
+            saved = json.loads(raw) if isinstance(raw, str) and raw else raw
+        except (TypeError, ValueError):
+            saved = {}
+        if not isinstance(saved, dict):
+            return {}
+        return {str(witness): bool(leads) for witness, leads in saved.items()}
+
+    def _witness_lead_changed(self, _witness, _leads):
+        _settings().setValue(
+            self._view_settings_key("witnessLeadsEdition"),
+            json.dumps({witness: panel.leads_edition for witness, panel in self.panels.items()}, ensure_ascii=False),
+        )
+
     def _save_witness_display_order(self):
         _settings().setValue(
             self._view_settings_key("witnessOrder"),

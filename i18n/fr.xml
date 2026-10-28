@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">Recherche XML : aucune occurrence — {query}</string>
   <string key="status.ctrl_e.config">Configuration Ctrl+E : {path}</string>
   <string key="manuscript.home.tip">Revenir à la correspondance du passage XML</string>
+  <string key="manuscript.lead.tip">Mener l’édition : enfoncé, les flèches et le choix du folio de ce manuscrit déplacent aussi le curseur dans l’édition ; relâché, ils ne font que feuilleter le manuscrit.</string>
   <string key="manuscript.no_direct">pas de correspondance directe</string>
   <string key="manuscript.no_match">Aucune correspondance proposée pour cette ligne du témoin pivot.</string>
   <string key="manuscript.no_line">aucune ligne</string>
@@ -842,6 +843,7 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="apparatus.no_witness">Aucun témoin (&lt;witness xml:id&gt;) dans un &lt;listWit&gt; du document affiché, ou XML mal formé : seules vos requêtes sont disponibles.</string>
   <string key="apparatus.check.repeated">&lt;app&gt; où un témoin est cité plusieurs fois (leçon ambiguë)</string>
   <string key="apparatus.check.incomplete">&lt;app&gt; incomplets (un témoin n’y a pas de leçon)</string>
+  <string key="apparatus.check.no_lem">&lt;app&gt; qui n’a pas de &lt;lem&gt;</string>
   <string key="apparatus.check.witness">&lt;app&gt; où le témoin</string>
   <string key="apparatus.present">apparaît</string>
   <string key="apparatus.absent">n’apparaît pas</string>

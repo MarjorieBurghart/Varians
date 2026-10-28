@@ -1,0 +1,19 @@
+<!-- Varians : bouton « feuilleter » des viewers de manuscrits (V0.9.2.8.1).
+     Livre ouvert dont une page tourne ; enfoncé, les flèches parcourent le
+     manuscrit sans mener l'édition. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="226 70 1082 872" fill="none" stroke="#2f2a25" stroke-width="52" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M 327 335 H 290 Q 262 335 262 363 V 837 Q 262 865 290 865 H 692 Q 716 865 728 886 Q 740 906 764 906 H 772 Q 796 906 808 886 Q 820 865 844 865 H 1244 Q 1272 865 1272 837 V 363 Q 1272 335 1244 335 H 1210"/>
+  <path d="M 768 845 C 740 805 690 790 615 790 H 345 Q 327 790 327 772 V 281 Q 327 263 345 263 H 615 C 700 263 768 290 768 350 Z"/>
+  <path d="M 1080 263 H 1192 Q 1210 263 1210 281 V 772 Q 1210 790 1192 790 H 925 C 860 790 805 805 768 845"/>
+  <path d="M 768 350 C 768 300 820 240 900 195 C 960 162 1020 132 1065 107 V 545 C 1065 600 1030 640 960 675 C 870 720 800 760 768 845"/>
+  <path d="M 405 382 H 685"/>
+  <path d="M 405 474 H 685"/>
+  <path d="M 405 566 H 685"/>
+  <path d="M 405 658 H 685"/>
+  <path d="M 828 380 C 870 330 920 305 990 292"/>
+  <path d="M 828 473 C 870 423 920 398 990 385"/>
+  <path d="M 828 566 C 870 516 920 491 990 478"/>
+  <path d="M 1080 382 H 1130"/>
+  <path d="M 1080 474 H 1130"/>
+  <path d="M 1080 566 H 1130"/>
+</svg>
