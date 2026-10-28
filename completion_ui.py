@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import (
     QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox, QVBoxLayout,
@@ -21,11 +21,18 @@ from xslt_completion import StylesheetCompletionModel
 
 
 class CompletionDialog(QDialog):
-    """Petit sélecteur filtrable pour Ctrl+Espace.
+    """Petit sélecteur filtrable pour Ctrl+Espace et Ctrl+E.
 
     Le dialogue est volontairement générique : le calcul du contexte et les
     modifications XML restent dans MainWindow, ce qui facilite les tests du
     moteur RELAX NG sans Qt.
+
+    Ctrl+Espace n'insère qu'une valeur de la liste : la première est
+    présélectionnée. Ctrl+E (``allow_custom``, V0.9.2.8.1) accepte aussi un
+    texte libre : rien n'est sélectionné (surligné) tant que l'on ne choisit
+    pas une entrée (clic, Tab ou ↓ depuis le champ, flèches) ; Entrée
+    insère l'entrée sélectionnée, sinon le texte saisi, et retaper dans le
+    champ efface la sélection.
     """
 
     def __init__(self, title, label, items, prefix="", parent=None, allow_custom=False):
@@ -76,6 +83,8 @@ class CompletionDialog(QDialog):
         self.filter_box.returnPressed.connect(self._accept_current)
         self.list_widget.itemActivated.connect(lambda _item: self._accept_current())
         self.list_widget.itemDoubleClicked.connect(lambda _item: self._accept_current())
+        if self._allow_custom:
+            self.filter_box.installEventFilter(self)
         self.filter_box.setText(prefix or "")
         self._refilter(prefix or "")
         self.filter_box.setFocus()
@@ -96,26 +105,37 @@ class CompletionDialog(QDialog):
             item = QListWidgetItem(display)
             item.setData(Qt.ItemDataRole.UserRole, value)
             self.list_widget.addItem(item)
-        if self.list_widget.count():
+        # Ctrl+E : pas de présélection, la liste vient d'être refaite.
+        if self.list_widget.count() and not self._allow_custom:
             self.list_widget.setCurrentRow(0)
+
+    def eventFilter(self, watched, event):
+        """Ctrl+E : ↓ ou Tab dans le champ passe à la liste et sélectionne sa
+        première entrée (sauf si une entrée l'est déjà)."""
+        if (watched is self.filter_box and event.type() == QEvent.Type.KeyPress
+                and event.key() in (Qt.Key.Key_Down, Qt.Key.Key_Tab, Qt.Key.Key_Backtab)
+                and self.list_widget.count()):
+            self.list_widget.setFocus(Qt.FocusReason.TabFocusReason)
+            if not self.list_widget.selectedItems():
+                self.list_widget.setCurrentRow(0)
+            return True
+        return super().eventFilter(watched, event)
 
     def _accept_current(self):
         typed = self.filter_box.text().strip()
-        raw_values = {value for value, _display in self._all_items}
-        if self._allow_custom and typed and typed not in raw_values:
-            # En mode Ctrl+E, le champ reste réellement éditable : une saisie
-            # manuelle ne doit pas être remplacée par le premier résultat dont
-            # elle n'est qu'un préfixe.
-            self._selected = typed
-            self.accept()
+        if self._allow_custom:
+            # Ctrl+E : l'entrée sélectionnée (surlignée), sinon le texte saisi.
+            chosen = self.list_widget.selectedItems()
+            if chosen:
+                self._selected = chosen[0].data(Qt.ItemDataRole.UserRole) or chosen[0].text()
+                self.accept()
+            elif typed:
+                self._selected = typed
+                self.accept()
             return
         item = self.list_widget.currentItem()
         if item is not None:
             self._selected = item.data(Qt.ItemDataRole.UserRole) or item.text()
-            self.accept()
-            return
-        if self._allow_custom and typed:
-            self._selected = typed
             self.accept()
 
 
