@@ -276,3 +276,15 @@ Fonctionnement : `RELAXNG_VALIDATION.md` (« V0.9.2.6 »).
 - `schematron_check_ui.py` : `_schematron_inclusions` (textes et jeton de la vérification).
 - `schematron_rules_dialog._declared_phases` : phases des fichiers inclus non enregistrés.
 - `code_editor.CodeEditor.set_text_document` : défilement remis en haut avant `setDocument` (correction : la position d'un long document défilé, appliquée un instant à un document court, faisait osciller les barres de défilement sans fin).
+
+## V0.9.2.7 — DOCX, ODT, EPUB, HTML en plusieurs fichiers, édition critique
+
+Fonctionnement : `XSLT_SCENARIOS.md` (« V0.9.2.7 »).
+
+- `project_config.TransformScenario` : `package`, `prepare` ; `project_management.transformations_element` les écrit.
+- `xslt_scenarios.py` : `PIVOT`, `substitute` (`${pivot}`, `${tei}/`), `TEI_SCENARIOS` (8), scénario `edition-critique`, problèmes `package_invalid` et `prepare_invalid`, requête (`package`, `package_template`, `package_fixstyle`, `prepare`), `included_stylesheets`, `_html_output` (EPUB 3).
+- `xslt_packages.py` (sans Qt, nouveau) : `PACKAGES`, `FOLDER_PARAMS`, `DEFAULT_PARAMS`, `prepare`, `copy_images`, `image_size`, `finish`, `PackageError`.
+- `xslt_engines._run_saxon` : paramètres sans type, dossier de travail, pré-passage, deux passes selon le format ; journal `image_skipped`.
+- `transform_ui.py` : sous-groupe `tei_group` (clé `(groupe, rang)` en `UserRole`, `item_for`), sous-menu TEI du bouton Transformer, champs « Format du résultat » et « Pré-passage » de la boîte d'un scénario, copie des feuilles incluses.
+- `rendering/apparat-commun.xsl`, `rendering/apparat-en-notes.xsl`, `rendering/edition-critique.xsl` (nouveaux).
+- `xslt_scenarios.witness_choices`, `WITNESS_PARAM`, `NO_WITNESS` ; `transform_ui.ScenarioDialog._update_value_widget` : liste du paramètre `temoin-de-base`.

@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
     QHeaderView, QLineEdit, QMenu, QMessageBox, QProgressDialog, QPushButton, QRadioButton, QTableWidget,
     QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
+import xslt_packages
 from app_context import _settings, current_i18n, tr as _t
 from document_dialogs import free_path
 from project_config import DocumentConfig, TransformScenario
@@ -38,9 +39,10 @@ from tei_stylesheets_ui import TeiStylesheetsDialog
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
-from xslt_scenarios import (TEI_PREFIX, VARIANS_PREFIX, customization_name, customization_text, predefined_scenarios,
-                            project_sources, resolve_path, saxon_available, scenario_path, scenario_problems,
-                            scenario_request, scenario_source, stylesheet_path)
+from xslt_scenarios import (NO_WITNESS, PIVOT, TEI_PREFIX, VARIANS_PREFIX, WITNESS_PARAM, customization_name,
+                            customization_text, included_stylesheets, predefined_scenarios, project_sources,
+                            resolve_path, saxon_available, scenario_path, scenario_problems, scenario_request,
+                            scenario_source, stylesheet_path, witness_choices)
 
 # Problèmes qui empêchent d'enregistrer un scénario ; les autres (fichier
 # absent, Saxon non installé…) sont signalés, et l'enregistrement reste possible.
@@ -63,6 +65,12 @@ def source_label(scenario):
     if scenario.source in ("edition", "current"):
         return _t(f"transform.source.{scenario.source}")
     return scenario.source
+
+
+def is_tei_scenario(scenario) -> bool:
+    """Vrai pour un scénario des TEI Stylesheets (feuille ``${tei}/…``),
+    rangé dans le sous-groupe « TEI Stylesheets » (V0.9.2.7)."""
+    return scenario.xslt.startswith(TEI_PREFIX)
 
 
 def predefined():
@@ -149,13 +157,24 @@ class ScenarioDialog(QDialog):
             self.engine_combo.addItem(scenario.engine, scenario.engine)
         self.engine_combo.setCurrentIndex(self.engine_combo.findData(scenario.engine))
         form.addRow(_t("transform.scenario.engine"), self.engine_combo)
+        # Format du résultat (V0.9.2.7, ``xslt_packages``) ; un format inconnu est gardé.
+        self.package_combo = QComboBox(self)
+        for package in ("none",) + xslt_packages.PACKAGES:
+            self.package_combo.addItem(_t(f"transform.package.{package}"), "" if package == "none" else package)
+        if self.package_combo.findData(scenario.package) < 0:
+            self.package_combo.addItem(scenario.package, scenario.package)
+        self.package_combo.setCurrentIndex(self.package_combo.findData(scenario.package))
+        form.addRow(_t("transform.scenario.package"), self.package_combo)
 
         self.xslt_field = _PathField(project, scenario.xslt, _t("transform.browse.xslt"),
                                      file_filter="XSLT (*.xsl *.xslt);;*", parent=self)
+        self.prepare_field = _PathField(project, scenario.prepare, _t("transform.browse.prepare"),
+                                        file_filter="XSLT (*.xsl *.xslt);;*", parent=self)
         self.css_field = _PathField(project, scenario.css, _t("transform.browse.css"),
                                     file_filter="CSS (*.css);;*", parent=self)
         self.output_field = _PathField(project, scenario.output, _t("transform.browse.output"), save=True, parent=self)
         form.addRow(_t("transform.scenario.xslt"), self.xslt_field)
+        form.addRow(_t("transform.scenario.prepare"), self.prepare_field)
         form.addRow(_t("transform.scenario.css"), self.css_field)
         form.addRow(_t("transform.scenario.output"), self.output_field)
         # Un nouveau scénario propose publications/<nom>.html, tant que le
@@ -167,8 +186,10 @@ class ScenarioDialog(QDialog):
         self.params_table.setHorizontalHeaderLabels([_t("transform.param.name"), _t("transform.param.value")])
         self.params_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.params_table.verticalHeader().setVisible(False)
+        self._witnesses = None
         for name, value in scenario.params:
             self.add_param_row(name, value)
+        self.params_table.itemChanged.connect(self._param_changed)
         param_buttons = QHBoxLayout()
         self.add_param_btn = QPushButton(_t("transform.param.add"), self)
         self.remove_param_btn = QPushButton(_t("transform.param.remove"), self)
@@ -234,7 +255,50 @@ class ScenarioDialog(QDialog):
         self.params_table.insertRow(row)
         self.params_table.setItem(row, 0, QTableWidgetItem(name))
         self.params_table.setItem(row, 1, QTableWidgetItem(value))
+        self._update_value_widget(row)
         self.params_table.setCurrentCell(row, 0)
+
+    def _param_changed(self, item):
+        if item.column() == 0:
+            self._update_value_widget(item.row())
+
+    def _update_value_widget(self, row):
+        """La valeur de ``temoin-de-base`` se choisit dans une liste (V0.9.2.7) :
+        le témoin pivot en tête (enregistré ``${pivot}``), les autres témoins,
+        « aucun » ; sans valeur, le pivot ; une autre valeur est gardée telle
+        quelle. Le menu garde la valeur : la cellule, dessous, reste vide (son
+        texte se voyait à travers le menu sous Windows)."""
+        name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
+        if name_item is None or value_item is None:
+            return
+        combo = self.params_table.cellWidget(row, 1)
+        if name_item.text().strip() != WITNESS_PARAM:
+            if combo is not None:
+                value_item.setText(combo.currentData())
+                value_item.setFlags(value_item.flags() | Qt.ItemFlag.ItemIsEditable)
+                self.params_table.removeCellWidget(row, 1)
+            return
+        if combo is not None:
+            return
+        if self._witnesses is None:
+            self._witnesses = witness_choices(self._project)
+        pivot = self._project.base_witness
+        combo = QComboBox(self.params_table)
+        for witness in self._witnesses:
+            if witness == pivot:
+                combo.addItem(_t("transform.param.pivot", witness=witness), PIVOT)
+            else:
+                combo.addItem(witness, witness)
+        combo.addItem(_t("transform.param.no_witness"), NO_WITNESS)
+        value = value_item.text().strip()
+        if pivot and value in ("", pivot):                    # sans valeur : le pivot
+            value = PIVOT
+        if combo.findData(value) < 0:                         # valeur inconnue : gardée
+            combo.addItem(value, value)
+        combo.setCurrentIndex(combo.findData(value))
+        value_item.setText("")
+        value_item.setFlags(value_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.params_table.setCellWidget(row, 1, combo)
 
     def remove_param_row(self, row):
         if 0 <= row < self.params_table.rowCount():
@@ -247,15 +311,17 @@ class ScenarioDialog(QDialog):
         for row in range(self.params_table.rowCount()):
             name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
             name = (name_item.text() if name_item else "").strip()
+            combo = self.params_table.cellWidget(row, 1)
             if name and name not in params:
-                params[name] = value_item.text() if value_item else ""
+                params[name] = combo.currentData() if combo is not None else (value_item.text() if value_item else "")
         return tuple(params.items())
 
     def scenario(self):
         source = self.source()
         return TransformScenario(self.name_edit.text().strip(), self.xslt_field.text(), self.output_field.text(),
                                  source=source, file=self.file_field.text() if source == "file" else "",
-                                 engine=self.engine(), css=self.css_field.text(), params=self.params())
+                                 engine=self.engine(), css=self.css_field.text(), params=self.params(),
+                                 package=self.package_combo.currentData(), prepare=self.prepare_field.text())
 
     def accept(self):
         scenario = self.scenario()
@@ -304,6 +370,9 @@ class ScenarioListDialog(QDialog):
         self.tree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tree.currentItemChanged.connect(self._update_buttons)
         self.tree.itemDoubleClicked.connect(lambda _item, _column: self.edit_scenario())
+        # Les colonnes ne mesurent que les lignes visibles : un sous-groupe
+        # déplié les fait mesurer de nouveau.
+        self.tree.itemExpanded.connect(lambda _item: [self.tree.resizeColumnToContents(c) for c in range(4)])
         self.project_group = QTreeWidgetItem(self.tree, [_t("transform.group.project")])
         self.predefined_group = QTreeWidgetItem(self.tree, [_t("transform.group.predefined")])
         for group in (self.project_group, self.predefined_group):
@@ -312,6 +381,10 @@ class ScenarioListDialog(QDialog):
             font = group.font(0)
             font.setBold(True)
             group.setFont(0, font)
+        # Les scénarios des TEI Stylesheets, moins utiles pour une édition
+        # critique : un sous-groupe replié (V0.9.2.7).
+        self.tei_group = None
+        self._tei_expanded = False
         root.addWidget(self.tree, 1)
 
         row = QHBoxLayout()
@@ -350,37 +423,69 @@ class ScenarioListDialog(QDialog):
     # --- Liste ------------------------------------------------------------------
 
     def _refresh(self, select=None):
-        """Remplit les deux groupes ; ``select`` : ``(groupe, rang)`` à choisir."""
+        """Remplit les deux groupes, et le sous-groupe « TEI Stylesheets »
+        des scénarios prédéfinis ; ``select`` : ``(groupe, rang)`` à
+        choisir. Chaque ligne porte sa clé ``(groupe, rang)``."""
         sources = project_sources(self._project)
-        for group, scenarios in ((self.project_group, self._scenarios), (self.predefined_group, self._predefined)):
+        if self.tei_group is not None:
+            self._tei_expanded = self.tei_group.isExpanded()
+        self.tei_group = None
+        for name, group, scenarios in (("project", self.project_group, self._scenarios),
+                                       ("predefined", self.predefined_group, self._predefined)):
             group.takeChildren()
-            for scenario in scenarios:
+            for rank, scenario in enumerate(scenarios):
+                parent = group
+                if name == "predefined" and is_tei_scenario(scenario):
+                    parent = self._tei_group()
                 problems = scenario_problems(scenario, self._project, self._current, sources)
-                item = QTreeWidgetItem(group, [scenario.name, source_label(scenario), engine_label(scenario.engine),
-                                               problem_text(problems[0]) if problems else ""])
+                item = QTreeWidgetItem(parent, [scenario.name, source_label(scenario), engine_label(scenario.engine),
+                                                problem_text(problems[0]) if problems else ""])
+                item.setData(0, Qt.ItemDataRole.UserRole, (name, rank))
                 if problems:
                     item.setToolTip(3, "\n".join(problem_text(problem) for problem in problems))
                     item.setForeground(3, Qt.GlobalColor.darkRed)
             group.setExpanded(True)
+        if self.tei_group is not None:
+            self.tei_group.setExpanded(self._tei_expanded)
         for column in range(4):
             self.tree.resizeColumnToContents(column)
         if select is not None:
-            group = self.project_group if select[0] == "project" else self.predefined_group
-            if 0 <= select[1] < group.childCount():
-                self.tree.setCurrentItem(group.child(select[1]))
+            item = self.item_for(*select)
+            if item is not None:
+                if item.parent() is self.tei_group:
+                    self.tei_group.setExpanded(True)
+                self.tree.setCurrentItem(item)
         self._update_buttons()
+
+    def _tei_group(self):
+        """Le sous-groupe « TEI Stylesheets », créé au premier scénario TEI."""
+        if self.tei_group is None:
+            self.tei_group = QTreeWidgetItem(self.predefined_group, [_t("transform.group.tei")])
+            self.tei_group.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            self.tei_group.setFirstColumnSpanned(True)
+        return self.tei_group
+
+    def item_for(self, group, rank):
+        """La ligne du scénario ``(group, rang)``, ou None."""
+        groups = [self.project_group if group == "project" else self.predefined_group]
+        while groups:
+            parent = groups.pop()
+            for index in range(parent.childCount()):
+                child = parent.child(index)
+                if child.data(0, Qt.ItemDataRole.UserRole) == (group, rank):
+                    return child
+                groups.append(child)
+        return None
 
     def selected(self):
         """``(groupe, rang, scénario)`` choisi, ou None."""
         item = self.tree.currentItem()
-        parent = item.parent() if item is not None else None
-        if parent is self.project_group:
-            index = parent.indexOfChild(item)
-            return "project", index, self._scenarios[index]
-        if parent is self.predefined_group:
-            index = parent.indexOfChild(item)
-            return "predefined", index, self._predefined[index]
-        return None
+        key = item.data(0, Qt.ItemDataRole.UserRole) if item is not None else None
+        if not key:
+            return None
+        group, rank = key
+        scenarios = self._scenarios if group == "project" else self._predefined
+        return (group, rank, scenarios[rank]) if 0 <= rank < len(scenarios) else None
 
     def selected_scenario(self):
         chosen = self.selected()
@@ -539,7 +644,8 @@ class TransformScenariosMixin:
     def open_scenario_stylesheet(self, scenario):
         """« Ouvrir la feuille » : affiche la feuille du scénario comme un
         document du projet (inscrit au besoin). Une feuille de Varians est
-        d'abord copiée dans ``xslt/`` ; une feuille hors du projet peut l'être,
+        d'abord copiée dans ``xslt/``, avec les feuilles qu'elle inclut ; une
+        feuille hors du projet peut l'être,
         ou s'ouvrir sur place. Après une copie, le scénario emploie la copie.
         Une feuille des TEI Stylesheets n'est pas copiée : une feuille de
         personnalisation qui l'importe est créée (``_customize``)."""
@@ -575,6 +681,13 @@ class TransformScenariosMixin:
                 try:
                     target.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(path, target)
+                    # Les feuilles qu'elle inclut, si elles n'y sont pas déjà
+                    # (apparat-commun.xsl pour edition-critique.xsl).
+                    for relative in included_stylesheets(path):
+                        included = target.parent / relative
+                        if not included.exists():
+                            included.parent.mkdir(parents=True, exist_ok=True)
+                            shutil.copy2(path.parent / relative, included)
                 except OSError as exc:
                     QMessageBox.critical(self, title, str(exc))
                     return False
@@ -651,14 +764,29 @@ class TransformScenariosMixin:
         return self.transform_button
 
     def _fill_transform_menu(self):
+        """Scénarios du projet, prédéfinis, et ceux des TEI Stylesheets dans un
+        sous-menu (V0.9.2.7) ; puis la liste des scénarios."""
         menu = self.transform_menu
         menu.clear()
-        for scenarios in (self.project.transformations, predefined()):
-            for scenario in scenarios:
-                action = menu.addAction(scenario.name)
-                action.triggered.connect(lambda _checked=False, s=scenario: self.run_transform_scenario(s))
-            if scenarios:
-                menu.addSeparator()
+
+        def add(target, scenario):
+            action = target.addAction(scenario.name)
+            action.triggered.connect(lambda _checked=False, s=scenario: self.run_transform_scenario(s))
+
+        for scenario in self.project.transformations:
+            add(menu, scenario)
+        if self.project.transformations:
+            menu.addSeparator()
+        scenarios = predefined()
+        for scenario in scenarios:
+            if not is_tei_scenario(scenario):
+                add(menu, scenario)
+        tei = [scenario for scenario in scenarios if is_tei_scenario(scenario)]
+        if tei:
+            submenu = menu.addMenu(_t("transform.group.tei"))
+            for scenario in tei:
+                add(submenu, scenario)
+        menu.addSeparator()
         menu.addAction(self.action_transform_scenarios)
 
     def _transform_current_path(self):

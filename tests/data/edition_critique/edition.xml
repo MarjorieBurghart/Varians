@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="la">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Lorem ipsum — exemple d’édition critique TEI</title>
+      </titleStmt>
+      <publicationStmt>
+        <p>Texte fictif, uniquement destiné à illustrer une feuille XSLT.</p>
+      </publicationStmt>
+      <sourceDesc>
+        <listWit>
+          <witness xml:id="A">Témoin fictif A (premier de la liste).</witness>
+          <witness xml:id="B">Témoin fictif B.</witness>
+        </listWit>
+      </sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text xml:lang="la">
+    <body>
+      <div xml:id="prosa" type="prose">
+        <head>Lorem ipsum — prose</head>
+        <p>Lorem <app><lem wit="#A">ipsum</lem><rdg wit="#B">ipsam</rdg></app> dolor sit amet, consectetur adipiscing elit.<note type="editorial">Note éditoriale de démonstration.</note></p>
+        <p><pb edRef="#A" n="1r"/>Sed do eiusmod <app><lem wit="#A"/><rdg wit="#B">breve</rdg></app> tempor incididunt ut labore et dolore magna aliqua.</p>
+      </div>
+      <div xml:id="carmen" type="poem">
+        <head>Lorem ipsum — vers</head>
+        <lg n="1" type="stanza">
+          <head>Strophe prima</head>
+          <l n="1">Lorem ipsum dolor sit amet,</l>
+          <l n="2">consectetur <app><lem wit="#B">adipiscing</lem><rdg wit="#A">adipiscens</rdg></app> elit,</l>
+          <l n="3">sed do eiusmod <caesura/> tempor.</l>
+        </lg>
+        <lg n="2" type="stanza">
+          <head>Strophe secunda</head>
+          <l n="4" rend="indent">Ut enim ad minim veniam,</l>
+          <l n="5">quis nostrud <app><lem wit="#A">exercitation</lem><rdg wit="#B"/></app> ullamco.</l>
+        </lg>
+      </div>
+    </body>
+  </text>
+</TEI>

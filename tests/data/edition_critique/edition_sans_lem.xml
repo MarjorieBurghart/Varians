@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="la">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt><title>Lorem ipsum — exemple sans lemmes</title></titleStmt>
+      <publicationStmt><p>Exemple fictif pour tester le choix du témoin.</p></publicationStmt>
+      <sourceDesc><listWit>
+        <witness xml:id="A">Témoin fictif A.</witness>
+        <witness xml:id="B">Témoin fictif B.</witness>
+      </listWit></sourceDesc>
+    </fileDesc>
+  </teiHeader>
+  <text><body><div xml:id="sans-lemme">
+    <head>Prosa experimentalis</head>
+    <p>Lorem <app><rdg wit="#A">ipsum</rdg><rdg wit="#B">ipsam</rdg></app> dolor <app><rdg wit="#A"/><rdg wit="#B">breve</rdg></app> sit amet.</p>
+  </div></body></text>
+</TEI>

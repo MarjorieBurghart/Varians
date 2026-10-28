@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import zipfile
 from dataclasses import replace
 from pathlib import Path
 
@@ -60,6 +61,68 @@ def test_the_other_tei_scenarios(project, name, extension, expected):
     output = project.root_dir / "publications" / "tei" / f"edition.{extension}"
     assert result.outputs == [str(output)]
     assert expected in output.read_text(encoding="utf-8")
+
+
+def test_the_docx_scenario_writes_a_word_document(project):
+    result = run_in_process(scenario_request(_scenario("tei-docx"), project), timeout=120)
+    assert result.ok, result.error
+    output = project.root_dir / "publications" / "tei" / "edition.docx"
+    assert result.outputs == [str(output)]
+    with zipfile.ZipFile(output) as archive:
+        names = archive.namelist()
+        assert names[0] == "[Content_Types].xml"
+        assert {"word/document.xml", "word/styles.xml", "word/_rels/document.xml.rels", "docProps/core.xml"} <= set(names)
+        document = archive.read("word/document.xml").decode("utf-8")
+        assert "Sermo in adventu Domini" in document
+        assert not {"docProps/newcore.xml", "image-size-info.xml"} & set(names)
+        # L'apparat en notes de bas de page (pré-passage, témoin pivot A) :
+        # la leçon retenue dans le texte, les variantes en note.
+        notes = re.sub(r"<[^>]+>", "", archive.read("word/footnotes.xml").decode("utf-8"))
+        assert "significant ] signant B" in notes
+        assert "significant" in document and "signant<" not in document
+        assert "w:footnoteReference" in document and "<w:br w:type=\"page\"/>" not in document
+
+
+def test_the_odt_scenario_writes_an_opendocument_text(project):
+    result = run_in_process(scenario_request(_scenario("tei-odt"), project), timeout=120)
+    assert result.ok, result.error
+    with zipfile.ZipFile(project.root_dir / "publications" / "tei" / "edition.odt") as archive:
+        first = archive.infolist()[0]
+        assert (first.filename, first.compress_type) == ("mimetype", zipfile.ZIP_STORED)
+        assert archive.read("mimetype") == b"application/vnd.oasis.opendocument.text"
+        content = archive.read("content.xml").decode("utf-8")
+        assert "Sermo in adventu Domini" in content
+        assert "META-INF/manifest.xml" in archive.namelist()
+        notes = [re.sub(r"<[^>]+>", "", note) for note in re.findall(r'<text:note text:note-class="footnote".*?</text:note>',
+                                                                      content, re.S)]
+        assert any("significant ] signant B" in note for note in notes)
+
+
+def test_the_epub_scenario_writes_a_book_with_the_css_of_the_library(project):
+    result = run_in_process(scenario_request(_scenario("tei-epub"), project), timeout=120)
+    assert result.ok, result.error
+    with zipfile.ZipFile(project.root_dir / "publications" / "tei" / "edition.epub") as archive:
+        first = archive.infolist()[0]
+        assert (first.filename, first.compress_type) == ("mimetype", zipfile.ZIP_STORED)
+        assert archive.read("mimetype") == b"application/epub+zip"
+        names = archive.namelist()
+        assert {"META-INF/container.xml", "OPS/package.opf", "OPS/stylesheet.css", "OPS/print.css"} <= set(names)
+        assert "Sermo in adventu Domini" in "".join(archive.read(name).decode("utf-8")
+                                                    for name in names if name.endswith(".html"))
+        # La CSS lue dans la bibliothèque (cssFile), et non sur tei-c.org.
+        assert archive.read("OPS/stylesheet.css").strip()
+
+
+def test_the_pages_scenario_writes_one_page_per_division(project):
+    result = run_in_process(scenario_request(_scenario("tei-pages"), project), timeout=120)
+    assert result.ok, result.error
+    folder = project.root_dir / "publications" / "tei" / "pages"
+    assert result.outputs[0] == str(folder / "index.html")
+    written = {Path(path).name for path in result.outputs}
+    assert {"index.html", "s02.html", "s03.html", "s04.html", "tei.css"} <= written
+    assert written == {path.name for path in folder.iterdir()}
+    assert "Sermo in nativitate Domini" in (folder / "s02.html").read_text(encoding="utf-8")
+    assert 'href="s02.html"' in (folder / "index.html").read_text(encoding="utf-8")
 
 
 # Les TEI Stylesheets écrivent du XHTML : les éléments ajoutés aussi (xmlns).
@@ -131,3 +194,19 @@ def test_the_customization_stylesheet_of_each_tei_scenario_compiles_and_runs(pro
     stamp = re.compile(r"\d{4}-\d\d-\d\dT[\d:.]+Z?|Generated from [^\n]*|\d{4}-\d\d-\d\d|d\d+e\d+")
     assert stamp.sub("", Path(str(output) + ".perso").read_text(encoding="utf-8")) == \
         stamp.sub("", output.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize("name", ["tei-pages", "tei-docx", "tei-odt", "tei-epub"])
+def test_the_customization_of_a_package_scenario_keeps_its_format(project, name):
+    from xslt_scenarios import customization_name, customization_text
+    scenario = _scenario(name)
+    path = project.root_dir / "xslt" / customization_name(scenario.xslt)
+    path.parent.mkdir()
+    path.write_text(customization_text(scenario.xslt), encoding="utf-8")
+    custom = replace(scenario, xslt=f"xslt/{path.name}")
+    result = run_in_process(scenario_request(custom, project), timeout=120)
+    assert result.ok, result.error
+    output = project.root_dir / scenario.output
+    assert result.outputs[0] == str(output)
+    if scenario.package != "pages":
+        assert zipfile.is_zipfile(output)

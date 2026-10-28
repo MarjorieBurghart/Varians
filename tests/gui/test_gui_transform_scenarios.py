@@ -47,7 +47,7 @@ def _scenario(setup):
 
 
 def _rows(dialog, group):
-    item = dialog.project_group if group == "project" else dialog.predefined_group
+    item = {"project": dialog.project_group, "predefined": dialog.predefined_group, "tei": dialog.tei_group}[group]
     return [[item.child(i).text(c) for c in range(4)] for i in range(item.childCount())]
 
 
@@ -61,10 +61,36 @@ def test_the_file_menu_lists_the_scenarios_of_the_project_and_the_predefined_one
     dialog = listing.dialog
     assert _rows(dialog, "project") == [["Personnes", tr("transform.source.file", file="xml/personnes.xml"),
                                          tr("transform.engine.lxml"), ""]]
-    assert _rows(dialog, "predefined") == [[tr("transform.predefined.varians-html"), tr("transform.source.edition"),
-                                            tr("transform.engine.lxml"), ""]] + [
+    assert _rows(dialog, "predefined") == [
+        [tr("transform.predefined.varians-html"), tr("transform.source.edition"), tr("transform.engine.lxml"), ""],
+        [tr("transform.predefined.edition-critique"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""],
+        [tr("transform.group.tei"), "", "", ""]]
+    # V0.9.2.7 : les scénarios des TEI Stylesheets, dans un sous-groupe replié.
+    assert dialog.predefined_group.child(2) is dialog.tei_group and not dialog.tei_group.isExpanded()
+    assert _rows(dialog, "tei") == [
         [tr(f"transform.predefined.{key}"), tr("transform.source.edition"), tr("transform.engine.saxon"), ""]
-        for key in ("tei-html", "tei-txt", "tei-markdown", "tei-latex")]
+        for key in ("tei-html", "tei-pages", "tei-docx", "tei-odt", "tei-epub", "tei-txt", "tei-markdown",
+                    "tei-latex")]
+
+
+def test_a_tei_scenario_is_chosen_in_its_sub_group(open_window, sermons_project, dialogs):
+    from transform_ui import predefined
+    window = open_window(sermons_project)
+
+    def check(dialog):
+        from PySide6.QtCore import Qt
+        assert not dialog.tei_group.flags() & Qt.ItemFlag.ItemIsSelectable
+        dialog.tree.setCurrentItem(dialog.tei_group)
+        assert dialog.selected() is None and not dialog.run_btn.isEnabled()
+        item = dialog.item_for("predefined", 2)
+        assert item.parent() is dialog.tei_group
+        dialog.tree.setCurrentItem(item)
+        assert dialog.selected() == ("predefined", 2, predefined()[2]) and dialog.run_btn.isEnabled()
+        assert dialog.item_for("predefined", 0).parent() is dialog.predefined_group
+
+    listing = _in_list(check)
+    dialogs.expect("dialog", listing)
+    window.action_transform_scenarios.trigger()
 
 
 def test_a_new_scenario_starts_from_the_stylesheet_of_the_preview_and_is_saved(open_window, sermons_project,
@@ -125,11 +151,138 @@ def test_a_scenario_is_edited_and_keeps_an_unknown_engine(open_window, sermons_p
     )
 
 
+def test_the_package_of_a_scenario_is_chosen_and_an_unknown_one_is_kept(open_window, sermons_project, dialogs):
+    book = TransformScenario("Livre", "rendering/personnes.xsl", "publications/livre.docx", engine="saxon",
+                             package="docx")
+    future = TransformScenario("Futur", "rendering/personnes.xsl", "publications/futur.pdf", engine="saxon",
+                               package="pdf")
+    window = open_window(_with_scenarios(sermons_project, book, future))
+    seen = {}
+
+    def select_and_edit(row):
+        def action(dialog):
+            dialog.tree.setCurrentItem(dialog.project_group.child(row))
+            dialog.edit_scenario()
+        return action
+
+    def change(dialog):
+        seen["choices"] = [dialog.package_combo.itemData(i) for i in range(dialog.package_combo.count())]
+        seen["docx"] = dialog.package_combo.currentData()
+        dialog.package_combo.setCurrentIndex(dialog.package_combo.findData("odt"))
+
+    def keep(dialog):
+        seen["pdf"] = dialog.package_combo.currentData()
+
+    answers = [] if saxon_available() else [("question", QMessageBox.StandardButton.Yes)]
+    dialogs.expect("dialog", _in_list(select_and_edit(0)))
+    dialogs.expect("dialog", _scenario(change))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    dialogs.expect("dialog", _in_list(select_and_edit(1)))
+    dialogs.expect("dialog", _scenario(keep))
+    dialogs.expect("question", QMessageBox.StandardButton.Yes)           # « Paquet inconnu : pdf »
+    window.transform_scenarios_dialog()
+    assert seen == {"choices": ["", "pages", "docx", "odt", "epub"], "docx": "docx", "pdf": "pdf"}
+    assert [s.package for s in load_project(sermons_project).transformations] == ["odt", "pdf"]
+
+
+def test_the_witness_parameter_is_chosen_in_a_list(open_window, sermons_project, dialogs):
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QComboBox
+    critique = TransformScenario("Critique", "${varians}/edition-critique.xsl", "publications/critique.html",
+                                 engine="saxon", params=(("temoin-de-base", "${pivot}"), ("montrer-folios", "true")))
+    inconnu = replace(critique, name="Inconnu", params=(("temoin-de-base", "#Z"),))
+    window = open_window(_with_scenarios(sermons_project, critique, inconnu))
+    seen = {}
+
+    def edit(row):
+        def action(dialog):
+            dialog.tree.setCurrentItem(dialog.project_group.child(row))
+            dialog.edit_scenario()
+        return action
+
+    def choose(dialog):
+        combo = dialog.params_table.cellWidget(0, 1)
+        seen["combo"] = isinstance(combo, QComboBox) and dialog.params_table.cellWidget(1, 1) is None
+        seen["items"] = [(combo.itemText(i), combo.itemData(i)) for i in range(combo.count())]
+        seen["current"] = combo.currentData()
+        combo.setCurrentIndex(combo.findData("C"))
+        # Sous le menu, la cellule n'a pas de texte (sous Windows, il se voyait
+        # à travers le menu) et ne se modifie pas.
+        under = dialog.params_table.item(0, 1)
+        seen["hidden"] = under.text() == "" and not under.flags() & Qt.ItemFlag.ItemIsEditable
+        # Un paramètre renommé en temoin-de-base reçoit la liste, et la perd s'il change de nom.
+        dialog.add_param_row("autre", "aucun")
+        dialog.params_table.item(2, 0).setText("temoin-de-base")
+        seen["renamed"] = isinstance(dialog.params_table.cellWidget(2, 1), QComboBox) \
+            and dialog.params_table.cellWidget(2, 1).currentData() == "aucun"
+        dialog.params_table.item(2, 0).setText("autre")
+        back = dialog.params_table.item(2, 1)
+        seen["back"] = dialog.params_table.cellWidget(2, 1) is None and back.text() == "aucun" \
+            and bool(back.flags() & Qt.ItemFlag.ItemIsEditable)
+        dialog.remove_param_row(2)
+        # Un paramètre ajouté sans valeur puis nommé temoin-de-base : le pivot.
+        dialog.add_param_row("", "")
+        dialog.params_table.item(2, 0).setText("temoin-de-base")
+        seen["empty"] = dialog.params_table.cellWidget(2, 1).currentData()
+        dialog.remove_param_row(2)
+
+    def keep(dialog):
+        combo = dialog.params_table.cellWidget(0, 1)
+        seen["unknown"] = (combo.currentText(), combo.currentData())
+
+    answers = [] if saxon_available() else [("question", QMessageBox.StandardButton.Yes)]
+    dialogs.expect("dialog", _in_list(edit(0)))
+    dialogs.expect("dialog", _scenario(choose))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    dialogs.expect("dialog", _in_list(edit(1)))
+    dialogs.expect("dialog", _scenario(keep))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    assert seen["combo"] and seen["hidden"] and seen["renamed"] and seen["back"]
+    # Le pivot en tête, enregistré ${pivot} ; les autres témoins ; « aucun ».
+    assert seen["items"] == [(tr("transform.param.pivot", witness="A"), "${pivot}"), ("B", "B"), ("C", "C"),
+                             ("D", "D"), ("E", "E"), (tr("transform.param.no_witness"), "aucun")]
+    assert seen["current"] == seen["empty"] == "${pivot}" and seen["unknown"] == ("#Z", "#Z")
+    saved = load_project(sermons_project).transformations
+    assert saved[0].params == (("temoin-de-base", "C"), ("montrer-folios", "true"))
+    assert saved[1].params == (("temoin-de-base", "#Z"),)
+
+
+def test_the_prepass_of_a_scenario_is_shown_and_kept(open_window, sermons_project, dialogs):
+    (sermons_project.parent / "rendering" / "avant.xsl").write_text("<xsl:stylesheet/>", encoding="utf-8")
+    book = TransformScenario("Livre", "rendering/personnes.xsl", "publications/livre.docx", engine="saxon",
+                             package="docx", prepare="rendering/avant.xsl")
+    window = open_window(_with_scenarios(sermons_project, book))
+    seen = {}
+
+    def edit(dialog):
+        dialog.tree.setCurrentItem(dialog.project_group.child(0))
+        dialog.edit_scenario()
+
+    def change(dialog):
+        seen["prepare"] = dialog.prepare_field.text()
+        dialog.name_edit.setText("Livre 2")
+
+    answers = [] if saxon_available() else [("question", QMessageBox.StandardButton.Yes)]
+    dialogs.expect("dialog", _in_list(edit))
+    dialogs.expect("dialog", _scenario(change))
+    for answer in answers:
+        dialogs.expect(*answer)
+    window.transform_scenarios_dialog()
+    assert seen == {"prepare": "rendering/avant.xsl"}
+    assert load_project(sermons_project).transformations == (replace(book, name="Livre 2"),)
+
+
 def test_a_predefined_scenario_is_duplicated_into_the_project(open_window, sermons_project, dialogs):
     window = open_window(sermons_project)
 
     def duplicate(dialog):
-        dialog.tree.setCurrentItem(dialog.predefined_group.child(0))
+        dialog.tree.setCurrentItem(dialog.item_for("predefined", 0))
         assert not dialog.edit_btn.isEnabled() and not dialog.remove_btn.isEnabled()
         dialog.duplicate_scenario()
 
@@ -236,8 +389,7 @@ def _keep_open(action):
 
 def _open_row(group, row):
     def action(dialog):
-        parent = dialog.project_group if group == "project" else dialog.predefined_group
-        dialog.tree.setCurrentItem(parent.child(row))
+        dialog.tree.setCurrentItem(dialog.item_for(group, row))
         dialog.open_stylesheet_btn.click()
     return action
 
@@ -275,7 +427,7 @@ def test_the_open_button_needs_a_stylesheet_of_the_project(open_window, sermons_
         assert button.isEnabled() and button.toolTip() == tr("transform.open_stylesheet.tip")
         dialog.tree.setCurrentItem(dialog.project_group.child(1))
         assert not button.isEnabled()
-        dialog.tree.setCurrentItem(dialog.predefined_group.child(0))
+        dialog.tree.setCurrentItem(dialog.item_for("predefined", 0))
         assert not button.isEnabled() and button.toolTip() == tr("transform.open_stylesheet.predefined")
 
     dialogs.expect("dialog", _in_list(check))
@@ -348,6 +500,31 @@ def test_a_stylesheet_of_varians_is_copied_before_it_is_opened(open_window, serm
         PERSONS, TransformScenario("Édition", "xslt/tei-to-html.xsl", "publications/edition.html",
                                    css="${varians}/tei.css"))
     assert window.document.path == copy
+
+
+def test_the_stylesheets_included_by_a_stylesheet_of_varians_are_copied_with_it(open_window, sermons_project,
+                                                                                  dialogs):
+    from xslt_scenarios import VARIANS_STYLESHEETS
+    critique = TransformScenario("Critique", "${varians}/edition-critique.xsl", "publications/critique.html",
+                                 engine="saxon")
+    window = open_window(_with_scenarios(sermons_project, PERSONS, critique))
+    folder = sermons_project.parent / "xslt"
+    dialogs.expect("dialog", _keep_open(_open_row("project", 1)))
+    dialogs.expect("box", ROLE.AcceptRole)                                     # « Copier »
+    window.transform_scenarios_dialog()
+    assert sorted(p.name for p in folder.iterdir()) == ["apparat-commun.xsl", "edition-critique.xsl"]
+    assert (folder / "apparat-commun.xsl").read_bytes() == (VARIANS_STYLESHEETS / "apparat-commun.xsl").read_bytes()
+    assert load_project(sermons_project).transformations[1].xslt == "xslt/edition-critique.xsl"
+    # Une feuille incluse déjà là n'est pas remplacée : la nouvelle copie l'inclut telle quelle.
+    (folder / "apparat-commun.xsl").write_text("<!-- retouchée -->", encoding="utf-8")
+    update_project_transformations(sermons_project, [PERSONS, critique])
+    window = open_window(sermons_project)
+    dialogs.expect("dialog", _keep_open(_open_row("project", 1)))
+    dialogs.expect("box", ROLE.AcceptRole)
+    window.transform_scenarios_dialog()
+    assert sorted(p.name for p in folder.iterdir()) == ["apparat-commun.xsl", "edition-critique.xsl",
+                                                        "edition-critique_2.xsl"]
+    assert (folder / "apparat-commun.xsl").read_text(encoding="utf-8") == "<!-- retouchée -->"
 
 
 def test_the_scenario_dialog_saves_the_scenario_then_opens_its_stylesheet(open_window, sermons_project, dialogs):

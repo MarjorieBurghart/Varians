@@ -507,6 +507,96 @@ def test_each_help_announces_version_0926():
         assert page.index('<section id="v0925">') < page.index('<section id="v0926">'), language
 
 
+def _label(catalog, key):
+    """Un intitulé de champ sans ses deux-points (« Format du résultat »)."""
+    return catalog[key].rstrip(" :：")
+
+
+def test_each_help_explains_the_scenarios_of_version_0927():
+    """Sous-groupe TEI Stylesheets, format du résultat, pré-passage, paramètres
+    sans type, ${pivot} (V0.9.2.7)."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="transformations">'):]
+        section = section[:section.index("</section>")]
+        for key in ("transform.group.tei", "transform.predefined.edition-critique"):
+            assert catalog[key] in section, (language, key)
+        for key in ("transform.scenario.package", "transform.scenario.prepare"):
+            assert _label(catalog, key) in section, (language, key)
+        for text in ("${pivot}", "${tei}/", "xs:boolean", 'href="#critical-edition"', 'href="#tei-stylesheets"'):
+            assert text in section, (language, text)
+
+
+def test_each_help_explains_the_new_tei_formats():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="tei-stylesheets">'):]
+        section = section[:section.index("</section>")]
+        for key in ("transform.group.tei", "transform.predefined.tei-pages", "transform.predefined.tei-docx",
+                    "transform.predefined.tei-odt", "transform.predefined.tei-epub"):
+            assert catalog[key] in section, (language, key)
+        for text in ("<code>splitLevel</code>", "<code>publications/tei/pages/index.html</code>",
+                     "<code>edition.docx</code>", "<code>edition.odt</code>", "<code>edition.epub</code>",
+                     "<code>apparat-en-notes.xsl</code>", "lacuna incipit", 'type="apparatus"', 'place="end"',
+                     'href="#critical-edition"'):
+            assert text in section, (language, text)
+
+
+def test_each_help_explains_the_critical_edition():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="critical-edition">'):]
+        section = section[:section.index("</section>")]
+        assert catalog["transform.predefined.edition-critique"] in section, language
+        for text in ("<code>temoin-de-base</code>", "${pivot}", "<code>aucun</code>", "<code>montrer-folios</code>",
+                     "<code>montrer-numeros-de-vers</code>", "<code>sauts-lb</code>", "lacuna incipit",
+                     "lacuna desinit", "<code>&lt;rdgGrp&gt;</code>", "<code>publications/edition-critique.html</code>",
+                     "<code>@n</code>", "om.", "add.", 'href="#tei-stylesheets"', 'href="#transformations"'):
+            assert text in section, (language, text)
+        assert page.index('<section id="tei-stylesheets">') < page.index('<section id="critical-edition">') \
+            < page.index('<section id="v0900">'), language
+
+
+def test_the_apparatus_is_called_by_numbers_and_the_notes_by_letters():
+    """Édition critique : l'apparat, nombreux, appelé par des chiffres ; les
+    notes par des lettres (a, b… z, aa…)."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="critical-edition">'):]
+        section = section[:section.index("</section>")]
+        letters = section.index("aa…")
+        # En japonais, le complément précède le nom : « 文字（…）で呼び出される … Notes ».
+        anchor = "Apparat critique</strong>" if language == "ja" else "<strong>Notes</strong>"
+        assert letters > section.index(anchor), language
+
+
+def test_each_help_shows_the_list_of_witnesses_of_the_critical_edition():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="critical-edition">'):]
+        section = section[:section.index("</section>")]
+        assert catalog["transform.param.pivot"].format(witness="T1") in section, language
+        assert catalog["transform.param.no_witness"] in section, language
+
+
+def test_each_help_announces_version_0927():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = page[page.index('<section id="v0927">'):]
+        version = version[:version.index("</section>")]
+        for link in ('href="#critical-edition"', 'href="#tei-stylesheets"', 'href="#transformations"'):
+            assert link in version, (language, link)
+        assert page.index('<section id="v0926">') < page.index('<section id="v0927">'), language
+
+
 def test_the_documents_menu_names_xml_and_xslt():
     root = ET.parse(ROOT / "i18n" / "fr.xml").getroot()
     catalog = {string.get("key"): string.text for string in root.findall("string")}

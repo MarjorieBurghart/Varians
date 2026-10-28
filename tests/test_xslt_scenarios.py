@@ -8,6 +8,8 @@ document auxiliaire (xml/personnes.xml).
 from __future__ import annotations
 
 import shutil
+import urllib.parse
+import urllib.request
 from dataclasses import replace
 from pathlib import Path
 
@@ -144,6 +146,15 @@ def test_the_displayed_document_is_the_current_file_or_the_assembled_edition(pro
 
 # --- Requête ------------------------------------------------------------------------------
 
+def test_the_pivot_witness_is_substituted_in_the_parameters(project):
+    """V0.9.2.7 : ``${pivot}``, dans la valeur d'un paramètre, est le témoin
+    pivot du projet au moment de l'exécution."""
+    scenario = replace(BASE, params=(("temoin-de-base", "${pivot}"), ("titre", "Pivot ${pivot} !"), ("autre", "x")))
+    params = scenario_request(scenario, project)["params"]
+    pivot = project.base_witness
+    assert pivot and params == [["temoin-de-base", pivot], ["titre", f"Pivot {pivot} !"], ["autre", "x"]]
+
+
 def test_the_request_holds_absolute_paths_and_the_parameters(project):
     scenario = replace(BASE, css="rendering/tei.css", params=(("titre", "Index"),))
     request = scenario_request(scenario, project)
@@ -174,10 +185,36 @@ def test_a_chosen_path_is_written_relative_to_the_project_or_to_the_stylesheets_
     assert scenario_path(project, tmp_path / "ailleurs.xsl") == (tmp_path / "ailleurs.xsl").as_posix()
 
 
+def test_a_package_needs_saxon_and_a_known_format(project):
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="docx"), project)) == []
+    assert _codes(scenario_problems(replace(BASE, package="docx"), project)) == ["package_invalid"]
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="pdf"), project)) == ["package_invalid"]
+    request = scenario_request(replace(BASE, engine="saxon", package="docx"), project)
+    assert request["package"] == "docx" and Path(request["package_template"]).name == "template.docx"
+    assert Path(request["package_fixstyle"]).name == "fixstyle.xsl"
+    assert "package" not in scenario_request(BASE, project)
+
+
+def test_a_prepass_needs_saxon_and_an_existing_stylesheet(project):
+    (project.root_dir / "rendering" / "avant.xsl").write_text("<xsl:stylesheet/>", encoding="utf-8")
+    scenario = replace(BASE, engine="saxon", prepare="rendering/avant.xsl")
+    assert _codes(scenario_problems(scenario, project)) == []
+    assert _codes(scenario_problems(replace(scenario, engine="lxml"), project)) == ["prepare_invalid"]
+    missing = scenario_problems(replace(scenario, prepare="rendering/absente.xsl"), project)
+    assert [(p.code, p.detail) for p in missing] == [("xslt_missing", "rendering/absente.xsl")]
+    request = scenario_request(scenario, project)
+    assert request["prepare"] == str(project.root_dir / "rendering" / "avant.xsl")
+    # Le résultat ne remplace jamais la feuille du pré-passage.
+    assert str(project.root_dir / "rendering" / "avant.xsl") in request["protected"]
+    assert _codes(scenario_problems(replace(scenario, output="rendering/avant.xsl"), project)) == ["output_is_source"]
+    assert "prepare" not in scenario_request(BASE, project)
+
+
 def test_each_problem_has_a_message_in_the_seven_catalogs():
     import xml.etree.ElementTree as ET
     from xslt_scenarios import PROBLEM_CODES
-    assert {"output_is_source", "tei_missing"} <= set(PROBLEM_CODES) and len(PROBLEM_CODES) == 14
+    assert {"output_is_source", "tei_missing", "package_invalid", "prepare_invalid"} <= set(PROBLEM_CODES)
+    assert len(PROBLEM_CODES) == 16
     for language in ("fr", "en", "de", "ja", "cs", "it", "ru"):
         root = ET.parse(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml").getroot()
         catalog = {string.get("key") for string in root.findall("string")}
@@ -189,8 +226,15 @@ def test_each_problem_has_a_message_in_the_seven_catalogs():
 # La bibliothèque des tests est installée depuis l'archive livrée, dans un
 # dossier temporaire commun à la session (tests/conftest.py).
 
-TEI_OUTPUTS = {"tei-html": ("html", "html"), "tei-txt": ("txt", "txt"), "tei-markdown": ("markdown", "md"),
-               "tei-latex": ("latex", "tex")}
+# Scénarios TEI : profil des TEI Stylesheets, résultat, format du résultat.
+TEI_OUTPUTS = {"tei-html": ("html", "publications/tei/edition.html", ""),
+               "tei-pages": ("html", "publications/tei/pages/index.html", "pages"),
+               "tei-docx": ("docx", "publications/tei/edition.docx", "docx"),
+               "tei-odt": ("odt", "publications/tei/edition.odt", "odt"),
+               "tei-epub": ("epub3", "publications/tei/edition.epub", "epub"),
+               "tei-txt": ("txt", "publications/tei/edition.txt", ""),
+               "tei-markdown": ("markdown", "publications/tei/edition.md", ""),
+               "tei-latex": ("latex", "publications/tei/edition.tex", "")}
 
 
 @pytest.fixture
@@ -217,40 +261,111 @@ def test_tei_paths_designate_the_active_version(project, tmp_path):
 
 def test_the_tei_scenarios_are_predefined(project):
     scenarios = predefined_scenarios()
-    assert [scenario.name for scenario in scenarios] == ["varians-html", *TEI_OUTPUTS]
-    for scenario in scenarios[1:]:
-        folder, extension = TEI_OUTPUTS[scenario.name]
+    assert [scenario.name for scenario in scenarios] == ["varians-html", "edition-critique", *TEI_OUTPUTS]
+    for scenario in scenarios[2:]:
+        folder, output, package = TEI_OUTPUTS[scenario.name]
         assert scenario.xslt == f"${{tei}}/profiles/default/{folder}/to.xsl"
         # Dans un dossier à part : leur CSS (tei.css) ne remplace pas celle de Varians.
-        assert scenario.output == f"publications/tei/edition.{extension}"
+        assert scenario.output == output and scenario.package == package
         assert (scenario.source, scenario.engine) == ("edition", "saxon")
         assert stylesheet_path(scenario, project).is_file()
         assert scenario_problems(scenario, project) == []
-    html = scenarios[1]
+    named = {scenario.name: scenario for scenario in scenarios}
+    html = named["tei-html"]
     # La CSS des TEI Stylesheets, copiée à côté du résultat : aucun lien vers tei-c.org.
     assert html.css == "${tei}/tei.css"
     assert html.params == (("cssFile", "tei.css"), ("cssPrintFile", ""), ("homeURL", ""))
-    assert scenarios[2].css == "" and scenarios[2].params == ()
-    # Les deux éditions HTML ne copient pas leur CSS au même endroit.
+    # Une page par division et par sous-division (V0.9.2.7).
+    assert named["tei-pages"].css == "${tei}/tei.css"
+    assert named["tei-pages"].params == html.params + (("splitLevel", "1"),)
+    # L'EPUB lit ses CSS dans la bibliothèque, et non sur tei-c.org.
+    assert named["tei-epub"].css == ""
+    assert named["tei-epub"].params == (("cssFile", "${tei}/tei.css"), ("cssPrintFile", "${tei}/epub-print.css"))
+    # DOCX et ODT : l'apparat en notes de bas de page, d'après le témoin pivot.
+    for name in ("tei-docx", "tei-odt"):
+        assert named[name].prepare == "${varians}/apparat-en-notes.xsl"
+        assert named[name].css == "" and named[name].params == (("temoin-de-base", "${pivot}"),)
+    assert named["tei-txt"].css == "" and named["tei-txt"].params == ()
+    assert [s.name for s in scenarios if s.prepare] == ["tei-docx", "tei-odt"]
+    # Les éditions HTML ne copient pas leur CSS au même endroit.
     copies = [resolve_path(project, s.output).parent / resolve_path(project, s.css).name for s in scenarios if s.css]
-    assert len(copies) == len(set(copies)) == 2
+    assert len(copies) == len(set(copies)) == 3
+
+
+def test_the_critical_edition_is_predefined_after_the_edition_of_varians(project):
+    scenarios = predefined_scenarios(lambda key: {"edition-critique": "Édition critique (HTML)"}.get(key, key))
+    critique = scenarios[1]
+    assert critique == TransformScenario(
+        "Édition critique (HTML)", "${varians}/edition-critique.xsl", "publications/edition-critique.html",
+        engine="saxon", params=(("temoin-de-base", "${pivot}"), ("montrer-folios", "true"),
+                                ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false")))
+    assert scenario_problems(critique, project) == []
+    assert dict(scenario_request(critique, project)["params"])["temoin-de-base"] == "A"      # le pivot
+
+
+def test_a_stylesheet_names_the_stylesheets_it_includes(tmp_path):
+    from xslt_scenarios import VARIANS_STYLESHEETS, included_stylesheets
+    assert included_stylesheets(VARIANS_STYLESHEETS / "edition-critique.xsl") == ["apparat-commun.xsl"]
+    assert included_stylesheets(VARIANS_STYLESHEETS / "tei-to-html.xsl") == []
+    # Inclusions et imports relatifs, de proche en proche ; pas les adresses absolues.
+    (tmp_path / "sous").mkdir()
+    head = '<xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">'
+    (tmp_path / "a.xsl").write_text(head + '<xsl:import href="sous/b.xsl"/><xsl:include href="c.xsl"/>'
+                                    '<xsl:import href="http://www.tei-c.org/release/xml/tei/stylesheet/x.xsl"/>'
+                                    '</xsl:stylesheet>', encoding="utf-8")
+    (tmp_path / "sous" / "b.xsl").write_text(head + '<xsl:include href="../c.xsl"/></xsl:stylesheet>',
+                                             encoding="utf-8")
+    (tmp_path / "c.xsl").write_text(head + '<xsl:include href="a.xsl"/></xsl:stylesheet>', encoding="utf-8")
+    assert included_stylesheets(tmp_path / "a.xsl") == ["sous/b.xsl", "c.xsl"]
+    assert included_stylesheets(tmp_path / "absente.xsl") == []
+
+
+def test_the_witnesses_offered_for_temoin_de_base_start_with_the_pivot(project):
+    from xslt_scenarios import NO_WITNESS, WITNESS_PARAM, witness_choices
+    assert (WITNESS_PARAM, NO_WITNESS) == ("temoin-de-base", "aucun")
+    # Le pivot d'abord, puis les témoins du projet, puis ceux du seul <listWit>.
+    assert witness_choices(project) == ["A", "B", "C", "D", "E"]
+    edition = project.edition
+    text = edition.read_text(encoding="utf-8")
+    edition.write_text(text.replace('<witness xml:id="D">', '<witness xml:id="F">Fictif F.</witness><witness xml:id="D">'),
+                       encoding="utf-8")
+    assert witness_choices(replace(project, base_witness="C")) == ["C", "A", "B", "D", "E", "F"]
+    # Une édition illisible : les témoins du projet.
+    edition.write_text("<TEI", encoding="utf-8")
+    assert witness_choices(project) == ["A", "B", "C", "D", "E"]
+
+
+def test_the_tei_folder_is_substituted_in_the_parameters(project):
+    from xslt_scenarios import tei_library
+    folder = tei_library().folder
+    epub = next(scenario for scenario in predefined_scenarios() if scenario.name == "tei-epub")
+    params = dict(scenario_request(epub, project)["params"])
+    assert params == {"cssFile": (folder / "tei.css").as_uri(), "cssPrintFile": (folder / "epub-print.css").as_uri()}
+    assert Path(urllib.request.url2pathname(urllib.parse.urlparse(params["cssFile"]).path)) == folder / "tei.css"
 
 
 def test_the_tei_scenarios_speak_the_language_of_the_interface():
-    html = predefined_scenarios(language="fr")[1]
+    html = next(scenario for scenario in predefined_scenarios(language="fr") if scenario.name == "tei-html")
     assert html.params[-2:] == (("lang", "fr"), ("documentationLanguage", "fr"))
-    assert predefined_scenarios(language="ja")[4].params == (("lang", "ja"), ("documentationLanguage", "ja"))
+    latex = next(scenario for scenario in predefined_scenarios(language="ja") if scenario.name == "tei-latex")
+    assert latex.params == (("lang", "ja"), ("documentationLanguage", "ja"))
+    epub = next(scenario for scenario in predefined_scenarios(language="ja") if scenario.name == "tei-epub")
+    assert epub.params[-2:] == (("lang", "ja"), ("documentationLanguage", "ja"))
     names = [scenario.name for scenario in predefined_scenarios(lambda key: f"«{key}»", "fr")]
-    assert names == ["«varians-html»", "«tei-html»", "«tei-txt»", "«tei-markdown»", "«tei-latex»"]
+    assert names == ["«varians-html»", "«edition-critique»", "«tei-html»", "«tei-pages»", "«tei-docx»", "«tei-odt»",
+                     "«tei-epub»", "«tei-txt»", "«tei-markdown»", "«tei-latex»"]
 
 
 def test_without_tei_stylesheets_the_tei_scenarios_report_it(project, no_tei):
     from xslt_scenarios import ScenarioProblem, tei_library
     assert tei_library() is None
-    varians, html, text = predefined_scenarios()[:3]
-    assert scenario_problems(html, project) == [ScenarioProblem("tei_missing", str(no_tei))]
-    assert scenario_problems(text, project) == [ScenarioProblem("tei_missing", str(no_tei))]
-    assert scenario_problems(varians, project) == []
+    varians, critique, *tei = predefined_scenarios()
+    for scenario in tei:
+        assert scenario_problems(scenario, project) == [ScenarioProblem("tei_missing", str(no_tei))]
+    assert scenario_problems(varians, project) == scenario_problems(critique, project) == []
+    # Un paquet DOCX ou ODT part du modèle des TEI Stylesheets, même avec une autre feuille.
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="odt"), project)) == ["tei_missing"]
+    assert _codes(scenario_problems(replace(BASE, engine="saxon", package="epub"), project)) == []
 
 
 def _customization(project, imported="profiles/default/html/to.xsl"):
@@ -266,7 +381,7 @@ def test_a_saxon_request_carries_the_catalog_of_the_tei_stylesheets(project):
     from xslt_scenarios import tei_library
     library = tei_library()
     label = f"TEI Stylesheets {library.version}"
-    request = scenario_request(predefined_scenarios()[1], project)
+    request = scenario_request(next(s for s in predefined_scenarios() if s.name == "tei-html"), project)
     assert request["catalogs"] == [str(library.catalog)] and request["library"] == label
     assert request["xslt"] == str((library.folder / "profiles" / "default" / "html" / "to.xsl").resolve())
     assert request["css"] == str((library.folder / "tei.css").resolve())
@@ -327,6 +442,9 @@ def test_a_customization_imports_the_official_address_of_the_stylesheet():
     assert "<b><xsl:apply-templates/></b>" in comment.text
     latex = etree.fromstring(customization_text("${tei}/profiles/default/latex/to.xsl").encode("utf-8"))
     assert None not in latex.nsmap and "<b>" not in latex.getprevious().text
+    # L'EPUB 3 aussi est du XHTML (V0.9.2.7).
+    epub = etree.fromstring(customization_text("${tei}/profiles/default/epub3/to.xsl").encode("utf-8"))
+    assert epub.nsmap[None] == "http://www.w3.org/1999/xhtml" and "<b>" in epub.getprevious().text
 
 
 def test_the_comment_of_a_customization_is_wrapped_by_display_width():

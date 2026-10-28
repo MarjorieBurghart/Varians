@@ -249,10 +249,15 @@ servent aux scénarios prédéfinis « TEI : … ».
   versions, les versions incomplètes et les dossiers `.tmp-…` sont supprimés
   au lancement suivant (`remove_old_versions`).
 - **Scénarios prédéfinis** (`TEI_SCENARIOS`) : « TEI : HTML », « TEI :
-  texte », « TEI : Markdown », « TEI : LaTeX », Saxon, source `edition`,
-  feuille `${tei}/profiles/default/<format>/to.xsl`, résultat
-  `publications/tei/edition.<ext>` : un dossier à part, pour que `tei.css` ne
-  remplace pas la CSS de l'édition HTML de Varians. Le HTML copie
+  texte », « TEI : Markdown », « TEI : LaTeX », et depuis la V0.9.2.7
+  « TEI : HTML en plusieurs fichiers », « TEI : DOCX (Word) », « TEI : ODT
+  (LibreOffice) », « TEI : EPUB » (voir plus bas), Saxon, source `edition`,
+  feuille `${tei}/profiles/default/<format>/to.xsl`, résultat dans
+  `publications/tei/` : un dossier à part, pour que `tei.css` ne
+  remplace pas la CSS de l'édition HTML de Varians. Dans la liste, ils
+  forment le sous-groupe dépliable « TEI Stylesheets » (`transform_ui`,
+  `is_tei_scenario`, clé `(groupe, rang)` de chaque ligne), et un sous-menu
+  du bouton Transformer. Le HTML copie
   `${tei}/tei.css` et reçoit `cssFile=tei.css`, `cssPrintFile=` (vide) et
   `homeURL=` (vide) : aucun lien vers tei-c.org ni vers « / ». Les quatre
   reçoivent `lang` et `documentationLanguage`, la langue de l'interface
@@ -291,6 +296,64 @@ servent aux scénarios prédéfinis « TEI : … ».
   dernière vérification ; « Rechercher une mise à jour » vérifie aussitôt
   et dit aussi « à jour » ou l'erreur.
 
+## Formats en plusieurs fichiers, pré-passage, édition critique (V0.9.2.7)
+
+- **Paramètres** : Saxon les reçoit sans type (`make_atomic_value("untypedAtomic", …)`),
+  comme sa ligne de commande ; lxml, des chaînes. `xslt_scenarios.substitute`
+  remplace `${pivot}` (`ProjectConfig.base_witness`) et `${tei}/` (adresse
+  `file:` de la bibliothèque) dans leurs valeurs.
+- **Format du résultat** (`TransformScenario.package`, attribut `package`) :
+  `pages`, `docx`, `odt`, `epub` (`xslt_packages`), Saxon seulement (sinon,
+  problème `package_invalid`). `pages` : `STDOUT=false`, `splitLevel=0` par
+  défaut ; le résultat principal prend un autre nom (`.varians-principal…`)
+  pour ne pas gêner `index.html`, qui devient le résultat ; les autres pages
+  suivent les règles habituelles (dossier du résultat, fichiers protégés).
+  Archives : un dossier de travail temporaire, dont l'adresse va au paramètre
+  `word-directory`, `outputDir` ou `directory` ; `prepare` y déballe le
+  modèle des TEI Stylesheets (`package_template`), retire ce que retirent les
+  tâches ant, passe `fixstyle.xsl` (`package_fixstyle`) sur les styles du
+  DOCX ; `copy_images` copie les images locales (`resource{N}.{ext}`) et
+  écrit `image-size-info.xml` (dimensions lues dans l'en-tête PNG, GIF,
+  JPEG ; journal `image_skipped` pour une image distante ou absente). La
+  feuille n'écrit que dans ce dossier (sinon `write_refused`) ; `finish`
+  place le résultat principal (`word/document.xml`, `content.xml`), renomme
+  `docProps/new*.xml`, puis fait l'archive (`mimetype` en tête et non
+  compressé, sans les fichiers de travail), écrite par `_write_outputs`.
+- **Pré-passage** (`TransformScenario.prepare`, attribut `prepare`) : une
+  feuille TEI → TEI appliquée par Saxon à la source avant la feuille du
+  scénario, avec les mêmes paramètres ; son résultat est relu avec l'URI de
+  base de la source. Sans Saxon : problème `prepare_invalid` ; feuille
+  absente : `xslt_missing`. Elle est protégée comme une source.
+- **DOCX et ODT** : pré-passage `${varians}/apparat-en-notes.xsl`,
+  `temoin-de-base=${pivot}` : chaque `<app>` devient sa leçon retenue suivie
+  de `<note place="foot" type="apparatus">` ; note de l'éditeur sans
+  `@place` → `place="end"` ; `<pb>` du témoin → `<seg type="folio">⟨n⟩</seg>`,
+  les autres supprimés ; `<lb>` → espaces (un groupe de `<lb>` contigus est
+  une seule coupure) ; l'espace entre deux éléments va dans un `<seg>`, que
+  les TEI Stylesheets gardent dans Word ; l'appel d'une note suit son mot.
+- **EPUB** : `cssFile=${tei}/tei.css`, `cssPrintFile=${tei}/epub-print.css`
+  (sinon lues sur tei-c.org, que le catalogue ne renvoie pas : https).
+- **HTML en plusieurs fichiers** : `splitLevel=1` dans le scénario (une page
+  par pièce d'un recueil réuni dans une seule division) ; selon les TEI
+  Stylesheets (`tei:keepDivOnPage`), la première division reste sur
+  `index.html` si rien ne la précède.
+- **Édition critique** (`${varians}/edition-critique.xsl`, scénario après
+  « Édition HTML (feuille de Varians) ») : la feuille du kit, retouchée ;
+  ses règles d'apparat sont dans `rendering/apparat-commun.xsl` (module
+  inclus, partagé avec le pré-passage : `f:choix`, `f:lecons` avec les
+  `rdgGrp`, `f:apparat` → map, `f:folio-montre`, `f:lb-groupe`,
+  `f:texte-net`, `f:verifier`). Deux séries par division : apparat
+  (chiffres) et notes, moins nombreuses (lettres :
+  `format-integer(…, 'a')`).
+- **Témoin des feuilles d'apparat** : dans la boîte d'un scénario, la valeur
+  du paramètre `temoin-de-base` (`WITNESS_PARAM`) se choisit dans une liste
+  (`witness_choices` : le pivot, enregistré `${pivot}`, puis les témoins du
+  projet et du `<listWit>` de l'édition ; `aucun`) ; une autre valeur est
+  gardée.
+- **Copie d'une feuille de Varians** (« Ouvrir la feuille ») : avec les
+  feuilles qu'elle inclut ou importe par un chemin relatif
+  (`xslt_scenarios.included_stylesheets`), sans remplacer un fichier.
+
 ## Limites
 
 - XSLT 1.0 (lxml) : un seul fichier de résultat.
@@ -305,8 +368,7 @@ servent aux scénarios prédéfinis « TEI : … ».
   d'attributs sont celles d'XSLT 3.0 ; ni les noms déclarés dans la feuille
   (modèles, modes, clés) ni l'XPath ne sont complétés ; une feuille qui déclare
   un `xml-model` est vérifiée par compilation, non par ce schéma.
-- TEI Stylesheets (V0.9.2.2) : DOCX, ODT et EPUB (une archive à fabriquer)
-  et le HTML en plusieurs fichiers (`splitLevel`) ne sont pas proposés ; le
+- TEI Stylesheets (V0.9.2.2) : le
   LaTeX se compile hors de Varians (xelatex) ; en texte et en Markdown, les
   TEI Stylesheets écrivent le lemme et la variante à la suite. Une seule
   version est installée pour tous les projets : une publication refaite
@@ -329,6 +391,10 @@ TEI Stylesheets (V0.9.2.2) : `tests/test_tei_stylesheets.py`,
 `tests/test_tei_scenarios_saxon.py` (ignoré sans Saxon),
 `tests/gui/test_gui_tei_stylesheets.py`, et des tests dans
 `tests/test_xslt_scenarios.py`, `tests/gui/test_gui_transform_scenarios.py`
-et `tests/gui/test_gui_transform_run.py`. Les tests installent la
+et `tests/gui/test_gui_transform_run.py`. V0.9.2.7 : `tests/test_apparatus_notes_saxon.py`,
+`tests/test_edition_critique_saxon.py` (exemples du kit dans
+`tests/data/edition_critique/`), et des tests dans
+`tests/test_xslt_engine_saxon.py`, `tests/test_tei_scenarios_saxon.py`,
+`tests/test_xslt_scenarios.py`. Les tests installent la
 bibliothèque dans un dossier temporaire de la session
 (`tests/conftest.py`, `tests/gui/conftest.py`).

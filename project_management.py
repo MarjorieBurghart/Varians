@@ -394,9 +394,13 @@ def transformations_element(scenarios) -> ET.Element | None:
             attrs["file"] = scenario.file
         attrs["engine"] = scenario.engine
         attrs["xslt"] = scenario.xslt
+        if scenario.prepare:
+            attrs["prepare"] = scenario.prepare
         if scenario.css:
             attrs["css"] = scenario.css
         attrs["output"] = scenario.output
+        if scenario.package:
+            attrs["package"] = scenario.package
         scenario_el = ET.SubElement(transformations_el, "scenario", attrs)
         for name, value in scenario.params:
             ET.SubElement(scenario_el, "param", {"name": name, "value": value})

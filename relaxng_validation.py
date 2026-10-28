@@ -311,7 +311,9 @@ def _checked(xml_text, schema_path, base_url):
         base = str(Path(base_url).expanduser().resolve()) if base_url else None
         document = etree.fromstring(xml_text.encode("utf-8"), parser=parser, base_url=base)
     except etree.XMLSyntaxError as exc:
-        issues = _unique_issues(exc.error_log or ())
+        # Le journal de l'analyseur : celui de l'exception est le journal
+        # global de lxml, avec les erreurs des analyses précédentes.
+        issues = _unique_issues(parser.error_log or ())
         if not issues:
             issues = (ValidationIssue(
                 line=max(0, int(getattr(exc, "lineno", 0) or 0)),
