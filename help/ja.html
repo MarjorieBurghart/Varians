@@ -247,7 +247,21 @@ xml/sermons/s01.xml, s02.xml, s03.xml …</pre>
 <li><strong>検索と置換</strong>（<kbd>Ctrl+H</kbd>）は XML エディタの下にバーを開きます。フォーカスが断片にあるときは、その検索の下に <strong>置換後</strong> の行を開きます。<strong>置換</strong> は強調表示された一致を置き換えて次へ進み、<strong>すべて置換</strong> は文書全体（または断片全体）を置き換え、1 回の <kbd>Ctrl+Z</kbd> で元に戻せます。検索する文字列は空白も含めて入力どおりに扱われます。置き換えるのは見つかったものだけです。開始タグを置き換えても、その終了タグの名前は変わらず、削除もされません。<kbd>Esc</kbd> でバーを閉じます。</li>
 <li>正規表現では、置換テキストで括弧のグループを使えます：<code>\1</code>、<code>\2</code>…、名前付きグループ <code>(?P&lt;name&gt;…)</code> には <code>\g&lt;name&gt;</code>。<code>\n</code> で改行します。例：<code>wit="#(\w+)"</code> を <code>wit="#\1 #T3"</code> で置き換えると、単一伝本の各異文に T3 が加わります。<code>&lt;(rdg|lem)\b</code> は両方の要素を、<code>&lt;lb n="\d+"/&gt;</code> は番号付きの改行を見つけます。</li>
 <li><strong>XPath 検索</strong>（<kbd>Ctrl+Shift+F</kbd>）：<a href="#xpath">XPath検索</a>を参照。ツールバーのボタン（<strong>XPath</strong>、検索）はそのままです。</li>
-</ul></section>
+</ul><h3 id="regex-syntax">正規表現の早見表</h3><p><strong>.*</strong> のチェックを外すと特殊文字はなく、入力した文字列がそのまま検索されます。</p><table><tr><th>書き方</th><th>意味</th><th>例</th></tr>
+<tr><td><code>.</code></td><td>改行以外の任意の 1 文字</td><td><code>r.g</code>：rdg, reg</td></tr>
+<tr><td><code>\d</code>, <code>\w</code>, <code>\s</code></td><td>数字 1 文字、文字・数字・「_」の 1 文字、空白 1 文字（スペース、タブ、改行）</td><td><code>n="\d+"</code>：n="12"</td></tr>
+<tr><td><code>\D</code>, <code>\W</code>, <code>\S</code></td><td>その反対：数字・文字・空白以外</td><td><code>\S+</code>：句読点を含む語</td></tr>
+<tr><td><code>[abc]</code>, <code>[a-z]</code>, <code>[^&lt;]</code></td><td>リストのうちの 1 文字、範囲のうちの 1 文字、<code>&lt;</code> 以外の任意の 1 文字</td><td><code>[uv]ox</code>：uox, vox</td></tr>
+<tr><td><code>*</code></td><td>直前の要素の 0 回以上の繰り返し</td><td><code>&lt;lb[^&gt;]*/&gt;</code></td></tr>
+<tr><td><code>+</code></td><td>直前の要素の 1 回以上の繰り返し</td><td><code>\d+r</code>：12r, 266r</td></tr>
+<tr><td><code>?</code></td><td>直前の要素の 0 回または 1 回</td><td><code>mic?hi</code>：mihi, michi</td></tr>
+<tr><td><code>{2}</code>, <code>{2,4}</code></td><td>ちょうど 2 回、2 回から 4 回</td><td><code>\d{2,4}</code></td></tr>
+<tr><td><code>*?</code>, <code>+?</code></td><td>できるだけ短い繰り返し（指定しなければ、できるだけ長い繰り返し）</td><td><code>&lt;rdg.*?&lt;/rdg&gt;</code>：異文を 1 つずつ</td></tr>
+<tr><td><code>a|b</code></td><td>a または b</td><td><code>&lt;(rdg|lem)\b</code></td></tr>
+<tr><td><code>(…)</code></td><td>グループ。置換テキストで <code>\1</code>、<code>\2</code>… として再利用</td><td><code>wit="#(\w+)"</code></td></tr>
+<tr><td><code>^</code>, <code>$</code></td><td>行の先頭、行の末尾</td><td><code>^\s*&lt;lb</code></td></tr>
+<tr><td><code>\b</code></td><td>語の境界</td><td><code>\bet\b</code>：et, ただし次は除く： etiam</td></tr>
+<tr><td><code>\.</code>, <code>\(</code>, <code>\[</code>, <code>\\</code></td><td>その文字自体：<code>. * + ? ( ) [ ] { } | ^ $ \</code> は特殊文字なので、前に <code>\</code> を付けます</td><td><code>f\. \d+</code>：f. 12</td></tr></table><p>これは Python の正規表現です。詳しいドキュメント：<a href="https://docs.python.org/3/library/re.html">docs.python.org/3/library/re.html</a>。</p></section>
 <section id="v0900"><h2>バージョン 0.9.0.0 — 組み立てられた版（XInclude）</h2><p>版は XInclude で部分を取り込めるようになりました。各部分には専用のタブがあり、検証は組み立てられた版を対象として各エラーのファイルを示し、参照と補完は部分をまたいで働きます。<a href="#xinclude">組み立てられた版（XInclude）</a>を参照してください。このような版では伝本の同期は一時停止中です。<code>xi:include</code> のないプロジェクト、そのデータ、<code>project.xml</code> の形式は変わりません。</p></section>
 <section id="v0910"><h2>バージョン 0.9.1.0 — 部分をまたぐ伝本の同期</h2><p>XInclude で組み立てた版でも、伝本が再び同期するようになりました。ピボットの行は組み立てられた版の順に数えられ、部分のカーソルに伝本が追従し、ピボットからその行を含む部分が開きます。部分を表示している間も伝本は表示されたままで、「ページをマーク」と「見開き設定…」も使えます。<a href="#xinclude">組み立てられた版（XInclude）</a>を参照してください。<code>xi:include</code> のないプロジェクト、そのデータ、<code>project.xml</code> の形式は変わりません。</p></section>
 <section id="v0911"><h2>バージョン 0.9.1.1 — 別に同期されるテキスト</h2><p>部分に分かれた版で、整列フォルダー（<code>alignments/s02/</code>、伝本ごとに 1 つの JSON）を持つテキストは別に同期されます。<code>project.xml</code> が宣言すれば独自のピボットも使えます（<code>&lt;part name="s02" base="B"/&gt;</code>）。このテキストの JSON がない伝本は、そのパネルでそれを示します。部分に分かれた版の準備は手引きで説明しています：<a href="#xinclude-guide">部分に分かれた版を準備する</a>を参照してください。テキストごとのフォルダーがないプロジェクトは変わりません。</p></section>

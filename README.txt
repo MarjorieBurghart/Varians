@@ -20,7 +20,9 @@ VARIANS V0.9.2.8 — MENUS ÉDITER ET RECHERCHER, CHERCHER ET REMPLACER
   compris ; remplacer une balise ouvrante ne touche pas sa fermante.
 • Correction : l'occurrence trouvée est surlignée exactement, même après
   un caractère au-delà de U+FFFF.
-• Voir l'aide (Rechercher et remplacer).
+• Voir l'aide (Rechercher et remplacer), avec un aide-mémoire des
+  expressions régulières (., \d, \w, [...], *, +, ?, {2,4}, *?, |, (...),
+  ^, $, \b, échappement par \) et des exemples pour la TEI.
 
 VARIANS V0.9.2.7 — DOCX, ODT, EPUB, HTML EN PLUSIEURS FICHIERS, ÉDITION CRITIQUE
 

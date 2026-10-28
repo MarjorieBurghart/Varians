@@ -659,3 +659,20 @@ def test_each_help_names_indent_as_a_command_of_the_edit_menu():
         heading = page.index('<h2 id="formatage">' if language == "fr" else '<h2 id="formatting">')
         assert command in page[heading:page.index("<h2", heading + 1)], language
         assert f"<strong>{catalog['toolbar.format_xml']}</strong>" not in page, language
+
+
+def test_each_help_has_a_quick_reference_of_regular_expressions():
+    """V0.9.2.8 : la syntaxe des expressions régulières, dans un tableau de
+    la section « Rechercher et remplacer »."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        assert '<h3 id="regex-syntax">' in section and "<table>" in section, language
+        table = section[section.index('<h3 id="regex-syntax">'):]
+        for text in ("<code>.</code>", "<code>\\d</code>", "<code>\\w</code>", "<code>\\s</code>",
+                     "<code>[^&lt;]</code>", "<code>*</code>", "<code>+</code>", "<code>?</code>",
+                     "<code>{2,4}</code>", "<code>*?</code>", "<code>a|b</code>", "<code>(…)</code>",
+                     "<code>^</code>", "<code>$</code>", "<code>\\b</code>", "<code>\\.</code>",
+                     "<code>mic?hi</code>", "<code>[uv]ox</code>",
+                     'href="https://docs.python.org/3/library/re.html"'):
+            assert text in table, (language, text)
