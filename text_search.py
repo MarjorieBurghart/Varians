@@ -98,6 +98,36 @@ def replacements(text: str, query: str, template: str,
             for match in pattern.finditer(text) if match.end() > match.start()]
 
 
+_BLANKS = re.compile(r"\s+")
+
+
+@dataclass(frozen=True)
+class Kwic:
+    """Une occurrence ``text[start:end]`` en contexte (keyword in context) :
+    sa ligne (à partir de 1) et, sur une seule ligne, le texte avant, le
+    résultat et le texte après."""
+    start: int
+    end: int
+    line: int
+    before: str
+    match: str
+    after: str
+
+
+def kwic(text: str, spans, width: int = 40) -> list[Kwic]:
+    """Les occurrences *spans* de *text* en contexte : au plus *width*
+    caractères avant et après ; les blancs, sauts de ligne compris,
+    deviennent une espace."""
+    newlines = [match.start() for match in re.finditer("\n", text)]
+    rows = []
+    for start, end in spans:
+        before = _BLANKS.sub(" ", text[max(0, start - 4 * width):start])[-width:] if width else ""
+        after = _BLANKS.sub(" ", text[end:end + 4 * width])[:width]
+        rows.append(Kwic(start, end, bisect_left(newlines, start) + 1, before,
+                         _BLANKS.sub(" ", text[start:end]), after))
+    return rows
+
+
 class Utf16Positions:
     """Positions Python ↔ positions Qt (UTF-16) dans *text*."""
 

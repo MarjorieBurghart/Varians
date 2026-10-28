@@ -86,3 +86,18 @@ def test_python_and_qt_positions_differ_after_a_character_beyond_u_ffff():
     assert [positions.python(q) for q in (0, 1, 3, 4, 6, 7)] == [0, 1, 2, 3, 4, 5]
     plain = Utf16Positions("abc")
     assert (plain.qt(2), plain.python(2)) == (2, 2)
+
+
+def test_each_occurrence_has_its_line_and_its_context_on_one_line():
+    from text_search import kwic
+    text = "alpha\n  beta gamma\ndelta beta"
+    rows = kwic(text, find_spans(text, "beta", LITERAL), width=8)
+    assert [(row.line, row.before, row.match, row.after) for row in rows] == [
+        (2, "alpha ", "beta", " gamma d"),
+        (3, "a delta ", "beta", ""),
+    ]
+    assert (rows[0].start, rows[0].end) == (8, 12)
+    # Une occurrence sur deux lignes tient sur une seule.
+    row = kwic("xa\n   b y", find_spans("xa\n   b y", r"a\s+b", REGEX))[0]
+    assert (row.line, row.before, row.match, row.after) == (1, "x", "a b", " y")
+    assert kwic("abc", []) == []
