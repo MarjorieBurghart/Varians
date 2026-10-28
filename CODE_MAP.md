@@ -23,6 +23,8 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Bouton au livre : mener l'édition ou feuilleter (V0.9.2.8.1) | `manuscript_panel.py`, `witness_workspace.py`, `resources/icons/feuilleter.svg` | `gui/test_gui_witness_lead.py` |
 | Choix de l'élément de Ctrl+E (V0.9.2.8.1) | `completion_ui.CompletionDialog` | `gui/test_gui_ctrl_e_choice.py` |
 | Sigle et identifiant d'un témoin (V0.9.2.8.2) | `witness_ids.py`, `project_config.py`, `project_management.py`, `project_dialogs.py` | `test_witness_siglum.py`, `test_witness_siglum_outputs.py`, `gui/test_gui_witness_siglum.py`, `gui/test_gui_witness_siglum_display.py` |
+| Témoin ajouté déclaré dans la `<listWit>` (V0.9.2.8.2) | `tei_listwit.py`, `project_actions.project_settings_dialog` | `test_listwit_witnesses.py`, `gui/test_gui_listwit_on_add.py` |
+| Marquer la page : tout identifiant XML (V0.9.2.8.2) | `tei_facsimile.valid_xml_id`, `safe_id_component`, `apparatus_xpath` | `test_mark_page_xml_ids.py` |
 | Crayon ✎ et F2 de la vue XSLT / CSS (V0.9.2.8.2) | `formatted_view.py` | `gui/test_gui_pencil_selection.py` |
 | Contenu des publications (V0.9.2.8.2) | `.gitattributes`, `tests/data/exemple`, `web_viewer/generator.py` | `test_release_contents.py` |
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
@@ -334,4 +336,6 @@ Fonctionnement : aide, « Sigle et identifiant d'un témoin » (`witness-siglum`
 - Affichage : `MainWindow.witness_sigla`, `witness_siglum()` (barre d'état, structure, diagnostic, témoin détaché, menus, `transform_ui`, `apparatus_ui` avec `sigla`) ; `WitnessDiagnostic.siglum`.
 - Sorties : `f:sigle` dans `rendering/apparat-commun.xsl` (Édition critique, apparat en notes), modèle `sigles` dans `rendering/tei-to-html.xsl` ; `legacy_v11_core.extract_witness_labels` laisse l'`<idno>` de côté ; viewer : `siglum` dans les données d'un témoin s'il diffère, `siglumOf` dans les messages. `diagnostic_rows` accepte le sigle dans `meta.witness` et `meta.base_witness`.
 - `formatted_view` : `ClickablePreview.mousePressEvent` retient la sélection au clic sur le crayon (`take_selection_before_pencil`) ; `edit_paragraph_action` (F2, `WidgetShortcut` sur l'aperçu), `edit_selected_paragraph`, `_edit_paragraph` (ne recharge pas un fragment modifié).
+- `tei_listwit.py` (nouveau, sans Qt) : `add_witnesses_to_listwit` (insertion textuelle à la fin de la première `<listWit>` de l'en-tête, style et préfixe conservés ; compte rendu `ListWitReport` : `added`, `declared`, `id_used`, `no_listwit`, `malformed`), `add_witnesses_to_listwit_file` (octets, `.bak`) ; appelé par `project_settings_dialog` pour les témoins nouveaux, messages `project.listwit.*`.
+- `tei_facsimile.valid_xml_id` = `witness_ids.is_xml_id` (NCName, toutes écritures) ; `safe_id_component` garde les caractères permis (« Σ-p0001 ») ; `apparatus_xpath._cites` suit la même règle.
 - Projet de test dans `tests/data/exemple` (`corpus_data.copy_example`) ; `.gitattributes` : `/tests export-ignore` ; `MainWindow(project_path)` sans projet par défaut ; `web_viewer.generator.main([])` rend 2.

@@ -521,7 +521,13 @@ le même identifiant. Sans `siglum`, le sigle est l'identifiant : un projet
 existant ne change pas. Le libellé vide prend le sigle.
 
 Dans l'édition créée avec le projet, un tel témoin porte son sigle dans un
-`<idno type="siglum">`, que lisent les feuilles livrées et le viewer web :
+`<idno type="siglum">`, que lisent les feuilles livrées et le viewer web.
+Un témoin ajouté plus tard dans les paramètres du projet reçoit le même
+`<witness>` à la fin de la première `<listWit>` de l'en-tête de l'édition
+(`tei_listwit.add_witnesses_to_listwit_file`, copie `.bak`), si elle
+existe : Varians n'en crée jamais. Un témoin déjà déclaré n'est pas répété,
+un identifiant porté par un autre élément n'est pas employé, une édition
+mal formée n'est pas touchée :
 
 ```xml
 <witness xml:id="_1760"><idno type="siglum">1760</idno>Troyes 1760</witness>

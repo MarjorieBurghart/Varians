@@ -12,6 +12,16 @@ VARIANS V0.9.2.8.2 — SIGLES DES TÉMOINS, CRAYON ET F2, PROJET DE TEST
   viewer web montrent ce sigle à la place de l'identifiant. Deux sigles
   qui donnent le même identifiant sont refusés. Un projet existant ne
   change pas.
+• Un témoin ajouté dans Fichier ▸ Paramètres du projet reçoit son
+  <witness> (et, s'il y a lieu, son <idno type="siglum">) à la fin de la
+  <listWit> existante de l'édition, dans le style de celle-ci, avec une
+  copie .bak. Varians ne crée jamais de <listWit> : sans elle, l'édition
+  ne change pas. La boîte « paramètres enregistrés » dit ce qui a été
+  ajouté, ou pourquoi rien ne l'a été.
+• Marquer la page (et la couche <facsimile>, le découpage des folios, la
+  préparation du pivot) accepte tout identifiant XML, en toute écriture
+  (« Σ », « 伝本 ») ; l'identifiant de surface proposé garde ces
+  caractères (« Σ-p0001 »). Débugger l'apparat suit la même règle.
 • Vue XSLT / CSS : le crayon ✎ garde la sélection en cours de l'aperçu ;
   si elle est dans son paragraphe, elle est aussi sélectionnée dans
   l'éditeur de fragment. F2, dans l'aperçu, ouvre le paragraphe de la

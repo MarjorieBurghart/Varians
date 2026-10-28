@@ -799,7 +799,7 @@ def test_each_help_explains_the_witness_siglum():
         assert page.index(projects) < start < page.index("<h2", page.index(projects) + 1), language
         block = page[start:page.index("<h2", start)]
         for text in ("<code>_1760</code>", "<code>T_2</code>", "<code>siglum</code>", "&lt;idno type=\"siglum\"&gt;",
-                     "#_1760", catalog["menu.project_settings"]):
+                     "#_1760", catalog["menu.project_settings"], "<code>&lt;listWit&gt;</code>"):
             assert text in block, (language, text)
 
 
@@ -818,6 +818,7 @@ def test_each_help_announces_version_09282():
     for language in LANGUAGES:
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
         version = _help_section(page, "v09282")
-        for text in ('href="#witness-siglum"', 'href="#fragment-selection"', "<kbd>F2</kbd>", "<code>siglum</code>"):
+        for text in ('href="#witness-siglum"', 'href="#fragment-selection"', "<kbd>F2</kbd>", "<code>siglum</code>",
+                     "<code>&lt;listWit&gt;</code>", "Σ"):
             assert text in version, (language, text)
         assert page.index('<section id="v09281">') < page.index('<section id="v09282">'), language
