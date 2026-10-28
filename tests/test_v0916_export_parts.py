@@ -52,8 +52,8 @@ def test_the_text_of_every_part_is_exported(sermons):
     text = _text(data)
     for words in ("Sermo in adventu Domini", "Puer natus est nobis", "Surrexit Dominus vere", "exemplum"):
         assert words.lower() in text.lower(), words
-    sermon_ids = [b["attrs"]["xml_id"] for b in data["document"]["blocks"] if b["type"] == "sermon"]
-    assert [i for i in sermon_ids if i in ("s01", "s02", "s03", "s04")] == ["s01", "s02", "s03", "s04"]
+    div_ids = [b["attrs"]["id"] for b in data["document"]["blocks"] if b["type"] == "div"]
+    assert [i for i in div_ids if i in ("s01", "s02", "s03", "s04")] == ["s01", "s02", "s03", "s04"]
     assert data["meta"]["assembled"] is True and data["meta"]["assembly_problems"] == []
 
 

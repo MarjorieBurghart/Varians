@@ -238,6 +238,72 @@ def notes_inside(el: ET.Element):
 
 LACUNA_TAGS = ("lacunaStart", "lacunaEnd")
 
+# Texte de lecture (V0.9.3.0) : blocs affichés par le viewer. Un bloc « div »
+# marque le début d'une division ; il n'a pas de texte.
+RENDERED_BLOCKS = frozenset({"p", "head", "l", "item", "cell", "caption", "note"})
+DIVISION_TAGS = frozenset({"div", "div1", "div2", "div3", "div4", "div5", "div6", "div7"})
+# Repères posés entre deux blocs : ils ne font pas de bloc à eux seuls.
+MILESTONE_TAGS = frozenset({"pb", "lb", "cb", "milestone", "anchor"})
+# Éléments qui sortent d'un paragraphe ou d'une entrée de liste pour être
+# affichés à part ; la suite du bloc est un bloc marqué « cont ».
+SPLIT_TAGS = frozenset({"list", "table", "figure", "lg"})
+# Contenu de phrase : un élément inconnu, posé entre deux blocs, qui ne
+# contient que cela est lu comme un paragraphe ; sinon, comme un conteneur.
+PHRASE_TAGS = frozenset({
+    "hi", "emph", "foreign", "term", "gloss", "title", "name", "persName", "placeName", "orgName",
+    "geogName", "roleName", "forename", "surname", "addName", "rs", "date", "time", "num", "measure",
+    "quote", "q", "said", "cit", "ref", "ptr", "bibl", "author", "biblScope", "pubPlace", "publisher",
+    "app", "lem", "rdg", "rdgGrp", "witDetail", "wit", "choice", "sic", "corr", "orig", "reg", "abbr",
+    "expan", "am", "ex", "add", "del", "subst", "mod", "restore", "surplus", "supplied", "unclear",
+    "damage", "gap", "space", "handShift", "note", "seg", "w", "pc", "c", "g", "index", "mentioned",
+    "soCalled", "distinct", "metamark", "lacunaStart", "lacunaEnd", *MILESTONE_TAGS,
+})
+
+
+def reading_texts(root: ET.Element):
+    """Les ``<text>`` les plus externes du document, dans l'ordre (ceux d'un
+    ``<teiCorpus>`` compris) ; à défaut, son premier ``<body>``."""
+    found = []
+
+    def visit(node):
+        tag = lname(node.tag)
+        if tag == "teiHeader":
+            return
+        if tag == "text":
+            found.append(node)
+            return
+        for child in node:
+            visit(child)
+
+    visit(root)
+    if not found:
+        body = next((e for e in root.iter() if lname(e.tag) == "body"), None)
+        found = [body] if body is not None else []
+    return found
+
+
+def _phrase_only(node) -> bool:
+    """Vrai si ``node`` ne contient que du contenu de phrase (``PHRASE_TAGS``) ;
+    le contenu d'une note n'est pas examiné."""
+    for child in node:
+        tag = lname(child.tag)
+        if tag not in PHRASE_TAGS or (tag != "note" and not _phrase_only(child)):
+            return False
+    return True
+
+
+def _span(value) -> int | None:
+    """``@cols`` ou ``@rows`` d'une cellule, s'il vaut plus de 1."""
+    value = (value or "").strip()
+    return int(value) if value.isdigit() and int(value) > 1 else None
+
+
+def list_is_numbered(node) -> bool:
+    """Même règle que les feuilles livrées : ``@rend`` contient « numbered »,
+    ou ``@type`` vaut « ordered » ou « numbered »."""
+    return ("numbered" in (node.attrib.get("rend") or "").split()
+            or (node.attrib.get("type") or "").strip() in ("ordered", "numbered"))
+
 
 def lacuna_witnesses(root: ET.Element) -> dict:
     """``{id(élément): témoins}`` des ``<lacunaStart/>`` et ``<lacunaEnd/>``
@@ -294,8 +360,8 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
     root, lb_anchor_lookup, segment_of, target_of = _reading_options(
         path, target, base_line_keys, root, line_anchors, segment_of, target_of)
     witness_labels = extract_witness_labels(root)
-    body = next((e for e in root.iter() if lname(e.tag) == "body"), None)
-    if body is None:
+    texts = reading_texts(root)
+    if not texts:
         raise ValueError(f"Aucun <body> TEI trouvé dans {path}")
 
     pages = OrderedDict()
@@ -465,8 +531,9 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
                 else:
                     ensure_run("text", child.tail)
 
-    # La fonction est définie plus bas mais résolue au moment de l'exécution.
-    walk(body)
+    # Tous les textes : <front>, <body> et <back>, ceux d'un <group> compris.
+    for text in texts:
+        walk(text)
 
     # Nettoyage des lignes pour l'alignement + nettoyage minimal des runs.
     for page_lines in pages.values():
@@ -1154,6 +1221,22 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     ``pivot_lines`` sur le bureau : le parcours d'un témoin par pages en a
     besoin, car un ``<pb>`` placé juste après un ``<lb/>`` précède le texte
     de cette ligne.
+
+    Blocs (V0.9.3.0) : tous les textes sont lus (``reading_texts``). Chaque
+    division (``<div>``, ``<front>``, ``<back>``, texte d'un ``<group>``)
+    est un bloc ``div`` : ``id`` (son ``@xml:id``, sinon un identifiant
+    produit), ``level``, ``part`` (``front``, ``back``), ``label`` (le
+    texte de son premier ``<head>``, sinon son ``@n``) et ``title`` (son
+    ``@n``, s'il n'a pas de ``<head>``). Les blocs rendus
+    (``RENDERED_BLOCKS``) : ``head`` (``div_title`` pour le titre d'une
+    division, ``table`` pour celui d'un tableau), ``p`` (``<p>``, ``<ab>``,
+    contenu de phrase entre deux blocs), ``l`` (``n``, ``group`` : le rang
+    de son ``<lg>``), ``item`` (``list``, ``numbered``, ``depth``,
+    ``label``), ``cell`` (``table``, ``row``, ``label``, ``cols``,
+    ``rows``), ``caption`` (``<figDesc>``) et ``note`` (note posée entre
+    deux blocs). Une liste, un tableau, une figure ou une strophe sortent du
+    paragraphe ou de l'entrée qui les contient ; la suite en est un bloc
+    marqué ``cont``.
     """
     # The very same ordinal-to-JSON association that drives desktop cursor
     # navigation. PageResolver remains relevant for page-only witnesses, but
@@ -1161,11 +1244,14 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     root, lb_anchor_lookup, segment_of, target_of = _reading_options(
         path, target, base_line_keys, root, line_anchors, segment_of, target_of)
     witness_labels = extract_witness_labels(root)
-    body = next((e for e in root.iter() if lname(e.tag) == "body"), None)
-    if body is None:
+    texts = reading_texts(root)
+    if not texts:
         raise ValueError(f"Aucun <body> TEI trouvé dans {path}")
     # Lacunes (V0.9.1.6) : un repère invisible par balise, à sa place.
-    lacunae = lacuna_witnesses(body)
+    lacunae = {}
+    for text in texts:
+        lacunae.update(lacuna_witnesses(text))
+    taken_ids = {e.attrib.get(XML_ID) for e in root.iter()}
 
     blocks = []
     annotations = {}
@@ -1179,6 +1265,10 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         "pending_lb_sep": None,
         "seg": 0,
         "line_key_by_seg": {},
+        # Dans une strophe, une liste, un tableau ou une figure, ce qui tombe
+        # entre deux blocs (<pb/>, lacune…) reste dans le bloc précédent.
+        "sticky": False,
+        "divs": 0, "lists": 0, "tables": 0, "groups": {}, "list_depth": 0,
     }
 
     def enter(node):
@@ -1206,10 +1296,13 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     def start_block(kind="p", attrs=None):
         block = {"type": kind, "attrs": attrs or {}, "segments": []}
         blocks.append(block)
+        state["pending_lb_sep"] = None
         return block
 
     def ensure_block():
-        if state["block"] is None:
+        # Un bloc déjà suivi d'autres blocs n'est plus le bloc courant : ce
+        # qui vient ensuite irait sinon avant eux.
+        if state["block"] is None or blocks[-1] is not state["block"]:
             state["block"] = start_block("p")
         return state["block"]
 
@@ -1459,79 +1552,267 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             if child.tail:
                 add_text(child.tail, new_styles, variant_id=variant_id)
 
-    def walk_container(node):
-        tag = lname(node.tag)
+    def new_div_id():
+        while True:
+            state["divs"] += 1
+            candidate = f"div-{state['divs']}"
+            if candidate not in taken_ids:
+                taken_ids.add(candidate)
+                return candidate
+
+    def finish_block(block, old):
+        """Après un bloc : dans un conteneur « collant », il reste le bloc
+        courant ; ailleurs, le bloc courant redevient ``old``."""
+        state["block"] = block if state["sticky"] else old
+
+    def walk_block(node, kind, attrs=None, split=(), level=0):
+        """``node`` devient un bloc ``kind``. Ses enfants de ``split`` en
+        sortent pour être affichés à part ; la suite est un bloc ``kind``
+        marqué ``cont``. Renvoie le premier bloc."""
+        old = state["block"]
+        first = block = state["block"] = start_block(kind, attrs)
         enter(node)
-        if tag in LACUNA_TAGS:
-            add_lacuna(node)
-            return
-        if tag == "div":
-            # Chaque div portant xml:id correspond ici à un sermon distinct.
-            # On insère un bloc structurel autonome : il ne modifie pas le texte
-            # ni l'alignement des <lb>, mais permet au HTML de marquer nettement
-            # le début du sermon.
-            sermon_id = node.attrib.get(XML_ID)
-            if sermon_id:
-                blocks.append({
-                    "type": "sermon",
-                    "attrs": {
-                        "xml_id": sermon_id,
-                        "display_id": sermon_id.replace("_", " "),
-                    },
-                    "segments": [],
-                })
-            if node.text and node.text.strip():
-                add_text(node.text, [])
-            for child in list(node):
-                walk_container(child)
-                enter(node)
-                if child.tail and child.tail.strip():
-                    add_text(child.tail, [])
-            return
-        if tag in {"p", "head", "item", "l"}:
-            old = state["block"]
-            kind = "head" if tag == "head" else ("item" if tag == "item" else "p")
-            state["block"] = start_block(kind, dict(node.attrib))
-            walk(node, styles=[])
-            state["block"] = old
-            return
-        if tag == "pb":
-            walk(node, styles=[])
-            return
+        styles = style_for(node, [])
+        if node.text:
+            add_text(node.text, styles)
+        for child in list(node):
+            if lname(child.tag) in split:
+                sticky = state["sticky"]
+                state["sticky"] = False
+                walk_container(child, level, node)
+                state["sticky"] = sticky
+                block = state["block"] = start_block(kind, dict(attrs or {}, cont=True))
+            else:
+                walk(child, styles=styles)
+            enter(node)
+            if child.tail:
+                add_text(child.tail, styles)
+        finish_block(block, old)
+        return first
+
+    def walk_inline_block(node, kind="p"):
+        """``node`` et son contenu de phrase forment un bloc ``kind`` : une
+        note y est un repère, une référence une identification éditoriale."""
+        old = state["block"]
+        block = state["block"] = start_block(kind)
+        walk(node, styles=[])
+        finish_block(block, old)
+
+    def walk_children(node, level, sticky=False, special=None):
+        """Enfants d'un conteneur ; ``special(enfant)`` en traite certains."""
+        old_block, old_sticky = state["block"], state["sticky"]
+        state["sticky"] = sticky
         if node.text and node.text.strip():
             add_text(node.text, [])
         for child in list(node):
-            walk_container(child)
+            if special is None or not special(child):
+                walk_container(child, level, node)
             enter(node)
             if child.tail and child.tail.strip():
                 add_text(child.tail, [])
+        state["block"], state["sticky"] = old_block, old_sticky
 
-    for child in list(body):
-        walk_container(child)
-        enter(body)
+    def walk_division(node, level, part=None):
+        attrs = {"id": node.attrib.get(XML_ID) or new_div_id(), "level": level}
+        if part:
+            attrs["part"] = part
+        blocks.append({"type": "div", "attrs": attrs, "segments": []})
+        head = next((child for child in node if lname(child.tag) == "head"), None)
 
-    # Les blocs autres que « p » ne sont pas rendus : leurs repères de lacune
-    # passent au début du bloc « p » suivant (sinon à la fin du précédent).
+        def title(child):
+            if child is not head:
+                return False
+            block = walk_block(child, "head", {"div_title": True}, level=level)
+            label = clean_text("".join(seg.get("text", "") for seg in block["segments"] if seg["kind"] == "text"))
+            if label:
+                attrs["label"] = label
+            return True
+
+        walk_children(node, level, special=title)
+        n = clean_text(node.attrib.get("n") or "")
+        if "label" not in attrs and n:
+            attrs["title"] = attrs["label"] = n
+
+    def walk_lg(node, level):
+        def special(child):
+            tag = lname(child.tag)
+            if tag == "head":
+                walk_block(child, "head", level=level)
+            elif tag == "l":
+                walk_line(child, node, level)
+            elif tag == "lg":
+                walk_lg(child, level)
+            else:
+                return False
+            return True
+
+        walk_children(node, level, sticky=True, special=special)
+
+    def walk_line(node, parent, level):
+        groups = state["groups"]
+        attrs = {"group": groups.setdefault(id(parent), len(groups) + 1)}
+        n = clean_text(node.attrib.get("n") or "")
+        if n:
+            attrs["n"] = n
+        walk_block(node, "l", attrs, level=level)
+
+    def walk_list(node, level):
+        state["lists"] += 1
+        depth = state["list_depth"] = state["list_depth"] + 1
+        attrs = {"list": state["lists"], "numbered": list_is_numbered(node), "depth": depth}
+
+        def special(child):
+            tag = lname(child.tag)
+            if tag == "head":
+                walk_block(child, "head", level=level)
+            elif tag == "item":
+                walk_block(child, "item", dict(attrs), split=SPLIT_TAGS, level=level)
+            elif tag == "label":
+                walk_block(child, "item", dict(attrs, label=True), level=level)
+            else:
+                return False
+            return True
+
+        walk_children(node, level, sticky=True, special=special)
+        state["list_depth"] = depth - 1
+
+    def walk_table(node, level):
+        state["tables"] += 1
+        table = state["tables"]
+        rows = 0
+
+        def cell(child, row):
+            if lname(child.tag) != "cell":
+                return False
+            attrs = {"table": table, "row": rows}
+            if (child.attrib.get("role") or row.attrib.get("role")) == "label":
+                attrs["label"] = True
+            for name in ("cols", "rows"):
+                span = _span(child.attrib.get(name))
+                if span:
+                    attrs[name] = span
+            walk_block(child, "cell", attrs, level=level)
+            return True
+
+        def special(child):
+            nonlocal rows
+            tag = lname(child.tag)
+            if tag == "head":
+                walk_block(child, "head", {"table": table}, level=level)
+            elif tag == "row":
+                rows += 1
+                walk_children(child, level, sticky=True, special=lambda c: cell(c, child))
+            else:
+                return False
+            return True
+
+        walk_children(node, level, sticky=True, special=special)
+
+    def walk_figure(node, level):
+        def special(child):
+            if lname(child.tag) != "head":
+                return False
+            walk_block(child, "head", level=level)
+            return True
+
+        walk_children(node, level, sticky=True, special=special)
+
+    def walk_container(node, level=0, parent=None):
+        tag = lname(node.tag)
+        enter(node)
+        if tag == "teiHeader":
+            return
+        if tag in LACUNA_TAGS:
+            add_lacuna(node)
+            return
+        if tag in MILESTONE_TAGS:
+            walk(node, styles=[])
+            return
+        if tag in DIVISION_TAGS:
+            walk_division(node, level + 1)
+        elif tag in ("front", "back"):
+            walk_division(node, level + 1, part=tag)
+        elif tag == "text" and parent is not None and lname(parent.tag) == "group":
+            walk_division(node, level + 1)
+        elif tag in ("text", "body", "group"):
+            walk_children(node, level)
+        elif tag in ("p", "ab"):
+            walk_block(node, "p", dict(node.attrib), split=SPLIT_TAGS, level=level)
+        elif tag == "head":
+            walk_block(node, "head", level=level)
+        elif tag == "l":
+            walk_line(node, parent, level)
+        elif tag == "lg":
+            walk_lg(node, level)
+        elif tag == "list":
+            walk_list(node, level)
+        elif tag == "item":
+            walk_block(node, "item", {"list": 0, "numbered": False, "depth": max(1, state["list_depth"])},
+                       split=SPLIT_TAGS, level=level)
+        elif tag == "table":
+            walk_table(node, level)
+        elif tag == "figure":
+            walk_figure(node, level)
+        elif tag == "figDesc":
+            walk_block(node, "caption", level=level)
+        elif tag == "note":
+            walk_inline_block(node, "note")
+        elif _phrase_only(node):
+            # Contenu de phrase entre deux blocs (citation, <cit>, <app>…) : un paragraphe.
+            walk_inline_block(node)
+        elif tag == "app":
+            walk_structural_app(node, level)
+        else:
+            # Conteneur inconnu (<quote> de paragraphes, <titlePage>, <sp>…).
+            walk_children(node, level)
+
+    def walk_structural_app(node, level):
+        """``<app>`` dont la leçon retenue contient des blocs : ses blocs, puis
+        le repère de la variante."""
+        selected = choose_app_reading(node)
+        if selected is None:
+            return
+        aid = new_ann_id("v")
+        ann = {
+            "id": aid, "kind": "variant",
+            "selected": flatten_editorial_text(selected, include_notes=False, include_refs=False),
+            "target": target_of(node).lstrip("#"), "readings": describe_app(node),
+        }
+        annotations[aid] = ann
+        for other in node:
+            if other is not selected:
+                add_lacunae_in(other)
+        walk_children(selected, level)
+        enter(node)
+        add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
+
+    for text in texts:
+        walk_container(text)
+
+    # Les blocs non rendus ne gardent pas de repère de lacune : ils passent au
+    # début du bloc rendu suivant (sinon à la fin du précédent).
     pending = []
-    last_p = None
+    last_rendered = None
     for b in blocks:
-        if b.get("type") == "p":
+        if b.get("type") in RENDERED_BLOCKS:
             if pending:
                 b["segments"][0:0] = pending
                 pending = []
-            last_p = b
+            last_rendered = b
         elif b.get("segments"):
             moved = [seg for seg in b["segments"] if seg.get("kind") == "lacuna"]
             if moved:
                 b["segments"] = [seg for seg in b["segments"] if seg.get("kind") != "lacuna"]
                 pending.extend(moved)
-    if pending and last_p is not None:
-        last_p["segments"].extend(pending)
+    if pending and last_rendered is not None:
+        last_rendered["segments"].extend(pending)
 
-    # Élimine les blocs ne contenant que du blanc / un marqueur de page isolé sans texte utile.
+    # Élimine les blocs ne contenant que du blanc / un marqueur de page isolé
+    # sans texte utile ; les divisions et les cellules (vides comprises) restent.
     cleaned = []
     for b in blocks:
-        if b.get("type") == "sermon" or any(seg.get("kind") != "text" or seg.get("text", "").strip() for seg in b["segments"]):
+        if b.get("type") in ("div", "cell") or any(seg.get("kind") != "text" or seg.get("text", "").strip()
+                                                    for seg in b["segments"]):
             cleaned.append(b)
     return {"blocks": cleaned, "annotations": annotations}
 

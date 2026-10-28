@@ -6,7 +6,11 @@ La V0.9.1.6 apprend à l'export les éditions en parties (XInclude), les textes
 synchronisés à part, les lacunes et l'ordre propre des manuscrits. Pour une
 édition en un seul fichier, sans lacunes, rien ne doit changer : l'empreinte
 des données du projet exemple a été relevée avant ces changements. Elle ne
-change que par une décision explicite."""
+change que par une décision explicite.
+
+V0.9.3.0 : les blocs « sermon » deviennent des blocs « div » (identifiant,
+niveau, titre tiré du premier <head>, sinon de @n) ; la division englobante
+<div n="pr"> en a un. Le texte et les positions ne changent pas."""
 from __future__ import annotations
 
 import hashlib
@@ -16,7 +20,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "bab3330c4870d52c2073c5cd1236d6820559d31df7af76d0af86476b05ffd29c"
+DIGEST = "ed739bd621973912bad52b312f2c6831907c95fb0e24c0779368e2b96b7c17d4"
 
 
 def _digest(data):
