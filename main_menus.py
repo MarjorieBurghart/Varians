@@ -96,10 +96,9 @@ class MainMenusMixin:
         self.action_validate_rng = self._make_action(
             _t("toolbar.validate_rng"), "F8", self.validate_relaxng_manual, _t("toolbar.validate_rng.tip")
         )
-        # Indenter et XPath viennent des menus Éditer et Rechercher (V0.9.2.8) ;
-        # la barre d'outils les montre sous leur libellé court (iconText).
+        # XPath vient du menu Rechercher (V0.9.2.8), sous son libellé court
+        # (iconText) ; Indenter n'est plus que dans le menu Éditer.
         tb.addAction(self.action_validate_rng)
-        tb.addAction(self.action_format_xml)
         self.action_check_references = self._make_action(
             _t("references.action"), "", self.check_references, _t("references.action.tip")
         )
@@ -219,7 +218,6 @@ class MainMenusMixin:
         self.action_format_xml = self._make_action(
             _t("edit.format_xml"), "", self.format_xml_source, _t("toolbar.format_xml.tip")
         )
-        self.action_format_xml.setIconText(_t("toolbar.format_xml"))
         menu.addAction(self.action_undo)
         menu.addAction(self.action_redo)
         menu.addSeparator()
@@ -547,7 +545,6 @@ class MainMenusMixin:
         self.rng_busy.setToolTip(_t("rng.status.running.tip"))
         self._update_check_labels()
         self.action_format_xml.setText(_t("edit.format_xml"))
-        self.action_format_xml.setIconText(_t("toolbar.format_xml"))
         self.action_format_xml.setToolTip(_t("toolbar.format_xml.tip"))
         self.search_source_label.setText(" " + _t("toolbar.search_source") + " ")
         for action, key, short in ((self.action_search, "search.find", "toolbar.search"),

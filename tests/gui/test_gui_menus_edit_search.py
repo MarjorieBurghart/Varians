@@ -49,8 +49,10 @@ def test_the_edit_and_search_menus_follow_the_file_menu(open_window, example_pro
         (_tr("search.find"), "Ctrl+F"), (_tr("search.previous"), "Shift+F3"), (_tr("search.next"), "F3"),
         (_tr("search.replace"), "Ctrl+H"), (_tr("search.case"), ""), (_tr("search.regex"), ""), (_tr("search.xpath"), "Ctrl+Shift+F"),
     ]
-    # La barre d'outils garde ses boutons et leurs libellés courts.
-    for action, key in ((window.action_format_xml, "toolbar.format_xml"), (window.action_xpath_search, "xpath.action"),
+    # La barre d'outils garde ses autres boutons, sous leur libellé court ;
+    # « Indenter » n'est plus que dans le menu Éditer.
+    assert window.action_format_xml not in toolbar.actions()
+    for action, key in ((window.action_xpath_search, "xpath.action"),
                         (window.action_search, "toolbar.search"), (window.action_find_next, "toolbar.next")):
         assert toolbar.widgetForAction(action).text() == _tr(key)
 
@@ -107,4 +109,4 @@ def test_the_new_menus_are_translated(open_window, example_project):
     assert (window.edit_menu_button.text(), window.search_menu_button.text()) == ("Edit", "Search")
     assert window.edit_menu.title() == "Edit" and window.action_undo.text() == "Undo"
     assert window.action_format_xml.text() == current_i18n().tr("edit.format_xml")
-    assert window.main_toolbar.widgetForAction(window.action_format_xml).text() == "Indent"
+    assert window.main_toolbar.widgetForAction(window.action_xpath_search).text() == "XPath"

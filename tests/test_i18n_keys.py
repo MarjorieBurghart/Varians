@@ -646,3 +646,16 @@ def test_each_help_announces_version_0928():
         version = _help_section(page, "v0928")
         assert 'href="#search-replace"' in version, language
         assert page.index('<section id="v0927">') < page.index('<section id="v0928">'), language
+
+
+def test_each_help_names_indent_as_a_command_of_the_edit_menu():
+    """V0.9.2.8 : « Indenter le XML » n'est plus un bouton de la barre
+    d'outils, mais une commande du menu Éditer."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        command = f"<strong>{catalog['menu.edit']} → {catalog['edit.format_xml']}</strong>"
+        heading = page.index('<h2 id="formatage">' if language == "fr" else '<h2 id="formatting">')
+        assert command in page[heading:page.index("<h2", heading + 1)], language
+        assert f"<strong>{catalog['toolbar.format_xml']}</strong>" not in page, language

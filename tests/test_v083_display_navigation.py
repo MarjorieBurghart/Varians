@@ -40,7 +40,8 @@ def test_toolbar_and_display_menu_are_reorganized():
     assert 'self.language_combo = QComboBox()' not in source
     # XML commands are added together and XPath is no longer after the search block.
     xml_block = source.index('tb.addAction(self.action_validate_rng)')
-    assert xml_block < source.index('tb.addAction(self.action_format_xml)', xml_block)
+    # V0.9.2.8 : « Indenter » n'est plus que dans le menu Éditer.
+    assert 'tb.addAction(self.action_format_xml)' not in source
     assert xml_block < source.index('tb.addAction(self.action_xpath_search)', xml_block)
     assert source.index('spacer.setSizePolicy', xml_block) < source.index('self.search_source_label = QLabel', xml_block)
 
