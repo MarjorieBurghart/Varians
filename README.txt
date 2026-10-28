@@ -27,6 +27,13 @@ VARIANS V0.9.2.9 — ÉLÉMENTS MODIFIABLES COMME FRAGMENT
   est numérotée si elle porte @rend="numbered" ou @type="ordered" (ou
   « numbered ») ; le titre (<head>) d'une liste est placé avant elle (dans
   l'Édition critique, il était écrit dans la liste HTML).
+• Feuille de la vue, comme « Édition critique » : une division est titrée
+  par son premier <head>, sinon par son @n ; son @xml:id n'est plus pris
+  pour un titre. Le sommaire de l'aperçu liste les divisions titrées, par
+  niveaux (une division sans titre laisse passer les siennes) ; leur ancre
+  est leur @xml:id, sinon un identifiant produit. L'en-tête ne montre plus
+  que le titre de l'édition (plus la ligne date · langue de <msContents>),
+  et la langue de la page vient de @xml:lang de <text> ou de <TEI>.
 
 VARIANS V0.9.2.8.2 — SIGLES DES TÉMOINS, CRAYON ET F2, PROJET DE TEST
 

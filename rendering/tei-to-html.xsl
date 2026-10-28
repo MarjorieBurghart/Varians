@@ -35,9 +35,23 @@
     </xsl:if>
   </xsl:template>
 
-  <!-- ROOT -->
+  <!-- Divisions de l'édition (Varians 0.9.2.9). -->
+  <xsl:variable name="divisions"
+    select="//tei:body//*[self::tei:div or self::tei:div1 or self::tei:div2 or self::tei:div3
+                          or self::tei:div4 or self::tei:div5 or self::tei:div6 or self::tei:div7]"/>
+
+  <!-- ROOT. L'en-tête montre le titre de l'édition ; la langue de la page
+       est celle du texte (@xml:lang de <text>, sinon de <TEI>). -->
   <xsl:template match="/">
-    <html lang="la">
+    <html>
+      <xsl:choose>
+        <xsl:when test="/tei:TEI/tei:text/@xml:lang">
+          <xsl:attribute name="lang"><xsl:value-of select="/tei:TEI/tei:text/@xml:lang"/></xsl:attribute>
+        </xsl:when>
+        <xsl:when test="/*/@xml:lang">
+          <xsl:attribute name="lang"><xsl:value-of select="/*/@xml:lang"/></xsl:attribute>
+        </xsl:when>
+      </xsl:choose>
       <head>
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -47,23 +61,14 @@
       <body>
         <header>
           <h1><xsl:value-of select="//tei:titleStmt/tei:title"/></h1>
-          <p class="meta">
-            <xsl:value-of select="//tei:msContents//tei:origDate"/>
-            <xsl:text> · </xsl:text>
-            <xsl:value-of select="//tei:msContents//tei:textLang"/>
-          </p>
         </header>
-        <xsl:if test="//tei:body//tei:div[@xml:id]">
+        <!-- Sommaire : les divisions titrées, par niveaux. -->
+        <xsl:if test="$divisions[tei:head or normalize-space(@n) != '']">
           <nav class="toc">
             <div class="toc-title"><xsl:value-of select="$tocTitle"/></div>
-            <div class="toc-list">
-              <xsl:for-each select="//tei:body//tei:div[@xml:id]">
-                <a class="toc-link" href="tei-toc:/{@xml:id}">
-                  <xsl:value-of select="translate(@xml:id, '_', ' ')"/>
-                </a>
-                <xsl:text> </xsl:text>
-              </xsl:for-each>
-            </div>
+            <ul class="toc-list">
+              <xsl:apply-templates select="//tei:body/*" mode="toc"/>
+            </ul>
           </nav>
         </xsl:if>
         <main>
@@ -78,18 +83,71 @@
     <xsl:apply-templates/>
   </xsl:template>
 
-  <!-- DIV with @xml:id -->
-  <xsl:template match="tei:div[@xml:id]">
-    <a name="{@xml:id}"></a>
-    <div class="section" id="{@xml:id}">
-      <h2 class="section-title"><xsl:value-of select="@xml:id"/></h2>
+  <!-- Ancre d'une division : son @xml:id, sinon un identifiant produit. -->
+  <xsl:template name="ancre">
+    <xsl:choose>
+      <xsl:when test="@xml:id"><xsl:value-of select="@xml:id"/></xsl:when>
+      <xsl:otherwise><xsl:value-of select="generate-id()"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- DIVISION (Varians 0.9.2.9), comme dans « Édition critique » : titrée
+       par son premier <head>, sinon par son @n ; un @xml:id n'est pas un
+       titre. -->
+  <xsl:template match="tei:div | tei:div1 | tei:div2 | tei:div3 | tei:div4 | tei:div5 | tei:div6 | tei:div7">
+    <xsl:variable name="ancre"><xsl:call-template name="ancre"/></xsl:variable>
+    <a name="{$ancre}"></a>
+    <div class="section" id="{$ancre}">
+      <xsl:if test="not(tei:head) and normalize-space(@n) != ''">
+        <h2 class="section-title"><xsl:value-of select="@n"/></h2>
+      </xsl:if>
       <xsl:apply-templates/>
     </div>
   </xsl:template>
 
-  <!-- DIV without @xml:id -->
-  <xsl:template match="tei:div">
-    <xsl:apply-templates/>
+  <!-- Titre d'une division : son premier <head>. -->
+  <xsl:template match="tei:head[not(preceding-sibling::tei:head)]
+                       [parent::tei:div or parent::tei:div1 or parent::tei:div2 or parent::tei:div3
+                        or parent::tei:div4 or parent::tei:div5 or parent::tei:div6 or parent::tei:div7]">
+    <h2 class="section-title"><xsl:apply-templates/></h2>
+  </xsl:template>
+
+  <!-- SOMMAIRE : une entrée par division titrée, ses sous-divisions titrées
+       en dessous ; une division sans titre laisse passer les siennes. -->
+  <xsl:template match="tei:div | tei:div1 | tei:div2 | tei:div3 | tei:div4 | tei:div5 | tei:div6 | tei:div7"
+                mode="toc">
+    <xsl:choose>
+      <xsl:when test="tei:head or normalize-space(@n) != ''">
+        <xsl:variable name="ancre"><xsl:call-template name="ancre"/></xsl:variable>
+        <li>
+          <a class="toc-link" href="tei-toc:/{$ancre}">
+            <xsl:choose>
+              <xsl:when test="tei:head"><xsl:apply-templates select="tei:head[1]" mode="toc-label"/></xsl:when>
+              <xsl:otherwise><xsl:value-of select="normalize-space(@n)"/></xsl:otherwise>
+            </xsl:choose>
+          </a>
+          <xsl:variable name="sous" select=".//*[self::tei:div or self::tei:div1 or self::tei:div2 or self::tei:div3
+                                                 or self::tei:div4 or self::tei:div5 or self::tei:div6
+                                                 or self::tei:div7][tei:head or normalize-space(@n) != '']"/>
+          <xsl:if test="$sous">
+            <ul><xsl:apply-templates select="*" mode="toc"/></ul>
+          </xsl:if>
+        </li>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:apply-templates select="*" mode="toc"/>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  <xsl:template match="*" mode="toc">
+    <xsl:apply-templates select="*" mode="toc"/>
+  </xsl:template>
+
+  <!-- Libellé du sommaire : le texte du titre, sans notes ni leçons
+       variantes. -->
+  <xsl:template match="tei:note | tei:rdg | tei:rdgGrp | tei:witDetail" mode="toc-label"/>
+  <xsl:template match="text()" mode="toc-label">
+    <xsl:value-of select="."/>
   </xsl:template>
 
   <!-- PARAGRAPH -->

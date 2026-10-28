@@ -353,3 +353,4 @@ Fonctionnement : aide, paragraphe « Éléments modifiables » (`fragment-units`
 - `formatted_view` : `unit_spans` remplace `paragraph_spans` (fragment, F2, application) ; `editeur_tei._source_selection_descriptor` / `_select_xml_text_in_paragraph` aussi ; étiquette du fragment en texte brut avec le nom de l'élément (`{element}`).
 - `rendering/tei-to-html.xsl` : `lg`, `l`, `head`, `list`/`item`, `figure`/`figDesc` ; styles dans `rendering/tei.css`.
 - Listes, `tei-to-html.xsl` et `edition-critique.xsl` : numérotées si `@rend` contient `numbered` ou si `@type` vaut `ordered` ou `numbered` ; le `<head>` d'une liste avant elle.
+- `tei-to-html.xsl` : division titrée par son premier `<head>`, sinon `@n` (jamais `@xml:id`) ; sommaire par niveaux (mode `toc`, libellé `toc-label` sans notes ni leçons), ancre `@xml:id` ou `generate-id()` ; en-tête réduit au titre ; `lang` d'après `@xml:lang`.

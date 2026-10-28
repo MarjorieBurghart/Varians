@@ -52,14 +52,7 @@ header h1 {
   font-family: var(--font-ui);
 }
 
-.meta {
-  font-size: 0.85rem;
-  color: var(--color-muted);
-  font-family: var(--font-ui);
-  margin: 0;
-}
-
-/* ---------- Sommaire des sermons ------------------------------ */
+/* ---------- Sommaire : divisions titrées, par niveaux ---------- */
 .toc {
   margin: 0 auto 2.2rem;
   padding: 0.9rem 1rem;
@@ -78,16 +71,15 @@ header h1 {
   margin-bottom: 0.45rem;
 }
 
-.toc-list {
-  line-height: 1.8;
+.toc-list, .toc-list ul {
+  margin: 0;
+  padding-left: 1.2em;
+  line-height: 1.6;
 }
 
 .toc-link {
-  display: inline-block;
-  margin: 0 0.55rem 0.15rem 0;
   color: var(--color-accent);
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .toc-link:hover {

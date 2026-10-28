@@ -14,9 +14,9 @@ BUILTIN = ROOT / "rendering" / "tei-to-html.xsl"
 TEI_NS = "http://www.tei-c.org/ns/1.0"
 
 
-def _page(body):
-    tei = (f'<TEI xmlns="{TEI_NS}"><teiHeader><fileDesc><titleStmt><title>T</title></titleStmt></fileDesc>'
-           f'</teiHeader><text><body>{body}</body></text></TEI>')
+def _page(body, header="", text=""):
+    tei = (f'<TEI xmlns="{TEI_NS}"><teiHeader><fileDesc><titleStmt><title>T</title></titleStmt>{header}</fileDesc>'
+           f'</teiHeader><text{text}><body>{body}</body></text></TEI>')
     result = etree.XSLT(etree.parse(str(BUILTIN)))(etree.fromstring(tei.encode("utf-8")))
     return html.fromstring(str(result))
 
@@ -33,10 +33,40 @@ def test_a_verse_group_is_a_block_of_lines():
     assert len(page.xpath('//div[@class="lg"]')) == 2
 
 
-def test_a_head_is_a_heading():
-    page = _page('<div xml:id="d1"><head>Titulus</head><p>textus</p></div>')
-    assert _texts(page, '//div[@class="section"]/h3[@class="head"]') == ["Titulus"]
-    assert _texts(page, '//div[@class="section"]/p') == ["textus"]
+def test_a_division_is_titled_by_its_head_or_its_n_never_by_its_identifier():
+    """Comme « Édition critique » : le premier <head> d'une division, sinon
+    son @n ; un @xml:id n'est pas un titre. Chaque division est une section."""
+    page = _page('<div xml:id="RLS_184"><p>a</p></div><div xml:id="d2" n="Sermo 2"><p>b</p></div>'
+                 '<div xml:id="d3" n="tertius"><head>Titulus</head><p>c</p></div>')
+    assert _texts(page, '//main//h2[@class="section-title"]') == ["Sermo 2", "Titulus"]
+    assert not page.xpath('//main//h3[@class="head"]')
+    assert "RLS_184" not in page.text_content() and "tertius" not in page.text_content()
+    assert len(page.xpath('//main//div[@class="section"]')) == 3
+    assert _texts(page, '//div[@class="section"]/p') == ["a", "b", "c"]
+
+
+def test_the_table_of_contents_lists_the_titled_divisions_by_level():
+    page = _page('<div n="I"><head>Liber primus</head>'
+                 '<div><head>Caput <app><lem>unum</lem><rdg>primum</rdg></app><note>n</note></head><p>a</p></div>'
+                 '<div xml:id="c2"><p>b</p></div></div><div xml:id="x"><p>c</p></div><div n="II"><p>d</p></div>')
+    toc = page.xpath('//nav[@class="toc"]/ul[@class="toc-list"]')[0]
+    entries = [(" ".join(li.find("a").text_content().split()), [" ".join(a.text_content().split())
+                                                                 for a in li.xpath("./ul/li/a")])
+               for li in toc.xpath("./li")]
+    assert entries == [("Liber primus", ["Caput unum"]), ("II", [])]
+    for link in toc.xpath(".//a"):
+        anchor = link.get("href").removeprefix("tei-toc:/")
+        assert link.get("href").startswith("tei-toc:/") and page.xpath(f'//main//a[@name="{anchor}"]')
+    assert not _page('<div xml:id="a"><p>x</p></div>').xpath('//nav')
+
+
+def test_the_header_shows_the_title_and_the_page_takes_the_language_of_the_text():
+    header = ('<sourceDesc><msDesc><msIdentifier/><msContents><textLang>Latin</textLang>'
+              '<origDate>XIIIe s.</origDate></msContents></msDesc></sourceDesc>')
+    page = _page("<div><p>a</p></div>", header=header, text=' xml:lang="la"')
+    assert _texts(page, "//header/*") == ["T"]
+    assert page.get("lang") == "la"
+    assert _page("<div><p>a</p></div>").get("lang") is None
 
 
 def test_a_list_is_a_list():
