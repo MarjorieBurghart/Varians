@@ -16,7 +16,7 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Paires XML | `xml_tag_pairs.py` | `test_v080_xml_tag_pairs.py` |
 | Indentation sûre | `tei_formatter.py` | `test_v081_tei_formatter.py` |
 | XPath | `xpath_search.py` | `test_xpath_search.py`, `test_v0841_xpath_help.py` |
-| Rechercher et remplacer (V0.9.2.8) | `text_search.py`, `code_editor.py` | `test_text_search.py` |
+| Rechercher et remplacer (V0.9.2.8) | `text_search.py`, `code_editor.py`, `replace_bar.py`, `main_menus.py` | `test_text_search.py`, `gui/test_gui_search_replace.py`, `gui/test_gui_search_options.py`, `gui/test_gui_replace_bar.py`, `gui/test_gui_menus_edit_search.py` |
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
@@ -289,3 +289,14 @@ Fonctionnement : `XSLT_SCENARIOS.md` (« V0.9.2.7 »).
 - `transform_ui.py` : sous-groupe `tei_group` (clé `(groupe, rang)` en `UserRole`, `item_for`), sous-menu TEI du bouton Transformer, champs « Format du résultat » et « Pré-passage » de la boîte d'un scénario, copie des feuilles incluses.
 - `rendering/apparat-commun.xsl`, `rendering/apparat-en-notes.xsl`, `rendering/edition-critique.xsl` (nouveaux).
 - `xslt_scenarios.witness_choices`, `WITNESS_PARAM`, `NO_WITNESS` ; `transform_ui.ScenarioDialog._update_value_widget` : liste du paramètre `temoin-de-base`.
+
+## V0.9.2.8 — menus Éditer et Rechercher, chercher et remplacer
+
+Fonctionnement : aide, section « Rechercher et remplacer » (`search-replace`).
+
+- `text_search.py` (sans Qt, nouveau) : `SearchOptions`, `find_spans` (littérale avec chevauchements, ou expression régulière `MULTILINE` sans correspondance vide), `match_at`, `replacements`, `replacement_for`, `SearchError` (`pattern_invalid`, `template_invalid`), `Utf16Positions` (positions Python ↔ Qt).
+- `code_editor.py` : `find_in_plain_editor(…, options, exact)`, `replace_in_plain_editor`, `replace_all_in_plain_editor`, `_replace_spans` (une étape d'annulation, sous `_pair_edit_guard` : pas d'automatisme de paires).
+- `main_menus.py` : `_build_edit_menu` (commandes sur le champ qui a le focus, `_edit_target`, `_update_edit_actions`, raccourcis en `WidgetShortcut`), `_build_search_menu` (`action_replace` Ctrl+H, options cochables `action_search_case` / `action_search_regex`, `search_options`, réglages `search/caseSensitive` et `search/regex`) ; libellés courts de la barre d'outils en `iconText`.
+- `replace_bar.py` (nouveau) : `ReplaceBarMixin` (barre sous l'éditeur XML, `show_replace`, `replace_source_next`, `replace_source_all`), `search_error_text`.
+- `formatted_view.py` : boutons des options dans la barre de recherche du fragment (`add_fragment_find_options`), ligne « Remplacer par » (`fragment_replace_row`, `show_fragment_find(replace=True)`, `replace_fragment_next`, `replace_fragment_all`).
+- `editeur_tei._find_source(backwards, field)` : options, champ de la barre de remplacement, expression incorrecte.

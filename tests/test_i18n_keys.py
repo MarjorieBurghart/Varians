@@ -605,3 +605,44 @@ def test_the_documents_menu_names_xml_and_xslt():
         root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
         label = next(string.text for string in root.findall("string") if string.get("key") == "documents.menu")
         assert "XSLT" in label, language
+
+
+def _help_section(page, section_id):
+    section = page[page.index(f'<section id="{section_id}">'):]
+    return section[:section.index("</section>")]
+
+
+def test_each_help_explains_search_and_replace():
+    """V0.9.2.8 : menus Éditer et Rechercher, casse, expressions régulières,
+    chercher et remplacer."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = _help_section(page, "search-replace")
+        for key in ("menu.edit", "menu.search", "edit.format_xml", "search.find", "search.case", "search.regex",
+                    "replace.one", "replace.all"):
+            assert catalog[key] in section, (language, key)
+        assert catalog["search.replace"].rstrip("…") in section, language
+        assert catalog["replace.with.label"].rstrip(" :：") in section, language
+        for text in ("Ctrl+H", "Ctrl+F", "F3", "Ctrl+Z", "<strong>Aa</strong>", "<strong>.*</strong>",
+                     "<code>\\1</code>", "<code>\\g&lt;", "<code>re</code>", 'href="#xpath"',
+                     '<code>wit="#(\\w+)"</code>'):
+            assert text in section, (language, text)
+        assert page.index('<section id="critical-edition">') < page.index('<section id="search-replace">') \
+            < page.index('<section id="v0900">'), language
+
+
+def test_each_help_lists_ctrl_h_among_the_shortcuts():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        ctrl_f = page.index("<tr><td>Ctrl+F</td>")
+        assert page.index("<tr>", ctrl_f + 1) == page.index("<tr><td>Ctrl+H</td>"), language
+
+
+def test_each_help_announces_version_0928():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = _help_section(page, "v0928")
+        assert 'href="#search-replace"' in version, language
+        assert page.index('<section id="v0927">') < page.index('<section id="v0928">'), language
