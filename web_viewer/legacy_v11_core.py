@@ -100,6 +100,7 @@ UTILISER_BOITES_DE_DIALOGUE = True
 
 TEI_NS = "http://www.tei-c.org/ns/1.0"
 XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
+XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
 
 
 def lname(tag: str) -> str:
@@ -202,6 +203,53 @@ def extract_witness_labels(root: ET.Element):
     return labels
 
 
+READING_TAGS = ("lem", "rdg", "wit")
+# Forme montrée d'un <choice>, comme « Édition critique » : la première
+# présente dans cet ordre, sinon le premier enfant.
+CHOICE_ORDER = ("corr", "reg", "expan", "sic", "orig", "abbr")
+
+
+def app_readings(app: ET.Element):
+    """Leçons d'un ``<app>`` dans l'ordre : ``<lem>``, ``<rdg>`` (et la
+    coquille ``<wit>``), celles d'un ``<rdgGrp>`` comprises."""
+    found = []
+    for child in app:
+        tag = lname(child.tag)
+        if tag in READING_TAGS:
+            found.append(child)
+        elif tag == "rdgGrp":
+            found.extend(app_readings(child))
+    return found
+
+
+def choose_reading(app: ET.Element, target: str):
+    """Leçon du témoin ``target``, sinon le ``<lem>``, sinon la première."""
+    readings = app_readings(app)
+    for reading in readings:
+        if witness_matches(reading.attrib.get("wit"), target):
+            return reading
+    lem = next((reading for reading in readings if lname(reading.tag) == "lem"), None)
+    return lem if lem is not None else (readings[0] if readings else None)
+
+
+def describe_readings(app: ET.Element):
+    return [{
+        "role": lname(reading.tag),
+        "wit": wit_tokens(reading.attrib.get("wit")),
+        "text": flatten_editorial_text(reading, include_notes=False, include_refs=False),
+        "notes": notes_inside(reading),
+    } for reading in app_readings(app)]
+
+
+def choose_choice_form(choice: ET.Element):
+    forms = [child for child in choice if isinstance(child.tag, str)]
+    for name in CHOICE_ORDER:
+        form = next((child for child in forms if lname(child.tag) == name), None)
+        if form is not None:
+            return form
+    return forms[0] if forms else None
+
+
 def flatten_editorial_text(el: ET.Element, include_notes=False, include_refs=False) -> str:
     """Aplatit un fragment TEI pour l'affichage d'une lecture ou d'une note."""
     parts = []
@@ -214,6 +262,11 @@ def flatten_editorial_text(el: ET.Element, include_notes=False, include_refs=Fal
             return
         if tag in {"lb", "pb"}:
             parts.append(" ")
+            return
+        if tag == "choice":
+            form = choose_choice_form(node)
+            if form is not None:
+                walk(form)
             return
         if node.text:
             parts.append(node.text)
@@ -420,32 +473,6 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
         # Le run ne contribue pas au texte manuscrit : marqueur cliquable uniquement.
         cur["runs"].append({"type": "note", "text": "", "ann_id": aid, "tooltip": txt})
 
-    def describe_app(node, selected):
-        readings = []
-        for c in list(node):
-            # Tolérance pour une coquille de balisage rencontrée dans la TEI fournie :
-            # <wit wit="#Troyes816"> est traité comme une lecture vide, au même titre qu'un <rdg>.
-            if lname(c.tag) not in {"lem", "rdg", "wit"}:
-                continue
-            wits = wit_tokens(c.attrib.get("wit"))
-            readings.append(
-                {
-                    "role": lname(c.tag),
-                    "wit": wits,
-                    "text": flatten_editorial_text(c, include_notes=False, include_refs=False),
-                    "notes": notes_inside(c),
-                }
-            )
-        return readings
-
-    def choose_app_reading(node):
-        choices = [c for c in list(node) if lname(c.tag) in {"lem", "rdg", "wit"}]
-        for c in choices:
-            if witness_matches(c.attrib.get("wit"), target_of(node)):
-                return c
-        lem = next((c for c in choices if lname(c.tag) == "lem"), None)
-        return lem if lem is not None else (choices[0] if choices else None)
-
     def walk(node, active_variant=None):
         tag = lname(node.tag)
         if tag == "teiHeader":
@@ -495,8 +522,15 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
             pages.setdefault(page, []).append(line)
             state["current"] = line
             return
+        if tag == "choice":
+            form = choose_choice_form(node)
+            if form is not None:
+                walk(form, active_variant=active_variant)
+            return
         if tag == "app":
-            selected = choose_app_reading(node)
+            # Une coquille rencontrée dans une TEI fournie, <wit wit="#…">, est
+            # lue comme une leçon vide (app_readings).
+            selected = choose_reading(node, target_of(node))
             if selected is None:
                 return
             aid = new_annotation_id("v")
@@ -506,7 +540,7 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
                 "kind": "variant",
                 "selected": selected_text,
                 "target": target_of(node).lstrip("#"),
-                "readings": describe_app(node, selected),
+                "readings": describe_readings(node),
             }
             if state["current"] is not None:
                 state["current"]["annotations"].append(ann)
@@ -1237,6 +1271,14 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     deux blocs). Une liste, un tableau, une figure ou une strophe sortent du
     paragraphe ou de l'entrée qui les contient ; la suite en est un bloc
     marqué ``cont``.
+
+    Texte, comme « Édition critique » : un ``<choice>`` montre une forme
+    (``CHOICE_ORDER``), les autres dans ``alt`` ; ``<del>`` et
+    ``<surplus>`` ont le style ``del``, ``<add>`` le style ``add`` ;
+    ``<supplied>`` est entre crochets ; ``<gap>`` donne « […] », son
+    ``@reason`` et son ``@extent`` dans ``alt`` ; ``<space>`` une espace.
+    Les leçons d'un ``<rdgGrp>`` sont lues (``app_readings``). ``lang`` :
+    le ``@xml:lang`` du texte, sinon de la racine.
     """
     # The very same ordinal-to-JSON association that drives desktop cursor
     # navigation. PageResolver remains relevant for page-only witnesses, but
@@ -1315,7 +1357,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 seg["text"] = seg["text"].rstrip()
                 return
 
-    def add_text(text, styles=None, variant_id=None, extra_classes=None):
+    def add_text(text, styles=None, variant_id=None, extra_classes=None, alt=None):
         if text is None or text == "":
             return
         block = ensure_block()
@@ -1338,12 +1380,16 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             seg["variant_id"] = variant_id
         if extra_classes:
             seg["classes"] = list(extra_classes)
+        if alt:
+            # Autres formes d'un <choice>, détail d'un <gap> : [[élément, texte], …].
+            seg["alt"] = [list(item) for item in alt]
         prev = block["segments"][-1] if block["segments"] else None
         if (prev and prev.get("kind") == "text" and
             prev.get("line_key") == seg.get("line_key") and
             prev.get("styles") == seg.get("styles") and
             prev.get("variant_id") == seg.get("variant_id") and
             prev.get("classes") == seg.get("classes") and
+            prev.get("alt") == seg.get("alt") and
             prev.get("seg") == seg.get("seg")):
             prev["text"] += text
         else:
@@ -1409,37 +1455,35 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         }))
 
     def choose_app_reading(node):
-        choices = [c for c in list(node) if lname(c.tag) in {"lem", "rdg", "wit"}]
-        for c in choices:
-            if witness_matches(c.attrib.get("wit"), target_of(node)):
-                return c
-        lem = next((c for c in choices if lname(c.tag) == "lem"), None)
-        return lem if lem is not None else (choices[0] if choices else None)
+        return choose_reading(node, target_of(node))
 
     def describe_app(node):
-        readings = []
-        for c in list(node):
-            if lname(c.tag) not in {"lem", "rdg", "wit"}:
-                continue
-            readings.append({
-                "role": lname(c.tag),
-                "wit": wit_tokens(c.attrib.get("wit")),
-                "text": flatten_editorial_text(c, include_notes=False, include_refs=False),
-                "notes": notes_inside(c),
-            })
-        return readings
+        return describe_readings(node)
 
     def style_for(node, inherited):
         styles = list(inherited)
         tag = lname(node.tag)
         if tag == "hi":
             rend = (node.attrib.get("rend") or "").lower()
+            tokens = set(re.split(r"[\s,;]+", rend))
             if "italic" in rend or "italics" in rend:
                 styles.append("italic")
             if "bold" in rend:
                 styles.append("bold")
             if "smallcaps" in rend or "small-caps" in rend:
                 styles.append("smallcaps")
+            if tokens & {"sup", "superscript", "super"}:
+                styles.append("sup")
+            if tokens & {"sub", "subscript"}:
+                styles.append("sub")
+            if "underline" in rend:
+                styles.append("underline")
+        elif tag in {"del", "surplus"}:
+            styles.append("del")
+        elif tag == "add":
+            styles.append("add")
+        elif tag == "supplied":
+            styles.append("supplied")
         elif tag in {"foreign", "title"}:
             styles.append("italic")
         elif tag == "unclear":
@@ -1450,7 +1494,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             styles.append("quote")
         return styles
 
-    def walk(node, styles=None, variant_id=None):
+    def walk(node, styles=None, variant_id=None, alt=None):
         styles = list(styles or [])
         tag = lname(node.tag)
         if tag == "teiHeader":
@@ -1532,25 +1576,57 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 "target": target_of(node).lstrip("#"), "readings": describe_app(node),
             }
             annotations[aid] = ann
-            readings = list(node)
-            chosen = readings.index(selected)
-            for other in readings[:chosen]:
-                add_lacunae_in(other)
-            walk(selected, styles=styles, variant_id=aid)
-            for other in readings[chosen + 1:]:
-                add_lacunae_in(other)
+
+            def readings_of(container):
+                # Dans l'ordre : la leçon retenue, les repères de lacune des autres.
+                for other in list(container):
+                    if other is selected:
+                        walk(selected, styles=styles, variant_id=aid, alt=alt)
+                    elif lname(other.tag) == "rdgGrp" and any(x is selected for x in other.iter()):
+                        readings_of(other)
+                    else:
+                        add_lacunae_in(other)
+
+            readings_of(node)
             enter(node)
             add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
             return
+        if tag == "choice":
+            # Comme « Édition critique » : une forme, les autres en infobulle.
+            form = choose_choice_form(node)
+            if form is None:
+                return
+            others = [[lname(other.tag), flatten_editorial_text(other)] for other in node
+                      if other is not form and isinstance(other.tag, str)]
+            for other in node:
+                if other is not form:
+                    add_lacunae_in(other)
+            walk(form, styles=styles, variant_id=variant_id,
+                 alt=[item for item in others if item[1]] or alt)
+            return
+        if tag == "gap":
+            detail = " · ".join(clean_text(value) for value in (
+                node.attrib.get("reason"),
+                node.attrib.get("extent") or " ".join(filter(None, (node.attrib.get("quantity"),
+                                                                     node.attrib.get("unit"))))) if clean_text(value))
+            add_text("[…]", styles + ["gap"], variant_id=variant_id, alt=[["gap", detail]])
+            return
+        if tag == "space":
+            add_text(" ", styles, variant_id=variant_id, alt=alt)
+            return
 
         new_styles = style_for(node, styles)
+        if tag == "supplied":
+            add_text("[", new_styles, variant_id=variant_id, alt=alt)
         if node.text:
-            add_text(node.text, new_styles, variant_id=variant_id)
+            add_text(node.text, new_styles, variant_id=variant_id, alt=alt)
         for child in list(node):
-            walk(child, styles=new_styles, variant_id=variant_id)
+            walk(child, styles=new_styles, variant_id=variant_id, alt=alt)
             enter(node)           # la suite (tail) est dans le texte de ``node``
             if child.tail:
-                add_text(child.tail, new_styles, variant_id=variant_id)
+                add_text(child.tail, new_styles, variant_id=variant_id, alt=alt)
+        if tag == "supplied":
+            add_text("]", new_styles, variant_id=variant_id, alt=alt)
 
     def new_div_id():
         while True:
@@ -1779,7 +1855,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             "target": target_of(node).lstrip("#"), "readings": describe_app(node),
         }
         annotations[aid] = ann
-        for other in node:
+        for other in app_readings(node):
             if other is not selected:
                 add_lacunae_in(other)
         walk_children(selected, level)
@@ -1814,7 +1890,13 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if b.get("type") in ("div", "cell") or any(seg.get("kind") != "text" or seg.get("text", "").strip()
                                                     for seg in b["segments"]):
             cleaned.append(b)
-    return {"blocks": cleaned, "annotations": annotations}
+    document = {"blocks": cleaned, "annotations": annotations}
+    # Langue du texte (césure, lecteurs d'écran) : @xml:lang du <text>, sinon de la racine.
+    lang = next((value for value in [text.attrib.get(XML_LANG) for text in texts] + [root.attrib.get(XML_LANG)]
+                 if value and value.strip()), None)
+    if lang:
+        document["lang"] = lang.strip()
+    return document
 
 # =============================================================================
 # Construction des données du viewer

@@ -7,7 +7,12 @@ vers, entrées de liste, cellules de tableau, légendes et notes posées entre
 deux blocs sont des blocs rendus (``RENDERED_BLOCKS``). Une division est
 titrée par son premier ``<head>``, sinon par son ``@n``, jamais par son
 ``@xml:id``. Tous les textes sont lus : ``<front>``, ``<body>`` et
-``<back>``, et chaque texte d'un ``<group>``."""
+``<back>``, et chaque texte d'un ``<group>``.
+
+Le texte suit « Édition critique » : une forme d'un ``<choice>`` (les autres
+en infobulle), ratures barrées, ajouts marqués, restitutions entre
+crochets, lacunes « […] ». Les leçons d'un ``<rdgGrp>`` sont lues ; la
+langue du texte est donnée au viewer."""
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
@@ -226,3 +231,88 @@ def test_the_lines_of_front_and_back_are_extracted_for_the_facsimile():
     pages, _labels = extract_corrected_pages(None, "#A", root=root, base_line_keys=["P::1", "P::2", "P::3"])
     assert [(line["line_key"], line["text"]) for line in pages["P"]] == [
         ("P::1", "praefatio"), ("P::2", "corpus"), ("P::3", "appendix")]
+
+
+# W.2 : phénomènes éditoriaux comme « Édition critique », <rdgGrp>, langue, <hi>.
+
+def _segments(reading):
+    return [seg for block in reading["blocks"] for seg in block["segments"]]
+
+
+def test_a_choice_shows_one_form_and_gives_the_other_in_a_tooltip():
+    reading = _reading('<div><p>Isti <choice><sic>erat</sic><corr>erant</corr></choice> '
+                       '<choice><abbr>dns</abbr><expan>dominus</expan></choice> '
+                       '<choice><orig>uita</orig><reg>vita</reg></choice> '
+                       '<choice><sic>solum</sic></choice> <choice><seg>unum</seg><seg>alterum</seg></choice></p></div>')
+    paragraph = reading["blocks"][1]
+    assert _text(paragraph) == "Isti erant dominus vita solum unum"
+    assert [seg["alt"] for seg in paragraph["segments"] if seg.get("alt")] == [
+        [["sic", "erat"]], [["abbr", "dns"]], [["orig", "uita"]], [["seg", "alterum"]]]
+    solum = next(seg for seg in paragraph["segments"] if seg.get("text") == "solum")
+    assert "sic" in solum["styles"] and "alt" not in solum
+
+
+def test_a_choice_in_a_reading_keeps_its_variant():
+    reading = _reading('<div><p><app><lem wit="#A"><choice><sic>erat</sic><corr>erant</corr></choice></lem>'
+                       '<rdg wit="#B">fuit</rdg></app></p></div>')
+    erant = next(seg for seg in _segments(reading) if seg.get("text") == "erant")
+    assert erant.get("variant_id") and erant["alt"] == [["sic", "erat"]]
+    ann = reading["annotations"][erant["variant_id"]]
+    assert ann["selected"] == "erant" and [r["text"] for r in ann["readings"]] == ["erant", "fuit"]
+
+
+def test_deletions_additions_supplied_text_gaps_and_spaces():
+    reading = _reading('<div><p><del>deleta</del> <add>addita</add> <surplus>et</surplus> '
+                       'Pe<supplied>trus</supplied><space quantity="3"/>fin<gap reason="illegible" extent="3 litterae"/>is '
+                       '<gap/></p></div>')
+    paragraph = reading["blocks"][1]
+    assert _text(paragraph) == "deleta addita et Pe[trus] fin[…]is […]"
+    styles = {seg["text"].strip(): seg["styles"] for seg in paragraph["segments"] if seg["kind"] == "text"}
+    assert styles["deleta"] == ["del"] and styles["et"] == ["del"] and styles["addita"] == ["add"]
+    assert styles["[trus]"] == ["supplied"]
+    gaps = [seg for seg in paragraph["segments"] if seg.get("text", "").strip() == "[…]"]
+    assert [(seg["styles"], seg["alt"]) for seg in gaps] == [
+        (["gap"], [["gap", "illegible · 3 litterae"]]), (["gap"], [["gap", ""]])]
+
+
+def test_renditions_of_hi():
+    reading = _reading('<div><p>x <hi rend="sup">a</hi> <hi rend="superscript">b</hi> <hi rend="sub">c</hi> '
+                       '<hi rend="subscript">d</hi> <hi rend="underline">e</hi> <hi rend="italic bold">f</hi> '
+                       '<hi rend="smallcaps">g</hi></p></div>')
+    styles = {seg["text"].strip(): seg["styles"] for seg in _segments(reading) if seg["kind"] == "text"}
+    assert [styles[x] for x in "abcdefg"] == [["sup"], ["sup"], ["sub"], ["sub"], ["underline"], ["italic", "bold"],
+                                              ["smallcaps"]]
+
+
+def test_the_readings_of_a_reading_group_are_read():
+    reading = _reading('<div><p>a <app><lem wit="#B">ille</lem><rdgGrp type="orth"><rdg wit="#A">iste</rdg>'
+                       '<rdg wit="#C">yste</rdg></rdgGrp></app> b</p>'
+                       '<p><app><rdgGrp><rdg wit="#B">primus</rdg></rdgGrp><rdgGrp><rdg wit="#C">secundus</rdg>'
+                       '</rdgGrp></app></p></div>')
+    first, second = reading["blocks"][1], reading["blocks"][2]
+    assert _text(first) == "a iste b" and _text(second) == "primus"
+    marker = next(seg for seg in first["segments"] if seg["kind"] == "variant-marker")
+    ann = reading["annotations"][marker["ann_id"]]
+    assert [(r["role"], r["wit"], r["text"]) for r in ann["readings"]] == [
+        ("lem", ["B"], "ille"), ("rdg", ["A"], "iste"), ("rdg", ["C"], "yste")]
+    assert ann["selected"] == "iste"
+
+
+def test_a_lacuna_in_a_reading_group_not_shown():
+    reading = _reading('<div><p>a<app><lem wit="#A"/><rdgGrp><rdg wit="#B"><lacunaStart/></rdg></rdgGrp></app>'
+                       '</p></div>')
+    assert [(seg["start"], seg["wit"]) for seg in _segments(reading) if seg["kind"] == "lacuna"] == [(True, ["B"])]
+
+
+def test_the_document_has_the_language_of_its_text():
+    assert _reading("<div><p>a</p></div>", text=' xml:lang="la"')["lang"] == "la"
+    root = ET.fromstring(f'<TEI xmlns="{TEI_NS}" xml:lang="fr"><teiHeader/><text><body><p>a</p></body></text></TEI>')
+    assert extract_reading_document(None, "#A", root=root)["lang"] == "fr"
+    assert "lang" not in _reading("<div><p>a</p></div>")
+
+
+def test_the_lines_for_the_facsimile_show_one_form_of_a_choice_and_a_reading_group():
+    root = _root('<div><p><lb edRef="#A"/>Isti <choice><sic>erat</sic><corr>erant</corr></choice> '
+                 '<app><lem wit="#B">ille</lem><rdgGrp><rdg wit="#A">iste</rdg></rdgGrp></app></p></div>')
+    pages, _labels = extract_corrected_pages(None, "#A", root=root, base_line_keys=["P::1"])
+    assert pages["P"][0]["text"] == "Isti erant iste"
