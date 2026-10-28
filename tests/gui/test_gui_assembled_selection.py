@@ -16,7 +16,7 @@ from pathlib import Path
 
 from PySide6.QtGui import QTextCursor
 
-from formatted_view import paragraph_spans
+from fragment_units import unit_spans
 
 WJ = "⁠"          # WORD JOINER technique de l'aperçu
 PART_PARAGRAPH = 14
@@ -132,7 +132,7 @@ def test_a_part_selection_is_found_in_the_preview_of_the_edition(open_window, ex
 def test_an_edition_selection_is_found_in_the_preview(open_window, example_with_part, qtbot):
     window = open_window(example_with_part)
     text = window.editor.toPlainText()
-    start, end = paragraph_spans(text)[2]
+    start, end = unit_spans(text)[2]
     _select(window.editor, *_occurrences_in(text, "premium", start, end)[1])
     view = _show_preview(window, qtbot)
     qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=5000)

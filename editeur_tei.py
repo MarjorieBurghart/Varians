@@ -38,7 +38,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -75,9 +75,10 @@ from app_context import (
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 from pivot_lines import pivot_lb_pattern
 from formatted_view import (
-    _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget, paragraph_spans,
+    _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget,
     pick_xml_occurrence, xml_selection_descriptor,
 )
+from fragment_units import unit_spans
 from manuscript_panel import ManuscriptPanel
 from code_editor import CodeEditor, find_in_plain_editor, XMLHighlighter
 from text_search import SearchError
@@ -1001,9 +1002,10 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return self.ordinal_at_position(self.editor.textCursor().position())
 
     def _source_selection_descriptor(self, text, selection_start):
-        """Paragraphe de l'aperçu qui contient la sélection, et rang de
-        l'occurrence dans ce paragraphe. Pour une édition en parties
-        (V0.9.1.5), le paragraphe est celui de l'aperçu de toute l'édition."""
+        """Élément modifiable de l'aperçu (V0.9.2.9 ; auparavant le
+        paragraphe) qui contient la sélection, et rang de l'occurrence dans
+        cet élément. Pour une édition en parties (V0.9.1.5), l'élément est
+        celui de l'aperçu de toute l'édition."""
         source = self.editor.toPlainText()
         sources = self._assembled_preview_sources()
         if sources is not None:
@@ -1012,7 +1014,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 return None
             start, end = sources.paragraphs[pidx].start, sources.paragraphs[pidx].end
         else:
-            spans = paragraph_spans(source)
+            spans = unit_spans(source, self._preview_unit_names())
             pidx = containing_span_index(spans, selection_start)
             if pidx is None:
                 return None
@@ -1033,7 +1035,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                     return False
                 pstart, pend = span.start, span.end
             else:
-                pstart, pend = paragraph_spans(self.editor.toPlainText())[int(descriptor.get("paragraph"))]
+                pstart, pend = unit_spans(self.editor.toPlainText(),
+                                          self._preview_unit_names())[int(descriptor.get("paragraph"))]
         except (IndexError, TypeError, ValueError):
             return False
         source = self.editor.toPlainText()

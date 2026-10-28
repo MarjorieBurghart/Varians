@@ -221,7 +221,7 @@ def test_the_web_export_of_an_edition_in_parts_saves_its_parts_first(open_window
     window.show_document(window.edition_session)
     # Un fragment non appliqué, dans une autre partie.
     view = _preview(window)
-    assert view.load_fragment(6)                                        # premier paragraphe de s03
+    assert view.load_fragment(9)                                        # premier paragraphe de s03
     text = view.fragment_editor.toPlainText()
     view.fragment_editor.setPlainText(text.replace("Surrexit Dominus", "SURREXIT Dominus", 1))
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # compte rendu seulement

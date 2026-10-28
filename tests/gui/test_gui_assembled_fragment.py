@@ -5,16 +5,17 @@ le fragment appliqué y est écrit, que ce fichier soit affiché ou non, et mêm
 s'il n'a jamais été ouvert.
 
 Jeu « sermons » (tests/data/sermons) : les ✎ de l'aperçu sont, dans l'ordre,
-trois paragraphes de s01, trois de s02, trois de s03, deux de s04 et celui de
-l'exemplum (inclus par s04)."""
+le titre (<head>, V0.9.2.9) et trois paragraphes de s01, de s02 et de s03, le
+titre et deux paragraphes de s04, et le paragraphe de l'exemplum (inclus par
+s04)."""
 from __future__ import annotations
 
 from PySide6.QtWidgets import QMessageBox
 
 from app_context import tr
 
-S03_FIRST = 6
-EXEMPLUM = 11
+S03_FIRST = 9
+EXEMPLUM = 15
 
 
 def _doc(window, name):
@@ -45,7 +46,7 @@ def test_the_pencil_opens_the_paragraph_in_its_part(open_window, sermons_project
     assert view.fragment_editor.toPlainText().startswith('<p xml:id="s03_p1">')
     assert view.fragment_editor.toPlainText().endswith("</p>")
     assert view.fragment_session is _doc(window, "s03.xml")
-    assert view.frag_label.text() == tr("fragment.label.file", index=S03_FIRST + 1, total=12, file="s03.xml")
+    assert view.frag_label.text() == tr("fragment.label.file", index=S03_FIRST + 1, total=16, file="s03.xml")
     assert window.document is window.edition_session                 # le ✎ ne déplace pas la source
 
 
