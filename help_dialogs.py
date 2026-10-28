@@ -212,7 +212,9 @@ class SoftwareHelpDialog(QDialog):
         cursor = QTextCursor(document)
         cursor.setPosition(self._positions[self.current][0])
         self.browser.setTextCursor(cursor)
-        self.browser.ensureCursorVisible()
+        # L'occurrence dans le premier tiers de la vue, pas tout en bas.
+        bar = self.browser.verticalScrollBar()
+        bar.setValue(bar.value() + self.browser.cursorRect().top() - self.browser.viewport().height() // 3)
         start = self.occurrences[self.current][0]
         row = next((row for row, hit in enumerate(self._hits)
                     if hit.section.start <= start < hit.section.end), -1)

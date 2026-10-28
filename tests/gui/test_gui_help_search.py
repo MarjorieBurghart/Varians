@@ -69,6 +69,8 @@ def test_a_section_of_the_list_shows_its_first_occurrence(help_dialog):
     heading = dialog.browser.toPlainText().index("Aide-mémoire des expressions régulières")
     assert start >= heading
     assert dialog.browser.textCursor().position() == start
+    # L'occurrence est montrée dans le haut de la vue, pas tout en bas.
+    assert 0 <= dialog.browser.cursorRect().top() < dialog.browser.viewport().height() // 2
 
 
 def test_no_result_and_ctrl_f(help_dialog, qtbot):
