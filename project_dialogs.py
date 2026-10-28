@@ -552,7 +552,7 @@ class WitnessEditDialog(QDialog):
         label_item = QTableWidgetItem(label or path.stem)
         # L'identifiant est stable : une fois enregistré dans project.xml, il
         # n'est jamais recalculé à partir du foliotage ou du nom de fichier.
-        sid = str(surface_id or default_surface_id(self.id_edit.text().strip() or "W", row + 1))
+        sid = str(surface_id or default_surface_id(self.witness_id() or "W", row + 1))
         surface_item = QTableWidgetItem(sid)
         path_item = QTableWidgetItem(str(path))
         path_item.setFlags(path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)

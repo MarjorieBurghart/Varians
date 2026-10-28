@@ -140,3 +140,20 @@ def test_editing_a_witness_keeps_the_sigla_unique(qtbot, tr, dialogs):
     assert table.table.item(1, 0).toolTip() == tr("project.witness.xml_id", id="_1760_bis")
     assert table.witnesses()[1].id == "_1760_bis"
     assert table.table.item(1, 0).data(Qt.ItemDataRole.UserRole) is False
+
+
+def test_default_surface_ids_use_the_xml_identifier(qtbot, tr, tmp_path):
+    """Les surfaces proposées pour des images locales partent de
+    l'identifiant XML, comme à l'enregistrement du projet."""
+    from PySide6.QtGui import QImage
+    image = tmp_path / "f1.png"
+    picture = QImage(20, 30, QImage.Format.Format_RGB32)
+    picture.fill(0xFFFFFF)
+    assert picture.save(str(image))
+    dialog = _dialog(qtbot, tr)
+    dialog.id_edit.setText("1760")
+    dialog._append_local_image(image)
+    assert dialog.local_table.item(0, 1).text() == "_1760-p0001"
+    dialog.id_edit.setText("Σ")
+    dialog._append_local_image(image)
+    assert dialog.local_table.item(1, 1).text() == "Σ-p0002"
