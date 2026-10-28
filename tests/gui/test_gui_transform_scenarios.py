@@ -188,6 +188,7 @@ def test_the_package_of_a_scenario_is_chosen_and_an_unknown_one_is_kept(open_win
 
 
 def test_the_witness_parameter_is_chosen_in_a_list(open_window, sermons_project, dialogs):
+    from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QComboBox
     critique = TransformScenario("Critique", "${varians}/edition-critique.xsl", "publications/critique.html",
                                  engine="saxon", params=(("temoin-de-base", "${pivot}"), ("montrer-folios", "true")))
@@ -207,13 +208,19 @@ def test_the_witness_parameter_is_chosen_in_a_list(open_window, sermons_project,
         seen["items"] = [(combo.itemText(i), combo.itemData(i)) for i in range(combo.count())]
         seen["current"] = combo.currentData()
         combo.setCurrentIndex(combo.findData("C"))
+        # Sous le menu, la cellule n'a pas de texte (sous Windows, il se voyait
+        # à travers le menu) et ne se modifie pas.
+        under = dialog.params_table.item(0, 1)
+        seen["hidden"] = under.text() == "" and not under.flags() & Qt.ItemFlag.ItemIsEditable
         # Un paramètre renommé en temoin-de-base reçoit la liste, et la perd s'il change de nom.
         dialog.add_param_row("autre", "aucun")
         dialog.params_table.item(2, 0).setText("temoin-de-base")
         seen["renamed"] = isinstance(dialog.params_table.cellWidget(2, 1), QComboBox) \
             and dialog.params_table.cellWidget(2, 1).currentData() == "aucun"
         dialog.params_table.item(2, 0).setText("autre")
-        seen["back"] = dialog.params_table.cellWidget(2, 1) is None and dialog.params_table.item(2, 1).text() == "aucun"
+        back = dialog.params_table.item(2, 1)
+        seen["back"] = dialog.params_table.cellWidget(2, 1) is None and back.text() == "aucun" \
+            and bool(back.flags() & Qt.ItemFlag.ItemIsEditable)
         dialog.remove_param_row(2)
         # Un paramètre ajouté sans valeur puis nommé temoin-de-base : le pivot.
         dialog.add_param_row("", "")
@@ -236,7 +243,7 @@ def test_the_witness_parameter_is_chosen_in_a_list(open_window, sermons_project,
     for answer in answers:
         dialogs.expect(*answer)
     window.transform_scenarios_dialog()
-    assert seen["combo"] and seen["renamed"] and seen["back"]
+    assert seen["combo"] and seen["hidden"] and seen["renamed"] and seen["back"]
     # Le pivot en tête, enregistré ${pivot} ; les autres témoins ; « aucun ».
     assert seen["items"] == [(tr("transform.param.pivot", witness="A"), "${pivot}"), ("B", "B"), ("C", "C"),
                              ("D", "D"), ("E", "E"), (tr("transform.param.no_witness"), "aucun")]

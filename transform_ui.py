@@ -266,7 +266,8 @@ class ScenarioDialog(QDialog):
         """La valeur de ``temoin-de-base`` se choisit dans une liste (V0.9.2.7) :
         le témoin pivot en tête (enregistré ``${pivot}``), les autres témoins,
         « aucun » ; sans valeur, le pivot ; une autre valeur est gardée telle
-        quelle."""
+        quelle. Le menu garde la valeur : la cellule, dessous, reste vide (son
+        texte se voyait à travers le menu sous Windows)."""
         name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
         if name_item is None or value_item is None:
             return
@@ -274,6 +275,7 @@ class ScenarioDialog(QDialog):
         if name_item.text().strip() != WITNESS_PARAM:
             if combo is not None:
                 value_item.setText(combo.currentData())
+                value_item.setFlags(value_item.flags() | Qt.ItemFlag.ItemIsEditable)
                 self.params_table.removeCellWidget(row, 1)
             return
         if combo is not None:
@@ -294,7 +296,8 @@ class ScenarioDialog(QDialog):
         if combo.findData(value) < 0:                         # valeur inconnue : gardée
             combo.addItem(value, value)
         combo.setCurrentIndex(combo.findData(value))
-        combo.currentIndexChanged.connect(lambda _index, item=value_item, box=combo: item.setText(box.currentData()))
+        value_item.setText("")
+        value_item.setFlags(value_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
         self.params_table.setCellWidget(row, 1, combo)
 
     def remove_param_row(self, row):
