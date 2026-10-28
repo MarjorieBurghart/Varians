@@ -150,8 +150,10 @@
           .liste-tei {padding-left:2.1em; margin:1rem 0;}
           .liste-tei li {margin:.15rem 0;}
           .tableau-tei {width:100%; border-collapse:collapse; margin:1rem 0; font-size:.9em;}
-          .tableau-tei td {border-bottom:1px solid var(--filet); padding:.4em .6em; vertical-align:top;}
-          .tableau-tei tr:first-child td {border-top:1px solid var(--filet);}
+          .tableau-tei td, .tableau-tei th {border-bottom:1px solid var(--filet); padding:.4em .6em; vertical-align:top; text-align:left;}
+          .tableau-tei tr:first-child td, .tableau-tei tr:first-child th {border-top:1px solid var(--filet);}
+          .tableau-tei th {font-weight:600;}
+          .tableau-tei caption {font-weight:600; text-align:left; padding-bottom:.3em;}
           .discours {margin:1rem 0 1rem 1em;}
           .locuteur {font-variant:small-caps; letter-spacing:.035em; margin-right:.55em;}
           .didascalie {font-style:italic; color:var(--secondaire);}
@@ -491,11 +493,23 @@
     <li><xsl:apply-templates mode="base"/></li>
   </xsl:template>
   <xsl:template match="tei:label" mode="base"><strong><xsl:apply-templates mode="base"/></strong></xsl:template>
+  <!-- Tableau (Varians 0.9.3.0) : son <head> en légende ; une cellule
+       @role="label", ou d'une ligne @role="label", en en-tête ; @cols et
+       @rows fusionnent les cellules. -->
   <xsl:template match="tei:table" mode="base">
-    <table class="tableau-tei"><tbody><xsl:apply-templates mode="base"/></tbody></table>
+    <table class="tableau-tei">
+      <xsl:if test="tei:head"><caption><xsl:apply-templates select="tei:head[1]/node()" mode="base"/></caption></xsl:if>
+      <tbody><xsl:apply-templates select="node() except tei:head" mode="base"/></tbody>
+    </table>
   </xsl:template>
   <xsl:template match="tei:row" mode="base"><tr><xsl:apply-templates mode="base"/></tr></xsl:template>
-  <xsl:template match="tei:cell" mode="base"><td><xsl:apply-templates mode="base"/></td></xsl:template>
+  <xsl:template match="tei:cell" mode="base">
+    <xsl:element name="{if ((@role, ../@role)[1] = 'label') then 'th' else 'td'}">
+      <xsl:if test="number(@cols) gt 1"><xsl:attribute name="colspan" select="normalize-space(@cols)"/></xsl:if>
+      <xsl:if test="number(@rows) gt 1"><xsl:attribute name="rowspan" select="normalize-space(@rows)"/></xsl:if>
+      <xsl:apply-templates mode="base"/>
+    </xsl:element>
+  </xsl:template>
   <xsl:template match="tei:sp" mode="base"><div class="discours"><xsl:apply-templates mode="base"/></div></xsl:template>
   <xsl:template match="tei:speaker" mode="base"><span class="locuteur"><xsl:apply-templates mode="base"/></span></xsl:template>
   <xsl:template match="tei:stage" mode="base"><span class="didascalie">(<xsl:apply-templates mode="base"/>)</span></xsl:template>

@@ -2,7 +2,7 @@
 """Rendu de la feuille de Varians (rendering/tei-to-html.xsl), V0.9.2.9 :
 vers (chaque <l> sur sa ligne, chaque <lg> en bloc), <head> en titre,
 <list> en liste, <figure> en bloc. Ces éléments sont désormais modifiables
-avec le crayon ✎ de la Vue XSLT / CSS."""
+avec le crayon ✎ de la Vue XSLT / CSS. V0.9.3.0 : <table> en tableau."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -85,6 +85,31 @@ def test_a_figure_is_a_block():
     assert _texts(page, '//div[@class="figure"]/div[@class="figdesc"]') == ["Descriptio tabulae"]
 
 
+TABLE = ('<div><table rows="4" cols="2"><head>Tabula</head>'
+         '<row role="label"><cell>Nomen</cell><cell>Folium</cell></row>'
+         '<row><cell role="label">Petrus</cell><cell>12r</cell></row>'
+         '<row><cell cols="2">totum</cell></row>'
+         '<row role="label"><cell rows="2">a</cell><cell role="data">b</cell></row></table></div>')
+
+
+def _cells(table):
+    return [[(cell.tag, " ".join(cell.text_content().split()), cell.get("colspan"), cell.get("rowspan"))
+             for cell in row] for row in table.xpath(".//tr")]
+
+
+def test_a_table_is_a_table():
+    """V0.9.3.0 : son <head> en légende ; une cellule @role="label", ou
+    d'une ligne @role="label", en en-tête ; @cols et @rows fusionnent."""
+    page = _page(TABLE)
+    table = page.xpath("//main//table")[0]
+    assert _texts(page, "//main//table/caption") == ["Tabula"]
+    assert _cells(table) == [[("th", "Nomen", None, None), ("th", "Folium", None, None)],
+                             [("th", "Petrus", None, None), ("td", "12r", None, None)],
+                             [("td", "totum", "2", None)],
+                             [("th", "a", None, "2"), ("td", "b", None, None)]]
+    assert not page.xpath('//main//h3[@class="head"]')
+
+
 def test_paragraphs_are_unchanged():
     page = _page("<div><p>Commune <hi rend=\"italic\">sanctorum</hi></p></div>")
     assert _texts(page, "//main//p") == ["Commune sanctorum"]
@@ -92,5 +117,5 @@ def test_paragraphs_are_unchanged():
 
 def test_the_stylesheet_of_new_projects_styles_them():
     css = (ROOT / "rendering" / "tei.css").read_text(encoding="utf-8")
-    for selector in (".lg", ".l", ".head", ".figure", ".figdesc"):
+    for selector in (".lg", ".l", ".head", ".figure", ".figdesc", ".table"):
         assert f"\n{selector} " in css or f"\n{selector}," in css, selector

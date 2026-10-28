@@ -253,7 +253,7 @@ _MARKER_RE = re.compile(_MARKER)
 _DIVE_RE = re.compile(
     r"(?P<marker>" + _MARKER.replace("(\\d+)", "\\d+") + r")(?P<gap>(?:\s|<a\b[^>]*>\s*</a>)*)"
     r"(?P<block><(?:p|div|h[1-6]|li|ul|ol|dl|dt|dd|blockquote|figure|figcaption|section|article|header"
-    r"|footer|aside|nav|table|thead|tbody|tfoot|tr|td|th|pre|center|address)\b[^>]*>)",
+    r"|footer|aside|nav|table|caption|thead|tbody|tfoot|tr|td|th|pre|center|address)\b[^>]*>)",
     re.I,
 )
 

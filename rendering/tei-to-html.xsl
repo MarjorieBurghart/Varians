@@ -198,6 +198,42 @@
     <div class="figdesc"><xsl:apply-templates/></div>
   </xsl:template>
 
+  <!-- TABLE (Varians 0.9.3.0) : son <head> en légende ; une cellule
+       @role="label", ou d'une ligne @role="label", en en-tête ; @cols et
+       @rows fusionnent les cellules. -->
+  <xsl:template match="tei:table">
+    <table class="table">
+      <xsl:if test="tei:head">
+        <caption><xsl:apply-templates select="tei:head[1]/node()"/></caption>
+      </xsl:if>
+      <tbody><xsl:apply-templates select="node()[not(self::tei:head)]"/></tbody>
+    </table>
+  </xsl:template>
+
+  <xsl:template match="tei:row">
+    <tr><xsl:apply-templates/></tr>
+  </xsl:template>
+
+  <xsl:template match="tei:cell">
+    <xsl:choose>
+      <xsl:when test="@role = 'label' or (not(@role) and ../@role = 'label')">
+        <th><xsl:call-template name="cell-span"/><xsl:apply-templates/></th>
+      </xsl:when>
+      <xsl:otherwise>
+        <td><xsl:call-template name="cell-span"/><xsl:apply-templates/></td>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="cell-span">
+    <xsl:if test="number(@cols) &gt; 1">
+      <xsl:attribute name="colspan"><xsl:value-of select="normalize-space(@cols)"/></xsl:attribute>
+    </xsl:if>
+    <xsl:if test="number(@rows) &gt; 1">
+      <xsl:attribute name="rowspan"><xsl:value-of select="normalize-space(@rows)"/></xsl:attribute>
+    </xsl:if>
+  </xsl:template>
+
   <!-- PAGE BREAK -->
   <xsl:template match="tei:pb">
     <span class="pb" title="Page : {@n}">[<xsl:value-of select="@n"/>]</span>

@@ -208,6 +208,24 @@ def test_a_list_is_numbered_by_its_rend_or_its_type_and_titled_before_it(project
     assert head.getparent().tag not in ("ol", "ul") and head.getnext().tag == "ol"
 
 
+def test_a_table_has_its_caption_its_header_cells_and_its_merged_cells(project):
+    """V0.9.3.0 : le <head> d'un tableau est sa légende ; une cellule
+    @role="label", ou d'une ligne @role="label", est un en-tête ; @cols et
+    @rows fusionnent les cellules, comme dans la feuille de l'aperçu."""
+    name = _write(project, "tableau.xml", '<div><p>x</p><table><head>Tabula</head>'
+                                          '<row role="label"><cell>Nomen</cell><cell>Folium</cell></row>'
+                                          '<row><cell role="label">Petrus</cell><cell cols="2" rows="2">12r</cell>'
+                                          '</row></table></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    table = tree.find(".//main").xpath(".//table")[0]
+    assert [_text(caption) for caption in table.xpath("caption")] == ["Tabula"]
+    assert [[(cell.tag, _text(cell), cell.get("colspan"), cell.get("rowspan")) for cell in row]
+            for row in table.xpath(".//tr")] == [[("th", "Nomen", None, None), ("th", "Folium", None, None)],
+                                                 [("th", "Petrus", None, None), ("td", "12r", "2", "2")]]
+    assert not table.xpath(".//h3")
+
+
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):
     scenario = next(s for s in predefined_scenarios() if s.name == "edition-critique")
     result = run_in_process(scenario_request(scenario, project), timeout=120)
