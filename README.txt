@@ -23,6 +23,10 @@ VARIANS V0.9.2.9 — ÉLÉMENTS MODIFIABLES COMME FRAGMENT
   titre, les <list> en liste et les <figure> en bloc ; tei.css, copiée
   dans les nouveaux projets, les met en forme. Le scénario « HTML » gagne
   ces mises en forme. Le format de project.xml est inchangé.
+• Listes, dans cette feuille comme dans « Édition critique » : une liste
+  est numérotée si elle porte @rend="numbered" ou @type="ordered" (ou
+  « numbered ») ; le titre (<head>) d'une liste est placé avant elle (dans
+  l'Édition critique, il était écrit dans la liste HTML).
 
 VARIANS V0.9.2.8.2 — SIGLES DES TÉMOINS, CRAYON ET F2, PROJET DE TEST
 

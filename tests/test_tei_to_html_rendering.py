@@ -41,9 +41,10 @@ def test_a_head_is_a_heading():
 
 def test_a_list_is_a_list():
     page = _page('<div><list><head>Index</head><item>unum</item><item>duo</item></list>'
-                 '<list rend="numbered"><item>primum</item></list></div>')
-    assert _texts(page, "//main//ul/li") == ["unum", "duo"]
-    assert _texts(page, "//main//ol/li") == ["primum"]
+                 '<list rend="numbered"><item>primum</item></list><list type="ordered"><item>secundum</item></list>'
+                 '<list rend="unnumbered"><item>tres</item></list></div>')
+    assert _texts(page, "//main//ul/li") == ["unum", "duo", "tres"]
+    assert _texts(page, "//main//ol/li") == ["primum", "secundum"]
     heading = page.xpath('//main//h3[@class="head"]')[0]
     assert heading.text_content() == "Index" and heading.getnext().tag == "ul"
 

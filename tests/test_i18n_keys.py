@@ -883,6 +883,6 @@ def test_each_help_announces_version_0929():
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
         version = _help_section(page, "v0929")
         for text in ('href="#fragment-units"', "<code>model.divPart</code>", "<code>model.inter</code>", "✎",
-                     "<code>project.xml</code>"):
+                     "<code>project.xml</code>", '<code>@rend="numbered"</code>', '<code>@type="ordered"</code>'):
             assert text in version, (language, text)
         assert page.index('<section id="v09282">') < page.index('<section id="v0929">'), language

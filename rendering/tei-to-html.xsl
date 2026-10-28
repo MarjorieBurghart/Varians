@@ -112,11 +112,13 @@
   </xsl:template>
 
   <!-- LIST (Varians 0.9.2.9) : son <head> avant la liste ; liste numérotée
-       si @rend contient « numbered ». -->
+       si @rend contient « numbered », ou si @type vaut « ordered » ou
+       « numbered » (comme dans la feuille « Édition critique »). -->
   <xsl:template match="tei:list">
     <xsl:apply-templates select="tei:head"/>
     <xsl:choose>
-      <xsl:when test="contains(@rend, 'numbered')">
+      <xsl:when test="contains(concat(' ', normalize-space(@rend), ' '), ' numbered ')
+                      or @type = 'ordered' or @type = 'numbered'">
         <ol class="list"><xsl:apply-templates select="node()[not(self::tei:head)]"/></ol>
       </xsl:when>
       <xsl:otherwise>
