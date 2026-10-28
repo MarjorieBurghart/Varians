@@ -453,6 +453,9 @@ Přesto uložit?</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Latinský slovník</string>
   <string key="help.software">Nápověda k Varians</string>
+  <string key="help.search.placeholder">Hledat v nápovědě (Ctrl+F)</string>
+  <string key="help.search.summary">Oddíly: {sections}, výskyty: {count}</string>
+  <string key="help.search.none">Žádný výsledek</string>
   <string key="completion.values.title">Povolené hodnoty atributu</string>
   <string key="completion.values.label">Povolené hodnoty pro @{attribute} v &lt;{element}&gt;:</string>
   <string key="welcome.window">Varians</string>

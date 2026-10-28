@@ -439,6 +439,9 @@ Enregistrer quand même ?</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Dictionnaire de Latin</string>
   <string key="help.software">Aide du logiciel</string>
+  <string key="help.search.placeholder">Rechercher dans l’aide (Ctrl+F)</string>
+  <string key="help.search.summary">{sections} section(s), {count} occurrence(s)</string>
+  <string key="help.search.none">Aucun résultat</string>
   <string key="completion.values.title">Valeurs d’attribut autorisées</string>
   <string key="completion.values.label">Valeurs autorisées pour @{attribute} dans &lt;{element}&gt; :</string>
   <string key="welcome.window">Varians</string>

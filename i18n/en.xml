@@ -439,6 +439,9 @@ Save anyway?</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Latin Dictionary</string>
   <string key="help.software">Software Help</string>
+  <string key="help.search.placeholder">Search the help (Ctrl+F)</string>
+  <string key="help.search.summary">{sections} section(s), {count} occurrence(s)</string>
+  <string key="help.search.none">No result</string>
   <string key="completion.values.title">Allowed attribute values</string>
   <string key="completion.values.label">Allowed values for @{attribute} in &lt;{element}&gt;:</string>
   <string key="welcome.window">Varians</string>

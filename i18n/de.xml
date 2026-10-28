@@ -453,6 +453,9 @@ Trotzdem speichern?</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Lateinisches Wörterbuch</string>
   <string key="help.software">Varians-Hilfe</string>
+  <string key="help.search.placeholder">In der Hilfe suchen (Ctrl+F)</string>
+  <string key="help.search.summary">{sections} Abschnitt(e), {count} Treffer</string>
+  <string key="help.search.none">Kein Ergebnis</string>
   <string key="completion.values.title">Erlaubte Attributwerte</string>
   <string key="completion.values.label">Erlaubte Werte für @{attribute} in &lt;{element}&gt;:</string>
   <string key="welcome.window">Varians</string>

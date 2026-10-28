@@ -453,6 +453,9 @@
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Словарь латинского языка</string>
   <string key="help.software">Справка Varians</string>
+  <string key="help.search.placeholder">Поиск в справке (Ctrl+F)</string>
+  <string key="help.search.summary">Разделов: {sections}, совпадений: {count}</string>
+  <string key="help.search.none">Ничего не найдено</string>
   <string key="completion.values.title">Разрешённые значения атрибута</string>
   <string key="completion.values.label">Разрешённые значения @{attribute} в &lt;{element}&gt;:</string>
   <string key="welcome.window">Varians</string>

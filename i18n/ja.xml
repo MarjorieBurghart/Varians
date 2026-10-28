@@ -453,6 +453,9 @@
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">ラテン語辞書</string>
   <string key="help.software">Variansヘルプ</string>
+  <string key="help.search.placeholder">ヘルプを検索（Ctrl+F）</string>
+  <string key="help.search.summary">{sections} 節、{count} 件</string>
+  <string key="help.search.none">見つかりません</string>
   <string key="completion.values.title">使用可能な属性値</string>
   <string key="completion.values.label">&lt;{element}&gt; の @{attribute} に使用可能な値：</string>
   <string key="welcome.window">Varians</string>

@@ -453,6 +453,9 @@ Salvare comunque?</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Dizionario latino</string>
   <string key="help.software">Guida di Varians</string>
+  <string key="help.search.placeholder">Cerca nella guida (Ctrl+F)</string>
+  <string key="help.search.summary">{sections} sezione/i, {count} occorrenza/e</string>
+  <string key="help.search.none">Nessun risultato</string>
   <string key="completion.values.title">Valori di attributo consentiti</string>
   <string key="completion.values.label">Valori consentiti per @{attribute} in &lt;{element}&gt;:</string>
   <string key="welcome.window">Varians</string>
