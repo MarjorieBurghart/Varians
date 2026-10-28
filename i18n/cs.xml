@@ -272,7 +272,8 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.new.info">Nový projekt obsahuje kopie TEI, zarovnání, CSS, konfigurace Ctrl+E a překladů. Výchozí XSLT zůstává v aplikaci; vlastní XSLT se zkopíruje do projektu. Vyberte prázdnou složku.</string>
   <string key="project.new.info.blank">Varians automaticky vytvoří minimální soubor TEI v xml/edition.xml. Přidejte alespoň jednoho svědka a výslovně zvolte „Zatím bez obrázků“, pokud začínáte transkripci bez faksimile. ALTO a synchronizaci lze přidat později. V automatickém režimu schématu nová TEI odkazuje na TEI All prostřednictvím xml-model. Vyberte prázdnou složku.</string>
   <string key="project.witness.edit.title">Textový svědek projektu</string>
-  <string key="project.witness.id">Sigla / identifikátor</string>
+  <string key="project.witness.id">Sigla</string>
+  <string key="project.witness.xml_id">Identifikátor XML: {id}</string>
   <string key="project.witness.label">Zobrazovaný název</string>
   <string key="project.witness.images">Zdroj obrázků</string>
   <string key="project.witness.images.none">Zatím bez obrázků</string>
@@ -287,10 +288,11 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.witness.base">Pivotní</string>
   <string key="project.witness.secondary">Sekundární</string>
   <string key="project.validation.title">Neplatný projekt</string>
-  <string key="project.validation.witness_id">Identifikátor svědka je povinný, nesmí obsahovat mezery ani začínat znakem #.</string>
+  <string key="project.validation.witness_id">Sigla svědka je povinná.</string>
   <string key="project.validation.alignment_missing">Soubor zarovnání nebyl nalezen:
 {path}</string>
-  <string key="project.validation.duplicate_witness">Identifikátor {id} se již používá.</string>
+  <string key="project.validation.duplicate_witness">Sigla {id} se již používá.</string>
+  <string key="project.validation.witness_id_collision">Sigla {siglum} dává identifikátor XML {id}, který už má svědek {other}.</string>
   <string key="project.validation.folder_required">Vyberte složku pro nový projekt.</string>
   <string key="project.validation.folder_not_empty">Vybraná složka není prázdná. Vyberte prázdnou nebo novou složku.</string>
   <string key="project.validation.edition_missing">Soubor TEI nebyl nalezen:

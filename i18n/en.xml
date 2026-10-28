@@ -258,7 +258,8 @@ It has been removed from the recent-project list.</string>
   <string key="project.new.info">The new project includes copies of the TEI, alignments, CSS, Ctrl+E configuration and translations. The default XSLT stays in the application; a custom XSLT is copied into the project. Choose an empty folder.</string>
   <string key="project.new.info.blank">Varians will automatically create a minimal TEI file in xml/edition.xml. Add at least one witness and explicitly choose “No images for now” if you are beginning the transcription without a facsimile. ALTO and synchronization can be added later. In automatic schema mode, the new TEI references TEI All through xml-model. Choose an empty folder.</string>
   <string key="project.witness.edit.title">Project witness</string>
-  <string key="project.witness.id">Siglum / identifier</string>
+  <string key="project.witness.id">Siglum</string>
+  <string key="project.witness.xml_id">XML identifier: {id}</string>
   <string key="project.witness.label">Display name</string>
   <string key="project.witness.images">Image source</string>
   <string key="project.witness.images.none">No images for now</string>
@@ -273,10 +274,11 @@ It has been removed from the recent-project list.</string>
   <string key="project.witness.base">Pivot</string>
   <string key="project.witness.secondary">Secondary</string>
   <string key="project.validation.title">Invalid project</string>
-  <string key="project.validation.witness_id">The witness identifier is required, must contain no spaces, and must not start with #.</string>
+  <string key="project.validation.witness_id">The witness siglum is required.</string>
   <string key="project.validation.alignment_missing">Alignment file not found:
 {path}</string>
-  <string key="project.validation.duplicate_witness">The identifier {id} is already in use.</string>
+  <string key="project.validation.duplicate_witness">The siglum {id} is already in use.</string>
+  <string key="project.validation.witness_id_collision">The siglum {siglum} gives the XML identifier {id}, already used by the witness {other}.</string>
   <string key="project.validation.folder_required">Choose a folder for the new project.</string>
   <string key="project.validation.folder_not_empty">The selected folder is not empty. Choose an empty or new folder.</string>
   <string key="project.validation.edition_missing">TEI file not found:

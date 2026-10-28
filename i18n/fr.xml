@@ -258,7 +258,8 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="project.new.info">Le nouveau projet contient une copie de la TEI, des alignements, de la CSS, de la configuration Ctrl+E et des traductions. La XSLT par défaut reste celle de l’application ; une XSLT personnalisée sera copiée dans le projet. Choisissez un dossier vide.</string>
   <string key="project.new.info.blank">Varians créera automatiquement un fichier TEI minimal dans xml/edition.xml. Ajoutez au moins un témoin et choisissez explicitement « Aucune image pour le moment » si vous commencez la transcription sans fac-similé. L’ALTO et la synchronisation peuvent être ajoutés plus tard. En mode de schéma automatique, le nouveau TEI référence TEI All par xml-model. Choisissez un dossier vide.</string>
   <string key="project.witness.edit.title">Témoin du projet</string>
-  <string key="project.witness.id">Sigle / identifiant</string>
+  <string key="project.witness.id">Sigle</string>
+  <string key="project.witness.xml_id">Identifiant XML : {id}</string>
   <string key="project.witness.label">Nom affiché</string>
   <string key="project.witness.images">Source des images</string>
   <string key="project.witness.images.none">Aucune image pour le moment</string>
@@ -273,10 +274,11 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="project.witness.base">Pivot</string>
   <string key="project.witness.secondary">Secondaire</string>
   <string key="project.validation.title">Projet invalide</string>
-  <string key="project.validation.witness_id">Le sigle du témoin est obligatoire, sans espaces, et ne doit pas commencer par #.</string>
+  <string key="project.validation.witness_id">Le sigle du témoin est obligatoire.</string>
   <string key="project.validation.alignment_missing">Fichier d’alignement introuvable :
 {path}</string>
   <string key="project.validation.duplicate_witness">Le sigle {id} est déjà utilisé.</string>
+  <string key="project.validation.witness_id_collision">Le sigle {siglum} donne l’identifiant XML {id}, qui est déjà celui du témoin {other}.</string>
   <string key="project.validation.folder_required">Choisissez un dossier pour le nouveau projet.</string>
   <string key="project.validation.folder_not_empty">Le dossier choisi n’est pas vide. Choisissez un dossier vide ou un nouveau dossier.</string>
   <string key="project.validation.edition_missing">Fichier TEI introuvable :

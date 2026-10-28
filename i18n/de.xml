@@ -272,7 +272,8 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.new.info">Das neue Projekt enthält Kopien der TEI, der Alignments, der CSS-Datei, der Ctrl+E-Konfiguration und der Übersetzungen. Die Standard-XSLT bleibt in der Anwendung; eine benutzerdefinierte XSLT wird in das Projekt kopiert. Wählen Sie einen leeren Ordner.</string>
   <string key="project.new.info.blank">Varians erstellt automatisch eine minimale TEI-Datei in xml/edition.xml. Fügen Sie mindestens einen Textzeugen hinzu und wählen Sie ausdrücklich „Vorerst keine Bilder“, wenn Sie die Transkription ohne Faksimile beginnen. ALTO und Synchronisierung können später ergänzt werden. Im automatischen Schemamodus verweist die neue TEI per xml-model auf TEI All. Wählen Sie einen leeren Ordner.</string>
   <string key="project.witness.edit.title">Textzeuge des Projekts</string>
-  <string key="project.witness.id">Sigle / Kennung</string>
+  <string key="project.witness.id">Sigle</string>
+  <string key="project.witness.xml_id">XML-Kennung: {id}</string>
   <string key="project.witness.label">Anzeigename</string>
   <string key="project.witness.images">Bildquelle</string>
   <string key="project.witness.images.none">Vorerst keine Bilder</string>
@@ -287,10 +288,11 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.witness.base">Pivot</string>
   <string key="project.witness.secondary">Sekundär</string>
   <string key="project.validation.title">Ungültiges Projekt</string>
-  <string key="project.validation.witness_id">Die Kennung des Textzeugen ist erforderlich, darf keine Leerzeichen enthalten und nicht mit # beginnen.</string>
+  <string key="project.validation.witness_id">Die Sigle des Textzeugen ist erforderlich.</string>
   <string key="project.validation.alignment_missing">Alignment-Datei nicht gefunden:
 {path}</string>
-  <string key="project.validation.duplicate_witness">Die Kennung {id} wird bereits verwendet.</string>
+  <string key="project.validation.duplicate_witness">Die Sigle {id} wird bereits verwendet.</string>
+  <string key="project.validation.witness_id_collision">Die Sigle {siglum} ergibt die XML-Kennung {id}, die bereits der Textzeuge {other} trägt.</string>
   <string key="project.validation.folder_required">Wählen Sie einen Ordner für das neue Projekt.</string>
   <string key="project.validation.folder_not_empty">Der gewählte Ordner ist nicht leer. Wählen Sie einen leeren oder neuen Ordner.</string>
   <string key="project.validation.edition_missing">TEI-Datei nicht gefunden:
