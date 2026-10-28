@@ -63,6 +63,13 @@ class WitnessDraft:
     iiif_selected_canvases: list[str] = field(default_factory=list)
     iiif_ocr_links: list[tuple[str, str]] = field(default_factory=list)  # file, canvas ID
     iiif_page_links: list[tuple[str, str]] = field(default_factory=list)  # sync page ID, canvas ID
+    # V0.9.2.8.2 : sigle saisi, quand il n'est pas un identifiant XML valide
+    # (``id`` en est alors tiré, voir witness_ids) ; vide sinon.
+    siglum: str = ""
+
+    @property
+    def display_siglum(self) -> str:
+        return (self.siglum or "").strip() or self.id
 
 
 @dataclass
@@ -135,17 +142,29 @@ def minimal_tei_text(
     # d'une description textuelle impossible à référencer.
     list_wit = ET.SubElement(source_desc, q("listWit"))
     XML_NS = "http://www.w3.org/XML/1998/namespace"
+    mixed = []
     for witness in witnesses:
         wid = (witness.id or "").strip()
         if not wid:
             continue
         wel = ET.SubElement(list_wit, q("witness"), {f"{{{XML_NS}}}id": wid})
-        wel.text = (witness.label or wid).strip()
+        label = (witness.label or witness.display_siglum).strip()
+        siglum = witness.display_siglum
+        if siglum != wid:
+            # Le sigle saisi, quand l'identifiant a dû en être tiré (V0.9.2.8.2).
+            idno = ET.SubElement(wel, q("idno"), {"type": "siglum"})
+            idno.text = siglum
+            idno.tail = label
+            mixed.append(wel)
+        else:
+            wel.text = label
 
     text = ET.SubElement(root, q("text"))
     body = ET.SubElement(text, q("body"))
     ET.SubElement(body, q("p"))
     ET.indent(root, space="  ")
+    for wel in mixed:
+        wel.text = None             # contenu mixte : pas d'indentation avant <idno>
     xml = ET.tostring(root, encoding="unicode", short_empty_elements=False)
     prolog = '<?xml version="1.0" encoding="UTF-8"?>\n'
     if schema_mode == "auto":
@@ -235,8 +254,10 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
     for w in draft.witnesses:
         attrs = {
             "id": w.id.strip(),
-            "label": w.label.strip() or w.id.strip(),
+            "label": w.label.strip() or w.display_siglum,
         }
+        if w.display_siglum != w.id.strip():
+            attrs["siglum"] = w.display_siglum
         if w.alignment is not None:
             attrs["alignment"] = portable_path(root_dir, Path(w.alignment))
         if w.id == draft.base_witness:
@@ -742,6 +763,7 @@ def create_portable_project(
             list(getattr(witness, 'iiif_selected_canvases', ()) or ()),
             list(getattr(witness, 'iiif_ocr_links', ()) or ()),
             list(getattr(witness, 'iiif_page_links', ()) or ()),
+            getattr(witness, "siglum", ""),
         ))
 
     draft = ProjectDraft(
