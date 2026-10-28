@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">Recherche XML : aucune occurrence — {query}</string>
   <string key="status.ctrl_e.config">Configuration Ctrl+E : {path}</string>
   <string key="manuscript.home.tip">Revenir à la correspondance du passage XML</string>
+  <string key="manuscript.browse.tip">Feuilleter : enfoncé, les flèches et le choix du folio parcourent ce manuscrit sans déplacer le curseur dans l’édition.</string>
   <string key="manuscript.no_direct">pas de correspondance directe</string>
   <string key="manuscript.no_match">Aucune correspondance proposée pour cette ligne du témoin pivot.</string>
   <string key="manuscript.no_line">aucune ligne</string>

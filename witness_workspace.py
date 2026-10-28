@@ -192,6 +192,21 @@ class WitnessWorkspaceMixin:
             saved = []
         return normalized_witness_order([w.id for w in self.witness_configs], saved)
 
+    def _load_browse_only_witnesses(self):
+        """Témoins en feuilletage libre (V0.9.2.8.1) : réglage local du projet."""
+        raw = _settings().value(self._view_settings_key("witnessBrowseOnly"), "")
+        try:
+            saved = json.loads(raw) if isinstance(raw, str) and raw else raw
+        except (TypeError, ValueError):
+            saved = []
+        return {str(witness) for witness in saved} if isinstance(saved, (list, tuple)) else set()
+
+    def _witness_browse_only_changed(self, _witness, _browse_only):
+        _settings().setValue(
+            self._view_settings_key("witnessBrowseOnly"),
+            json.dumps([witness for witness, panel in self.panels.items() if panel.browse_only], ensure_ascii=False),
+        )
+
     def _save_witness_display_order(self):
         _settings().setValue(
             self._view_settings_key("witnessOrder"),

@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">XML search: no match — {query}</string>
   <string key="status.ctrl_e.config">Ctrl+E configuration: {path}</string>
   <string key="manuscript.home.tip">Return to the correspondence for the XML passage</string>
+  <string key="manuscript.browse.tip">Browse: when pressed, the arrows and the folio list go through this manuscript without moving the cursor in the edition.</string>
   <string key="manuscript.no_direct">no direct correspondence</string>
   <string key="manuscript.no_match">No correspondence proposed for this pivot-witness line.</string>
   <string key="manuscript.no_line">no line</string>

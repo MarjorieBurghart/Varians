@@ -51,6 +51,7 @@
   <string key="status.search.xml.none">XML-Suche: kein Treffer — {query}</string>
   <string key="status.ctrl_e.config">Ctrl+E-Konfiguration: {path}</string>
   <string key="manuscript.home.tip">Zur Entsprechung der aktuellen XML-Passage zurückkehren</string>
+  <string key="manuscript.browse.tip">Blättern: Eingedrückt durchlaufen die Pfeile und die Folioauswahl diese Handschrift, ohne den Cursor in der Edition zu bewegen.</string>
   <string key="manuscript.no_direct">keine direkte Entsprechung</string>
   <string key="manuscript.no_match">Für diese Zeile des Pivot-Textzeugen wurde keine Entsprechung vorgeschlagen.</string>
   <string key="manuscript.no_line">keine Zeile</string>

@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import (
-    QBuffer, QByteArray, QIODevice, QPointF, QRectF, Qt, QThreadPool, QUrl, Signal,
+    QBuffer, QByteArray, QIODevice, QPointF, QRectF, QSize, Qt, QThreadPool, QUrl, Signal,
     Slot,
 )
 from PySide6.QtGui import (
-    QBrush, QColor, QDesktopServices, QImageReader, QPen, QPixmap, QPolygonF,
+    QBrush, QColor, QDesktopServices, QIcon, QImageReader, QPen, QPixmap, QPolygonF,
 )
 from PySide6.QtWidgets import (
     QComboBox, QFrame, QGraphicsPixmapItem, QGraphicsPolygonItem, QGraphicsRectItem,
@@ -25,6 +25,12 @@ from image_sources import (
     page_image_request as generic_image_request, page_image_source,
     page_label as image_page_label, valid_matched_indices, visible_line_frame_indices,
 )
+
+
+# Bouton « feuilleter » (V0.9.2.8.1) : livre ouvert dont une page tourne.
+BROWSE_ICON = Path(__file__).resolve().parent / "resources" / "icons" / "feuilleter.svg"
+# Bouton à bascule enfoncé (Cadres, feuilleter) : bien visible sous tous les thèmes.
+_CHECKED_BUTTON_QSS = "QPushButton:checked { background-color: #ffe4d4; border: 2px solid #d45735; font-weight: bold; }"
 
 
 def scaled_bbox(item, project_root=None):
@@ -224,6 +230,7 @@ class WitnessHeader(QWidget):
 class ManuscriptPanel(QFrame):
     primaryNavigate = Signal(int)   # nouveau centre du témoin de base
     witnessNavigate = Signal(str, int)  # témoin, pas des flèches (V0.9.1.4)
+    browseOnlyChanged = Signal(str, bool)  # témoin, feuilletage libre (V0.9.2.8.1)
     markPageRequested = Signal(str, str, str)  # témoin, surface/zone xml:id, @n
     splitFolioRequested = Signal(str, str)  # témoin, surface xml:id
     maximizeRequested = Signal(str)
@@ -271,13 +278,22 @@ class ManuscriptPanel(QFrame):
         self.frames_btn.setToolTip(_t("manuscript.frames.tip"))
         # The toggle is *per witness*. Make this visually obvious even with a
         # platform theme that gives checked and unchecked buttons similar hues.
-        self.frames_btn.setStyleSheet("QPushButton:checked { background-color: #ffe4d4; border: 2px solid #d45735; font-weight: bold; }")
+        self.frames_btn.setStyleSheet(_CHECKED_BUTTON_QSS)
+        # Feuilletage libre (V0.9.2.8.1) : enfoncé, les flèches et le choix du
+        # folio parcourent ce manuscrit sans déplacer le curseur dans l'édition.
+        self.browse_btn = QPushButton()
+        self.browse_btn.setCheckable(True)
+        self.browse_btn.setIcon(QIcon(str(BROWSE_ICON)))
+        self.browse_btn.setIconSize(QSize(23, 18))
+        self.browse_btn.setToolTip(_t("manuscript.browse.tip"))
+        self.browse_btn.setStyleSheet(_CHECKED_BUTTON_QSS)
+        self.browse_btn.toggled.connect(lambda checked: self.browseOnlyChanged.emit(self.siglum, bool(checked)))
         self.page_btn = QPushButton(_t("common.page"))
         self.mark_page_btn = QPushButton(_t("manuscript.mark_page"))
         self.mark_page_btn.setToolTip(_t("manuscript.mark_page.tip"))
-        for b in [self.prev_btn, self.next_btn, self.home_btn, self.minus_btn, self.reset_btn, self.plus_btn, self.frames_btn, self.page_btn, self.mark_page_btn]:
+        for b in [self.prev_btn, self.next_btn, self.home_btn, self.browse_btn, self.minus_btn, self.reset_btn, self.plus_btn, self.frames_btn, self.page_btn, self.mark_page_btn]:
             bar.addWidget(b)
-        bar.insertWidget(6, self.zoom_label)
+        bar.insertWidget(7, self.zoom_label)
         # V0.8.5.20: the double-page command shares the EXISTING toolbar.
         # No second toolbar row. Arrows continue traversing logical parts in
         # page mode; a hidden combo maintains the existing navigation state.
@@ -362,10 +378,16 @@ class ManuscriptPanel(QFrame):
             else:
                 btn.setMinimumWidth(0)
                 btn.setMaximumWidth(16777215)
+        if compact:
+            self.browse_btn.setFixedWidth(34)
+        else:
+            self.browse_btn.setMinimumWidth(0)
+            self.browse_btn.setMaximumWidth(16777215)
 
     def retranslate_ui(self):
         self.detach_btn.setToolTip(_t('workspace.attach.tip' if getattr(self, '_detached', False) else 'workspace.detach.tip'))
         self.home_btn.setToolTip(_t("manuscript.home.tip"))
+        self.browse_btn.setToolTip(_t("manuscript.browse.tip"))
         self.frames_btn.setText(_t("common.frames"))
         self.frames_btn.setToolTip(_t("manuscript.frames.tip"))
         self.page_btn.setText(_t("common.page"))
@@ -437,9 +459,27 @@ class ManuscriptPanel(QFrame):
                 return
         self.reload()
 
+    @property
+    def browse_only(self):
+        """Feuilletage libre (V0.9.2.8.1) : les flèches et le choix du folio
+        ne mènent pas l'édition."""
+        return self.browse_btn.isChecked()
+
+    def set_browse_only(self, browse_only):
+        """État retenu pour le projet, sans le réenregistrer."""
+        self.browse_btn.blockSignals(True)
+        try:
+            self.browse_btn.setChecked(bool(browse_only))
+        finally:
+            self.browse_btn.blockSignals(False)
+
     def navigate(self, step):
         """Flèches du panneau (V0.9.1.4) : la fenêtre fait mener l'édition
-        par le témoin, dans son propre ordre, ou le feuillette (``browse``)."""
+        par le témoin, dans son propre ordre, ou le feuillette (``browse``).
+        En feuilletage libre (V0.9.2.8.1), le témoin est seulement feuilleté."""
+        if self.browse_only:
+            self.browse(step)
+            return
         self.witnessNavigate.emit(self.siglum, int(step))
 
     def browse(self, step):
@@ -528,8 +568,10 @@ class ManuscriptPanel(QFrame):
         if self._updating_folios or self.sync_enabled or index < 0 or index >= len(self.folios):
             return
         self.set_folio(self.folios[index].ref)
-        # Le folio choisi mène l'édition, comme les flèches (V0.9.1.4).
-        self.witnessNavigate.emit(self.siglum, 0)
+        # Le folio choisi mène l'édition, comme les flèches (V0.9.1.4), sauf
+        # en feuilletage libre (V0.9.2.8.1).
+        if not self.browse_only:
+            self.witnessNavigate.emit(self.siglum, 0)
 
     def _request_split_folio(self):
         """Ouvre la définition des folios, même si ce témoin suit les lignes.
