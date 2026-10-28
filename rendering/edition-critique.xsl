@@ -10,8 +10,8 @@
     demande un <lem> dans chaque <app>. Règles communes avec le pré-passage
     des scénarios DOCX et ODT : apparat-commun.xsl.
   - Apparat après chaque division, en deux séries : l'apparat critique,
-    appelé par des lettres (a, b… z, aa…), et les notes, appelées par des
-    chiffres. La leçon précède ses sigles, en italique ; om., add., lacuna
+    appelé par des chiffres, et les notes, moins nombreuses, appelées par
+    des lettres (a, b… z, aa…). La leçon précède ses sigles, en italique ; om., add., lacuna
     incipit, lacuna desinit ; les leçons d'un <rdgGrp> comptent.
   - Titre d'une division sans <head> : son @n, sinon rien.
   - Folios : ceux du témoin choisi (et sans @edRef) ; tous avec « aucun ».
@@ -62,13 +62,13 @@
       [f:section(.) is $section][f:dans-texte-etabli(.)][not(ancestor::tei:note)]"/>
   </xsl:function>
 
-  <!-- Le repère d'un appel : une lettre pour l'apparat (a… z, aa…), un
-       chiffre pour une note. -->
+  <!-- Le repère d'un appel : un chiffre pour l'apparat, une lettre pour une
+       note (a… z, aa…). -->
   <xsl:function name="f:repere" as="xs:string">
     <xsl:param name="n" as="element()"/>
     <xsl:variable name="memes" select="f:appels-de-section(f:section($n))[node-name(.) = node-name($n)]"/>
     <xsl:variable name="rang" select="count($memes[. &lt;&lt; $n]) + 1"/>
-    <xsl:sequence select="if ($n/self::tei:app) then format-integer($rang, 'a') else string($rang)"/>
+    <xsl:sequence select="if ($n/self::tei:app) then string($rang) else format-integer($rang, 'a')"/>
   </xsl:function>
 
   <xsl:function name="f:cle-section" as="xs:string">

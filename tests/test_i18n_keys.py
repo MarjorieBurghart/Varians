@@ -563,6 +563,19 @@ def test_each_help_explains_the_critical_edition():
             < page.index('<section id="v0900">'), language
 
 
+def test_the_apparatus_is_called_by_numbers_and_the_notes_by_letters():
+    """Édition critique : l'apparat, nombreux, appelé par des chiffres ; les
+    notes par des lettres (a, b… z, aa…)."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="critical-edition">'):]
+        section = section[:section.index("</section>")]
+        letters = section.index("aa…")
+        # En japonais, le complément précède le nom : « 文字（…）で呼び出される … Notes ».
+        anchor = "Apparat critique</strong>" if language == "ja" else "<strong>Notes</strong>"
+        assert letters > section.index(anchor), language
+
+
 def test_each_help_announces_version_0927():
     for language in LANGUAGES:
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")

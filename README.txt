@@ -19,7 +19,7 @@ VARIANS V0.9.2.7 — DOCX, ODT, EPUB, HTML EN PLUSIEURS FICHIERS, ÉDITION CRITI
   (rendering/edition-critique.xsl, Saxon, publications/edition-critique.html),
   d'après la feuille du kit d'édition critique, retouchée : témoin pivot
   par défaut (temoin-de-base=${pivot}), titres tirés du seul @n, folios du
-  témoin choisi, lacunes nommées, apparat (lettres) et notes (chiffres) en
+  témoin choisi, lacunes nommées, apparat (chiffres) et notes (lettres) en
   deux séries, leçons des rdgGrp, une coupure par groupe de <lb>.
 • Scénarios : « Format du résultat » (pages, docx, odt, epub) et
   « Pré-passage TEI → TEI » dans la boîte d'un scénario, écrits dans

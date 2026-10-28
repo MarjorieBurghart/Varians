@@ -343,7 +343,8 @@ servent aux scénarios prédéfinis « TEI : … ».
   inclus, partagé avec le pré-passage : `f:choix`, `f:lecons` avec les
   `rdgGrp`, `f:apparat` → map, `f:folio-montre`, `f:lb-groupe`,
   `f:texte-net`, `f:verifier`). Deux séries par division : apparat
-  (`format-integer(…, 'a')`) et notes (chiffres).
+  (chiffres) et notes, moins nombreuses (lettres :
+  `format-integer(…, 'a')`).
 - **Copie d'une feuille de Varians** (« Ouvrir la feuille ») : avec les
   feuilles qu'elle inclut ou importe par un chemin relatif
   (`xslt_scenarios.included_stylesheets`), sans remplacer un fichier.

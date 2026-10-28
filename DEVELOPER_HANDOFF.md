@@ -697,7 +697,7 @@ Appliqué depuis la V0.9.2.3 (`schematron.py`, SchXslt2 livré dans `resources/s
 
 ### Transformations
 
-Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus `transform_worker`, interface `transform_ui`), TEI Stylesheets depuis la V0.9.2.2 (`tei_stylesheets`). Depuis la V0.9.2.7 : formats en plusieurs fichiers (`xslt_packages` : pages HTML, DOCX, ODT, EPUB, archive faite par Varians), pré-passage TEI → TEI (`TransformScenario.prepare`), paramètres sans type pour Saxon, `${pivot}`, sous-groupe « TEI Stylesheets », scénario « Édition critique (HTML) » (`rendering/edition-critique.xsl`, règles communes avec le pré-passage DOCX/ODT dans `rendering/apparat-commun.xsl`). Restent hors champ : PDF, images des pages HTML, numérotation par lettres de l'apparat dans Word et LibreOffice, textes de l'édition critique dans d'autres langues que le français.
+Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus `transform_worker`, interface `transform_ui`), TEI Stylesheets depuis la V0.9.2.2 (`tei_stylesheets`). Depuis la V0.9.2.7 : formats en plusieurs fichiers (`xslt_packages` : pages HTML, DOCX, ODT, EPUB, archive faite par Varians), pré-passage TEI → TEI (`TransformScenario.prepare`), paramètres sans type pour Saxon, `${pivot}`, sous-groupe « TEI Stylesheets », scénario « Édition critique (HTML) » (`rendering/edition-critique.xsl`, règles communes avec le pré-passage DOCX/ODT dans `rendering/apparat-commun.xsl`). Restent hors champ : PDF, images des pages HTML, notes de l'éditeur appelées par des lettres dans Word et LibreOffice (chiffres romains, i, ii…, comme ces logiciels numérotent les notes de fin), textes de l'édition critique dans d'autres langues que le français.
 
 ### Outil tiers d'alignement
 

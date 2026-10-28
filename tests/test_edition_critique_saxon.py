@@ -71,10 +71,10 @@ def test_the_example_with_lemmas(project):
     assert tree.find_class("cesure") and tree.find_class("folio")
     prose, second = _main(tree)[:2]
     assert prose.startswith("Lorem ipsum dolor sit amet") and second.startswith("Sed do eiusmod tempor")
-    assert ("a", "ipsum ] ipsam B") in _entries(tree) and ("b", "breve add. B") in _entries(tree)
+    assert ("1", "ipsum ] ipsam B") in _entries(tree) and ("2", "breve add. B") in _entries(tree)
     # Le lemme du deuxième vers (B) prime sur A, premier témoin de listWit.
     assert "consectetur adipiscing elit," in _text(tree.find(".//main"))
-    assert ("a", "adipiscing ] adipiscens A") in _entries(tree)
+    assert ("1", "adipiscing ] adipiscens A") in _entries(tree)
     # Les sigles, après la leçon, en italique.
     assert [_text(i) for i in tree.xpath("(//ol[contains(@class, 'apparat')]/li)[1]//i[contains(@class, 'temoin')]")] == ["B"]
     # « aucun » : le même texte établi, tous les apparats ayant un lemme.
@@ -140,21 +140,23 @@ def test_a_lacuna_is_named_in_the_apparatus(project):
                                           '<lacunaEnd/></rdg></app> finis</p></div>')
     result, tree = _edition(project, name, "A")
     assert result.ok, result.error
-    assert _entries(tree) == [("a", "fuit ] lacuna incipit C"), ("b", "sic ] lacuna desinit C")]
+    assert _entries(tree) == [("1", "fuit ] lacuna incipit C"), ("2", "sic ] lacuna desinit C")]
     assert _main(tree) == ["et fuit diu sic finis"]
 
 
 def test_the_apparatus_and_the_notes_are_two_series(project):
-    apps = "".join(f'<app><rdg wit="#A">u{i}</rdg><rdg wit="#B">v{i}</rdg></app> ' for i in range(28))
-    name = _write(project, "series.xml", f'<div n="I"><p>{apps}<note>Première note.</note> fin'
-                                         f'<note>Seconde.</note></p></div>')
+    # L'apparat, nombreux, appelé par des chiffres ; les notes par des lettres.
+    apps = "".join(f'<app><rdg wit="#A">u{i}</rdg><rdg wit="#B">v{i}</rdg></app> ' for i in range(3))
+    notes = "".join(f'<note>Note {i}.</note> ' for i in range(28))
+    name = _write(project, "series.xml", f'<div n="I"><p>{apps}{notes}fin</p></div>')
     result, tree = _edition(project, name)
     assert result.ok, result.error
     calls = [_text(sup) for sup in tree.xpath("//main//sup[contains(@class, 'appel')]")]
-    assert calls[:3] == ["a", "b", "c"] and calls[25:28] == ["z", "aa", "ab"] and calls[28:] == ["1", "2"]
+    assert calls[:3] == ["1", "2", "3"] and calls[3:6] == ["a", "b", "c"] and calls[28:] == ["z", "aa", "ab"]
     assert [_text(h) for h in tree.xpath("//aside//h3")] == ["Apparat critique", "Notes"]
-    assert _entries(tree)[27] == ("ab", "u27 ] v27 B")
-    assert _entries(tree, "notes") == [("1", "Première note."), ("2", "Seconde.")]
+    assert _entries(tree) == [("1", "u0 ] v0 B"), ("2", "u1 ] v1 B"), ("3", "u2 ] v2 B")]
+    assert _entries(tree, "notes")[:2] == [("a", "Note 0."), ("b", "Note 1.")]
+    assert _entries(tree, "notes")[27] == ("ab", "Note 27.")
     # Chaque appel mène à son entrée, et l'entrée à son appel.
     for link in tree.xpath("//main//sup[contains(@class, 'appel')]/a"):
         target = link.get("href")[1:]
@@ -166,7 +168,7 @@ def test_the_readings_of_a_rdggrp_count(project):
                                           '<rdg wit="#B">mortes</rdg><rdg wit="#C">mortis sue</rdg></rdgGrp></app>'
                                           '</p></div>')
     _result, tree = _edition(project, name)
-    assert _entries(tree) == [("a", "mortis ] sue mortis A ; mortes B ; mortis sue C")]
+    assert _entries(tree) == [("1", "mortis ] sue mortis A ; mortes B ; mortis sue C")]
 
 
 def test_the_numbers_stay_in_their_column_and_the_wording_is_varians(project):
