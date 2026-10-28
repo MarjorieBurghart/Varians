@@ -20,6 +20,8 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Recherche dans l'aide (V0.9.2.8) | `help_search.py`, `help_dialogs.py` | `test_help_search.py`, `gui/test_gui_help_search.py` |
 | Tout lister : occurrences en contexte (V0.9.2.8) | `text_search.py` (`kwic`), `search_results.py` | `test_text_search.py`, `gui/test_gui_search_results.py` |
 | Menu ▾ de tous les onglets (V0.9.2.8) | `document_tabs.py` | `gui/test_gui_document_tabs_menu.py` |
+| Feuilleter un manuscrit sans mener l'édition (V0.9.2.8.1) | `manuscript_panel.py`, `witness_workspace.py`, `resources/icons/feuilleter.svg` | `gui/test_gui_witness_browse.py` |
+| Choix de l'élément de Ctrl+E (V0.9.2.8.1) | `completion_ui.CompletionDialog` | `gui/test_gui_ctrl_e_choice.py` |
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
@@ -309,3 +311,12 @@ Fonctionnement : aide, section « Rechercher et remplacer » (`search-replace`).
 - `text_search.kwic` / `Kwic` : chaque occurrence avec sa ligne et ses contextes avant et après, sur une ligne (blancs réduits à une espace).
 - `search_results.py` (nouveau) : `SearchResultsMixin`, panneau du bas « Tout lister » (`action_search_list` Ctrl+Maj+L, `list_search_results`, `refresh_search_results`, case `search_results_project`, `goto_search_result`, au plus `MAX_RESULTS` lignes) ; suivi par `search_results_follow` (`_find_source`), `search_results_document_changed` (`_attach_document`), les options et le texte (minuterie de 400 ms).
 - `document_tabs.py` : rangée `document_tab_row` (barre et flèche `document_tabs_button`), `DocumentTabBar.layoutChanged`, `_update_document_tabs_button` (flèche visible quand la somme des `tabSizeHint` dépasse la rangée), `_fill_document_tabs_menu`.
+
+## V0.9.2.8.1 — feuilleter un manuscrit, débugger l'apparat, Ctrl+E
+
+Fonctionnement : aide, sections « Suivre un manuscrit dans son propre ordre » (`browse-witness`), « Débugger l'apparat » (`app-without-lem`) et la description de Ctrl+E.
+
+- `manuscript_panel.ManuscriptPanel` : bouton à bascule `browse_btn` (icône `resources/icons/feuilleter.svg`, `BROWSE_ICON`), après ← → ⤺ ; `browse_only`, `set_browse_only`, signal `browseOnlyChanged` ; enfoncé, `navigate` ne fait que `browse` et le choix du folio n'émet pas `witnessNavigate`.
+- `witness_workspace` : `_load_browse_only_witnesses`, `_witness_browse_only_changed` (réglage local `projectView/…/witnessBrowseOnly`) ; `editeur_tei` applique l'état à la création des panneaux.
+- `apparatus_xpath.app_without_lem_xpath` ; `apparatus_ui.ApparatusDebugDialog.no_lem_radio`, troisième choix, disponible sans `<listWit>`.
+- `completion_ui.CompletionDialog` (mode `allow_custom`, Ctrl+E) : pas de présélection ; `eventFilter` (Tab, ↓ : première entrée) ; `_accept_current` insère l'entrée sélectionnée, sinon le texte saisi. Ctrl+Espace (présélection de la première entrée) ne change pas.
