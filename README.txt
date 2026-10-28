@@ -1,3 +1,29 @@
+VARIANS V0.9.2.9 — ÉLÉMENTS MODIFIABLES COMME FRAGMENT
+
+• Vue XSLT / CSS : le crayon ✎ n'est plus réservé aux paragraphes. Il
+  ouvre dans l'éditeur de fragment chaque bloc posé dans une division du
+  <body> : tout élément des classes TEI model.divPart (<p>, <ab>, <lg>,
+  <l>, <sp>…) et model.inter (<list>, <table>, <quote>, <cit>, <bibl>…),
+  ainsi que <head>, <figure> et <note>, sauf s'il est dans un autre
+  élément de cet ensemble (un <lg> a son crayon, ses <l> non ; un <p> a
+  le sien, sa <quote> ou sa <note> non). F2, le fragment et les reports
+  de sélection entre la source, l'aperçu et le fragment suivent la même
+  règle.
+• Les classes sont lues dans le schéma RELAX NG du projet, tel que la
+  validation l'a trouvé : une personnalisation ODD est suivie. À défaut,
+  Varians prend la liste de TEI P5 4.10.2.
+• Varians place lui-même les crayons, quelle que soit la feuille XSLT de
+  la vue : une feuille enveloppe importe celle-ci, et chaque crayon porte
+  le rang exact de son élément. Un élément que la feuille n'affiche pas
+  n'a pas de crayon. Le XML du projet n'est pas touché.
+• L'étiquette du fragment nomme l'élément ouvert (« Fragment TEI · <lg>
+  3/40 ») ; les messages du crayon et du fragment parlent d'éléments.
+• La feuille livrée avec Varians (rendering/tei-to-html.xsl) affiche les
+  vers (chaque <l> sur sa ligne, chaque <lg> en bloc), les <head> en
+  titre, les <list> en liste et les <figure> en bloc ; tei.css, copiée
+  dans les nouveaux projets, les met en forme. Le scénario « HTML » gagne
+  ces mises en forme. Le format de project.xml est inchangé.
+
 VARIANS V0.9.2.8.2 — SIGLES DES TÉMOINS, CRAYON ET F2, PROJET DE TEST
 
 • Sigle d'un témoin : Fichier ▸ Paramètres du projet accepte un sigle qui

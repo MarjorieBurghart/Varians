@@ -842,3 +842,47 @@ def test_the_fragment_messages_speak_of_elements():
         for key in keys:
             text = re.sub(r"\{\w+\}", "", catalog[key]).lower()          # hors noms de paramètres
             assert not any(word in text for word in paragraph[language]), (language, key)
+
+
+PARAGRAPH_WORDS = {"fr": ("paragraphe",), "en": ("paragraph",), "de": ("absatz", "absätz"), "ja": ("段落",),
+                   "cs": ("odstav",), "it": ("paragraf",), "ru": ("абзац",)}
+
+
+def test_each_help_explains_the_editable_elements():
+    """V0.9.2.9 : le crayon ✎ ouvre chaque bloc d'une division (model.divPart,
+    model.inter, <head>, <figure>, <note>), sauf s'il est dans un autre ;
+    classes du schéma du projet, sinon TEI P5 ; toute feuille XSLT."""
+    import html
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        selection = page.index('<p id="fragment-selection">')
+        start = page.index('<p id="fragment-units">')
+        assert selection < start < page.index("<h2", selection), language
+        block = page[start:page.index("</p>", start)]
+        label = html.escape(catalog["fragment.label"].format(element="<lg>", index=3, total=40), quote=False)
+        for text in ("✎", "<code>model.divPart</code>", "<code>model.inter</code>", "<code>&lt;head&gt;</code>",
+                     "<code>&lt;figure&gt;</code>", "<code>&lt;note&gt;</code>", "<code>&lt;lg&gt;</code>",
+                     "<code>&lt;l&gt;</code>", "<code>&lt;body&gt;</code>", "RELAX NG", "ODD", "TEI P5 4.10.2", label):
+            assert text in block, (language, text)
+        paragraph = page[selection:page.index("</p>", selection)]
+        assert 'href="#fragment-units"' in paragraph, language
+        f2 = page.index("<tr><td>F2</td>")
+        row = page[f2:page.index("</tr>", f2)].lower()
+        assert not any(word in row for word in PARAGRAPH_WORDS[language]), language
+        parts = page[page.index('<h3 id="xinclude-preview">'):]
+        fragment = parts[parts.index("✎"):]
+        fragment = fragment[:fragment.index("</li>")]
+        assert not any(word in fragment.split("«")[0].split("“")[0].split("„")[0].split("「")[0].lower()
+                       for word in PARAGRAPH_WORDS[language]), language
+
+
+def test_each_help_announces_version_0929():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = _help_section(page, "v0929")
+        for text in ('href="#fragment-units"', "<code>model.divPart</code>", "<code>model.inter</code>", "✎",
+                     "<code>project.xml</code>"):
+            assert text in version, (language, text)
+        assert page.index('<section id="v09282">') < page.index('<section id="v0929">'), language
