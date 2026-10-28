@@ -360,6 +360,9 @@ def build_dataset(project, display_witness_ids=None):
                           "line_sync": witness_line_sync,
                           "sync_diagnostic": diagnostic,
                           "pages": normalized_pages, "meta": cache.get("meta", {})})
+        if getattr(w, "siglum", ""):
+            # Sigle montré par le viewer, s'il diffère de l'identifiant (V0.9.2.8.2).
+            witnesses[-1]["siglum"] = w.siglum
     # Same TEI zone semantics as desktop: one physical image may contain
     # two independently addressed folios. No image is duplicated in the export.
     if assembled is not None:
@@ -647,7 +650,8 @@ function pbFolioFor(wid,st,seg){const edrefs=ptrs(seg.edref),sids=ptrs(seg.facs)
 function routeOf(w){if(Array.isArray(w.route))return w.route;let route=routeCache.get(w.id);if(!route){const st=states.get(w.id),ranks=lineRanks().all;route=st.pageMode?VariansSync.pageStops(syncIndex,seg=>pbFolioFor(w.id,st,seg)):VariansSync.lineStops(panelItems(w,st),w.role==='base',k=>ranks.get(k));routeCache.set(w.id,route)}return route}
 function routeMapOf(route){let map=routeMaps.get(route);if(!map){map=VariansSync.routeIndex(route);routeMaps.set(route,map)}return map}
 function segmentName(k){return SEGMENTS?.find(s=>Number(s.index)===Number(k))?.name||String(k)}
-function witnessEnd(id,d){$('syncNotice').textContent=t(d>0?'status.witness_end':'status.witness_start',{witness:id})}
+function siglumOf(id){return witnessMap.get(id)?.siglum||id}
+function witnessEnd(id,d){$('syncNotice').textContent=t(d>0?'status.witness_end':'status.witness_start',{witness:siglumOf(id)})}
 function revealPos(p){const el=[...document.querySelectorAll('[data-doc-pos]')].find(x=>Number(x.dataset.docPos)>=p&&x.offsetParent!==null);el?.scrollIntoView({block:'center'})}
 function showFolio(id,ref){const st=states.get(id),i=st?.surfaceIndex.get(String(ref));if(!st?.pageMode||i==null)return;st.center=i;st.origin=i;st.folioRef=String(ref);renderWitness(id)}
 function leadFrom(id,d){const w=witnessMap.get(id),st=states.get(id);if(!w||!st)return false;
@@ -659,7 +663,7 @@ function leadFrom(id,d){const w=witnessMap.get(id),st=states.get(id);if(!w||!st)
  if(!found&&!map.has(activeSeg+'\u0001'+key)){const ranks=lineRanks().all,stop=VariansSync.panelStop(panelItems(w,st),st.center+d,w.role==='base',k=>ranks.get(k),activeSeg);found=stop&&{stop}}
  if(!found){witnessEnd(id,d);return true}
  const from=activeSeg;goToStop(id,found.stop);
- if(found.stop.s!==from&&(w.route_uncertain||[]).includes(found.stop.s))$('syncNotice').textContent=t('status.route_uncertain',{witness:id,text:segmentName(found.stop.s)});
+ if(found.stop.s!==from&&(w.route_uncertain||[]).includes(found.stop.s))$('syncNotice').textContent=t('status.route_uncertain',{witness:siglumOf(id),text:segmentName(found.stop.s)});
  return true}
 function goToStop(id,stop){
  if(Number.isFinite(stop.p)){activateSegment(stop.s);if(lineMode&&stop.t&&lineMap.has(stop.t)){pendingDocPos=stop.p;selectLine(stop.t,false)}else syncPagesToDocPosition(stop.p);revealPos(stop.p);showFolio(id,stop.k);return}
@@ -667,7 +671,7 @@ function goToStop(id,stop){
  selectLine(stop.t,true);
  const w=witnessMap.get(id),st=states.get(id),i=st?.index.get(String(stop.k));
  if(i!=null&&!st.pageMode){const m=w.role==='base'?[i]:(st.byBase.get(stop.t)||[]);st.matches=new Set(m.map(j=>itemKey(w,st.physical[j])));st.center=i;st.origin=VariansGeometry.nearestIndex(m,i,st.physical.length)??i;renderWitness(id);focusCurrentLine(id)}
- if(stop.u)$('syncNotice').textContent=t('status.witness_unlinked',{witness:id,line:(lineRanks().inSeg.get(stop.t)??0)+1})}
+ if(stop.u)$('syncNotice').textContent=t('status.witness_unlinked',{witness:siglumOf(id),line:(lineRanks().inSeg.get(stop.t)??0)+1})}
 // Témoin par pages : le texte va à la page affichée (sa première ligne dans un JSON
 // du témoin, sinon son <pb>), sinon au début du texte dont le <locus from> est cette
 // page ; sinon il ne bouge pas, et le message le dit.
@@ -677,7 +681,7 @@ function leadToPage(id){const w=witnessMap.get(id),st=states.get(id),ref=st.foli
  if(i!==undefined&&i!==null&&i>=0){goToStop(id,route[i]);showFolio(id,ref);return true}
  const k=(w.lead_locus||{})[ref];
  if(k!==undefined){const first=lineOrder.find(key=>VariansSync.segOfKey(key,SEGMENTS)===Number(k));if(first)selectLine(first,true);else activateSegment(k);showFolio(id,ref);return true}
- $('syncNotice').textContent=t('status.page_unmarked',{witness:id,folio:st.folioByRef.get(ref)?.label||ref});return false}
+ $('syncNotice').textContent=t('status.page_unmarked',{witness:siglumOf(id),folio:st.folioByRef.get(ref)?.label||ref});return false}
 function leadFromFolio(id,ref){if(!states.get(id)?.surfaceIndex.has(ref))return false;showFolio(id,ref);return leadToPage(id)}
 function lacunaLineKey(w,st){if(st.pageMode||w.id===activePivot()||!lacunaState.has(w.id))return null;const from=VariansSync.lastLinked(syncIndex,lacunaState.get(w.id)),seg=VariansSync.segOfKey(from,SEGMENTS);for(let i=lineOrder.indexOf(from);i>=0;i--){const k=lineOrder[i];if(SEGMENTS&&VariansSync.segOfKey(k,SEGMENTS)!==seg)break;if(st.byBase.has(k))return k}return null}
 function groupByPage(items){const a=[];for(const it of items){const last=a[a.length-1];if(!last||last.p.id!==it.p.id)a.push({p:it.p,items:[it]});else last.items.push(it)}return a}

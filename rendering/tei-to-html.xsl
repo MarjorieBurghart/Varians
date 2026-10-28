@@ -12,6 +12,29 @@
 
   <xsl:output method="html" encoding="UTF-8" indent="yes" doctype-system="about:legacy-compat"/>
 
+  <!-- Sigles d'un @wit (Varians 0.9.2.8.2) : pour chaque témoin, son
+       <idno type="siglum"> dans <listWit>, sinon son identifiant. -->
+  <xsl:key name="witness-by-id" match="tei:witness[@xml:id]" use="@xml:id"/>
+  <xsl:template name="sigles">
+    <xsl:param name="wit"/>
+    <xsl:variable name="token" select="substring-before(concat($wit, ' '), ' ')"/>
+    <xsl:variable name="id">
+      <xsl:choose>
+        <xsl:when test="contains($token, '#')"><xsl:value-of select="substring-after($token, '#')"/></xsl:when>
+        <xsl:otherwise><xsl:value-of select="$token"/></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:variable name="idno" select="key('witness-by-id', $id)/tei:idno[@type = 'siglum'][normalize-space()]"/>
+    <xsl:choose>
+      <xsl:when test="$idno"><xsl:value-of select="normalize-space($idno[1])"/></xsl:when>
+      <xsl:otherwise><xsl:value-of select="$id"/></xsl:otherwise>
+    </xsl:choose>
+    <xsl:if test="substring-after($wit, ' ')">
+      <xsl:text> </xsl:text>
+      <xsl:call-template name="sigles"><xsl:with-param name="wit" select="substring-after($wit, ' ')"/></xsl:call-template>
+    </xsl:if>
+  </xsl:template>
+
   <!-- ROOT -->
   <xsl:template match="/">
     <html lang="la">
@@ -228,7 +251,7 @@
   <xsl:template match="tei:lem">
     <xsl:if test=". = ''"><xsl:text>--</xsl:text></xsl:if>    
     <b><xsl:apply-templates/></b> <em>
-      <xsl:if test="@wit"><xsl:text> (</xsl:text><xsl:value-of select="translate(@wit, '#', '')"/><xsl:text>)</xsl:text></xsl:if>
+      <xsl:if test="@wit"><xsl:text> (</xsl:text><xsl:call-template name="sigles"><xsl:with-param name="wit" select="normalize-space(@wit)"/></xsl:call-template><xsl:text>)</xsl:text></xsl:if>
     </em>
     <xsl:text> </xsl:text>
   </xsl:template>
@@ -236,7 +259,7 @@
     <xsl:if test="position() != 1"> | </xsl:if>
     <xsl:if test=". = ''"><xsl:text>--</xsl:text></xsl:if>
     <xsl:apply-templates/> <em>
-      <xsl:if test="@wit"><xsl:text> (</xsl:text><xsl:value-of select="translate(@wit, '#', '')"/><xsl:text>)</xsl:text></xsl:if>
+      <xsl:if test="@wit"><xsl:text> (</xsl:text><xsl:call-template name="sigles"><xsl:with-param name="wit" select="normalize-space(@wit)"/></xsl:call-template><xsl:text>)</xsl:text></xsl:if>
     </em>
     <xsl:text> </xsl:text>
   </xsl:template>

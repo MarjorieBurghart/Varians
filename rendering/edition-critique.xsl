@@ -199,15 +199,16 @@
             <xsl:choose>
               <xsl:when test="$f:sans-temoin">Texte établi à partir des lemmes explicites, sans témoin choisi.</xsl:when>
               <xsl:otherwise>Leçon explicite prioritaire, sinon lecture du témoin <i class="temoin"><xsl:value-of
-                select="if ($f:temoin ne '') then $f:temoin else 'non défini'"/></i>.</xsl:otherwise>
+                select="if ($f:temoin ne '') then f:sigle($f:temoin) else 'non défini'"/></i>.</xsl:otherwise>
             </xsl:choose>
             Les variantes rejetées figurent dans l'apparat.</p>
         </header>
         <xsl:if test="tei:teiHeader//tei:listWit/tei:witness">
           <section class="temoins"><h2>Sigles des témoins</h2><dl>
             <xsl:for-each select="tei:teiHeader//tei:listWit//tei:witness">
-              <div><dt><xsl:value-of select="@xml:id"/></dt>
-                <dd><xsl:value-of select="normalize-space(.)"/></dd></div>
+              <div><dt><xsl:value-of select="f:sigle(string(@xml:id))"/></dt>
+                <dd><xsl:value-of select="normalize-space(string-join(
+                  descendant::text()[empty(ancestor::tei:idno[@type = 'siglum'])], ''))"/></dd></div>
             </xsl:for-each>
           </dl></section>
         </xsl:if>
