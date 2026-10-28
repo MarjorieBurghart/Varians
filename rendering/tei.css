@@ -119,6 +119,38 @@ p {
   hyphens: auto;
 }
 
+/* ---------- Verse, headings, lists, figures (0.9.2.9) ---------- */
+.lg {
+  margin: 0 0 1em;
+}
+
+.l {
+  margin: 0;
+  padding-left: 1.5em;
+  text-indent: -1.5em;
+}
+
+.head {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.2em 0 0.6em;
+}
+
+.list {
+  margin: 0 0 1em;
+}
+
+.figure {
+  margin: 0 0 1em;
+  padding: 0.4em 0.8em;
+  border-left: 3px solid var(--color-muted);
+}
+
+.figdesc {
+  font-style: italic;
+  color: var(--color-muted);
+}
+
 /* ---------- Quotes --------------------------------------------- */
 .quote {
   font-style: italic;

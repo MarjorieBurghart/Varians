@@ -97,6 +97,47 @@
     <p><xsl:apply-templates/></p>
   </xsl:template>
 
+  <!-- VERSE (Varians 0.9.2.9) : chaque <lg> en bloc, chaque <l> sur sa ligne. -->
+  <xsl:template match="tei:lg">
+    <div class="lg"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <xsl:template match="tei:l">
+    <div class="l"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <!-- HEAD (Varians 0.9.2.9) -->
+  <xsl:template match="tei:head">
+    <h3 class="head"><xsl:apply-templates/></h3>
+  </xsl:template>
+
+  <!-- LIST (Varians 0.9.2.9) : son <head> avant la liste ; liste numérotée
+       si @rend contient « numbered ». -->
+  <xsl:template match="tei:list">
+    <xsl:apply-templates select="tei:head"/>
+    <xsl:choose>
+      <xsl:when test="contains(@rend, 'numbered')">
+        <ol class="list"><xsl:apply-templates select="node()[not(self::tei:head)]"/></ol>
+      </xsl:when>
+      <xsl:otherwise>
+        <ul class="list"><xsl:apply-templates select="node()[not(self::tei:head)]"/></ul>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="tei:item">
+    <li><xsl:apply-templates/></li>
+  </xsl:template>
+
+  <!-- FIGURE (Varians 0.9.2.9) -->
+  <xsl:template match="tei:figure">
+    <div class="figure"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <xsl:template match="tei:figDesc">
+    <div class="figdesc"><xsl:apply-templates/></div>
+  </xsl:template>
+
   <!-- PAGE BREAK -->
   <xsl:template match="tei:pb">
     <span class="pb" title="Page : {@n}">[<xsl:value-of select="@n"/>]</span>
