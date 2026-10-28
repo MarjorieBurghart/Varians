@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QCompleter, QPlainTextDocumentLayout, QPlainTextEdit, QTextEdit, QWidget,
 )
 from rng_completion import format_pointer_list_insertion
+from text_search import SearchOptions, Utf16Positions, find_spans, match_at, replacement_for, replacements
 from xml_folding import foldable_xml_regions, region_at_header, region_for_cursor
 from xml_tag_pairs import (
     closing_rename_mirror_for_change, closing_tag_suggestion, exact_selected_opening_pair,
@@ -776,59 +777,120 @@ class CodeEditor(QPlainTextEdit):
         self.highlightCurrentLine()
 
 
-def find_in_plain_editor(editor, query, backwards=False):
-    """Recherche robuste (insensible à la casse) dans un QPlainTextEdit.
+def _search_query(query, options):
+    """La recherche littérale ignore les blancs du début et de la fin, comme
+    avant la 0.9.2.8 ; une expression régulière est prise telle quelle."""
+    return (query or "") if options.regex else (query or "").strip()
+
+
+def find_in_plain_editor(editor, query, backwards=False, options=None):
+    """Recherche robuste dans un QPlainTextEdit (V0.9.2.8 : *options*,
+    ``text_search.SearchOptions``, casse respectée ou non, expression
+    régulière ; par défaut, recherche littérale insensible à la casse).
 
     La recherche avance à partir du résultat précédent et boucle en début/fin.
     Le résultat est mis en évidence sans devenir une sélection éditable.
-    Retourne (trouve, numero_occurrence, total_occurrences).
+    Retourne (trouve, numero_occurrence, total_occurrences) ; une expression
+    incorrecte lève ``text_search.SearchError``.
     """
-    query = (query or "").strip()
+    options = options or SearchOptions()
+    query = _search_query(query, options)
     if not query:
         return False, 0, 0
 
     text = editor.toPlainText()
-    hay = text.casefold()
-    needle = query.casefold()
-    if not needle:
-        return False, 0, 0
-
-    # Liste des occurrences, y compris celles qui se chevauchent : utile pour
-    # des recherches éditoriales très courtes.
-    positions = []
-    start = 0
-    while True:
-        pos = hay.find(needle, start)
-        if pos < 0:
-            break
-        positions.append(pos)
-        start = pos + 1
+    # Liste des occurrences, y compris celles qui se chevauchent en recherche
+    # littérale : utile pour des recherches éditoriales très courtes. Les
+    # positions sont celles de Qt (UTF-16).
+    qt = Utf16Positions(text)
+    positions = [(qt.qt(start), qt.qt(end)) for start, end in find_spans(text, query, options)]
     if not positions:
         editor.clearSearchMatch()
         return False, 0, 0
 
     c = editor.textCursor()
     last = editor._search_last
+    needle = query.casefold()
     # Mémoriser le résultat précédent permet notamment à « Précédent »
     # d'éviter de revenir sur le résultat actuel (qui n'est plus sélectionné).
     same_hit = (last is not None and last[2] == needle
                 and c.position() == last[1])
     if backwards:
         anchor = last[0] if same_hit else (c.selectionStart() if c.hasSelection() else c.position())
-        candidates = [i for i, pos in enumerate(positions) if pos < anchor]
+        candidates = [i for i, (pos, _end) in enumerate(positions) if pos < anchor]
         idx = candidates[-1] if candidates else len(positions) - 1
     else:
         anchor = last[1] if same_hit else (c.selectionEnd() if c.hasSelection() else c.position())
-        candidates = [i for i, pos in enumerate(positions) if pos >= anchor]
+        candidates = [i for i, (pos, _end) in enumerate(positions) if pos >= anchor]
         idx = candidates[0] if candidates else 0
 
-    pos = positions[idx]
+    start, end = positions[idx]
     # Le vrai curseur XML n'a PAS de sélection. Seule l'ExtraSelection jaune
     # représente l'occurrence trouvée, même si le focus se déplace.
     out = QTextCursor(editor.document())
-    out.setPosition(pos + len(query))
+    out.setPosition(end)
     editor.setTextCursor(out)
     editor.centerCursor()
-    editor.setSearchMatch(pos, pos + len(query), query)
+    editor.setSearchMatch(start, end, query)
     return True, idx + 1, len(positions)
+
+
+def _replace_spans(editor, edits):
+    """Remplace les ``(début, fin, texte)`` (positions Qt, dans l'ordre du
+    texte) en une seule étape d'annulation, de la fin vers le début. Les
+    automatismes des paires de balises ne s'en mêlent pas : on remplace ce
+    qu'on a trouvé, rien de plus."""
+    cursor = QTextCursor(editor.document())
+    editor._pair_edit_guard = True
+    try:
+        cursor.beginEditBlock()
+        for start, end, value in reversed(edits):
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            cursor.insertText(value)
+        cursor.endEditBlock()
+    finally:
+        editor._pair_edit_guard = False
+        editor._pending_pair_rename = None
+        editor._pair_previous_text = editor.toPlainText()
+
+
+def replace_in_plain_editor(editor, query, template, options=None):
+    """Remplace l'occurrence surlignée par *template* si elle correspond
+    toujours à *query*, puis cherche la suivante. Sans occurrence surlignée
+    valable, cherche seulement. Retourne (remplacée, résultat de
+    ``find_in_plain_editor``)."""
+    options = options or SearchOptions()
+    query = _search_query(query, options)
+    replaced = False
+    current = editor._search_match
+    if query and current is not None:
+        text = editor.toPlainText()
+        qt = Utf16Positions(text)
+        match = match_at(text, qt.python(current[0]), qt.python(current[1]), query, options)
+        if match is not None:
+            value = replacement_for(match, template, options)
+            _replace_spans(editor, [(current[0], current[1], value)])
+            # La suite de la recherche part de la fin du texte remplacé.
+            after = QTextCursor(editor.document())
+            after.setPosition(current[0] + Utf16Positions(value).qt(len(value)))
+            editor.setTextCursor(after)
+            editor.clearSearchMatch()
+            replaced = True
+    return replaced, find_in_plain_editor(editor, query, options=options)
+
+
+def replace_all_in_plain_editor(editor, query, template, options=None):
+    """Remplace toutes les occurrences de *query* par *template*, en une
+    seule étape d'annulation ; retourne leur nombre."""
+    options = options or SearchOptions()
+    query = _search_query(query, options)
+    text = editor.toPlainText()
+    found = replacements(text, query, template, options)
+    if not found:
+        return 0
+    qt = Utf16Positions(text)
+    _replace_spans(editor, [(qt.qt(start), qt.qt(end), value) for start, end, value in found])
+    editor.clearSearchMatch()
+    return len(found)
 

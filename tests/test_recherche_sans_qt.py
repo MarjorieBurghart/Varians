@@ -10,7 +10,10 @@ from varians_source import application_ast, application_source
 
 SOURCE = Path(__file__).resolve().parents[1] / 'editeur_tei.py'
 root = application_ast()
-func = next(n for n in root.body if isinstance(n, ast.FunctionDef) and n.name == 'find_in_plain_editor')
+# V0.9.2.8 : la recherche passe par text_search (sans Qt) et _search_query.
+funcs = [n for n in root.body if isinstance(n, ast.FunctionDef)
+         and n.name in ('_search_query', 'find_in_plain_editor')]
+assert len(funcs) == 2
 
 class MockCursor:
     def __init__(self, document):
@@ -57,8 +60,13 @@ class MockEditor:
         self._search_last = None
         self.match = None
 
-ns = {'QTextCursor': MockCursor}
-exec(compile(ast.Module(body=[func], type_ignores=[]), str(SOURCE), 'exec'), ns)
+import sys  # noqa: E402
+sys.path.insert(0, str(SOURCE.parent))
+import text_search  # noqa: E402
+
+ns = {'QTextCursor': MockCursor, 'SearchOptions': text_search.SearchOptions,
+      'Utf16Positions': text_search.Utf16Positions, 'find_spans': text_search.find_spans}
+exec(compile(ast.Module(body=funcs, type_ignores=[]), str(SOURCE), 'exec'), ns)
 search = ns['find_in_plain_editor']
 editor = MockEditor('alpha BETA beta beta end')
 results = []
