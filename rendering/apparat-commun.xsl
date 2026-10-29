@@ -207,8 +207,12 @@
     <xsl:param name="t" as="text()"/>
     <xsl:variable name="s" select="if ($t/ancestor::*[@xml:space][1]/@xml:space = 'preserve')
       then string($t) else replace(string($t), '\s+', ' ')"/>
-    <xsl:variable name="a" select="if (f:lb-avant($t)/@break = 'no') then replace($s, '^\s+', '') else $s"/>
-    <xsl:sequence select="if (f:lb-apres($t)/@break = 'no') then replace($a, '\s+$', '') else $a"/>
+    <!-- Le premier et le dernier texte d'une didascalie touchent ses parenthèses (V0.9.3.1). -->
+    <xsl:variable name="didascalie" select="$t/ancestor::tei:stage[1]//text()"/>
+    <xsl:variable name="a" select="if (f:lb-avant($t)/@break = 'no' or $t is $didascalie[1])
+      then replace($s, '^\s+', '') else $s"/>
+    <xsl:sequence select="if (f:lb-apres($t)/@break = 'no' or $t is $didascalie[last()])
+      then replace($a, '\s+$', '') else $a"/>
   </xsl:function>
 
 </xsl:stylesheet>

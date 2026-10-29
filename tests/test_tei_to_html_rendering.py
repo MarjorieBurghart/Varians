@@ -175,17 +175,25 @@ SCENE = ('<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
 
 def test_a_speech_has_its_speaker_its_lines_and_its_stage_directions():
     """V0.9.3.1, comme le viewer web : chaque réplique est un bloc, son
-    locuteur en tête ; une didascalie est un bloc entre deux blocs, une ligne
-    dans une strophe, en italique dans une phrase."""
+    locuteur en tête ; une didascalie, entre parenthèses comme dans
+    « Édition critique », est un bloc entre deux blocs, une ligne dans une
+    strophe, en italique dans une phrase."""
     page = _page(SCENE)
     speeches = page.xpath('//main//div[@class="sp"]')
     assert [_texts(sp, 'div[@class="speaker"]') for sp in speeches] == [["HAMLETUS"], ["OPHELIA"]]
     assert _texts(speeches[0], 'div[@class="lg"]/span[@class="l"]') == ["Esse aut non esse,", "haec quaestio."]
     assert [child.tag for child in speeches[0].xpath('div[@class="lg"]')[0]] == ["span", "br", "span", "br", "span"]
-    assert _texts(speeches[0], 'div[@class="lg"]/span[@class="stage"]') == ["ridet"]
-    assert _texts(speeches[1], 'p/span[@class="stage"]') == ["susurrat"]
-    assert _texts(page, '//main//div[@class="stage"]') == ["Intrat Hamletus.", "Exit."]
-    assert _texts(speeches[1], 'div[@class="stage"]') == ["Exit."]
+    assert _texts(speeches[0], 'div[@class="lg"]/span[@class="stage"]') == ["(ridet)"]
+    assert _texts(speeches[1], 'p/span[@class="stage"]') == ["(susurrat)"]
+    assert _texts(page, '//main//div[@class="stage"]') == ["(Intrat Hamletus.)", "(Exit.)"]
+    assert _texts(speeches[1], 'div[@class="stage"]') == ["(Exit.)"]
+
+
+def test_the_parentheses_of_a_stage_direction_hug_its_text():
+    page = _page('<div><sp><speaker>A</speaker><p>Ita <stage>\n  ridet <hi rend="italic">multum</hi>\n</stage> est.</p>'
+                 '<stage>\n    Exeunt\n  </stage></sp></div>')
+    assert [element.text_content() for element in page.xpath('//main//*[@class="stage"]')] == [
+        "(ridet multum)", "(Exeunt)"]
 
 
 def test_the_preview_styles_the_speeches_even_with_the_stylesheet_of_an_older_project():

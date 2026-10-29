@@ -311,7 +311,7 @@ def test_every_rendered_block_has_the_same_positions_in_the_render_the_search_an
     texts = {seg.get("text", "").strip(): positions[id(seg)] for seg in flat if seg["kind"] == "text"}
     assert out["title"] == [texts["Titulus"]] and out["verse"] == [texts["uersus secundus"]]
     assert out["item"] == [texts["sub"]] and out["cell"] == [texts["Folium"]] and out["caption"] == [texts["Imago"]]
-    assert out["speaker"] == [texts["Petrus"]] and out["stage"] == [texts["Exit."]]
+    assert out["speaker"] == [texts["Petrus"]] and out["stage"] == [texts["(Exit.)"]]
     # La ligne ouverte à chaque position : celle du titre, puis celle des vers.
     assert out["lines"][texts["Titulus"]] == "P::1" and out["lines"][texts["uersus secundus"]] == "P::2"
     # Un <pb/> entre deux vers : sa position est entre eux.

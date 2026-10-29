@@ -718,6 +718,12 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             return
         block = ensure_block()
         text = re.sub(r"\s+", " ", text)
+        if state.get("hug"):
+            # Juste après une parenthèse ouvrante : pas de blanc (V0.9.3.1).
+            text = text.lstrip()
+            if not text:
+                return
+            state["hug"] = False
         sep = state.get("pending_lb_sep")
         if sep is not None:
             text = text.lstrip()
@@ -753,6 +759,22 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             prev["text"] += text
         else:
             block["segments"].append(seg)
+
+    def open_parenthesis(styles, **extra):
+        """Parenthèse ouvrante d'une didascalie, collée au texte qui suit."""
+        add_text("(", styles, **extra)
+        state["hug"] = True
+
+    def close_parenthesis(styles, **extra):
+        """Parenthèse fermante, collée au texte qui précède."""
+        state["hug"] = False
+        block = state["block"]
+        if block and block["segments"] and block["segments"][-1].get("kind") == "text":
+            last = block["segments"][-1]
+            last["text"] = last["text"].rstrip()
+            if not last["text"]:
+                block["segments"].pop()
+        add_text(")", styles, **extra)
 
     def add_marker(kind, ann_id, tooltip=""):
         block = ensure_block()
@@ -1098,6 +1120,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         new_styles = style_for(node, styles)
         if tag == "supplied":
             add_text("[", new_styles, variant_id=variant_id, alt=alt)
+        elif tag == "stage":
+            open_parenthesis(new_styles, variant_id=variant_id, alt=alt)
         if node.text:
             add_text(node.text, new_styles, variant_id=variant_id, alt=alt)
         for child in list(node):
@@ -1107,6 +1131,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 add_text(child.tail, new_styles, variant_id=variant_id, alt=alt)
         if tag == "supplied":
             add_text("]", new_styles, variant_id=variant_id, alt=alt)
+        elif tag == "stage":
+            close_parenthesis(new_styles, variant_id=variant_id, alt=alt)
 
     def new_div_id():
         while True:
@@ -1130,6 +1156,9 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         enter(node)
         # Une didascalie en bloc est en italique par son bloc : pas de style « stage » en plus.
         styles = [] if kind == "stage" else style_for(node, [])
+        if kind == "stage":
+            # Entre parenthèses, comme dans « Édition critique » (V0.9.3.1).
+            open_parenthesis(styles)
         if node.text:
             add_text(node.text, styles)
         for child in list(node):
@@ -1144,6 +1173,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             enter(node)
             if child.tail:
                 add_text(child.tail, styles)
+        if kind == "stage":
+            close_parenthesis(styles)
         finish_block(block, old)
         return first
 

@@ -428,16 +428,25 @@ DRAMA = ('<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
 def test_a_speech_has_its_speaker_its_lines_and_its_stage_directions():
     reading = _reading(DRAMA)
     assert _blocks(reading, "sp", "group") == [
-        ("div", "", {}), ("head", "Scena prima", {}), ("stage", "Intrat Hamletus.", {}),
+        ("div", "", {}), ("head", "Scena prima", {}), ("stage", "(Intrat Hamletus.)", {}),
         ("speaker", "HAMLETUS", {"sp": 1}), ("l", "Esse aut non esse,", {"sp": 1, "group": 1}),
         ("l", "haec quaestio.", {"sp": 1, "group": 1}),
-        ("speaker", "OPHELIA", {"sp": 2}), ("p", "Domine ad eum accedit quomodo uales?", {"sp": 2}),
-        ("stage", "Exit.", {"sp": 2})]
-    styles = [seg["styles"] for seg in _segments(reading) if seg.get("text", "").strip() == "ad eum accedit"]
-    assert styles == [["stage"]]
+        ("speaker", "OPHELIA", {"sp": 2}), ("p", "Domine (ad eum accedit) quomodo uales?", {"sp": 2}),
+        ("stage", "(Exit.)", {"sp": 2})]
+    # Une didascalie est entre parenthèses (V0.9.3.1), comme dans « Édition critique » ;
+    # dans une phrase, parenthèses comprises, elle porte le style « stage ».
+    inline = "".join(seg["text"] for seg in _segments(reading) if "stage" in seg.get("styles", []))
+    assert inline == "(ad eum accedit)"
     # Une didascalie en bloc est en italique par son bloc : pas de style en plus.
-    assert [seg.get("styles", []) for seg in _segments(reading) if seg.get("text", "").strip() in
-            ("Intrat Hamletus.", "Exit.")] == [[], []]
+    assert all(not seg.get("styles") for block in reading["blocks"] if block["type"] == "stage"
+               for seg in block["segments"] if seg["kind"] == "text")
+
+
+def test_the_parentheses_of_a_stage_direction_hug_its_text():
+    reading = _reading('<div><sp><speaker>A</speaker><p>Ita <stage>\n   ridet\n </stage> est.</p>'
+                       '<stage>\n    Exeunt\n    omnes.\n  </stage></sp></div>')
+    assert [(block["type"], _text(block)) for block in reading["blocks"]][-2:] == [
+        ("p", "Ita (ridet) est."), ("stage", "(Exeunt omnes.)")]
     assert {"speaker", "stage"} <= RENDERED_BLOCKS
 
 

@@ -301,6 +301,14 @@ def test_a_speech_has_its_speaker_and_a_stage_direction_between_two_blocks_is_a_
     assert [_text(e) for e in speeches[0].find_class("vers")] == ["Esse aut non esse,", "haec quaestio."]
 
 
+def test_the_parentheses_of_a_stage_direction_hug_its_text(project):
+    name = _write(project, "scene-blancs.xml", '<div><sp><speaker>A</speaker><p>Ita <stage>\n  ridet\n</stage> est.</p>'
+                                               '<stage>\n    Exeunt\n  </stage></sp></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    assert [e.text_content() for e in tree.find(".//main").find_class("didascalie")] == ["(ridet)", "(Exeunt)"]
+
+
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):
     scenario = next(s for s in predefined_scenarios() if s.name == "edition-critique")
     result = run_in_process(scenario_request(scenario, project), timeout=120)

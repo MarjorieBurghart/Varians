@@ -197,11 +197,11 @@ def test_a_scene_shows_its_speeches_their_speakers_and_the_stage_directions(brow
         speeches = page.eval_on_selector_all("#document .tei-sp", """els=>els.map(e=>[
             e.querySelector('.tei-speaker')?.innerText.trim(), e.querySelectorAll('.tei-lg .tei-l').length,
             e.querySelectorAll('.tei-p').length, [...e.querySelectorAll('.tei-stage')].map(s=>s.innerText.trim())])""")
-        assert speeches == [["HAMLETUS", 2, 0, []], ["OPHELIA", 0, 1, ["Exit."]]]
-        assert _texts(page, "#document > .tei-stage") == ["Intrat Hamletus."]
+        assert speeches == [["HAMLETUS", 2, 0, []], ["OPHELIA", 0, 1, ["(Exit.)"]]]
+        assert _texts(page, "#document > .tei-stage") == ["(Intrat Hamletus.)"]
         assert page.eval_on_selector("#document .tei-speaker", "e=>getComputedStyle(e).fontVariantCaps") == "small-caps"
         inline = page.locator("#document .tei-sp .tei-p .tei-stage-inline")
-        assert inline.inner_text().strip() == "susurrat"
+        assert inline.inner_text().strip() == "(susurrat)"
         assert inline.evaluate("e=>getComputedStyle(e).fontStyle") == "italic"
         assert page.eval_on_selector("#document > .tei-stage", "e=>getComputedStyle(e).fontStyle") == "italic"
         # La recherche trouve le locuteur et les didascalies (« Hamletus » : le locuteur et la didascalie).
