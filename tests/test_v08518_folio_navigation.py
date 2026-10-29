@@ -78,9 +78,12 @@ def test_folio_selection_returns_none_before_complete_pb():
     pos=xml.index('facs="#')
     assert folio_at_position(xml,pos,'L',folios_for_witness(xml,'L',['L-p0008'])) is None
 
-def test_malformed_editor_xml_falls_back_to_surface_level():
+def test_malformed_editor_xml_keeps_the_zones_of_a_well_formed_facsimile():
+    # V0.9.3.2 : les folios ne dépendent que du <facsimile> ; un texte mal
+    # formé ailleurs ne les ramène plus aux seules surfaces (voir
+    # test_folio_refresh_performance.py, où un <facsimile> mal formé y revient).
     xml,ids=make_spread()
-    assert [f.ref for f in folios_for_witness(xml+'<p','L',['L-p0008'],{'L-p0008':'spread'})]==['L-p0008']
+    assert [f.ref for f in folios_for_witness(xml+'<p','L',['L-p0008'],{'L-p0008':'spread'})]==['L-p0008',*ids]
 
 def test_split_respects_custom_ratio():
     xml, ids=split_surface_into_folios(BASE,'L-p0008','1v','2r',4000,2000,45)

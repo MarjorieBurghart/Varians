@@ -12,12 +12,13 @@ import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 
-from folio_navigation import Folio, folio_at_position, folios_for_witness
+from folio_navigation import Folio, facsimile_markup, facsimile_surfaces, folio_at_position, folios_for_witness
 from tei_facsimile import position_inside_xml_markup, upsert_pb_at_position
 from image_sources import page_label as image_page_label
 from pivot_lines import include_spans, pivot_lines
 from tei_facsimile import facsimile_ref_at_position
 from varians_source import method_source
+from image_sources import surface_labels
 
 DATA = Path(__file__).resolve().parent / "data" / "sermons" / "xml"
 EDITION = DATA / "edition.xml"
@@ -28,7 +29,8 @@ FOLIOS_A = [Folio(f"A{n}", f"A{n}", n) for n in ("12v", "13r", "13v", "14r", "14
 def _method(name):
     namespace = {"folio_at_position": folio_at_position, "facsimile_ref_at_position": facsimile_ref_at_position,
                  "folios_for_witness": folios_for_witness, "include_spans": include_spans,
-                 "image_page_label": image_page_label}
+                 "image_page_label": image_page_label, "facsimile_markup": facsimile_markup,
+                 "facsimile_surfaces": facsimile_surfaces, "surface_labels": surface_labels}
     exec(textwrap.dedent(method_source("MainWindow", name)), namespace)
     return namespace[name]
 
