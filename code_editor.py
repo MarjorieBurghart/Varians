@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from PySide6.QtCore import QRect, QSize, QStringListModel, Qt
+from PySide6.QtCore import QRect, QSize, QStringListModel, Qt, QTimer
 from PySide6.QtGui import (
     QColor, QFont, QPainter, QStandardItem, QStandardItemModel, QSyntaxHighlighter,
     QTextCharFormat, QTextCursor, QTextDocument, QTextFormat,
@@ -12,6 +12,7 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QCompleter, QPlainTextDocumentLayout, QPlainTextEdit, QTextEdit, QWidget,
 )
+from document_session import LB_EDIT_LOOKBACK, _CLOSERS, _inside_tag
 from rng_completion import format_pointer_list_insertion
 from text_search import SearchOptions, Utf16Positions, find_spans, match_at, replacement_for, replacements
 from xml_folding import foldable_xml_regions, region_at_header, region_for_cursor
@@ -50,16 +51,27 @@ def text_positions(document, text) -> Utf16Positions:
     return Utf16Positions(text)
 
 
-def python_change(document, old_text, new_text, position, removed, added):
+def python_change(document, old_text, new_text, position, removed, added, old_positions=None, new_positions=None):
     """La modification ``contentsChange`` de Qt (positions UTF-16) en indices
     Python : ``(position, retirés, ajoutés)``. *old_text* et *new_text* sont
-    le texte de *document* avant et après."""
+    le texte de *document* avant et après ; leurs tables de positions, si
+    elles sont déjà faites (*old_positions*, *new_positions*)."""
     units = document.characterCount() - 1
     if len(new_text) == units and len(old_text) == units - added + removed:
         return position, removed, added
-    old, new = Utf16Positions(old_text), Utf16Positions(new_text)
+    old = old_positions or Utf16Positions(old_text)
+    new = new_positions or Utf16Positions(new_text)
     start = old.python(position)
     return start, old.python(position + removed) - start, new.python(position + added) - start
+
+
+# Une ligne plus longue n'est colorée que sur ce nombre de caractères : la
+# coloration d'une ligne de plusieurs centaines de milliers de caractères
+# figeait chaque frappe (red team 2, A7).
+HIGHLIGHT_LIMIT = 10000
+# Pause de la frappe après laquelle les repères de repliage de la gouttière
+# sont recalculés (red team 2, A2).
+FOLD_REFRESH_MS = 300
 
 
 class XMLHighlighter(QSyntaxHighlighter):
@@ -72,6 +84,7 @@ class XMLHighlighter(QSyntaxHighlighter):
         self.entity_fmt = QTextCharFormat(); self.entity_fmt.setForeground(QColor("#327f79"))
 
     def highlightBlock(self, text):
+        text = text[:HIGHLIGHT_LIMIT]
         for m in re.finditer(r"<!--.*?-->", text):
             self.setFormat(m.start(), m.end()-m.start(), self.comment_fmt)
         for m in re.finditer(r"</?[A-Za-z_][\w:.-]*(?:\s+[^<>]*?)?/?>", text):
@@ -102,10 +115,24 @@ class LineNumberArea(QWidget):
 class CodeEditor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
+        # Le texte du document, lu une fois par modification : ``(document,
+        # révision, texte, positions)`` (red team 2, A5). La révision du
+        # document change à chaque modification, même faite pendant le
+        # traitement d'une autre, que Qt ne signale pas.
+        self._text_snapshot = None
+        self._previous_positions = None
         self.lineNumberArea = LineNumberArea(self)
         self._fold_regions_cache = None
+        # Lignes des éléments repliables, pour la gouttière : gardées pendant
+        # la frappe, recalculées après une pause (red team 2, A2).
+        self._fold_headers = None
+        self._fold_timer = QTimer(self)
+        self._fold_timer.setSingleShot(True)
+        self._fold_timer.setInterval(FOLD_REFRESH_MS)
+        self._fold_timer.timeout.connect(self._refresh_fold_headers)
         self._folded_opening_lines = set()
         self._fold_relayouting = False
+        self.document().contentsChange.connect(self._forget_text_snapshot)
         self.document().contentsChange.connect(self._folding_document_changed)
         self.cursorPositionChanged.connect(self._unfold_for_hidden_cursor)
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
@@ -171,13 +198,34 @@ class CodeEditor(QPlainTextEdit):
         self.context_menu_provider = None
 
     def toPlainText(self):
-        """Le texte exact (``raw_text``), espaces insécables compris."""
-        return raw_text(self.document())
+        """Le texte exact (``raw_text``), espaces insécables compris. Lu une
+        seule fois par modification du document, puis gardé jusqu'à la
+        suivante : une frappe le demandait une dizaine de fois (red team 2,
+        A5)."""
+        document = self.document()
+        snapshot = getattr(self, "_text_snapshot", None)
+        if snapshot is None or snapshot[0] is not document or snapshot[1] != document.revision():
+            snapshot = self._text_snapshot = (document, document.revision(), raw_text(document), None)
+        return snapshot[2]
 
     def positions(self, text=None):
         """Indices Python du texte affiché (*text*, s'il est déjà lu) ↔
-        positions Qt (``text_positions``)."""
-        return text_positions(self.document(), self.toPlainText() if text is None else text)
+        positions Qt (``text_positions``), faites une fois par modification."""
+        text = self.toPlainText() if text is None else text
+        snapshot = self._text_snapshot
+        if snapshot is not None and snapshot[0] is self.document() and snapshot[2] is text:
+            if snapshot[3] is None:
+                snapshot = self._text_snapshot = snapshot[:3] + (text_positions(snapshot[0], text),)
+            return snapshot[3]
+        return text_positions(self.document(), text)
+
+    def _forget_text_snapshot(self, *_change):
+        """Premier traitement de chaque modification : le texte gardé ne vaut
+        plus. Ses positions, s'il y en avait, servent à convertir celle-ci :
+        ``(texte, positions)``."""
+        snapshot = self._text_snapshot
+        self._previous_positions = (snapshot[2], snapshot[3]) if snapshot is not None and snapshot[3] else None
+        self._text_snapshot = None
 
     def mousePressEvent(self, event):
         if (event.button() == Qt.MouseButton.LeftButton
@@ -461,7 +509,9 @@ class CodeEditor(QPlainTextEdit):
         old = self.document()
         if document is old:
             return
-        for slot in (self._folding_document_changed, self._pair_document_contents_changed):
+        self._text_snapshot = None
+        self._previous_positions = None
+        for slot in (self._forget_text_snapshot, self._folding_document_changed, self._pair_document_contents_changed):
             try:
                 old.contentsChange.disconnect(slot)
             except (RuntimeError, TypeError):
@@ -474,9 +524,13 @@ class CodeEditor(QPlainTextEdit):
         self.horizontalScrollBar().setValue(0)
         self.setDocument(document)
         self.setTabStopDistance(tab_stop)
+        document.contentsChange.connect(self._forget_text_snapshot)
         document.contentsChange.connect(self._folding_document_changed)
         document.contentsChange.connect(self._pair_document_contents_changed)
+        self._text_snapshot = None
         self._fold_regions_cache = None
+        self._fold_headers = None
+        self._fold_timer.stop()
         self._folded_opening_lines = set()
         self._search_match = None
         self._search_last = None
@@ -509,7 +563,54 @@ class CodeEditor(QPlainTextEdit):
     def _fold_regions(self):
         if self._fold_regions_cache is None:
             self._fold_regions_cache = foldable_xml_regions(self.toPlainText())
+            self._fold_headers = frozenset(r.opening_line for r in self._fold_regions_cache)
         return self._fold_regions_cache
+
+    def fold_header_lines(self):
+        """Lignes (à partir de 0) où commence un élément repliable, pour la
+        gouttière. Une frappe ne les fait pas recalculer : sans balise ni
+        saut de ligne, elles restent ; sinon elles sont décalées, puis
+        recalculées après une pause de la frappe (red team 2, A2)."""
+        if self._fold_headers is None:
+            self._fold_regions()
+        return self._fold_headers
+
+    def _refresh_fold_headers(self):
+        self._fold_regions_cache = None
+        self._fold_regions()
+        self.lineNumberArea.update()
+
+    def _update_fold_headers(self, block, position, removed, inserted, text):
+        """Repères de la gouttière après une modification, sans balayer le
+        texte : *removed* et *inserted* en indices Python à *position* ;
+        *block* : le bloc Qt de la modification."""
+        if self._fold_headers is None:
+            return
+        end = position + len(inserted)
+        old_window = text[max(0, position - 2):position] + (removed or "") + text[end:end + 2]
+        new_window = text[max(0, position - 2):end + 2]
+        # Un élément n'est repliable que si ses balises sont seules sur leur
+        # ligne : une ligne qui est, ou était, une balise seule compte.
+        line_start = text.rfind("\n", 0, position) + 1
+        line_end = text.find("\n", end)
+        line_end = len(text) if line_end < 0 else line_end
+        lines_around = (text[line_start:line_end].strip(),
+                        (text[line_start:position] + (removed or "") + text[end:line_end]).strip())
+        structural = (removed is None or any(c in removed or c in inserted for c in "<>\"'")
+                      or any(line.startswith("<") and line.endswith(">") for line in lines_around)
+                      or any(closer in old_window or closer in new_window for closer in _CLOSERS)
+                      or _inside_tag(text[max(0, position - LB_EDIT_LOOKBACK):position]))
+        lines = inserted.count("\n") - (removed or "").count("\n")
+        if not structural and not lines:
+            return
+        line = block.blockNumber()
+        # La ligne de la modification descend aussi si rien ne précède la
+        # modification sur sa ligne.
+        moved = not block.text()[:max(0, position - (text.rfind("\n", 0, position) + 1))].strip()
+        self._fold_headers = frozenset(
+            header if header < line or (header == line and not moved) else header + lines
+            for header in self._fold_headers if not (line < header <= line - lines))
+        self._fold_timer.start()
 
     def _folding_document_changed(self, _position, _removed, _added):
         if self._fold_relayouting:
@@ -644,14 +745,14 @@ class CodeEditor(QPlainTextEdit):
         top = round(self.blockBoundingGeometry(block).translated(self.contentOffset()).top())
         # Qt peut conserver une métrique mise en cache sur un bloc invisible.
         # Seules les hauteurs des blocs vraiment visibles font progresser y.
-        regions_by_header = {r.opening_line: r for r in self._fold_regions()}
+        headers = self.fold_header_lines()
         while block.isValid() and top <= event.rect().bottom():
             visible = block.isVisible()
             height = round(self.blockBoundingRect(block).height()) if visible else 0
             n = block.blockNumber()
             if visible and top + height >= event.rect().top():
                 painter.setPen(QColor("#8a8177"))
-                if n in regions_by_header:
+                if n in headers:
                     painter.setPen(QColor("#315a8a"))
                     painter.drawText(QRect(1, top, 17, self.fontMetrics().height()),
                                      Qt.AlignmentFlag.AlignCenter,
@@ -763,12 +864,18 @@ class CodeEditor(QPlainTextEdit):
         old_text = self._pair_previous_text
         # Texte de référence d'une modification faite ci-dessous (fermeture).
         self._pair_previous_text = new_text
+        block = self.document().findBlock(position)
         if old_text is not None:
             position, chars_removed, chars_added = python_change(
-                self.document(), old_text, new_text, position, chars_removed, chars_added)
+                self.document(), old_text, new_text, position, chars_removed, chars_added,
+                self._previous_positions[1] if self._previous_positions and self._previous_positions[0] is old_text
+                else None,
+                None if len(new_text) == self.document().characterCount() - 1 else self.positions(new_text))
         # Texte retiré par la modification (None : inconnu), pour le
         # ``text_change_listener``.
         self.last_removed_text = old_text[position:position + chars_removed] if old_text is not None else None
+        self._update_fold_headers(block, position, self.last_removed_text,
+                                  new_text[position:position + chars_added], new_text)
         if callable(self.text_change_listener):
             self.text_change_listener(position, chars_removed, chars_added, new_text)
         if self._pair_edit_guard or old_text is None:
