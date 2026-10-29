@@ -47,6 +47,9 @@
       <xsl:when test="$cle = 'publication.sic'">Leçon transmise (sic)</xsl:when>
       <xsl:when test="$cle = 'publication.gap'">[lacune]</xsl:when>
       <xsl:when test="$cle = 'publication.gap.extent'">[lacune : {extent}]</xsl:when>
+      <xsl:when test="$cle = 'publication.critique.front_matter'">Préliminaires</xsl:when>
+      <xsl:when test="$cle = 'publication.critique.back_matter'">Annexes</xsl:when>
+      <xsl:when test="$cle = 'publication.editor_siglum'">éd.</xsl:when>
     </xsl:choose>
   </xsl:template>
 
@@ -99,9 +102,15 @@
     </xsl:if>
   </xsl:template>
 
-  <!-- Divisions de l'édition (Varians 0.9.2.9). -->
+  <!-- Groupes de <lb> contigus (Varians 0.9.3.4) : ceux qui suivent un même
+       nœud, des blancs entre eux n'y changeant rien. -->
+  <xsl:key name="lb-groupe" match="tei:lb"
+    use="concat(generate-id(..), '/', generate-id(preceding-sibling::node()[not(self::tei:lb) and not(self::text() and normalize-space() = '')][1]))"/>
+
+  <!-- Divisions de l'édition (Varians 0.9.2.9), préliminaires et annexes
+       compris (Varians 0.9.3.4). -->
   <xsl:variable name="divisions"
-    select="//tei:body//*[self::tei:div or self::tei:div1 or self::tei:div2 or self::tei:div3
+    select="(//tei:front | //tei:body | //tei:back)//*[self::tei:div or self::tei:div1 or self::tei:div2 or self::tei:div3
                           or self::tei:div4 or self::tei:div5 or self::tei:div6 or self::tei:div7]"/>
 
   <!-- ROOT. L'en-tête montre le titre de l'édition ; la langue de la page
@@ -131,12 +140,12 @@
           <nav class="toc">
             <div class="toc-title"><xsl:value-of select="$tocTitle"/></div>
             <ul class="toc-list">
-              <xsl:apply-templates select="//tei:body/*" mode="toc"/>
+              <xsl:apply-templates select="//tei:front/* | //tei:body/* | //tei:back/*" mode="toc"/>
             </ul>
           </nav>
         </xsl:if>
         <main>
-          <xsl:apply-templates select="//tei:body"/>
+          <xsl:apply-templates select="//tei:front | //tei:body | //tei:back"/>
         </main>
       </body>
     </html>
@@ -144,6 +153,18 @@
 
   <!-- BODY -->
   <xsl:template match="tei:body">
+    <xsl:apply-templates/>
+  </xsl:template>
+
+  <!-- Préliminaires et annexes (Varians 0.9.3.4) : rendus, titrés comme
+       dans « Édition critique ». -->
+  <xsl:template match="tei:front | tei:back">
+    <h2 class="section-title">
+      <xsl:choose>
+        <xsl:when test="self::tei:front"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'publication.critique.front_matter'"/></xsl:call-template></xsl:when>
+        <xsl:otherwise><xsl:call-template name="texte"><xsl:with-param name="cle" select="'publication.critique.back_matter'"/></xsl:call-template></xsl:otherwise>
+      </xsl:choose>
+    </h2>
     <xsl:apply-templates/>
   </xsl:template>
 
@@ -359,7 +380,12 @@
     <xsl:if test="@edRef=concat('#',$baseWitness)">
       <a class="tei-line-marker" href="tei-line://base/INDEX"><xsl:text>&#8288;</xsl:text></a>
     </xsl:if>
-    <xsl:if test="not(@break='no')">
+    <!-- Des <lb> contigus (de plusieurs témoins) sont une seule coupure,
+         comme dans « Édition critique » : l'espace du premier, aucune si
+         l'un porte break="no" (Varians 0.9.3.4). -->
+    <xsl:variable name="groupe" select="key('lb-groupe', concat(generate-id(..), '/',
+      generate-id(preceding-sibling::node()[not(self::tei:lb) and not(self::text() and normalize-space() = '')][1])))"/>
+    <xsl:if test="not($groupe[@break='no']) and generate-id($groupe[1]) = generate-id(.)">
       <xsl:text> </xsl:text>
     </xsl:if>
   </xsl:template>
@@ -373,12 +399,23 @@
   -->
   <xsl:template match="text()">
     <xsl:variable name="s" select="."/>
+    <!-- Les <lb> contigus avant et après ce texte : leur groupe soude-t-il
+         le mot (Varians 0.9.3.4) ? -->
+    <xsl:variable name="avant" select="preceding-sibling::node()[not(self::text() and normalize-space() = '')][1][self::tei:lb]"/>
+    <xsl:variable name="apres" select="following-sibling::node()[not(self::text() and normalize-space() = '')][1][self::tei:lb]"/>
+    <xsl:variable name="soudeAvant" select="$avant and key('lb-groupe', concat(generate-id(..), '/',
+      generate-id($avant/preceding-sibling::node()[not(self::tei:lb) and not(self::text() and normalize-space() = '')][1])))[@break='no']"/>
+    <xsl:variable name="soudeApres" select="$apres and key('lb-groupe', concat(generate-id(..), '/',
+      generate-id($apres/preceding-sibling::node()[not(self::tei:lb) and not(self::text() and normalize-space() = '')][1])))[@break='no']"/>
     <!-- Le premier et le dernier texte d'une didascalie touchent ses parenthèses. -->
-    <xsl:variable name="afterBreakNo" select="preceding-sibling::node()[1][self::tei:lb[@break='no']]
+    <xsl:variable name="afterBreakNo" select="$soudeAvant
       or (ancestor::tei:stage and generate-id(ancestor::tei:stage[1]/descendant::text()[1]) = generate-id())"/>
-    <xsl:variable name="beforeBreakNo" select="following-sibling::node()[1][self::tei:lb[@break='no']]
+    <xsl:variable name="beforeBreakNo" select="$soudeApres
       or (ancestor::tei:stage and generate-id(ancestor::tei:stage[1]/descendant::text()[last()]) = generate-id())"/>
     <xsl:choose>
+      <!-- Un blanc entre deux <lb> d'un même groupe : la coupure est celle
+           du groupe. -->
+      <xsl:when test="normalize-space($s) = '' and $avant and $apres"/>
       <!--
         A text node can be BETWEEN two <lb break="no"/> elements belonging
         to different witnesses. In that case both ends must be cleaned.
@@ -643,24 +680,60 @@
   <!-- Suppress teiHeader -->
   <xsl:template match="tei:teiHeader"/>
   
-  <!-- APP -->
+  <!-- APP : l'apparat en ligne, « [leçon (sigles) | leçon (sigles) ] », avec
+       la règle commune (Varians 0.9.3.4) : un séparateur entre deux leçons,
+       celles d'un <rdgGrp> comprises ; le @wit d'un <rdgGrp> vaut pour ses
+       leçons ; une leçon sans témoin est « éd. » ; une omission « om. ».
+       Un vers qui suit un apparat de vers va à la ligne. -->
   <xsl:template match="tei:app">
-    <span class="apparatus"><xsl:text>[</xsl:text><xsl:apply-templates/><xsl:text>]</xsl:text></span>
+    <span class="apparatus"><xsl:text>[</xsl:text><xsl:apply-templates select="node()[not(self::text() and normalize-space() = '')]"/><xsl:text>]</xsl:text></span>
+    <xsl:if test="parent::tei:lg and .//tei:l and following-sibling::tei:l"><br/></xsl:if>
   </xsl:template>
-  <xsl:template match="tei:lem">
-    <xsl:if test=". = ''"><xsl:text>--</xsl:text></xsl:if>    
-    <b><xsl:apply-templates/></b> <em>
-      <xsl:if test="@wit"><xsl:text> (</xsl:text><xsl:call-template name="sigles"><xsl:with-param name="wit" select="normalize-space(@wit)"/></xsl:call-template><xsl:text>)</xsl:text></xsl:if>
+  <xsl:template match="tei:lem | tei:rdg">
+    <xsl:variable name="app" select="ancestor::tei:app[1]"/>
+    <xsl:variable name="lecons" select="$app/tei:lem | $app/tei:rdg | $app/tei:rdgGrp/tei:lem | $app/tei:rdgGrp/tei:rdg
+                                        | $app/tei:rdgGrp/tei:rdgGrp/tei:lem | $app/tei:rdgGrp/tei:rdgGrp/tei:rdg"/>
+    <xsl:if test="generate-id(.) != generate-id($lecons[1])"> | </xsl:if>
+    <xsl:variable name="wit">
+      <xsl:choose>
+        <xsl:when test="@wit"><xsl:value-of select="normalize-space(@wit)"/></xsl:when>
+        <xsl:otherwise><xsl:value-of select="normalize-space(ancestor::tei:rdgGrp[@wit][generate-id(ancestor::tei:app[1]) = generate-id($app)][1]/@wit)"/></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:choose>
+      <!-- Ni texte (hors des notes), ni lacune, ni rien qui ait valeur de leçon. -->
+      <xsl:when test="not(.//text()[normalize-space()][count(ancestor::tei:note) = count(current()/ancestor::tei:note)])
+                      and not(.//tei:gap | .//tei:space | .//tei:app | .//tei:graphic | .//tei:lacunaStart | .//tei:lacunaEnd)">
+        <em class="editeur">om.</em><xsl:apply-templates/>
+      </xsl:when>
+      <xsl:when test="self::tei:lem"><b><xsl:apply-templates/></b></xsl:when>
+      <xsl:otherwise><xsl:apply-templates/></xsl:otherwise>
+    </xsl:choose>
+    <em>
+      <xsl:text> (</xsl:text>
+      <xsl:choose>
+        <xsl:when test="$wit != ''"><xsl:call-template name="sigles"><xsl:with-param name="wit" select="$wit"/></xsl:call-template></xsl:when>
+        <xsl:otherwise><xsl:call-template name="texte"><xsl:with-param name="cle" select="'publication.editor_siglum'"/></xsl:call-template></xsl:otherwise>
+      </xsl:choose>
+      <xsl:text>)</xsl:text>
     </em>
     <xsl:text> </xsl:text>
   </xsl:template>
-  <xsl:template match="tei:rdg">
-    <xsl:if test="position() != 1"> | </xsl:if>
-    <xsl:if test=". = ''"><xsl:text>--</xsl:text></xsl:if>
-    <xsl:apply-templates/> <em>
-      <xsl:if test="@wit"><xsl:text> (</xsl:text><xsl:call-template name="sigles"><xsl:with-param name="wit" select="normalize-space(@wit)"/></xsl:call-template><xsl:text>)</xsl:text></xsl:if>
+
+  <!-- Lacunes : rien dans le texte ; dans une leçon, « lacuna incipit » ou
+       « lacuna desinit », avec les témoins de la balise s'ils ne sont pas
+       ceux de sa leçon (Varians 0.9.3.4). -->
+  <xsl:template match="tei:lacunaStart | tei:lacunaEnd"/>
+  <xsl:template match="tei:lacunaStart[ancestor::tei:lem or ancestor::tei:rdg] | tei:lacunaEnd[ancestor::tei:lem or ancestor::tei:rdg]">
+    <em class="editeur">
+      <xsl:choose>
+        <xsl:when test="self::tei:lacunaStart">lacuna incipit</xsl:when>
+        <xsl:otherwise>lacuna desinit</xsl:otherwise>
+      </xsl:choose>
+      <xsl:if test="normalize-space(@wit) != '' and normalize-space(@wit) != normalize-space(ancestor::*[self::tei:lem or self::tei:rdg][1]/@wit)">
+        <xsl:text> </xsl:text><xsl:call-template name="sigles"><xsl:with-param name="wit" select="normalize-space(@wit)"/></xsl:call-template>
+      </xsl:if>
     </em>
-    <xsl:text> </xsl:text>
   </xsl:template>
   
   

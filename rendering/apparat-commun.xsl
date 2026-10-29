@@ -16,8 +16,9 @@
     <lacunaEnd/>) donne « lacuna incipit » ou « lacuna desinit ».
   - Folios : seuls les <pb> du témoin choisi, ou sans @edRef ; avec
     « aucun », tous.
-  - Sauts de ligne : des <lb> contigus (de plusieurs témoins) sont une
-    seule coupure, qui soude un mot si l'un d'eux porte break="no".
+  - Sauts de ligne : des <lb> contigus (de plusieurs témoins), même
+    séparés par des blancs, sont une seule coupure, qui soude un mot si
+    l'un d'eux porte break="no".
   - Sigles (Varians 0.9.2.8.2) : celui du <idno type="siglum"> du témoin
     dans <listWit>, sinon son identifiant ; une leçon sans témoin est
     « éd. », dans la langue demandée (Varians 0.9.3.4).
@@ -275,15 +276,17 @@
 
   <!-- Sauts de ligne. Les <lb> contigus de plusieurs témoins (« fu <lb
        edRef="#A" break="no"/><lb edRef="#B"/>it ») sont une seule coupure :
-       un mot coupé si l'un d'eux porte break="no", sinon une espace. -->
+       un mot coupé si l'un d'eux porte break="no", sinon une espace. Des
+       blancs entre eux (un <lb> par ligne du fichier) n'y changent rien
+       (Varians 0.9.3.4). -->
   <xsl:function name="f:lb-avant" as="element()*">
     <xsl:param name="n" as="node()"/>
-    <xsl:variable name="debut" select="$n/preceding-sibling::node()[not(self::tei:lb)][1]"/>
+    <xsl:variable name="debut" select="$n/preceding-sibling::node()[not(self::tei:lb or self::text()[not(normalize-space())])][1]"/>
     <xsl:sequence select="$n/preceding-sibling::tei:lb[empty($debut) or . &gt;&gt; $debut]"/>
   </xsl:function>
   <xsl:function name="f:lb-apres" as="element()*">
     <xsl:param name="n" as="node()"/>
-    <xsl:variable name="fin" select="$n/following-sibling::node()[not(self::tei:lb)][1]"/>
+    <xsl:variable name="fin" select="$n/following-sibling::node()[not(self::tei:lb or self::text()[not(normalize-space())])][1]"/>
     <xsl:sequence select="$n/following-sibling::tei:lb[empty($fin) or . &lt;&lt; $fin]"/>
   </xsl:function>
   <xsl:function name="f:lb-groupe" as="element()*">
