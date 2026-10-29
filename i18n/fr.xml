@@ -820,6 +820,8 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="viewer.show_variants.tip">Afficher ou masquer les marqueurs de variantes (v) dans le texte</string>
   <string key="viewer.show_notes">Notes</string>
   <string key="viewer.show_notes.tip">Afficher ou masquer les marqueurs de notes (n) dans le texte</string>
+  <string key="viewer.show_nonlem">Leçons hors &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Surligner en jaune les leçons qui ne viennent pas d’un &lt;lem&gt;</string>
   <string key="completion.ids.label">Identifiants du projet pour @{attribute} dans &lt;{element}&gt; :</string>
   <string key="references.goto">Aller à la cible</string>
   <string key="references.back">Revenir</string>

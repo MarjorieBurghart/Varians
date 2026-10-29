@@ -474,3 +474,15 @@ def test_in_the_established_text_the_readings_not_from_a_lem_are_flagged():
     assert [seg["text"] for seg in _segments(reading) if seg.get("nonlem")] == ["k"]
     reading = _chosen(body, text_mode="witness", text_witness="C")
     assert not [seg for seg in _segments(reading) if seg.get("nonlem")] and reading["nonlem_readings"] == 0
+
+
+def test_the_spaces_around_a_reading_outside_a_lem_are_not_flagged():
+    """Le surlignage couvre les mots de la leçon, pas les blancs qui
+    l'entourent ; ceux du dedans restent marqués, le texte ne change pas."""
+    body = ('<div><p>a<app><rdg wit="#A"> seruos <hi rend="italic">solent</hi> nunc </rdg><rdg wit="#B">z</rdg></app>b '
+            '<app><rdg wit="#A"> </rdg><rdg wit="#B">y</rdg></app> c</p></div>')
+    reading = _chosen(body, text_mode="established")
+    assert _text(reading["blocks"][1]) == "a seruos solent nunc b c"
+    flagged = [seg["text"] for seg in _segments(reading) if seg.get("nonlem")]
+    assert flagged == ["seruos ", "solent", " nunc"]
+    assert reading["nonlem_readings"] == 2

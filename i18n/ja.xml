@@ -834,6 +834,8 @@
   <string key="viewer.show_variants.tip">本文中の異読マーカー（v）を表示または非表示にする</string>
   <string key="viewer.show_notes">注</string>
   <string key="viewer.show_notes.tip">本文中の注マーカー（n）を表示または非表示にする</string>
+  <string key="viewer.show_nonlem">&lt;lem&gt; 以外の読み</string>
+  <string key="viewer.show_nonlem.tip">&lt;lem&gt; に由来しない読みを黄色で強調表示する</string>
   <string key="completion.ids.label">&lt;{element}&gt; の @{attribute} に使えるプロジェクト内の識別子：</string>
   <string key="references.goto">参照先へ移動</string>
   <string key="references.back">戻る</string>

@@ -20,6 +20,7 @@ le bureau. Le XML est lu avec ``xml.etree.ElementTree``.
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 from collections import OrderedDict
@@ -666,7 +667,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         "missing": None, "shown_wit": None, "missing_count": 0,
         # Texte établi (V0.9.3.1) : dans une leçon affichée qui n'est pas un
         # <lem> ; le nombre de ces leçons.
-        "nonlem": False, "nonlem_count": 0,
+        "nonlem": False, "nonlem_count": 0, "nonlem_edges": None,
     }
 
     def enter(node):
@@ -763,8 +764,29 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             prev.get("nonlem") == seg.get("nonlem") and
             prev.get("seg") == seg.get("seg")):
             prev["text"] += text
+            seg = prev
         else:
             block["segments"].append(seg)
+        if state["nonlem"]:
+            edges = state["nonlem_edges"]
+            state["nonlem_edges"] = [edges[0] if edges else (block, seg), (block, seg)]
+
+    def unflag_edges(edges):
+        """Les blancs au bord d'une leçon hors <lem> ne sont pas surlignés :
+        détachés du premier et du dernier segment marqués (V0.9.3.1)."""
+        for (block, seg), pattern in zip(edges, (r"^\s+", r"\s+$")):
+            match = re.search(pattern, seg["text"])
+            if not match:
+                continue
+            if match.group(0) == seg["text"]:
+                seg.pop("nonlem", None)
+                continue
+            blank = copy.deepcopy(seg)
+            blank.pop("nonlem")
+            blank["text"] = match.group(0)
+            seg["text"] = seg["text"][:match.start()] + seg["text"][match.end():]
+            index = next(i for i, item in enumerate(block["segments"]) if item is seg)
+            block["segments"].insert(index if match.start() == 0 else index + 1, blank)
 
     def open_parenthesis(styles, **extra):
         """Parenthèse ouvrante d'une didascalie, collée au texte qui suit."""
@@ -936,10 +958,14 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         state["missing"] = missing or saved[0]
         state["shown_wit"] = wit
         state["nonlem"] = nonlem or saved[2]
+        if nonlem and not saved[2]:
+            state["nonlem_edges"] = None
         walker()
         state["missing"], state["shown_wit"], state["nonlem"] = saved
         if nonlem and not saved[2]:
             state["nonlem_count"] += 1
+            if state["nonlem_edges"]:
+                unflag_edges(state["nonlem_edges"])
         if missing:
             state["missing_count"] += 1
             if not clean_text(flatten_editorial_text(selected)):

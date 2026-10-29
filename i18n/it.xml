@@ -834,6 +834,8 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="viewer.show_variants.tip">Mostra o nascondi i marcatori delle varianti (v) nel testo</string>
   <string key="viewer.show_notes">Note</string>
   <string key="viewer.show_notes.tip">Mostra o nascondi i marcatori delle note (n) nel testo</string>
+  <string key="viewer.show_nonlem">Lezioni fuori da &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Evidenzia in giallo le lezioni che non provengono da un &lt;lem&gt;</string>
   <string key="completion.ids.label">Identificatori del progetto per @{attribute} in &lt;{element}&gt;:</string>
   <string key="references.goto">Vai alla destinazione</string>
   <string key="references.back">Torna indietro</string>

@@ -834,6 +834,8 @@
   <string key="viewer.show_variants.tip">Показать или скрыть метки разночтений (v) в тексте</string>
   <string key="viewer.show_notes">Примечания</string>
   <string key="viewer.show_notes.tip">Показать или скрыть метки примечаний (n) в тексте</string>
+  <string key="viewer.show_nonlem">Чтения вне &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Выделить жёлтым чтения, взятые не из &lt;lem&gt;</string>
   <string key="completion.ids.label">Идентификаторы проекта для @{attribute} в &lt;{element}&gt;:</string>
   <string key="references.goto">Перейти к цели</string>
   <string key="references.back">Вернуться</string>

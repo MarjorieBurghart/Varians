@@ -820,6 +820,8 @@ The file is not deleted: it stays on disk.</string>
   <string key="viewer.show_variants.tip">Show or hide the variant markers (v) in the text</string>
   <string key="viewer.show_notes">Notes</string>
   <string key="viewer.show_notes.tip">Show or hide the note markers (n) in the text</string>
+  <string key="viewer.show_nonlem">Readings outside &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Highlight in yellow the readings that do not come from a &lt;lem&gt;</string>
   <string key="completion.ids.label">Project identifiers for @{attribute} in &lt;{element}&gt;:</string>
   <string key="references.goto">Go to target</string>
   <string key="references.back">Go back</string>
