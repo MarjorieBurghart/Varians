@@ -102,6 +102,20 @@ def test_the_words_of_the_editor_in_a_note_are_in_italics(project):
     assert [_text(hi) for hi in note.iterfind("t:hi[@rend='italic']", NS)] == ["om.", "A"]
 
 
+def test_a_siglum_that_is_not_an_identifier_replaces_it_in_the_notes(project):
+    # Un sigle qui ne peut pas être un @xml:id est dans <idno type="siglum"> :
+    # il remplace l'identifiant dans les notes (V0.9.2.8.2).
+    source = SOURCE.replace('<witness xml:id="B">Rome</witness>',
+                            '<witness xml:id="_1760"><idno type="siglum">1760</idno>Rome</witness>')
+    source = re.sub(r'#B\b', "#_1760", source)
+    (project.root_dir / "xml" / "sigle.xml").write_text(source, encoding="utf-8")
+    result, tree = _notes(project, "A", "xml/sigle.xml")
+    assert result.ok, result.error
+    assert _apparatus(tree)[:3] == ["regem ] reges 1760 C", "non add. 1760", "mortis ] sue mortis A ; mortes 1760 ; mortis sue C"]
+    notes = "".join(" ".join(note.itertext()) for note in tree.iterfind(".//t:note[@type='apparatus']", NS))
+    assert "_1760" not in notes
+
+
 def test_only_the_pages_of_the_witness_are_kept_as_folio_marks(project):
     _result, tree = _notes(project, "A")
     assert tree.find(".//t:pb", NS) is None                   # pas de saut de page dans Word
