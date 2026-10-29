@@ -97,6 +97,20 @@ def _find_markup_end(text: str, start: int) -> int:
         if quote:
             if ch == quote:
                 quote = None
+        elif bracket_depth and text.startswith("<!--", i):
+            # Commentaire du sous-ensemble interne : une apostrophe n'y ouvre
+            # pas de chaîne (red team 2, B7).
+            stop = text.find("-->", i + 4)
+            if stop < 0:
+                return n
+            i = stop + 3
+            continue
+        elif bracket_depth and text.startswith("<?", i):
+            stop = text.find("?>", i + 2)
+            if stop < 0:
+                return n
+            i = stop + 2
+            continue
         elif ch in ("'", '"'):
             quote = ch
         elif declaration and ch == "[":
