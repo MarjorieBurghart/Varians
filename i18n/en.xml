@@ -187,6 +187,8 @@
   <string key="viewer.text.witness">Text of {witness}</string>
   <string key="viewer.text.pivot">the pivot witness</string>
   <string key="viewer.text.missing">{count} passage(s) without a reading of {witness}, marked</string>
+  <string key="viewer.text.witness_pivot">Text of the pivot witness</string>
+  <string key="viewer.text.missing_pivot">{count} passage(s) without a reading of the pivot witness, marked</string>
   <string key="viewer.missing">No reading of {witness} here: {fallback}</string>
   <string key="viewer.missing.lem">text of the &lt;lem&gt;</string>
   <string key="viewer.missing.reading">reading of {witness}</string>

@@ -16,6 +16,9 @@
     for (let i = 0; i < String(value ?? '').length;) {
       const char = String(value).codePointAt(i);
       const source = String.fromCodePoint(char), width = source.length;
+      // U+2060 marque un mot coupé par une ligne du pivot (<lb break="no"/>) :
+      // il n'est pas cherché (red team 2, D2).
+      if (char === 0x2060) { i += width; continue; }
       let folded = source.toLowerCase();
       if (options.medieval) {
         folded = Array.from(folded).map(ch => {

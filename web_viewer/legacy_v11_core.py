@@ -44,8 +44,14 @@ def lname(tag: str) -> str:
     return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
 
 
+# Blancs XML (espace, tabulation, retour chariot, saut de ligne) : une espace
+# insécable n'en est pas un (red team 2, C6).
+_XML_BLANKS = re.compile(r"[ \t\r\n]+")
+_XML_BLANK_CHARS = " \t\r\n"
+
+
 def clean_text(s: str) -> str:
-    return " ".join((s or "").split())
+    return _XML_BLANKS.sub(" ", s or "").strip(_XML_BLANK_CHARS)
 
 
 def wit_tokens(value: str | None):
@@ -643,6 +649,10 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         lacunae.update(lacuna_witnesses(text))
     taken_ids = {e.attrib.get(XML_ID) for e in root.iter()}
     ref_notes = reference_notes(root)
+    # <ref> d'une citation biblique : entre chevrons, précédé d'une espace,
+    # comme dans « Édition critique » (red team 2, C14).
+    biblical_refs = {id(ref) for cit in root.iter() if lname(cit.tag) == "cit" and cit_is_biblical(cit)
+                     for ref in cit if lname(ref.tag) == "ref"}
 
     blocks = []
     annotations = {}
@@ -714,26 +724,45 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             return
         for seg in reversed(block["segments"]):
             if seg.get("kind") == "text" and seg.get("text"):
-                seg["text"] = seg["text"].rstrip()
+                seg["text"] = seg["text"].rstrip(_XML_BLANK_CHARS)
                 return
+
+    def has_visible_text():
+        block = state.get("block")
+        return bool(block) and blocks and blocks[-1] is block and any(
+            seg.get("kind") == "text" and seg.get("text", "").strip(_XML_BLANK_CHARS) for seg in block["segments"])
+
+    def line_break(breaking, pivot):
+        """Un ``<lb>`` (red team 2, C1) : une fin de mot, ou (``breaking``
+        faux : break="no") un mot soudé. Des ``<lb>`` contigus soudent le mot
+        si l'un d'eux le soude, comme dans « Édition critique ». Un mot
+        coupé par une ligne du pivot (``pivot``) porte U+2060."""
+        pending = state.get("pending_lb_sep")
+        if not pivot and pending is None and not has_visible_text():
+            return                        # en tête de bloc : rien à séparer
+        trim_last_visible_right()
+        if not breaking or pending in ("", "\u2060"):
+            state["pending_lb_sep"] = "\u2060" if (pivot or pending == "\u2060") else ""
+        else:
+            state["pending_lb_sep"] = " "
 
     def add_text(text, styles=None, variant_id=None, extra_classes=None, alt=None):
         if text is None or text == "":
             return
         block = ensure_block()
-        text = re.sub(r"\s+", " ", text)
+        text = _XML_BLANKS.sub(" ", text)
         if state.get("hug"):
             # Juste après une parenthèse ouvrante : pas de blanc (V0.9.3.1).
-            text = text.lstrip()
+            text = text.lstrip(_XML_BLANK_CHARS)
             if not text:
                 return
             state["hug"] = False
         sep = state.get("pending_lb_sep")
         if sep is not None:
-            text = text.lstrip()
+            text = text.lstrip(_XML_BLANK_CHARS)
             if text:
                 text = sep + text
-            state["pending_lb_sep"] = None
+                state["pending_lb_sep"] = None
         if not text:
             return
         seg = tagged({
@@ -851,12 +880,17 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             if lname(element.tag) in LACUNA_TAGS:
                 add_lacuna(element)
 
-    def add_editorial_ref(text):
-        """Ajoute une identification éditoriale de citation, hors texte manuscrit."""
+    def add_editorial_ref(text, spaced=False):
+        """Ajoute une identification éditoriale de citation, hors texte
+        manuscrit ; ``spaced`` : après une espace (citation biblique)."""
         text = clean_text(text)
         if not text:
             return
         block = ensure_block()
+        if spaced:
+            last = next((seg for seg in reversed(block["segments"]) if seg.get("kind") == "text"), None)
+            if last is not None and last.get("text") and not last["text"].endswith(" "):
+                last["text"] += " "
         block["segments"].append(tagged({
             "kind": "editorial-ref",
             "text": text,
@@ -1000,7 +1034,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             styles.append("add")
         elif tag == "supplied":
             styles.append("supplied")
-        elif tag in {"foreign", "title"}:
+        elif tag in {"foreign", "title", "emph"}:
             styles.append("italic")
         elif tag == "unclear":
             styles.append("unclear")
@@ -1056,13 +1090,14 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             return
         if tag == "lb":
             edref = node.attrib.get("edRef")
+            breaking = node.attrib.get("break") != "no"
             if (edref and not witness_matches(edref, target_of(node))) or (not edref and foreign_to_shown(node)):
-                # Les <lb> d'un autre témoin sont des ancres invisibles et ne
-                # doivent pas casser la lecture continue du pivot.
+                # Un <lb> d'un autre témoin n'est pas une ligne du pivot ; il
+                # suit la règle TEI des fins de mot (red team 2, C1).
+                line_break(breaking, False)
                 return
             advance_line(node)
-            trim_last_visible_right()
-            state["pending_lb_sep"] = "\u2060" if node.attrib.get("break") == "no" else " "
+            line_break(breaking, True)
             return
         if tag in LACUNA_TAGS:
             add_lacuna(node)
@@ -1086,7 +1121,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             # de la source de la citation : elle ne fait pas partie du manuscrit.
             add_lacunae_in(node)
             enter(node)
-            add_editorial_ref(flatten_editorial_text(node, include_notes=True, include_refs=True))
+            add_editorial_ref(flatten_editorial_text(node, include_notes=True, include_refs=True),
+                              spaced=id(node) in biblical_refs)
             return
         if tag == "app":
             selected, wit, missing = choose_app_reading(node)

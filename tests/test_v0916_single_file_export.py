@@ -25,7 +25,14 @@ les compte (``nonlem_readings``), ``meta.text`` aussi, avec l'état de départ
 du surlignage (``highlight``). Ces marques retirées, l'empreinte est celle
 d'avant : le texte ne change pas. Les blancs au bord d'une telle leçon sont
 détachés dans leur propre segment, non marqué : le texte affiché et les mots
-marqués restent les mêmes."""
+marqués restent les mêmes.
+
+V0.9.3.4 (red team 2, décision explicite) : un <lb/> d'un autre témoin que
+le pivot suit la règle TEI, comme dans « Édition critique » et l'aperçu :
+sans break="no", une fin de mot. Les 30 « XX<lb edRef="#T2"/>II » du projet
+exemple (sans doute des break="no" oubliés) deviennent « XX II », comme
+ailleurs. L'en-tête compte les variantes et les notes de l'apparat du texte
+de lecture (366 notes au lieu des 333 rattachées aux lignes du pivot)."""
 from __future__ import annotations
 
 import hashlib
@@ -35,7 +42,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "8ba3f7663afc5684c7628de9f344921d3baac34a6c559799fac7e2432607cda5"
+DIGEST = "a79a76c7c85ffe03c99626c7d659e33b88a326fc84ce46bc6cf9a95090438f65"
 
 
 def _digest(data):

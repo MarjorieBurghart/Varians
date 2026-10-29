@@ -201,6 +201,8 @@
   <string key="viewer.text.witness">Текст свидетеля {witness}</string>
   <string key="viewer.text.pivot">опорный свидетель</string>
   <string key="viewer.text.missing">мест без чтения свидетеля {witness}: {count} (отмечены)</string>
+  <string key="viewer.text.witness_pivot">Текст опорного свидетеля</string>
+  <string key="viewer.text.missing_pivot">мест без чтения опорного свидетеля: {count} (отмечены)</string>
   <string key="viewer.missing">Здесь нет чтения свидетеля {witness}: {fallback}</string>
   <string key="viewer.missing.lem">текст &lt;lem&gt;</string>
   <string key="viewer.missing.reading">чтение свидетеля {witness}</string>

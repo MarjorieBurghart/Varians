@@ -201,6 +201,8 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="viewer.text.witness">Text svědka {witness}</string>
   <string key="viewer.text.pivot">pivotní svědek</string>
   <string key="viewer.text.missing">{count} míst bez čtení svědka {witness}, označeno</string>
+  <string key="viewer.text.witness_pivot">Text pivotního svědka</string>
+  <string key="viewer.text.missing_pivot">{count} míst bez čtení pivotního svědka, označeno</string>
   <string key="viewer.missing">Zde není čtení svědka {witness}: {fallback}</string>
   <string key="viewer.missing.lem">text &lt;lem&gt;</string>
   <string key="viewer.missing.reading">čtení svědka {witness}</string>

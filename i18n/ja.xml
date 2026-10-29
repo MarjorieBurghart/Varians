@@ -201,6 +201,8 @@
   <string key="viewer.text.witness">{witness} の本文</string>
   <string key="viewer.text.pivot">ピボット伝本</string>
   <string key="viewer.text.missing">{witness} の読みがない箇所 {count}件（表示あり）</string>
+  <string key="viewer.text.witness_pivot">ピボット伝本の本文</string>
+  <string key="viewer.text.missing_pivot">ピボット伝本の読みがない箇所 {count}件（表示あり）</string>
   <string key="viewer.missing">ここには {witness} の読みがありません：{fallback}</string>
   <string key="viewer.missing.lem">&lt;lem&gt; の本文</string>
   <string key="viewer.missing.reading">{witness} の読み</string>

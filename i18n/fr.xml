@@ -187,6 +187,8 @@
   <string key="viewer.text.witness">Texte de {witness}</string>
   <string key="viewer.text.pivot">le témoin pivot</string>
   <string key="viewer.text.missing">{count} passage(s) sans leçon de {witness}, signalé(s)</string>
+  <string key="viewer.text.witness_pivot">Texte du témoin pivot</string>
+  <string key="viewer.text.missing_pivot">{count} passage(s) sans leçon du témoin pivot, signalé(s)</string>
   <string key="viewer.missing">Pas de leçon de {witness} ici : {fallback}</string>
   <string key="viewer.missing.lem">texte du &lt;lem&gt;</string>
   <string key="viewer.missing.reading">leçon de {witness}</string>
