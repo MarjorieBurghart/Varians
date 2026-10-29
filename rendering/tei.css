@@ -113,10 +113,18 @@ p {
 
 /* ---------- Verse, headings, lists, figures (0.9.2.9) ---------- */
 .lg {
-  margin: 0 0 1em;
+  margin: 0.5em 0 1em 2em;
+  line-height: 150%;
+}
+
+/* Les vers d'une strophe sont séparés par un <br/> pour l'aperçu de
+   Varians ; dans un navigateur, chaque vers est un bloc. */
+.lg br {
+  display: none;
 }
 
 .l {
+  display: block;
   margin: 0;
   padding-left: 1.5em;
   text-indent: -1.5em;

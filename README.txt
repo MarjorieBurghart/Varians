@@ -29,6 +29,12 @@ VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
 • Feuille de l'aperçu (tei-to-html.xsl, scénario « Édition HTML ») et
   « Édition critique » : tableaux avec légende, en-têtes et cellules
   fusionnées ; le crayon ✎ d'un tableau entre dans sa légende.
+• Vue XSLT / CSS : une strophe (<lg>) est un seul bloc en retrait, ses
+  vers séparés par des retours à la ligne ; auparavant, l'aperçu (Qt), qui
+  ne regroupe pas des blocs imbriqués, en faisait autant de paragraphes.
+  Varians donne ce retrait même avec la CSS d'un projet créé par une
+  version antérieure ; la CSS du projet le remplace si elle a une règle
+  .lg. Dans un navigateur, chaque vers reste un bloc (tei.css).
 • Le code propre au corpus de Troyes a été retiré du générateur du viewer.
   Le format de project.xml est inchangé ; un viewer déjà exporté doit être
   exporté de nouveau.

@@ -155,9 +155,17 @@
     <p><xsl:apply-templates/></p>
   </xsl:template>
 
-  <!-- VERSE (Varians 0.9.2.9) : chaque <lg> en bloc, chaque <l> sur sa ligne. -->
+  <!-- VERSE (Varians 0.9.2.9, 0.9.3.0) : chaque <lg> est un seul bloc, ses
+       vers séparés par un <br/> ; l'aperçu de Varians (Qt) ne regroupe pas
+       des blocs imbriqués. Dans un navigateur, tei.css fait de chaque vers
+       un bloc. Un <l> hors d'un <lg> est un bloc. -->
   <xsl:template match="tei:lg">
     <div class="lg"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <xsl:template match="tei:lg/tei:l">
+    <span class="l"><xsl:apply-templates/></span>
+    <xsl:if test="following-sibling::tei:l"><br/></xsl:if>
   </xsl:template>
 
   <xsl:template match="tei:l">

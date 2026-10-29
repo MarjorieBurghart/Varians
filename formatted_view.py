@@ -238,6 +238,13 @@ def resolve_css_variables(css_text):
     return out
 
 
+# Règles de base de l'aperçu (V0.9.3.0), placées avant la CSS du projet, qui
+# les remplace si elle en a : une strophe de la feuille livrée (un seul bloc,
+# vers séparés par des <br/>) en retrait, même avec la CSS d'un projet créé
+# par une version antérieure. Qt ignore toute règle placée après un @media.
+PREVIEW_BASE_CSS = ".lg { margin-top: 0.5em; margin-bottom: 1em; margin-left: 2em; line-height: 150%; }\n"
+
+
 LINE_MARKER_RE = re.compile(
     r'(<a\b(?=[^>]*\bclass=["\'][^"\']*\btei-line-marker\b[^"\']*["\'])'
     r'(?=[^>]*\bhref=["\']tei-line://base/(\d+)["\'])[^>]*>)(?:\s|\u2060|&#8288;)*</a>',
@@ -1394,7 +1401,7 @@ class FormattedEditionWidget(QWidget):
     def _resolved_css_cached(self):
         key = self._file_signature(self.css_path)
         if key != self._cached_css_key or self._cached_css_text is None:
-            css = resolve_css_variables(self.css_path.read_text(encoding="utf-8"))
+            css = PREVIEW_BASE_CSS + resolve_css_variables(self.css_path.read_text(encoding="utf-8"))
             css += (
                 "\n.tei-edit-marker { color:#8a8177; text-decoration:none; font-family:sans-serif; font-size:0.75em; padding-right:0.35em; }"
                 "\na.tei-line-marker { color: transparent; text-decoration:none; font-size:0; line-height:0; margin:0; padding:0; white-space:nowrap; }"

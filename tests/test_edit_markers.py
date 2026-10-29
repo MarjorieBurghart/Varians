@@ -63,7 +63,7 @@ def test_the_varians_stylesheet_gets_a_pencil_per_editable_element():
     assert count == 5 and _indexes(html) == [0, 1, 2, 3, 4]
     assert re.search(re.escape(_marker(0)) + r"\s*Titre", html)
     assert "<p>" + _marker(1) in html
-    assert re.search(re.escape(_marker(2)) + r"\s*vers un", html)
+    assert re.search(re.escape(_marker(2)) + r'\s*<span class="l">vers un', html)
     assert "<p>" + _marker(4) + "fin" in html
     # Les paramètres de la vue passent : repères de ligne du pivot.
     assert 'href="tei-line://base/INDEX"' in html

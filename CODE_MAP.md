@@ -366,5 +366,6 @@ Fonctionnement : aide, paragraphe « Texte de lecture » (`viewer-text`, à la f
 - Positions : `VariansSync.RENDERED` (`sync_model.js`), `VariansFullText.RENDERED` (`fulltext_search.js`), `segment_views.RENDERED_BLOCKS` : mêmes blocs, mêmes positions que `renderDocument`.
 - `web_viewer/generator.py` : `renderDocument` (`renderLines`, `renderList`, `renderTable`, `renderToc`, `partTitle`), `styles` (`STYLE_CLASSES`), `altTitle` (`FORM_KEYS`, `viewer.form.detail`), CSS (`div-start`, `div-title`, `tei-head`, `tei-lg`, `verse-n`, `tei-list`, `tei-table`, `tei-caption`, `tei-note-block`…), `lang` du texte ; messages `viewer.part.*`, `viewer.form.*` (×7).
 - Retiré de `legacy_v11_core.py` : configuration du corpus de Troyes, alignement HTR/ALTO, manifestes, témoins secondaires, `build_dataset_fast`, ancien `make_html`, `main`.
+- Strophes de `tei-to-html.xsl` : un `<lg>` est un seul bloc, ses `<l>` des `<span class="l">` séparés par `<br/>` (Qt ne regroupe pas des blocs imbriqués) ; `tei.css` : `.lg br` masqué et `.l` en bloc dans un navigateur ; `formatted_view.PREVIEW_BASE_CSS`, placée avant la CSS du projet (Qt ignore toute règle après un `@media`).
 - Feuilles : tableaux dans `tei-to-html.xsl` (`table`, `row`, `cell`, modèle `cell-span`) et `edition-critique.xsl` (légende, `th`, `colspan`, `rowspan`) ; `fragment_units._DIVE_RE` accepte `caption`.
 

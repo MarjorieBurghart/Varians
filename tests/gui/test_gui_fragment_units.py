@@ -148,3 +148,26 @@ def test_the_classes_come_from_the_project_schema(open_window, verse_project, qt
     _click_pencil(qtbot, view, 1)
     qtbot.waitUntil(lambda: view.current_paragraph == 1, timeout=3000)
     assert view.fragment_editor.toPlainText() == "<strophe>Strophe nova</strophe>"
+
+
+OLD_CSS = ("body { line-height: 1.8; }\np { margin: 0 0 1em; }\n"
+           "@media (max-width: 600px) { body { font-size: 0.97rem; } }\n")
+
+
+@pytest.mark.parametrize("old_stylesheet", [False, True])
+def test_a_stanza_is_one_indented_block(open_window, verse_project, qtbot, old_stylesheet):
+    """V0.9.3.0 : les vers d'un <lg> forment un seul bloc de l'aperçu, en
+    retrait, même avec la CSS d'un projet créé par une version antérieure
+    (sans règle pour .lg, et finie par un @media, après lequel Qt ignore
+    toute règle) : Varians place ses règles de base avant celle du projet."""
+    if old_stylesheet:
+        (verse_project.parent / "rendering" / "tei.css").write_text(OLD_CSS, encoding="utf-8")
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    text = view.preview.toPlainText()
+    block = view.preview.document().findBlock(text.index("Uersus primus"))
+    assert "uersus secundus" in block.text()
+    assert block.blockFormat().leftMargin() > 0
+    paragraph = view.preview.document().findBlock(text.index("Commune sanctorum"))
+    assert paragraph.blockFormat().leftMargin() == 0
+

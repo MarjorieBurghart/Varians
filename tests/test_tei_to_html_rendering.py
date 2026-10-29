@@ -26,11 +26,18 @@ def _texts(page, xpath):
 
 
 def test_a_verse_group_is_a_block_of_lines():
-    page = _page("<div><lg><head>Carmen</head><l>uersus unus</l><l>uersus duo</l></lg>"
-                 "<lg><l>tertius</l></lg></div>")
-    assert _texts(page, '//main//div[@class="lg"]/div[@class="l"]') == ["uersus unus", "uersus duo", "tertius"]
+    """Une strophe est un seul bloc : ses vers y sont séparés par un <br/>.
+    L'aperçu de Varians (Qt) ne regroupe pas des blocs imbriqués : des vers
+    en <div> y seraient autant de paragraphes (V0.9.3.0)."""
+    page = _page("<div><lg><head>Carmen</head><l>uersus unus</l><l>uersus duo</l><pb n=\"2r\"/><l>tres</l></lg>"
+                 "<lg><l>quartus</l></lg><l>solus</l></div>")
+    assert _texts(page, '//main//div[@class="lg"]/span[@class="l"]') == ["uersus unus", "uersus duo", "tres", "quartus"]
     assert _texts(page, '//div[@class="lg"]/h3[@class="head"]') == ["Carmen"]
-    assert len(page.xpath('//div[@class="lg"]')) == 2
+    first, second = page.xpath('//div[@class="lg"]')
+    assert [child.tag for child in first] == ["h3", "span", "br", "span", "br", "span", "span"]
+    assert first.xpath("span")[-2].get("class") == "pb"
+    assert not second.xpath("br")
+    assert _texts(page, '//main//div[@class="l"]') == ["solus"]
 
 
 def test_a_division_is_titled_by_its_head_or_its_n_never_by_its_identifier():
@@ -117,5 +124,7 @@ def test_paragraphs_are_unchanged():
 
 def test_the_stylesheet_of_new_projects_styles_them():
     css = (ROOT / "rendering" / "tei.css").read_text(encoding="utf-8")
-    for selector in (".lg", ".l", ".head", ".figure", ".figdesc", ".table"):
+    for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table"):
         assert f"\n{selector} " in css or f"\n{selector}," in css, selector
+    # Qt ignore toute règle placée après un @media : il reste à la fin.
+    assert css.rindex("@media") > css.rindex(".lg br")
