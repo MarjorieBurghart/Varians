@@ -762,6 +762,8 @@ def validate(tree, sources, file_of=None, base=None, texts=None) -> SchematronRe
                     if uri is not None:
                         builder.set_base_uri(uri)
                     document = builder.parse_xml(xml_text=etree.tostring(root.getroottree(), encoding="unicode"))
+                # Un xsl:result-document des règles n'écrit rien (red team, B2).
+                entry.executable.set_capture_result_documents(True)
                 svrl = entry.executable.transform_to_string(xdm_node=document)
             except PySaxonApiError as exc:
                 errors.append(_saxon_error(exc, path, _stderr_since(start), texts=unsaved))

@@ -455,6 +455,12 @@ It has been removed from the recent-project list.</string>
   <string key="schematron.tip.unsaved">{name}, unsaved</string>
   <string key="schematron.tip.unsaved_included">{name} (unsaved: {files})</string>
   <string key="schematron.tip.click">Click to choose the rules files and their phase.</string>
+  <string key="schematron.outside.title">Schematron rules outside the project</string>
+  <string key="schematron.outside.text">This document declares Schematron rules located outside the project folder:\n{path}\n\nVarians runs these rules to validate the document. They can neither write files nor access the network, but only apply them if you know where they come from.\n\nYour answer is remembered. For rules that are not applied, “{command}” (F8) asks again.</string>
+  <string key="schematron.outside.apply">Apply these rules</string>
+  <string key="schematron.outside.skip">Do not apply them</string>
+  <string key="schematron.status.refused">Schematron: rules not applied</string>
+  <string key="schematron.tip.refused">Rules outside the project not applied (F8 to accept them): {files}</string>
   <string key="schematron.panel.rules_button">Rules…</string>
   <string key="schematron.panel.rules_button.tip">Schematron rules of the document: declared rules files and checked phase</string>
   <string key="schematron.dialog.title">Schematron rules of the document</string>

@@ -469,6 +469,12 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="schematron.tip.unsaved">{name}, neuloženo</string>
   <string key="schematron.tip.unsaved_included">{name} (neuloženo: {files})</string>
   <string key="schematron.tip.click">Kliknutím zvolíte soubory pravidel a jejich fázi.</string>
+  <string key="schematron.outside.title">Pravidla Schematron mimo projekt</string>
+  <string key="schematron.outside.text">Tento dokument deklaruje pravidla Schematron umístěná mimo složku projektu:\n{path}\n\nVarians tato pravidla spouští, aby dokument ověřil. Nemohou zapisovat soubory ani přistupovat k síti, ale použijte je jen tehdy, pokud víte, odkud pocházejí.\n\nVaše odpověď se zapamatuje. U nepoužitých pravidel se „{command}“ (F8) zeptá znovu.</string>
+  <string key="schematron.outside.apply">Použít tato pravidla</string>
+  <string key="schematron.outside.skip">Nepoužívat je</string>
+  <string key="schematron.status.refused">Schematron: pravidla nepoužita</string>
+  <string key="schematron.tip.refused">Nepoužitá pravidla mimo projekt (F8 pro jejich přijetí): {files}</string>
   <string key="schematron.panel.rules_button">Pravidla…</string>
   <string key="schematron.panel.rules_button.tip">Pravidla Schematron dokumentu: deklarované soubory pravidel a kontrolovaná fáze</string>
   <string key="schematron.dialog.title">Pravidla Schematron dokumentu</string>

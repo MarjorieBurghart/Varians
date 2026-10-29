@@ -12,6 +12,7 @@ seconde copie, avec ses propres traductions.
 from __future__ import annotations
 
 from pathlib import Path
+import os
 
 import shiboken6
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QSettings, QTimer, QTranslator
@@ -136,6 +137,38 @@ def remove_recent_project(path):
 
 def clear_recent_projects():
     _settings().remove("recentProjects")
+
+
+# Règles Schematron hors du projet (red team, B2) : la réponse de
+# l'utilisatrice, par fichier.
+_ALLOWED_RULES, _REFUSED_RULES = "schematron/allowedRules", "schematron/refusedRules"
+
+
+def _rules_key(path):
+    return os.path.normcase(str(Path(path).expanduser().resolve()))
+
+
+def _settings_list(settings, name):
+    value = settings.value(name, [])
+    return [value] if isinstance(value, str) else [str(item) for item in value or []]
+
+
+def rules_choice(path):
+    """True si les règles Schematron du fichier *path* ont été acceptées,
+    False si elles ont été refusées, None sans réponse."""
+    settings, key = _settings(), _rules_key(path)
+    if key in _settings_list(settings, _ALLOWED_RULES):
+        return True
+    if key in _settings_list(settings, _REFUSED_RULES):
+        return False
+    return None
+
+
+def remember_rules_choice(path, allowed):
+    settings, key = _settings(), _rules_key(path)
+    for name, keep in ((_ALLOWED_RULES, allowed), (_REFUSED_RULES, not allowed)):
+        values = [value for value in _settings_list(settings, name) if value != key]
+        settings.setValue(name, values + [key] if keep else values)
 
 
 def last_open_project_path():

@@ -75,6 +75,9 @@ class SchemaResolution:
     # V0.9.2.3 : voir resolve_schema.
     schematron_sources: tuple[SchematronSource, ...] = ()
     schematron_errors: tuple[tuple[str, str], ...] = ()
+    # Red team (B2) : les sources hors du projet que l'utilisatrice n'a pas
+    # acceptées, retirées de schematron_sources par l'interface.
+    schematron_refused: tuple[SchematronSource, ...] = ()
 
 
 def detect_xml_models(xml_text: str) -> tuple[XmlModelDeclaration, ...]:
@@ -191,6 +194,32 @@ def _local_href_path(href: str, xml_path: Path) -> Path:
 def _path_key(path) -> str:
     """Clé de comparaison d'un chemin (comme ``xml_assembly.path_key``)."""
     return os.path.normcase(os.path.abspath(os.fspath(path)))
+
+
+# Règles livrées avec Varians (red team, B2) : voir ``rules_outside``.
+SHIPPED_RESOURCES = Path(__file__).resolve().parent / "resources"
+
+
+def _inside(key: str, root: str) -> bool:
+    return key == root or key.startswith(root.rstrip(os.sep) + os.sep)
+
+
+def rules_outside(sources, project_root, trusted=()) -> tuple:
+    """Les sources de règles Schematron de *sources* à confirmer avant de les
+    appliquer (red team, B2) : celles qui ne sont ni dans le dossier du
+    projet *project_root*, ni dans le cache des schémas distants, ni parmi
+    les fichiers livrés avec Varians, ni dans *trusted* (le schéma choisi
+    dans les paramètres du projet). Un document reçu peut déclarer des
+    règles prises n'importe où : Saxon les exécute."""
+    roots = [_path_key(Path(root).expanduser().resolve())
+             for root in (project_root, default_schema_cache_dir(), SHIPPED_RESOURCES) if root]
+    known = {_path_key(Path(path).expanduser().resolve()) for path in trusted if path}
+    found = []
+    for source in sources:
+        key = _path_key(Path(source).expanduser().resolve())
+        if key not in known and not any(_inside(key, root) for root in roots):
+            found.append(source)
+    return tuple(found)
 
 
 def _with_schematron_sources(resolution, declarations, xml_path, cache_root, force_refresh, fetched):

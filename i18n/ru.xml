@@ -469,6 +469,12 @@
   <string key="schematron.tip.unsaved">{name}, не сохранён</string>
   <string key="schematron.tip.unsaved_included">{name} (не сохранено: {files})</string>
   <string key="schematron.tip.click">Щёлкните, чтобы выбрать файлы правил и их фазу.</string>
+  <string key="schematron.outside.title">Правила Schematron вне проекта</string>
+  <string key="schematron.outside.text">Этот документ объявляет правила Schematron, расположенные вне папки проекта:\n{path}\n\nVarians выполняет эти правила, чтобы проверить документ. Они не могут ни записывать файлы, ни обращаться к сети, но применяйте их, только если знаете, откуда они.\n\nВаш ответ запоминается. Для неприменённых правил «{command}» (F8) спросит снова.</string>
+  <string key="schematron.outside.apply">Применить эти правила</string>
+  <string key="schematron.outside.skip">Не применять</string>
+  <string key="schematron.status.refused">Schematron: правила не применены</string>
+  <string key="schematron.tip.refused">Правила вне проекта не применены (F8, чтобы принять их): {files}</string>
   <string key="schematron.panel.rules_button">Правила…</string>
   <string key="schematron.panel.rules_button.tip">Правила Schematron документа: объявленные файлы правил и проверяемая фаза</string>
   <string key="schematron.dialog.title">Правила Schematron документа</string>

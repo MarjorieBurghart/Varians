@@ -469,6 +469,12 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="schematron.tip.unsaved">{name}, nicht gespeichert</string>
   <string key="schematron.tip.unsaved_included">{name} (nicht gespeichert: {files})</string>
   <string key="schematron.tip.click">Klicken, um die Regeldateien und ihre Phase zu wählen.</string>
+  <string key="schematron.outside.title">Schematron-Regeln außerhalb des Projekts</string>
+  <string key="schematron.outside.text">Dieses Dokument deklariert Schematron-Regeln außerhalb des Projektordners:\n{path}\n\nVarians führt diese Regeln aus, um das Dokument zu validieren. Sie können weder Dateien schreiben noch auf das Netzwerk zugreifen; wenden Sie sie aber nur an, wenn Sie wissen, woher sie stammen.\n\nIhre Antwort wird gespeichert. Für nicht angewendete Regeln fragt „{command}“ (F8) erneut.</string>
+  <string key="schematron.outside.apply">Diese Regeln anwenden</string>
+  <string key="schematron.outside.skip">Nicht anwenden</string>
+  <string key="schematron.status.refused">Schematron: Regeln nicht angewendet</string>
+  <string key="schematron.tip.refused">Regeln außerhalb des Projekts nicht angewendet (F8, um sie zu akzeptieren): {files}</string>
   <string key="schematron.panel.rules_button">Regeln…</string>
   <string key="schematron.panel.rules_button.tip">Schematron-Regeln des Dokuments: deklarierte Regeldateien und geprüfte Phase</string>
   <string key="schematron.dialog.title">Schematron-Regeln des Dokuments</string>

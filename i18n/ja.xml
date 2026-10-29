@@ -469,6 +469,12 @@
   <string key="schematron.tip.unsaved">{name}（未保存）</string>
   <string key="schematron.tip.unsaved_included">{name}（未保存: {files}）</string>
   <string key="schematron.tip.click">クリックしてルールのファイルとフェーズを選びます。</string>
+  <string key="schematron.outside.title">プロジェクト外の Schematron ルール</string>
+  <string key="schematron.outside.text">この文書は、プロジェクトフォルダーの外にある Schematron ルールを宣言しています：\n{path}\n\nVarians は文書を検証するためにこれらのルールを実行します。ルールはファイルを書き込むこともネットワークにアクセスすることもできませんが、出所がわかっている場合にのみ適用してください。\n\n回答は記憶されます。適用しなかったルールについては、「{command}」（F8）で再度確認します。</string>
+  <string key="schematron.outside.apply">これらのルールを適用</string>
+  <string key="schematron.outside.skip">適用しない</string>
+  <string key="schematron.status.refused">Schematron：ルール未適用</string>
+  <string key="schematron.tip.refused">適用されていないプロジェクト外のルール（F8 で承認）：{files}</string>
   <string key="schematron.panel.rules_button">ルール…</string>
   <string key="schematron.panel.rules_button.tip">文書の Schematron ルール：宣言されたルールのファイルと検査するフェーズ</string>
   <string key="schematron.dialog.title">文書の Schematron ルール</string>

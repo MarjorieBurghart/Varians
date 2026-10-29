@@ -469,6 +469,12 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="schematron.tip.unsaved">{name}, non salvato</string>
   <string key="schematron.tip.unsaved_included">{name} (non salvato: {files})</string>
   <string key="schematron.tip.click">Fare clic per scegliere i file di regole e la loro fase.</string>
+  <string key="schematron.outside.title">Regole Schematron fuori dal progetto</string>
+  <string key="schematron.outside.text">Questo documento dichiara regole Schematron situate fuori dalla cartella del progetto:\n{path}\n\nVarians esegue queste regole per validare il documento. Non possono né scrivere file né accedere alla rete, ma applicatele solo se sapete da dove provengono.\n\nLa risposta viene memorizzata. Per le regole non applicate, «{command}» (F8) ripropone la domanda.</string>
+  <string key="schematron.outside.apply">Applica queste regole</string>
+  <string key="schematron.outside.skip">Non applicarle</string>
+  <string key="schematron.status.refused">Schematron: regole non applicate</string>
+  <string key="schematron.tip.refused">Regole fuori dal progetto non applicate (F8 per accettarle): {files}</string>
   <string key="schematron.panel.rules_button">Regole…</string>
   <string key="schematron.panel.rules_button.tip">Regole Schematron del documento: file di regole dichiarati e fase verificata</string>
   <string key="schematron.dialog.title">Regole Schematron del documento</string>
