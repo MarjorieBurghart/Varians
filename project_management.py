@@ -12,7 +12,7 @@ import shutil
 import tempfile
 import xml.etree.ElementTree as ET
 
-from project_config import DEFAULT_APPLICATION_XSLT, DocumentConfig
+from project_config import DEFAULT_APPLICATION_XSLT, WEB_TEXT_MODES, DocumentConfig
 
 
 
@@ -452,11 +452,46 @@ def update_project_transformations(path: str | Path, scenarios) -> Path:
                                     transformations_element(scenarios))
 
 
+def update_project_web_text(path: str | Path, mode: str, witness: str = "") -> Path:
+    """Choix du texte du viewer web (V0.9.3.0) : ``text`` et ``textWitness``
+    de <webViewer> (``textWitness`` absent : le pivot de chaque texte), sans
+    toucher au reste ; copie ``.bak`` préalable."""
+    if mode not in WEB_TEXT_MODES:
+        raise ValueError(f"Choix du texte inconnu : {mode}")
+    path = Path(path).expanduser().resolve()
+    tree = _parse_project(path)
+    root = tree.getroot()
+    web_el = root.find("webViewer")
+    if web_el is None:
+        web_el = ET.Element("webViewer", {"outputDir": "web_output", "filename": "viewer.html"})
+        rendering = root.find("rendering")
+        root.insert(list(root).index(rendering) + 1 if rendering is not None else len(root), web_el)
+    web_el.set("text", mode)
+    if witness.strip():
+        web_el.set("textWitness", witness.strip())
+    else:
+        web_el.attrib.pop("textWitness", None)
+    return _write_project(path, tree)
+
+
+def _parse_project(path: Path) -> ET.ElementTree:
+    """project.xml, commentaires et instructions de traitement compris."""
+    parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True))
+    return ET.parse(path, parser)
+
+
+def _write_project(path: Path, tree: ET.ElementTree) -> Path:
+    """Écrit project.xml, après une copie ``.bak`` de l'ancienne version."""
+    shutil.copy2(path, path.with_suffix(path.suffix + ".bak"))
+    ET.indent(tree, space="  ")
+    tree.write(path, encoding="utf-8", xml_declaration=True)
+    return path
+
+
 def _replace_project_element(path: Path, tag: str, new_el: ET.Element | None) -> Path:
     """Remplace (ou retire, si ``new_el`` est None) l'élément ``tag`` de
     project.xml, à sa place, sans toucher au reste ; copie ``.bak`` préalable."""
-    parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True))
-    tree = ET.parse(path, parser)
+    tree = _parse_project(path)
     root = tree.getroot()
     old_el = root.find(tag)
     if old_el is not None:
@@ -466,10 +501,7 @@ def _replace_project_element(path: Path, tag: str, new_el: ET.Element | None) ->
             root.insert(index, new_el)
     elif new_el is not None:
         root.append(new_el)
-    shutil.copy2(path, path.with_suffix(path.suffix + ".bak"))
-    ET.indent(tree, space="  ")
-    tree.write(path, encoding="utf-8", xml_declaration=True)
-    return path
+    return _write_project(path, tree)
 
 
 
