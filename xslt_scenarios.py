@@ -67,9 +67,14 @@ LANGUAGE_PARAM = "langue"
 CATALOGS_PARAM = "catalogues"
 
 
-def catalogs_uri() -> str:
-    """Adresse (``file:``, finie par « / ») des catalogues i18n de Varians."""
-    return (VARIANS_STYLESHEETS.parent / "i18n").resolve().as_uri() + "/"
+def catalogs_uri(language=None) -> str:
+    """Adresse (``file:``, finie par « / ») des catalogues i18n de Varians ;
+    rien si *language* n'y a pas de catalogue : la feuille garde alors le
+    français (une feuille XSLT 1.0 ne sait pas vérifier qu'un fichier existe)."""
+    folder = VARIANS_STYLESHEETS.parent / "i18n"
+    if language is not None and not (folder / f"{language}.xml").is_file():
+        return ""
+    return folder.resolve().as_uri() + "/"
 SOURCES = ("edition", "current", "file")
 ENGINES = ("lxml", "saxon")
 PROBLEM_CODES = ("unknown_source", "no_file", "file_missing", "no_current", "unknown_engine", "saxon_missing",
@@ -464,7 +469,7 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
     if LANGUAGE_PARAM not in names:
         params.append([LANGUAGE_PARAM, language])
     if CATALOGS_PARAM not in names:
-        params.append([CATALOGS_PARAM, catalogs_uri()])
+        params.append([CATALOGS_PARAM, catalogs_uri(dict(params)[LANGUAGE_PARAM])])
     xslt = stylesheet_path(scenario, project)
     request = {
         "name": scenario.name,

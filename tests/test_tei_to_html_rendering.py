@@ -15,10 +15,12 @@ BUILTIN = ROOT / "rendering" / "tei-to-html.xsl"
 TEI_NS = "http://www.tei-c.org/ns/1.0"
 
 
-def _page(body, header="", text=""):
+def _page(body, header="", text="", params=None, access_control=None):
     tei = (f'<TEI xmlns="{TEI_NS}"><teiHeader><fileDesc><titleStmt><title>T</title></titleStmt>{header}</fileDesc>'
            f'</teiHeader><text{text}><body>{body}</body></text></TEI>')
-    result = etree.XSLT(etree.parse(str(BUILTIN)))(etree.fromstring(tei.encode("utf-8")))
+    transform = etree.XSLT(etree.parse(str(BUILTIN)), access_control=access_control)
+    values = {name: etree.XSLT.strparam(value) for name, value in (params or {}).items()}
+    result = transform(etree.fromstring(tei.encode("utf-8")), **values)
     return html.fromstring(str(result))
 
 
@@ -149,6 +151,57 @@ def test_editorial_phenomena_as_in_the_critical_edition():
     assert _texts(page, '//span[@class="sic"]') == ["solum"]
     assert _texts(page, '//span[@class="restitution"]') == ["[trus]"]
     assert [e.get("title") for e in paragraph.xpath('.//span[@class="lacune"]')] == ["Lacune : illegible", "Lacune"]
+
+
+PHENOMENA = ('<div><p><pb n="2r"/>Isti <choice><sic>erat</sic><corr>erant</corr></choice> '
+             '<choice><abbr>dns</abbr><expan>dominus</expan></choice> <sic>solum</sic> <unclear>forte</unclear> '
+             '<choice><orig>uita</orig><reg>vita</reg></choice> fin<gap reason="illegible" extent="2 uerba"/>is <gap/>.</p></div>')
+
+
+def _marks(page):
+    paragraph = page.xpath("//main//p")[0]
+    return (" ".join(paragraph.text_content().split()),
+            [e.get("title") for e in paragraph.xpath('.//span[@class="choice"]')],
+            [e.get("title") for e in paragraph.xpath('.//span[@class="lacune"]')],
+            [paragraph.xpath(f'.//span[@class="{name}"]')[0].get("title") for name in ("pb", "sic", "unclear")])
+
+
+def test_the_texts_of_the_view_follow_the_language_of_the_interface():
+    """V0.9.3.1 : infobulles et marques de la feuille dans la langue de
+    l'interface (``langue``, ``catalogues``) ; le français pour une langue
+    sans catalogue."""
+    from xslt_scenarios import catalogs_uri
+    text, choices, gaps, titles = _marks(_page(PHENOMENA, params={"langue": "en", "catalogues": catalogs_uri()}))
+    assert text == "[2r]Isti erant dominus solum forte vita fin[gap: 2 uerba]is [gap]."
+    assert choices == ["Transmitted reading: erat", "Abbreviation: dns", "Original spelling: uita"]
+    assert gaps == ["Gap: illegible", "Gap"]
+    assert titles == ["Page: 2r", "Transmitted reading (sic)", "Uncertain reading"]
+    french = _marks(_page(PHENOMENA))
+    # Une langue sans catalogue : Varians ne passe pas de catalogue (XSLT 1.0
+    # ne sait pas vérifier qu'un fichier existe).
+    assert catalogs_uri("xx") == ""
+    assert _marks(_page(PHENOMENA, params={"langue": "xx", "catalogues": catalogs_uri("xx")})) == french
+    assert french[1][0] == "Leçon transmise : erat" and french[3][0] == "Page : 2r"
+
+
+def test_without_catalogs_the_view_reads_no_file():
+    """Le moteur .NET de secours interdit document() : sans catalogue, la
+    feuille n'en appelle pas, et garde le français."""
+    page = _page(PHENOMENA, access_control=etree.XSLTAccessControl.DENY_ALL)
+    assert _marks(page)[2] == ["Lacune : illegible", "Lacune"]
+
+
+def test_the_preview_passes_the_language_of_the_interface():
+    import app_context
+    from formatted_view import publication_params
+    from i18n import I18nManager
+    from xslt_scenarios import catalogs_uri
+    saved = app_context.current_i18n()
+    try:
+        app_context.set_i18n(I18nManager(ROOT / "i18n", "de", "en"))
+        assert publication_params() == {"langue": "de", "catalogues": catalogs_uri()}
+    finally:
+        app_context.set_i18n(saved)
 
 
 def test_renditions_of_hi_and_italic_elements():

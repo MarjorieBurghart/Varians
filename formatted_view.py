@@ -675,6 +675,16 @@ def lxml_available():
         return False
 
 
+def publication_params():
+    """Langue de l'interface et catalogues i18n, où la feuille de Varians
+    lit ses textes (V0.9.3.1)."""
+    from app_context import current_i18n
+    from xslt_scenarios import catalogs_uri
+    i18n = current_i18n()
+    language = i18n.language if i18n is not None else "fr"
+    return {"langue": language, "catalogues": catalogs_uri(language)}
+
+
 def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
     """Transformation XSLT 1.0 optimisée.
 
@@ -1565,7 +1575,8 @@ class FormattedEditionWidget(QWidget):
         t0 = time.perf_counter()
         try:
             html_text, engine = transform_with_xslt(
-                xml_text, self.xsl_path, {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc")},
+                xml_text, self.xsl_path,
+                {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc"), **publication_params()},
                 edit_markers=True)
             html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
             html_text, marked = place_edit_markers(html_text, _t("preview.edit_paragraph"))

@@ -166,6 +166,9 @@ def test_the_texts_of_the_stylesheets_follow_the_language_of_the_interface(proje
     assert dict(scenario_request(BASE, project, language="en")["params"])["langue"] == "en"
     scenario = replace(BASE, params=(("langue", "${langue}"),))
     assert scenario_request(scenario, project, language="de")["params"][0] == ["langue", "de"]
+    # Une langue sans catalogue : pas de catalogue, la feuille garde le français.
+    scenario = replace(BASE, params=(("langue", "xx"),))
+    assert scenario_request(scenario, project)["params"] == [["langue", "xx"], ["catalogues", ""]]
     scenario = replace(BASE, params=(("langue", "it"), ("catalogues", "")))
     params = scenario_request(scenario, project, language="de")["params"]
     assert params == [["langue", "it"], ["catalogues", ""]]
