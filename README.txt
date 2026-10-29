@@ -52,7 +52,9 @@ VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
   sélection de départ.
 • Apparat d'« Édition critique » et des scénarios DOCX et ODT : tout texte
   qui ne vient pas d'un témoin est en italique (sigles, om., add., lacuna
-  incipit et desinit, commentaires) ; les leçons restent en romain.
+  incipit et desinit, commentaires) ; les leçons restent en romain, même
+  un <sic> (suivi de « sic » en italique), une citation ou une mise en
+  relief.
 • « Sigles des témoins » (Édition critique) et viewer web : un élément du
   <witness> qui ne contient que le sigle (<abbr>, <label>…) n'est plus
   répété dans le libellé (« P Paris… » et non « P PParis… »).
