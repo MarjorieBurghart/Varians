@@ -61,7 +61,7 @@ def test_a_hostile_schema_is_written_inside_the_cache(tmp_path, monkeypatch):
     cache = tmp_path / "home" / "cache"
     url = "http://127.0.0.1/%2e%2e/%2e%2e/%2e%2e/Startup/evil.bat"
     monkeypatch.setattr(schema_resolution, "urlopen", lambda request, timeout=None: Response(url, b"@echo off\r\n"))
-    path, _from_cache = _fetch_remote_rng(url, cache)
+    path, _from_cache = _fetch_remote_rng(url, cache, may_fetch=lambda url: True)
     assert path.resolve().is_relative_to(cache.resolve()) and path.read_bytes() == b"@echo off\r\n"
     assert not (tmp_path / "Startup").exists() and not (tmp_path / "home" / "Startup").exists()
     written = [p for p in tmp_path.rglob("*") if p.is_file()]
@@ -77,6 +77,6 @@ def test_a_hostile_dependency_is_written_inside_the_cache(tmp_path, monkeypatch)
              dependency: b'<grammar xmlns="http://relaxng.org/ns/structure/1.0"/>'}
     monkeypatch.setattr(schema_resolution, "urlopen",
                         lambda request, timeout=None: Response(request.full_url, pages[request.full_url]))
-    path, _from_cache = _fetch_remote_rng(main, cache)
+    path, _from_cache = _fetch_remote_rng(main, cache, may_fetch=lambda url: True)
     written = [p for p in tmp_path.rglob("*") if p.is_file()]
     assert len(written) == 2 and all(p.resolve().is_relative_to(cache.resolve()) for p in written), written

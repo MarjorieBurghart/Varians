@@ -49,10 +49,11 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QFrame, QHBoxLayout, QHeaderView, QLabel, QMessageBox, QTableWidget,
     QTableWidgetItem, QToolButton, QVBoxLayout,
 )
-from app_context import call_later, remember_rules_choice, rules_choice, tr as _t
+from app_context import (call_later, remember_rules_choice, remember_site_choice, rules_choice, site_choice,
+                         tr as _t)
 from project_config import DocumentConfig
 from relaxng_validation import ValidationIssue, lxml_available, relaxng_schema_token
-from schema_resolution import detect_xml_models, resolve_schema, rules_outside
+from schema_resolution import detect_xml_models, resolve_schema, rules_outside, schema_site
 from text_search import Utf16Positions
 from validation_worker import worker_client
 from xml_assembly import path_key
@@ -526,6 +527,42 @@ class ValidationPanelMixin:
         box.exec()
         return box.clickedButton() is apply_button
 
+    # --- Schémas distants (red team, B2) ----------------------------------------
+
+    def _schema_site_policy(self, *, ask=True, ask_refused=False):
+        """``may_fetch`` de resolve_schema : un site accepté ou refusé est
+        mémorisé ; sans réponse (ou refusé, avec *ask_refused* : F8), la
+        question est posée si *ask*, une fois par site pendant la
+        résolution."""
+        answers = {}
+
+        def may_fetch(url):
+            site = schema_site(url)
+            if site not in answers:
+                choice = site_choice(site)
+                if ask and (choice is None or (ask_refused and choice is False)):
+                    choice = self._ask_site(site, url)
+                    remember_site_choice(site, choice)
+                answers[site] = bool(choice)
+            return answers[site]
+
+        return may_fetch
+
+    def _ask_site(self, site, url):
+        """La question pour le site *site* (adresse *url*) : True pour
+        télécharger."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle(_t("schemas.site.title"))
+        box.setText(_t("schemas.site.text", site=site, url=url, command=_t("toolbar.validate_rng")))
+        allow_button = box.addButton(_t("schemas.site.allow"), QMessageBox.ButtonRole.AcceptRole)
+        refuse_button = box.addButton(_t("schemas.site.refuse"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(refuse_button)
+        box.setEscapeButton(refuse_button)
+        box.exec()
+        return box.clickedButton() is allow_button
+
     def _update_schematron_status(self, resolution):
         """Avant la validation : l'étiquette Schematron quand aucune règle ne
         sera vérifiée (validation désactivée, ou aucune source) ; sinon elle
@@ -568,6 +605,11 @@ class ValidationPanelMixin:
         refused = tuple(getattr(resolution, "schematron_refused", ()) or ())
         if refused:
             tips.append(_t("schematron.tip.refused", files=", ".join(str(Path(path)) for path in refused)))
+        # Règles déclarées sur un site refusé (schéma compris).
+        sites = tuple(getattr(resolution, "refused_sites", ()) or ()) if getattr(resolution, "schematron", ()) else ()
+        if sites:
+            tips.append(_t("schematron.tip.site_refused", sites=", ".join(sites)))
+            refused += sites
         messages = [issue for issue in (result.issues if result is not None else ()) if _is_schematron(issue)]
         errors = sum(1 for issue in messages if _is_error(issue))
         if result is not None and result.schematron_error == "saxon_missing":
@@ -703,15 +745,20 @@ class ValidationPanelMixin:
             schema_text = edition.text_document.toPlainText()
             schema_xml_path = edition.path or self.project.edition
         key = self._schema_resolution_cache_key(schema_text)
-        if not refresh_schema and self._completion_resolution_key == key and self._completion_resolution is not None:
-            resolution = self._completion_resolution
+        cached = self._completion_resolution
+        if (not refresh_schema and self._completion_resolution_key == key and cached is not None
+                and not cached.refused_sites):
+            resolution = cached
         else:
+            # Hors du site de la TEI, un schéma n'est téléchargé qu'avec
+            # l'accord de l'utilisatrice (red team, B2).
             resolution = resolve_schema(
                 mode=self._schema_mode,
                 xml_text=schema_text,
                 xml_path=schema_xml_path,
                 project_schema=self._schema_file,
                 force_refresh=refresh_schema,
+                may_fetch=self._schema_site_policy(ask_refused=ask_rules),
             )
         # Le chargement/résolution du schéma peut être long (cache distant).
         # Si le document a changé entre-temps, ne jamais publier les anciennes
@@ -747,9 +794,15 @@ class ValidationPanelMixin:
             self._last_rng_revision = revision
             self._clear_validation_table()
             self._show_schematron_result(resolution, None)
-            self.validation_summary.setText(_t("rng.panel.schema_resolution_error", error=resolution.error))
-            self.rng_status.setText(_t("rng.status.schema_error"))
-            self.rng_status.setStyleSheet("color:#a13d32;font-weight:600")
+            if resolution.rng_refused_site:                      # site refusé (red team, B2)
+                self.validation_summary.setText(_t("rng.panel.site_refused", sites=resolution.rng_refused_site,
+                                                   command=_t("toolbar.validate_rng")))
+                self.rng_status.setText(_t("rng.status.site_refused"))
+                self.rng_status.setStyleSheet("color:#a14b2f;font-weight:600")
+            else:
+                self.validation_summary.setText(_t("rng.panel.schema_resolution_error", error=resolution.error))
+                self.rng_status.setText(_t("rng.status.schema_error"))
+                self.rng_status.setStyleSheet("color:#a13d32;font-weight:600")
             if show_panel:
                 self.show_validation_panel()
             return None

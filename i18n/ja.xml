@@ -475,6 +475,13 @@
   <string key="schematron.outside.skip">適用しない</string>
   <string key="schematron.status.refused">Schematron：ルール未適用</string>
   <string key="schematron.tip.refused">適用されていないプロジェクト外のルール（F8 で承認）：{files}</string>
+  <string key="schemas.site.title">別のサイトからダウンロードしますか？</string>
+  <string key="schemas.site.text">この文書は、サイト {site} からスキーマまたは Schematron ルールをダウンロードするよう求めています：\n{url}\n\n許可がない限り、Varians は TEI のサイト（tei-c.org）からのみダウンロードします。別のサイトからダウンロードすると、この文書を開いていることがそのサイトに伝わり、そのサイトが提供する Schematron ルールが適用されます。\n\n回答はサイト全体に適用され、記憶されます。拒否したサイトについては、「{command}」（F8）で再度確認します。</string>
+  <string key="schemas.site.allow">ダウンロード</string>
+  <string key="schemas.site.refuse">ダウンロードしない</string>
+  <string key="rng.status.site_refused">RNG：スキーマ未ダウンロード</string>
+  <string key="rng.panel.site_refused">スキーマはダウンロードされていません：サイト {sites} は許可されていません。文書は検証されていません。「{command}」（F8）で再度確認します。</string>
+  <string key="schematron.tip.site_refused">未ダウンロード（許可されていないサイト、F8 で許可）：{sites}</string>
   <string key="schematron.panel.rules_button">ルール…</string>
   <string key="schematron.panel.rules_button.tip">文書の Schematron ルール：宣言されたルールのファイルと検査するフェーズ</string>
   <string key="schematron.dialog.title">文書の Schematron ルール</string>

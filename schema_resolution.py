@@ -8,13 +8,19 @@ sont récupérés récursivement et réécrits vers le cache local afin que lxml
 puisse ensuite compiler le schéma avec ``no_network=True``. Depuis la
 V0.9.2.3, il donne aussi les sources des règles Schematron appliquées
 (``SchemaResolution.schematron_sources``).
+
+Un document reçu peut déclarer un schéma ou des règles sur n'importe quel
+site (red team, B2) : seul le site de la TEI (``trusted_schema_site``) est
+consulté sans accord ; pour les autres, ``may_fetch`` décide (l'interface
+demande à l'utilisatrice), y compris pour les fichiers inclus et les
+redirections. Un site refusé figure dans ``SchemaResolution.refused_sites``.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
 from urllib.parse import urljoin, urlparse, unquote
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 import hashlib
 import html
 import os
@@ -78,6 +84,10 @@ class SchemaResolution:
     # Red team (B2) : les sources hors du projet que l'utilisatrice n'a pas
     # acceptées, retirées de schematron_sources par l'interface.
     schematron_refused: tuple[SchematronSource, ...] = ()
+    # Red team (B2) : les sites dont un fichier n'a pas été téléchargé, faute
+    # d'accord (voir le module) ; celui qui prive du RNG déclaré.
+    refused_sites: tuple[str, ...] = ()
+    rng_refused_site: str = ""
 
 
 def detect_xml_models(xml_text: str) -> tuple[XmlModelDeclaration, ...]:
@@ -110,6 +120,59 @@ def default_schema_cache_dir() -> Path:
     return Path.home() / ".cache" / "tei-manuscript-editor" / "schema_cache"
 
 
+# Site de la TEI : ses schémas sont téléchargés sans question (red team, B2).
+TEI_SITE = "tei-c.org"
+
+
+def schema_site(url: str) -> str:
+    """Le site (nom d'hôte, en minuscules) de l'adresse *url*."""
+    return (urlparse(url).hostname or "").lower()
+
+
+def trusted_schema_site(url: str) -> bool:
+    """Vrai pour une adresse du site de la TEI, consultée sans accord."""
+    site = schema_site(url)
+    return urlparse(url).scheme in {"http", "https"} and (site == TEI_SITE or site.endswith("." + TEI_SITE))
+
+
+class RemoteSchemaRefused(OSError):
+    """Téléchargement refusé : le site de l'adresse n'est pas autorisé."""
+
+    def __init__(self, url: str):
+        self.url, self.site = url, schema_site(url)
+        super().__init__(f"Download not allowed from {self.site}: {url}")
+
+
+def _check_site(url, may_fetch) -> None:
+    """Lève RemoteSchemaRefused si le site de *url* n'est ni celui de la TEI
+    ni accepté par *may_fetch* (``may_fetch(url) -> bool``)."""
+    if not (trusted_schema_site(url) or (may_fetch is not None and may_fetch(url))):
+        raise RemoteSchemaRefused(url)
+
+
+class _CheckedRedirects(HTTPRedirectHandler):
+    """Une redirection vers un autre site est soumise à la même règle,
+    avant toute requête vers lui."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        may_fetch = getattr(req, "may_fetch", None)
+        if schema_site(newurl) != schema_site(req.full_url):
+            _check_site(newurl, may_fetch)
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None:
+            new.may_fetch = may_fetch
+        return new
+
+
+_OPENER = build_opener(_CheckedRedirects)
+
+
+def urlopen(request, timeout=None):
+    """``urllib.request.urlopen``, redirections comprises dans la règle des
+    sites (``_CheckedRedirects`` ; *request* porte ``may_fetch``)."""
+    return _OPENER.open(request, timeout=timeout)
+
+
 def _url_cache_path(url: str, cache_dir: Path) -> Path:
     """Place du schéma distant ``url`` dans le cache : son hôte, puis le
     chemin de l'adresse. Ce chemin ne sort jamais du cache (V0.9.3.3) : les
@@ -128,11 +191,14 @@ def _url_cache_path(url: str, cache_dir: Path) -> Path:
     return path
 
 
-def _fetch_remote_rng(url: str, cache_dir: Path, visited: set[str] | None = None, *, force: bool = False) -> tuple[Path, bool]:
+def _fetch_remote_rng(url: str, cache_dir: Path, visited: set[str] | None = None, *, force: bool = False,
+                      may_fetch=None) -> tuple[Path, bool]:
     """Télécharge un RNG et ses dépendances dans un miroir local.
 
     Renvoie ``(path, from_cache)``. Les href RNG sont réécrits en URI ``file:``
-    afin que la compilation ultérieure reste entièrement hors-ligne.
+    afin que la compilation ultérieure reste entièrement hors-ligne. Un
+    fichier d'un site ni TEI ni accepté par *may_fetch* n'est ni téléchargé
+    ni pris dans le cache (RemoteSchemaRefused).
     """
     visited = visited if visited is not None else set()
     if url in visited:
@@ -142,11 +208,13 @@ def _fetch_remote_rng(url: str, cache_dir: Path, visited: set[str] | None = None
     dest = _url_cache_path(url, cache_dir)
     if not dest.resolve().is_relative_to(Path(cache_dir).resolve()):
         raise ValueError(f"Chemin hors du cache des schémas : {url}")
+    _check_site(url, may_fetch)
     if dest.is_file() and not force:
         return dest, True
 
     dest.parent.mkdir(parents=True, exist_ok=True)
     req = Request(url, headers={"User-Agent": "TEI-Manuscript-Editor/0.5.2"})
+    req.may_fetch = may_fetch
     with urlopen(req, timeout=25) as response:
         data = response.read()
         final_url = response.geturl() or url
@@ -169,7 +237,7 @@ def _fetch_remote_rng(url: str, cache_dir: Path, visited: set[str] | None = None
         parsed = urlparse(dep_url)
         if parsed.scheme not in {"http", "https"}:
             continue
-        dep_path, _ = _fetch_remote_rng(dep_url, cache_dir, visited, force=force)
+        dep_path, _ = _fetch_remote_rng(dep_url, cache_dir, visited, force=force, may_fetch=may_fetch)
         elem.set(attribute, dep_path.resolve().as_uri())
         changed = True
 
@@ -222,9 +290,10 @@ def rules_outside(sources, project_root, trusted=()) -> tuple:
     return tuple(found)
 
 
-def _with_schematron_sources(resolution, declarations, xml_path, cache_root, force_refresh, fetched):
+def _with_schematron_sources(resolution, declarations, xml_path, cache_root, force_refresh, fetched,
+                             may_fetch=None):
     """*resolution* complétée des sources Schematron (voir ``resolve_schema``)."""
-    sources, index, errors = [], {}, []
+    sources, index, errors, refused = [], {}, [], list(resolution.refused_sites)
 
     def add(path, phase=""):
         key = _path_key(path)
@@ -242,10 +311,13 @@ def _with_schematron_sources(resolution, declarations, xml_path, cache_root, for
             if urlparse(href).scheme in {"http", "https"}:
                 path = fetched.get(href)
                 if path is None:
-                    path, _cached = _fetch_remote_rng(href, cache_root, force=force_refresh)
+                    path, _cached = _fetch_remote_rng(href, cache_root, force=force_refresh, may_fetch=may_fetch)
                     fetched[href] = path
             else:
                 path = _local_href_path(href, xml_path)
+        except RemoteSchemaRefused as exc:
+            refused.append(exc.site)
+            continue
         except Exception as exc:
             errors.append((href, str(exc)))
             continue
@@ -253,7 +325,8 @@ def _with_schematron_sources(resolution, declarations, xml_path, cache_root, for
             errors.append((href, f"Schematron file not found: {path}"))
             continue
         add(path.resolve(), declaration.phase)
-    return replace(resolution, schematron_sources=tuple(sources), schematron_errors=tuple(errors))
+    return replace(resolution, schematron_sources=tuple(sources), schematron_errors=tuple(errors),
+                   refused_sites=tuple(dict.fromkeys(refused)))
 
 
 def resolve_schema(
@@ -264,6 +337,7 @@ def resolve_schema(
     project_schema: str | Path | None = None,
     cache_dir: str | Path | None = None,
     force_refresh: bool = False,
+    may_fetch=None,
 ) -> SchemaResolution:
     """Résout le RNG à utiliser selon le mode de projet.
 
@@ -280,6 +354,10 @@ def resolve_schema(
     n'est téléchargée qu'une fois : la déclaration Schematron de la TEI
     désigne le même ``tei_all.rng`` que son RNG. Une déclaration introuvable
     va dans ``schematron_errors`` (``(href, erreur)``), sans arrêter le reste.
+
+    ``may_fetch(url) -> bool`` (red team, B2) : faut-il télécharger *url*,
+    hors du site de la TEI ? Sans elle, seul ce site est consulté. Un site
+    refusé figure dans ``refused_sites``.
     """
     mode = (mode or "auto").strip().lower()
     xml_path = Path(xml_path).expanduser().resolve()
@@ -288,13 +366,15 @@ def resolve_schema(
     cache_root = Path(cache_dir).expanduser().resolve() if cache_dir else default_schema_cache_dir()
     fetched: dict[str, Path] = {}
     resolution = _resolve_rng(mode, declarations, schematron, xml_path, project_schema, cache_root,
-                              force_refresh, fetched)
+                              force_refresh, fetched, may_fetch)
     if mode not in {"auto", "file"}:
         return resolution
-    return _with_schematron_sources(resolution, schematron, xml_path, cache_root, force_refresh, fetched)
+    return _with_schematron_sources(resolution, schematron, xml_path, cache_root, force_refresh, fetched,
+                                    may_fetch)
 
 
-def _resolve_rng(mode, declarations, schematron, xml_path, project_schema, cache_root, force_refresh, fetched):
+def _resolve_rng(mode, declarations, schematron, xml_path, project_schema, cache_root, force_refresh, fetched,
+                 may_fetch=None):
     if mode == "none":
         return SchemaResolution(mode, None, "none", schematron=schematron)
 
@@ -319,7 +399,11 @@ def _resolve_rng(mode, declarations, schematron, xml_path, project_schema, cache
     parsed = urlparse(rng.href)
     if parsed.scheme in {"http", "https"}:
         try:
-            path, cached = _fetch_remote_rng(rng.href, cache_root, force=force_refresh)
+            path, cached = _fetch_remote_rng(rng.href, cache_root, force=force_refresh, may_fetch=may_fetch)
+        except RemoteSchemaRefused as exc:
+            return SchemaResolution(mode, None, "xml-model", href=rng.href, remote=True,
+                                    schematron=schematron, error=str(exc), refused_sites=(exc.site,),
+                                    rng_refused_site=exc.site)
         except Exception as exc:
             return SchemaResolution(mode, None, "xml-model", href=rng.href, remote=True,
                                     schematron=schematron, error=str(exc))

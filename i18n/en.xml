@@ -461,6 +461,13 @@ It has been removed from the recent-project list.</string>
   <string key="schematron.outside.skip">Do not apply them</string>
   <string key="schematron.status.refused">Schematron: rules not applied</string>
   <string key="schematron.tip.refused">Rules outside the project not applied (F8 to accept them): {files}</string>
+  <string key="schemas.site.title">Download from another site?</string>
+  <string key="schemas.site.text">This document asks for a schema or Schematron rules to be downloaded from the site {site}:\n{url}\n\nWithout your consent, Varians only downloads from the TEI site (tei-c.org). Downloading from another site tells that site you are opening this document, and the Schematron rules it provides would be applied.\n\nYour answer applies to the whole site and is remembered. For a refused site, “{command}” (F8) asks again.</string>
+  <string key="schemas.site.allow">Download</string>
+  <string key="schemas.site.refuse">Do not download</string>
+  <string key="rng.status.site_refused">RNG: schema not downloaded</string>
+  <string key="rng.panel.site_refused">The schema was not downloaded: the site {sites} is not allowed. The document is not validated. “{command}” (F8) asks again.</string>
+  <string key="schematron.tip.site_refused">Not downloaded (site not allowed, F8 to allow it): {sites}</string>
   <string key="schematron.panel.rules_button">Rules…</string>
   <string key="schematron.panel.rules_button.tip">Schematron rules of the document: declared rules files and checked phase</string>
   <string key="schematron.dialog.title">Schematron rules of the document</string>

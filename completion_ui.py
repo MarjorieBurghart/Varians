@@ -175,6 +175,7 @@ class CompletionMixin:
             xml_path=xml_path,
             project_schema=self._schema_file,
             force_refresh=False,
+            may_fetch=self._schema_site_policy(ask=False),       # sans question
         )
         self._completion_resolution_key = key
         self._completion_resolution = resolution

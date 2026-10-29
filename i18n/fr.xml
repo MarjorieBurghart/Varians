@@ -461,6 +461,13 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="schematron.outside.skip">Ne pas les appliquer</string>
   <string key="schematron.status.refused">Schematron : règles non appliquées</string>
   <string key="schematron.tip.refused">Règles hors du projet non appliquées (F8 pour les accepter) : {files}</string>
+  <string key="schemas.site.title">Télécharger depuis un autre site ?</string>
+  <string key="schemas.site.text">Ce document demande un schéma ou des règles Schematron à télécharger depuis le site {site} :\n{url}\n\nSans votre accord, Varians ne télécharge que depuis le site de la TEI (tei-c.org). Télécharger depuis un autre site lui signale que vous ouvrez ce document, et les règles Schematron qu’il fournit seraient appliquées.\n\nVotre réponse vaut pour tout le site et est mémorisée. Pour un site refusé, « {command} » (F8) repose la question.</string>
+  <string key="schemas.site.allow">Télécharger</string>
+  <string key="schemas.site.refuse">Ne pas télécharger</string>
+  <string key="rng.status.site_refused">RNG : schéma non téléchargé</string>
+  <string key="rng.panel.site_refused">Le schéma n’a pas été téléchargé : le site {sites} n’est pas autorisé. Le document n’est pas validé. « {command} » (F8) repose la question.</string>
+  <string key="schematron.tip.site_refused">Non téléchargé (site non autorisé, F8 pour l’autoriser) : {sites}</string>
   <string key="schematron.panel.rules_button">Règles…</string>
   <string key="schematron.panel.rules_button.tip">Règles Schematron du document : fichiers de règles déclarés et phase vérifiée</string>
   <string key="schematron.dialog.title">Règles Schematron du document</string>

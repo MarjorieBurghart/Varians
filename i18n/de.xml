@@ -475,6 +475,13 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="schematron.outside.skip">Nicht anwenden</string>
   <string key="schematron.status.refused">Schematron: Regeln nicht angewendet</string>
   <string key="schematron.tip.refused">Regeln außerhalb des Projekts nicht angewendet (F8, um sie zu akzeptieren): {files}</string>
+  <string key="schemas.site.title">Von einer anderen Website herunterladen?</string>
+  <string key="schemas.site.text">Dieses Dokument verlangt, ein Schema oder Schematron-Regeln von der Website {site} herunterzuladen:\n{url}\n\nOhne Ihre Zustimmung lädt Varians nur von der TEI-Website (tei-c.org) herunter. Ein Download von einer anderen Website teilt ihr mit, dass Sie dieses Dokument öffnen, und die von ihr gelieferten Schematron-Regeln würden angewendet.\n\nIhre Antwort gilt für die ganze Website und wird gespeichert. Für eine abgelehnte Website fragt „{command}“ (F8) erneut.</string>
+  <string key="schemas.site.allow">Herunterladen</string>
+  <string key="schemas.site.refuse">Nicht herunterladen</string>
+  <string key="rng.status.site_refused">RNG: Schema nicht heruntergeladen</string>
+  <string key="rng.panel.site_refused">Das Schema wurde nicht heruntergeladen: Die Website {sites} ist nicht zugelassen. Das Dokument wird nicht validiert. „{command}“ (F8) fragt erneut.</string>
+  <string key="schematron.tip.site_refused">Nicht heruntergeladen (Website nicht zugelassen, F8 zum Zulassen): {sites}</string>
   <string key="schematron.panel.rules_button">Regeln…</string>
   <string key="schematron.panel.rules_button.tip">Schematron-Regeln des Dokuments: deklarierte Regeldateien und geprüfte Phase</string>
   <string key="schematron.dialog.title">Schematron-Regeln des Dokuments</string>

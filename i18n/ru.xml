@@ -475,6 +475,13 @@
   <string key="schematron.outside.skip">Не применять</string>
   <string key="schematron.status.refused">Schematron: правила не применены</string>
   <string key="schematron.tip.refused">Правила вне проекта не применены (F8, чтобы принять их): {files}</string>
+  <string key="schemas.site.title">Загрузить с другого сайта?</string>
+  <string key="schemas.site.text">Этот документ запрашивает загрузку схемы или правил Schematron с сайта {site}:\n{url}\n\nБез вашего согласия Varians загружает только с сайта TEI (tei-c.org). Загрузка с другого сайта сообщает ему, что вы открываете этот документ, и предоставленные им правила Schematron будут применены.\n\nВаш ответ относится ко всему сайту и запоминается. Для отклонённого сайта «{command}» (F8) спросит снова.</string>
+  <string key="schemas.site.allow">Загрузить</string>
+  <string key="schemas.site.refuse">Не загружать</string>
+  <string key="rng.status.site_refused">RNG: схема не загружена</string>
+  <string key="rng.panel.site_refused">Схема не загружена: сайт {sites} не разрешён. Документ не проверен. «{command}» (F8) спросит снова.</string>
+  <string key="schematron.tip.site_refused">Не загружено (сайт не разрешён, F8, чтобы разрешить): {sites}</string>
   <string key="schematron.panel.rules_button">Правила…</string>
   <string key="schematron.panel.rules_button.tip">Правила Schematron документа: объявленные файлы правил и проверяемая фаза</string>
   <string key="schematron.dialog.title">Правила Schematron документа</string>

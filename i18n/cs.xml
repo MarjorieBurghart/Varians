@@ -475,6 +475,13 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="schematron.outside.skip">Nepoužívat je</string>
   <string key="schematron.status.refused">Schematron: pravidla nepoužita</string>
   <string key="schematron.tip.refused">Nepoužitá pravidla mimo projekt (F8 pro jejich přijetí): {files}</string>
+  <string key="schemas.site.title">Stáhnout z jiného webu?</string>
+  <string key="schemas.site.text">Tento dokument žádá o stažení schématu nebo pravidel Schematron z webu {site}:\n{url}\n\nBez vašeho souhlasu Varians stahuje pouze z webu TEI (tei-c.org). Stažení z jiného webu mu prozradí, že tento dokument otevíráte, a pravidla Schematron, která poskytuje, by byla použita.\n\nVaše odpověď platí pro celý web a zapamatuje se. U odmítnutého webu se „{command}“ (F8) zeptá znovu.</string>
+  <string key="schemas.site.allow">Stáhnout</string>
+  <string key="schemas.site.refuse">Nestahovat</string>
+  <string key="rng.status.site_refused">RNG: schéma nestaženo</string>
+  <string key="rng.panel.site_refused">Schéma nebylo staženo: web {sites} není povolen. Dokument není ověřen. „{command}“ (F8) se zeptá znovu.</string>
+  <string key="schematron.tip.site_refused">Nestaženo (web není povolen, F8 pro povolení): {sites}</string>
   <string key="schematron.panel.rules_button">Pravidla…</string>
   <string key="schematron.panel.rules_button.tip">Pravidla Schematron dokumentu: deklarované soubory pravidel a kontrolovaná fáze</string>
   <string key="schematron.dialog.title">Pravidla Schematron dokumentu</string>
