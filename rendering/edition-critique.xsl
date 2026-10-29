@@ -14,7 +14,8 @@
     des lettres (a, b… z, aa…). La leçon précède ses sigles ; om., add., lacuna
     incipit, lacuna desinit ; les leçons d'un <rdgGrp> comptent. Tout texte
     de l'apparat qui ne vient pas d'un témoin (sigles, om., add., lacunes,
-    commentaires) est en italique.
+    commentaires) est en italique ; les leçons, même un <sic> (suivi de
+    « sic »), une citation ou une mise en relief, y sont en romain.
   - Titre d'une division sans <head> : son @n, sinon rien.
   - Folios : ceux du témoin choisi (et sans @edRef) ; tous avec « aucun ».
   - Vers (<l>, <lg>) et strophes gardent leur structure ; divisions,
@@ -387,7 +388,7 @@
             <xsl:if test="$apparat?lemme">
               <span class="lecon-retenue">
                 <xsl:choose>
-                  <xsl:when test="exists($apparat?retenue)"><xsl:apply-templates select="$apparat?retenue/node()" mode="lecture"/></xsl:when>
+                  <xsl:when test="exists($apparat?retenue)"><xsl:apply-templates select="$apparat?retenue/node()" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/></xsl:apply-templates></xsl:when>
                   <xsl:otherwise><i class="editeur"><xsl:value-of select="$f:non-disponible"/></i></xsl:otherwise>
                 </xsl:choose>
               </span>
@@ -397,8 +398,8 @@
               <xsl:if test="position() gt 1"><span class="separateur"> ; </span></xsl:if>
               <span class="variantes">
                 <xsl:choose>
-                  <xsl:when test="?genre = 'om'"><i class="editeur"><xsl:value-of select="$f:om"/></i><xsl:apply-templates select="?lecon//tei:note" mode="lecture"/></xsl:when>
-                  <xsl:otherwise><xsl:apply-templates select="?lecon/node()" mode="lecture"/></xsl:otherwise>
+                  <xsl:when test="?genre = 'om'"><i class="editeur"><xsl:value-of select="$f:om"/></i><xsl:apply-templates select="?lecon//tei:note" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/></xsl:apply-templates></xsl:when>
+                  <xsl:otherwise><xsl:apply-templates select="?lecon/node()" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/></xsl:apply-templates></xsl:otherwise>
                 </xsl:choose>
               </span>
               <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><i class="editeur"><xsl:value-of select="$f:add"/></i></xsl:if>
@@ -437,12 +438,22 @@
       <xsl:otherwise><span class="citation"><xsl:apply-templates mode="base"/></span></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+  <!-- Dans l'apparat (dans-apparat), une leçon est en romain : l'italique y
+       est réservé au texte de l'éditeur (V0.9.3.0). -->
   <xsl:template match="tei:quote | tei:q | tei:said" mode="lecture">
-    <span class="citation"><xsl:apply-templates mode="lecture"/></span>
+    <xsl:param name="dans-apparat" tunnel="yes" as="xs:boolean" select="false()"/>
+    <xsl:choose>
+      <xsl:when test="$dans-apparat"><xsl:apply-templates mode="lecture"/></xsl:when>
+      <xsl:otherwise><span class="citation"><xsl:apply-templates mode="lecture"/></span></xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:hi | tei:emph" mode="base lecture">
+    <xsl:param name="dans-apparat" tunnel="yes" as="xs:boolean" select="false()"/>
     <xsl:variable name="r" select="lower-case(string-join((@rend,@style), ' '))"/>
     <xsl:choose>
+      <xsl:when test="(matches($r, 'italic|italique') or self::tei:emph) and $dans-apparat">
+        <xsl:apply-templates mode="#current"/>
+      </xsl:when>
       <xsl:when test="matches($r, 'italic|italique') or self::tei:emph">
         <i class="italique"><xsl:apply-templates mode="#current"/></i>
       </xsl:when>
@@ -456,7 +467,11 @@
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:title | tei:foreign" mode="base lecture">
-    <i class="italique"><xsl:apply-templates mode="#current"/></i>
+    <xsl:param name="dans-apparat" tunnel="yes" as="xs:boolean" select="false()"/>
+    <xsl:choose>
+      <xsl:when test="$dans-apparat"><xsl:apply-templates mode="#current"/></xsl:when>
+      <xsl:otherwise><i class="italique"><xsl:apply-templates mode="#current"/></i></xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:ref" mode="base lecture">
     <xsl:variable name="biblique" select="exists(parent::tei:cit) and f:biblique(parent::tei:cit)"/>
@@ -484,7 +499,14 @@
     <span class="incertain" title="Lecture incertaine"><xsl:apply-templates mode="#current"/></span>
   </xsl:template>
   <xsl:template match="tei:sic" mode="base lecture">
-    <span class="sic" title="Leçon transmise (sic)"><xsl:apply-templates mode="#current"/></span>
+    <xsl:param name="dans-apparat" tunnel="yes" as="xs:boolean" select="false()"/>
+    <xsl:choose>
+      <!-- Dans l'apparat : la leçon en romain, suivie de « sic » en italique. -->
+      <xsl:when test="$dans-apparat">
+        <xsl:apply-templates mode="#current"/><xsl:text> </xsl:text><i class="editeur">sic</i>
+      </xsl:when>
+      <xsl:otherwise><span class="sic" title="Leçon transmise (sic)"><xsl:apply-templates mode="#current"/></span></xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:choice" mode="base lecture">
     <xsl:apply-templates select="(tei:corr,tei:reg,tei:expan,tei:sic,tei:orig,tei:abbr,*[1])[1]" mode="#current"/>

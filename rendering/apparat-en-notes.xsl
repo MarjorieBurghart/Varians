@@ -9,7 +9,8 @@
     <note place="foot" type="apparatus"> : « leçon ] variante sigles ; … »,
     avec om., add., lacuna incipit et lacuna desinit, comme dans l'édition
     critique HTML : tout texte de la note qui ne vient pas d'un témoin
-    (sigles, om., add., lacunes, commentaires) est en italique.
+    (sigles, om., add., lacunes, commentaires) est en italique ; les
+    leçons sont en romain, un <sic> suivi de « sic ».
   - Une note de l'éditeur sans @place devient une note de fin
     (place="end") : une autre série que celle de l'apparat. Dans une
     note, une note devient « (…) » et l'entrée d'un apparat se met entre
@@ -164,9 +165,22 @@
   <xsl:template match="text()" mode="note">
     <xsl:value-of select="f:texte-net(.)"/>
   </xsl:template>
-  <!-- La mise en forme est gardée, sans les identifiants (déjà dans le texte). -->
-  <xsl:template match="tei:hi | tei:emph | tei:foreign | tei:title | tei:term" mode="note">
-    <xsl:copy><xsl:copy-of select="@* except @xml:id"/><xsl:apply-templates mode="note"/></xsl:copy>
+  <!-- La mise en forme est gardée, sans les identifiants (déjà dans le texte),
+       mais une leçon est en romain : l'italique est réservé au texte de
+       l'éditeur (V0.9.3.0). -->
+  <xsl:template match="tei:hi" mode="note">
+    <xsl:choose>
+      <xsl:when test="matches(lower-case(string-join((@rend, @style), ' ')), 'italic|italique')">
+        <xsl:apply-templates mode="note"/>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:copy><xsl:copy-of select="@* except @xml:id"/><xsl:apply-templates mode="note"/></xsl:copy>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  <!-- <sic> : la leçon, suivie de « sic » en italique. -->
+  <xsl:template match="tei:sic" mode="note">
+    <xsl:apply-templates mode="note"/><xsl:text> </xsl:text><hi rend="italic">sic</hi>
   </xsl:template>
   <xsl:template match="@*" mode="note"/>
   <xsl:template match="tei:app" mode="note">

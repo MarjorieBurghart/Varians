@@ -163,6 +163,25 @@ def test_the_words_of_the_editor_in_the_apparatus_are_in_italics(project):
     assert roman == ["fuit ] ;", "breue", "] sic ;"]
 
 
+def test_the_readings_of_the_apparatus_are_in_roman_and_a_sic_is_marked(project):
+    # Dans l'apparat, une leçon est en romain, même un <sic>, une citation ou
+    # une mise en relief ; un <sic> y est suivi de « sic » en italique. Le
+    # texte établi garde ses styles.
+    name = _write(project, "romain.xml", '<div><p>et <app><rdg wit="#A">ministerium</rdg><rdg wit="#B">ministerium '
+                                         '<sic>corelectionis</sic></rdg></app> <app><rdg wit="#A"><quote>Uos estis'
+                                         '</quote></rdg><rdg wit="#B"><hi rend="italic">Uos</hi> <title>estis</title>'
+                                         '</rdg></app> finis</p></div>')
+    result, tree = _edition(project, name, "A")
+    assert result.ok, result.error
+    assert _entries(tree) == [("1", "ministerium ] ministerium corelectionis sic B"), ("2", "Uos estis ] Uos estis B")]
+    entries = tree.xpath("//aside//ol[contains(@class, 'apparat')]/li//span[@class='entree']")
+    assert [[_text(i) for i in entry.iter("i")] for entry in entries] == [["sic", "B"], ["B"]]
+    styled = [element.get("class") for entry in entries for element in entry.iter()
+              if {"sic", "citation", "italique"} & set((element.get("class") or "").split())]
+    assert styled == []
+    assert [_text(span) for span in tree.xpath("//main//span[contains(@class, 'citation')]")] == ["Uos estis"]
+
+
 def test_the_apparatus_and_the_notes_are_two_series(project):
     # L'apparat, nombreux, appelé par des chiffres ; les notes par des lettres.
     apps = "".join(f'<app><rdg wit="#A">u{i}</rdg><rdg wit="#B">v{i}</rdg></app> ' for i in range(3))
