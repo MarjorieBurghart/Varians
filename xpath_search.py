@@ -155,11 +155,14 @@ def _element_range_map(text: str) -> dict[int, int]:
     return ranges
 
 
-def _path_position_map(root, text: str) -> dict[str, int]:
-    tree = root.getroottree()
+def _position_map(root, text: str) -> dict:
+    """``{élément: début de sa balise ouvrante}``, par l'élément lui-même
+    (red team 2, A3) : son chemin (``getpath``) comptait ses frères, pour
+    chaque élément du document. Le dictionnaire garde les éléments en vie :
+    lxml rend alors les mêmes objets aux résultats d'une requête."""
     lexical = _opening_tags(text)
     elements = [el for el in root.iter() if isinstance(getattr(el, "tag", None), str)]
-    mapping: dict[str, int] = {}
+    mapping: dict = {}
     j = 0
     for el in elements:
         target = _local_name(el.tag)
@@ -173,17 +176,17 @@ def _path_position_map(root, text: str) -> dict[str, int]:
                 break
         if found is None:
             continue
-        raw_name, pos = lexical[found]
+        _raw_name, pos = lexical[found]
         j = found + 1
-        try:
-            mapping[tree.getpath(el)] = pos
-        except Exception:
-            pass
+        mapping[el] = pos
     return mapping
 
 
-def _display_path(el) -> str:
-    """Chemin lisible, indépendant des préfixes de namespace lxml."""
+def _display_path(el, ranks=None) -> str:
+    """Chemin lisible, indépendant des préfixes de namespace lxml. *ranks* :
+    ``{parent: ({nom: nombre}, {enfant: rang})}``, fait une fois par parent
+    et partagé entre les résultats d'une requête (red team 2, A3)."""
+    ranks = {} if ranks is None else ranks
     parts: list[str] = []
     current = el
     while current is not None and isinstance(getattr(current, "tag", None), str):
@@ -191,16 +194,18 @@ def _display_path(el) -> str:
         parent = current.getparent()
         index_suffix = ""
         if parent is not None:
-            siblings = [
-                child for child in parent
-                if isinstance(getattr(child, "tag", None), str)
-                and _local_name(child.tag) == name
-            ]
-            if len(siblings) > 1:
-                try:
-                    index_suffix = f"[{siblings.index(current) + 1}]"
-                except ValueError:
-                    pass
+            known = ranks.get(parent)
+            if known is None:
+                counts, rank = {}, {}
+                for child in parent:
+                    if isinstance(getattr(child, "tag", None), str):
+                        child_name = _local_name(child.tag)
+                        counts[child_name] = counts.get(child_name, 0) + 1
+                        rank[child] = counts[child_name]
+                known = ranks[parent] = (counts, rank)
+            counts, rank = known
+            if counts.get(name, 0) > 1 and current in rank:
+                index_suffix = f"[{rank[current]}]"
         parts.append(name + index_suffix)
         current = parent
     return "/" + "/".join(reversed(parts))
@@ -262,22 +267,23 @@ def search_xpath(xml_text: str, expression: str) -> XPathSearchResult:
             namespace_fallback_used=fallback,
         )
 
-    position_map = _path_position_map(root, xml_text or "")
+    position_map = _position_map(root, xml_text or "")
     range_map = _element_range_map(xml_text or "")
-    tree = root.getroottree()
+    ranks: dict = {}
+    starts: list[int] = []
     matches: list[XPathMatch] = []
     ignored = 0
     for item in value:
         if not isinstance(item, LET._Element) or not isinstance(getattr(item, "tag", None), str):
             ignored += 1
             continue
-        raw_path = tree.getpath(item)
-        pos = position_map.get(raw_path, -1)
+        pos = position_map.get(item, -1)
         line = int(getattr(item, "sourceline", 0) or 0)
         if pos < 0 and line > 0:
             # Repli : au minimum, aller au début de la ligne source.
-            starts = [0]
-            starts.extend(m.end() for m in re.finditer("\n", xml_text or ""))
+            if not starts:
+                starts = [0]
+                starts.extend(m.end() for m in re.finditer("\n", xml_text or ""))
             pos = starts[line - 1] if line - 1 < len(starts) else 0
         start = max(0, pos)
         end = range_map.get(start, start)
@@ -286,7 +292,7 @@ def search_xpath(xml_text: str, expression: str) -> XPathSearchResult:
             position=start,
             end_position=max(start, end),
             tag=_local_name(item.tag),
-            path=_display_path(item),
+            path=_display_path(item, ranks),
             preview=_preview(item),
         ))
 
