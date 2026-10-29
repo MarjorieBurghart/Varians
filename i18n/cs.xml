@@ -150,7 +150,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="webgen.wrong_file.title">Webový prohlížeč</string>
   <string key="webgen.wrong_file.text">Generátor používá soubor &lt;edition&gt; deklarovaný v project.xml. Aktuálně otevřený soubor není tímto projektovým souborem.</string>
   <string key="webgen.error.title">Generování webového prohlížeče</string>
-  <string key="webgen.text.title">Vytvořit webový prohlížeč</string>
+  <string key="webgen.text.title">Vygenerovat webový prohlížeč</string>
   <string key="webgen.text.label">Text prohlížeče:</string>
   <string key="webgen.text.established">Ustavený text: &lt;lem&gt;, jinak čtení zvoleného svědka</string>
   <string key="webgen.text.witness">Text zvoleného svědka, i když to není &lt;lem&gt;</string>

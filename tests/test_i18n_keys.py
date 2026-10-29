@@ -915,6 +915,20 @@ def test_each_help_announces_version_0930():
                      "<code>@xml:id</code>", "<code>project.xml</code>", "<code>&lt;cit&gt;</code>",
                      "<code>&lt;ref&gt;</code>", '<code>type="bible"</code>', "✎", "XPath",
                      "<code>&lt;choice&gt;</code>", "<code>&lt;hi&gt;</code>", "add.", "DOCX",
-                     "<code>&lt;witness&gt;</code>", "<code>&lt;abbr&gt;</code>", "Sigles des témoins", "<code>&lt;sic&gt;</code>"):
+                     "<code>&lt;witness&gt;</code>", "<code>&lt;abbr&gt;</code>", "Sigles des témoins", "<code>&lt;sic&gt;</code>",
+                     'href="#viewer-text-choice"'):
             assert text in version, (language, text)
         assert page.index('<section id="v0929">') < page.index('<section id="v0930">'), language
+
+
+def test_each_help_explains_the_choice_of_the_text_of_the_viewer():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        start = page.index('<p id="viewer-text-choice">')
+        paragraph = page[start:page.index("</p>", start)]
+        assert page.index('<p id="viewer-text">') < start, language
+        for text in (catalog["toolbar.generate_web"], "<code>&lt;lem&gt;</code>", "∅", "textWitness",
+                     "<code>generer_viewer_web.bat</code>", '<code>&lt;rdg wit="#T2"/&gt;</code>'):
+            assert text in paragraph, (language, text)

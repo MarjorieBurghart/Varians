@@ -150,7 +150,7 @@
   <string key="webgen.wrong_file.title">Webビューア</string>
   <string key="webgen.wrong_file.text">ジェネレータはproject.xmlで宣言された&lt;edition&gt;ファイルを使用します。現在開いているファイルは、そのプロジェクトファイルではありません。</string>
   <string key="webgen.error.title">Webビューア生成</string>
-  <string key="webgen.text.title">Web ビューアを生成</string>
+  <string key="webgen.text.title">Webビューアを生成</string>
   <string key="webgen.text.label">ビューアの本文：</string>
   <string key="webgen.text.established">校訂本文：&lt;lem&gt;、なければ選んだ伝本の読み</string>
   <string key="webgen.text.witness">選んだ伝本の本文（&lt;lem&gt; でない場合も）</string>

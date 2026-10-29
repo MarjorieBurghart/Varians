@@ -64,6 +64,20 @@ VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
   Varians donne ce retrait même avec la CSS d'un projet créé par une
   version antérieure ; la CSS du projet le remplace si elle a une règle
   .lg. Dans un navigateur, chaque vers reste un bloc (tei.css).
+• Choix du texte du viewer : « Générer viewer web » demande d'abord le
+  texte affiché, soit le texte établi (le <lem>, à défaut la leçon du
+  témoin choisi, comme « Édition critique » ; désormais par défaut), soit
+  le texte du témoin choisi, même quand il n'est pas le <lem> (sa
+  transcription reconstituée). Le témoin choisi est par défaut le pivot de
+  chaque texte. Là où il n'a pas de leçon (aucune leçon de l'<app> ne le
+  nomme), le texte de repli est grisé et encadré, avec une infobulle
+  « Pas de leçon de … ici » (« ∅ » s'il est vide) ; une omission
+  (<rdg wit="#T2"/>) n'est pas signalée. L'en-tête du viewer et le compte
+  rendu en donnent le nombre. La synchronisation suit toujours les lignes
+  du pivot (lignes de sa leçon non affichée réparties dans le texte
+  affiché ; repère invisible si le témoin omet le passage). Le choix est
+  gardé dans project.xml : <webViewer text="established|witness"
+  textWitness="T2"/> ; generer_viewer_web.bat le suit.
 • Le code propre au corpus de Troyes a été retiré du générateur du viewer.
   Le format de project.xml est inchangé ; un viewer déjà exporté doit être
   exporté de nouveau.
