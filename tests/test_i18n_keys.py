@@ -914,6 +914,7 @@ def test_each_help_announces_version_0930():
         for text in ('href="#viewer-text"', "<code>&lt;table&gt;</code>", "<code>&lt;rdgGrp&gt;</code>",
                      "<code>@xml:id</code>", "<code>project.xml</code>", "<code>&lt;cit&gt;</code>",
                      "<code>&lt;ref&gt;</code>", '<code>type="bible"</code>', "✎", "XPath",
-                     "<code>&lt;choice&gt;</code>", "<code>&lt;hi&gt;</code>"):
+                     "<code>&lt;choice&gt;</code>", "<code>&lt;hi&gt;</code>", "add.", "DOCX",
+                     "<code>&lt;witness&gt;</code>", "<code>&lt;abbr&gt;</code>", "Sigles des témoins"):
             assert text in version, (language, text)
         assert page.index('<section id="v0929">') < page.index('<section id="v0930">'), language

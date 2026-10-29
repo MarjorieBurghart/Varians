@@ -48,6 +48,14 @@ VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
 • Un résultat de recherche XPath sélectionné dans la source reste
   sélectionné en passant à la Vue XSLT / CSS, même s'il contient un apparat
   ou s'il s'agit d'un paragraphe entier (seule la position était gardée).
+  Revenir à la source sans avoir changé la sélection de l'aperçu rend la
+  sélection de départ.
+• Apparat d'« Édition critique » et des scénarios DOCX et ODT : tout texte
+  qui ne vient pas d'un témoin est en italique (sigles, om., add., lacuna
+  incipit et desinit, commentaires) ; les leçons restent en romain.
+• « Sigles des témoins » (Édition critique) et viewer web : un élément du
+  <witness> qui ne contient que le sigle (<abbr>, <label>…) n'est plus
+  répété dans le libellé (« P Paris… » et non « P PParis… »).
 • Vue XSLT / CSS : une strophe (<lg>) est un seul bloc en retrait, ses
   vers séparés par des retours à la ligne ; auparavant, l'aperçu (Qt), qui
   ne regroupe pas des blocs imbriqués, en faisait autant de paragraphes.

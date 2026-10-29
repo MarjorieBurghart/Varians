@@ -371,4 +371,7 @@ Fonctionnement : aide, paragraphe « Texte de lecture » (`viewer-text`, à la f
 - Aperçu : `formatted_view.PREVIEW_BASE_CSS` porte aussi les règles du crayon ✎, des repères de ligne et de `.ref` ; report d'une sélection de la source par la structure en dernier recours (`xml_selection_structure`, `ClickablePreview.select_structure`, `MainWindow._source_selection_structure`).
 - Strophes de `tei-to-html.xsl` : un `<lg>` est un seul bloc, ses `<l>` des `<span class="l">` séparés par `<br/>` (Qt ne regroupe pas des blocs imbriqués) ; `tei.css` : `.lg br` masqué et `.l` en bloc dans un navigateur ; `formatted_view.PREVIEW_BASE_CSS`, placée avant la CSS du projet (Qt ignore toute règle après un `@media`).
 - Feuilles : tableaux dans `tei-to-html.xsl` (`table`, `row`, `cell`, modèle `cell-span`) et `edition-critique.xsl` (légende, `th`, `colspan`, `rowspan`) ; `fragment_units._DIVE_RE` accepte `caption`.
+- Apparat : texte de l'éditeur en italique, `edition-critique.xsl` (`i.editeur` : om., add., lacunes, leçon non disponible) et `apparat-en-notes.xsl` (`hi rend="italic"`, commentaires compris).
+- Libellé d'un témoin sans son sigle : `edition-critique.xsl` (« Sigles des témoins » : `$marques`, `<idno type="siglum">` et tout élément qui ne contient que le sigle ou l'identifiant) ; `legacy_v11_core.extract_witness_labels`, même règle.
+- Aller-retour Source → XSLT / CSS → Source : `MainWindow._preview_round_trip` (document, révision, sélections de la source et de l'aperçu), `_select_source_span`.
 
