@@ -405,10 +405,13 @@ class WitnessSyncMixin:
             if hasattr(panel, 'folios') and panel.folios:
                 if lines is not None:
                     target = lines.page_at(self.document.path, pos, text, includes, witness_id, panel.folios)
-                    # Texte synchronisé à part (V0.9.1.3) : avant le premier pb
-                    # du témoin dans le texte, sa page de départ.
-                    if target is None and getattr(self, "_active_segment", None) is not None:
-                        target = self._text_start_folio(witness_id, panel.folios)
+                    # Avant le premier pb du témoin dans le texte affiché, sa
+                    # page de départ : dans un texte synchronisé à part
+                    # (V0.9.1.3), comme dans l'édition (red team 2, D3).
+                    if target is None:
+                        target = (self._text_start_folio(witness_id, panel.folios)
+                                  if getattr(self, "_active_segment", None) is not None
+                                  else self._edition_start_folio(witness_id, panel.folios))
                 else:
                     target = folio_at_position(text, pos, witness_id, panel.folios)
                 if target:

@@ -24,7 +24,7 @@ from pathlib import Path
 
 import segment_model
 from app_context import tr as _t
-from folio_navigation import folio_marks, witness_loci
+from folio_navigation import folio_marks, page_folios, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
@@ -117,6 +117,18 @@ class TextSegmentsMixin:
         segment = self._active_segment
         return segment_model.start_folio(self._pivot_lines(), segment, witness_id, folios,
                                          self._text_loci(segment), self._segment_ids(segment))
+
+    def _edition_start_folio(self, witness_id, folios):
+        """Page de départ du témoin dans l'édition (hors textes synchronisés
+        à part), avant son premier ``<pb>`` dans l'édition : comme pour un
+        texte à part (``segment_model.start_folio``), sinon sa première page,
+        comme dans le viewer web (red team 2, D3)."""
+        start = segment_model.start_folio(self._pivot_lines(), None, witness_id, folios,
+                                          self._witness_loci(), self._segment_ids(None))
+        if start is None:
+            pages = page_folios(folios)
+            start = pages[0] if pages else None
+        return start
 
     def _text_page_witnesses(self, sync):
         """Témoins qui ont le texte ``sync`` sans y avoir de JSON : un ``<pb

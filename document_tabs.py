@@ -27,7 +27,7 @@ from app_context import call_later, current_i18n, tr as _t
 from code_editor import TextDocument, XMLHighlighter
 from document_session import DocumentSession
 from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
-from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
+from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines, structure_signature
 from preview_sources import preview_sources
 from project_management import update_project_documents
 from lxml import etree
@@ -296,9 +296,10 @@ class DocumentTabsMixin:
         pour une édition sans parties, ou jamais assemblée (mal formée).
 
         Le résultat est gardé tant que les documents de l'édition ne changent
-        pas, et pendant la saisie tant que le document affiché garde le même
-        nombre de <lb/> du pivot et de xi:include : les positions viennent de
-        son index, tenu à jour. Une partie (ou l'édition) devenue mal formée
+        pas, et pendant la saisie tant que la structure du document affiché
+        reste la même (``structure_signature`` : ses <lb/>, <pb>, xi:include,
+        lacunes et leçons, dans l'ordre) : les positions viennent de son
+        index, tenu à jour. Une partie (ou l'édition) devenue mal formée
         laisse la numérotation précédente."""
         if not self._edition_has_parts():
             return None
@@ -306,14 +307,23 @@ class DocumentTabsMixin:
         revisions = {s: (s.text_document.revision() if s.text_document is not None else None) for s in sessions}
         cache = self.__dict__.get("_pivot_lines_cache")
         if cache is not None:
-            known, lines, malformed = cache
+            known, lines, malformed, signatures = cache
             if known == revisions:
                 return lines
             changed = [s for s in sessions if known.get(s, -1) != revisions[s]]
+            key = path_key(self.document.path) if self.document.path is not None else None
+            if key is not None and key not in signatures and known.get(self.document, -1) is None:
+                # Fichier lu depuis le disque pour la numérotation, puis ouvert.
+                try:
+                    signatures[key] = structure_signature(Path(self.document.path).read_text(encoding="utf-8"))
+                except (OSError, UnicodeError):
+                    pass
             if (lines is not None and known.keys() == revisions.keys() and changed == [self.document]
+                    and key in signatures
+                    and signatures[key] == structure_signature(self.editor.toPlainText())
                     and lines.matches(self.document.path, len(self.lb_spans()),
                                       len(include_spans(self.editor.toPlainText())))):
-                self._pivot_lines_cache = (revisions, lines, malformed)
+                self._pivot_lines_cache = (revisions, lines, malformed, signatures)
                 return lines
         edition = self.edition_session
         texts = {s.path: s.text_document.toPlainText() for s in sessions
@@ -325,7 +335,10 @@ class DocumentTabsMixin:
                      frozenset(path_key(p.file) for p in lines.problems if p.code == "malformed"))
         if cache is not None and cache[1] is not None and (lines is None or not malformed <= cache[2]):
             lines, malformed = cache[1], cache[2]
-        self._pivot_lines_cache = (revisions, lines, malformed)
+        # Structure de chaque fichier ouvert de l'édition, telle que comptée.
+        signatures = {path_key(s.path): structure_signature(s.text_document.toPlainText())
+                      for s in sessions if s.path is not None and s.text_document is not None}
+        self._pivot_lines_cache = (revisions, lines, malformed, signatures)
         return lines
 
     def _base_ordinal_at(self, position):

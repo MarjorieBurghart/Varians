@@ -87,6 +87,19 @@ def pivot_lb_pattern(base_id):
     return _PivotLbPattern(base_id)
 
 
+_STRUCTURE_TAGS = element_tag_pattern("lb", "pb", "include", "lacunaStart", "lacunaEnd", "rdg", "lem")
+
+
+def structure_signature(text):
+    """Ce dont dépend la numérotation d'un fichier (``PivotLines``) : ses
+    balises <lb>, <pb>, xi:include, de lacune et de leçon, dans l'ordre, sans
+    leur position. Taper du texte ne la change pas ; ajouter, retirer ou
+    déplacer l'une de ces balises, ou modifier ses attributs, si (red team 2,
+    B4)."""
+    return tuple((m.group("close"), m.group("name"), m.group("attrs"))
+                 for m in element_tags(_STRUCTURE_TAGS, str(text or "")))
+
+
 def pb_tag_ends(text):
     """Fin de chaque balise ``<pb>`` de *text*, hors zones inertes."""
     return [match.end() for match in element_tags(_PB_TAGS, str(text or "")) if not match.group("close")]
@@ -249,8 +262,8 @@ class PivotLines:
     def page_at(self, path, position, text, includes, witness_id, folios):
         """Folio du témoin ``witness_id`` à ``position`` dans ``path`` (texte
         ``text``) : le dernier ``<pb>`` qui le concerne avant cette position,
-        dans l'ordre du document assemblé ; dans un texte synchronisé à part,
-        dans ce texte seulement."""
+        dans l'ordre du document assemblé, parmi ceux de son texte : un texte
+        synchronisé à part, ou l'édition sans ces textes."""
         lines = self.file(path)
         if lines is None:
             return None
@@ -260,7 +273,11 @@ class PivotLines:
             return local[0]
         begin = self._starts.get(lines.segment, (0, 0))[0] if lines.segment is not None else 0
         lookup = folio_lookup(folios)
-        for facs, ed_ref, n, _segment in reversed(self._pbs[begin:count]):
+        for facs, ed_ref, n, segment in reversed(self._pbs[begin:count]):
+            # Les <pb> d'un autre texte (synchronisé à part) n'y comptent pas,
+            # comme ses lacunes et comme dans le viewer web (red team 2, D3).
+            if segment != lines.segment:
+                continue
             folio = pb_folio(facs, ed_ref, n, witness_id, lookup)
             if folio is not None:
                 return folio
