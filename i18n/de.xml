@@ -135,6 +135,10 @@ Die Einfügung wurde abgebrochen, um unerwartetes Markup zu vermeiden.</string>
   <string key="file.save_as.title">TEI-Edition speichern</string>
   <string key="file.save.error.title">Fehler beim Speichern</string>
   <string key="file.save.read_only">Die Datei {path} ist schreibgeschützt: Varians ersetzt sie nicht. Speichern Sie sie unter einem anderen Namen ({menu} ▸ {command}) oder heben Sie den Schreibschutz auf und speichern Sie erneut.</string>
+  <string key="file.changed.title">Datei außerhalb von Varians geändert</string>
+  <string key="file.changed.text">{path}\n\nwurde außerhalb von Varians geändert, seit Sie sie geöffnet oder gespeichert haben (durch ein anderes Programm, eine Synchronisierung…).\n\nÜberschreiben: Ihre Fassung an ihrer Stelle speichern (die andere bleibt in der .bak-Kopie erhalten).\nNeu laden: Ihre Änderungen verwerfen und die Datei so anzeigen, wie sie jetzt ist.\nAbbrechen: nichts speichern.</string>
+  <string key="file.changed.overwrite">Überschreiben</string>
+  <string key="file.changed.reload">Neu laden</string>
   <string key="file.structure.title">Struktur von {base} geändert</string>
   <string key="file.structure.text">Das XML enthält {count} Zeilen für {base} statt {expected}.
 

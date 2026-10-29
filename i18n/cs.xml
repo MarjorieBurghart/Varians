@@ -135,6 +135,10 @@ Vložení bylo zrušeno, aby se zabránilo neočekávanému značkování.</stri
   <string key="file.save_as.title">Uložit edici TEI</string>
   <string key="file.save.error.title">Chyba při ukládání</string>
   <string key="file.save.read_only">Soubor {path} je jen pro čtení: Varians jej nenahradí. Uložte jej pod jiným názvem ({menu} ▸ {command}), nebo povolte zápis do souboru a uložte znovu.</string>
+  <string key="file.changed.title">Soubor změněn mimo Varians</string>
+  <string key="file.changed.text">{path}\n\nbyl změněn mimo Varians od chvíle, kdy jste jej otevřeli nebo uložili (jiným programem, synchronizací…).\n\nPřepsat: uložit vaši verzi místo něj (druhá zůstane v kopii .bak).\nZnovu načíst: zahodit vaše změny a zobrazit soubor tak, jak je nyní.\nZrušit: nic neukládat.</string>
+  <string key="file.changed.overwrite">Přepsat</string>
+  <string key="file.changed.reload">Znovu načíst</string>
   <string key="file.structure.title">Struktura {base} se změnila</string>
   <string key="file.structure.text">XML obsahuje {count} řádků {base} místo {expected}.
 

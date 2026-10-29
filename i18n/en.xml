@@ -128,6 +128,10 @@
   <string key="file.save_as.title">Save TEI edition</string>
   <string key="file.save.error.title">Save error</string>
   <string key="file.save.read_only">The file {path} is read-only: Varians does not replace it. Save it under another name ({menu} ▸ {command}), or make it writable and save again.</string>
+  <string key="file.changed.title">File changed outside Varians</string>
+  <string key="file.changed.text">{path}\n\nhas been changed outside Varians since you opened or saved it (by another program, a synchronisation…).\n\nOverwrite: save your version in its place (the other one is kept in the .bak copy).\nReload: discard your changes and show the file as it is now.\nCancel: save nothing.</string>
+  <string key="file.changed.overwrite">Overwrite</string>
+  <string key="file.changed.reload">Reload</string>
   <string key="file.structure.title">{base} structure changed</string>
   <string key="file.structure.text">The XML contains {count} {base} lines instead of {expected}.\n\nThe file can be saved, but the image alignment caches will then need to be realigned.</string>
   <string key="file.unsaved.title">Unsaved changes</string>

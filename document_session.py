@@ -26,6 +26,17 @@ Span = tuple[int, int]
 LB_EDIT_LOOKBACK = 4096
 
 
+def file_stamp(path) -> Optional[tuple[int, int]]:
+    """(date de modification en ns, taille) du fichier *path* ; None s'il
+    est introuvable. Un fichier modifié hors de Varians depuis sa lecture
+    change d'empreinte (red team, A3)."""
+    try:
+        stat = Path(path).stat()
+    except (OSError, TypeError):
+        return None
+    return stat.st_mtime_ns, stat.st_size
+
+
 class LbIndex:
     """Positions des ``<lb/>`` du témoin pivot dans le texte source.
 
@@ -148,6 +159,9 @@ class DocumentSession:
         # Fichier et état d'enregistrement.
         self.path: Optional[Path] = None                 # current_path
         self.modified = False                            # modified
+        # Date et taille du fichier lu ou enregistré (red team, A3) : voir
+        # file_stamp.
+        self.disk_stamp: Optional[tuple[int, int]] = None
 
         # Suivi des révisions du QTextDocument.
         self.last_processed_edit_revision = -1           # _last_processed_edit_revision
@@ -229,6 +243,7 @@ class DocumentSession:
         """Un fichier vient d'être chargé dans ``text_document``."""
         self.path = Path(path)
         self.modified = False
+        self.disk_stamp = file_stamp(path)
         self.last_processed_edit_revision = int(revision)
         self.lb.invalidate()
         self.completion_context_cache.clear()
@@ -240,3 +255,4 @@ class DocumentSession:
         """Le contenu courant vient d'être écrit dans ``path``."""
         self.path = Path(path)
         self.modified = False
+        self.disk_stamp = file_stamp(path)

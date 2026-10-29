@@ -4,11 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app_context import call_later, HERE, tr as _t
+from document_session import file_stamp
 from save_io import ReadOnlyFileError, atomic_write_text_with_backup
-from xml_assembly import find_includes
+from xml_assembly import find_includes, path_key
 
 
 class DocumentIOMixin:
@@ -61,7 +63,41 @@ class DocumentIOMixin:
         box.exec()
         return box.clickedButton() is save_btn
 
+    def _confirm_external_change(self, path):
+        """Avant d'écrire *path*, le fichier affiché : s'il a changé sur le
+        disque depuis sa lecture ou son dernier enregistrement (red team,
+        A3), Écraser, Recharger (les modifications faites dans Varians sont
+        abandonnées) ou Annuler. Renvoie True pour l'écrire."""
+        session = self.document
+        known = session.disk_stamp
+        if known is None or session.path is None or path_key(path) != path_key(session.path):
+            return True
+        current = file_stamp(path)
+        if current is None or current == known:
+            return True
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle(_t("file.changed.title"))
+        box.setText(_t("file.changed.text", path=path))
+        overwrite_btn = box.addButton(_t("file.changed.overwrite"), QMessageBox.ButtonRole.AcceptRole)
+        reload_btn = box.addButton(_t("file.changed.reload"), QMessageBox.ButtonRole.DestructiveRole)
+        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(cancel_btn)
+        box.setEscapeButton(cancel_btn)
+        box.exec()
+        if box.clickedButton() is overwrite_btn:
+            return True
+        if box.clickedButton() is reload_btn:
+            self.open_path(path)
+            if self.document.in_edition:
+                self._refresh_parts()
+        return False
+
     def _write_to(self,path):
+        # Fichier modifié hors de Varians depuis sa lecture (red team, A3).
+        if not self._confirm_external_change(Path(path)):
+            return False
         # Un seul instantané du document pour toute la sauvegarde.
         text = self.editor.toPlainText()
         revision = self.editor.document().revision()

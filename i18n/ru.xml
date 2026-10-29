@@ -135,6 +135,10 @@
   <string key="file.save_as.title">Сохранить издание TEI</string>
   <string key="file.save.error.title">Ошибка сохранения</string>
   <string key="file.save.read_only">Файл {path} доступен только для чтения: Varians его не заменяет. Сохраните его под другим именем ({menu} ▸ {command}) или разрешите запись в файл и сохраните снова.</string>
+  <string key="file.changed.title">Файл изменён вне Varians</string>
+  <string key="file.changed.text">{path}\n\nбыл изменён вне Varians с момента, когда вы его открыли или сохранили (другой программой, синхронизацией…).\n\nПерезаписать: сохранить вашу версию вместо него (другая останется в копии .bak).\nПерезагрузить: отменить ваши изменения и показать файл таким, какой он сейчас.\nОтмена: ничего не сохранять.</string>
+  <string key="file.changed.overwrite">Перезаписать</string>
+  <string key="file.changed.reload">Перезагрузить</string>
   <string key="file.structure.title">Структура {base} изменена</string>
   <string key="file.structure.text">XML содержит {count} строк {base} вместо {expected}.
 
