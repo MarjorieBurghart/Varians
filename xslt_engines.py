@@ -124,6 +124,14 @@ def xslt_error_text(exc, xsl_path, log=()):
     return " ; ".join(parts)
 
 
+def source_tree(path):
+    """L'arbre lxml du fichier source d'un scénario : sans résoudre les
+    entités ni lire le réseau ; un document très imbriqué est lu (huge_tree,
+    red team 2, A10)."""
+    from lxml import etree
+    return etree.parse(str(path), etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=True))
+
+
 def run(request) -> TransformResult:
     """Exécute une requête de ``xslt_scenarios.scenario_request``."""
     start = time.perf_counter()
@@ -735,8 +743,7 @@ def _run_saxon(request, journal):
                 xslt_packages.prepare(package, folder, request.get("package_template"),
                                       request.get("package_fixstyle"), apply_xslt)
                 if tree is None:
-                    from lxml import etree
-                    tree = etree.parse(str(request["source"]))
+                    tree = source_tree(request["source"])
                 xslt_packages.copy_images(package, tree.getroot(), request["source"], folder, journal)
             except xslt_packages.PackageError as exc:
                 raise TransformError(exc.code, exc.detail) from exc

@@ -213,7 +213,26 @@ def _line_order(order, keys_by_segment, prefixes):
     return order
 
 
+# Profondeur de récursion permise le temps d'un export (red team 2, A10) :
+# les extracteurs parcourent le TEI récursivement ; un document de quelques
+# centaines de niveaux d'imbrication levait RecursionError. Depuis Python
+# 3.11, une récursion Python n'use plus la pile du système.
+EXPORT_RECURSION_LIMIT = 20000
+
+
 def build_dataset(project, display_witness_ids=None, text_mode=None, text_witness=None, highlight_nonlem=None):
+    """Les données du viewer (``data``) et les pages manquantes ; voir
+    ``_build_dataset``. La limite de récursion est relevée le temps de
+    l'export, puis rétablie."""
+    old_limit = sys.getrecursionlimit()
+    sys.setrecursionlimit(max(old_limit, EXPORT_RECURSION_LIMIT))
+    try:
+        return _build_dataset(project, display_witness_ids, text_mode, text_witness, highlight_nonlem)
+    finally:
+        sys.setrecursionlimit(old_limit)
+
+
+def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witness=None, highlight_nonlem=None):
     """Build an export without rewriting the project's scientific witness order.
 
     ``display_witness_ids`` is an optional ordered snapshot of the GUI's

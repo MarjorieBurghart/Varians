@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import time
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 
 from pathlib import Path
 
@@ -685,7 +686,7 @@ def publication_params():
     return {"langue": language, "catalogues": catalogs_uri(language)}
 
 
-def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
+def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False, cache=None):
     """Transformation XSLT 1.0 optimisée.
 
     Avec lxml, la feuille XSLT compilée est mise en cache tant que le fichier
@@ -696,25 +697,30 @@ def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
     Avec ``edit_markers`` (V0.9.2.9), la feuille est importée par l'enveloppe
     de ``fragment_units.edit_stylesheet`` : les éléments numérotés par
     ``mark_units`` reçoivent leur crayon ✎, quelle que soit la feuille.
+
+    *cache* : les feuilles compilées, propres à un fil (red team 2, A8) ; par
+    défaut, celles du fil de la fenêtre. Un document très imbriqué est lu
+    (huge_tree, red team 2, A10).
     """
+    cache = _LXML_TRANSFORM_CACHE if cache is None else cache
     try:
         from lxml import etree as LET
     except ImportError as exc:
         return _transform_without_lxml(xml_text, xsl_path, params, exc, edit_markers)
     try:
-        parser = LET.XMLParser(resolve_entities=False, no_network=True, recover=False)
+        parser = LET.XMLParser(resolve_entities=False, no_network=True, recover=False, huge_tree=True)
         xml_doc = LET.fromstring(xml_text.encode("utf-8"), parser=parser)
         xp = Path(xsl_path).resolve()
         st = xp.stat()
         cache_key = (str(xp), st.st_mtime_ns, st.st_size, bool(edit_markers))
-        transform = _LXML_TRANSFORM_CACHE.get(cache_key)
+        transform = cache.get(cache_key)
         if transform is None:
             # Une seule version compilée par chemin (avec ou sans crayons)
             # suffit ; jeter les anciennes si la feuille a été modifiée sur
             # disque.
-            for k in list(_LXML_TRANSFORM_CACHE):
+            for k in list(cache):
                 if k[0] == str(xp) and k[3] == cache_key[3]:
-                    _LXML_TRANSFORM_CACHE.pop(k, None)
+                    cache.pop(k, None)
             if edit_markers:
                 xsl_doc = LET.fromstring(edit_stylesheet(xp).encode("utf-8"), parser=parser,
                                          base_url=edit_stylesheet_url(xp))
@@ -728,7 +734,7 @@ def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
                 read_network=False, write_network=False,
             )
             transform = LET.XSLT(xsl_doc, access_control=access)
-            _LXML_TRANSFORM_CACHE[cache_key] = transform
+            cache[cache_key] = transform
         xslt_params = {str(k): LET.XSLT.strparam(str(v)) for k, v in (params or {}).items()}
         return str(transform(xml_doc, **xslt_params)), "lxml (XSLT en cache)"
     except Exception as exc:
@@ -737,6 +743,19 @@ def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
         # erreurs antérieures.
         log = exc.error_log if isinstance(exc, LET.XSLTError) else ()
         raise RuntimeError(_xslt_error_text(exc, xsl_path, log)) from exc
+
+
+def render_preview(xml_text, xsl_path, params, marker_title, cache=None, check=False):
+    """La partie lourde de l'aperçu, sans Qt ni état de la fenêtre :
+    ``(html, lignes cliquables, crayons, moteur)``. Avec *check*, le XML est
+    d'abord vérifié (ET.ParseError). Peut se faire hors du fil de la
+    fenêtre, avec son propre *cache* de feuilles compilées (red team 2, A8)."""
+    if check:
+        ET.fromstring(xml_text)
+    html_text, engine = transform_with_xslt(xml_text, xsl_path, params, edit_markers=True, cache=cache)
+    html_text, clickable_lines, _text_links = make_line_segments_clickable(html_text)
+    html_text, marked = place_edit_markers(html_text, marker_title)
+    return html_text, clickable_lines, marked, engine
 
 
 def _transform_without_lxml(xml_text, xsl_path, params, first_error, edit_markers=False):
@@ -787,6 +806,10 @@ def _transform_without_lxml(xml_text, xsl_path, params, first_error, edit_marker
 
 class FormattedEditionWidget(QWidget):
     """Vue XSLT/CSS + édition sûre du fragment TEI correspondant au paragraphe choisi."""
+
+    # Résultat d'une actualisation faite dans un autre fil (red team 2, A8),
+    # reçu dans celui de la fenêtre.
+    preview_job_done = Signal(object)
 
     def __init__(self, main_window):
         super().__init__(main_window)
@@ -1041,7 +1064,12 @@ class FormattedEditionWidget(QWidget):
         # Évite une retransformation de toute l'édition après chaque petite pause
         # de frappe. Le moteur PowerShell de secours est plus coûteux que lxml.
         self.preview_timer.setInterval(1800 if lxml_available() else 3200)
-        self.preview_timer.timeout.connect(self.refresh_preview)
+        self.preview_timer.timeout.connect(self._refresh_preview_in_background)
+        # Actualisation automatique hors du fil de la fenêtre (red team 2, A8).
+        self._preview_generation = 0
+        self._preview_executor = None
+        self._background_xslt_cache = {}
+        self.preview_job_done.connect(self._background_preview_done)
         self.xsl_btn.clicked.connect(self.choose_xslt)
         self.css_btn.clicked.connect(self.choose_css)
         self.refresh_btn.clicked.connect(self.refresh_preview)
@@ -1489,6 +1517,8 @@ class FormattedEditionWidget(QWidget):
 
     def source_changed(self):
         self.dirty_preview = True
+        # Un aperçu en cours dans un autre fil ne montre plus le texte.
+        self._preview_generation += 1
         # start() redémarre le timer : une saisie continue ne déclenche donc pas
         # de transformation intermédiaire. On attend une vraie pause de frappe.
         if self.auto_check.isChecked() and self.isVisible():
@@ -1529,43 +1559,128 @@ class FormattedEditionWidget(QWidget):
             self._cached_css_text = css
         return self._cached_css_text
 
-    def refresh_preview(self, force=False):
-        # Édition en parties (XInclude) : l'aperçu montre l'édition assemblée,
-        # quel que soit le document affiché ; ses éléments modifiables et ses
-        # lignes restent rattachés à leur fichier (V0.9.1.5). Chaque élément
-        # modifiable porte son rang (vx:edit), celui de son crayon ✎.
+    def _preview_inputs(self):
+        """Ce que l'aperçu transforme : ``(sources, texte, plages, noms)``.
+        Édition en parties (XInclude) : l'édition assemblée, quel que soit le
+        document affiché ; ses éléments modifiables et ses lignes restent
+        rattachés à leur fichier (V0.9.1.5). Chaque élément modifiable porte
+        son rang (vx:edit), celui de son crayon ✎."""
         names = self.main.fragment_unit_names()
         if self.main._edition_has_parts():
-            self.sources = self.main._assembled_preview_sources(names)
-            xml_text = (self.sources.text if self.sources is not None
+            sources = self.main._assembled_preview_sources(names)
+            xml_text = (sources.text if sources is not None
                         else self.main.edition_session.text_document.toPlainText())
-            spans = self.sources.paragraphs if self.sources is not None else ()
+            spans = sources.paragraphs if sources is not None else ()
         else:
-            self.sources = None
+            sources = None
             xml_text, spans = mark_units(self.main.editor.toPlainText(), names)
-        if not self.xsl_path.exists() or not self.css_path.exists():
-            self.info.setText(_t("preview.files_missing"))
-            self.info.setStyleSheet("color:#a14b2f")
-            return
+        return sources, xml_text, spans, names
 
+    def _preview_files_missing(self):
+        if self.xsl_path.exists() and self.css_path.exists():
+            return False
+        self.info.setText(_t("preview.files_missing"))
+        self.info.setStyleSheet("color:#a14b2f")
+        return True
+
+    def _preview_key(self, xml_text, names):
         # Empreinte légère : évite de reconstruire le gros QTextDocument quand
         # rien n'a changé (clic sur Actualiser, changement d'onglet, etc.).
         xml_digest = hashlib.blake2b(xml_text.encode("utf-8"), digest_size=12).hexdigest()
-        preview_key = (xml_digest, self._file_signature(self.xsl_path), self._file_signature(self.css_path), names)
-        if not force and preview_key == self._last_preview_key:
-            self.dirty_preview = False
-            engine = self._last_preview_engine or "cache"
-            self.info.setText(_t("preview.up_to_date", engine=engine))
-            self.info.setStyleSheet("color:#376b3c")
-            return
+        return (xml_digest, self._file_signature(self.xsl_path), self._file_signature(self.css_path), names)
 
+    def _preview_up_to_date(self):
+        self.dirty_preview = False
+        engine = self._last_preview_engine or "cache"
+        self.info.setText(_t("preview.up_to_date", engine=engine))
+        self.info.setStyleSheet("color:#376b3c")
+
+    def _preview_params(self):
+        return {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc"), **publication_params()}
+
+    def refresh_preview(self, force=False):
+        sources, xml_text, spans, names = self._preview_inputs()
+        self.sources = sources
+        if self._preview_files_missing():
+            return
+        preview_key = self._preview_key(xml_text, names)
+        if not force and preview_key == self._last_preview_key:
+            self._preview_up_to_date()
+            return
+        # Un aperçu en cours dans un autre fil est dépassé.
+        self._preview_generation += 1
         try:
             ET.fromstring(xml_text)
         except ET.ParseError as exc:
             self.info.setText(_t("preview.xml_invalid", error=exc))
             self.info.setStyleSheet("color:#a14b2f")
             return
+        started = time.perf_counter()
+        try:
+            rendered = render_preview(xml_text, self.xsl_path, self._preview_params(), _t("preview.edit_paragraph"))
+            self._show_preview(rendered, preview_key, names, spans, started)
+        except Exception as exc:
+            self.info.setText(_t("preview.transform_error", error=exc))
+            self.info.setStyleSheet("color:#a13d32")
 
+    def _refresh_preview_in_background(self):
+        """Actualisation automatique, après une pause de la frappe (red team
+        2, A8) : la transformation (0,85 s par Mo) se fait hors du fil de la
+        fenêtre, qui reste libre ; seul l'affichage du résultat s'y fait. Un
+        résultat dépassé (le texte a changé depuis, ou l'aperçu a été
+        actualisé autrement) est jeté."""
+        sources, xml_text, spans, names = self._preview_inputs()
+        if self._preview_files_missing():
+            return
+        preview_key = self._preview_key(xml_text, names)
+        if preview_key == self._last_preview_key:
+            self._preview_up_to_date()
+            return
+        self._preview_generation += 1
+        generation = self._preview_generation
+        xsl_path, params, title = self.xsl_path, self._preview_params(), _t("preview.edit_paragraph")
+        started = time.perf_counter()
+        cache = self._background_xslt_cache
+
+        def job():
+            try:
+                return "ok", render_preview(xml_text, xsl_path, params, title, cache=cache, check=True)
+            except ET.ParseError as exc:
+                return "xml", exc
+            except Exception as exc:
+                return "error", exc
+
+        def finished(future):
+            try:
+                self.preview_job_done.emit((generation, future.result(), sources, spans, names, preview_key, started))
+            except RuntimeError:
+                pass        # la vue a été fermée entre-temps
+
+        if self._preview_executor is None:
+            self._preview_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="varians-preview")
+        self._preview_executor.submit(job).add_done_callback(finished)
+
+    def _background_preview_done(self, payload):
+        generation, (status, value), sources, spans, names, preview_key, started = payload
+        if generation != self._preview_generation:
+            return
+        if status == "xml":
+            self.info.setText(_t("preview.xml_invalid", error=value))
+            self.info.setStyleSheet("color:#a14b2f")
+        elif status == "error":
+            self.info.setText(_t("preview.transform_error", error=value))
+            self.info.setStyleSheet("color:#a13d32")
+        else:
+            self.sources = sources
+            try:
+                self._show_preview(value, preview_key, names, spans, started)
+            except Exception as exc:
+                self.info.setText(_t("preview.transform_error", error=exc))
+                self.info.setStyleSheet("color:#a13d32")
+
+    def _show_preview(self, rendered, preview_key, names, spans, started):
+        """Affiche le résultat de ``render_preview``, à la même place."""
+        html_text, clickable_lines, marked, engine = rendered
         # Conserver une ancre sémantique plutôt qu’une simple valeur de scrollbar.
         # Une modification de fragment peut changer la hauteur/recomposition du HTML :
         # restaurer le même nombre de pixels ne ramène alors plus au même passage.
@@ -1574,48 +1689,37 @@ class FormattedEditionWidget(QWidget):
             old_anchor_line = self.preview.active_line_ordinal
         old_bar = self.preview.verticalScrollBar()
         old_ratio = (old_bar.value() / old_bar.maximum()) if old_bar.maximum() > 0 else 0.0
-        t0 = time.perf_counter()
-        try:
-            html_text, engine = transform_with_xslt(
-                xml_text, self.xsl_path,
-                {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc"), **publication_params()},
-                edit_markers=True)
-            html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
-            html_text, marked = place_edit_markers(html_text, _t("preview.edit_paragraph"))
-            css = self._resolved_css_cached()
+        css = self._resolved_css_cached()
 
-            # setHtml() et zoomIn()/zoomOut() n’ont pas des sémantiques identiques
-            # selon la nature des tailles CSS. Remettre explicitement le widget à
-            # sa base avant reconstruction rend le résultat déterministe.
-            self._normalize_preview_zoom_before_reload()
-            self.preview.document().setDefaultStyleSheet(css)
-            self.preview.setHtml(html_text)
-            self.preview.rebuild_line_markers()
-            self.unit_names = names
-            self._preview_applied_zoom_steps = 0
-            self._reapply_preview_zoom()
+        # setHtml() et zoomIn()/zoomOut() n’ont pas des sémantiques identiques
+        # selon la nature des tailles CSS. Remettre explicitement le widget à
+        # sa base avant reconstruction rend le résultat déterministe.
+        self._normalize_preview_zoom_before_reload()
+        self.preview.document().setDefaultStyleSheet(css)
+        self.preview.setHtml(html_text)
+        self.preview.rebuild_line_markers()
+        self.unit_names = names
+        self._preview_applied_zoom_steps = 0
+        self._reapply_preview_zoom()
 
-            def restore_preview_position(line=old_anchor_line, ratio=old_ratio):
-                if line is not None and self.preview.scroll_to_line(int(line), center=True):
-                    return
-                bar = self.preview.verticalScrollBar()
-                if bar.maximum() > 0:
-                    bar.setValue(int(round(ratio * bar.maximum())))
+        def restore_preview_position(line=old_anchor_line, ratio=old_ratio):
+            if line is not None and self.preview.scroll_to_line(int(line), center=True):
+                return
+            bar = self.preview.verticalScrollBar()
+            if bar.maximum() > 0:
+                bar.setValue(int(round(ratio * bar.maximum())))
 
-            call_later(0, self, restore_preview_position)
-            self.dirty_preview = False
-            self._last_preview_key = preview_key
-            self._last_preview_engine = engine
-            elapsed = time.perf_counter() - t0
-            if clickable_lines:
-                self.info.setText(_t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans), lines=clickable_lines))
-                self.info.setStyleSheet("color:#376b3c")
-            else:
-                self.info.setText(_t("preview.updated.timed.no_lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans)))
-                self.info.setStyleSheet("color:#9a6a2f")
-        except Exception as exc:
-            self.info.setText(_t("preview.transform_error", error=exc))
-            self.info.setStyleSheet("color:#a13d32")
+        call_later(0, self, restore_preview_position)
+        self.dirty_preview = False
+        self._last_preview_key = preview_key
+        self._last_preview_engine = engine
+        elapsed = time.perf_counter() - started
+        if clickable_lines:
+            self.info.setText(_t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans), lines=clickable_lines))
+            self.info.setStyleSheet("color:#376b3c")
+        else:
+            self.info.setText(_t("preview.updated.timed.no_lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans)))
+            self.info.setStyleSheet("color:#9a6a2f")
 
     def _activate_line(self, idx, move_xml_cursor=True):
         """Repère de ligne ``idx`` de l'aperçu : le curseur de la source et les
