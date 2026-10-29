@@ -230,6 +230,8 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="publication.critique.call_apparatus">Aparát {n}</string>
   <string key="publication.critique.call_note">Poznámka {n}</string>
   <string key="publication.critique.back">Zpět k textu</string>
+  <string key="publication.critique.front_matter">Úvodní část</string>
+  <string key="publication.critique.back_matter">Přílohy</string>
   <string key="publication.reference">[odkaz]</string>
   <string key="publication.caesura">Cezura</string>
   <string key="publication.unclear">Nejisté čtení</string>

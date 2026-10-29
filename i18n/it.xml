@@ -230,6 +230,8 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="publication.critique.call_apparatus">Apparato {n}</string>
   <string key="publication.critique.call_note">Nota {n}</string>
   <string key="publication.critique.back">Torna al testo</string>
+  <string key="publication.critique.front_matter">Parti introduttive</string>
+  <string key="publication.critique.back_matter">Appendici</string>
   <string key="publication.reference">[riferimento]</string>
   <string key="publication.caesura">Cesura</string>
   <string key="publication.unclear">Lettura incerta</string>

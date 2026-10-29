@@ -216,6 +216,8 @@
   <string key="publication.critique.call_apparatus">Apparat {n}</string>
   <string key="publication.critique.call_note">Note {n}</string>
   <string key="publication.critique.back">Retour au texte</string>
+  <string key="publication.critique.front_matter">Préliminaires</string>
+  <string key="publication.critique.back_matter">Annexes</string>
   <string key="publication.reference">[référence]</string>
   <string key="publication.caesura">Césure</string>
   <string key="publication.unclear">Lecture incertaine</string>

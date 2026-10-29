@@ -230,6 +230,8 @@
   <string key="publication.critique.call_apparatus">校異 {n}</string>
   <string key="publication.critique.call_note">注 {n}</string>
   <string key="publication.critique.back">本文に戻る</string>
+  <string key="publication.critique.front_matter">前付け</string>
+  <string key="publication.critique.back_matter">後付け</string>
   <string key="publication.reference">［参照］</string>
   <string key="publication.caesura">中間休止</string>
   <string key="publication.unclear">不確かな読み</string>

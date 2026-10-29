@@ -230,6 +230,8 @@
   <string key="publication.critique.call_apparatus">Аппарат {n}</string>
   <string key="publication.critique.call_note">Примечание {n}</string>
   <string key="publication.critique.back">Вернуться к тексту</string>
+  <string key="publication.critique.front_matter">Вступительная часть</string>
+  <string key="publication.critique.back_matter">Приложения</string>
   <string key="publication.reference">[ссылка]</string>
   <string key="publication.caesura">Цезура</string>
   <string key="publication.unclear">Неуверенное прочтение</string>

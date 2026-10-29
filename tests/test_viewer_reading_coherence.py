@@ -141,3 +141,16 @@ def test_the_pivot_is_named_with_its_own_phrases():
         assert "{count}" in keys["viewer.text.missing_pivot"] and keys["viewer.text.witness_pivot"]
     french = {s.get("key"): s.text for s in XET.parse(ROOT / "i18n" / "fr.xml").getroot()}
     assert french["viewer.text.missing_pivot"].startswith("{count} passage(s) sans leçon du témoin pivot")
+
+
+def test_renditions_of_hi_follow_the_rule_of_the_critical_edition():
+    """C13 : les mêmes rendus que dans l'Édition critique : @rend et @style,
+    en anglais ou en français (italique, gras, souligne, petites-capitales,
+    exposant, indice)."""
+    reading = _reading('<p>a <hi rend="gras souligne">b</hi> c <hi style="font-style:italic">d</hi> e '
+                       '<hi rend="petites-capitales">f</hi> g <hi rend="exposant">h</hi> i <hi rend="indice">j</hi>'
+                       ' k <hi rend="small-caps">l</hi> m <hi style="vertical-align:super">n</hi></p>')
+    styles = {seg["text"]: seg.get("styles") for block in reading["blocks"] for seg in block["segments"]
+              if seg["kind"] == "text" and seg["text"].strip() in "bdfhjln"}
+    assert [styles[x] for x in "bdfhjln"] == [["bold", "underline"], ["italic"], ["smallcaps"], ["sup"], ["sub"],
+                                              ["smallcaps"], ["sup"]]

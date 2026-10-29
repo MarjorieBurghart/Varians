@@ -240,22 +240,24 @@ SPACED_IN_READING = frozenset({"l", "lg", "p", "ab", "head", "item"})
 TRANSCRIPTION_STYLES = {"del": "del", "surplus": "del", "add": "add", "unclear": "unclear"}
 
 
-def hi_styles(rend: str | None):
-    """Styles d'un ``<hi rend>`` : italic, bold, smallcaps, sup, sub, underline."""
-    rend = (rend or "").lower()
-    tokens = set(re.split(r"[\s,;]+", rend))
+def hi_styles(node):
+    """Styles d'un ``<hi>`` : italic, bold, smallcaps, sup, sub, underline,
+    lus dans ``@rend`` et ``@style``, en anglais ou en français, comme dans
+    « Édition critique » (red team 2, C13)."""
+    rend = " ".join(filter(None, (node.attrib.get("rend"), node.attrib.get("style")))).lower()
+    tokens = set(re.split(r"[\s,;:]+", rend))
     styles = []
-    if "italic" in rend or "italics" in rend:
+    if "italic" in rend or "italique" in rend:
         styles.append("italic")
-    if "bold" in rend:
+    if "bold" in rend or "gras" in rend:
         styles.append("bold")
-    if "smallcaps" in rend or "small-caps" in rend:
+    if re.search(r"small-?caps|petites-capitales", rend):
         styles.append("smallcaps")
-    if tokens & {"sup", "superscript", "super"}:
+    if tokens & {"sup", "superscript", "super", "exposant"}:
         styles.append("sup")
-    if tokens & {"sub", "subscript"}:
+    if tokens & {"sub", "subscript", "indice"}:
         styles.append("sub")
-    if "underline" in rend:
+    if "underline" in rend or "souligne" in rend:
         styles.append("underline")
     return styles
 
@@ -379,7 +381,7 @@ def _reading_tokens(element, choose, wit, skip_notes, roman=True, describe=None)
             children(node, styles)
             text(" ", ())
         elif tag == "hi":
-            children(node, [*styles, *(s for s in hi_styles(node.attrib.get("rend")) if not roman or s != "italic")])
+            children(node, [*styles, *(s for s in hi_styles(node) if not roman or s != "italic")])
         elif tag in {"emph", "title", "foreign"} and not roman:
             children(node, [*styles, "italic"])
         elif tag in TRANSCRIPTION_STYLES:
@@ -1268,7 +1270,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         styles = list(inherited)
         tag = lname(node.tag)
         if tag == "hi":
-            styles.extend(hi_styles(node.attrib.get("rend")))
+            styles.extend(hi_styles(node))
         elif tag in {"del", "surplus"}:
             styles.append("del")
         elif tag == "add":

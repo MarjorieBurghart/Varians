@@ -230,6 +230,8 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="publication.critique.call_apparatus">Apparat {n}</string>
   <string key="publication.critique.call_note">Anmerkung {n}</string>
   <string key="publication.critique.back">Zurück zum Text</string>
+  <string key="publication.critique.front_matter">Vorspann</string>
+  <string key="publication.critique.back_matter">Anhang</string>
   <string key="publication.reference">[Verweis]</string>
   <string key="publication.caesura">Zäsur</string>
   <string key="publication.unclear">Unsichere Lesung</string>

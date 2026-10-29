@@ -19,7 +19,10 @@
   - Sauts de ligne : des <lb> contigus (de plusieurs témoins) sont une
     seule coupure, qui soude un mot si l'un d'eux porte break="no".
   - Sigles (Varians 0.9.2.8.2) : celui du <idno type="siglum"> du témoin
-    dans <listWit>, sinon son identifiant.
+    dans <listWit>, sinon son identifiant ; une leçon sans témoin est
+    « éd. », dans la langue demandée (Varians 0.9.3.4).
+  - Folios d'une leçon non retenue (Varians 0.9.3.4) : ceux du témoin
+    choisi sont gardés (f:folios-ecartes).
 
   Les deux feuilles mettent en forme ce que donne f:apparat (une map) :
   retenue (la leçon retenue, ou rien), lemme (montrer « leçon ] »),
@@ -66,6 +69,9 @@
     <string key="publication.critique.call_apparatus">Apparat {n}</string>
     <string key="publication.critique.call_note">Note {n}</string>
     <string key="publication.critique.back">Retour au texte</string>
+    <string key="publication.critique.front_matter">Préliminaires</string>
+    <string key="publication.critique.back_matter">Annexes</string>
+    <string key="publication.editor_siglum">éd.</string>
     <string key="publication.reference">[référence]</string>
     <string key="publication.caesura">Césure</string>
     <string key="publication.unclear">Lecture incertaine</string>
@@ -170,7 +176,8 @@
   <xsl:function name="f:sigles" as="xs:string">
     <xsl:param name="lecon" as="element()?"/>
     <xsl:variable name="sigles" select="f:wit($lecon)"/>
-    <xsl:sequence select="if (empty($sigles)) then 'éd.' else string-join($sigles ! f:sigle(.), ' ')"/>
+    <xsl:sequence select="if (empty($sigles)) then f:libelle('publication.editor_siglum')
+                          else string-join($sigles ! f:sigle(.), ' ')"/>
   </xsl:function>
 
   <!-- Le texte d'une leçon, hors des notes qu'elle contient (elle peut
@@ -225,6 +232,26 @@
     <xsl:param name="pb" as="element()"/>
     <xsl:sequence select="$f:sans-temoin or normalize-space($pb/@edRef) = ''
       or $f:temoin = (tokenize(normalize-space($pb/@edRef), '\s+') ! replace(., '^.*#', ''))"/>
+  </xsl:function>
+
+  <!-- Les <pb> à montrer des leçons non retenues d'un apparat (red team 2) :
+       ceux du témoin choisi (par @edRef, sinon par les témoins de leur
+       leçon) ; tous avec « aucun ». Ils ne sont pas perdus avec leur leçon. -->
+  <xsl:function name="f:folios-ecartes" as="element()*">
+    <xsl:param name="a" as="element(tei:app)"/>
+    <xsl:param name="retenue" as="element()?"/>
+    <xsl:sequence select="f:lecons($a)[not(. is $retenue)]//tei:pb[$f:sans-temoin
+      or (if (normalize-space(@edRef) != '')
+          then $f:temoin = (tokenize(normalize-space(@edRef), '\s+') ! replace(., '^.*#', ''))
+          else f:porte-temoin(ancestor::*[self::tei:lem or self::tei:rdg][1], $f:temoin))]"/>
+  </xsl:function>
+  <!-- Un tel <pb> précède-t-il tout texte de sa leçon ? Son folio est alors
+       placé avant le texte de l'apparat, sinon après. -->
+  <xsl:function name="f:folio-en-tete" as="xs:boolean">
+    <xsl:param name="pb" as="element()"/>
+    <xsl:param name="a" as="element(tei:app)"/>
+    <xsl:variable name="lecon" select="$pb/ancestor::*[(self::tei:lem or self::tei:rdg) and ancestor::tei:app[1] is $a]"/>
+    <xsl:sequence select="empty($lecon//text()[. &lt;&lt; $pb][normalize-space()][not(ancestor::tei:note)])"/>
   </xsl:function>
 
   <xsl:function name="f:folio" as="xs:string">
