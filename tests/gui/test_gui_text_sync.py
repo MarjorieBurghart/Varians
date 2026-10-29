@@ -187,3 +187,20 @@ def test_saving_a_text_checks_its_own_lines(open_window, example_with_text, dial
     dialogs.expect("warning", QMessageBox.StandardButton.Cancel)
     assert not window.save()
     assert dialogs.seen[-1][2] == tr("file.structure.text", count=166, base="T1", expected=165)
+
+
+def test_a_witness_without_data_for_the_edition_says_so(open_window, corpus_project):
+    """Red team 2 (D5) : B, D et E n'ont pas de données pour l'édition (s01,
+    s03), seulement pour des textes à part. Le viewer web le disait ; le
+    bureau montrait un panneau vide, sans message."""
+    window = open_window(corpus_project)
+    window.show_document(_doc(window, "s01.xml"))
+    for wid in ("B", "D", "E"):
+        panel = window.panels[wid]
+        assert panel.absent_key == "manuscript.text_absent", wid
+        assert panel.message.text() == tr("manuscript.text_absent") and not panel.message.isHidden()
+    assert window.panels["C"].absent_key is None and window.panels["C"].items
+    window.show_document(_doc(window, "s02.xml"))
+    assert window.panels["B"].absent_key is None and window.panels["D"].absent_key is None
+    window.show_document(_doc(window, "s03.xml"))                 # retour à l'édition
+    assert [window.panels[w].absent_key for w in "BDE"] == ["manuscript.text_absent"] * 3

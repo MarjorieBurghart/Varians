@@ -155,7 +155,8 @@ def test_html_embeds_offline_geometry_and_escapes_user_title():
 
 
 def test_local_assets_are_packaged_or_explicitly_flagged(tmp_path):
-    img=tmp_path/'present.png';img.write_bytes(b'valid copy placeholder')
+    # Une signature PNG : seules les images sont copiées (V0.9.3.3, red team D2).
+    img=tmp_path/'present.png';img.write_bytes(b'\x89PNG\r\n\x1a\nvalid copy placeholder')
     data={'meta':{},'witnesses':[{'id':'W','pages':[
         {'id':'p1','image':{'type':'file','path':str(img)}},
         {'id':'p2','image':{'type':'file','path':str(tmp_path/'absent.png')}},

@@ -183,6 +183,34 @@ class SearchResultsMixin:
         table.setColumnHidden(0, not project)
         shown = results[:MAX_RESULTS]
         table.setRowCount(len(shown))
+        # Les colonnes à la taille de leur contenu sont mesurées une fois,
+        # après le remplissage : mesurées à chaque cellule posée, elles
+        # rendaient le remplissage quadratique (red team 2, A1).
+        header = table.horizontalHeader()
+        fitted = [column for column in range(table.columnCount())
+                  if header.sectionResizeMode(column) == QHeaderView.ResizeMode.ResizeToContents]
+        for column in fitted:
+            header.setSectionResizeMode(column, QHeaderView.ResizeMode.Interactive)
+        table.setUpdatesEnabled(False)
+        try:
+            self._fill_search_results(table, shown)
+        finally:
+            for column in fitted:
+                header.setSectionResizeMode(column, QHeaderView.ResizeMode.ResizeToContents)
+            table.setUpdatesEnabled(True)
+        if error is not None:
+            summary = search_error_text(error)
+        elif project:
+            summary = _t("results.summary.project", count=len(results), query=query, documents=documents)
+        else:
+            summary = _t("results.summary", count=len(results), query=query)
+        if len(results) > len(shown):
+            summary += " — " + _t("results.truncated", shown=len(shown))
+        self.search_results_summary.setText(summary)
+
+    def _fill_search_results(self, table, shown):
+        """Une ligne de *table* par résultat de *shown* (``(document, ligne
+        KWIC)``)."""
         mono = QFont(self.editor.font())
         bold = QFont(mono)
         bold.setBold(True)
@@ -203,15 +231,6 @@ class SearchResultsMixin:
                     item.setBackground(QColor("#fff000"))
                     item.setForeground(QColor("#17120b"))
                 table.setItem(index, column, item)
-        if error is not None:
-            summary = search_error_text(error)
-        elif project:
-            summary = _t("results.summary.project", count=len(results), query=query, documents=documents)
-        else:
-            summary = _t("results.summary", count=len(results), query=query)
-        if len(results) > len(shown):
-            summary += " — " + _t("results.truncated", shown=len(shown))
-        self.search_results_summary.setText(summary)
 
     def goto_search_result(self, row, _column=0):
         if not 0 <= row < len(self._search_results):

@@ -34,6 +34,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+import xslt_engines
 from xslt_engines import TransformResult, check, run
 
 _APPLICATION_DIR = Path(__file__).resolve().parent
@@ -101,7 +102,15 @@ def serve(input_fd=0, output_fd=1):
         result = TransformResult(False, error_code="internal", error=f"invalid JSON: {exc}")
     else:
         if isinstance(request, dict):
-            result = check(request) if request.get("op") == "check" else run(request)
+            # Vérifier une feuille ne consulte pas le réseau (red team, B5) ;
+            # appelée hors du processus de transformation (tests), le réglage
+            # précédent est ensuite rendu.
+            previous = xslt_engines.CHECKS_LOCAL_ONLY
+            xslt_engines.CHECKS_LOCAL_ONLY = request.get("op") == "check"
+            try:
+                result = check(request) if request.get("op") == "check" else run(request)
+            finally:
+                xslt_engines.CHECKS_LOCAL_ONLY = previous
         else:
             result = TransformResult(False, error_code="internal", error="request must be a JSON object")
     answer = dict(result.to_dict(), qt_loaded="PySide6" in sys.modules)

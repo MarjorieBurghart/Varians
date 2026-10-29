@@ -12,12 +12,13 @@ seconde copie, avec ses propres traductions.
 from __future__ import annotations
 
 from pathlib import Path
+import os
 
 import shiboken6
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QSettings, QTimer, QTranslator
 
 HERE = Path(__file__).resolve().parent
-APP_VERSION = "0.9.3.2"
+APP_VERSION = "0.9.3.4"
 
 # --- Traductions --------------------------------------------------------------
 
@@ -34,7 +35,7 @@ def current_i18n():
     return _i18n
 
 
-def tr(key, default=None, **values):
+def tr(key, /, default=None, **values):
     """Texte traduit dans la langue active (équivalent de ``_t``)."""
     return _i18n.tr(key, default=default, **values)
 
@@ -136,6 +137,57 @@ def remove_recent_project(path):
 
 def clear_recent_projects():
     _settings().remove("recentProjects")
+
+
+# Réponses de l'utilisatrice mémorisées (red team, B2) : règles Schematron
+# hors du projet, par fichier ; schémas distants, par site.
+_ALLOWED_RULES, _REFUSED_RULES = "schematron/allowedRules", "schematron/refusedRules"
+_ALLOWED_SITES, _REFUSED_SITES = "schemas/allowedSites", "schemas/refusedSites"
+
+
+def _rules_key(path):
+    return os.path.normcase(str(Path(path).expanduser().resolve()))
+
+
+def _settings_list(settings, name):
+    value = settings.value(name, [])
+    return [value] if isinstance(value, str) else [str(item) for item in value or []]
+
+
+def _choice(allowed, refused, key):
+    settings = _settings()
+    if key in _settings_list(settings, allowed):
+        return True
+    if key in _settings_list(settings, refused):
+        return False
+    return None
+
+
+def _remember_choice(allowed, refused, key, accepted):
+    settings = _settings()
+    for name, keep in ((allowed, accepted), (refused, not accepted)):
+        values = [value for value in _settings_list(settings, name) if value != key]
+        settings.setValue(name, values + [key] if keep else values)
+
+
+def rules_choice(path):
+    """True si les règles Schematron du fichier *path* ont été acceptées,
+    False si elles ont été refusées, None sans réponse."""
+    return _choice(_ALLOWED_RULES, _REFUSED_RULES, _rules_key(path))
+
+
+def remember_rules_choice(path, allowed):
+    _remember_choice(_ALLOWED_RULES, _REFUSED_RULES, _rules_key(path), allowed)
+
+
+def site_choice(site):
+    """True si les schémas du site *site* (nom d'hôte) peuvent être
+    téléchargés, False si c'est refusé, None sans réponse."""
+    return _choice(_ALLOWED_SITES, _REFUSED_SITES, str(site).lower())
+
+
+def remember_site_choice(site, allowed):
+    _remember_choice(_ALLOWED_SITES, _REFUSED_SITES, str(site).lower(), allowed)
 
 
 def last_open_project_path():

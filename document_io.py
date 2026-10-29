@@ -4,15 +4,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app_context import call_later, HERE, tr as _t
-from save_io import atomic_write_text_with_backup
-from xml_assembly import find_includes
+from document_session import file_stamp, protect_paragraph_separators
+from save_io import ReadOnlyFileError, atomic_write_text_with_backup, declared_encoding, is_utf8
+from xml_assembly import find_includes, path_key
 
 
 class DocumentIOMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
+
+    def _report_paragraph_separators(self, path):
+        """Les U+2029 d'un fichier ouvert sont écrits &#x2029; (red team 2, B2)."""
+        QMessageBox.information(self, _t("file.paragraph_separator.title"),
+                                _t("file.paragraph_separator", file=Path(path).name))
 
     def open_path(self,path):
         # Un changement de document invalide immédiatement tous les diagnostics
@@ -21,6 +28,9 @@ class DocumentIOMixin:
             self._reset_validation_state()
         try: text=Path(path).read_text(encoding="utf-8")
         except Exception as exc: QMessageBox.critical(self,_t("file.open.error.title"),str(exc)); return
+        text, separators = protect_paragraph_separators(text)
+        if separators:
+            call_later(0, self, lambda p=Path(path): self._report_paragraph_separators(p))
         self._loading_editor_document = True
         try:
             self.editor.blockSignals(True)
@@ -61,7 +71,72 @@ class DocumentIOMixin:
         box.exec()
         return box.clickedButton() is save_btn
 
+    def _confirm_external_change(self, path):
+        """Avant d'écrire *path*, le fichier affiché : s'il a changé sur le
+        disque depuis sa lecture ou son dernier enregistrement (red team,
+        A3), Écraser, Recharger (les modifications faites dans Varians sont
+        abandonnées) ou Annuler. Renvoie True pour l'écrire."""
+        session = self.document
+        known = session.disk_stamp
+        if known is None or session.path is None or path_key(path) != path_key(session.path):
+            return True
+        current = file_stamp(path)
+        if current is None or current == known:
+            return True
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle(_t("file.changed.title"))
+        box.setText(_t("file.changed.text", path=path))
+        overwrite_btn = box.addButton(_t("file.changed.overwrite"), QMessageBox.ButtonRole.AcceptRole)
+        reload_btn = box.addButton(_t("file.changed.reload"), QMessageBox.ButtonRole.DestructiveRole)
+        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(cancel_btn)
+        box.setEscapeButton(cancel_btn)
+        box.exec()
+        if box.clickedButton() is overwrite_btn:
+            return True
+        if box.clickedButton() is reload_btn:
+            self.open_path(path)
+            if self.document.in_edition:
+                self._refresh_parts()
+        return False
+
+    def _confirm_utf8_declaration(self):
+        """Varians enregistre en UTF-8 : un document qui déclare un autre
+        encodage (red team, A4) voit sa déclaration corrigée, après accord ;
+        sans accord, il n'est pas enregistré. Renvoie True pour
+        l'enregistrer."""
+        text = self.editor.toPlainText()
+        declared = declared_encoding(text)
+        if declared is None or is_utf8(declared.name):
+            return True
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle(_t("file.encoding.title"))
+        box.setText(_t("file.encoding.text", encoding=declared.name))
+        fix_btn = box.addButton(_t("file.encoding.fix"), QMessageBox.ButtonRole.AcceptRole)
+        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(fix_btn)
+        box.setEscapeButton(cancel_btn)
+        box.exec()
+        if box.clickedButton() is not fix_btn:
+            return False
+        qt = self.editor.positions(text)
+        cursor = QTextCursor(self.editor.document())
+        cursor.setPosition(qt.qt(declared.start))
+        cursor.setPosition(qt.qt(declared.end), QTextCursor.MoveMode.KeepAnchor)
+        cursor.insertText("UTF-8")
+        return True
+
     def _write_to(self,path):
+        # Fichier modifié hors de Varians depuis sa lecture (red team, A3).
+        if not self._confirm_external_change(Path(path)):
+            return False
+        # Encodage déclaré autre que UTF-8 (red team, A4).
+        if not self._confirm_utf8_declaration():
+            return False
         # Un seul instantané du document pour toute la sauvegarde.
         text = self.editor.toPlainText()
         revision = self.editor.document().revision()
@@ -120,6 +195,10 @@ class DocumentIOMixin:
         try:
             path=Path(path)
             atomic_write_text_with_backup(path, text, encoding="utf-8")
+        except ReadOnlyFileError:
+            QMessageBox.critical(self, _t("file.save.error.title"),
+                                 _t("file.save.read_only", path=path, menu=_t("menu.file"), command=_t("toolbar.save_as")))
+            return False
         except Exception as exc:
             QMessageBox.critical(self,_t("file.save.error.title"),str(exc)); return False
         self.document.mark_saved(path)

@@ -124,7 +124,19 @@ def handle_request(request):
 
 
 def serve(input_fd=0, output_fd=1):
-    """Répond à chaque ligne reçue jusqu'à la fin de l'entrée."""
+    """Répond à chaque ligne reçue jusqu'à la fin de l'entrée. Les règles
+    Schematron n'y consultent pas le réseau (red team, B2, B5) ; appelée
+    hors du processus de validation (tests), elle rend ensuite le réglage
+    précédent."""
+    import schematron
+    previous, schematron.LOCAL_ONLY = schematron.LOCAL_ONLY, True
+    try:
+        return _serve(input_fd, output_fd)
+    finally:
+        schematron.LOCAL_ONLY = previous
+
+
+def _serve(input_fd, output_fd):
     reader = os.fdopen(input_fd, "rb", closefd=False)
     writer = os.fdopen(output_fd, "wb", closefd=False)
     for line in reader:

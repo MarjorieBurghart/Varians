@@ -1,4 +1,4 @@
-VARIANS V0.9.3.2 — ÉDITEUR XML TEI POUR L'ECDOTIQUE
+VARIANS V0.9.3.4 — ÉDITEUR XML TEI POUR L'ECDOTIQUE
 
 Varians est un éditeur XML pour l'édition critique de textes transmis par des
 manuscrits, encodés en TEI. Il réunit dans une même fenêtre la transcription,

@@ -66,6 +66,10 @@ class DummyMain:
     def _displayed_schematron(self):
         return None
 
+    # Schémas distants (red team, B2) : aucun site demandé ici.
+    def _schema_site_policy(self, **options):
+        return None
+
     def __init__(self):
         self.doc = DummyDoc()
         self.editor = SimpleNamespace(document=lambda: self.doc)

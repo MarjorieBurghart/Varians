@@ -19,11 +19,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import re
-import xml.etree.ElementTree as ET
+
+from lxml import etree
 
 from xml_tag_pairs import XmlTagToken, scan_xml_tags
 
 _XML_SPACE_RE = re.compile(r"\bxml:space\s*=\s*(['\"])(.*?)\1", re.S | re.I)
+_XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
+# Les seuls blancs XML : espace, tabulation, retour chariot, saut de ligne.
+# Une espace insécable ou idéographique est du texte (red team 2, B1).
+_XML_BLANKS_RE = re.compile(r"[ \t\r\n]*")
+
+
+def _is_blank(text: str) -> bool:
+    return _XML_BLANKS_RE.fullmatch(text) is not None
 
 
 def _local_qname(name: str) -> str:
@@ -36,6 +45,9 @@ class _Node:
     opening: XmlTagToken
     closing: XmlTagToken | None = None
     children: list["_Node"] = field(default_factory=list)
+    # Valeur de xml:space dans l'arbre XML (valeurs par défaut du DTD
+    # comprises), None si l'arbre n'a pas pu être apparié.
+    xml_space: str | None = None
 
     @property
     def self_closing(self) -> bool:
@@ -81,11 +93,29 @@ class FormatResult:
         return pos + delta
 
 
+# Analyse de contrôle : entités non résolues, ni réseau ; valeurs par défaut
+# des attributs du DTD ; documents profonds ou volumineux acceptés. Le texte
+# est donné en UTF-8, quel que soit l'encodage qu'il déclare.
+def _parser(attribute_defaults=True):
+    return etree.XMLParser(encoding="utf-8", resolve_entities=False, no_network=True, huge_tree=True,
+                           attribute_defaults=attribute_defaults, remove_blank_text=False)
+
+
+def _parse(text: str):
+    """L'arbre XML de *text* ; un DTD externe qui ne peut pas être lu (en
+    ligne, par exemple) prive seulement des valeurs par défaut qu'il donne."""
+    data = text.encode("utf-8")
+    try:
+        return etree.fromstring(data, _parser())
+    except etree.XMLSyntaxError:
+        return etree.fromstring(data, _parser(attribute_defaults=False))
+
+
 def _build_tree(xml_text: str) -> tuple[_Node | None, str]:
     """Construit l'arbre lexical des éléments après contrôle de bonne formation."""
     text = str(xml_text or "")
     try:
-        ET.fromstring(text)
+        document = _parse(text)
     except Exception as exc:
         return None, str(exc)
 
@@ -107,7 +137,24 @@ def _build_tree(xml_text: str) -> tuple[_Node | None, str]:
             stack.pop()
     if stack or len(roots) != 1:
         return None, "structure XML incomplète"
+    _attach_xml_space(roots[0], document)
     return roots[0], ""
+
+
+def _attach_xml_space(root: _Node, document) -> None:
+    """Les éléments lexicaux et ceux de l'arbre XML se suivent dans le même
+    ordre : chaque nœud reçoit son xml:space (red team 2, B7). Si les deux
+    listes diffèrent, rien n'est attaché (lecture de la balise, plus bas)."""
+    elements = [element for element in document.iter() if isinstance(element.tag, str)]
+    nodes, pending = [], [root]
+    while pending:
+        node = pending.pop()
+        nodes.append(node)
+        pending.extend(reversed(node.children))
+    if len(nodes) != len(elements):
+        return
+    for node, element in zip(nodes, elements):
+        node.xml_space = element.get(_XML_SPACE) or ""
 
 
 def _xml_space_preserve(raw_opening: str) -> bool:
@@ -175,23 +222,27 @@ def format_tei_xml(xml_text: str, *, rng_model=None, custom_config=None, indent:
     formatted_nodes: set[int] = set()
     protected = 0
 
-    def visit(node: _Node, depth: int, inherited_preserve: bool = False, inherited_inline: bool = False):
-        nonlocal protected
+    # Parcours sans récursion : une imbrication de milliers de niveaux ne
+    # lève pas RecursionError (red team 2, A10).
+    pending: list[tuple[_Node, int, bool]] = [(root, 0, False)]
+    while pending:
+        node, depth, inherited_inline = pending.pop()
         if node.self_closing or node.closing is None:
-            return
+            continue
 
-        raw_open = text[node.opening.start:node.opening.end]
-        own_xml_preserve = _xml_space_preserve(raw_open)
+        if node.xml_space is not None:
+            own_xml_preserve = node.xml_space.strip() == "preserve"
+        else:
+            own_xml_preserve = _xml_space_preserve(text[node.opening.start:node.opening.end])
         custom_mode = _custom_formatting(custom_config, node.name)
 
         # xml:space=preserve et formatting=preserve protègent tout le sous-arbre.
-        subtree_preserve = inherited_preserve or own_xml_preserve or custom_mode == "preserve"
-        if subtree_preserve:
+        if own_xml_preserve or custom_mode == "preserve":
             protected += 1
-            return
+            continue
 
         gaps = _direct_gaps(text, node)
-        direct_nonwhite_text = any(chunk.strip() for _, _, chunk in gaps)
+        direct_nonwhite_text = any(not _is_blank(chunk) for _, _, chunk in gaps)
         direct_special_markup = any("<" in chunk for _, _, chunk in gaps)
         has_direct_lb = any(_local_qname(child.name) == "lb" for child in node.children)
         has_direct_inline_override = any(
@@ -226,8 +277,8 @@ def format_tei_xml(xml_text: str, *, rng_model=None, custom_config=None, indent:
             changed_this_node = False
             for (start, end, old_gap), desired in zip(gaps, desired_gaps):
                 # Les gaps sont déjà connus sans texte significatif. Par sécurité,
-                # ne réécrire que du blanc pur.
-                if old_gap.strip() or old_gap == desired:
+                # ne réécrire que des blancs XML.
+                if not _is_blank(old_gap) or old_gap == desired:
                     continue
                 replacements.append(FormatReplacement(start, end, desired))
                 changed_this_node = True
@@ -241,20 +292,23 @@ def format_tei_xml(xml_text: str, *, rng_model=None, custom_config=None, indent:
         # l'éditeur. Une simple ambiguïté RNG, en revanche, n'interdit pas aux
         # enfants de se classifier eux-mêmes.
         child_inline = inherited_inline or actual_inline or schema_inline
-        for child in node.children:
-            visit(child, depth + 1, False, child_inline)
+        for child in reversed(node.children):
+            pending.append((child, depth + 1, child_inline))
 
-    visit(root, 0)
-
-    # Les gaps de niveaux différents sont disjoints. On applique en ordre
-    # décroissant pour conserver les offsets calculés dans le texte original.
+    # Les gaps de niveaux différents sont disjoints : le texte formaté est
+    # assemblé en un seul passage (red team 2, A4 : une copie du texte par
+    # remplacement coûtait le carré de leur nombre).
     unique: dict[tuple[int, int], FormatReplacement] = {}
     for repl in replacements:
         unique[(repl.start, repl.end)] = repl
     ordered = tuple(sorted(unique.values(), key=lambda r: r.start))
-    out = text
-    for repl in reversed(ordered):
-        out = out[:repl.start] + repl.text + out[repl.end:]
+    pieces, cursor = [], 0
+    for repl in ordered:
+        pieces.append(text[cursor:repl.start])
+        pieces.append(repl.text)
+        cursor = repl.end
+    pieces.append(text[cursor:])
+    out = "".join(pieces)
 
     return FormatResult(
         text=out,

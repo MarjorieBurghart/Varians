@@ -97,6 +97,20 @@ def _find_markup_end(text: str, start: int) -> int:
         if quote:
             if ch == quote:
                 quote = None
+        elif bracket_depth and text.startswith("<!--", i):
+            # Commentaire du sous-ensemble interne : une apostrophe n'y ouvre
+            # pas de chaîne (red team 2, B7).
+            stop = text.find("-->", i + 4)
+            if stop < 0:
+                return n
+            i = stop + 3
+            continue
+        elif bracket_depth and text.startswith("<?", i):
+            stop = text.find("?>", i + 2)
+            if stop < 0:
+                return n
+            i = stop + 2
+            continue
         elif ch in ("'", '"'):
             quote = ch
         elif declaration and ch == "[":
@@ -107,6 +121,38 @@ def _find_markup_end(text: str, start: int) -> int:
             return i + 1
         i += 1
     return n
+
+
+# Zones où « <x » n'est pas une balise : commentaires, CDATA, instructions de
+# traitement, DOCTYPE (sous-ensemble interne compris) ; non fermées, elles
+# vont jusqu'à la fin du texte. Une seule expression, lue dans l'ordre : un
+# commentaire qui contient « <? » reste un commentaire (red team 2, B3, B6).
+# Le « < » commun est en tête : l'expression saute d'un « < » au suivant.
+_INERT_ZONES = (r"!--.*?(?:-->|\Z)|!\[CDATA\[.*?(?:\]\]>|\Z)|\?.*?(?:\?>|\Z)"
+                r"|!DOCTYPE\b(?:[^\[>]|\[.*?\])*>?")
+
+
+def element_tag_pattern(*local_names: str):
+    """Expression qui trouve, dans l'ordre du texte et hors des zones
+    inertes, les balises (ouvrantes, fermantes, vides) des éléments de noms
+    locaux *local_names* (préfixe libre, casse respectée, guillemets des
+    attributs respectés). Groupes nommés d'une balise trouvée : ``close``
+    (« / » d'une fermante), ``name`` (nom local), ``attrs`` (attributs). Un
+    match sans ``name`` est une zone inerte (voir ``element_tags``). Une
+    valeur d'attribut ne contient jamais « < » : un guillemet resté ouvert
+    n'étend pas la balise au-delà de la suivante."""
+    names = "|".join(re.escape(name) for name in local_names)
+    return re.compile(
+        r"<(?:" + _INERT_ZONES + r"|(?P<close>/?)(?:[A-Za-z_][\w.-]*:)?(?P<name>" + names + r")(?=[\s/>])"
+        r"(?P<attrs>(?:[^<>\"']|\"[^\"<]*\"|'[^'<]*')*)>)", re.S)
+
+
+def element_tags(pattern, text: str):
+    """Les balises trouvées par *pattern* (``element_tag_pattern``) dans
+    *text* : des ``re.Match`` dont l'étendue est celle de la balise."""
+    for match in pattern.finditer(text):
+        if match.group("name") is not None:
+            yield match
 
 
 def scan_xml_tags(xml_text: str) -> list[XmlTagToken]:

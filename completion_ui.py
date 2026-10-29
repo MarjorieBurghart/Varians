@@ -175,6 +175,7 @@ class CompletionMixin:
             xml_path=xml_path,
             project_schema=self._schema_file,
             force_refresh=False,
+            may_fetch=self._schema_site_policy(ask=False),       # sans question
         )
         self._completion_resolution_key = key
         self._completion_resolution = resolution
@@ -243,7 +244,7 @@ class CompletionMixin:
         source_text = self.editor.toPlainText()
         text = source_text if editor is self.editor else editor.toPlainText()
         cursor = editor.textCursor()
-        pos = cursor.position() if position is None else int(position)
+        pos = editor.positions(text).python(cursor.position()) if position is None else int(position)
         cache = (
             self._source_completion_context_cache
             if editor is self.editor
@@ -284,7 +285,7 @@ class CompletionMixin:
         cursor = editor.textCursor()
         cache = (self._source_completion_context_cache if editor is self.editor
                  else self._fragment_completion_context_cache)
-        context = cache.analyze(text, cursor.position())
+        context = cache.analyze(text, editor.positions(text).python(cursor.position()))
         if context.kind != "attribute" or not context.prefix:
             return (), context
         model = self._vocabulary_completion(editor)
@@ -310,7 +311,7 @@ class CompletionMixin:
         qui ne sont jamais des pointeurs, ne sont pas consultées à chaque
         frappe."""
         text = editor.toPlainText()
-        position = editor.textCursor().position()
+        position = editor.positions(text).python(editor.textCursor().position())
         cache = (self._source_completion_context_cache if editor is self.editor
                  else self._fragment_completion_context_cache)
         context = cache.analyze(text, position)
@@ -352,7 +353,7 @@ class CompletionMixin:
         custom = self._custom_completion_config() if not stylesheet else None
         text = source_text if editor is self.editor else editor.toPlainText()
         cursor = editor.textCursor()
-        position = cursor.position()
+        position = editor.positions(text).python(cursor.position())
         cache = (
             self._source_completion_context_cache
             if editor is self.editor
@@ -493,41 +494,35 @@ class CompletionMixin:
         return context, items, custom_values, custom_mode
 
     def _apply_rng_completion(self, editor, context, value):
-        """Insère la suggestion sans remplacer une sélection éditoriale existante."""
+        """Insère la suggestion sans remplacer une sélection éditoriale existante.
+        Le contexte donne des indices Python, convertis en positions Qt (red
+        team, A2)."""
         doc = editor.document()
+        text = editor.toPlainText()
+        qt = editor.positions(text)
         cursor = QTextCursor(doc)
         start = max(0, int(context.replace_start))
         end = max(start, int(context.replace_end))
-        cursor.setPosition(start)
-        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(qt.qt(start))
+        cursor.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
 
         if context.kind == "element":
             if context.typed_lt:
                 replacement = f"{value}></{value}>"
-                inner_pos = start + len(value) + 1
+                final_pos = start + len(value) + 1
             else:
                 replacement = f"<{value}></{value}>"
-                inner_pos = start + len(value) + 2
-            cursor.insertText(replacement)
-            out = QTextCursor(doc)
-            out.setPosition(inner_pos)
-            editor.setTextCursor(out)
+                final_pos = start + len(value) + 2
         elif context.kind == "attribute_value":
-            replacement, final_pos = format_pointer_list_insertion(
-                editor.toPlainText(), start, end, value
-            )
-            cursor.insertText(replacement)
-            out = QTextCursor(doc)
-            out.setPosition(final_pos)
-            editor.setTextCursor(out)
+            replacement, final_pos = format_pointer_list_insertion(text, start, end, value)
         else:
-            before = editor.toPlainText()[max(0, start - 1):start]
+            before = text[max(0, start - 1):start]
             lead = "" if (before.isspace() or before in {"<", ""}) else " "
             replacement = f'{lead}{value}=""'
-            cursor.insertText(replacement)
-            quote_pos = start + len(lead) + len(value) + 2
-            out = QTextCursor(doc)
-            out.setPosition(quote_pos)
-            editor.setTextCursor(out)
+            final_pos = start + len(lead) + len(value) + 2
+        cursor.insertText(replacement)
+        out = QTextCursor(doc)
+        out.setPosition(editor.positions().qt(final_pos))
+        editor.setTextCursor(out)
         editor.ensureCursorVisible()
         editor.setFocus()

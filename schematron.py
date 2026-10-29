@@ -401,14 +401,22 @@ def rules_text(path, text=None, texts=None) -> str | None:
     return etree.tostring(schema, encoding="unicode")
 
 
+# Processus de validation (relaxng_worker) : Saxon n'y lit que des fichiers
+# locaux (red team, B2, B5) ; la restriction vaut pour tout le processus.
+LOCAL_ONLY = False
+
+
 def _processor():
     """Le processeur Saxon du processus, partagé avec les scénarios de
     transformation (SaxonC n'en veut qu'un)."""
-    from xslt_engines import TransformError, _saxon_processor
+    from xslt_engines import TransformError, _saxon_processor, saxon_without_network
     try:
-        return _saxon_processor()
+        processor = _saxon_processor()
     except TransformError as exc:
         raise _SaxonMissing() from exc
+    if LOCAL_ONLY:
+        saxon_without_network(processor)
+    return processor
 
 
 def _transpiler(check=False):
@@ -754,6 +762,8 @@ def validate(tree, sources, file_of=None, base=None, texts=None) -> SchematronRe
                     if uri is not None:
                         builder.set_base_uri(uri)
                     document = builder.parse_xml(xml_text=etree.tostring(root.getroottree(), encoding="unicode"))
+                # Un xsl:result-document des règles n'écrit rien (red team, B2).
+                entry.executable.set_capture_result_documents(True)
                 svrl = entry.executable.transform_to_string(xdm_node=document)
             except PySaxonApiError as exc:
                 errors.append(_saxon_error(exc, path, _stderr_since(start), texts=unsaved))

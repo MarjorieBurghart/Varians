@@ -15,7 +15,6 @@
   <string key="common.next">次へ</string>
   <string key="common.none">なし</string>
   <string key="common.line">行</string>
-  <string key="common.lines">行</string>
   <string key="common.score">スコア</string>
   <string key="common.page">ページ ↗</string>
   <string key="common.frames">枠</string>
@@ -134,6 +133,14 @@
   <string key="file.open.error.title">ファイルを開けません</string>
   <string key="file.save_as.title">TEI校訂本文を保存</string>
   <string key="file.save.error.title">保存エラー</string>
+  <string key="file.save.read_only">ファイル {path} は読み取り専用のため、Varians は置き換えません。別の名前で保存するか（{menu} ▸ {command}）、書き込み可能にしてから保存し直してください。</string>
+  <string key="file.changed.title">Varians の外でファイルが変更されました</string>
+  <string key="file.changed.text">{path}\n\nは、開いたか保存した後に Varians の外で変更されました（別のソフトウェア、同期など）。\n\n上書き：あなたの版をその代わりに保存します（もう一方は .bak コピーに保存されます）。\n再読み込み：変更を破棄し、現在のファイルを表示します。\nキャンセル：何も保存しません。</string>
+  <string key="file.changed.overwrite">上書き</string>
+  <string key="file.changed.reload">再読み込み</string>
+  <string key="file.encoding.title">文書のエンコーディング</string>
+  <string key="file.encoding.text">この文書はエンコーディング {encoding} を宣言していますが、Varians は常に UTF-8 で保存します。この宣言のままでは、他のソフトウェアがアクセント付き文字などを正しく読めません。\n\n宣言を encoding="UTF-8" に修正して保存しますか？（キャンセル：何も保存されません。）</string>
+  <string key="file.encoding.fix">修正して保存</string>
   <string key="file.structure.title">{base} の構造が変更されました</string>
   <string key="file.structure.text">XMLには{expected}行ではなく{count}行の{base}行があります。
 
@@ -146,6 +153,7 @@
   <string key="file.discard_quit">保存せず終了</string>
   <string key="xml.invalid.title">XMLが整形式ではありません</string>
   <string key="xml.invalid">XMLが整形式ではありません{where}：{error}</string>
+  <string key="xml.invalid.where">（{line}行、{column}列）</string>
   <string key="xml.valid">XMLは整形式です ✓</string>
   <string key="webgen.wrong_file.title">Webビューア</string>
   <string key="webgen.wrong_file.text">ジェネレータはproject.xmlで宣言された&lt;edition&gt;ファイルを使用します。現在開いているファイルは、そのプロジェクトファイルではありません。</string>
@@ -193,6 +201,8 @@
   <string key="viewer.text.witness">{witness} の本文</string>
   <string key="viewer.text.pivot">ピボット伝本</string>
   <string key="viewer.text.missing">{witness} の読みがない箇所 {count}件（表示あり）</string>
+  <string key="viewer.text.witness_pivot">ピボット伝本の本文</string>
+  <string key="viewer.text.missing_pivot">ピボット伝本の読みがない箇所 {count}件（表示あり）</string>
   <string key="viewer.missing">ここには {witness} の読みがありません：{fallback}</string>
   <string key="viewer.missing.lem">&lt;lem&gt; の本文</string>
   <string key="viewer.missing.reading">{witness} の読み</string>
@@ -220,6 +230,8 @@
   <string key="publication.critique.call_apparatus">校異 {n}</string>
   <string key="publication.critique.call_note">注 {n}</string>
   <string key="publication.critique.back">本文に戻る</string>
+  <string key="publication.critique.front_matter">前付け</string>
+  <string key="publication.critique.back_matter">後付け</string>
   <string key="publication.reference">［参照］</string>
   <string key="publication.caesura">中間休止</string>
   <string key="publication.unclear">不確かな読み</string>
@@ -229,6 +241,7 @@
   <string key="publication.gap.extent">［欠落：{extent}］</string>
   <string key="publication.page">ページ：{n}</string>
   <string key="publication.not_available">［伝本の読みなし］</string>
+  <string key="publication.editor_siglum">校訂者</string>
   <string key="publication.error.no_lemma">temoin-de-base=aucun：レンマ（lem）のない校異が {count} 件あります。それぞれにレンマを加えるか、伝本を選んでください。</string>
   <string key="publication.error.unknown_witness">不明な伝本：{witness}（宣言されている伝本：{witnesses}）。</string>
   <string key="viewer.language">言語</string>
@@ -468,6 +481,19 @@
   <string key="schematron.tip.unsaved">{name}（未保存）</string>
   <string key="schematron.tip.unsaved_included">{name}（未保存: {files}）</string>
   <string key="schematron.tip.click">クリックしてルールのファイルとフェーズを選びます。</string>
+  <string key="schematron.outside.title">プロジェクト外の Schematron ルール</string>
+  <string key="schematron.outside.text">この文書は、プロジェクトフォルダーの外にある Schematron ルールを宣言しています：\n{path}\n\nVarians は文書を検証するためにこれらのルールを実行します。ルールはファイルを書き込むこともネットワークにアクセスすることもできませんが、出所がわかっている場合にのみ適用してください。\n\n回答は記憶されます。適用しなかったルールについては、「{command}」（F8）で再度確認します。</string>
+  <string key="schematron.outside.apply">これらのルールを適用</string>
+  <string key="schematron.outside.skip">適用しない</string>
+  <string key="schematron.status.refused">Schematron：ルール未適用</string>
+  <string key="schematron.tip.refused">適用されていないプロジェクト外のルール（F8 で承認）：{files}</string>
+  <string key="schemas.site.title">別のサイトからダウンロードしますか？</string>
+  <string key="schemas.site.text">この文書は、サイト {site} からスキーマまたは Schematron ルールをダウンロードするよう求めています：\n{url}\n\n許可がない限り、Varians は TEI のサイト（tei-c.org）からのみダウンロードします。別のサイトからダウンロードすると、この文書を開いていることがそのサイトに伝わり、そのサイトが提供する Schematron ルールが適用されます。\n\n回答はサイト全体に適用され、記憶されます。拒否したサイトについては、「{command}」（F8）で再度確認します。</string>
+  <string key="schemas.site.allow">ダウンロード</string>
+  <string key="schemas.site.refuse">ダウンロードしない</string>
+  <string key="rng.status.site_refused">RNG：スキーマ未ダウンロード</string>
+  <string key="rng.panel.site_refused">スキーマはダウンロードされていません：サイト {sites} は許可されていません。文書は検証されていません。「{command}」（F8）で再度確認します。</string>
+  <string key="schematron.tip.site_refused">未ダウンロード（許可されていないサイト、F8 で許可）：{sites}</string>
   <string key="schematron.panel.rules_button">ルール…</string>
   <string key="schematron.panel.rules_button.tip">文書の Schematron ルール：宣言されたルールのファイルと検査するフェーズ</string>
   <string key="schematron.dialog.title">文書の Schematron ルール</string>
@@ -628,8 +654,12 @@
   <string key="manuscript.mark_page.updated">現在の &lt;pb&gt; をページ {page} に関連付けました。</string>
   <string key="manuscript.mark_page.inside_tag">カーソルを本文中またはタグとタグの間に置いてください。</string>
   <string key="facsimile.warning.title">TEIファクシミリ</string>
+  <string key="facsimile.conflict.malformed">XMLが整形式ではありません：{error}</string>
+  <string key="facsimile.conflict.id_used">{surface}：この xml:id は別の要素ですでに使われています。サーフェスは追加されませんでした。</string>
+  <string key="facsimile.conflict.no_text">&lt;text&gt; 要素が見つかりません。&lt;facsimile&gt; は作成されませんでした。</string>
   <string key="facsimile.warning.preserved">既存のTEI内容を保持したため、一部の自動変更は適用されませんでした：</string>
-  <string key="viewer.pages">ページ</string>
+  <string key="viewer.card.lines">{count}行</string>
+  <string key="viewer.card.pages">{count}ページ</string>
   <string key="viewer.info.page_lines">このページで検出されたALTO行：{count}</string>
   <string key="menu.display">表示</string>
   <string key="view.witnesses.choose">表示する伝本を選択…</string>
@@ -740,6 +770,42 @@
   <string key="pivot.preview.warnings">警告とページの詳細</string>
   <string key="pivot.preview.confirm">挿入しますか？変更前のTEIを日時付きでバックアップします。OCR本文は転記しません。</string>
   <string key="pivot.done">区切り記号を生成しました。バックアップ：{backup}。</string>
+  <string key="pivot.error.invalid_witness">ピボット伝本の識別子が無効です：{witness}</string>
+  <string key="pivot.error.unknown_witness">ピボット伝本 {witness} はプロジェクトの伝本ではありません。</string>
+  <string key="pivot.error.surface_conflict">&lt;facsimile&gt; のサーフェスを作成できませんでした：{conflicts}</string>
+  <string key="pivot.error.witness_not_declared">ピボット伝本 {witness} が版で宣言されていません（xml:id「{witness}」の要素がありません）。</string>
+  <string key="pivot.error.missing_surface">ピボット伝本のあるページに、版の &lt;facsimile&gt; 内の &lt;surface&gt; がありません。</string>
+  <string key="pivot.error.no_body">版に &lt;body&gt; 要素が見つかりません。</string>
+  <string key="pivot.error.no_container">版の &lt;body&gt; には空の &lt;p&gt; または &lt;ab&gt; が1つだけ必要です。</string>
+  <string key="pivot.warning.sync_unreadable">同期データを読み込めません：{error}</string>
+  <string key="pivot.warning.lines_invalid">{page}：JSONの行リストが無効です。lb は生成されません</string>
+  <string key="pivot.warning.no_lines">{page}：JSONに行の記述がありません（ページは保持）</string>
+  <string key="pivot.warning.rows_invalid">{page}：JSONの行が無効です。lb は生成されません</string>
+  <string key="pivot.warning.numbers_invalid">{page}：JSONの行番号が無効です。lb は生成されません</string>
+  <string key="pivot.warning.numbers_duplicated">{page}：JSONの行番号が重複しています。lb は生成されません</string>
+  <string key="pivot.warning.partial">{page}：物理行 {count} 行のJSON抜粋（番号 {first}–{last}）。葉の網羅性を確認してください。欠けている行は補われません</string>
+  <string key="pivot.warning.check_complete">{page}：JSONの行が網羅されているか確認してください</string>
+  <string key="pivot.warning.ocr_unreadable">OCRを読み込めません：{path}：{error}</string>
+  <string key="pivot.warning.no_image">JSONページ {page}：&lt;surface&gt; に使える確かな画像がありません</string>
+  <string key="pivot.warning.invalid_surface_id">JSONページ {page}：サーフェスの識別子が無効です</string>
+  <string key="pivot.warning.ambiguous_canvas">JSONページ {page} の Canvas が曖昧です</string>
+  <string key="pivot.warning.iiif_links">IIIFリンクが無効です：{error}</string>
+  <string key="pivot.warning.several_ocr">Canvas {canvas} に複数のOCRがあります</string>
+  <string key="pivot.warning.multipage_ocr">{canvas} の複数ページOCRを解決できません</string>
+  <string key="pivot.warning.unassociated_page">{page}：選択範囲に対応する画像／サーフェスのないJSONページです。pb は生成されません</string>
+  <string key="pivot.warning.duplicate_surface">サーフェスが重複しています：{surface}</string>
+  <string key="pivot.warning.ocr_priority">{page}：OCR {layout_lines} 行、JSON {sync_lines} 行。OCRを優先します</string>
+  <string key="pivot.warning.no_line_list">{page}：確実に対応付けられた行リストがありません</string>
+  <string key="pivot.warning.no_surface">ピボット伝本のサーフェスがありません（必要な画像を選択してください）。</string>
+  <string key="pivot.evidence.json_invalid">無効なJSON</string>
+  <string key="pivot.evidence.json_empty">行のないJSON</string>
+  <string key="pivot.evidence.json_ambiguous">曖昧なJSON</string>
+  <string key="pivot.evidence.json_partial">部分的なJSON</string>
+  <string key="pivot.evidence.image_only">画像のみ</string>
+  <string key="iiif.ocr_link.unreadable">{file}：OCRを読み込めません（{error}）</string>
+  <string key="iiif.ocr_link.multipage">{file}：複数ページのOCR</string>
+  <string key="iiif.ocr_link.conflict">{file}：IIIF名が矛盾または重複しています</string>
+  <string key="iiif.ocr_link.shared_canvas">{file}：複数のOCRファイルが同じCanvasを指しています</string>
   <string key="project.witness.pivot_tip">ピボット伝本は同期のための技術的な基準です。校訂における底本として指定するものではありません。</string>
   <string key="manuscript.sync.no_base_keys">JSON にピボット伝本への対応付けがありません。ページ単位でのみ移動します。</string>
   <string key="manuscript.sync.unmatched_base_keys">JSON の対応付けがピボット伝本のどの行とも一致しません。同期識別子を確認してください。</string>
@@ -962,6 +1028,20 @@
   <string key="manuscript.text_absent">この伝本には、このテキストの整列がありません。</string>
   <string key="status.structure.text.tip">テキスト {name} の {base} の行。このテキストは独自の整列（フォルダー alignments/{name}/）で別に同期されています。</string>
   <string key="text_sync.error">テキスト {name} の整列を読み込めません：{error}</string>
+  <string key="alignment.damaged.title">読み込めない整列ファイル</string>
+  <string key="alignment.damaged">伝本 {witness} の整列ファイルを読み込めません：
+{file}
+{detail}
+プロジェクトは開きます。この伝本の同期だけが切断されます。ファイルを修正してから「同期データを再読み込み…」を選んでください。</string>
+  <string key="alignment.error.read">ファイルを読み込めません：{message}</string>
+  <string key="alignment.error.json">不正な JSON（{line} 行目、{column} 列目）：{message}</string>
+  <string key="alignment.error.root">ルートは「pages」配列を持つオブジェクトでなければなりません</string>
+  <string key="alignment.error.page">{page} ページ目：「lines」配列を持つオブジェクトが必要です</string>
+  <string key="alignment.error.line">{page} ページ目、{line} 行目：オブジェクトが必要です</string>
+  <string key="alignment.error.keys">{page} ページ目、{line} 行目：「{field}」は識別子（文字列）の配列でなければなりません</string>
+  <string key="file.paragraph_separator.title">Unicode の段落区切り</string>
+  <string key="file.paragraph_separator">ファイル {file} に Unicode の段落区切り（U+2029）が含まれています。エディターはこれをそのまま保持できないため、XML では同じ文字である &amp;#x2029; として書き、そのまま保存します。</string>
+  <string key="rng.xinclude.too_large">組み立てを中止しました：取り込みにより要素が {detail} 個を超えます（非常に多くの回数取り込まれる部分はありませんか？）</string>
   <string key="diagnostics.scope.edition">対象：版（ピボット {base}）。</string>
   <string key="diagnostics.scope.text">対象：別に同期されるテキスト {name}（alignments/{name}/）、ピボット {base}。</string>
   <string key="diagnostics.texts">別に同期されるテキスト：{texts}。</string>

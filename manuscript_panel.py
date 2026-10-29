@@ -218,6 +218,11 @@ class WitnessHeader(QWidget):
         self.title.setStyleSheet("font-weight:700;border:0")
         self.status = QLabel("—", self)
         self.status.setStyleSheet("color:#746b61;border:0")
+        # Nom du témoin et libellé de la page (d'un manifeste IIIF) : du
+        # texte, jamais du HTML (red team, C3 : une image <img> d'un partage
+        # réseau y était chargée).
+        for text_label in (self.title, self.status):
+            text_label.setTextFormat(Qt.TextFormat.PlainText)
         self.title.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.status.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         layout.addWidget(self.title)
@@ -244,6 +249,7 @@ class ManuscriptPanel(QFrame):
         super().__init__(parent)
         self.siglum = siglum; self.label = label; self.items = items; self.map_base = map_base or {}; self.is_base = bool(is_base); self.base_label = base_label; self.project_root = Path(project_root).resolve() if project_root else None
         self.sync_enabled = bool(sync_enabled)
+        self._message_key = None            # (clé, valeurs) du message de l’image affiché
         # Clé du message affiché quand le témoin n'a pas de données pour le
         # texte en cours (V0.9.1.1, textes synchronisés à part) ; voir set_absent.
         self.absent_key = None
@@ -387,7 +393,19 @@ class ManuscriptPanel(QFrame):
             self.lead_btn.setMinimumWidth(0)
             self.lead_btn.setMaximumWidth(16777215)
 
+    def _show_message(self, key, style=None, **values):
+        """Message de l'image, gardé avec sa clé pour être retraduit (red
+        team 2, D6)."""
+        self._message_key = (key, values)
+        self.message.setText(_t(key, **values))
+        if style is not None:
+            self.message.setStyleSheet(style)
+        self.message.show()
+
     def retranslate_ui(self):
+        if getattr(self, "_message_key", None) and not self.message.isHidden():
+            key, values = self._message_key
+            self.message.setText(_t(key, **values))
         self.detach_btn.setToolTip(_t('workspace.attach.tip' if getattr(self, '_detached', False) else 'workspace.detach.tip'))
         self.home_btn.setToolTip(_t("manuscript.home.tip"))
         self.lead_btn.setToolTip(_t("manuscript.lead.tip"))
@@ -408,6 +426,7 @@ class ManuscriptPanel(QFrame):
             return
         if not self.is_base and self.primary_key is not None and not self.match_indices:
             self.status.setText(_t("manuscript.no_direct"))
+            self._message_key = ("manuscript.no_match", {})
             self.message.setText(_t("manuscript.no_match"))
             return
         center = self.current_item()
@@ -456,9 +475,7 @@ class ManuscriptPanel(QFrame):
                 self.match_indices = set()
                 self.status.setText(_t("manuscript.no_direct"))
                 self.view.scene().clear()
-                self.message.setText(_t("manuscript.no_match"))
-                self.message.setStyleSheet("color:#746b61;border:0;font-size:11px")
-                self.message.show()
+                self._show_message("manuscript.no_match", "color:#746b61;border:0;font-size:11px")
                 return
         self.reload()
 
@@ -681,15 +698,14 @@ class ManuscriptPanel(QFrame):
         """Panneau sans ligne : le message d'absence du texte, s'il y a lieu."""
         if self.absent_key:
             self.status.setText(_t(self.absent_key))
-            self.message.setText(_t(self.absent_key))
-            self.message.show()
+            self._show_message(self.absent_key)
         else:
             self.status.setText(_t("manuscript.no_line"))
 
     def reload(self):
         self.load_token += 1; token = self.load_token
         self.loaded_groups = {}; self.group_specs = []
-        self.view.scene().clear(); self.message.hide(); self.message.setText("")
+        self.view.scene().clear(); self.message.hide(); self.message.setText(""); self._message_key = None
         inds = self._window_indices()
         if not inds:
             self._show_empty(); return
@@ -740,8 +756,8 @@ class ManuscriptPanel(QFrame):
                    'manuscript.no_image_reason.canvas_not_found' if detail == 'canvas_not_found' else
                    'manuscript.no_image_reason.no_match' if reason == 'unresolved' else
                    'manuscript.no_image_source')
-            self.message.setText(_t(key)); self.message.show(); return
-        self.message.setText(_t("manuscript.loading")); self.message.setStyleSheet("color:#746b61;border:0;font-size:11px"); self.message.show()
+            self._show_message(key); return
+        self._show_message("manuscript.loading", "color:#746b61;border:0;font-size:11px")
         for spec in specs:
             url = spec["url"]
             if not url: continue
@@ -873,12 +889,10 @@ class ManuscriptPanel(QFrame):
             if idx < len(self.group_specs)-1:
                 scene.addLine(0, yoff+1, max(1, pix.width()), yoff+1, divider_pen); yoff += 4
         if not scene.items():
-            self.message.setText(_t("manuscript.image_failed", detail=(" : " + " | ".join(errors[:2]) if errors else "")))
-            self.message.setStyleSheet("color:#9b4636;border:0;font-size:11px"); self.message.show()
+            self._show_message("manuscript.image_failed", "color:#9b4636;border:0;font-size:11px",
+                               detail=(" : " + " | ".join(errors[:2]) if errors else ""))
         elif self.show_frames and missing_frame_geometry and not frame_count:
-            self.message.setText(_t("manuscript.frames.no_geometry"))
-            self.message.setStyleSheet("color:#9b4636;border:0;font-size:11px")
-            self.message.show()
+            self._show_message("manuscript.frames.no_geometry", "color:#9b4636;border:0;font-size:11px")
         else:
             self.message.hide()
         self.view.folio_focus_rect = focus_rect

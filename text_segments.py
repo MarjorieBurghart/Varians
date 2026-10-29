@@ -24,11 +24,12 @@ from pathlib import Path
 
 import segment_model
 from app_context import tr as _t
-from folio_navigation import folio_marks, witness_loci
+from folio_navigation import folio_marks, page_folios, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
-from witness_resource_refresh import RuntimeState, assemble_resources, flatten_primary, read_alignment_json
+from witness_resource_refresh import (RuntimeState, alignment_error_text, assemble_resources, flatten_primary,
+                                      read_alignment_json)
 from witness_route import PageMark, Source, witness_route
 from xml_assembly import path_key
 
@@ -117,6 +118,18 @@ class TextSegmentsMixin:
         segment = self._active_segment
         return segment_model.start_folio(self._pivot_lines(), segment, witness_id, folios,
                                          self._text_loci(segment), self._segment_ids(segment))
+
+    def _edition_start_folio(self, witness_id, folios):
+        """Page de départ du témoin dans l'édition (hors textes synchronisés
+        à part), avant son premier ``<pb>`` dans l'édition : comme pour un
+        texte à part (``segment_model.start_folio``), sinon sa première page,
+        comme dans le viewer web (red team 2, D3)."""
+        start = segment_model.start_folio(self._pivot_lines(), None, witness_id, folios,
+                                          self._witness_loci(), self._segment_ids(None))
+        if start is None:
+            pages = page_folios(folios)
+            start = pages[0] if pages else None
+        return start
 
     def _text_page_witnesses(self, sync):
         """Témoins qui ont le texte ``sync`` sans y avoir de JSON : un ``<pb
@@ -338,7 +351,8 @@ class TextSegmentsMixin:
                 try:
                     state = assemble_resources(project)
                 except Exception as exc:
-                    self.statusBar().showMessage(_t("text_sync.error", name=sync.name, error=exc), 8000)
+                    self.statusBar().showMessage(_t("text_sync.error", name=sync.name,
+                                                    error=alignment_error_text(exc, _t)), 8000)
                     project = text_project(self.project, replace(sync, alignments={}))
                     state = empty_runtime_state()
                 states[segment] = (state, project)
@@ -382,12 +396,16 @@ class TextSegmentsMixin:
         valid_pivot_keys = set(state.base_by_key)
         base_label = self.witness_titles[base]
         witnesses = project.witness_by_id
+        with_texts = bool(self._text_witness_ids())
         for w in self.witness_configs:
             panel = self.panels[w.id]
             panel.set_base(w.id == base, base_label)
-            # Un témoin par pages sans aucune image (V0.9.1.3) n'a rien à montrer.
-            if w.id not in witnesses or (w.id in getattr(project, "page_witnesses", ())
-                                         and not state.display_items.get(w.id)):
+            # Un témoin par pages sans aucune image (V0.9.1.3) n'a rien à
+            # montrer ; dans un projet à textes à part, un témoin sans
+            # données pour le texte affiché, l'édition comprise, le dit,
+            # comme le viewer web (red team 2, D5).
+            if w.id not in witnesses or (not state.display_items.get(w.id) and (
+                    with_texts or w.id in getattr(project, "page_witnesses", ()))):
                 panel.set_absent(TEXT_ABSENT)
                 continue
             panel.absent_key = None

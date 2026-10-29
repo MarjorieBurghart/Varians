@@ -15,13 +15,12 @@
   <string key="common.next">Следующий</string>
   <string key="common.none">нет</string>
   <string key="common.line">строка</string>
-  <string key="common.lines">строки</string>
   <string key="common.score">oценка</string>
   <string key="common.page">Страница ↗</string>
   <string key="common.frames">Рамки</string>
   <string key="manuscript.frames.tip">Показывать контуры строк только для этого свидетеля. Оранжевый: синхронизированная строка; синий: строка, выбранная вручную.</string>
   <string key="manuscript.frames.no_geometry">Невозможно показать контур строки: для этой строки отсутствуют пригодные координаты.</string>
-  <string key="manuscript.iiif_unassociated_layout.tip">Для {count} страниц ALTO/PAGE не удалось надёжно установить соответствие с изображениями IIIF. Изображения остаются доступными. Чтобы отображать контуры строк, сопоставьте файлы OCR с холстами в настройках свидетеля.</string>
+  <string key="manuscript.iiif_unassociated_layout.tip">Для {count, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}} ALTO/PAGE не удалось надёжно установить соответствие с изображениями IIIF. Изображения остаются доступными. Чтобы отображать контуры строк, сопоставьте файлы OCR с холстами в настройках свидетеля.</string>
   <string key="common.language">Язык:</string>
   <string key="toolbar.title">Синхронизация и поиск</string>
   <string key="toolbar.open">Открыть</string>
@@ -43,9 +42,9 @@
   <string key="tab.preview">Представление XSLT / CSS</string>
   <string key="status.xml.initial">XML: —</string>
   <string key="status.cursor">строка {line}, столбец {column}</string>
-  <string key="status.structure.expected">{base}: ожидается {count} строк</string>
-  <string key="status.structure.ok">{base}: {count} строк ✓</string>
-  <string key="status.structure.changed">{base}: {count} строк — ожидалось {expected}</string>
+  <string key="status.structure.expected">{base}: {count, plural, one {ожидается # строка} few {ожидается # строки} many {ожидается # строк} other {ожидается # строки}}</string>
+  <string key="status.structure.ok">{base}: {count, plural, one {# строка} few {# строки} many {# строк} other {# строки}} ✓</string>
+  <string key="status.structure.changed">{base}: {count, plural, one {# строка} few {# строки} many {# строк} other {# строки}} — ожидалось {expected}</string>
   <string key="status.saved">Сохранено: {path}</string>
   <string key="status.search.xml.found">Поиск в XML: совпадение {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Поиск в XML: совпадений нет — {query}</string>
@@ -134,8 +133,16 @@
   <string key="file.open.error.title">Не удалось открыть файл</string>
   <string key="file.save_as.title">Сохранить издание TEI</string>
   <string key="file.save.error.title">Ошибка сохранения</string>
+  <string key="file.save.read_only">Файл {path} доступен только для чтения: Varians его не заменяет. Сохраните его под другим именем ({menu} ▸ {command}) или разрешите запись в файл и сохраните снова.</string>
+  <string key="file.changed.title">Файл изменён вне Varians</string>
+  <string key="file.changed.text">{path}\n\nбыл изменён вне Varians с момента, когда вы его открыли или сохранили (другой программой, синхронизацией…).\n\nПерезаписать: сохранить вашу версию вместо него (другая останется в копии .bak).\nПерезагрузить: отменить ваши изменения и показать файл таким, какой он сейчас.\nОтмена: ничего не сохранять.</string>
+  <string key="file.changed.overwrite">Перезаписать</string>
+  <string key="file.changed.reload">Перезагрузить</string>
+  <string key="file.encoding.title">Кодировка документа</string>
+  <string key="file.encoding.text">Этот документ объявляет кодировку {encoding}, но Varians всегда сохраняет в UTF-8: с таким объявлением другие программы неправильно прочитают его символы с диакритикой.\n\nИсправить объявление на encoding="UTF-8" и сохранить? (Отмена: ничего не сохраняется.)</string>
+  <string key="file.encoding.fix">Исправить и сохранить</string>
   <string key="file.structure.title">Структура {base} изменена</string>
-  <string key="file.structure.text">XML содержит {count} строк {base} вместо {expected}.
+  <string key="file.structure.text">XML содержит {count, plural, one {# строку} few {# строки} many {# строк} other {# строки}} {base} вместо {expected}.
 
 Файл можно сохранить, но после этого кэши выравнивания изображений потребуется выровнять заново.</string>
   <string key="file.unsaved.title">Несохранённые изменения</string>
@@ -146,6 +153,7 @@
   <string key="file.discard_quit">Выйти без сохранения</string>
   <string key="xml.invalid.title">XML сформирован некорректно</string>
   <string key="xml.invalid">XML сформирован некорректно{where}: {error}</string>
+  <string key="xml.invalid.where"> — строка {line}, столбец {column}</string>
   <string key="xml.valid">XML сформирован корректно ✓</string>
   <string key="webgen.wrong_file.title">Веб-просмотрщик</string>
   <string key="webgen.wrong_file.text">Генератор использует файл &lt;edition&gt;, указанный в project.xml. Открытый сейчас файл не является этим файлом проекта.</string>
@@ -193,6 +201,8 @@
   <string key="viewer.text.witness">Текст свидетеля {witness}</string>
   <string key="viewer.text.pivot">опорный свидетель</string>
   <string key="viewer.text.missing">мест без чтения свидетеля {witness}: {count} (отмечены)</string>
+  <string key="viewer.text.witness_pivot">Текст опорного свидетеля</string>
+  <string key="viewer.text.missing_pivot">мест без чтения опорного свидетеля: {count} (отмечены)</string>
   <string key="viewer.missing">Здесь нет чтения свидетеля {witness}: {fallback}</string>
   <string key="viewer.missing.lem">текст &lt;lem&gt;</string>
   <string key="viewer.missing.reading">чтение свидетеля {witness}</string>
@@ -220,6 +230,8 @@
   <string key="publication.critique.call_apparatus">Аппарат {n}</string>
   <string key="publication.critique.call_note">Примечание {n}</string>
   <string key="publication.critique.back">Вернуться к тексту</string>
+  <string key="publication.critique.front_matter">Вступительная часть</string>
+  <string key="publication.critique.back_matter">Приложения</string>
   <string key="publication.reference">[ссылка]</string>
   <string key="publication.caesura">Цезура</string>
   <string key="publication.unclear">Неуверенное прочтение</string>
@@ -229,7 +241,8 @@
   <string key="publication.gap.extent">[лакуна: {extent}]</string>
   <string key="publication.page">Страница: {n}</string>
   <string key="publication.not_available">[чтение свидетеля недоступно]</string>
-  <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} единиц аппарата без леммы (lem). Добавьте лемму к каждой или выберите свидетеля.</string>
+  <string key="publication.editor_siglum">изд.</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun: единицы аппарата без леммы (lem): {count}. Добавьте лемму к каждой или выберите свидетеля.</string>
   <string key="publication.error.unknown_witness">Неизвестный свидетель: {witness} (объявленные свидетели: {witnesses}).</string>
   <string key="viewer.language">Язык</string>
   <string key="viewer.variant">разночтение</string>
@@ -468,6 +481,19 @@
   <string key="schematron.tip.unsaved">{name}, не сохранён</string>
   <string key="schematron.tip.unsaved_included">{name} (не сохранено: {files})</string>
   <string key="schematron.tip.click">Щёлкните, чтобы выбрать файлы правил и их фазу.</string>
+  <string key="schematron.outside.title">Правила Schematron вне проекта</string>
+  <string key="schematron.outside.text">Этот документ объявляет правила Schematron, расположенные вне папки проекта:\n{path}\n\nVarians выполняет эти правила, чтобы проверить документ. Они не могут ни записывать файлы, ни обращаться к сети, но применяйте их, только если знаете, откуда они.\n\nВаш ответ запоминается. Для неприменённых правил «{command}» (F8) спросит снова.</string>
+  <string key="schematron.outside.apply">Применить эти правила</string>
+  <string key="schematron.outside.skip">Не применять</string>
+  <string key="schematron.status.refused">Schematron: правила не применены</string>
+  <string key="schematron.tip.refused">Правила вне проекта не применены (F8, чтобы принять их): {files}</string>
+  <string key="schemas.site.title">Загрузить с другого сайта?</string>
+  <string key="schemas.site.text">Этот документ запрашивает загрузку схемы или правил Schematron с сайта {site}:\n{url}\n\nБез вашего согласия Varians загружает только с сайта TEI (tei-c.org). Загрузка с другого сайта сообщает ему, что вы открываете этот документ, и предоставленные им правила Schematron будут применены.\n\nВаш ответ относится ко всему сайту и запоминается. Для отклонённого сайта «{command}» (F8) спросит снова.</string>
+  <string key="schemas.site.allow">Загрузить</string>
+  <string key="schemas.site.refuse">Не загружать</string>
+  <string key="rng.status.site_refused">RNG: схема не загружена</string>
+  <string key="rng.panel.site_refused">Схема не загружена: сайт {sites} не разрешён. Документ не проверен. «{command}» (F8) спросит снова.</string>
+  <string key="schematron.tip.site_refused">Не загружено (сайт не разрешён, F8, чтобы разрешить): {sites}</string>
   <string key="schematron.panel.rules_button">Правила…</string>
   <string key="schematron.panel.rules_button.tip">Правила Schematron документа: объявленные файлы правил и проверяемая фаза</string>
   <string key="schematron.dialog.title">Правила Schematron документа</string>
@@ -628,8 +654,12 @@
   <string key="manuscript.mark_page.updated">Текущий &lt;pb&gt; связан со страницей {page}.</string>
   <string key="manuscript.mark_page.inside_tag">Поместите курсор в текст или между тегами.</string>
   <string key="facsimile.warning.title">Факсимиле TEI</string>
+  <string key="facsimile.conflict.malformed">XML сформирован некорректно: {error}</string>
+  <string key="facsimile.conflict.id_used">{surface}: этот xml:id уже есть у другого элемента; поверхность не добавлена.</string>
+  <string key="facsimile.conflict.no_text">Элемент &lt;text&gt; не найден; &lt;facsimile&gt; не создан.</string>
   <string key="facsimile.warning.preserved">Varians сохранил существующее содержимое TEI; некоторые автоматические изменения не были применены:</string>
-  <string key="viewer.pages">страницы</string>
+  <string key="viewer.card.lines">{count, plural, one {# строка} few {# строки} many {# строк} other {# строки}}</string>
+  <string key="viewer.card.pages">{count, plural, one {# страница} few {# страницы} many {# страниц} other {# страницы}}</string>
   <string key="viewer.info.page_lines">Строк ALTO, обнаруженных на этой странице: {count}</string>
   <string key="menu.display">Вид</string>
   <string key="view.witnesses.choose">Выбрать отображаемых свидетелей…</string>
@@ -652,7 +682,7 @@
   <string key="project.witness.iiif.download_progress">Загрузка изображений IIIF: {witness}</string>
   <string key="project.witness.iiif.download_page">Загрузка IIIF: {witness} — страница {index}/{count}</string>
   <string key="project.witness.iiif.download_title">Локальная копия IIIF неполная</string>
-  <string key="project.witness.iiif.download_partial">Загружено {downloaded} изображений из {total} страниц. Имеющиеся файлы сохранены. Загрузку можно продолжить позже.</string>
+  <string key="project.witness.iiif.download_partial">Загружено {downloaded, plural, one {# изображение} few {# изображения} many {# изображений} other {# изображения}} из {total, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}}. Имеющиеся файлы сохранены. Загрузку можно продолжить позже.</string>
   <string key="iiif.manager.menu">Менеджер загрузок IIIF…</string>
   <string key="iiif.manager.title">Загрузка изображений IIIF</string>
   <string key="iiif.manager.witness">Рукопись:</string>
@@ -667,7 +697,7 @@
   <string key="iiif.manager.running">Идёт загрузка (работу можно продолжать).</string>
   <string key="iiif.manager.paused">Пауза (после текущего изображения).</string>
   <string key="iiif.manager.stopping">Остановка после текущего изображения…</string>
-  <string key="iiif.manager.page">{label} — обработано {index}/{count} страниц</string>
+  <string key="iiif.manager.page">{label} — обработано {index}/{count, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}}</string>
   <string key="iiif.manager.done">Готово: загружено {downloaded}, уже имелось {skipped}, ошибок {failed}.</string>
   <string key="iiif.manager.failed">Ошибка: {error}</string>
   <string key="iiif.manager.cancelled">Загрузка остановлена; полученные изображения сохранены.</string>
@@ -693,16 +723,16 @@
   <string key="iiif.picker.select_visible">Выбрать видимые строки</string>
   <string key="iiif.picker.clear_visible">Снять выбор с видимых строк</string>
   <string key="iiif.picker.preview">Предпросмотр в браузере</string>
-  <string key="iiif.picker.count">Выбрано {selected} из {total} изображений</string>
+  <string key="iiif.picker.count">Выбрано {selected} из {total, plural, one {# изображения} few {# изображений} many {# изображений} other {# изображения}}</string>
   <string key="iiif.picker.mode.all">Весь манифест (прежний режим)</string>
   <string key="iiif.picker.mode.selected">Только выбранные для издания изображения</string>
   <string key="iiif.picker.open">Выбрать изображения и связать файлы OCR…</string>
   <string key="iiif.picker.duplicate">Один и тот же файл ALTO/PAGE нельзя назначить нескольким канвасам.</string>
   <string key="iiif.picker.multipage">Файл {name} содержит несколько страниц. Привязка целого файла неоднозначна; используйте отдельный OCR-файл для каждого изображения.</string>
   <string key="iiif.prune.title">Необязательная очистка поверхностей IIIF</string>
-  <string key="iiif.prune.question">Для свидетеля «{witness}» обнаружено {count} автоматически созданных поверхностей IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются в данном TEI.
+  <string key="iiif.prune.question">Для свидетеля «{witness}» {count, plural, one {обнаружена # автоматически созданная поверхность IIIF, которая больше не выбрана, не содержит аннотаций и не упоминается} few {обнаружены # автоматически созданные поверхности IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются} many {обнаружено # автоматически созданных поверхностей IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются} other {обнаружено # автоматически созданных поверхностей IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются}} в данном TEI.
 
-Удалить их из документа? Рядом с файлом TEI будет сохранена резервная копия с датой.
+{count, plural, one {Удалить её} other {Удалить их}} из документа? Рядом с файлом TEI будет сохранена резервная копия с датой.
 
 Идентификаторы (фрагмент): {ids}</string>
   <string key="iiif.picker.validate_reload">Перед сохранением выбора загрузите манифест IIIF.</string>
@@ -723,7 +753,7 @@
   <string key="iiif.picker.status.ambiguous">Неоднозначность: несколько возможных Canvas</string>
   <string key="iiif.picker.source.local">Источник: локальная копия</string>
   <string key="iiif.picker.source.iiif">Источник: сервис IIIF</string>
-  <string key="iiif.picker.sync.unresolved">Для {count} страниц JSON не удалось однозначно определить Canvas. Проверьте идентификаторы или укажите связь вручную.</string>
+  <string key="iiif.picker.sync.unresolved">Для {count, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}} JSON не удалось однозначно определить Canvas. Проверьте идентификаторы или укажите связь вручную.</string>
   <string key="iiif.picker.sync.duplicate">Синхронизированную страницу нельзя связать с несколькими Canvas.</string>
   <string key="iiif.picker.sync.bad_canvas">Связь указывает на невыбранный Canvas.</string>
   <string key="iiif.picker.sync.no_json">Сначала загрузите JSON-файл синхронизации.</string>
@@ -740,6 +770,42 @@
   <string key="pivot.preview.warnings">Предупреждения и сведения о страницах</string>
   <string key="pivot.preview.confirm">Подтвердить вставку? Перед изменением будет создана резервная копия с датой и временем. Текст OCR не переносится.</string>
   <string key="pivot.done">Разметка создана. Резервная копия: {backup}.</string>
+  <string key="pivot.error.invalid_witness">Недопустимый идентификатор опорного свидетеля: {witness}</string>
+  <string key="pivot.error.unknown_witness">Опорный свидетель {witness} не входит в число свидетелей проекта.</string>
+  <string key="pivot.error.surface_conflict">Не удалось создать поверхности &lt;facsimile&gt;: {conflicts}</string>
+  <string key="pivot.error.witness_not_declared">Опорный свидетель {witness} не объявлен в издании (нет элемента с xml:id «{witness}»).</string>
+  <string key="pivot.error.missing_surface">У одной из страниц опорного свидетеля нет &lt;surface&gt; в &lt;facsimile&gt; издания.</string>
+  <string key="pivot.error.no_body">В издании не найден элемент &lt;body&gt;.</string>
+  <string key="pivot.error.no_container">&lt;body&gt; издания должен содержать один пустой &lt;p&gt; или &lt;ab&gt;.</string>
+  <string key="pivot.warning.sync_unreadable">Не удаётся прочитать синхронизацию: {error}</string>
+  <string key="pivot.warning.lines_invalid">{page}: недопустимый список строк JSON; lb не созданы</string>
+  <string key="pivot.warning.no_lines">{page}: в JSON не описано ни одной строки (страница сохранена)</string>
+  <string key="pivot.warning.rows_invalid">{page}: недопустимые строки JSON; lb не созданы</string>
+  <string key="pivot.warning.numbers_invalid">{page}: недопустимые номера строк JSON; lb не созданы</string>
+  <string key="pivot.warning.numbers_duplicated">{page}: повторяющиеся номера строк JSON; lb не созданы</string>
+  <string key="pivot.warning.partial">{page}: фрагмент JSON из {count, plural, one {# физической строки} few {# физических строк} many {# физических строк} other {# физической строки}} (номера {first}–{last}); проверьте полноту листа, отсутствующие строки не придумываются</string>
+  <string key="pivot.warning.check_complete">{page}: проверьте полноту строк JSON</string>
+  <string key="pivot.warning.ocr_unreadable">Не удаётся прочитать OCR: {path}: {error}</string>
+  <string key="pivot.warning.no_image">Страница JSON {page}: нет надёжного изображения для &lt;surface&gt;</string>
+  <string key="pivot.warning.invalid_surface_id">Страница JSON {page}: недопустимый идентификатор поверхности</string>
+  <string key="pivot.warning.ambiguous_canvas">Неоднозначный canvas для страницы JSON {page}</string>
+  <string key="pivot.warning.iiif_links">Недопустимые ссылки IIIF: {error}</string>
+  <string key="pivot.warning.several_ocr">Несколько файлов OCR для canvas {canvas}</string>
+  <string key="pivot.warning.multipage_ocr">Многостраничный OCR для {canvas} не сопоставлен</string>
+  <string key="pivot.warning.unassociated_page">{page}: страница JSON без связанного изображения/поверхности в выбранном диапазоне; pb не создан</string>
+  <string key="pivot.warning.duplicate_surface">Повторяющаяся поверхность: {surface}</string>
+  <string key="pivot.warning.ocr_priority">{page}: {layout_lines, plural, one {# строка OCR} few {# строки OCR} many {# строк OCR} other {# строки OCR}}, {sync_lines, plural, one {# строка JSON} few {# строки JSON} many {# строк JSON} other {# строки JSON}}; приоритет у OCR</string>
+  <string key="pivot.warning.no_line_list">{page}: нет надёжно сопоставленного списка строк</string>
+  <string key="pivot.warning.no_surface">Нет доступных поверхностей опорного свидетеля (выберите нужные изображения).</string>
+  <string key="pivot.evidence.json_invalid">недопустимый JSON</string>
+  <string key="pivot.evidence.json_empty">JSON без строк</string>
+  <string key="pivot.evidence.json_ambiguous">неоднозначный JSON</string>
+  <string key="pivot.evidence.json_partial">неполный JSON</string>
+  <string key="pivot.evidence.image_only">только изображение</string>
+  <string key="iiif.ocr_link.unreadable">{file}: не удаётся прочитать OCR ({error})</string>
+  <string key="iiif.ocr_link.multipage">{file}: многостраничный OCR</string>
+  <string key="iiif.ocr_link.conflict">{file}: противоречивые или повторяющиеся имена IIIF</string>
+  <string key="iiif.ocr_link.shared_canvas">{file}: несколько файлов OCR указывают на один canvas</string>
   <string key="project.witness.pivot_tip">Опорный свидетель используется только как технический ориентир синхронизации; он не обязательно является основным списком критического издания.</string>
   <string key="manuscript.sync.no_base_keys">В JSON нет связей с опорным свидетелем: доступна только навигация по страницам.</string>
   <string key="manuscript.sync.unmatched_base_keys">Связи из JSON не соответствуют ни одной строке опорного свидетеля. Проверьте идентификаторы синхронизации.</string>
@@ -962,6 +1028,20 @@
   <string key="manuscript.text_absent">Для этого текста нет выравнивания этого свидетеля.</string>
   <string key="status.structure.text.tip">Строки {base} в тексте {name}, синхронизируемом отдельно, со своими выравниваниями (папка alignments/{name}/).</string>
   <string key="text_sync.error">Не удаётся прочитать выравнивания текста {name}: {error}</string>
+  <string key="alignment.damaged.title">Файл выравнивания не читается</string>
+  <string key="alignment.damaged">Не удаётся прочитать файл выравнивания свидетеля {witness}:
+{file}
+{detail}
+Проект открывается; отключена только синхронизация этого свидетеля. Исправьте файл, затем выберите «Обновить синхронизацию…».</string>
+  <string key="alignment.error.read">не удаётся прочитать файл: {message}</string>
+  <string key="alignment.error.json">неверный JSON, строка {line}, столбец {column}: {message}</string>
+  <string key="alignment.error.root">корень должен быть объектом с массивом «pages»</string>
+  <string key="alignment.error.page">страница {page}: ожидается объект с массивом «lines»</string>
+  <string key="alignment.error.line">страница {page}, строка {line}: ожидается объект</string>
+  <string key="alignment.error.keys">страница {page}, строка {line}: «{field}» должен быть массивом идентификаторов (строк)</string>
+  <string key="file.paragraph_separator.title">Разделители абзацев Unicode</string>
+  <string key="file.paragraph_separator">Файл {file} содержит разделители абзацев Unicode (U+2029). Редактор не может сохранить их как есть: они записываются как &amp;#x2029; — для XML это тот же символ — и так и будут сохранены.</string>
+  <string key="rng.xinclude.too_large">Сборка остановлена: включения дают более {detail} элементов (часть, включённая очень много раз?)</string>
   <string key="diagnostics.scope.edition">Охват: издание, опорный свидетель {base}.</string>
   <string key="diagnostics.scope.text">Охват: текст {name}, синхронизируемый отдельно (alignments/{name}/), опорный свидетель {base}.</string>
   <string key="diagnostics.texts">Тексты, синхронизируемые отдельно: {texts}.</string>

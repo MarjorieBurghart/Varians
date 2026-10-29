@@ -30,6 +30,9 @@ def _document(tmp_path, *models, name="edition.xml"):
 
 def _resolve(tmp_path, text, path, mode="auto", **options):
     options.setdefault("cache_dir", tmp_path / "cache")
+    # Tout site est accepté ici ; la question par site est vérifiée par
+    # test_remote_schema_sites (red team, B2).
+    options.setdefault("may_fetch", lambda url: True)
     return resolve_schema(mode=mode, xml_text=text, xml_path=path, **options)
 
 

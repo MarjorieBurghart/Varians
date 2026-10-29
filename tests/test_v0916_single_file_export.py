@@ -25,7 +25,25 @@ les compte (``nonlem_readings``), ``meta.text`` aussi, avec l'état de départ
 du surlignage (``highlight``). Ces marques retirées, l'empreinte est celle
 d'avant : le texte ne change pas. Les blancs au bord d'une telle leçon sont
 détachés dans leur propre segment, non marqué : le texte affiché et les mots
-marqués restent les mêmes."""
+marqués restent les mêmes.
+
+V0.9.3.4 (red team 2, décision explicite) : un <lb/> d'un autre témoin que
+le pivot suit la règle TEI, comme dans « Édition critique » et l'aperçu :
+sans break="no", une fin de mot. Les 30 « XX<lb edRef="#T2"/>II » du projet
+exemple (sans doute des break="no" oubliés) deviennent « XX II », comme
+ailleurs. L'en-tête compte les variantes et les notes de l'apparat du texte
+de lecture (366 notes au lieu des 333 rattachées aux lignes du pivot).
+Puis la fenêtre d'une variante dit les leçons comme l'apparat de « Édition
+critique » : chaque leçon porte ses parties (``parts`` : om., [lacune],
+notes entre parenthèses…) et le @wit de son <rdgGrp> ; le document porte
+les sigles de <listWit> (``sigla``). Dans le projet exemple, 50 leçons
+non affichées perdent une espace parasite (un <lb break="no"/> ou un <pb/>
+dans un mot : « Magna tes » devient « Magnates ») et 64 omissions sont
+dites « om. » ; le texte de lecture ne change pas (seul le ``tooltip``
+des repères de variante, que le viewer n'affiche pas, suit ces leçons).
+Une note suit les mêmes règles (``parts``) : l'apparat de la note
+« stellarum ????nalia… » donne sa leçon, puis son entrée entre crochets,
+au lieu de toutes ses leçons collées (« ????naliamagnalia »)."""
 from __future__ import annotations
 
 import hashlib
@@ -35,7 +53,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "8ba3f7663afc5684c7628de9f344921d3baac34a6c559799fac7e2432607cda5"
+DIGEST = "5bbc3814e50fc91a370c099adedf794d08c06d42d260b1dd678fe4d0d08ddb0d"
 
 
 def _digest(data):

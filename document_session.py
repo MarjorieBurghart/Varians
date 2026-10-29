@@ -14,6 +14,7 @@ annuler/refaire) est simplement référencé par ``text_document``.
 from __future__ import annotations
 
 import bisect
+import re
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
@@ -24,6 +25,39 @@ Span = tuple[int, int]
 # Longueur du texte, avant une modification, examinée pour savoir si elle a
 # lieu à l'intérieur d'une balise (voir LbIndex.apply_edit).
 LB_EDIT_LOOKBACK = 4096
+# Fins d'un commentaire, d'une CDATA, d'une instruction de traitement (voir
+# LbIndex.apply_edit) ; leurs débuts commencent par « < ».
+_CLOSERS = ("-->", "]]>", "?>")
+# Une balise complète : guillemets respectés, sans « < » dans une valeur.
+_CLOSED_TAG_RE = re.compile(r"<[^<>\"']*(?:(?:\"[^\"<]*\"|'[^'<]*')[^<>\"']*)*>")
+
+
+def _inside_tag(preceding: str) -> bool:
+    """Vrai si la fin de *preceding* est à l'intérieur d'une balise : son
+    dernier « < » n'a pas encore été fermé (un « > » entre guillemets ne
+    ferme rien)."""
+    start = preceding.rfind("<")
+    return start >= 0 and _CLOSED_TAG_RE.match(preceding, start) is None
+
+
+def protect_paragraph_separators(text: str) -> tuple[str, int]:
+    """``(texte, nombre)`` : chaque U+2029 (séparateur de paragraphe
+    Unicode) de *text* écrit « &#x2029; », le même caractère pour XML. Qt
+    coupe ses blocs à ce caractère : gardé tel quel, il devenait un saut de
+    ligne à l'enregistrement (red team 2, B2)."""
+    count = text.count("\u2029")
+    return (text.replace("\u2029", "&#x2029;"), count) if count else (text, 0)
+
+
+def file_stamp(path) -> Optional[tuple[int, int]]:
+    """(date de modification en ns, taille) du fichier *path* ; None s'il
+    est introuvable. Un fichier modifié hors de Varians depuis sa lecture
+    change d'empreinte (red team, A3)."""
+    try:
+        stat = Path(path).stat()
+    except (OSError, TypeError):
+        return None
+    return stat.st_mtime_ns, stat.st_size
 
 
 class LbIndex:
@@ -61,22 +95,26 @@ class LbIndex:
         return max(0, min(len(spans) - 1, i))
 
     def apply_edit(self, position: int, chars_removed: int, chars_added: int,
-                   inserted: str = "", preceding: str = "") -> None:
+                   inserted: str = "", preceding: str = "", removed_text: str | None = "",
+                   following: str = "") -> None:
         """Répercute une modification du texte sur l'index.
 
         ``inserted`` est le texte inséré à ``position`` ; ``preceding`` est le
         texte qui précède ``position`` après la modification (quelques milliers
         de caractères suffisent). Une modification qui touche un ``<lb/>``
-        existant, qui insère ``<`` ou ``>`` ou qui a lieu à l'intérieur d'une
-        balise invalide l'index (nouveau balayage au prochain accès) ; sinon
-        les ``<lb/>`` situés après la modification sont simplement décalés.
+        existant, qui insère ou retire (``removed_text`` ; None : inconnu)
+        ``<`` ou ``>``, qui forme ou défait une fin de commentaire, de CDATA
+        ou d'instruction (``preceding`` et ``following`` : le texte avant et
+        après la modification) ou qui a lieu à l'intérieur d'une balise
+        invalide l'index (nouveau balayage au prochain accès) ; sinon les
+        ``<lb/>`` situés après la modification sont simplement décalés.
         """
         if self.dirty:
             return
         # À l'intérieur d'une balise (dernier « < » après le dernier « > »),
         # même sans saisir « < » ni « > », une balise quelconque peut devenir
         # un <lb/> pivot, ou cesser de l'être (ex. edRef="#T" -> "#T1").
-        if preceding.rfind("<") > preceding.rfind(">"):
+        if _inside_tag(preceding):
             self.dirty = True
             return
         position = max(0, int(position))
@@ -97,10 +135,18 @@ class LbIndex:
             overlap = idx < len(spans) and spans[idx][0] < old_end
 
         # La création d'une nouvelle balise commence nécessairement par '<'.
-        # '>' est également structurel (fermeture d'une balise en cours).
+        # '>' est également structurel (fermeture d'une balise en cours) ;
+        # retirer « <!-- » change aussi ce qui est commenté (red team 2, B3).
         structural_insert = "<" in inserted or ">" in inserted
+        structural_removal = (chars_removed > 0 and removed_text is None) or \
+            "<" in (removed_text or "") or ">" in (removed_text or "")
+        # Former ou défaire « --> », « ]]> » ou « ?> » (« - » retiré, lettre
+        # insérée au milieu…) change ce qui est commenté.
+        around_before = preceding[-2:] + (removed_text or "") + following[:2]
+        around_after = preceding[-2:] + inserted + following[:2]
+        closer = any(end in around_before or end in around_after for end in _CLOSERS)
 
-        if overlap or structural_insert:
+        if overlap or structural_insert or structural_removal or closer:
             self.dirty = True
             return
 
@@ -148,6 +194,9 @@ class DocumentSession:
         # Fichier et état d'enregistrement.
         self.path: Optional[Path] = None                 # current_path
         self.modified = False                            # modified
+        # Date et taille du fichier lu ou enregistré (red team, A3) : voir
+        # file_stamp.
+        self.disk_stamp: Optional[tuple[int, int]] = None
 
         # Suivi des révisions du QTextDocument.
         self.last_processed_edit_revision = -1           # _last_processed_edit_revision
@@ -229,6 +278,7 @@ class DocumentSession:
         """Un fichier vient d'être chargé dans ``text_document``."""
         self.path = Path(path)
         self.modified = False
+        self.disk_stamp = file_stamp(path)
         self.last_processed_edit_revision = int(revision)
         self.lb.invalidate()
         self.completion_context_cache.clear()
@@ -240,3 +290,4 @@ class DocumentSession:
         """Le contenu courant vient d'être écrit dans ``path``."""
         self.path = Path(path)
         self.modified = False
+        self.disk_stamp = file_stamp(path)

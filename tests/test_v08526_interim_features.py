@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 import pytest
+from i18n import message_fields
 from varians_source import application_source, CATALOG_SIZE
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -85,6 +86,6 @@ def test_languages_and_help_maintained():
         mapping={x.get('key'):x.text for x in strings}
         assert len(strings)==len(mapping)==CATALOG_SIZE
         assert all(mapping.get('viewer.search.'+k) for k in ('medieval','run','close','count'))
-        assert '{count}' in mapping['viewer.search.count']
+        assert 'count' in message_fields(mapping['viewer.search.count'])
         page=(ROOT/'help'/f'{lang}.html').read_text(encoding='utf8')
         assert mapping['viewer.search.medieval'] in page      # V0.9.3.1 : l'aide sans versions

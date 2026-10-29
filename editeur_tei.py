@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.9.3.2.
+"""Varians — éditeur TEI/manuscrits générique — V0.9.3.4.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -15,9 +15,7 @@ récupérées en Python (urllib). Elle ne contient aucun navigateur HTML embarqu
 """
 from __future__ import annotations
 
-import json
 import re
-import shutil
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -73,6 +71,7 @@ from app_context import (
     forget_open_project,
 )
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
+from save_io import atomic_write_text_with_backup
 from pivot_lines import pivot_lb_pattern
 from formatted_view import (
     _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget,
@@ -81,10 +80,11 @@ from formatted_view import (
 from fragment_units import unit_spans
 from xml_assembly import path_key
 from manuscript_panel import ManuscriptPanel
-from code_editor import CodeEditor, find_in_plain_editor, XMLHighlighter
+from code_editor import CodeEditor, TextDocument, find_in_plain_editor, XMLHighlighter
 from text_search import SearchError
 from replace_bar import ReplaceBarMixin
 from search_results import SearchResultsMixin
+from witness_resource_refresh import AlignmentError, alignment_error_text, read_alignment_json
 from witness_sync import WitnessSyncMixin, flatten_primary, flatten_secondary
 from project_actions import ProjectActionsMixin
 from main_menus import MainMenusMixin, TEI_GUIDE_URL
@@ -97,7 +97,7 @@ from completion_ui import CompletionMixin
 from validation_panel import ValidationPanelMixin
 from xpath_panel import XPathPanelMixin
 from document_tabs import DocumentTabsMixin
-from text_segments import TextSegmentsMixin
+from text_segments import TEXT_ABSENT, TextSegmentsMixin
 from document_display import DocumentDisplayMixin
 from document_dialogs import DocumentDialogsMixin
 from references_ui import ReferencesMixin
@@ -120,7 +120,7 @@ from selection_sync import containing_span_index
 
 try:
     from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot, QRunnable, QThreadPool, QEvent
-    from PySide6.QtGui import QTextCursor, QAction, QKeySequence, QTextDocument
+    from PySide6.QtGui import QTextCursor, QAction, QKeySequence
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QSplitter, QToolBar, QFileDialog, QMessageBox,
         QLabel, QSizePolicy, QVBoxLayout, QHBoxLayout, QCheckBox, QScrollArea, QFrame,
@@ -154,13 +154,8 @@ def _install_light_selection_palette(app):
 I18N = I18nManager(HERE / "i18n", "fr", "en")
 set_i18n(I18N)
 
-def _t(key, default=None, **values):
+def _t(key, /, default=None, **values):
     return tr(key, default=default, **values)
-
-
-def load_json(path: Path):
-    with open(path, "r", encoding="utf-8") as fh:
-        return json.load(fh)
 
 
 class XmlHealthSignals(QObject):
@@ -241,9 +236,7 @@ class CtrlEConfigDialog(QDialog):
             QMessageBox.warning(self, _t("ctrl_e.config.editor.invalid.title"), str(exc))
             return False
         try:
-            if self.path.exists():
-                shutil.copy2(self.path, self.path.with_suffix(self.path.suffix + ".bak"))
-            self.path.write_text(text, encoding="utf-8")
+            atomic_write_text_with_backup(self.path, text)          # .bak, écriture atomique
             self.editor.document().setModified(False)
             QMessageBox.information(self, _t("ctrl_e.config.editor.saved.title"), _t("ctrl_e.config.editor.saved", path=self.path))
             return True
@@ -389,10 +382,17 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         # une synchronisation et ne doit jamais imposer ce nombre.
         self._base_sync_line_count = None
         self._secondary_sync_link_counts = {}
+        # Un fichier d'alignement abîmé (red team 2, B5) : le projet s'ouvre,
+        # sans synchroniser ce seul témoin, et c'est dit.
+        self._alignment_problems = []
         for w in self.witness_configs:
-            alignment_available = has_line_synchronization(w)
-            if alignment_available:
-                cache = load_json(w.alignment)
+            cache = None
+            if has_line_synchronization(w):
+                try:
+                    cache = read_alignment_json(w.alignment)
+                except AlignmentError as exc:
+                    self._alignment_problems.append((w, exc))
+            if cache is not None:
                 if w.is_base:
                     self._base_sync_line_count = primary_sync_line_count(cache)
                 else:
@@ -429,6 +429,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 self.witness_items[w.id] = items
                 self.base_maps[w.id] = by_base
         self.base_items = self.witness_items.get(self.base_id, [])
+        if self._alignment_problems:
+            call_later(0, self, self._report_alignment_problems)
         base_cfg = self.project.witness_by_id[self.base_id]
         # V0.8.4 : un fichier JSON vide/provisoire n'active pas le mode ligne.
         # Le nombre est mesuré avant toute superposition ALTO, afin qu'un ALTO
@@ -467,7 +469,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
 
         self.editor = CodeEditor()
         # Le QTextDocument appartient au document ouvert, non à l'éditeur.
-        self.document.text_document = QTextDocument(self)
+        self.document.text_document = TextDocument(self)
         self.editor.set_text_document(self.document.text_document)
         self.highlighter = XMLHighlighter(self.editor.document())
         self.formatted_view = FormattedEditionWidget(self)
@@ -476,10 +478,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.editor.value_completion_provider = self._auto_value_choices
         self.formatted_view.fragment_editor.value_completion_provider = self._auto_value_choices
         # Invalidation incrémentale : les points lexicaux antérieurs à l'édition
-        # restent valides et accélèrent les Ctrl+Espace suivants.
-        self.editor.document().contentsChange.connect(self._source_contents_changed)
-        self.formatted_view.fragment_editor.document().contentsChange.connect(
-            lambda position, _removed, _added: self._fragment_completion_context_cache.invalidate_from(position)
+        # restent valides et accélèrent les Ctrl+Espace suivants. Les
+        # modifications arrivent en indices Python (red team, A2).
+        self.editor.text_change_listener = self._source_contents_changed
+        self.formatted_view.fragment_editor.text_change_listener = (
+            lambda position, _removed, _added, _text: self._fragment_completion_context_cache.invalidate_from(position)
         )
 
         self.source_wrap_element_action = QAction(_t("fragment.wrap"), self.editor)
@@ -610,6 +613,10 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 page_image_source(page, self.project.root_dir).available
                 for page in (cache.get("pages", []) or [])
             ) or (w.id in self._text_witness_ids() and getattr(w, "image_source_type", "auto") != "none")
+            # Sans donnée pour l'édition, dans un projet à textes à part : le
+            # panneau le dit, comme le viewer web (red team 2, D5).
+            if not self.witness_display_items[w.id] and self._text_witness_ids():
+                panel.set_absent(TEXT_ABSENT)
             self.witness_splitter.addWidget(panel)
             # Ces commandes écrivent dans l'édition : refusées si un autre
             # document est affiché.
@@ -727,6 +734,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.open_path(self.project.edition)
         remember_open_project(self.project.path)
 
+    def _report_alignment_problems(self):
+        texts = [_t("alignment.damaged", witness=self.witness_siglum(w.id), file=str(w.alignment),
+                    detail=alignment_error_text(exc, _t)) for w, exc in self._alignment_problems]
+        QMessageBox.warning(self, _t("alignment.damaged.title"), "\n\n".join(texts))
+
     def witness_siglum(self, witness_id):
         """Sigle du témoin ``witness_id`` pour l'affichage : le sigle saisi
         dans les paramètres du projet, sinon l'identifiant lui-même."""
@@ -817,9 +829,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             self.statusBar().showMessage(_t("format_xml.no_change"), 3500)
             return
 
+        # Positions Python du texte formaté (red team, A2).
+        qt = self.editor.positions(source)
         old_cursor = self.editor.textCursor()
-        old_pos = old_cursor.position()
-        old_anchor = old_cursor.anchor()
+        old_pos = qt.python(old_cursor.position())
+        old_anchor = qt.python(old_cursor.anchor())
         new_pos = result.map_position(old_pos)
         new_anchor = result.map_position(old_anchor)
 
@@ -832,19 +846,22 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         edit = QTextCursor(self.editor.document())
         edit.beginEditBlock()
         try:
+            # Du bas vers le haut : le texte qui précède chacun est intact.
             for repl in reversed(result.replacements):
-                edit.setPosition(repl.start)
-                edit.setPosition(repl.end, QTextCursor.MoveMode.KeepAnchor)
+                edit.setPosition(qt.qt(repl.start))
+                edit.setPosition(qt.qt(repl.end), QTextCursor.MoveMode.KeepAnchor)
                 edit.insertText(repl.text)
         finally:
             edit.endEditBlock()
             self.editor._pair_edit_guard = previous_guard
             self.editor._pair_previous_text = self.editor.toPlainText()
 
+        formatted = self.editor.toPlainText()
+        qt = self.editor.positions(formatted)
         restored = QTextCursor(self.editor.document())
-        restored.setPosition(max(0, min(self.editor.document().characterCount() - 1, new_anchor)))
+        restored.setPosition(qt.qt(max(0, min(len(formatted), new_anchor))))
         restored.setPosition(
-            max(0, min(self.editor.document().characterCount() - 1, new_pos)),
+            qt.qt(max(0, min(len(formatted), new_pos))),
             QTextCursor.MoveMode.KeepAnchor if new_pos != new_anchor else QTextCursor.MoveMode.MoveAnchor,
         )
         self.editor.setTextCursor(restored)
@@ -944,25 +961,21 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.setWindowTitle(_t("app.window.file", project=self.project.title, name=name, mark=mark))
         self._refresh_document_tab(self.document)
 
-    @Slot(int, int, int)
-    def _source_contents_changed(self, position, chars_removed, chars_added):
-        """Invalide seulement ce que l'édition rend réellement obsolète."""
+    def _source_contents_changed(self, position, chars_removed, chars_added, text):
+        """Invalide seulement ce que l'édition rend réellement obsolète.
+        Rappel de l'éditeur (``text_change_listener``) : indices Python de
+        ``text``, le texte après la modification."""
         self._source_completion_context_cache.invalidate_from(position)
         lb = self.document.lb
         if lb.dirty:
             return
         start = max(0, int(position))
-        cursor = QTextCursor(self.editor.document())
-        inserted = ""
-        if chars_added:
-            cursor.setPosition(start)
-            cursor.setPosition(start + max(0, int(chars_added)), QTextCursor.MoveMode.KeepAnchor)
-            inserted = cursor.selectedText()
+        inserted = text[start:start + max(0, int(chars_added))]
         # Texte qui précède la modification : permet de savoir si elle a lieu
         # à l'intérieur d'une balise.
-        cursor.setPosition(max(0, start - LB_EDIT_LOOKBACK))
-        cursor.setPosition(start, QTextCursor.MoveMode.KeepAnchor)
-        lb.apply_edit(position, chars_removed, chars_added, inserted, cursor.selectedText())
+        end = start + max(0, int(chars_added))
+        lb.apply_edit(position, chars_removed, chars_added, inserted, text[max(0, start - LB_EDIT_LOOKBACK):start],
+                      removed_text=getattr(self.editor, "last_removed_text", None), following=text[end:end + 2])
 
     def _set_lb_spans(self, spans):
         self.document.lb.set(spans)
@@ -1000,7 +1013,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return self.document.lb.ordinal_at(position)
 
     def ordinal_at_cursor(self):
-        return self.ordinal_at_position(self.editor.textCursor().position())
+        return self.ordinal_at_position(self.editor.positions().python(self.editor.textCursor().position()))
 
     def _source_selection_descriptor(self, text, selection_start):
         """Élément modifiable de l'aperçu (V0.9.2.9 ; auparavant le
@@ -1035,7 +1048,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         else:
             units = [(index, a, b) for index, (a, b)
                      in enumerate(unit_spans(source, self._preview_unit_names()))]
-        return xml_selection_structure(source, cursor.selectionStart(), cursor.selectionEnd(), units)
+        qt = self.editor.positions(source)
+        return xml_selection_structure(source, qt.python(cursor.selectionStart()), qt.python(cursor.selectionEnd()),
+                                       units)
 
     def _select_xml_text_in_paragraph(self, text, descriptor):
         """Sélectionne dans la source l'occurrence décrite par ``descriptor``.
@@ -1063,9 +1078,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return True
 
     def _select_source_span(self, start, end):
+        """Sélectionne ``start``…``end`` (indices Python) dans la source."""
+        qt = self.editor.positions()
         cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(start)
-        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(qt.qt(start))
+        cursor.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
@@ -1087,15 +1104,16 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             return False
         if not matches:
             return False
-        anchor = self.editor.textCursor().position()
+        qt = self.editor.positions(source)
+        anchor = qt.python(self.editor.textCursor().position())
         spans = self.lb_spans()
         if ordinal is not None and spans:
             n = max(0, min(len(spans) - 1, int(ordinal)))
             anchor = spans[n][0]
         match = min(matches, key=lambda m: abs(m.start() - anchor))
         cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(match.start())
-        cursor.setPosition(match.end(), QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(qt.qt(match.start()))
+        cursor.setPosition(qt.qt(match.end()), QTextCursor.MoveMode.KeepAnchor)
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
@@ -1152,7 +1170,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # plusieurs fois). On transporte aussi le paragraphe et le rang de
             # l'occurrence à l'intérieur de ce paragraphe.
             source_cursor = self.editor.textCursor()
-            source_pos = source_cursor.selectionStart() if source_cursor.hasSelection() else source_cursor.position()
+            qt = self.editor.positions()
+            source_pos = qt.python(source_cursor.selectionStart() if source_cursor.hasSelection()
+                                   else source_cursor.position())
             if parts:
                 sources = self._assembled_preview_sources()
                 ordinal = sources.line_before(self.document.path, source_pos) if sources is not None else None
@@ -1171,7 +1191,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # l'aperçu y reste, le retour à la source rend celle de départ.
             self._preview_round_trip = None
             round_trip = (self.document, self.editor.document().revision(),
-                          source_cursor.selectionStart(), source_cursor.selectionEnd())
+                          qt.python(source_cursor.selectionStart()), qt.python(source_cursor.selectionEnd()))
             self.formatted_view.became_visible()
 
             def restore_preview_context(n=ordinal, selected=selected_visible, desc=descriptor, shape=structure):
@@ -1232,16 +1252,29 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
 
             call_later(0, self, restore_xml_context)
 
+    def _xml_health_text(self, well_formed, line=0, column=0, error=""):
+        if well_formed:
+            return _t("xml.valid")
+        where = _t("xml.invalid.where", line=line, column=column + 1) if line else ""
+        return _t("xml.invalid", where=where, error=error)
+
+    def _retranslate_xml_health(self):
+        """Contrôle XML refait dans la nouvelle langue, comme au premier
+        affichage d'un onglet (red team 2, D6)."""
+        if getattr(self, "document", None) is None:
+            return
+        self._last_xml_health_revision = -1
+        self.validate_text(False)
+
     def _apply_xml_health_result(self, well_formed, line=0, column=0, error="", spans=None, show_message=False):
         if not well_formed:
-            where = f" — ligne {line}, colonne {column + 1}" if line else ""
-            msg = _t("xml.invalid", where=where, error=error)
+            msg = self._xml_health_text(False, line, column, error)
             self.xml_status.setText(msg); self.xml_status.setStyleSheet("color:#a13d32")
             self._set_document_health("malformed")
             if show_message:
                 QMessageBox.warning(self, _t("xml.invalid.title"), msg)
             return False
-        self.xml_status.setText(_t("xml.valid")); self.xml_status.setStyleSheet("color:#376b3c")
+        self.xml_status.setText(self._xml_health_text(True)); self.xml_status.setStyleSheet("color:#376b3c")
         if spans is not None:
             self._set_lb_spans(spans)
         current_revision = self.editor.document().revision()
