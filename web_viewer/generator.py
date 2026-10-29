@@ -966,20 +966,21 @@ def _all_pages(witness):
 
 
 def make_html(data):
-    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    body_class = "" if data.get("meta", {}).get("has_images") else "no-images"
-    geometry_js = (HERE / "geometry.js").read_text(encoding="utf-8")
-    iiif_js = (HERE / "iiif.js").read_text(encoding="utf-8")
-    search_js = (HERE / "fulltext_search.js").read_text(encoding="utf-8")
-    sync_js = (HERE / "sync_model.js").read_text(encoding="utf-8")
-    return (HTML_TEMPLATE.replace("__DATA_JSON__", payload)
-            .replace("__GEOMETRY_JS__", geometry_js)
-            .replace("__IIIF_JS__", iiif_js)
-            .replace("__SEARCH_JS__", search_js)
-            .replace("__SYNC_JS__", sync_js)
-            .replace("__TITLE__", html.escape(str(data["meta"]["title"]), quote=True))
-            .replace("__LANG__", html.escape(str(data.get("i18n", {}).get("default", "en")), quote=True))
-            .replace("__BODY_CLASS__", body_class))
+    # Aucun « < » dans le bloc des données (V0.9.3.3) : ni « </script », ni
+    # « <!-- » venus du texte ne peuvent en sortir ; JSON.parse rend le texte.
+    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+    parts = {
+        "__DATA_JSON__": payload,
+        "__GEOMETRY_JS__": (HERE / "geometry.js").read_text(encoding="utf-8"),
+        "__IIIF_JS__": (HERE / "iiif.js").read_text(encoding="utf-8"),
+        "__SEARCH_JS__": (HERE / "fulltext_search.js").read_text(encoding="utf-8"),
+        "__SYNC_JS__": (HERE / "sync_model.js").read_text(encoding="utf-8"),
+        "__TITLE__": html.escape(str(data["meta"]["title"]), quote=True),
+        "__LANG__": html.escape(str(data.get("i18n", {}).get("default", "en")), quote=True),
+        "__BODY_CLASS__": "" if data.get("meta", {}).get("has_images") else "no-images",
+    }
+    # Une seule passe : le texte inséré (données, scripts) n'est jamais relu.
+    return re.sub("|".join(map(re.escape, parts)), lambda match: parts[match.group()], HTML_TEMPLATE)
 
 
 def generate(project_path: str | Path, output: str | Path | None = None,
