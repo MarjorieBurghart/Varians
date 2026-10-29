@@ -120,6 +120,7 @@ class CodeEditor(QPlainTextEdit):
         # Rappel facultatif à chaque modification du document affiché, en
         # indices Python : ``(position, retirés, ajoutés, texte)``.
         self.text_change_listener = None
+        self.last_removed_text = None
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
         self.document().contentsChange.connect(self._pair_document_contents_changed)
         self.textChanged.connect(self.clearSearchMatch)
@@ -765,6 +766,9 @@ class CodeEditor(QPlainTextEdit):
         if old_text is not None:
             position, chars_removed, chars_added = python_change(
                 self.document(), old_text, new_text, position, chars_removed, chars_added)
+        # Texte retiré par la modification (None : inconnu), pour le
+        # ``text_change_listener``.
+        self.last_removed_text = old_text[position:position + chars_removed] if old_text is not None else None
         if callable(self.text_change_listener):
             self.text_change_listener(position, chars_removed, chars_added, new_text)
         if self._pair_edit_guard or old_text is None:

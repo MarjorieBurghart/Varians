@@ -960,7 +960,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         inserted = text[start:start + max(0, int(chars_added))]
         # Texte qui précède la modification : permet de savoir si elle a lieu
         # à l'intérieur d'une balise.
-        lb.apply_edit(position, chars_removed, chars_added, inserted, text[max(0, start - LB_EDIT_LOOKBACK):start])
+        end = start + max(0, int(chars_added))
+        lb.apply_edit(position, chars_removed, chars_added, inserted, text[max(0, start - LB_EDIT_LOOKBACK):start],
+                      removed_text=getattr(self.editor, "last_removed_text", None), following=text[end:end + 2])
 
     def _set_lb_spans(self, spans):
         self.document.lb.set(spans)

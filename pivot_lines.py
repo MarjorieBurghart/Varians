@@ -32,6 +32,7 @@ page d'un témoin et ses lacunes ne dépendent que de ce texte (V0.9.1.3).
 from __future__ import annotations
 
 import bisect
+import html
 import re
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -42,21 +43,53 @@ from lxml import etree
 from document_session import LbIndex
 from folio_navigation import Folio, folio_lookup, last_folio_mark, pb_folio
 from lacunae import Lacuna, apply_events, lacuna_events, witness_tokens
-from tei_facsimile import _PB_RE
 from xml_assembly import assemble, path_key
+from xml_tag_pairs import element_tag_pattern, element_tags
 
 # Balise ouvrante d'un xi:include (le préfixe est libre) ; un élément non vide
 # se termine à sa balise fermante.
 _INCLUDE_START = re.compile(r"<((?:[A-Za-z_][\w.-]*:)?include)\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*>", re.S)
 
 
+_LB_TAGS = element_tag_pattern("lb")
+_PB_TAGS = element_tag_pattern("pb")
+# Attributs d'une balise, lus dans l'ordre : une valeur n'est jamais prise
+# pour un autre attribut.
+_ATTRIBUTE_RE = re.compile(r"([^\s=/>]+)\s*=\s*(?:\"([^\"]*)\"|'([^']*)')")
+
+
+class _PivotLbPattern:
+    """Les ``<lb edRef="#pivot"/>`` d'un texte XML, lus comme le fait un
+    analyseur XML (red team 2, B3) : hors commentaires, CDATA, instructions
+    et DOCTYPE ; casse respectée ; @edRef égal à « #pivot », références de
+    caractères décodées. ``finditer`` rend des ``re.Match`` (étendue de la
+    balise), comme une expression régulière."""
+
+    def __init__(self, base_id):
+        self.target = f"#{base_id}"
+
+    def finditer(self, text):
+        for match in element_tags(_LB_TAGS, str(text or "")):
+            attributes = match.group("attrs")
+            # Le plus souvent, l'identifiant n'y figure même pas.
+            if match.group("close") or (self.target not in attributes and "&" not in attributes):
+                continue
+            for attribute in _ATTRIBUTE_RE.finditer(attributes):
+                if attribute.group(1) == "edRef":
+                    value = attribute.group(2) if attribute.group(2) is not None else attribute.group(3)
+                    if html.unescape(value) == self.target:
+                        yield match
+                    break
+
+
 def pivot_lb_pattern(base_id):
-    """Expression des ``<lb edRef="#pivot"/>`` dans un texte XML."""
-    escaped = re.escape(base_id)
-    return re.compile(
-        rf"<(?:[A-Za-z_][\w.-]*:)?lb\b(?=[^>]*\bedRef\s*=\s*(['\"])#{escaped}\1)[^>]*?/?>",
-        re.IGNORECASE | re.DOTALL,
-    )
+    """Les ``<lb edRef="#pivot"/>`` d'un texte XML (``finditer``)."""
+    return _PivotLbPattern(base_id)
+
+
+def pb_tag_ends(text):
+    """Fin de chaque balise ``<pb>`` de *text*, hors zones inertes."""
+    return [match.end() for match in element_tags(_PB_TAGS, str(text or "")) if not match.group("close")]
 
 
 def _include_tags(text):
@@ -393,7 +426,7 @@ def pivot_lines(edition_text, edition_path, texts=None, base_id="", pattern=None
         includes = _match_by_line(text, [tag_end - 1 for _s, _e, tag_end in tags], ends[key])
         files[key] = FileLines(ordinals, includes, entries[key], segment)
         if pb_lines[key]:
-            pb_ends = [match.end() for match in _PB_RE.finditer(text)]
+            pb_ends = pb_tag_ends(text)
             for end, index in zip(pb_ends, _match_by_line(text, [end - 1 for end in pb_ends], pb_lines[key])):
                 if index is not None:
                     pb_places[index] = (path, end, pb_ordinals[index])
