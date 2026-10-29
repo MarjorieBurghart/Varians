@@ -253,3 +253,23 @@ def test_the_attributes_of_a_pb_are_read_as_before(tag):
     xml = xml.replace("<p>abc</p>", f"<p>a{tag}b</p>")
     folios = folios_for_witness(xml, "L", ["L-p0008"])
     assert folio_marks(xml, "L", folios) == _reference_folio_marks(xml, "L", folios)
+
+
+def test_adding_moving_or_removing_a_pb_is_seen_at_once():
+    """Les pb gardés le sont pour un texte : toute modification, ici d'un pb,
+    donne un autre texte, relu aussitôt. Le curseur est sur « C »."""
+    xml, ids = _spread()
+    first, second = (f'<pb edRef="#L" facs="#{ids[0]}"/>', f'<pb edRef="#L" facs="#{ids[1]}"/>')
+    texts = {
+        "départ": f"<p>a{first}b</p><p>C</p><p>d</p>",
+        "ajout": f"<p>a{first}b</p><p>{second}C</p><p>d</p>",           # nouveau pb avant le curseur
+        "déplacement": f"<p>a{first}b</p><p>C</p><p>{second}d</p>",     # le même pb, après le curseur
+        "retrait": "<p>ab</p><p>C</p><p>d</p>",                         # premier pb retiré
+    }
+    folios = folios_for_witness(xml, "L", ["L-p0008"])
+    seen = {}
+    for name, body in texts.items():
+        text = xml.replace("<p>abc</p>", body)
+        seen[name] = getattr(folio_at_position(text, text.index("C</p>"), "L", folios), "ref", None)
+        assert folio_marks(text, "L", folios) == _reference_folio_marks(text, "L", folios), name
+    assert seen == {"départ": ids[0], "ajout": ids[1], "déplacement": ids[0], "retrait": None}
