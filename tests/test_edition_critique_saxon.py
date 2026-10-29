@@ -281,6 +281,26 @@ def test_the_reference_of_a_biblical_quotation_is_in_angle_brackets_the_others_a
     assert _main(tree) == ["Dixit Uos estis <Lc. 22:28> et Ait Augustinus uidelicet alia."]
 
 
+def test_a_speech_has_its_speaker_and_a_stage_direction_between_two_blocks_is_a_block(project):
+    """V0.9.3.1 : chaque réplique est un bloc, son locuteur en tête ; une
+    didascalie est entre parenthèses, en italique : un bloc entre deux
+    blocs (entre deux répliques, deux vers), dans la phrase sinon."""
+    name = _write(project, "scene.xml",
+                  '<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
+                  '<sp who="#h"><speaker>HAMLETUS</speaker><lg><l>Esse aut non esse,</l><stage>ridet</stage>'
+                  '<l>haec quaestio.</l></lg></sp>'
+                  '<sp who="#o"><speaker>OPHELIA</speaker><p>Domine <stage>susurrat</stage> quomodo uales?</p>'
+                  '<stage>Exit.</stage></sp></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    main = tree.find(".//main")
+    speeches = main.find_class("discours")
+    assert [[_text(e) for e in sp.find_class("locuteur")] for sp in speeches] == [["HAMLETUS"], ["OPHELIA"]]
+    assert [(e.tag, _text(e)) for e in main.find_class("didascalie")] == [
+        ("div", "(Intrat Hamletus.)"), ("div", "(ridet)"), ("span", "(susurrat)"), ("div", "(Exit.)")]
+    assert [_text(e) for e in speeches[0].find_class("vers")] == ["Esse aut non esse,", "haec quaestio."]
+
+
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):
     scenario = next(s for s in predefined_scenarios() if s.name == "edition-critique")
     result = run_in_process(scenario_request(scenario, project), timeout=120)

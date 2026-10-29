@@ -176,6 +176,7 @@
           .discours {margin:1rem 0 1rem 1em;}
           .locuteur {font-variant:small-caps; letter-spacing:.035em; margin-right:.55em;}
           .didascalie {font-style:italic; color:var(--secondaire);}
+          div.didascalie {margin:.3rem 0 .6rem 1.5em;}
           .illustration {text-align:center; margin:1.2rem auto;}
           .illustration img {max-width:100%; height:auto;}
           .illustration figcaption {font-size:.8em; color:var(--secondaire);}
@@ -572,6 +573,12 @@
   <xsl:template match="tei:sp" mode="base"><div class="discours"><xsl:apply-templates mode="base"/></div></xsl:template>
   <xsl:template match="tei:speaker" mode="base"><span class="locuteur"><xsl:apply-templates mode="base"/></span></xsl:template>
   <xsl:template match="tei:stage" mode="base"><span class="didascalie">(<xsl:apply-templates mode="base"/>)</span></xsl:template>
+  <!-- Une didascalie entre deux blocs (répliques, vers…) est un bloc (V0.9.3.1). -->
+  <xsl:template match="tei:stage[parent::tei:sp or parent::tei:spGrp or parent::tei:lg or parent::tei:body
+                       or parent::tei:front or parent::tei:back or parent::tei:*[matches(local-name(), '^div[1-7]?$')]]"
+                mode="base">
+    <div class="didascalie">(<xsl:apply-templates mode="base"/>)</div>
+  </xsl:template>
   <xsl:template match="tei:figure" mode="base">
     <figure class="illustration"><xsl:apply-templates mode="base"/>
       <xsl:if test="tei:figDesc"><figcaption><xsl:apply-templates select="tei:figDesc/node()" mode="base"/></figcaption></xsl:if>
