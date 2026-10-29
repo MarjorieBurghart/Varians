@@ -7,12 +7,13 @@ cibles stables de pb/@facs, avec @edRef pour lever les homonymies entre témoins
 Aucune relation de ligne ALTO/JSON n'est inférée ici.
 """
 from __future__ import annotations
+import bisect
 from dataclasses import dataclass
 import html
 import re
 import xml.etree.ElementTree as ET
 
-from tei_facsimile import _attr, _pointer_tokens, _PB_RE, valid_xml_id, _set_or_add_attr
+from tei_facsimile import _ATTR_RE_TEMPLATE, _attr, _pointer_tokens, _PB_RE, valid_xml_id, _set_or_add_attr
 from image_sources import effective_line_bbox, page_image_dimensions
 
 
@@ -191,13 +192,17 @@ def pb_folio(facs, ed_ref, n, witness_id: str, lookup) -> Folio | None:
     Si pb/@facs désigne la surface entière et pb/@n un de ses folios,
     choisir sa zone.
     """
+    return _folio_of_pb(_pointer_tokens(facs), _pointer_tokens(ed_ref), (n or '').strip().casefold(),
+                        witness_id, lookup)
+
+
+def _folio_of_pb(refs, edrefs, label, witness_id: str, lookup) -> Folio | None:
+    """``pb_folio`` sur les valeurs déjà découpées : pointeurs de @facs et
+    de @edRef, @n normalisé."""
     wid = str(witness_id).lstrip('#')
     id_map, by_name = lookup
-    refs = _pointer_tokens(facs)
-    edrefs = _pointer_tokens(ed_ref)
     if edrefs and wid not in edrefs:
         return None
-    label = (n or '').strip().casefold()
     if not edrefs and not any(ref in id_map for ref in refs):
         return None
     direct = next((id_map[r] for r in refs if r in id_map), None)
@@ -236,31 +241,109 @@ def last_folio_mark(xml_text: str, position: int, witness_id: str,
     return marks[-1] if marks else None
 
 
+class _TextMemo:
+    """Valeurs calculées pour les derniers textes lus (V0.9.3.2) : quelques
+    textes, car la synchronisation alterne entre une partie affichée et
+    l'édition."""
+
+    def __init__(self, size=4):
+        self.size, self.entries = size, []
+
+    def get(self, text):
+        for cached, value in self.entries:
+            if cached is text or cached == text:
+                return value
+        return None
+
+    def put(self, text, value):
+        self.entries = [(text, value)] + [e for e in self.entries if e[0] is not text][:self.size - 1]
+        return value
+
+
+# Pb de chaque témoin, par texte puis par (témoin, folios).
+_marks_memo = _TextMemo()
+
+
 def folio_marks(xml_text: str, witness_id: str, folios: list[Folio],
                 stop: int | None = None) -> list[tuple[Folio, int]]:
     """``(folio, fin)`` de chaque pb du témoin dans ``xml_text``, dans
-    l'ordre ; ceux qui finissent après ``stop`` sont ignorés."""
+    l'ordre ; ceux qui finissent après ``stop`` sont ignorés.
+
+    Les pb d'un témoin sont lus une fois par texte (V0.9.3.2) : déplacer le
+    curseur sans modifier le texte ne relit pas le document."""
+    text = str(xml_text or '')
+    entries = _marks_memo.get(text)
+    if entries is None:
+        entries = _marks_memo.put(text, {})
+    key = (str(witness_id), tuple(folios))
+    marks = entries.get(key)
+    if marks is None:
+        marks = entries[key] = _scan_folio_marks(text, witness_id, folios)
+    if stop is None:
+        return list(marks)
+    stop = max(0, min(int(stop), len(text)))
+    return [mark for mark in marks if mark[1] <= stop]
+
+
+def _scan_folio_marks(xml_text: str, witness_id: str, folios: list[Folio],
+                      stop: int | None = None) -> list[tuple[Folio, int]]:
+    """Pb d'un témoin pour ``folio_marks``, d'après les pb du texte."""
     lookup = folio_lookup(folios)
     text = str(xml_text or '')
     stop = len(text) if stop is None else max(0, min(int(stop), len(text)))
-    # Position des commentaires / CDATA / instructions XML, pour ne pas
-    # interpréter un exemple textuel comme un vrai pb.
-    ignored = [(m.start(), m.end()) for rx in (
-        re.compile(r'<!--.*?(?:-->|$)', re.S),
-        re.compile(r'<!\[CDATA\[.*?(?:\]\]>|$)', re.S),
-        re.compile(r'<\?.*?(?:\?>|$)', re.S),
-    ) for m in rx.finditer(text)]
     marks = []
-    for m in _PB_RE.finditer(text):
-        if m.end() > stop:
+    for end, refs, edrefs, label in _pb_tags(text):
+        if end > stop:
             break
-        if any(a <= m.start() < b for a, b in ignored):
+        folio = _folio_of_pb(refs, edrefs, label, witness_id, lookup)
+        if folio is not None:
+            marks.append((folio, end))
+    return marks
+
+
+# Commentaires / CDATA / instructions XML : un exemple textuel n'est pas un
+# vrai pb.
+_IGNORED_RES = (
+    re.compile(r'<!--.*?(?:-->|$)', re.S),
+    re.compile(r'<!\[CDATA\[.*?(?:\]\]>|$)', re.S),
+    re.compile(r'<\?.*?(?:\?>|$)', re.S),
+)
+# Pb des derniers textes lus, partagés par tous les témoins (V0.9.3.2).
+_pb_memo = _TextMemo()
+# Les expressions de ``_attr`` pour les attributs d'un pb, compilées une fois.
+_PB_ATTR_RES = {name: re.compile(_ATTR_RE_TEMPLATE.format(name=re.escape(name)), re.I | re.S)
+                for name in ('facs', 'edRef', 'n')}
+
+
+def _pb_attr(tag: str, name: str) -> str | None:
+    """``_attr(tag, name)`` pour @facs, @edRef et @n."""
+    m = _PB_ATTR_RES[name].search(tag)
+    return html.unescape(m.group(2)) if m else None
+
+
+def _pb_tags(text: str) -> tuple:
+    """``(fin, pointeurs de @facs, de @edRef, @n normalisé)`` de chaque pb du
+    texte, dans l'ordre, hors commentaires, CDATA et instructions ; lus une
+    fois par texte."""
+    tags = _pb_memo.get(text)
+    if tags is not None:
+        return tags
+    ignored = []
+    for start, end in sorted((m.start(), m.end()) for rx in _IGNORED_RES for m in rx.finditer(text)):
+        if ignored and start <= ignored[-1][1]:
+            ignored[-1][1] = max(ignored[-1][1], end)
+        else:
+            ignored.append([start, end])
+    starts = [start for start, _end in ignored]
+    found = []
+    for m in _PB_RE.finditer(text):
+        i = bisect.bisect_right(starts, m.start()) - 1
+        if i >= 0 and m.start() < ignored[i][1]:
             continue
         tag = m.group()
-        folio = pb_folio(_attr(tag, 'facs'), _attr(tag, 'edRef'), _attr(tag, 'n'), witness_id, lookup)
-        if folio is not None:
-            marks.append((folio, m.end()))
-    return marks
+        found.append((m.end(), tuple(_pointer_tokens(_pb_attr(tag, 'facs'))),
+                      tuple(_pointer_tokens(_pb_attr(tag, 'edRef'))), (_pb_attr(tag, 'n') or '').strip().casefold()))
+    return _pb_memo.put(text, tuple(found))
 
 
 def split_surface_into_folios(xml_text: str, surface_id: str, left: str, right: str,

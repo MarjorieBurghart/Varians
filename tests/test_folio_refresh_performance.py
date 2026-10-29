@@ -13,6 +13,8 @@ des folios du panneau reconstruite. Désormais :
   momentanément mal formé ailleurs (balise en cours de frappe) ne fait plus
   perdre les zones des folios ;
 - la liste d'un panneau n'est reconstruite que si ses folios changent ;
+- les ``<pb>`` d'un témoin sont lus une fois par texte : déplacer le curseur
+  sans modifier le texte ne relit plus le document.
 """
 from __future__ import annotations
 
@@ -22,7 +24,7 @@ from types import SimpleNamespace
 import pytest
 
 import folio_navigation as F
-from folio_navigation import folios_for_witness, split_surface_into_folios
+from folio_navigation import folio_at_position, folio_marks, folios_for_witness, split_surface_into_folios
 from varians_source import method_source
 
 BASE = '''<TEI xmlns="http://www.tei-c.org/ns/1.0"><facsimile>
@@ -173,3 +175,81 @@ def test_a_forced_refresh_rereads_the_facsimile(window):
     window.refresh()
     window.refresh(force=True)
     assert window.counters["facsimile_surfaces"].calls == 2
+
+
+# --- <pb> d'un témoin lus une fois par texte ---------------------------------------
+
+def test_moving_the_cursor_does_not_reread_the_pb(monkeypatch):
+    xml, ids = _spread()
+    xml = xml.replace("<p>abc</p>", "".join(
+        f'<p>{i}<pb edRef="#L" n="f00{2 + i % 2}{"v" if i % 2 == 0 else "r"}" facs="#{ids[i % 2]}"/>x</p>'
+        for i in range(6)))
+    folios = folios_for_witness(xml, "L", ["L-p0008"])
+    scans = Counter(F._scan_folio_marks)
+    monkeypatch.setattr(F, "_scan_folio_marks", scans)
+    positions = [xml.index(f"<p>{i}<pb") for i in range(6)] + [len(xml)]
+    found = [folio_at_position(xml, position, "L", folios) for position in positions]
+    assert scans.calls == 1
+    assert [f.ref if f else None for f in found] == [None, ids[0], ids[1], ids[0], ids[1], ids[0], ids[1]]
+    assert len(folio_marks(xml, "L", folios)) == 6 and scans.calls == 1
+    edited = xml.replace("<p>0", "<p>00")
+    assert folio_at_position(edited, len(edited), "L", folios).ref == ids[1] and scans.calls == 2
+
+
+def _reference_folio_marks(text, witness_id, folios, stop=None):
+    """``folio_marks`` d'avant V0.9.3.2 (référence) : tout relu à chaque appel."""
+    import re
+    from tei_facsimile import _PB_RE, _attr
+    lookup = F.folio_lookup(folios)
+    stop = len(text) if stop is None else max(0, min(int(stop), len(text)))
+    ignored = [(m.start(), m.end()) for rx in (
+        re.compile(r'<!--.*?(?:-->|$)', re.S), re.compile(r'<!\[CDATA\[.*?(?:\]\]>|$)', re.S),
+        re.compile(r'<\?.*?(?:\?>|$)', re.S)) for m in rx.finditer(text)]
+    marks = []
+    for m in _PB_RE.finditer(text):
+        if m.end() > stop:
+            break
+        if any(a <= m.start() < b for a, b in ignored):
+            continue
+        tag = m.group()
+        folio = F.pb_folio(_attr(tag, 'facs'), _attr(tag, 'edRef'), _attr(tag, 'n'), witness_id, lookup)
+        if folio is not None:
+            marks.append((folio, m.end()))
+    return marks
+
+
+def test_the_cached_pb_match_a_fresh_reading():
+    xml, ids = _spread()
+    xml = xml.replace("<p>abc</p>", f'<p><!-- <pb edRef="#L" facs="#{ids[1]}"/> <?x <pb edRef="#L"?> -->'
+                                    f'<pb edRef="#L" facs="#{ids[0]}"/>a<![CDATA[<pb edRef="#L" n="f003r"/>]]>'
+                                    f'<?pi <pb edRef="#L" n="f003r"/>?><pb edRef="#L" facs="#{ids[1]}"/>b'
+                                    f'<pb edRef="#L" n="f002v"/>c<!-- unterminated <pb edRef="#L"/></p>')
+    folios = folios_for_witness(xml, "L", ["L-p0008"])
+    assert len(_reference_folio_marks(xml, "L", folios)) == 3
+    for stop in range(0, len(xml) + 1, 7):
+        assert folio_marks(xml, "L", folios, stop=stop) == _reference_folio_marks(xml, "L", folios, stop)
+
+
+def test_alternating_between_a_part_and_the_edition_reads_each_text_once(monkeypatch):
+    xml, ids = _spread()
+    part = '<div><pb edRef="#L" n="f003r"/>abc</div>'
+    folios = folios_for_witness(xml, "L", ["L-p0008"])
+    scans = Counter(F._scan_folio_marks)
+    monkeypatch.setattr(F, "_scan_folio_marks", scans)
+    for _ in range(3):
+        folio_at_position(xml, len(xml), "L", folios)
+        assert folio_at_position(part, len(part), "L", folios).ref == ids[1]
+    assert scans.calls == 2
+
+
+@pytest.mark.parametrize("tag", ['<pb edRef="#L" n="f003r"/>', "<pb EDREF='#L' N='F003R'/>", '<tei:pb xml:n="x" n="f002v" edRef="#L"/>',
+                                 '<pb facs="#L-p0008-right"/>', '<pb facs="#L-p0008" n="f003r"/>', '<pb edRef="#L&#x20;#M" n="f002v"/>',
+                                 '<pb edRef="#M" n="f002v"/>', '<pb n="f002v"/>'])
+def test_the_attributes_of_a_pb_are_read_as_before(tag):
+    from tei_facsimile import _attr
+    for name in ("facs", "edRef", "n"):
+        assert F._pb_attr(tag, name) == _attr(tag, name)
+    xml, _ids = _spread()
+    xml = xml.replace("<p>abc</p>", f"<p>a{tag}b</p>")
+    folios = folios_for_witness(xml, "L", ["L-p0008"])
+    assert folio_marks(xml, "L", folios) == _reference_folio_marks(xml, "L", folios)
