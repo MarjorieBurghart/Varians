@@ -1127,6 +1127,7 @@ Salvare comunque?</string>
   <string key="transform.param.value">Valore</string>
   <string key="transform.param.pivot">{witness} (pivot)</string>
   <string key="transform.param.no_witness">aucun (solo i lemmi)</string>
+  <string key="transform.param.interface_language">Lingua dell’interfaccia</string>
   <string key="transform.param.add">Aggiungi un parametro</string>
   <string key="transform.param.remove">Rimuovi il parametro</string>
   <string key="transform.browse.file">File sorgente dello scenario</string>

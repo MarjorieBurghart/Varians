@@ -1127,6 +1127,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="transform.param.value">Значение</string>
   <string key="transform.param.pivot">{witness} (опорный)</string>
   <string key="transform.param.no_witness">aucun (только леммы)</string>
+  <string key="transform.param.interface_language">Язык интерфейса</string>
   <string key="transform.param.add">Добавить параметр</string>
   <string key="transform.param.remove">Убрать параметр</string>
   <string key="transform.browse.file">Исходный файл сценария</string>

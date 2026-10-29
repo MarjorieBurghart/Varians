@@ -1127,6 +1127,7 @@ Trotzdem speichern?</string>
   <string key="transform.param.value">Wert</string>
   <string key="transform.param.pivot">{witness} (Pivot)</string>
   <string key="transform.param.no_witness">aucun (nur Lemmata)</string>
+  <string key="transform.param.interface_language">Sprache der Oberfläche</string>
   <string key="transform.param.add">Parameter hinzufügen</string>
   <string key="transform.param.remove">Parameter entfernen</string>
   <string key="transform.browse.file">Quelldatei des Szenarios</string>

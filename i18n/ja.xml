@@ -1127,6 +1127,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.param.value">値</string>
   <string key="transform.param.pivot">{witness}（ピボット）</string>
   <string key="transform.param.no_witness">aucun（レンマのみ）</string>
+  <string key="transform.param.interface_language">インターフェースの言語</string>
   <string key="transform.param.add">パラメータを追加</string>
   <string key="transform.param.remove">パラメータを削除</string>
   <string key="transform.browse.file">シナリオの入力ファイル</string>
