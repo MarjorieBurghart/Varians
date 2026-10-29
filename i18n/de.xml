@@ -21,7 +21,7 @@
   <string key="common.frames">Rahmen</string>
   <string key="manuscript.frames.tip">Zeilenumrisse nur für diesen Textzeugen anzeigen. Orange: synchronisierte Zeile; Blau: manuell ausgewählte Zeile.</string>
   <string key="manuscript.frames.no_geometry">Der Zeilenumriss kann nicht gezeichnet werden: Für diese Zeile liegen keine verwendbaren Koordinaten vor.</string>
-  <string key="manuscript.iiif_unassociated_layout.tip">{count} ALTO/PAGE-Seite(n) konnten keiner IIIF-Abbildung sicher zugeordnet werden. Die Bilder bleiben verfügbar. Um Zeilenumrisse anzuzeigen, ordnen Sie die OCR-Dateien in den Zeugeneinstellungen den Canvases zu.</string>
+  <string key="manuscript.iiif_unassociated_layout.tip">{count, plural, one {# ALTO/PAGE-Seite konnte} other {# ALTO/PAGE-Seiten konnten}} keiner IIIF-Abbildung sicher zugeordnet werden. Die Bilder bleiben verfügbar. Um Zeilenumrisse anzuzeigen, ordnen Sie die OCR-Dateien in den Zeugeneinstellungen den Canvases zu.</string>
   <string key="common.language">Sprache:</string>
   <string key="toolbar.title">Synchronisierung und Suche</string>
   <string key="toolbar.open">Öffnen</string>
@@ -43,9 +43,9 @@
   <string key="tab.preview">XSLT-/CSS-Ansicht</string>
   <string key="status.xml.initial">XML: —</string>
   <string key="status.cursor">Zeile {line}, Spalte {column}</string>
-  <string key="status.structure.expected">{base}: {count} Zeilen erwartet</string>
-  <string key="status.structure.ok">{base}: {count} Zeilen ✓</string>
-  <string key="status.structure.changed">{base}: {count} Zeilen — erwartet: {expected}</string>
+  <string key="status.structure.expected">{base}: {count, plural, one {# Zeile erwartet} other {# Zeilen erwartet}}</string>
+  <string key="status.structure.ok">{base}: {count, plural, one {# Zeile} other {# Zeilen}} ✓</string>
+  <string key="status.structure.changed">{base}: {count, plural, one {# Zeile} other {# Zeilen}} — erwartet: {expected}</string>
   <string key="status.saved">Gespeichert: {path}</string>
   <string key="status.search.xml.found">XML-Suche: Treffer {n}/{total} — {query}</string>
   <string key="status.search.xml.none">XML-Suche: kein Treffer — {query}</string>
@@ -75,8 +75,8 @@
   <string key="preview.files_missing">XSLT- oder CSS-Datei nicht gefunden. Wählen Sie die Dateien mit den Schaltflächen oben aus.</string>
   <string key="preview.up_to_date">Vorschau bereits aktuell · {engine}. Kein erneutes Laden nötig.</string>
   <string key="preview.xml_invalid">Vorschau nicht aktualisiert: XML ist vorübergehend nicht wohlgeformt ({error}). Die letzte gültige Ansicht bleibt sichtbar.</string>
-  <string key="preview.updated.lines">Vorschau aktualisiert: {paragraphs} bearbeitbare Absätze · {lines} anklickbare Zeilen des Pivot-Textzeugen.</string>
-  <string key="preview.updated.no_lines">Vorschau aktualisiert: {paragraphs} bearbeitbare Absätze. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
+  <string key="preview.updated.lines">Vorschau aktualisiert: {paragraphs, plural, one {# bearbeitbarer Absatz} other {# bearbeitbare Absätze}} · {lines, plural, one {# anklickbare Zeile} other {# anklickbare Zeilen}} des Pivot-Textzeugen.</string>
+  <string key="preview.updated.no_lines">Vorschau aktualisiert: {paragraphs, plural, one {# bearbeitbarer Absatz} other {# bearbeitbare Absätze}}. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
   <string key="preview.transform_error">Fehler bei der XSLT-Transformation: {error}</string>
   <string key="preview.base_selected">Zeile {line} des Pivot-Textzeugen ausgewählt · Textzeugen synchronisiert.</string>
   <string key="preview.toc">Inhalt</string>
@@ -143,7 +143,7 @@ Die Einfügung wurde abgebrochen, um unerwartetes Markup zu vermeiden.</string>
   <string key="file.encoding.text">Dieses Dokument deklariert die Kodierung {encoding}, Varians speichert jedoch immer in UTF-8: Unter dieser Deklaration würden andere Programme seine Sonderzeichen falsch lesen.\n\nDie Deklaration zu encoding="UTF-8" korrigieren und speichern? (Abbrechen: Es wird nichts gespeichert.)</string>
   <string key="file.encoding.fix">Korrigieren und speichern</string>
   <string key="file.structure.title">Struktur von {base} geändert</string>
-  <string key="file.structure.text">Das XML enthält {count} Zeilen für {base} statt {expected}.
+  <string key="file.structure.text">Das XML enthält {count, plural, one {# Zeile} other {# Zeilen}} für {base} statt {expected}.
 
 Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Caches jedoch neu ausgerichtet werden.</string>
   <string key="file.unsaved.title">Nicht gespeicherte Änderungen</string>
@@ -167,13 +167,13 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="webgen.text.pivot">Pivot (jedes Textes)</string>
   <string key="webgen.text.missing_hint">Stellen ohne Lesart des gewählten Textzeugen werden im Viewer markiert.</string>
   <string key="webgen.text.generate">Erzeugen</string>
-  <string key="webgen.text.missing">\n\n{count} Stelle(n) ohne Lesart von {witness}, im Viewer markiert.</string>
+  <string key="webgen.text.missing">\n\n{count, plural, one {# Stelle} other {# Stellen}} ohne Lesart von {witness}, im Viewer markiert.</string>
   <string key="webgen.text.unknown">\n\nUnbekannter Textzeuge in project.xml: {witness}; stattdessen wird der Pivot verwendet.</string>
   <string key="webgen.done.title">Web-Viewer erzeugt</string>
   <string key="webgen.done.text">Viewer erzeugt:
 {output}
 
-{witnesses} Textzeuge(n), {lines} Zeilen des Pivot-Textzeugen.</string>
+{witnesses, plural, one {# Textzeuge} other {# Textzeugen}}, {lines, plural, one {# Zeile} other {# Zeilen}} des Pivot-Textzeugen.</string>
   <string key="webgen.missing">
 
 Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
@@ -195,14 +195,14 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="viewer.score"> · {score} %</string>
   <string key="viewer.info.line">{page} · Zeile {line}</string>
   <string key="viewer.info.no_line">Keine Zeile.</string>
-  <string key="viewer.stats">{witnesses} Textzeuge(n) · {lines} Zeilen des Pivot-Textzeugen · {variants} Varianten</string>
+  <string key="viewer.stats">{witnesses, plural, one {# Textzeuge} other {# Textzeugen}} · {lines, plural, one {# Zeile} other {# Zeilen}} des Pivot-Textzeugen · {variants, plural, one {# Variante} other {# Varianten}}</string>
   <string key="viewer.toc">Inhalt</string>
   <string key="viewer.text.established">Konstituierter Text (&lt;lem&gt;), sonst {witness}</string>
   <string key="viewer.text.witness">Text von {witness}</string>
   <string key="viewer.text.pivot">der Pivot-Textzeuge</string>
-  <string key="viewer.text.missing">{count} Stelle(n) ohne Lesart von {witness}, markiert</string>
+  <string key="viewer.text.missing">{count, plural, one {# Stelle} other {# Stellen}} ohne Lesart von {witness}, markiert</string>
   <string key="viewer.text.witness_pivot">Text des Pivot-Textzeugen</string>
-  <string key="viewer.text.missing_pivot">{count} Stelle(n) ohne Lesart des Pivot-Textzeugen, markiert</string>
+  <string key="viewer.text.missing_pivot">{count, plural, one {# Stelle} other {# Stellen}} ohne Lesart des Pivot-Textzeugen, markiert</string>
   <string key="viewer.missing">Keine Lesart von {witness} hier: {fallback}</string>
   <string key="viewer.missing.lem">Text des &lt;lem&gt;</string>
   <string key="viewer.missing.reading">Lesart von {witness}</string>
@@ -242,7 +242,7 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="publication.page">Seite: {n}</string>
   <string key="publication.not_available">[Lesart des Textzeugen nicht verfügbar]</string>
   <string key="publication.editor_siglum">Hg.</string>
-  <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} Apparateinträge ohne Lemma (lem). Fügen Sie jedem ein Lemma hinzu oder wählen Sie einen Textzeugen.</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun: Apparateinträge ohne Lemma (lem): {count}. Fügen Sie jedem ein Lemma hinzu oder wählen Sie einen Textzeugen.</string>
   <string key="publication.error.unknown_witness">Unbekannter Textzeuge: {witness} (deklarierte Textzeugen: {witnesses}).</string>
   <string key="viewer.language">Sprache</string>
   <string key="viewer.variant">Variante</string>
@@ -253,8 +253,8 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="console.missing_pages">Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="preview.choose_xslt">XSLT-Stylesheet auswählen</string>
   <string key="preview.choose_css">CSS-Stylesheet auswählen</string>
-  <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Elemente · {lines} anklickbare Zeilen des Pivot-Textzeugen.</string>
-  <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Elemente. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
+  <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs, plural, one {# bearbeitbares Element} other {# bearbeitbare Elemente}} · {lines, plural, one {# anklickbare Zeile} other {# anklickbare Zeilen}} des Pivot-Textzeugen.</string>
+  <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs, plural, one {# bearbeitbares Element} other {# bearbeitbare Elemente}}. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
   <string key="viewer.image_unavailable">IIIF-Bild nicht verfügbar</string>
   <string key="status.base_line">{base} Zeile {line}/{total}</string>
   <string key="common.all_files">Alle Dateien</string>
@@ -279,7 +279,7 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="results.title">Suchergebnisse</string>
   <string key="results.all_project">Ganzes Projekt</string>
   <string key="results.summary">{count} Treffer für „{query}“</string>
-  <string key="results.summary.project">{count} Treffer für „{query}“ in {documents} Dokument(en)</string>
+  <string key="results.summary.project">{count} Treffer für „{query}“ in {documents, plural, one {# Dokument} other {# Dokumenten}}</string>
   <string key="results.truncated">die ersten {shown} angezeigt</string>
   <string key="results.close">Schließen</string>
   <string key="results.column.document">Dokument</string>
@@ -297,7 +297,7 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="replace.one">Ersetzen</string>
   <string key="replace.all">Alle ersetzen</string>
   <string key="replace.close.tip">Schließen (Esc)</string>
-  <string key="replace.done">{count} Ersetzung(en)</string>
+  <string key="replace.done">{count, plural, one {# Ersetzung} other {# Ersetzungen}}</string>
   <string key="replace.error.template">Fehlerhafter Ersetzungstext: {detail}</string>
   <string key="menu.open_project">Projekt öffnen…</string>
   <string key="menu.save_edition">Edition speichern</string>
@@ -411,7 +411,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="toolbar.format_xml.tip">Nur XML-/TEI-Bereiche einrücken, deren Formatierung sicher ist</string>
   <string key="format_xml.invalid">Einrückung abgebrochen: XML ist nicht wohlgeformt ({error})</string>
   <string key="format_xml.no_change">Einrückung: keine sichere Formatierungsänderung anzuwenden.</string>
-  <string key="format_xml.done">XML eingerückt: {count} strukturelle(r) Bereich(e) formatiert.</string>
+  <string key="format_xml.done">XML eingerückt: {count, plural, one {# struktureller Bereich} other {# strukturelle Bereiche}} formatiert.</string>
   <string key="rng.panel.title">RELAX-NG- und Schematron-Validierung</string>
   <string key="rng.panel.no_validation">Noch keine Validierung durchgeführt.</string>
   <string key="rng.panel.no_schema">Diesem Projekt ist kein RELAX-NG-Schema zugeordnet.</string>
@@ -421,7 +421,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="rng.panel.valid">Dokument ist gemäß {schema} gültig.</string>
   <string key="rng.panel.invalid">{count} Validierungsfehler gemäß {schema}. Doppelklicken Sie auf einen Fehler, um zur entsprechenden Zeile zu springen.</string>
   <string key="rng.panel.invalid.schematron">{count} Validierungsfehler gemäß {schema}: {rng} RELAX NG, {schematron} Schematron. Doppelklicken Sie auf einen Fehler, um zur entsprechenden Zeile zu springen.</string>
-  <string key="rng.panel.valid.messages">Dokument ist gemäß {schema} gültig; {count} Meldung(en) der Schematron-Regeln (Warnungen, Informationen).</string>
+  <string key="rng.panel.valid.messages">Dokument ist gemäß {schema} gültig; {count, plural, one {# Meldung} other {# Meldungen}} der Schematron-Regeln (Warnungen, Informationen).</string>
   <string key="rng.panel.close">Validierungsbereich ausblenden</string>
   <string key="rng.column.level">Stufe</string>
   <string key="rng.column.origin">Herkunft</string>
@@ -466,7 +466,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="rng.status.no_xml_model">RNG: kein xml-model</string>
   <string key="schematron.status.valid">Schematron: ✓</string>
   <string key="schematron.status.errors">Schematron: {count} Fehler</string>
-  <string key="schematron.status.messages">Schematron: {count} Meldung(en)</string>
+  <string key="schematron.status.messages">Schematron: {count, plural, one {# Meldung} other {# Meldungen}}</string>
   <string key="schematron.status.no_rules">Schematron: keine Regeln</string>
   <string key="schematron.status.rules_error">Schematron: fehlerhafte Regeln</string>
   <string key="schematron.status.saxon_missing">Schematron: Saxon fehlt</string>
@@ -555,7 +555,7 @@ Trotzdem speichern?</string>
   <string key="help.tei_guide">Leitfaden zu den TEI-Elementen</string>
   <string key="help.software">Varians-Hilfe</string>
   <string key="help.search.placeholder">In der Hilfe suchen (Ctrl+F)</string>
-  <string key="help.search.summary">{sections} Abschnitt(e), {count} Treffer</string>
+  <string key="help.search.summary">{sections, plural, one {# Abschnitt} other {# Abschnitte}}, {count} Treffer</string>
   <string key="help.search.none">Kein Ergebnis</string>
   <string key="completion.values.title">Erlaubte Attributwerte</string>
   <string key="completion.values.label">Erlaubte Werte für @{attribute} in &lt;{element}&gt;:</string>
@@ -580,9 +580,9 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="xpath.empty">Geben Sie einen XPath-Ausdruck ein.</string>
   <string key="xpath.error">Ungültiger XPath-Ausdruck oder XML konnte nicht analysiert werden: {error}</string>
   <string key="xpath.scalar">XPath-Ergebnis: {value}</string>
-  <string key="xpath.found">{count} Element(e) gefunden. Klicken Sie auf ein Ergebnis, um zur entsprechenden Stelle im XML zu springen.</string>
-  <string key="xpath.found_tei_fallback">{count} Element(e) gefunden. Der Ausdruck wurde im TEI-Namensraum interpretiert als: {expression}</string>
-  <string key="xpath.non_elements">Die Abfrage lieferte {count} Nicht-Element-Ergebnis(se); in diesem Bereich können nur XML-Elemente angesteuert werden.</string>
+  <string key="xpath.found">{count, plural, one {# Element gefunden} other {# Elemente gefunden}}. Klicken Sie auf ein Ergebnis, um zur entsprechenden Stelle im XML zu springen.</string>
+  <string key="xpath.found_tei_fallback">{count, plural, one {# Element gefunden} other {# Elemente gefunden}}. Der Ausdruck wurde im TEI-Namensraum interpretiert als: {expression}</string>
+  <string key="xpath.non_elements">Die Abfrage lieferte {count, plural, one {# Nicht-Element-Ergebnis} other {# Nicht-Element-Ergebnisse}}; in diesem Bereich können nur XML-Elemente angesteuert werden.</string>
   <string key="xpath.none">Kein Element entspricht diesem XPath-Ausdruck.</string>
   <string key="menu.close_project">Projekt schließen</string>
   <string key="help.about">Über…</string>
@@ -600,7 +600,7 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="completion.custom.notice">Vorschläge „Projekt“ stammen aus custom-elements.xml und beeinflussen die RELAX-NG-Gültigkeit nicht.</string>
   <string key="completion.custom.replace_notice">Vom Projekt definierte Eingabeliste: Sie ersetzt die hier angezeigten Vorschläge, schränkt die RELAX-NG-Gültigkeit jedoch nicht ein.</string>
   <string key="status.structure.no_alignment">{base}: keine Zeilensynchronisierung</string>
-  <string key="status.structure.free">{base}: {count} TEI-Zeilen (ohne Synchronisierung)</string>
+  <string key="status.structure.free">{base}: {count, plural, one {# TEI-Zeile} other {# TEI-Zeilen}} (ohne Synchronisierung)</string>
   <string key="manuscript.no_image_source">Dieser Seite ist keine Bildquelle zugeordnet.</string>
   <string key="project.witness.alignment.optional">Synchronisierungsdatei (optional)</string>
   <string key="project.witness.images.files">Lokale Bilder</string>
@@ -622,7 +622,7 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="project.witness.iiif">IIIF-Manifest</string>
   <string key="project.witness.iiif.load">Laden / aktualisieren</string>
   <string key="project.witness.iiif.hint">Fügen Sie die URL eines IIIF-Presentation-2- oder -3-Manifests ein. Varians speichert eine lokale Kopie der Metadaten im Projekt.</string>
-  <string key="project.witness.iiif.loaded">Manifest geladen: {count} Seite(n) · Presentation API {version}.</string>
+  <string key="project.witness.iiif.loaded">Manifest geladen: {count, plural, one {# Seite} other {# Seiten}} · Presentation API {version}.</string>
   <string key="project.witness.iiif.error.title">IIIF-Manifest</string>
   <string key="project.validation.iiif_manifest_required">Geben Sie die URL des IIIF-Manifests ein.</string>
   <string key="project.witness.alto">ALTO (optional)</string>
@@ -678,13 +678,13 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="project.witness.iiif.download_progress">IIIF-Bilder werden geladen: {witness}</string>
   <string key="project.witness.iiif.download_page">IIIF-Download: {witness} — Seite {index}/{count}</string>
   <string key="project.witness.iiif.download_title">Lokale IIIF-Kopie unvollständig</string>
-  <string key="project.witness.iiif.download_partial">{downloaded} Bild(er) von {total} Seiten heruntergeladen. Vorhandene Dateien bleiben erhalten. Der Vorgang kann später fortgesetzt werden.</string>
+  <string key="project.witness.iiif.download_partial">{downloaded, plural, one {# Bild} other {# Bilder}} von {total, plural, one {# Seite} other {# Seiten}} heruntergeladen. Vorhandene Dateien bleiben erhalten. Der Vorgang kann später fortgesetzt werden.</string>
   <string key="iiif.manager.menu">IIIF-Downloadverwaltung…</string>
   <string key="iiif.manager.title">IIIF-Downloads</string>
   <string key="iiif.manager.witness">Textzeuge:</string>
   <string key="iiif.manager.none">Dieses Projekt enthält keine IIIF-Textzeugen.</string>
   <string key="iiif.manager.plan_error">Download kann nicht vorbereitet werden: {error}</string>
-  <string key="iiif.manager.summary">{total} Manifestseiten · {eligible} ausgewählt · {cached} lokal gespeichert · {missing} ausstehend · {excluded} ausgeschlossen</string>
+  <string key="iiif.manager.summary">{total, plural, one {# Manifestseite} other {# Manifestseiten}} · {eligible} ausgewählt · {cached} lokal gespeichert · {missing} ausstehend · {excluded} ausgeschlossen</string>
   <string key="iiif.manager.start">Fehlende herunterladen</string>
   <string key="iiif.manager.refresh">Auswahl neu herunterladen</string>
   <string key="iiif.manager.pause">Pausieren</string>
@@ -693,7 +693,7 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="iiif.manager.running">Download läuft (Sie können weiterarbeiten).</string>
   <string key="iiif.manager.paused">Pausiert (nach dem aktuellen Bild).</string>
   <string key="iiif.manager.stopping">Wird nach dem aktuellen Bild abgebrochen…</string>
-  <string key="iiif.manager.page">{label} — {index}/{count} Seiten bearbeitet</string>
+  <string key="iiif.manager.page">{label} — {index}/{count, plural, one {# Seite bearbeitet} other {# Seiten bearbeitet}}</string>
   <string key="iiif.manager.done">Fertig: {downloaded} heruntergeladen, {skipped} vorhanden, {failed} fehlgeschlagen.</string>
   <string key="iiif.manager.failed">Fehler: {error}</string>
   <string key="iiif.manager.cancelled">Download abgebrochen; bereits gespeicherte Bilder bleiben erhalten.</string>
@@ -719,14 +719,14 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="iiif.picker.select_visible">Sichtbare Zeilen auswählen</string>
   <string key="iiif.picker.clear_visible">Sichtbare Zeilen abwählen</string>
   <string key="iiif.picker.preview">Vorschau im Browser</string>
-  <string key="iiif.picker.count">{selected} von {total} Bildern ausgewählt</string>
+  <string key="iiif.picker.count">{selected} von {total, plural, one {# Bild} other {# Bildern}} ausgewählt</string>
   <string key="iiif.picker.mode.all">Gesamtes Manifest (bisheriges Verhalten)</string>
   <string key="iiif.picker.mode.selected">Nur für die Edition ausgewählte Bilder</string>
   <string key="iiif.picker.open">Bilder auswählen und OCR-Dateien zuordnen…</string>
   <string key="iiif.picker.duplicate">Dieselbe ALTO-/PAGE-Datei darf nicht mehreren Canvases zugeordnet werden.</string>
   <string key="iiif.picker.multipage">{name} enthält mehrere Seiten. Eine Zuordnung auf Dateiebene wäre mehrdeutig; verwenden Sie eine OCR-Datei pro Bild.</string>
   <string key="iiif.prune.title">Optionale Bereinigung von IIIF-Oberflächen</string>
-  <string key="iiif.prune.question">Für den Textzeugen „{witness}“ sind {count} automatisch erzeugte IIIF-Oberflächen nicht mehr ausgewählt, weder annotiert noch in dieser TEI referenziert.
+  <string key="iiif.prune.question">Für den Textzeugen „{witness}“ {count, plural, one {ist # automatisch erzeugte IIIF-Oberfläche} other {sind # automatisch erzeugte IIIF-Oberflächen}} nicht mehr ausgewählt, weder annotiert noch in dieser TEI referenziert.
 
 Aus dem Dokument entfernen? Neben der TEI-Datei wird eine datierte Sicherung angelegt.
 
@@ -749,7 +749,7 @@ Kennungen (Auszug): {ids}</string>
   <string key="iiif.picker.status.ambiguous">Mehrdeutig: mehrere Canvases möglich</string>
   <string key="iiif.picker.source.local">Anzeige: lokale Kopie</string>
   <string key="iiif.picker.source.iiif">Anzeige: IIIF-Dienst</string>
-  <string key="iiif.picker.sync.unresolved">Für {count} Seite(n) der JSON-Datei ist kein Canvas eindeutig bestimmt. Prüfen Sie die Kennungen oder ordnen Sie ihn manuell zu.</string>
+  <string key="iiif.picker.sync.unresolved">Für {count, plural, one {# Seite} other {# Seiten}} der JSON-Datei ist kein Canvas eindeutig bestimmt. Prüfen Sie die Kennungen oder ordnen Sie ihn manuell zu.</string>
   <string key="iiif.picker.sync.duplicate">Eine synchronisierte Seite darf nicht mehreren Canvases zugeordnet werden.</string>
   <string key="iiif.picker.sync.bad_canvas">Die Zuordnung verweist auf einen nicht ausgewählten Canvas.</string>
   <string key="iiif.picker.sync.no_json">Laden Sie zuerst eine Synchronisierungs-JSON-Datei.</string>
@@ -762,7 +762,7 @@ Kennungen (Auszug): {ids}</string>
   <string key="pivot.not_empty">Die Transkription enthält bereits Text oder Markierungen; keine Änderungen. Diese Funktion ist nur für einen anfänglich leeren TEI-Textkörper vorgesehen.</string>
   <string key="pivot.no_pages">Für den Pivot-Textzeugen sind keine Seiten mit Oberflächen vorhanden. Bitte die benötigten Bilder auswählen.</string>
   <string key="pivot.preview.title">Vorschau vor dem Erzeugen der TEI-Markierungen</string>
-  <string key="pivot.preview.summary">Pivot-Textzeuge {witness}: {pages} Seiten, {lines} einzufügende Zeilenanfänge.</string>
+  <string key="pivot.preview.summary">Pivot-Textzeuge {witness}: {pages, plural, one {# Seite} other {# Seiten}}, {lines, plural, one {# einzufügender Zeilenanfang} other {# einzufügende Zeilenanfänge}}.</string>
   <string key="pivot.preview.warnings">Hinweise und Seitenübersicht</string>
   <string key="pivot.preview.confirm">Markierungen einfügen? Zuvor wird eine datierte Sicherungskopie angelegt. OCR-Texte werden nicht übernommen.</string>
   <string key="pivot.done">Markierungen erzeugt. Sicherungskopie: {backup}.</string>
@@ -794,7 +794,7 @@ Kennungen (Auszug): {ids}</string>
 {changes}
 
 In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</string>
-  <string key="diagnostics.refresh.done">Ressourcen aktualisiert ({count} Handschrift(en) geändert).</string>
+  <string key="diagnostics.refresh.done">Ressourcen aktualisiert ({count, plural, one {# Handschrift geändert} other {# Handschriften geändert}}).</string>
   <string key="diagnostics.issue.alignment_missing">Synchronisierungs-JSON nicht gefunden</string>
   <string key="diagnostics.issue.witness_mismatch">Handschriftensigle in der JSON-Datei abweichend</string>
   <string key="diagnostics.issue.pivot_mismatch">JSON verweist auf einen anderen Pivot-Textzeugen</string>
@@ -845,7 +845,7 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="fold.current">Element ein- / ausklappen</string>
   <string key="fold.all">Strukturelemente einklappen</string>
   <string key="fold.none">Alles ausklappen</string>
-  <string key="viewer.external_iiif_notice">{count} externe IIIF-Bilder: Internetverbindung und Zugriffsrechte erforderlich.</string>
+  <string key="viewer.external_iiif_notice">{count, plural, one {# externes IIIF-Bild} other {# externe IIIF-Bilder}}: Internetverbindung und Zugriffsrechte erforderlich.</string>
   <string key="viewer.line_no_anchor">Diese Textstelle besitzt keinen verifizierbaren TEI-Zeilenanker. Die Handschriftenansicht wurde nicht verschoben.</string>
   <string key="viewer.line_unresolved">Die TEI-Zeile {key} fehlt in den exportierten Zeilen des Pivot-Textzeugen. Es wurde keine Zuordnung erschlossen.</string>
   <string key="viewer.pivot_lb_mismatch">TEI-Zeilenmarken des Pivot-Textzeugen: {markers}; physische Zeilen: {physical}. Fehlende Zuordnungen werden nicht erschlossen.</string>
@@ -912,8 +912,8 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="references.problem.missing">Ziel nicht gefunden</string>
   <string key="references.problem.ambiguous">Mehrdeutiges Ziel: {targets}</string>
   <string key="references.problem.no_file">Datei nicht gefunden</string>
-  <string key="references.summary.ok">{count} Verweis(e) geprüft: alle aufgelöst ✓</string>
-  <string key="references.summary.problems">{count} Verweis(e) geprüft, {problems} Problem(e). Doppelklicken Sie auf eine Zeile, um zum Verweis zu springen.</string>
+  <string key="references.summary.ok">{count, plural, one {# Verweis geprüft: aufgelöst} other {# Verweise geprüft: alle aufgelöst}} ✓</string>
+  <string key="references.summary.problems">{count, plural, one {# Verweis geprüft} other {# Verweise geprüft}}, {problems, plural, one {# Problem} other {# Probleme}}. Doppelklicken Sie auf eine Zeile, um zum Verweis zu springen.</string>
   <string key="references.summary.none">Kein Verweis („#id“, „datei.xml#id“) in den Dokumenten des Projekts.</string>
   <string key="project.error.unknown_pivot">Unbekannter Pivot-Textzeuge: „{witness}“ gehört nicht zu den Textzeugen in project.xml ({witnesses}).</string>
   <string key="project.error.unknown_value">project.xml: unbekannter Wert „{value}“ für {attribute} (mögliche Werte: {expected}).</string>
@@ -1100,7 +1100,7 @@ Es importiert das Stylesheet {name} des TEI Consortium. Die hier geschriebenen P
   <string key="xslt_check.action.tip">Das angezeigte XSLT-Stylesheet mit der Engine seiner Szenarien kompilieren, ohne es auszuführen (F8)</string>
   <string key="xslt_check.panel.title">Prüfung des XSLT-Stylesheets</string>
   <string key="xslt_check.panel.valid">XSLT-Stylesheet laut {engines} korrekt.</string>
-  <string key="xslt_check.panel.warnings">XSLT-Stylesheet laut {engines} korrekt, mit {count} Warnung(en).</string>
+  <string key="xslt_check.panel.warnings">XSLT-Stylesheet laut {engines} korrekt, mit {count, plural, one {# Warnung} other {# Warnungen}}.</string>
   <string key="xslt_check.panel.invalid">{count} Fehler im XSLT-Stylesheet laut {engines}. Doppelklicken Sie auf einen Fehler, um zur Zeile zu springen.</string>
   <string key="xslt_check.panel.malformed">Das Stylesheet ist kein wohlgeformtes XML. Doppelklicken Sie auf den Fehler, um zur Zeile zu springen.</string>
   <string key="xslt_check.panel.failed">Prüfung mit {engine} nicht möglich: {error}</string>
@@ -1208,7 +1208,7 @@ Trotzdem speichern?</string>
   <string key="transform.cannot_run">Das Szenario „{name}“ kann nicht ausgeführt werden:
 {problems}</string>
   <string key="transform.done.title">Transformation abgeschlossen</string>
-  <string key="transform.done.text">Szenario „{name}“: {count} Datei(en) in {seconds} s geschrieben.
+  <string key="transform.done.text">Szenario „{name}“: {count, plural, one {# Datei} other {# Dateien}} in {seconds} s geschrieben.
 
 Ergebnis: {output}</string>
   <string key="transform.done.refused">

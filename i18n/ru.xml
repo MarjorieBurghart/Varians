@@ -21,7 +21,7 @@
   <string key="common.frames">Рамки</string>
   <string key="manuscript.frames.tip">Показывать контуры строк только для этого свидетеля. Оранжевый: синхронизированная строка; синий: строка, выбранная вручную.</string>
   <string key="manuscript.frames.no_geometry">Невозможно показать контур строки: для этой строки отсутствуют пригодные координаты.</string>
-  <string key="manuscript.iiif_unassociated_layout.tip">Для {count} страниц ALTO/PAGE не удалось надёжно установить соответствие с изображениями IIIF. Изображения остаются доступными. Чтобы отображать контуры строк, сопоставьте файлы OCR с холстами в настройках свидетеля.</string>
+  <string key="manuscript.iiif_unassociated_layout.tip">Для {count, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}} ALTO/PAGE не удалось надёжно установить соответствие с изображениями IIIF. Изображения остаются доступными. Чтобы отображать контуры строк, сопоставьте файлы OCR с холстами в настройках свидетеля.</string>
   <string key="common.language">Язык:</string>
   <string key="toolbar.title">Синхронизация и поиск</string>
   <string key="toolbar.open">Открыть</string>
@@ -43,9 +43,9 @@
   <string key="tab.preview">Представление XSLT / CSS</string>
   <string key="status.xml.initial">XML: —</string>
   <string key="status.cursor">строка {line}, столбец {column}</string>
-  <string key="status.structure.expected">{base}: ожидается {count} строк</string>
-  <string key="status.structure.ok">{base}: {count} строк ✓</string>
-  <string key="status.structure.changed">{base}: {count} строк — ожидалось {expected}</string>
+  <string key="status.structure.expected">{base}: {count, plural, one {ожидается # строка} few {ожидается # строки} many {ожидается # строк} other {ожидается # строки}}</string>
+  <string key="status.structure.ok">{base}: {count, plural, one {# строка} few {# строки} many {# строк} other {# строки}} ✓</string>
+  <string key="status.structure.changed">{base}: {count, plural, one {# строка} few {# строки} many {# строк} other {# строки}} — ожидалось {expected}</string>
   <string key="status.saved">Сохранено: {path}</string>
   <string key="status.search.xml.found">Поиск в XML: совпадение {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Поиск в XML: совпадений нет — {query}</string>
@@ -143,7 +143,7 @@
   <string key="file.encoding.text">Этот документ объявляет кодировку {encoding}, но Varians всегда сохраняет в UTF-8: с таким объявлением другие программы неправильно прочитают его символы с диакритикой.\n\nИсправить объявление на encoding="UTF-8" и сохранить? (Отмена: ничего не сохраняется.)</string>
   <string key="file.encoding.fix">Исправить и сохранить</string>
   <string key="file.structure.title">Структура {base} изменена</string>
-  <string key="file.structure.text">XML содержит {count} строк {base} вместо {expected}.
+  <string key="file.structure.text">XML содержит {count, plural, one {# строку} few {# строки} many {# строк} other {# строки}} {base} вместо {expected}.
 
 Файл можно сохранить, но после этого кэши выравнивания изображений потребуется выровнять заново.</string>
   <string key="file.unsaved.title">Несохранённые изменения</string>
@@ -242,7 +242,7 @@
   <string key="publication.page">Страница: {n}</string>
   <string key="publication.not_available">[чтение свидетеля недоступно]</string>
   <string key="publication.editor_siglum">изд.</string>
-  <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} единиц аппарата без леммы (lem). Добавьте лемму к каждой или выберите свидетеля.</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun: единицы аппарата без леммы (lem): {count}. Добавьте лемму к каждой или выберите свидетеля.</string>
   <string key="publication.error.unknown_witness">Неизвестный свидетель: {witness} (объявленные свидетели: {witnesses}).</string>
   <string key="viewer.language">Язык</string>
   <string key="viewer.variant">разночтение</string>
@@ -678,7 +678,7 @@
   <string key="project.witness.iiif.download_progress">Загрузка изображений IIIF: {witness}</string>
   <string key="project.witness.iiif.download_page">Загрузка IIIF: {witness} — страница {index}/{count}</string>
   <string key="project.witness.iiif.download_title">Локальная копия IIIF неполная</string>
-  <string key="project.witness.iiif.download_partial">Загружено {downloaded} изображений из {total} страниц. Имеющиеся файлы сохранены. Загрузку можно продолжить позже.</string>
+  <string key="project.witness.iiif.download_partial">Загружено {downloaded, plural, one {# изображение} few {# изображения} many {# изображений} other {# изображения}} из {total, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}}. Имеющиеся файлы сохранены. Загрузку можно продолжить позже.</string>
   <string key="iiif.manager.menu">Менеджер загрузок IIIF…</string>
   <string key="iiif.manager.title">Загрузка изображений IIIF</string>
   <string key="iiif.manager.witness">Рукопись:</string>
@@ -693,7 +693,7 @@
   <string key="iiif.manager.running">Идёт загрузка (работу можно продолжать).</string>
   <string key="iiif.manager.paused">Пауза (после текущего изображения).</string>
   <string key="iiif.manager.stopping">Остановка после текущего изображения…</string>
-  <string key="iiif.manager.page">{label} — обработано {index}/{count} страниц</string>
+  <string key="iiif.manager.page">{label} — обработано {index}/{count, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}}</string>
   <string key="iiif.manager.done">Готово: загружено {downloaded}, уже имелось {skipped}, ошибок {failed}.</string>
   <string key="iiif.manager.failed">Ошибка: {error}</string>
   <string key="iiif.manager.cancelled">Загрузка остановлена; полученные изображения сохранены.</string>
@@ -719,16 +719,16 @@
   <string key="iiif.picker.select_visible">Выбрать видимые строки</string>
   <string key="iiif.picker.clear_visible">Снять выбор с видимых строк</string>
   <string key="iiif.picker.preview">Предпросмотр в браузере</string>
-  <string key="iiif.picker.count">Выбрано {selected} из {total} изображений</string>
+  <string key="iiif.picker.count">Выбрано {selected} из {total, plural, one {# изображения} few {# изображений} many {# изображений} other {# изображения}}</string>
   <string key="iiif.picker.mode.all">Весь манифест (прежний режим)</string>
   <string key="iiif.picker.mode.selected">Только выбранные для издания изображения</string>
   <string key="iiif.picker.open">Выбрать изображения и связать файлы OCR…</string>
   <string key="iiif.picker.duplicate">Один и тот же файл ALTO/PAGE нельзя назначить нескольким канвасам.</string>
   <string key="iiif.picker.multipage">Файл {name} содержит несколько страниц. Привязка целого файла неоднозначна; используйте отдельный OCR-файл для каждого изображения.</string>
   <string key="iiif.prune.title">Необязательная очистка поверхностей IIIF</string>
-  <string key="iiif.prune.question">Для свидетеля «{witness}» обнаружено {count} автоматически созданных поверхностей IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются в данном TEI.
+  <string key="iiif.prune.question">Для свидетеля «{witness}» {count, plural, one {обнаружена # автоматически созданная поверхность IIIF, которая больше не выбрана, не содержит аннотаций и не упоминается} few {обнаружены # автоматически созданные поверхности IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются} many {обнаружено # автоматически созданных поверхностей IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются} other {обнаружено # автоматически созданных поверхностей IIIF, которые больше не выбраны, не содержат аннотаций и не упоминаются}} в данном TEI.
 
-Удалить их из документа? Рядом с файлом TEI будет сохранена резервная копия с датой.
+{count, plural, one {Удалить её} other {Удалить их}} из документа? Рядом с файлом TEI будет сохранена резервная копия с датой.
 
 Идентификаторы (фрагмент): {ids}</string>
   <string key="iiif.picker.validate_reload">Перед сохранением выбора загрузите манифест IIIF.</string>
@@ -749,7 +749,7 @@
   <string key="iiif.picker.status.ambiguous">Неоднозначность: несколько возможных Canvas</string>
   <string key="iiif.picker.source.local">Источник: локальная копия</string>
   <string key="iiif.picker.source.iiif">Источник: сервис IIIF</string>
-  <string key="iiif.picker.sync.unresolved">Для {count} страниц JSON не удалось однозначно определить Canvas. Проверьте идентификаторы или укажите связь вручную.</string>
+  <string key="iiif.picker.sync.unresolved">Для {count, plural, one {# страницы} few {# страниц} many {# страниц} other {# страницы}} JSON не удалось однозначно определить Canvas. Проверьте идентификаторы или укажите связь вручную.</string>
   <string key="iiif.picker.sync.duplicate">Синхронизированную страницу нельзя связать с несколькими Canvas.</string>
   <string key="iiif.picker.sync.bad_canvas">Связь указывает на невыбранный Canvas.</string>
   <string key="iiif.picker.sync.no_json">Сначала загрузите JSON-файл синхронизации.</string>

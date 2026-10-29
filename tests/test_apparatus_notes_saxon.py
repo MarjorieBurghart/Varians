@@ -158,7 +158,7 @@ def test_another_witness_gives_another_text(project):
 
 @pytest.mark.parametrize("witness, message", [
     ("Z", "Témoin inconnu : Z"),
-    ("aucun", "4 apparat(s) sans lemme"),
+    ("aucun", "apparats sans lemme (lem) : 4"),
 ])
 def test_an_unknown_witness_or_missing_lemmas_stop_the_transformation(project, witness, message):
     result, _tree = _notes(project, witness)

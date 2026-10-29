@@ -24,6 +24,7 @@ from pathlib import Path
 
 import pytest
 
+from i18n import format_message, message_fields
 from web_viewer.generator import HTML_TEMPLATE
 from web_viewer.legacy_v11_core import extract_reading_document
 
@@ -138,9 +139,10 @@ def test_the_pivot_is_named_with_its_own_phrases():
     assert "t('viewer.text.missing_pivot'" in choice and "t('viewer.text.witness_pivot')" in choice
     for language in ("fr", "en", "de", "ja", "cs", "it", "ru"):
         keys = {s.get("key"): s.text for s in XET.parse(ROOT / "i18n" / f"{language}.xml").getroot()}
-        assert "{count}" in keys["viewer.text.missing_pivot"] and keys["viewer.text.witness_pivot"]
+        assert "count" in message_fields(keys["viewer.text.missing_pivot"]) and keys["viewer.text.witness_pivot"]
     french = {s.get("key"): s.text for s in XET.parse(ROOT / "i18n" / "fr.xml").getroot()}
-    assert french["viewer.text.missing_pivot"].startswith("{count} passage(s) sans leçon du témoin pivot")
+    assert format_message(french["viewer.text.missing_pivot"], "fr", count=2).startswith(
+        "2 passages sans leçon du témoin pivot")
 
 
 def test_renditions_of_hi_follow_the_rule_of_the_critical_edition():

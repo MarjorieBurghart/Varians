@@ -656,9 +656,10 @@ __GEOMETRY_JS__
 __IIIF_JS__
 __SEARCH_JS__
 __SYNC_JS__
+__PLURAL_JS__
 const DATA=JSON.parse(document.getElementById('data').textContent),$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeStorage={getItem(k){try{return window.localStorage.getItem(k)}catch(_){return null}},setItem(k,v){try{window.localStorage.setItem(k,v)}catch(_){}},removeItem(k){try{window.localStorage.removeItem(k)}catch(_){}}};
-const I18N=DATA.i18n||{default:'fr',fallback:'en',languages:[],catalogs:{}};let uiLang=safeStorage.getItem('tei-ui-language')||I18N.default||'fr';if(!I18N.catalogs?.[uiLang])uiLang=I18N.default||I18N.fallback||Object.keys(I18N.catalogs||{})[0]||'fr';function t(key,vars={}){let s=I18N.catalogs?.[uiLang]?.[key]??I18N.catalogs?.[I18N.fallback]?.[key]??key;return String(s).replace(/\{([A-Za-z0-9_]+)\}/g,(m,k)=>Object.prototype.hasOwnProperty.call(vars,k)?vars[k]:m)}
+const I18N=DATA.i18n||{default:'fr',fallback:'en',languages:[],catalogs:{}};let uiLang=safeStorage.getItem('tei-ui-language')||I18N.default||'fr';if(!I18N.catalogs?.[uiLang])uiLang=I18N.default||I18N.fallback||Object.keys(I18N.catalogs||{})[0]||'fr';function t(key,vars={}){let lang=uiLang,s=I18N.catalogs?.[uiLang]?.[key];if(s==null){lang=I18N.fallback;s=I18N.catalogs?.[I18N.fallback]?.[key]}if(s==null){lang=uiLang;s=key}s=VariansPlural.expand(String(s),lang,vars);return s.replace(/\{([A-Za-z0-9_]+)\}/g,(m,k)=>Object.prototype.hasOwnProperty.call(vars,k)?vars[k]:m)}
 const baseId=DATA.meta.base_witness,witnessMap=new Map(DATA.witnesses.map(w=>[w.id,w])),states=new Map(),lineMap=new Map(),lineOrder=[];const lineMode=!!DATA.meta.line_sync;
 // The pivot can be an invisible technical witness. All DOM cards and their
 // order come strictly from the exporting editor's visible panel snapshot.
@@ -1024,6 +1025,7 @@ def make_html(data):
         "__IIIF_JS__": (HERE / "iiif.js").read_text(encoding="utf-8"),
         "__SEARCH_JS__": (HERE / "fulltext_search.js").read_text(encoding="utf-8"),
         "__SYNC_JS__": (HERE / "sync_model.js").read_text(encoding="utf-8"),
+        "__PLURAL_JS__": (HERE / "plurals.js").read_text(encoding="utf-8"),
         "__TITLE__": html.escape(str(data["meta"]["title"]), quote=True),
         "__LANG__": html.escape(str(data.get("i18n", {}).get("default", "en")), quote=True),
         "__BODY_CLASS__": "" if data.get("meta", {}).get("has_images") else "no-images",

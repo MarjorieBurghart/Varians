@@ -21,7 +21,7 @@
   <string key="common.frames">Cadres</string>
   <string key="manuscript.frames.tip">Afficher les contours des lignes dans ce témoin uniquement. Orange : ligne synchronisée ; bleu : ligne consultée manuellement.</string>
   <string key="manuscript.frames.no_geometry">Cadre indisponible : la synchronisation ne contient pas de coordonnées utilisables pour cette ligne.</string>
-  <string key="manuscript.iiif_unassociated_layout.tip">{count} page(s) ALTO/PAGE sans association sûre à une image IIIF. Les images restent disponibles. Pour afficher les cadres, associez les fichiers OCR aux canvases dans les paramètres du témoin.</string>
+  <string key="manuscript.iiif_unassociated_layout.tip">{count, plural, one {# page ALTO/PAGE} other {# pages ALTO/PAGE}} sans association sûre à une image IIIF. Les images restent disponibles. Pour afficher les cadres, associez les fichiers OCR aux canvases dans les paramètres du témoin.</string>
   <string key="common.language">Langue :</string>
   <string key="toolbar.title">Synchronisation et recherche</string>
   <string key="toolbar.open">Ouvrir</string>
@@ -43,9 +43,9 @@
   <string key="tab.preview">Vue XSLT / CSS</string>
   <string key="status.xml.initial">XML : —</string>
   <string key="status.cursor">ligne {line}, colonne {column}</string>
-  <string key="status.structure.expected">{base} : {count} lignes attendues</string>
-  <string key="status.structure.ok">{base} : {count} lignes ✓</string>
-  <string key="status.structure.changed">{base} : {count} lignes — attendu {expected}</string>
+  <string key="status.structure.expected">{base} : {count, plural, one {# ligne attendue} other {# lignes attendues}}</string>
+  <string key="status.structure.ok">{base} : {count, plural, one {# ligne} other {# lignes}} ✓</string>
+  <string key="status.structure.changed">{base} : {count, plural, one {# ligne} other {# lignes}} — attendu {expected}</string>
   <string key="status.saved">Enregistré : {path}</string>
   <string key="status.search.xml.found">Recherche XML : occurrence {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Recherche XML : aucune occurrence — {query}</string>
@@ -75,8 +75,8 @@
   <string key="preview.files_missing">XSLT ou CSS introuvable. Choisissez les fichiers avec les boutons ci-dessus.</string>
   <string key="preview.up_to_date">Aperçu déjà à jour · {engine}. Aucun rechargement nécessaire.</string>
   <string key="preview.xml_invalid">Aperçu non actualisé : XML momentanément non bien formé ({error}). La dernière vue valide reste affichée.</string>
-  <string key="preview.updated.lines">Aperçu actualisé en {paragraphs} paragraphes éditables · {lines} lignes du témoin pivot cliquables.</string>
-  <string key="preview.updated.no_lines">Aperçu actualisé en {paragraphs} paragraphes éditables. Cette XSLT ne produit pas de marqueurs de ligne du témoin pivot.</string>
+  <string key="preview.updated.lines">Aperçu actualisé en {paragraphs, plural, one {# paragraphe éditable} other {# paragraphes éditables}} · {lines, plural, one {# ligne du témoin pivot cliquable} other {# lignes du témoin pivot cliquables}}.</string>
+  <string key="preview.updated.no_lines">Aperçu actualisé en {paragraphs, plural, one {# paragraphe éditable} other {# paragraphes éditables}}. Cette XSLT ne produit pas de marqueurs de ligne du témoin pivot.</string>
   <string key="preview.transform_error">Erreur de transformation XSLT : {error}</string>
   <string key="preview.base_selected">Ligne du témoin pivot {line} sélectionnée · témoins synchronisés.</string>
   <string key="preview.toc">Sommaire</string>
@@ -136,7 +136,7 @@
   <string key="file.encoding.text">Ce document déclare l’encodage {encoding}, mais Varians enregistre toujours en UTF-8 : sous cette déclaration, d’autres logiciels liraient mal ses caractères accentués.\n\nCorriger la déclaration en encoding="UTF-8" et enregistrer ? (Annuler : rien n’est enregistré.)</string>
   <string key="file.encoding.fix">Corriger et enregistrer</string>
   <string key="file.structure.title">Structure {base} modifiée</string>
-  <string key="file.structure.text">Le XML contient {count} lignes {base} au lieu de {expected}.\n\nLe fichier peut être sauvegardé, mais les caches d'images devront ensuite être réalignés.</string>
+  <string key="file.structure.text">Le XML contient {count, plural, one {# ligne} other {# lignes}} {base} au lieu de {expected}.\n\nLe fichier peut être sauvegardé, mais les caches d'images devront ensuite être réalignés.</string>
   <string key="file.unsaved.title">Modifications non enregistrées</string>
   <string key="file.unsaved.continue">Enregistrer les modifications avant de continuer ?</string>
   <string key="file.unsaved.quit.text">L’édition contient des modifications qui ne sont pas encore enregistrées.</string>
@@ -158,10 +158,10 @@
   <string key="webgen.text.pivot">Pivot (de chaque texte)</string>
   <string key="webgen.text.missing_hint">Les passages où le témoin choisi n'a pas de leçon sont signalés dans le viewer.</string>
   <string key="webgen.text.generate">Générer</string>
-  <string key="webgen.text.missing">\n\n{count} passage(s) sans leçon de {witness}, signalé(s) dans le viewer.</string>
+  <string key="webgen.text.missing">\n\n{count, plural, one {# passage sans leçon de {witness}, signalé} other {# passages sans leçon de {witness}, signalés}} dans le viewer.</string>
   <string key="webgen.text.unknown">\n\nTémoin inconnu dans project.xml : {witness} ; le pivot est pris à sa place.</string>
   <string key="webgen.done.title">Viewer web généré</string>
-  <string key="webgen.done.text">Viewer généré :\n{output}\n\n{witnesses} témoin(s), {lines} lignes du témoin pivot.</string>
+  <string key="webgen.done.text">Viewer généré :\n{output}\n\n{witnesses, plural, one {# témoin} other {# témoins}}, {lines, plural, one {# ligne du témoin pivot} other {# lignes du témoin pivot}}.</string>
   <string key="webgen.missing">\n\nPages absentes du cache du témoin pivot : {pages}</string>
   <string key="webgen.assembly_problems">\n\nProblèmes d’assemblage (le texte concerné manque dans le viewer) :\n{problems}</string>
   <string key="project.open_error">Impossible d’ouvrir le projet</string>
@@ -181,14 +181,14 @@
   <string key="viewer.score"> · {score} %</string>
   <string key="viewer.info.line">{page} · ligne {line}</string>
   <string key="viewer.info.no_line">Aucune ligne.</string>
-  <string key="viewer.stats">{witnesses} témoin(s) · {lines} lignes du témoin pivot · {variants} variantes</string>
+  <string key="viewer.stats">{witnesses, plural, one {# témoin} other {# témoins}} · {lines, plural, one {# ligne du témoin pivot} other {# lignes du témoin pivot}} · {variants, plural, one {# variante} other {# variantes}}</string>
   <string key="viewer.toc">Sommaire</string>
   <string key="viewer.text.established">Texte établi (&lt;lem&gt;), à défaut {witness}</string>
   <string key="viewer.text.witness">Texte de {witness}</string>
   <string key="viewer.text.pivot">le témoin pivot</string>
-  <string key="viewer.text.missing">{count} passage(s) sans leçon de {witness}, signalé(s)</string>
+  <string key="viewer.text.missing">{count, plural, one {# passage sans leçon de {witness}, signalé} other {# passages sans leçon de {witness}, signalés}}</string>
   <string key="viewer.text.witness_pivot">Texte du témoin pivot</string>
-  <string key="viewer.text.missing_pivot">{count} passage(s) sans leçon du témoin pivot, signalé(s)</string>
+  <string key="viewer.text.missing_pivot">{count, plural, one {# passage sans leçon du témoin pivot, signalé} other {# passages sans leçon du témoin pivot, signalés}}</string>
   <string key="viewer.missing">Pas de leçon de {witness} ici : {fallback}</string>
   <string key="viewer.missing.lem">texte du &lt;lem&gt;</string>
   <string key="viewer.missing.reading">leçon de {witness}</string>
@@ -228,7 +228,7 @@
   <string key="publication.page">Page : {n}</string>
   <string key="publication.not_available">[lecture du témoin non disponible]</string>
   <string key="publication.editor_siglum">éd.</string>
-  <string key="publication.error.no_lemma">temoin-de-base=aucun : {count} apparat(s) sans lemme (lem). Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun : apparats sans lemme (lem) : {count}. Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
   <string key="publication.error.unknown_witness">Témoin inconnu : {witness} (témoins déclarés : {witnesses}).</string>
   <string key="viewer.language">Langue</string>
   <string key="viewer.variant">variante</string>
@@ -239,8 +239,8 @@
   <string key="console.missing_pages">Pages du témoin pivot absentes du cache : {pages}</string>
   <string key="preview.choose_xslt">Choisir une feuille XSLT</string>
   <string key="preview.choose_css">Choisir une feuille CSS</string>
-  <string key="preview.updated.timed.lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs} éléments modifiables · {lines} lignes du témoin pivot cliquables.</string>
-  <string key="preview.updated.timed.no_lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs} éléments modifiables. Cette XSLT ne produit pas de marqueurs de ligne du témoin pivot.</string>
+  <string key="preview.updated.timed.lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# élément modifiable} other {# éléments modifiables}} · {lines, plural, one {# ligne du témoin pivot cliquable} other {# lignes du témoin pivot cliquables}}.</string>
+  <string key="preview.updated.timed.no_lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# élément modifiable} other {# éléments modifiables}}. Cette XSLT ne produit pas de marqueurs de ligne du témoin pivot.</string>
   <string key="viewer.image_unavailable">Image IIIF indisponible</string>
   <string key="status.base_line">Ligne {base} {line}/{total}</string>
   <string key="common.all_files">Tous les fichiers</string>
@@ -264,8 +264,8 @@
   <string key="search.list">Tout lister</string>
   <string key="results.title">Résultats de la recherche</string>
   <string key="results.all_project">Tout le projet</string>
-  <string key="results.summary">{count} occurrence(s) de « {query} »</string>
-  <string key="results.summary.project">{count} occurrence(s) de « {query} » dans {documents} document(s)</string>
+  <string key="results.summary">{count, plural, one {# occurrence} other {# occurrences}} de « {query} »</string>
+  <string key="results.summary.project">{count, plural, one {# occurrence} other {# occurrences}} de « {query} » dans {documents, plural, one {# document} other {# documents}}</string>
   <string key="results.truncated">{shown} premières affichées</string>
   <string key="results.close">Fermer</string>
   <string key="results.column.document">Document</string>
@@ -283,7 +283,7 @@
   <string key="replace.one">Remplacer</string>
   <string key="replace.all">Tout remplacer</string>
   <string key="replace.close.tip">Fermer (Échap)</string>
-  <string key="replace.done">{count} remplacement(s)</string>
+  <string key="replace.done">{count, plural, one {# remplacement} other {# remplacements}}</string>
   <string key="replace.error.template">Texte de remplacement incorrect : {detail}</string>
   <string key="menu.open_project">Ouvrir un projet…</string>
   <string key="menu.save_edition">Enregistrer l’édition</string>
@@ -397,7 +397,7 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="toolbar.format_xml.tip">Indenter uniquement les zones XML/TEI dont la mise en forme est sûre</string>
   <string key="format_xml.invalid">Indentation annulée : XML non bien formé ({error})</string>
   <string key="format_xml.no_change">Indentation : aucune modification sûre à effectuer.</string>
-  <string key="format_xml.done">XML indenté : {count} zone(s) structurelle(s) mise(s) en forme.</string>
+  <string key="format_xml.done">XML indenté : {count, plural, one {# zone structurelle mise} other {# zones structurelles mises}} en forme.</string>
   <string key="rng.panel.title">Validation RELAX NG et Schematron</string>
   <string key="rng.panel.no_validation">Aucune validation effectuée.</string>
   <string key="rng.panel.no_schema">Aucun schéma RELAX NG n’est associé à ce projet.</string>
@@ -405,9 +405,9 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="rng.panel.schema_error">Impossible de charger le schéma {path} : {error}</string>
   <string key="rng.panel.xml_invalid">Le XML n’est pas bien formé ; la validation RELAX NG ne peut pas être effectuée.</string>
   <string key="rng.panel.valid">Document valide selon {schema}.</string>
-  <string key="rng.panel.invalid">{count} erreur(s) de validation selon {schema}. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
-  <string key="rng.panel.invalid.schematron">{count} erreur(s) de validation selon {schema} : {rng} RELAX NG, {schematron} Schematron. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
-  <string key="rng.panel.valid.messages">Document valide selon {schema} ; {count} message(s) des règles Schematron (avertissements, informations).</string>
+  <string key="rng.panel.invalid">{count, plural, one {# erreur de validation} other {# erreurs de validation}} selon {schema}. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
+  <string key="rng.panel.invalid.schematron">{count, plural, one {# erreur de validation} other {# erreurs de validation}} selon {schema} : {rng} RELAX NG, {schematron} Schematron. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
+  <string key="rng.panel.valid.messages">Document valide selon {schema} ; {count, plural, one {# message} other {# messages}} des règles Schematron (avertissements, informations).</string>
   <string key="rng.panel.close">Masquer le panneau de validation</string>
   <string key="rng.column.level">Niveau</string>
   <string key="rng.column.origin">Origine</string>
@@ -430,7 +430,7 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="rng.status.schema_error">RNG : schéma invalide</string>
   <string key="rng.status.xml_invalid">RNG : XML invalide</string>
   <string key="rng.status.valid">RNG : valide ✓</string>
-  <string key="rng.status.invalid">RNG : {count} erreur(s)</string>
+  <string key="rng.status.invalid">RNG : {count, plural, one {# erreur} other {# erreurs}}</string>
   <string key="rng.message.no_schema">Aucun schéma RELAX NG n’est associé au projet.</string>
   <string key="rng.message.valid">Validation RELAX NG : document valide.</string>
   <string key="rng.lxml_missing.title">Validation RELAX NG indisponible</string>
@@ -451,8 +451,8 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="rng.panel.schema_resolution_error">Impossible de résoudre le schéma déclaré : {error}</string>
   <string key="rng.status.no_xml_model">RNG : aucun xml-model</string>
   <string key="schematron.status.valid">Schematron : ✓</string>
-  <string key="schematron.status.errors">Schematron : {count} erreur(s)</string>
-  <string key="schematron.status.messages">Schematron : {count} message(s)</string>
+  <string key="schematron.status.errors">Schematron : {count, plural, one {# erreur} other {# erreurs}}</string>
+  <string key="schematron.status.messages">Schematron : {count, plural, one {# message} other {# messages}}</string>
   <string key="schematron.status.no_rules">Schematron : aucune règle</string>
   <string key="schematron.status.rules_error">Schematron : règles incorrectes</string>
   <string key="schematron.status.saxon_missing">Schematron : Saxon manquant</string>
@@ -516,7 +516,7 @@ L’aperçu XSLT et la validation RELAX NG peuvent rester indisponibles tant que
 
 Enregistrer quand même ?</string>
   <string key="file.save_rng_invalid.title">Document non valide</string>
-  <string key="file.save_rng_invalid.text">Le document est bien formé, mais la validation (RELAX NG, règles Schematron) signale {count} erreur(s). Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
+  <string key="file.save_rng_invalid.text">Le document est bien formé, mais la validation (RELAX NG, règles Schematron) signale {count, plural, one {# erreur} other {# erreurs}}. Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
 
 Enregistrer quand même ?</string>
   <string key="xml.health.malformed.tooltip">XML non bien formé — sauvegarde autorisée avec avertissement.</string>
@@ -541,7 +541,7 @@ Enregistrer quand même ?</string>
   <string key="help.tei_guide">Guide des éléments TEI</string>
   <string key="help.software">Aide du logiciel</string>
   <string key="help.search.placeholder">Rechercher dans l’aide (Ctrl+F)</string>
-  <string key="help.search.summary">{sections} section(s), {count} occurrence(s)</string>
+  <string key="help.search.summary">{sections, plural, one {# section} other {# sections}}, {count, plural, one {# occurrence} other {# occurrences}}</string>
   <string key="help.search.none">Aucun résultat</string>
   <string key="completion.values.title">Valeurs d’attribut autorisées</string>
   <string key="completion.values.label">Valeurs autorisées pour @{attribute} dans &lt;{element}&gt; :</string>
@@ -566,9 +566,9 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="xpath.empty">Saisissez une expression XPath.</string>
   <string key="xpath.error">Expression XPath invalide ou XML non analysable : {error}</string>
   <string key="xpath.scalar">Résultat XPath : {value}</string>
-  <string key="xpath.found">{count} élément(s) trouvé(s). Cliquez sur un résultat pour aller à cet endroit dans le XML.</string>
-  <string key="xpath.found_tei_fallback">{count} élément(s) trouvé(s). L’expression a été interprétée dans l’espace de noms TEI comme : {expression}</string>
-  <string key="xpath.non_elements">La requête renvoie {count} résultat(s) non élémentaires ; seuls les éléments XML sont navigables dans ce panneau.</string>
+  <string key="xpath.found">{count, plural, one {# élément trouvé} other {# éléments trouvés}}. Cliquez sur un résultat pour aller à cet endroit dans le XML.</string>
+  <string key="xpath.found_tei_fallback">{count, plural, one {# élément trouvé} other {# éléments trouvés}}. L’expression a été interprétée dans l’espace de noms TEI comme : {expression}</string>
+  <string key="xpath.non_elements">La requête renvoie {count, plural, one {# résultat non élémentaire} other {# résultats non élémentaires}} ; seuls les éléments XML sont navigables dans ce panneau.</string>
   <string key="xpath.none">Aucun élément ne correspond à cette expression XPath.</string>
   <string key="menu.close_project">Fermer le projet</string>
   <string key="help.about">À propos…</string>
@@ -586,7 +586,7 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="completion.custom.notice">Les suggestions « Projet » proviennent de custom-elements.xml et n’affectent pas la validité RELAX NG.</string>
   <string key="completion.custom.replace_notice">Liste de saisie définie par le projet : elle remplace ici les propositions de l’interface, mais ne restreint pas la validité RELAX NG.</string>
   <string key="status.structure.no_alignment">{base} : aucune synchronisation de lignes</string>
-  <string key="status.structure.free">{base} : {count} lignes TEI (sans synchronisation)</string>
+  <string key="status.structure.free">{base} : {count, plural, one {# ligne TEI} other {# lignes TEI}} (sans synchronisation)</string>
   <string key="manuscript.no_image_source">Aucune source d’image n’est associée à cette page.</string>
   <string key="project.witness.alignment.optional">Fichier de synchronisation (facultatif)</string>
   <string key="project.witness.images.files">Images locales</string>
@@ -608,7 +608,7 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="project.witness.iiif">Manifest IIIF</string>
   <string key="project.witness.iiif.load">Charger / actualiser</string>
   <string key="project.witness.iiif.hint">Collez l’URL d’un Manifest IIIF Presentation 2 ou 3. Varians en conservera une copie locale des métadonnées dans le projet.</string>
-  <string key="project.witness.iiif.loaded">Manifest chargé : {count} page(s) · Presentation API {version}.</string>
+  <string key="project.witness.iiif.loaded">Manifest chargé : {count, plural, one {# page} other {# pages}} · Presentation API {version}.</string>
   <string key="project.witness.iiif.error.title">Manifest IIIF</string>
   <string key="project.validation.iiif_manifest_required">Indiquez l’URL du Manifest IIIF.</string>
   <string key="project.witness.alto">ALTO (facultatif)</string>
@@ -664,13 +664,13 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="project.witness.iiif.download_progress">Copie des images IIIF : {witness}</string>
   <string key="project.witness.iiif.download_page">Copie IIIF : {witness} — page {index}/{count}</string>
   <string key="project.witness.iiif.download_title">Copie locale IIIF incomplète</string>
-  <string key="project.witness.iiif.download_partial">{downloaded} image(s) téléchargée(s) sur {total} pages. Les fichiers déjà présents sont préservés. Reprenez plus tard pour compléter la copie.</string>
+  <string key="project.witness.iiif.download_partial">{downloaded, plural, one {# image téléchargée} other {# images téléchargées}} sur {total, plural, one {# page} other {# pages}}. Les fichiers déjà présents sont préservés. Reprenez plus tard pour compléter la copie.</string>
   <string key="iiif.manager.menu">Gestionnaire de téléchargements IIIF…</string>
   <string key="iiif.manager.title">Téléchargements IIIF</string>
   <string key="iiif.manager.witness">Témoin :</string>
   <string key="iiif.manager.none">Ce projet ne possède aucun témoin IIIF.</string>
   <string key="iiif.manager.plan_error">Impossible de préparer le téléchargement : {error}</string>
-  <string key="iiif.manager.summary">{total} pages dans le manifeste · {eligible} sélectionnées · {cached} en local · {missing} à télécharger · {excluded} exclues</string>
+  <string key="iiif.manager.summary">{total, plural, one {# page} other {# pages}} dans le manifeste · {eligible, plural, one {# sélectionnée} other {# sélectionnées}} · {cached} en local · {missing} à télécharger · {excluded, plural, one {# exclue} other {# exclues}}</string>
   <string key="iiif.manager.start">Télécharger les manquantes</string>
   <string key="iiif.manager.refresh">Actualiser la sélection</string>
   <string key="iiif.manager.pause">Pause</string>
@@ -679,8 +679,8 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="iiif.manager.running">Téléchargement en cours (vous pouvez continuer à travailler).</string>
   <string key="iiif.manager.paused">En pause (à la fin de l’image en cours).</string>
   <string key="iiif.manager.stopping">Arrêt demandé (à la fin de l’image en cours)…</string>
-  <string key="iiif.manager.page">{label} — {index}/{count} pages traitées</string>
-  <string key="iiif.manager.done">Terminé : {downloaded} téléchargées, {skipped} déjà présentes, {failed} échecs.</string>
+  <string key="iiif.manager.page">{label} — {index}/{count, plural, one {# page traitée} other {# pages traitées}}</string>
+  <string key="iiif.manager.done">Terminé : {downloaded, plural, one {# téléchargée} other {# téléchargées}}, {skipped, plural, one {# déjà présente} other {# déjà présentes}}, {failed, plural, one {# échec} other {# échecs}}.</string>
   <string key="iiif.manager.failed">Erreur : {error}</string>
   <string key="iiif.manager.cancelled">Téléchargement interrompu ; les images déjà reçues sont conservées.</string>
   <string key="iiif.manager.warning">Association non résolue : {message}</string>
@@ -705,16 +705,16 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="iiif.picker.select_visible">Cocher les lignes visibles</string>
   <string key="iiif.picker.clear_visible">Décocher les lignes visibles</string>
   <string key="iiif.picker.preview">Aperçu dans le navigateur</string>
-  <string key="iiif.picker.count">{selected} image(s) retenue(s) sur {total}</string>
+  <string key="iiif.picker.count">{selected, plural, one {# image retenue} other {# images retenues}} sur {total}</string>
   <string key="iiif.picker.mode.all">Tout le manifeste (comportement ancien)</string>
   <string key="iiif.picker.mode.selected">Uniquement les images choisies pour l’édition</string>
   <string key="iiif.picker.open">Choisir les images et associer les OCR…</string>
   <string key="iiif.picker.duplicate">Un même fichier ALTO/PAGE ne peut pas être associé à plusieurs canvases.</string>
   <string key="iiif.picker.multipage">Le fichier {name} décrit plusieurs pages : une association par fichier serait ambiguë. Utilisez un fichier OCR par image.</string>
   <string key="iiif.prune.title">Nettoyage facultatif des surfaces IIIF</string>
-  <string key="iiif.prune.question">Pour le témoin « {witness} », {count} surface(s) IIIF créées automatiquement ne sont plus sélectionnées, n’ont aucune annotation et ne sont pas référencées dans cette TEI.
+  <string key="iiif.prune.question">Pour le témoin « {witness} », {count, plural, one {# surface IIIF créée automatiquement n’est plus sélectionnée, n’a aucune annotation et n’est pas référencée} other {# surfaces IIIF créées automatiquement ne sont plus sélectionnées, n’ont aucune annotation et ne sont pas référencées}} dans cette TEI.
 
-Les supprimer du document ? Une sauvegarde datée sera conservée à côté du fichier TEI.
+{count, plural, one {La supprimer} other {Les supprimer}} du document ? Une sauvegarde datée sera conservée à côté du fichier TEI.
 
 Identifiants (extrait) : {ids}</string>
   <string key="iiif.picker.validate_reload">Veuillez charger le manifeste IIIF avant de valider la sélection.</string>
@@ -735,7 +735,7 @@ Identifiants (extrait) : {ids}</string>
   <string key="iiif.picker.status.ambiguous">Ambiguïté : plusieurs Canvas possibles</string>
   <string key="iiif.picker.source.local">Affichage : copie locale</string>
   <string key="iiif.picker.source.iiif">Affichage : service IIIF</string>
-  <string key="iiif.picker.sync.unresolved">{count} page(s) du JSON restent sans Canvas certain. Vérifiez les identifiants ou choisissez une association manuelle.</string>
+  <string key="iiif.picker.sync.unresolved">{count, plural, one {# page du JSON reste} other {# pages du JSON restent}} sans Canvas certain. Vérifiez les identifiants ou choisissez une association manuelle.</string>
   <string key="iiif.picker.sync.duplicate">Une page synchronisée ne peut pas être associée à plusieurs Canvas.</string>
   <string key="iiif.picker.sync.bad_canvas">L'association pointe vers un Canvas non sélectionné.</string>
   <string key="iiif.picker.sync.no_json">Chargez d'abord un JSON de synchronisation.</string>
@@ -748,7 +748,7 @@ Identifiants (extrait) : {ids}</string>
   <string key="pivot.not_empty">La transcription contient déjà du contenu ou des jalons ; aucune modification. Cette fonction est réservée au corps TEI initial vide.</string>
   <string key="pivot.no_pages">Aucune page avec surface disponible pour le témoin pivot. Sélectionnez les images utiles et réessayez.</string>
   <string key="pivot.preview.title">Aperçu avant génération des jalons TEI</string>
-  <string key="pivot.preview.summary">Témoin pivot {witness} : {pages} pages, {lines} débuts de ligne à insérer.</string>
+  <string key="pivot.preview.summary">Témoin pivot {witness} : {pages, plural, one {# page} other {# pages}}, {lines, plural, one {# début de ligne} other {# débuts de ligne}} à insérer.</string>
   <string key="pivot.preview.warnings">Avertissements et pages</string>
   <string key="pivot.preview.confirm">Confirmer l’insertion ? Les jalons seront insérés dans la TEI ; une sauvegarde datée sera créée. Les textes OCR ne sont pas copiés.</string>
   <string key="pivot.done">Jalons générés. Sauvegarde préalable : {backup}.</string>
@@ -780,7 +780,7 @@ Identifiants (extrait) : {ids}</string>
 {changes}
 
 Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modifié.</string>
-  <string key="diagnostics.refresh.done">Ressources actualisées ({count} témoin(s) modifié(s)).</string>
+  <string key="diagnostics.refresh.done">Ressources actualisées ({count, plural, one {# témoin modifié} other {# témoins modifiés}}).</string>
   <string key="diagnostics.issue.alignment_missing">JSON de synchronisation introuvable</string>
   <string key="diagnostics.issue.witness_mismatch">Identifiant de témoin incohérent dans le JSON</string>
   <string key="diagnostics.issue.pivot_mismatch">Témoin pivot différent dans le JSON</string>
@@ -831,14 +831,14 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="fold.current">Replier / déplier l’élément</string>
   <string key="fold.all">Replier les éléments structurels</string>
   <string key="fold.none">Tout déplier</string>
-  <string key="viewer.external_iiif_notice">{count} image(s) IIIF distante(s) : connexion et droits d’accès requis.</string>
+  <string key="viewer.external_iiif_notice">{count, plural, one {# image IIIF distante} other {# images IIIF distantes}} : connexion et droits d’accès requis.</string>
   <string key="viewer.line_no_anchor">Cette portion de texte ne possède pas de jalon de ligne TEI vérifiable. Aucun déplacement du manuscrit n’a été effectué.</string>
   <string key="viewer.line_unresolved">Ligne TEI {key} absente des lignes du témoin pivot exportées. Aucun alignement n’a été inventé.</string>
   <string key="viewer.pivot_lb_mismatch">Repères de lignes TEI du pivot : {markers} ; lignes physiques : {physical}. Les correspondances manquantes ne sont pas déduites.</string>
   <string key="viewer.search.medieval">Graphies médiévales</string>
   <string key="viewer.search.run">Chercher</string>
   <string key="viewer.search.close">Fermer la recherche</string>
-  <string key="viewer.search.count">{count} résultat(s)</string>
+  <string key="viewer.search.count">{count, plural, one {# résultat} other {# résultats}}</string>
   <string key="documents.edition_required.title">Édition non affichée</string>
   <string key="documents.edition_required.text">Cette commande modifie l’édition. Affichez d’abord l’édition ({name}), puis recommencez.</string>
   <string key="menu.save_document">Enregistrer le document</string>
@@ -898,8 +898,8 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="references.problem.missing">Cible introuvable</string>
   <string key="references.problem.ambiguous">Cible ambiguë : {targets}</string>
   <string key="references.problem.no_file">Fichier introuvable</string>
-  <string key="references.summary.ok">{count} référence(s) vérifiée(s) : toutes sont résolues ✓</string>
-  <string key="references.summary.problems">{count} référence(s) vérifiée(s), {problems} problème(s). Double-cliquez sur une ligne pour aller à la référence.</string>
+  <string key="references.summary.ok">{count, plural, one {# référence vérifiée : elle est résolue} other {# références vérifiées : toutes sont résolues}} ✓</string>
+  <string key="references.summary.problems">{count, plural, one {# référence vérifiée} other {# références vérifiées}}, {problems, plural, one {# problème} other {# problèmes}}. Double-cliquez sur une ligne pour aller à la référence.</string>
   <string key="references.summary.none">Aucune référence (« #id », « fichier.xml#id ») dans les documents du projet.</string>
   <string key="project.error.unknown_pivot">Témoin pivot inconnu : « {witness} » ne figure pas parmi les témoins de project.xml ({witnesses}).</string>
   <string key="project.error.unknown_value">project.xml : valeur « {value} » inconnue pour {attribute} (valeurs possibles : {expected}).</string>
@@ -1086,34 +1086,34 @@ Elle importe la feuille {name} du TEI Consortium. Les paramètres (xsl:param) et
   <string key="xslt_check.action.tip">Compiler la feuille XSLT affichée, sans l’exécuter, avec le moteur de ses scénarios (F8)</string>
   <string key="xslt_check.panel.title">Vérification de la feuille XSLT</string>
   <string key="xslt_check.panel.valid">Feuille XSLT correcte selon {engines}.</string>
-  <string key="xslt_check.panel.warnings">Feuille XSLT correcte selon {engines}, avec {count} avertissement(s).</string>
-  <string key="xslt_check.panel.invalid">{count} erreur(s) dans la feuille XSLT selon {engines}. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
+  <string key="xslt_check.panel.warnings">Feuille XSLT correcte selon {engines}, avec {count, plural, one {# avertissement} other {# avertissements}}.</string>
+  <string key="xslt_check.panel.invalid">{count, plural, one {# erreur} other {# erreurs}} dans la feuille XSLT selon {engines}. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
   <string key="xslt_check.panel.malformed">La feuille n’est pas un XML bien formé. Double-cliquez sur l’erreur pour aller à la ligne.</string>
   <string key="xslt_check.panel.failed">Vérification impossible avec {engine} : {error}</string>
   <string key="xslt_check.status.running">XSLT : vérification…</string>
   <string key="xslt_check.status.valid">{engines} : feuille correcte ✓</string>
-  <string key="xslt_check.status.invalid">{engines} : {count} erreur(s)</string>
+  <string key="xslt_check.status.invalid">{engines} : {count, plural, one {# erreur} other {# erreurs}}</string>
   <string key="xslt_check.status.malformed">XSLT : XML mal formé</string>
   <string key="xslt_check.status.failed">XSLT : vérification impossible</string>
   <string key="xslt_check.message.valid">Vérification XSLT : feuille correcte.</string>
   <string key="file.save_xslt_invalid.title">Feuille XSLT incorrecte</string>
-  <string key="file.save_xslt_invalid.text">La feuille est bien formée, mais sa compilation signale {count} erreur(s). Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
+  <string key="file.save_xslt_invalid.text">La feuille est bien formée, mais sa compilation signale {count, plural, one {# erreur} other {# erreurs}}. Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
 
 Enregistrer quand même ?</string>
   <string key="schematron_check.action">Vérifier les règles Schematron</string>
   <string key="schematron_check.action.tip">Vérifier le fichier Schematron affiché, sans l’appliquer : structure ISO Schematron et expressions XPath (F8)</string>
   <string key="schematron_check.panel.title">Vérification des règles Schematron</string>
   <string key="schematron_check.panel.valid">Règles Schematron correctes.</string>
-  <string key="schematron_check.panel.invalid">{count} erreur(s) dans les règles Schematron. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
+  <string key="schematron_check.panel.invalid">{count, plural, one {# erreur} other {# erreurs}} dans les règles Schematron. Double-cliquez sur une erreur pour aller à la ligne correspondante.</string>
   <string key="schematron_check.panel.malformed">Le fichier Schematron n’est pas un XML bien formé. Double-cliquez sur l’erreur pour aller à la ligne.</string>
   <string key="schematron_check.panel.saxon_missing">Expressions XPath non vérifiées : Saxon (paquet saxonche) n’est pas installé.</string>
   <string key="schematron_check.status.running">Schematron : vérification…</string>
   <string key="schematron_check.status.valid">Règles Schematron correctes ✓</string>
-  <string key="schematron_check.status.invalid">Règles Schematron : {count} erreur(s)</string>
+  <string key="schematron_check.status.invalid">Règles Schematron : {count, plural, one {# erreur} other {# erreurs}}</string>
   <string key="schematron_check.status.malformed">Schematron : XML mal formé</string>
   <string key="schematron_check.message.valid">Vérification Schematron : règles correctes.</string>
   <string key="file.save_schematron_invalid.title">Règles Schematron incorrectes</string>
-  <string key="file.save_schematron_invalid.text">Le fichier est bien formé, mais sa vérification signale {count} erreur(s). Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
+  <string key="file.save_schematron_invalid.text">Le fichier est bien formé, mais sa vérification signale {count, plural, one {# erreur} other {# erreurs}}. Vous pouvez l’enregistrer et corriger ces erreurs ultérieurement.
 
 Enregistrer quand même ?</string>
   <string key="transform.copy_name">{name} (copie)</string>
@@ -1194,7 +1194,7 @@ L’enregistrer quand même ?</string>
   <string key="transform.cannot_run">Le scénario « {name} » ne peut pas s’exécuter :
 {problems}</string>
   <string key="transform.done.title">Transformation terminée</string>
-  <string key="transform.done.text">Scénario « {name} » : {count} fichier(s) écrit(s) en {seconds} s.
+  <string key="transform.done.text">Scénario « {name} » : {count, plural, one {# fichier écrit} other {# fichiers écrits}} en {seconds} s.
 
 Résultat : {output}</string>
   <string key="transform.done.refused">

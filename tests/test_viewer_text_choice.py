@@ -13,6 +13,7 @@ import os
 import pytest
 
 from corpus_data import copy_example
+from i18n import format_message
 from project_management import update_project_web_text
 from test_v0916_viewer_texts import Viewer
 
@@ -43,7 +44,7 @@ def test_the_header_names_the_text_and_the_passages_without_reading_are_marked(b
         missing = viewer.data["meta"]["text"]["missing"]
         assert missing > 0
         assert viewer.text("viewer.text.witness").replace("{witness}", "P") in stats
-        assert viewer.text("viewer.text.missing").replace("{count}", str(missing)).replace("{witness}", "P") in stats
+        assert format_message(viewer.text("viewer.text.missing"), "fr", count=missing, witness="P") in stats
         marked = viewer("()=>[...document.querySelectorAll('#document .no-reading')].map(x=>x.title)")
         assert marked and all("P" in title for title in marked)
         expected = viewer.text("viewer.missing").split("{")[0]

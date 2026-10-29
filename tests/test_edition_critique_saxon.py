@@ -94,7 +94,7 @@ def test_the_example_without_lemmas_follows_the_chosen_witness(project, witness,
     assert _main(tree) == [expected]
 
 
-@pytest.mark.parametrize("witness, message", [("aucun", "2 apparat(s) sans lemme"), ("Z", "Témoin inconnu : Z")])
+@pytest.mark.parametrize("witness, message", [("aucun", "apparats sans lemme (lem) : 2"), ("Z", "Témoin inconnu : Z")])
 def test_aucun_without_lemmas_or_an_unknown_witness_is_refused(project, witness, message):
     result, _tree = _edition(project, "kit_edition_sans_lem.xml", witness)
     assert not result.ok and message in result.error + " ".join(detail for _code, detail in result.journal)

@@ -81,7 +81,7 @@
     <string key="publication.gap">[lacune]</string>
     <string key="publication.gap.extent">[lacune : {extent}]</string>
     <string key="publication.not_available">[lecture du témoin non disponible]</string>
-    <string key="publication.error.no_lemma">temoin-de-base=aucun : {count} apparat(s) sans lemme (lem). Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
+    <string key="publication.error.no_lemma">temoin-de-base=aucun : apparats sans lemme (lem) : {count}. Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
     <string key="publication.error.unknown_witness">Témoin inconnu : {witness} (témoins déclarés : {witnesses}).</string>
   </xsl:variable>
 

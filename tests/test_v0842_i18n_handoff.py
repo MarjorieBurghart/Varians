@@ -1,6 +1,6 @@
 from pathlib import Path
-import string
 import xml.etree.ElementTree as ET
+from i18n import message_fields
 from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,13 +22,9 @@ def _catalog(code: str):
 
 
 def _fields(text: str):
-    result = []
-    for _, field_name, _, _ in string.Formatter().parse(text):
-        if field_name:
-            # str.format accepts indexing/attributes, but the root placeholder is
-            # what must remain stable across translations.
-            result.append(field_name.split(".", 1)[0].split("[", 1)[0])
-    return sorted(result)
+    # Variables des formes plurielles comprises (V0.9.3.4) : une langue peut
+    # répéter « {witness} » dans chaque branche, une autre non.
+    return sorted(message_fields(text))
 
 
 def test_current_version_and_toolbar_filename_label_removed():
