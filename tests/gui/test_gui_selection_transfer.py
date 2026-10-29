@@ -324,3 +324,34 @@ def test_a_whole_paragraph_chosen_by_xpath_is_selected_in_the_preview(open_windo
     a, b = window.formatted_view.preview.paragraph_bounds(index)
     expected = " ".join(window.formatted_view.preview.toPlainText()[a:b].replace(WJ, "").split())
     assert selected == expected and len(selected) > 200
+
+
+# Retour à la source sans toucher à la sélection de l'aperçu : la sélection
+# de départ revient telle quelle, même quand son texte n'est pas celui de
+# l'aperçu (apparat, paragraphe entier) (V0.9.3.0).
+
+def _back_to_source(window, qtbot):
+    window.left_tabs.setCurrentIndex(0)
+    qtbot.waitUntil(lambda: window.editor.textCursor().hasSelection(), timeout=5000)
+    return _selection(window.editor)
+
+
+def test_an_xpath_result_holding_an_apparatus_comes_back_selected_in_the_source(open_window, example_project,
+                                                                                 qtbot):
+    window = open_window(example_project)
+    source, _selected = _xpath_to_preview(window, qtbot, '//tei:quote[@xml:id="RLS_184_q4"]')
+    assert _back_to_source(window, qtbot) == source
+
+
+def test_a_whole_paragraph_chosen_by_xpath_comes_back_selected_in_the_source(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    source, _selected = _xpath_to_preview(window, qtbot, '(//tei:div[@xml:id="RLS_184"]/tei:p)[1]')
+    assert _back_to_source(window, qtbot) == source
+
+
+def test_another_selection_made_in_the_preview_wins_over_the_round_trip(open_window, example_project, qtbot):
+    window = open_window(example_project)
+    _xpath_to_preview(window, qtbot, '(//tei:div[@xml:id="RLS_184"]/tei:p)[1]')
+    view = window.formatted_view
+    _select(view.preview, *_preview_occurrences(view, "premium", 2)[2])
+    assert _back_to_source(window, qtbot) == _source_occurrences(window, "premium", 2)[2]

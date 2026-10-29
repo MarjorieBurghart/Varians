@@ -1059,14 +1059,16 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         chosen = pick_xml_occurrence(source, text, descriptor, pstart, pend)
         if not chosen:
             return False
-        a, b = chosen
+        self._select_source_span(*chosen)
+        return True
+
+    def _select_source_span(self, start, end):
         cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(a)
-        cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
-        return True
 
     def _select_xml_text_near_ordinal(self, text, ordinal=None):
         """Projette une sélection de l'aperçu dans la source XML.
@@ -1165,16 +1167,22 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 if selected_visible else None
             )
             structure = self._source_selection_structure(source_cursor) if selected_visible else None
+            # Aller-retour (V0.9.3.0) : tant que la sélection faite dans
+            # l'aperçu y reste, le retour à la source rend celle de départ.
+            self._preview_round_trip = None
+            round_trip = (self.document, self.editor.document().revision(),
+                          source_cursor.selectionStart(), source_cursor.selectionEnd())
             self.formatted_view.became_visible()
 
             def restore_preview_context(n=ordinal, selected=selected_visible, desc=descriptor, shape=structure):
-                if selected and desc and self.formatted_view.preview.select_visible_text_in_paragraph(selected, desc):
-                    return
-                if selected and self.formatted_view.preview.select_visible_text_near_line(selected, n):
-                    return
+                preview = self.formatted_view.preview
                 # Un élément entier (résultat XPath), un apparat, une note :
-                # leur texte n'est pas celui de l'aperçu (V0.9.3.0).
-                if shape and self.formatted_view.preview.select_structure(shape):
+                # leur texte n'est pas celui de l'aperçu, d'où la structure.
+                if ((selected and desc and preview.select_visible_text_in_paragraph(selected, desc))
+                        or (selected and preview.select_visible_text_near_line(selected, n))
+                        or (shape and preview.select_structure(shape))):
+                    cursor = preview.textCursor()
+                    self._preview_round_trip = round_trip + (cursor.selectionStart(), cursor.selectionEnd())
                     return
                 if n is not None:
                     self.formatted_view.scroll_to_t1_line(n)
@@ -1186,6 +1194,13 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # XSLT -> XML : même descripteur positionnel dans l'autre sens.
             preview_cursor = self.formatted_view.preview.textCursor()
             has_selection = preview_cursor.hasSelection()
+            trip, self._preview_round_trip = getattr(self, "_preview_round_trip", None), None
+            if (trip and has_selection and trip[0] is self.document
+                    and trip[1] == self.editor.document().revision()
+                    and trip[4:] == (preview_cursor.selectionStart(), preview_cursor.selectionEnd())):
+                call_later(0, self, lambda span=trip[2:4], shown=self.document:
+                           self.document is shown and self._select_source_span(*span))
+                return
             selected_visible = (
                 preview_cursor.selectedText().replace("\u2060", "")
                 if has_selection else ""
