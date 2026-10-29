@@ -132,6 +132,9 @@
   <string key="file.changed.text">{path}\n\nhas been changed outside Varians since you opened or saved it (by another program, a synchronisation…).\n\nOverwrite: save your version in its place (the other one is kept in the .bak copy).\nReload: discard your changes and show the file as it is now.\nCancel: save nothing.</string>
   <string key="file.changed.overwrite">Overwrite</string>
   <string key="file.changed.reload">Reload</string>
+  <string key="file.encoding.title">Document encoding</string>
+  <string key="file.encoding.text">This document declares the encoding {encoding}, but Varians always saves in UTF-8: under this declaration, other programs would misread its accented characters.\n\nCorrect the declaration to encoding="UTF-8" and save? (Cancel: nothing is saved.)</string>
+  <string key="file.encoding.fix">Correct and save</string>
   <string key="file.structure.title">{base} structure changed</string>
   <string key="file.structure.text">The XML contains {count} {base} lines instead of {expected}.\n\nThe file can be saved, but the image alignment caches will then need to be realigned.</string>
   <string key="file.unsaved.title">Unsaved changes</string>

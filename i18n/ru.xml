@@ -139,6 +139,9 @@
   <string key="file.changed.text">{path}\n\nбыл изменён вне Varians с момента, когда вы его открыли или сохранили (другой программой, синхронизацией…).\n\nПерезаписать: сохранить вашу версию вместо него (другая останется в копии .bak).\nПерезагрузить: отменить ваши изменения и показать файл таким, какой он сейчас.\nОтмена: ничего не сохранять.</string>
   <string key="file.changed.overwrite">Перезаписать</string>
   <string key="file.changed.reload">Перезагрузить</string>
+  <string key="file.encoding.title">Кодировка документа</string>
+  <string key="file.encoding.text">Этот документ объявляет кодировку {encoding}, но Varians всегда сохраняет в UTF-8: с таким объявлением другие программы неправильно прочитают его символы с диакритикой.\n\nИсправить объявление на encoding="UTF-8" и сохранить? (Отмена: ничего не сохраняется.)</string>
+  <string key="file.encoding.fix">Исправить и сохранить</string>
   <string key="file.structure.title">Структура {base} изменена</string>
   <string key="file.structure.text">XML содержит {count} строк {base} вместо {expected}.
 

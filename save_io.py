@@ -12,6 +12,30 @@ import stat
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import NamedTuple
+
+
+# Déclaration XML en tête du texte, et son pseudo-attribut encoding.
+_ENCODING_DECLARATION = re.compile(r"""\A\ufeff?<\?xml\s[^?>]*?\bencoding\s*=\s*(["'])([^"']*)\1""")
+
+
+class DeclaredEncoding(NamedTuple):
+    """L'encodage déclaré par la déclaration XML : son nom et sa place."""
+    name: str
+    start: int
+    end: int
+
+
+def declared_encoding(text: str):
+    """L'encodage que déclare la déclaration XML de *text* (red team, A4) ;
+    None sans déclaration, ou sans encodage déclaré."""
+    match = _ENCODING_DECLARATION.match(text)
+    return None if match is None else DeclaredEncoding(match.group(2), match.start(2), match.end(2))
+
+
+def is_utf8(name: str) -> bool:
+    """Vrai si *name* désigne UTF-8, l'encodage où Varians enregistre."""
+    return name.strip().lower().replace("_", "-") in {"utf-8", "utf8"}
 
 
 class ReadOnlyFileError(PermissionError):

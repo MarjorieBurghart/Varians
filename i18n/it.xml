@@ -139,6 +139,9 @@ L’inserimento è stato annullato per evitare una marcatura imprevista.</string
   <string key="file.changed.text">{path}\n\nè stato modificato fuori da Varians da quando l’avete aperto o salvato (da un altro programma, una sincronizzazione…).\n\nSovrascrivi: salvare la vostra versione al suo posto (l’altra resta nella copia .bak).\nRicarica: abbandonare le modifiche e mostrare il file com’è ora.\nAnnulla: non salvare nulla.</string>
   <string key="file.changed.overwrite">Sovrascrivi</string>
   <string key="file.changed.reload">Ricarica</string>
+  <string key="file.encoding.title">Codifica del documento</string>
+  <string key="file.encoding.text">Questo documento dichiara la codifica {encoding}, ma Varians salva sempre in UTF-8: con questa dichiarazione, altri programmi leggerebbero male i suoi caratteri accentati.\n\nCorreggere la dichiarazione in encoding="UTF-8" e salvare? (Annulla: non viene salvato nulla.)</string>
+  <string key="file.encoding.fix">Correggi e salva</string>
   <string key="file.structure.title">Struttura {base} modificata</string>
   <string key="file.structure.text">L’XML contiene {count} righe {base} invece di {expected}.
 

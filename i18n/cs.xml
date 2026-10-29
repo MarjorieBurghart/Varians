@@ -139,6 +139,9 @@ Vložení bylo zrušeno, aby se zabránilo neočekávanému značkování.</stri
   <string key="file.changed.text">{path}\n\nbyl změněn mimo Varians od chvíle, kdy jste jej otevřeli nebo uložili (jiným programem, synchronizací…).\n\nPřepsat: uložit vaši verzi místo něj (druhá zůstane v kopii .bak).\nZnovu načíst: zahodit vaše změny a zobrazit soubor tak, jak je nyní.\nZrušit: nic neukládat.</string>
   <string key="file.changed.overwrite">Přepsat</string>
   <string key="file.changed.reload">Znovu načíst</string>
+  <string key="file.encoding.title">Kódování dokumentu</string>
+  <string key="file.encoding.text">Tento dokument deklaruje kódování {encoding}, ale Varians vždy ukládá v UTF-8: s touto deklarací by jiné programy chybně četly jeho znaky s diakritikou.\n\nOpravit deklaraci na encoding="UTF-8" a uložit? (Zrušit: nic se neuloží.)</string>
+  <string key="file.encoding.fix">Opravit a uložit</string>
   <string key="file.structure.title">Struktura {base} se změnila</string>
   <string key="file.structure.text">XML obsahuje {count} řádků {base} místo {expected}.
 

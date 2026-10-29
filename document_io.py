@@ -9,7 +9,7 @@ from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app_context import call_later, HERE, tr as _t
 from document_session import file_stamp
-from save_io import ReadOnlyFileError, atomic_write_text_with_backup
+from save_io import ReadOnlyFileError, atomic_write_text_with_backup, declared_encoding, is_utf8
 from xml_assembly import find_includes, path_key
 
 
@@ -94,9 +94,40 @@ class DocumentIOMixin:
                 self._refresh_parts()
         return False
 
+    def _confirm_utf8_declaration(self):
+        """Varians enregistre en UTF-8 : un document qui déclare un autre
+        encodage (red team, A4) voit sa déclaration corrigée, après accord ;
+        sans accord, il n'est pas enregistré. Renvoie True pour
+        l'enregistrer."""
+        text = self.editor.toPlainText()
+        declared = declared_encoding(text)
+        if declared is None or is_utf8(declared.name):
+            return True
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle(_t("file.encoding.title"))
+        box.setText(_t("file.encoding.text", encoding=declared.name))
+        fix_btn = box.addButton(_t("file.encoding.fix"), QMessageBox.ButtonRole.AcceptRole)
+        cancel_btn = box.addButton(_t("common.cancel"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(fix_btn)
+        box.setEscapeButton(cancel_btn)
+        box.exec()
+        if box.clickedButton() is not fix_btn:
+            return False
+        qt = self.editor.positions(text)
+        cursor = QTextCursor(self.editor.document())
+        cursor.setPosition(qt.qt(declared.start))
+        cursor.setPosition(qt.qt(declared.end), QTextCursor.MoveMode.KeepAnchor)
+        cursor.insertText("UTF-8")
+        return True
+
     def _write_to(self,path):
         # Fichier modifié hors de Varians depuis sa lecture (red team, A3).
         if not self._confirm_external_change(Path(path)):
+            return False
+        # Encodage déclaré autre que UTF-8 (red team, A4).
+        if not self._confirm_utf8_declaration():
             return False
         # Un seul instantané du document pour toute la sauvegarde.
         text = self.editor.toPlainText()

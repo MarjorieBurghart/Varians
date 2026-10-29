@@ -139,6 +139,9 @@ Die Einfügung wurde abgebrochen, um unerwartetes Markup zu vermeiden.</string>
   <string key="file.changed.text">{path}\n\nwurde außerhalb von Varians geändert, seit Sie sie geöffnet oder gespeichert haben (durch ein anderes Programm, eine Synchronisierung…).\n\nÜberschreiben: Ihre Fassung an ihrer Stelle speichern (die andere bleibt in der .bak-Kopie erhalten).\nNeu laden: Ihre Änderungen verwerfen und die Datei so anzeigen, wie sie jetzt ist.\nAbbrechen: nichts speichern.</string>
   <string key="file.changed.overwrite">Überschreiben</string>
   <string key="file.changed.reload">Neu laden</string>
+  <string key="file.encoding.title">Kodierung des Dokuments</string>
+  <string key="file.encoding.text">Dieses Dokument deklariert die Kodierung {encoding}, Varians speichert jedoch immer in UTF-8: Unter dieser Deklaration würden andere Programme seine Sonderzeichen falsch lesen.\n\nDie Deklaration zu encoding="UTF-8" korrigieren und speichern? (Abbrechen: Es wird nichts gespeichert.)</string>
+  <string key="file.encoding.fix">Korrigieren und speichern</string>
   <string key="file.structure.title">Struktur von {base} geändert</string>
   <string key="file.structure.text">Das XML enthält {count} Zeilen für {base} statt {expected}.
 

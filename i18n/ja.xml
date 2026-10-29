@@ -139,6 +139,9 @@
   <string key="file.changed.text">{path}\n\nは、開いたか保存した後に Varians の外で変更されました（別のソフトウェア、同期など）。\n\n上書き：あなたの版をその代わりに保存します（もう一方は .bak コピーに保存されます）。\n再読み込み：変更を破棄し、現在のファイルを表示します。\nキャンセル：何も保存しません。</string>
   <string key="file.changed.overwrite">上書き</string>
   <string key="file.changed.reload">再読み込み</string>
+  <string key="file.encoding.title">文書のエンコーディング</string>
+  <string key="file.encoding.text">この文書はエンコーディング {encoding} を宣言していますが、Varians は常に UTF-8 で保存します。この宣言のままでは、他のソフトウェアがアクセント付き文字などを正しく読めません。\n\n宣言を encoding="UTF-8" に修正して保存しますか？（キャンセル：何も保存されません。）</string>
+  <string key="file.encoding.fix">修正して保存</string>
   <string key="file.structure.title">{base} の構造が変更されました</string>
   <string key="file.structure.text">XMLには{expected}行ではなく{count}行の{base}行があります。
 
