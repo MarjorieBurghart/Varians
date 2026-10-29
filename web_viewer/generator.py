@@ -233,8 +233,9 @@ def build_dataset(project, display_witness_ids=None, text_mode=None, text_witnes
     """
     base_id = project.base_witness
     known_ids = [w.id for w in project.witnesses]
-    text_mode = text_mode or project.web_text_mode
-    chosen = (project.web_text_witness if text_witness is None else text_witness).strip()
+    # Un objet projet minimal (sans ces réglages) : le texte établi, du pivot.
+    text_mode = text_mode or getattr(project, "web_text_mode", "established")
+    chosen = (getattr(project, "web_text_witness", "") if text_witness is None else text_witness).strip()
     text_meta = {"mode": text_mode, "witness": chosen if chosen in known_ids else ""}
     if chosen and chosen not in known_ids:
         text_meta["unknown"] = chosen
