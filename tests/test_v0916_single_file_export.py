@@ -6,7 +6,18 @@ La V0.9.1.6 apprend à l'export les éditions en parties (XInclude), les textes
 synchronisés à part, les lacunes et l'ordre propre des manuscrits. Pour une
 édition en un seul fichier, sans lacunes, rien ne doit changer : l'empreinte
 des données du projet exemple a été relevée avant ces changements. Elle ne
-change que par une décision explicite."""
+change que par une décision explicite.
+
+V0.9.3.0 : les blocs « sermon » deviennent des blocs « div » (identifiant,
+niveau, titre tiré du premier <head>, sinon de @n) ; la division englobante
+<div n="pr"> en a un. Le texte et les positions ne changent pas. Puis,
+comme « Édition critique », le <ref> d'une <cit> sans @type « bible » est
+un repère de note (les 34 citations du projet exemple). Puis le document
+compte les passages où le témoin choisi n'a pas de leçon
+(``missing_readings`` : 0 ici, le texte ne change pas). Puis, par décision
+explicite, le texte exporté par défaut est le texte établi, comme
+« Édition critique » : le <lem>, à défaut la leçon du pivot (et non plus
+la leçon du pivot d'abord) ; ``meta.text`` dit ce choix."""
 from __future__ import annotations
 
 import hashlib
@@ -16,7 +27,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "bab3330c4870d52c2073c5cd1236d6820559d31df7af76d0af86476b05ffd29c"
+DIGEST = "712a789261bbb101791dfb39a67a2e29289ea2a06688cf429350268f940f4e51"
 
 
 def _digest(data):

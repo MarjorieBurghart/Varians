@@ -63,7 +63,7 @@ def test_the_varians_stylesheet_gets_a_pencil_per_editable_element():
     assert count == 5 and _indexes(html) == [0, 1, 2, 3, 4]
     assert re.search(re.escape(_marker(0)) + r"\s*Titre", html)
     assert "<p>" + _marker(1) in html
-    assert re.search(re.escape(_marker(2)) + r"\s*vers un", html)
+    assert re.search(re.escape(_marker(2)) + r'\s*<span class="l">vers un', html)
     assert "<p>" + _marker(4) + "fin" in html
     # Les paramètres de la vue passent : repères de ligne du pivot.
     assert 'href="tei-line://base/INDEX"' in html
@@ -115,6 +115,14 @@ def test_the_pencil_goes_into_the_first_block():
     assert count == 3
     assert html == ('<main>\n  <a name="s1"></a><div class="section"><ul>\n<li>' + _marker(3) + 'item</li></ul></div>'
                     + _marker(4) + '<span>en ligne</span>\n<h3 class="head">' + _marker(5) + 'Titre</h3></main>')
+
+
+def test_the_pencil_of_a_table_goes_into_its_caption_or_its_first_cell():
+    html, count = _render(BUILTIN, '<div><table><head>Tabula</head><row><cell>a</cell></row></table>'
+                                   '<table><row><cell>b</cell></row></table></div>')
+    assert count == 2 and _indexes(html) == [0, 1]
+    assert "<caption>" + _marker(0) + "Tabula</caption>" in html
+    assert "<td>" + _marker(1) + "b</td>" in html
 
 
 def test_the_title_is_escaped():

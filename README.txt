@@ -1,3 +1,87 @@
+VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
+
+• Le viewer web lit tous les textes de l'édition : <front>, <body> et
+  <back>, et chaque texte d'un <group> (auparavant, le premier <body>
+  seulement). Des préliminaires ou des annexes sans titre s'intitulent
+  « Préliminaires » ou « Annexes » (7 langues).
+• Titres comme dans l'aperçu et l'Édition critique : une division est
+  titrée par son premier <head>, sinon par son @n ; son @xml:id n'est plus
+  pris pour un titre (les sermons du jeu d'essai n'ont plus de titre
+  « RLS 184 »). Le sommaire liste les divisions titrées, en retrait sous la
+  division titrée qui les contient.
+• Mise en forme : chaque <lg> est une strophe, chaque <l> sur sa ligne et
+  son @n en marge ; les <head> sont des titres ; une liste garde ses
+  sous-listes (elle n'est plus fondue dans l'entrée qui la contient) ; un
+  <table> est un tableau (légende, en-têtes @role="label", cellules
+  fusionnées par @cols et @rows, défilement horizontal s'il est large) ;
+  <figDesc> est une légende ; une <note> placée entre deux paragraphes est
+  un repère, masqué avec les notes (son texte ne se mêle plus à celui de
+  l'édition).
+• Texte, comme « Édition critique » : un <choice> montre une forme (corr,
+  reg, expan, sinon sic, orig, abbr), l'autre en infobulle ; <del> et
+  <surplus> sont barrés, <add> souligné de pointillés, <supplied> entre
+  crochets ; <gap> donne « […] », sa raison et son étendue en infobulle.
+  Les leçons d'un <rdgGrp> sont lues. <hi rend> : exposant, indice,
+  souligné. Le texte prend sa langue (@xml:lang), qui règle la césure.
+• La recherche, la synchronisation avec les fac-similés et les lacunes
+  portent sur tout le texte affiché : titres, vers, entrées de liste,
+  cellules. Un clic sur un vers ou une cellule ouvre sa ligne.
+• Feuille de l'aperçu (tei-to-html.xsl, scénario « Édition HTML ») et
+  « Édition critique » : tableaux avec légende, en-têtes et cellules
+  fusionnées ; le crayon ✎ d'un tableau entre dans sa légende.
+• Références des citations : dans l'aperçu de la Vue XSLT / CSS, le <ref>
+  d'une <cit> (autrefois omis) suit la citation, entre chevrons et en gris.
+  Dans « Édition critique » et le viewer web, le <ref> d'une
+  <cit type="bible"> est entre chevrons ; celui d'une autre <cit> est une
+  note (dans l'Édition critique, appelée par une lettre comme les autres
+  notes ; dans le viewer, un rond « n »). Un <ref> hors d'une <cit> ne
+  change pas.
+• Feuille de l'aperçu (tei-to-html.xsl, scénario « Édition HTML »), comme
+  « Édition critique » : une forme d'un <choice> (corr, reg, expan, sinon
+  sic, orig, abbr), les autres en infobulle ; <sic> signalé ; <del> et
+  <surplus> barrés, <add> souligné ; <supplied> entre crochets ; <gap>
+  « [lacune : étendue] » ; <space>. <hi rend> : gras, souligné, exposant,
+  indice, petites capitales ; <emph>, <title>, <foreign> en italique.
+• Le crayon ✎ de l'aperçu est un petit signe gris, et non plus un lien
+  bleu souligné : ses règles de style, ajoutées après la CSS du projet,
+  étaient ignorées par Qt.
+• Un résultat de recherche XPath sélectionné dans la source reste
+  sélectionné en passant à la Vue XSLT / CSS, même s'il contient un apparat
+  ou s'il s'agit d'un paragraphe entier (seule la position était gardée).
+  Revenir à la source sans avoir changé la sélection de l'aperçu rend la
+  sélection de départ.
+• Apparat d'« Édition critique » et des scénarios DOCX et ODT : tout texte
+  qui ne vient pas d'un témoin est en italique (sigles, om., add., lacuna
+  incipit et desinit, commentaires) ; les leçons restent en romain, même
+  un <sic> (suivi de « sic » en italique), une citation ou une mise en
+  relief.
+• « Sigles des témoins » (Édition critique) et viewer web : un élément du
+  <witness> qui ne contient que le sigle (<abbr>, <label>…) n'est plus
+  répété dans le libellé (« P Paris… » et non « P PParis… »).
+• Vue XSLT / CSS : une strophe (<lg>) est un seul bloc en retrait, ses
+  vers séparés par des retours à la ligne ; auparavant, l'aperçu (Qt), qui
+  ne regroupe pas des blocs imbriqués, en faisait autant de paragraphes.
+  Varians donne ce retrait même avec la CSS d'un projet créé par une
+  version antérieure ; la CSS du projet le remplace si elle a une règle
+  .lg. Dans un navigateur, chaque vers reste un bloc (tei.css).
+• Choix du texte du viewer : « Générer viewer web » demande d'abord le
+  texte affiché, soit le texte établi (le <lem>, à défaut la leçon du
+  témoin choisi, comme « Édition critique » ; désormais par défaut), soit
+  le texte du témoin choisi, même quand il n'est pas le <lem> (sa
+  transcription reconstituée). Le témoin choisi est par défaut le pivot de
+  chaque texte. Là où il n'a pas de leçon (aucune leçon de l'<app> ne le
+  nomme), le texte de repli est grisé et encadré, avec une infobulle
+  « Pas de leçon de … ici » (« ∅ » s'il est vide) ; une omission
+  (<rdg wit="#T2"/>) n'est pas signalée. L'en-tête du viewer et le compte
+  rendu en donnent le nombre. La synchronisation suit toujours les lignes
+  du pivot (lignes de sa leçon non affichée réparties dans le texte
+  affiché ; repère invisible si le témoin omet le passage). Le choix est
+  gardé dans project.xml : <webViewer text="established|witness"
+  textWitness="T2"/> ; generer_viewer_web.bat le suit.
+• Le code propre au corpus de Troyes a été retiré du générateur du viewer.
+  Le format de project.xml est inchangé ; un viewer déjà exporté doit être
+  exporté de nouveau.
+
 VARIANS V0.9.2.9 — ÉLÉMENTS MODIFIABLES COMME FRAGMENT
 
 • Vue XSLT / CSS : le crayon ✎ n'est plus réservé aux paragraphes. Il

@@ -83,11 +83,50 @@ def test_each_app_becomes_its_reading_and_a_footnote(project):
     # Les sigles en italique.
     sigla = notes[0].findall("t:hi", NS)[-1]
     assert (sigla.text, sigla.get("rend")) == ("B C", "italic")
-    # La mise en forme d'une leçon est gardée dans sa note, sans ses identifiants.
-    assert [hi.text for hi in notes[0].iterfind("t:hi", NS)] == ["re", "B C"]
+    # Dans une note, une leçon est en romain (V0.9.3.0) : seuls les sigles et
+    # les mots de l'éditeur sont en italique ; sans les identifiants.
+    assert [hi.text for hi in notes[0].iterfind("t:hi", NS)] == ["B C"]
     assert not notes[0].xpath(".//@xml:id")
     for name in ("app", "lb", "lacunaStart", "lacunaEnd", "rdg", "lem"):
         assert tree.find(f".//t:text//t:{name}", NS) is None, name
+
+
+def test_the_words_of_the_editor_in_a_note_are_in_italics(project):
+    # Comme dans « Édition critique » : sigles, om., add., lacuna incipit et
+    # desinit en italique ; la leçon en romain, même son <hi rend="italic">.
+    _result, tree = _notes(project, "A")
+    italics = [[_text(hi) for hi in note.iterfind("t:hi[@rend='italic']", NS)]
+               for note in tree.iterfind(".//t:note[@type='apparatus']", NS)]
+    assert italics == [["B C"], ["add.", "B"], ["A", "B", "C"], ["lacuna incipit", "C"], ["lacuna desinit", "C"]]
+    _result, tree = _notes(project, "B")
+    note = tree.findall(".//t:note[@type='apparatus']", NS)[1]
+    assert [_text(hi) for hi in note.iterfind("t:hi[@rend='italic']", NS)] == ["om.", "A"]
+
+
+def test_a_sic_in_a_reading_is_marked_in_its_note(project):
+    source = SOURCE.replace('<rdg wit="#A">regem</rdg>', '<rdg wit="#A"><sic>regem</sic></rdg>')
+    source = source.replace('<rdg wit="#B">non</rdg>', '<rdg wit="#B"><title>non</title></rdg>')
+    (project.root_dir / "xml" / "sic.xml").write_text(source, encoding="utf-8")
+    result, tree = _notes(project, "B", "xml/sic.xml")
+    assert result.ok, result.error
+    notes = tree.findall(".//t:note[@type='apparatus']", NS)
+    assert [_text(note) for note in notes[:2]] == ["reges ] regem sic A", "non ] om. A"]
+    assert [_text(hi) for hi in notes[0].iterfind(".//t:hi", NS)] == ["sic", "A"]
+    assert notes[1].find(".//t:title", NS) is None
+
+
+def test_a_siglum_that_is_not_an_identifier_replaces_it_in_the_notes(project):
+    # Un sigle qui ne peut pas être un @xml:id est dans <idno type="siglum"> :
+    # il remplace l'identifiant dans les notes (V0.9.2.8.2).
+    source = SOURCE.replace('<witness xml:id="B">Rome</witness>',
+                            '<witness xml:id="_1760"><idno type="siglum">1760</idno>Rome</witness>')
+    source = re.sub(r'#B\b', "#_1760", source)
+    (project.root_dir / "xml" / "sigle.xml").write_text(source, encoding="utf-8")
+    result, tree = _notes(project, "A", "xml/sigle.xml")
+    assert result.ok, result.error
+    assert _apparatus(tree)[:3] == ["regem ] reges 1760 C", "non add. 1760", "mortis ] sue mortis A ; mortes 1760 ; mortis sue C"]
+    notes = "".join(" ".join(note.itertext()) for note in tree.iterfind(".//t:note[@type='apparatus']", NS))
+    assert "_1760" not in notes
 
 
 def test_only_the_pages_of_the_witness_are_kept_as_folio_marks(project):

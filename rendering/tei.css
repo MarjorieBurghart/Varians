@@ -113,10 +113,18 @@ p {
 
 /* ---------- Verse, headings, lists, figures (0.9.2.9) ---------- */
 .lg {
-  margin: 0 0 1em;
+  margin: 0.5em 0 1em 2em;
+  line-height: 150%;
+}
+
+/* Les vers d'une strophe sont séparés par un <br/> pour l'aperçu de
+   Varians ; dans un navigateur, chaque vers est un bloc. */
+.lg br {
+  display: none;
 }
 
 .l {
+  display: block;
   margin: 0;
   padding-left: 1.5em;
   text-indent: -1.5em;
@@ -143,10 +151,59 @@ p {
   color: var(--color-muted);
 }
 
+.table {
+  border-collapse: collapse;
+  margin: 0 0 1em;
+}
+
+.table caption {
+  font-weight: 600;
+  text-align: left;
+  padding: 0 0 0.3em;
+}
+
+.table th,
+.table td {
+  border: 1px solid var(--color-muted);
+  padding: 0.25em 0.6em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  font-weight: 600;
+}
+
 /* ---------- Quotes --------------------------------------------- */
 .quote {
   font-style: italic;
   color: var(--color-quote);
+}
+
+/* Référence d'une citation (<cit>/<ref>), entre chevrons. */
+.ref {
+  color: var(--color-muted);
+}
+
+/* Phénomènes éditoriaux, comme « Édition critique ». */
+.rature {
+  text-decoration: line-through;
+}
+
+.ajout {
+  text-decoration: underline dotted;
+}
+
+.sic {
+  font-style: italic;
+}
+
+.lacune {
+  color: var(--color-muted);
+}
+
+.petites-capitales {
+  font-variant: small-caps;
 }
 
 /* ---------- Unclear readings ----------------------------------- */

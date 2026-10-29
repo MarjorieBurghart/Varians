@@ -887,3 +887,48 @@ def test_each_help_announces_version_0929():
                      "<code>@n</code>", "<code>@xml:id</code>"):
             assert text in version, (language, text)
         assert page.index('<section id="v09282">') < page.index('<section id="v0929">'), language
+
+
+def test_each_help_explains_the_reading_text_of_the_web_viewer():
+    """V0.9.3.0 : le texte de lecture du viewer web (titres, sommaire,
+    préliminaires et annexes, textes d'un groupe, vers, listes, tableaux,
+    notes, choix, ratures, lacunes, groupes de leçons, langue)."""
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        viewer = page[page.index('<h2 id="viewer">'):]
+        viewer = viewer[:viewer.index("<h2 ", 1)]
+        paragraph = viewer[viewer.index('<p id="viewer-text">'):]
+        paragraph = paragraph[:paragraph.index("</p>")]
+        for name in ("head", "front", "back", "group", "lg", "l", "table", "note", "choice", "del", "add",
+                     "supplied", "gap", "rdgGrp", "cit", "ref"):
+            assert f"<code>&lt;{name}&gt;</code>" in paragraph, (language, name)
+        for attribute in ("@n", "@xml:id", "@xml:lang", '@role="label"', "@cols", "@rows"):
+            assert f"<code>{attribute}</code>" in paragraph, (language, attribute)
+        assert "[…]" in paragraph, language
+
+
+def test_each_help_announces_version_0930():
+    for language in LANGUAGES:
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        version = _help_section(page, "v0930")
+        for text in ('href="#viewer-text"', "<code>&lt;table&gt;</code>", "<code>&lt;rdgGrp&gt;</code>",
+                     "<code>@xml:id</code>", "<code>project.xml</code>", "<code>&lt;cit&gt;</code>",
+                     "<code>&lt;ref&gt;</code>", '<code>type="bible"</code>', "✎", "XPath",
+                     "<code>&lt;choice&gt;</code>", "<code>&lt;hi&gt;</code>", "add.", "DOCX",
+                     "<code>&lt;witness&gt;</code>", "<code>&lt;abbr&gt;</code>", "Sigles des témoins", "<code>&lt;sic&gt;</code>",
+                     'href="#viewer-text-choice"'):
+            assert text in version, (language, text)
+        assert page.index('<section id="v0929">') < page.index('<section id="v0930">'), language
+
+
+def test_each_help_explains_the_choice_of_the_text_of_the_viewer():
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        start = page.index('<p id="viewer-text-choice">')
+        paragraph = page[start:page.index("</p>", start)]
+        assert page.index('<p id="viewer-text">') < start, language
+        for text in (catalog["toolbar.generate_web"], "<code>&lt;lem&gt;</code>", "∅", "textWitness",
+                     "<code>generer_viewer_web.bat</code>", '<code>&lt;rdg wit="#T2"/&gt;</code>'):
+            assert text in paragraph, (language, text)

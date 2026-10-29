@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Varians — éditeur TEI/manuscrits générique — V0.9.2.9.
+"""Varians — éditeur TEI/manuscrits générique — V0.9.3.0.
 
 Refactorisation de la base V8o : le projet, le témoin pivot, les témoins
 secondaires, les alignements et les fichiers de rendu sont déclarés dans
@@ -76,9 +76,10 @@ from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 from pivot_lines import pivot_lb_pattern
 from formatted_view import (
     _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget,
-    pick_xml_occurrence, xml_selection_descriptor,
+    pick_xml_occurrence, xml_selection_descriptor, xml_selection_structure,
 )
 from fragment_units import unit_spans
+from xml_assembly import path_key
 from manuscript_panel import ManuscriptPanel
 from code_editor import CodeEditor, find_in_plain_editor, XMLHighlighter
 from text_search import SearchError
@@ -1021,6 +1022,21 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             start, end = spans[pidx]
         return {"paragraph": pidx, **xml_selection_descriptor(source, text, selection_start, start, end)}
 
+    def _source_selection_structure(self, cursor):
+        """Repère structurel de la sélection de la source pour l'aperçu
+        (``xml_selection_structure``, V0.9.3.0) : éléments modifiables du
+        document affiché, rangés comme dans l'aperçu."""
+        source = self.editor.toPlainText()
+        sources = self._assembled_preview_sources()
+        if sources is not None:
+            key = path_key(self.document.path)
+            units = [(index, span.start, span.end) for index, span in enumerate(sources.paragraphs)
+                     if span is not None and path_key(span.path) == key]
+        else:
+            units = [(index, a, b) for index, (a, b)
+                     in enumerate(unit_spans(source, self._preview_unit_names()))]
+        return xml_selection_structure(source, cursor.selectionStart(), cursor.selectionEnd(), units)
+
     def _select_xml_text_in_paragraph(self, text, descriptor):
         """Sélectionne dans la source l'occurrence décrite par ``descriptor``.
         Pour une édition en parties (V0.9.1.5), le fichier qui contient ce
@@ -1043,14 +1059,16 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         chosen = pick_xml_occurrence(source, text, descriptor, pstart, pend)
         if not chosen:
             return False
-        a, b = chosen
+        self._select_source_span(*chosen)
+        return True
+
+    def _select_source_span(self, start, end):
         cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(a)
-        cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
-        return True
 
     def _select_xml_text_near_ordinal(self, text, ordinal=None):
         """Projette une sélection de l'aperçu dans la source XML.
@@ -1148,12 +1166,23 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 self._source_selection_descriptor(selected_visible, source_pos)
                 if selected_visible else None
             )
+            structure = self._source_selection_structure(source_cursor) if selected_visible else None
+            # Aller-retour (V0.9.3.0) : tant que la sélection faite dans
+            # l'aperçu y reste, le retour à la source rend celle de départ.
+            self._preview_round_trip = None
+            round_trip = (self.document, self.editor.document().revision(),
+                          source_cursor.selectionStart(), source_cursor.selectionEnd())
             self.formatted_view.became_visible()
 
-            def restore_preview_context(n=ordinal, selected=selected_visible, desc=descriptor):
-                if selected and desc and self.formatted_view.preview.select_visible_text_in_paragraph(selected, desc):
-                    return
-                if selected and self.formatted_view.preview.select_visible_text_near_line(selected, n):
+            def restore_preview_context(n=ordinal, selected=selected_visible, desc=descriptor, shape=structure):
+                preview = self.formatted_view.preview
+                # Un élément entier (résultat XPath), un apparat, une note :
+                # leur texte n'est pas celui de l'aperçu, d'où la structure.
+                if ((selected and desc and preview.select_visible_text_in_paragraph(selected, desc))
+                        or (selected and preview.select_visible_text_near_line(selected, n))
+                        or (shape and preview.select_structure(shape))):
+                    cursor = preview.textCursor()
+                    self._preview_round_trip = round_trip + (cursor.selectionStart(), cursor.selectionEnd())
                     return
                 if n is not None:
                     self.formatted_view.scroll_to_t1_line(n)
@@ -1165,6 +1194,13 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # XSLT -> XML : même descripteur positionnel dans l'autre sens.
             preview_cursor = self.formatted_view.preview.textCursor()
             has_selection = preview_cursor.hasSelection()
+            trip, self._preview_round_trip = getattr(self, "_preview_round_trip", None), None
+            if (trip and has_selection and trip[0] is self.document
+                    and trip[1] == self.editor.document().revision()
+                    and trip[4:] == (preview_cursor.selectionStart(), preview_cursor.selectionEnd())):
+                call_later(0, self, lambda span=trip[2:4], shown=self.document:
+                           self.document is shown and self._select_source_span(*span))
+                return
             selected_visible = (
                 preview_cursor.selectedText().replace("\u2060", "")
                 if has_selection else ""

@@ -78,8 +78,8 @@ def test_the_positions_are_those_of_the_render_the_search_and_python(tmp_path):
       return {kinds:index.items.map(s=>s.kind),bad};""", data)
     assert out["bad"] == []
     assert out["kinds"] == [kinds[pos] for pos in range(len(kinds))]
-    # Le rendu compte chaque segment d'un bloc p, et seulement eux.
-    assert "else if(b.type==='p')h.push(`<p class=\"tei-p\">${(b.segments||[]).map(s=>segHTML(s,docPos++))" in HTML_TEMPLATE
+    # Le rendu compte chaque segment d'un bloc rendu, et seulement eux (V0.9.3.0).
+    assert "VariansSync.RENDERED.has(b.type)" in HTML_TEMPLATE
 
 
 def test_the_text_and_the_line_open_at_a_position(tmp_path):
@@ -148,6 +148,17 @@ def test_a_lacuna_marker_gives_the_line_open_at_its_place(tmp_path):
         {"kind": "lacuna", "start": True, "wit": ["B"], "line_key": "p::2"},
         {"kind": "text", "text": "b", "line_key": "p::2"}]}]
     assert _node(tmp_path, "return S.lastLinked(S.docIndex(D),1);", blocks) == "p::2"
+
+
+def test_a_line_anchor_gives_the_place_of_a_line_omitted_by_the_text_shown(tmp_path):
+    # V0.9.3.0 : quand le témoin affiché omet un passage, la ligne du pivot
+    # ouverte dans ce passage n'a pas de texte ; son repère donne sa place.
+    blocks = [{"type": "p", "segments": [
+        {"kind": "text", "text": "a", "line_key": "p::1"},
+        {"kind": "line-anchor", "line_key": "p::2"},
+        {"kind": "text", "text": "b", "line_key": "p::3"}]}]
+    assert _node(tmp_path, "const i=S.docIndex(D);return [S.positionOf(i,'p::2'),S.lastLinked(i,1)];",
+                 blocks) == [1, "p::2"]
 
 
 def test_the_route_of_a_panel_of_one_text_is_that_of_witness_route(tmp_path):
@@ -262,3 +273,46 @@ def test_the_module_is_in_the_viewer():
                       "document": {"blocks": []},
                       "i18n": {"default": "fr", "fallback": "en", "catalogs": {"fr": {}}, "languages": []}})
     assert "root.VariansSync = api" in html and "__SYNC_JS__" not in html
+
+
+# V0.9.3.0 : tous les blocs rendus (titres, vers, entrées de liste, cellules,
+# légendes, notes entre deux blocs) ont leurs positions, les mêmes pour le
+# rendu, la recherche et Python.
+STRUCTURED = ('<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader/><text><body>'
+              '<div><head><lb edRef="#A"/>Titulus</head><p>prosa <note>nota</note></p>'
+              '<lg><l n="1"><lb edRef="#A"/>uersus primus</l><pb n="2r" facs="#f2r"/><l n="2">uersus secundus</l></lg>'
+              '<list><item>primum<list><item>sub</item></list></item></list><note>inter</note>'
+              '<table><head>Tabula</head><row><cell role="label">Folium</cell><cell>12r</cell></row></table>'
+              '<figure><figDesc>Imago</figDesc></figure></div></body></text></TEI>')
+
+
+def test_every_rendered_block_has_the_same_positions_in_the_render_the_search_and_python(tmp_path):
+    import xml.etree.ElementTree as ET
+    from folio_navigation import Folio
+    from web_viewer.legacy_v11_core import RENDERED_BLOCKS, extract_reading_document
+    from web_viewer.segment_views import RENDERED_BLOCKS as VIEWS_RENDERED, page_marks
+    reading = extract_reading_document(None, "#A", root=ET.fromstring(STRUCTURED), base_line_keys=["P::1", "P::2"])
+    flat = [seg for block in reading["blocks"] if block["type"] in RENDERED_BLOCKS for seg in block["segments"]]
+    positions = doc_positions(reading)
+    assert [positions[id(seg)] for seg in flat] == list(range(len(flat))) and len(positions) == len(flat)
+    assert VIEWS_RENDERED == RENDERED_BLOCKS
+    out = _node(tmp_path, """
+      const index=S.docIndex(D.blocks), search=F.makeIndex(D.blocks), bad=[];
+      for(const p of search)for(const loc of p.locations){const seg=index.items[loc.docPos];
+        if(!seg||String(seg.text||'')[loc.offset]===undefined)bad.push(loc.docPos)}
+      const hits=q=>F.find(search,q).map(h=>h.docPos);
+      return {kinds:index.items.map(s=>s.kind), bad, rendered:[...S.RENDERED].sort(), search:[...F.RENDERED].sort(),
+              title:hits('Titulus'), verse:hits('secundus'), item:hits('sub'), cell:hits('Folium'), caption:hits('Imago'),
+              lines:index.lines};""", reading)
+    assert out["rendered"] == out["search"] == sorted(RENDERED_BLOCKS)
+    assert out["kinds"] == [seg["kind"] for seg in flat] and out["bad"] == []
+    texts = {seg.get("text", "").strip(): positions[id(seg)] for seg in flat if seg["kind"] == "text"}
+    assert out["title"] == [texts["Titulus"]] and out["verse"] == [texts["uersus secundus"]]
+    assert out["item"] == [texts["sub"]] and out["cell"] == [texts["Folium"]] and out["caption"] == [texts["Imago"]]
+    # La ligne ouverte à chaque position : celle du titre, puis celle des vers.
+    assert out["lines"][texts["Titulus"]] == "P::1" and out["lines"][texts["uersus secundus"]] == "P::2"
+    # Un <pb/> entre deux vers : sa position est entre eux.
+    pb = next(seg for seg in flat if seg["kind"] == "pb")
+    assert texts["uersus primus"] < positions[id(pb)] < texts["uersus secundus"]
+    marks = page_marks(reading, "A", {0: [Folio("f2r", "f2r", "2r")]}, {})
+    assert [mark.location[0] for mark in marks[0]] == [positions[id(pb)]]

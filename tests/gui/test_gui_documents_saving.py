@@ -2,7 +2,7 @@
 """Enregistrement et fermeture quand plusieurs documents sont ouverts."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QDialog, QMessageBox
 
 from app_context import tr
 
@@ -131,6 +131,7 @@ def test_web_export_saves_the_edition_even_when_not_displayed(open_window, proje
     _modify_edition(window)
     _modify_aux(window)
 
+    dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
     dialogs.expect("box", Role.RejectRole)                           # export terminé : fermer
     window.generate_web_viewer()
     assert dialogs.seen[-1][1] == tr("webgen.done.title")

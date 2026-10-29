@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from PySide6.QtGui import QTextCursor
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 
 from app_context import tr
 from project_config import DocumentConfig, load_project
@@ -224,13 +224,14 @@ def test_the_web_export_of_an_edition_in_parts_saves_its_parts_first(open_window
     assert view.load_fragment(9)                                        # premier paragraphe de s03
     text = view.fragment_editor.toPlainText()
     view.fragment_editor.setPlainText(text.replace("Surrexit Dominus", "SURREXIT Dominus", 1))
+    dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # compte rendu seulement
     window.generate_web_viewer()
     assert len(calls) == 1
     assert calls[0]["s01.xml"].endswith("<!-- essai -->")
     assert "SURREXIT Dominus" in calls[0]["s03.xml"]
     assert not any(session.modified for session in window.documents if session.in_edition)
-    assert [title for _kind, title, _text in dialogs.seen] == [tr("webgen.done.title")]
+    assert [title for _kind, title, _text in dialogs.seen] == [tr("webgen.text.title"), tr("webgen.done.title")]
 
 
 def test_a_part_that_is_not_saved_cancels_the_web_export(open_window, sermons_project, dialogs,
@@ -240,6 +241,7 @@ def test_a_part_that_is_not_saved_cancels_the_web_export(open_window, sermons_pr
     window.show_document(_doc(window, "s02.xml"))
     _type_at_end(window, "<p>")                                         # mal formé
     window.show_document(window.edition_session)
+    dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # ne pas l'enregistrer
     window.generate_web_viewer()
     assert calls == []
@@ -251,6 +253,7 @@ def test_the_web_export_lists_the_assembly_problems(open_window, sermons_project
     problem = {"file": "xml/edition.xml", "line": 12, "code": "missing", "detail": "xml/sermons/s03.xml"}
     _fake_generate(monkeypatch, tmp_path, [problem])
     window = open_window(sermons_project)
+    dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)
     window.generate_web_viewer()
     text = dialogs.seen[-1][2]
@@ -263,6 +266,7 @@ def test_the_web_export_of_a_simple_project_does_not_warn(open_window, project_w
     monkeypatch.setattr(web_viewer.generator, "generate",
                         lambda project_path, **kwargs: (tmp_path / "viewer.html", [], {}))
     window = open_window(project_with_documents)
+    dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # compte rendu seulement
     window.generate_web_viewer()
     assert dialogs.seen[-1][1] == tr("webgen.done.title")

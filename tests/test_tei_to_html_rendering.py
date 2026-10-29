@@ -2,7 +2,7 @@
 """Rendu de la feuille de Varians (rendering/tei-to-html.xsl), V0.9.2.9 :
 vers (chaque <l> sur sa ligne, chaque <lg> en bloc), <head> en titre,
 <list> en liste, <figure> en bloc. Ces éléments sont désormais modifiables
-avec le crayon ✎ de la Vue XSLT / CSS."""
+avec le crayon ✎ de la Vue XSLT / CSS. V0.9.3.0 : <table> en tableau."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -26,11 +26,18 @@ def _texts(page, xpath):
 
 
 def test_a_verse_group_is_a_block_of_lines():
-    page = _page("<div><lg><head>Carmen</head><l>uersus unus</l><l>uersus duo</l></lg>"
-                 "<lg><l>tertius</l></lg></div>")
-    assert _texts(page, '//main//div[@class="lg"]/div[@class="l"]') == ["uersus unus", "uersus duo", "tertius"]
+    """Une strophe est un seul bloc : ses vers y sont séparés par un <br/>.
+    L'aperçu de Varians (Qt) ne regroupe pas des blocs imbriqués : des vers
+    en <div> y seraient autant de paragraphes (V0.9.3.0)."""
+    page = _page("<div><lg><head>Carmen</head><l>uersus unus</l><l>uersus duo</l><pb n=\"2r\"/><l>tres</l></lg>"
+                 "<lg><l>quartus</l></lg><l>solus</l></div>")
+    assert _texts(page, '//main//div[@class="lg"]/span[@class="l"]') == ["uersus unus", "uersus duo", "tres", "quartus"]
     assert _texts(page, '//div[@class="lg"]/h3[@class="head"]') == ["Carmen"]
-    assert len(page.xpath('//div[@class="lg"]')) == 2
+    first, second = page.xpath('//div[@class="lg"]')
+    assert [child.tag for child in first] == ["h3", "span", "br", "span", "br", "span", "span"]
+    assert first.xpath("span")[-2].get("class") == "pb"
+    assert not second.xpath("br")
+    assert _texts(page, '//main//div[@class="l"]') == ["solus"]
 
 
 def test_a_division_is_titled_by_its_head_or_its_n_never_by_its_identifier():
@@ -85,6 +92,79 @@ def test_a_figure_is_a_block():
     assert _texts(page, '//div[@class="figure"]/div[@class="figdesc"]') == ["Descriptio tabulae"]
 
 
+TABLE = ('<div><table rows="4" cols="2"><head>Tabula</head>'
+         '<row role="label"><cell>Nomen</cell><cell>Folium</cell></row>'
+         '<row><cell role="label">Petrus</cell><cell>12r</cell></row>'
+         '<row><cell cols="2">totum</cell></row>'
+         '<row role="label"><cell rows="2">a</cell><cell role="data">b</cell></row></table></div>')
+
+
+def _cells(table):
+    return [[(cell.tag, " ".join(cell.text_content().split()), cell.get("colspan"), cell.get("rowspan"))
+             for cell in row] for row in table.xpath(".//tr")]
+
+
+def test_a_table_is_a_table():
+    """V0.9.3.0 : son <head> en légende ; une cellule @role="label", ou
+    d'une ligne @role="label", en en-tête ; @cols et @rows fusionnent."""
+    page = _page(TABLE)
+    table = page.xpath("//main//table")[0]
+    assert _texts(page, "//main//table/caption") == ["Tabula"]
+    assert _cells(table) == [[("th", "Nomen", None, None), ("th", "Folium", None, None)],
+                             [("th", "Petrus", None, None), ("td", "12r", None, None)],
+                             [("td", "totum", "2", None)],
+                             [("th", "a", None, "2"), ("td", "b", None, None)]]
+    assert not page.xpath('//main//h3[@class="head"]')
+
+
+def test_the_reference_of_a_quotation_is_shown_in_angle_brackets():
+    """V0.9.3.0 : le <ref> d'une <cit> (autrefois omis) suit la citation,
+    entre chevrons, grisé ; un <ref> hors d'une <cit> ne change pas."""
+    page = _page('<div><p>Dixit <cit><quote>Uos estis</quote><ref>Lc. 22:28</ref></cit> et '
+                 '<cit type="bible"><quote>In principio</quote> <ref>Io 1, 1</ref></cit> '
+                 '<ref target="#x">alia</ref>.</p></div>')
+    assert _texts(page, '//main//span[@class="ref"]') == ["<Lc. 22:28>", "<Io 1, 1>"]
+    assert " ".join(page.xpath("//main//p")[0].text_content().split()) == \
+        "Dixit Uos estis <Lc. 22:28> et In principio <Io 1, 1> alia."
+
+
+def test_editorial_phenomena_as_in_the_critical_edition():
+    """V0.9.3.0, comme « Édition critique » : une forme d'un <choice> (corr,
+    reg, expan, sinon sic, orig, abbr), les autres en infobulle ; <sic>
+    signalé ; <del> et <surplus> barrés, <add> marqué ; <supplied> entre
+    crochets ; <gap> « [lacune] » ; <space> une espace."""
+    page = _page('<div><p>Isti <choice><sic>erat</sic><corr>erant</corr></choice> '
+                 '<choice><abbr>dns</abbr><expan>dominus</expan></choice> <sic>solum</sic> '
+                 '<choice><orig>uita</orig><reg>vita</reg></choice> '
+                 '<del>deleta</del> <add>addita</add> <surplus>et</surplus> Pe<supplied>trus</supplied>'
+                 '<space/>fin<gap reason="illegible" extent="2 uerba"/>is <gap/>.</p></div>')
+    paragraph = page.xpath("//main//p")[0]
+    assert " ".join(paragraph.text_content().split()) == (
+        "Isti erant dominus solum vita deleta addita et Pe[trus] fin[lacune : 2 uerba]is [lacune].")
+    assert [e.get("title") for e in paragraph.xpath('.//span[@class="choice"]')] == [
+        "Leçon transmise : erat", "Abréviation : dns", "Graphie originale : uita"]
+    assert _texts(page, '//span[@class="rature"]') == ["deleta", "et"]
+    assert _texts(page, '//span[@class="ajout"]') == ["addita"]
+    assert _texts(page, '//span[@class="sic"]') == ["solum"]
+    assert _texts(page, '//span[@class="restitution"]') == ["[trus]"]
+    assert [e.get("title") for e in paragraph.xpath('.//span[@class="lacune"]')] == ["Lacune : illegible", "Lacune"]
+
+
+def test_renditions_of_hi_and_italic_elements():
+    page = _page('<div><p><hi rend="bold">a</hi> <hi rend="underline">b</hi> <hi rend="sup">c</hi> '
+                 '<hi rend="subscript">d</hi> <hi rend="smallcaps">e</hi> <hi rend="italic bold">f</hi> '
+                 '<hi rend="italic">g</hi> <emph>h</emph> <title>Summa</title> <foreign>logos</foreign></p></div>')
+    paragraph = page.xpath("//main//p")[0]
+    assert [e.text_content() for e in paragraph.xpath(".//b")] == ["a", "f"]
+    assert [e.text_content() for e in paragraph.xpath(".//u")] == ["b"]
+    assert [e.text_content() for e in paragraph.xpath(".//sup")] == ["c"]
+    assert [e.text_content() for e in paragraph.xpath(".//sub")] == ["d"]
+    assert _texts(page, '//span[@class="petites-capitales"]') == ["e"]
+    assert [e.text_content() for e in paragraph.xpath(".//i")] == ["f", "h", "Summa", "logos"]
+    assert paragraph.xpath(".//i/b")[0].text_content() == "f"
+    assert _texts(page, '//p/span[@class="quote"]') == ["g"]
+
+
 def test_paragraphs_are_unchanged():
     page = _page("<div><p>Commune <hi rend=\"italic\">sanctorum</hi></p></div>")
     assert _texts(page, "//main//p") == ["Commune sanctorum"]
@@ -92,5 +172,8 @@ def test_paragraphs_are_unchanged():
 
 def test_the_stylesheet_of_new_projects_styles_them():
     css = (ROOT / "rendering" / "tei.css").read_text(encoding="utf-8")
-    for selector in (".lg", ".l", ".head", ".figure", ".figdesc"):
+    for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table", ".ref",
+                     ".rature", ".ajout", ".sic", ".lacune", ".petites-capitales"):
         assert f"\n{selector} " in css or f"\n{selector}," in css, selector
+    # Qt ignore toute règle placée après un @media : il reste à la fin.
+    assert css.rindex("@media") > css.rindex(".lg br")

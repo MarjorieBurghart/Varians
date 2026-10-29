@@ -4,8 +4,10 @@
 
 ``doc_positions`` : la position de chaque segment du texte de lecture,
 comptée comme le viewer (``renderDocument``) et sa recherche plein texte
-(``VariansFullText.makeIndex``) : chaque segment d'un bloc ``p``, dans
-l'ordre, les autres blocs n'étant pas rendus.
+(``VariansFullText.makeIndex``) : chaque segment d'un bloc rendu
+(``RENDERED_BLOCKS`` : paragraphes, titres, vers, entrées de liste,
+cellules, légendes, notes ; V0.9.3.0), dans l'ordre ; un bloc ``div`` n'a
+pas de segment.
 
 Parcours d'un témoin (``witness_route``, mêmes règles que le bureau) : ses
 ``<pb>`` dans chaque texte, situés dans le texte de lecture (``page_marks``) ;
@@ -18,12 +20,14 @@ dépend de la ligne affichée.
 """
 from __future__ import annotations
 
+from web_viewer.legacy_v11_core import RENDERED_BLOCKS
+
 
 def doc_positions(reading) -> dict:
-    """``{id(segment): position}`` des segments des blocs ``p``."""
+    """``{id(segment): position}`` des segments des blocs rendus."""
     positions = {}
     for block in reading.get("blocks", []) or []:
-        if block.get("type") != "p":
+        if block.get("type") not in RENDERED_BLOCKS:
             continue
         for segment in block.get("segments", []) or []:
             positions[id(segment)] = len(positions)
@@ -35,7 +39,7 @@ def page_marks(reading, witness_id, folios_by_segment, ranks_by_segment) -> dict
     (``folios_by_segment``, ses folios dans ce texte), comme
     ``pivot_lines.pb_marks`` sur le bureau. Leur place est leur position
     dans le texte de lecture (``doc_positions`` ; un ``<pb>`` hors d'un bloc
-    ``p``, qui n'est pas rendu, prend celle du segment rendu suivant), et
+    rendu prend celle du segment rendu suivant), et
     leur ligne le rang (``ranks_by_segment``) de la ligne du pivot du texte
     ouverte à cet endroit : celle que porte le ``<pb>``
     (``extract_reading_document(pb_line_keys=True)``), sinon la dernière
@@ -45,10 +49,10 @@ def page_marks(reading, witness_id, folios_by_segment, ranks_by_segment) -> dict
     lookups = {k: folio_lookup(list(folios)) for k, folios in folios_by_segment.items() if folios}
     marks, last, position = {}, {}, 0
     for block in reading.get("blocks", []) or []:
-        counted = block.get("type") == "p"
+        counted = block.get("type") in RENDERED_BLOCKS
         for segment in block.get("segments", []) or []:
             k = segment.get("seg", 0)
-            if segment.get("kind") == "text" and segment.get("line_key"):
+            if segment.get("kind") in ("text", "line-anchor") and segment.get("line_key"):
                 rank = ranks_by_segment.get(k, {}).get(segment["line_key"])
                 if rank is not None:
                     last[k] = rank

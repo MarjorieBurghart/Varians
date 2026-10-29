@@ -148,3 +148,92 @@ def test_the_classes_come_from_the_project_schema(open_window, verse_project, qt
     _click_pencil(qtbot, view, 1)
     qtbot.waitUntil(lambda: view.current_paragraph == 1, timeout=3000)
     assert view.fragment_editor.toPlainText() == "<strophe>Strophe nova</strophe>"
+
+
+OLD_CSS = ("body { line-height: 1.8; }\np { margin: 0 0 1em; }\n"
+           "@media (max-width: 600px) { body { font-size: 0.97rem; } }\n")
+
+
+@pytest.mark.parametrize("old_stylesheet", [False, True])
+def test_a_stanza_is_one_indented_block(open_window, verse_project, qtbot, old_stylesheet):
+    """V0.9.3.0 : les vers d'un <lg> forment un seul bloc de l'aperçu, en
+    retrait, même avec la CSS d'un projet créé par une version antérieure
+    (sans règle pour .lg, et finie par un @media, après lequel Qt ignore
+    toute règle) : Varians place ses règles de base avant celle du projet."""
+    if old_stylesheet:
+        (verse_project.parent / "rendering" / "tei.css").write_text(OLD_CSS, encoding="utf-8")
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    text = view.preview.toPlainText()
+    block = view.preview.document().findBlock(text.index("Uersus primus"))
+    assert "uersus secundus" in block.text()
+    assert block.blockFormat().leftMargin() > 0
+    paragraph = view.preview.document().findBlock(text.index("Commune sanctorum"))
+    assert paragraph.blockFormat().leftMargin() == 0
+
+
+
+def test_the_pencil_is_a_small_grey_mark_not_a_blue_underlined_link(open_window, verse_project, qtbot):
+    """V0.9.3.0 : les règles de Varians pour le crayon (et les repères de
+    ligne) sont placées avant la CSS du projet ; ajoutées après elle, Qt les
+    ignorait (règles après un @media) et le crayon était un lien bleu
+    souligné."""
+    from PySide6.QtGui import QTextCursor
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    marker = view.preview._paragraph_markers[0][0]
+    cursor = QTextCursor(view.preview.document())
+    cursor.setPosition(marker + 1)
+    assert view.preview.toPlainText()[marker] == "✎"
+    fmt = cursor.charFormat()
+    assert fmt.isAnchor() and not fmt.fontUnderline()
+    assert fmt.foreground().color().name() == "#8a8177"
+
+
+@pytest.mark.parametrize("old_stylesheet", [False, True])
+def test_the_reference_of_a_quotation_is_grey_in_angle_brackets(open_window, verse_project, qtbot, old_stylesheet):
+    """V0.9.3.0 : « <Lc. 22:28> » suit sa citation, grisé, même avec la CSS
+    d'un projet créé par une version antérieure (sans règle .ref)."""
+    from PySide6.QtGui import QTextCursor
+    if old_stylesheet:
+        (verse_project.parent / "rendering" / "tei.css").write_text(OLD_CSS, encoding="utf-8")
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    text = view.preview.toPlainText()
+    at = text.index("<Lc. 22:28>")
+    cursor = QTextCursor(view.preview.document())
+    cursor.setPosition(at + 2)
+    grey = cursor.charFormat().foreground().color()
+    cursor.setPosition(text.index("Commune sanctorum") + 2)
+    assert grey.name() != cursor.charFormat().foreground().color().name()
+    if old_stylesheet:
+        assert grey.name() == "#8a8177"
+
+
+PHENOMENA = ('<p>Isti <choice><sic>erat</sic><corr>erant</corr></choice> <del>deleta</del> '
+             '<add>addita</add> <hi rend="smallcaps">capitulum</hi></p>\n')
+
+
+@pytest.mark.parametrize("old_stylesheet", [False, True])
+def test_editorial_phenomena_are_shown_in_the_preview(open_window, verse_project, qtbot, old_stylesheet):
+    """V0.9.3.0 : une forme d'un <choice>, rature barrée, ajout souligné,
+    petites capitales, même avec la CSS d'un projet ancien."""
+    from PySide6.QtGui import QFont, QTextCursor
+    edition = verse_project.parent / "xml" / "edition.xml"
+    edition.write_text(edition.read_text(encoding="utf-8").replace(VERSE, VERSE + PHENOMENA), encoding="utf-8")
+    if old_stylesheet:
+        (verse_project.parent / "rendering" / "tei.css").write_text(OLD_CSS, encoding="utf-8")
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    text = view.preview.toPlainText()
+    assert "Isti erant deleta addita" in text and "erat" not in text[text.index("Isti"):text.index("addita")]
+    cursor = QTextCursor(view.preview.document())
+
+    def char_format(word):
+        cursor.setPosition(text.index(word) + 2)
+        return cursor.charFormat()
+
+    assert char_format("deleta").fontStrikeOut()
+    assert char_format("addita").fontUnderline()
+    assert char_format("capitulum").fontCapitalization() == QFont.Capitalization.SmallCaps
+

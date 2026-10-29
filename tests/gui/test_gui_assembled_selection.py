@@ -173,3 +173,24 @@ def test_the_fragment_of_a_part_and_the_preview_share_their_selection(open_windo
     _select(view.fragment_editor, *_fragment_occurrences(view, "meritum")[0])
     qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=3000)
     assert _selection(view.preview) == _preview_occurrences(view, "meritum", PART_PARAGRAPH)[0]
+
+
+def test_a_whole_part_paragraph_chosen_by_xpath_is_selected_in_the_preview(open_window, example_with_part, qtbot):
+    """V0.9.3.0 : un paragraphe entier d'une partie, choisi par une recherche
+    XPath, est sélectionné en entier dans l'aperçu de toute l'édition."""
+    window = open_window(example_with_part)
+    view = _show_preview(window, qtbot)
+    part = _doc(window, "rls185.xml")
+    window.left_tabs.setCurrentIndex(0)
+    window.show_document(part)
+    window.xpath_query.setText("(//tei:p)[3]")
+    window.run_xpath_search()
+    window.goto_xpath_result(0)
+    start = window.editor.textCursor().selectionStart()
+    index = window._assembled_preview_sources().paragraph_at(part.path, start + 1)
+    assert index is not None and index > 11
+    _show_preview(window, qtbot)
+    qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=5000)
+    a, b = view.preview.paragraph_bounds(index)
+    expected = " ".join(view.preview.toPlainText()[a:b].replace(WJ, "").split())
+    assert " ".join(view.preview.textCursor().selectedText().replace(WJ, "").split()) == expected

@@ -180,6 +180,10 @@ def has_line_synchronization(witness: WitnessConfig) -> bool:
         return False
 
 
+# Choix du texte du viewer web (V0.9.3.0), <webViewer text="…">.
+WEB_TEXT_MODES = ("established", "witness")
+
+
 @dataclass(frozen=True)
 class ProjectConfig:
     path: Path
@@ -210,6 +214,11 @@ class ProjectConfig:
     parts: tuple[PartConfig, ...] = ()
     # Scénarios de transformation XSLT, dans l'ordre de <transformations>.
     transformations: tuple[TransformScenario, ...] = ()
+    # Texte du viewer web (V0.9.3.0) : <webViewer text textWitness>.
+    # established : le <lem>, à défaut la leçon du témoin choisi ; witness :
+    # la leçon du témoin choisi. Témoin vide : le pivot de chaque texte.
+    web_text_mode: str = "established"
+    web_text_witness: str = ""
 
     @property
     def root_dir(self) -> Path:
@@ -410,6 +419,10 @@ def load_project(path: str | Path) -> ProjectConfig:
     web_el = root.find("webViewer")
     web_output_dir = _resolve(root_dir, web_el.get("outputDir") if web_el is not None else None, "web_output")
     web_filename = (web_el.get("filename") if web_el is not None else None) or "viewer.html"
+    web_text_mode = (web_el.get("text") or "").strip() if web_el is not None else ""
+    if web_text_mode not in WEB_TEXT_MODES:
+        web_text_mode = "established"
+    web_text_witness = (web_el.get("textWitness") or "").strip() if web_el is not None else ""
 
     schema_mode, schema, schema_type = _parse_schema(root, root_dir)
 
@@ -568,6 +581,8 @@ def load_project(path: str | Path) -> ProjectConfig:
         custom_elements=custom,
         web_output_dir=web_output_dir,
         web_filename=web_filename,
+        web_text_mode=web_text_mode,
+        web_text_witness=web_text_witness,
         translations_dir=translations_dir,
         language=language,
         fallback_language=fallback_language,

@@ -2,7 +2,8 @@
  * Textes d'une édition assemblée, lacunes et parcours d'un témoin, selon les
  * règles du bureau (witness_route, segment_model, lacunae). Les positions sont
  * celles du rendu (renderDocument), de la recherche (VariansFullText.makeIndex)
- * et de Python (segment_views.doc_positions) : chaque segment d'un bloc p.
+ * et de Python (segment_views.doc_positions) : chaque segment d'un bloc rendu
+ * (RENDERED, comme legacy_v11_core.RENDERED_BLOCKS ; V0.9.3.0).
  */
 (function(root, factory) {
   const api = factory();
@@ -10,6 +11,8 @@
   root.VariansSync = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
   'use strict';
+  // Blocs affichés du texte de lecture ; un bloc « div » n'a pas de segment.
+  const RENDERED = new Set(['p', 'head', 'l', 'item', 'cell', 'caption', 'note']);
   // Index du texte de lecture : pour chaque position, le texte (seg) et la
   // ligne du pivot de ce texte ouverte à cet endroit ; les repères de lacune.
   // La ligne courante est propre à chaque texte et suit aussi les blocs non
@@ -17,14 +20,15 @@
   function docIndex(blocks) {
     const segs = [], lines = [], items = [], lacunae = [], firstPos = new Map(), current = new Map();
     for (const block of blocks || []) {
-      const rendered = block.type === 'p';
+      const rendered = RENDERED.has(block.type);
       for (const seg of block.segments || []) {
         const k = Number(seg.seg || 0);
-        if ((seg.kind === 'text' || seg.kind === 'pb' || seg.kind === 'lacuna') && seg.line_key) current.set(k, String(seg.line_key));
+        // Un repère de ligne (V0.9.3.0) : la place d'une ligne du pivot que le texte affiché omet.
+        if ((seg.kind === 'text' || seg.kind === 'pb' || seg.kind === 'lacuna' || seg.kind === 'line-anchor') && seg.line_key) current.set(k, String(seg.line_key));
         if (!rendered) continue;
         const pos = segs.length;
         segs.push(k); lines.push(current.has(k) ? current.get(k) : null); items.push(seg);
-        if (seg.kind === 'text' && seg.line_key && !firstPos.has(String(seg.line_key))) firstPos.set(String(seg.line_key), pos);
+        if ((seg.kind === 'text' || seg.kind === 'line-anchor') && seg.line_key && !firstPos.has(String(seg.line_key))) firstPos.set(String(seg.line_key), pos);
         if (seg.kind === 'lacuna') lacunae.push({pos, seg: k, start: !!seg.start, wit: (seg.wit || []).map(String)});
       }
     }
@@ -146,6 +150,6 @@
     for (let i = route.length - 1; i >= 0; i--) if (route[i].s === s) return i;
     return -1;
   }
-  return {docIndex, segAt, lastLinked, positionOf, segOfKey, lacunaStarts, lacunaeAt, lineStops, pageStops,
+  return {RENDERED, docIndex, segAt, lastLinked, positionOf, segOfKey, lacunaStarts, lacunaeAt, lineStops, pageStops,
           routeIndex, step, panelStop, presentStop};
 });

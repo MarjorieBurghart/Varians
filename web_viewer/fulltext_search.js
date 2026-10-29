@@ -1,6 +1,8 @@
 /* Varians A03 — Recherche de lecture hors ligne, sans modification de la TEI.
- * Index construit sur les seuls segments éditoriaux visibles. L'index normalisé
- * porte les offsets de code UTF-16 d'origine pour un surlignage fidèle.
+ * Index construit sur les seuls segments éditoriaux visibles, bloc par bloc
+ * (RENDERED : les blocs affichés, comme VariansSync.RENDERED ; V0.9.3.0).
+ * L'index normalisé porte les offsets de code UTF-16 d'origine pour un
+ * surlignage fidèle.
  */
 (function(root, factory) {
   const api = factory();
@@ -8,6 +10,7 @@
   root.VariansFullText = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
   'use strict';
+  const RENDERED = new Set(['p', 'head', 'l', 'item', 'cell', 'caption', 'note']);
   function normalize(value, options = {}) {
     const map = [], out = [];
     for (let i = 0; i < String(value ?? '').length;) {
@@ -30,7 +33,7 @@
   function makeIndex(blocks) {
     const paragraphs = []; let docPos = 0;
     for (const block of blocks || []) {
-      if (block.type !== 'p') continue;
+      if (!RENDERED.has(block.type)) continue;
       let text = ''; const locations = [];
       for (const seg of block.segments || []) {
         const currentPos = docPos++;
@@ -92,5 +95,5 @@
     }
     return html+escapeHtml(text.slice(cursor));
   }
-  return {normalize,makeIndex,find,spansByPosition,splitText};
+  return {RENDERED,normalize,makeIndex,find,spansByPosition,splitText};
 });

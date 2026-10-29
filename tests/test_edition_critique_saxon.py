@@ -144,6 +144,44 @@ def test_a_lacuna_is_named_in_the_apparatus(project):
     assert _main(tree) == ["et fuit diu sic finis"]
 
 
+def test_the_words_of_the_editor_in_the_apparatus_are_in_italics(project):
+    # Tout texte de l'apparat qui ne vient pas d'un témoin est en italique :
+    # sigles, om., add., lacuna incipit / desinit, leçon non disponible ;
+    # les leçons restent en romain.
+    name = _write(project, "mentions.xml", '<div><p>et <app><rdg wit="#A">fuit</rdg><rdg wit="#B"/><rdg wit="#C">'
+                                           '<lacunaStart/></rdg></app> <app><rdg wit="#A"/><rdg wit="#B">breue</rdg>'
+                                           '</app> diu <app><rdg wit="#B">sic</rdg><rdg wit="#C"><lacunaEnd/></rdg>'
+                                           '</app> finis</p></div>')
+    result, tree = _edition(project, name, "A")
+    assert result.ok, result.error
+    entries = tree.xpath("//aside//ol[contains(@class, 'apparat')]/li//span[@class='entree']")
+    italics = [[" ".join(i.text_content().split()) for i in entry.iter("i")] for entry in entries]
+    assert italics == [["om.", "B", "lacuna incipit", "C"], ["add.", "B"],
+                       ["[lecture du témoin non disponible]", "B", "lacuna desinit", "C"]]
+    roman = [" ".join("".join(entry.xpath(".//text()[not(ancestor::i) and not(ancestor::a)]")).split())
+             for entry in entries]
+    assert roman == ["fuit ] ;", "breue", "] sic ;"]
+
+
+def test_the_readings_of_the_apparatus_are_in_roman_and_a_sic_is_marked(project):
+    # Dans l'apparat, une leçon est en romain, même un <sic>, une citation ou
+    # une mise en relief ; un <sic> y est suivi de « sic » en italique. Le
+    # texte établi garde ses styles.
+    name = _write(project, "romain.xml", '<div><p>et <app><rdg wit="#A">ministerium</rdg><rdg wit="#B">ministerium '
+                                         '<sic>corelectionis</sic></rdg></app> <app><rdg wit="#A"><quote>Uos estis'
+                                         '</quote></rdg><rdg wit="#B"><hi rend="italic">Uos</hi> <title>estis</title>'
+                                         '</rdg></app> finis</p></div>')
+    result, tree = _edition(project, name, "A")
+    assert result.ok, result.error
+    assert _entries(tree) == [("1", "ministerium ] ministerium corelectionis sic B"), ("2", "Uos estis ] Uos estis B")]
+    entries = tree.xpath("//aside//ol[contains(@class, 'apparat')]/li//span[@class='entree']")
+    assert [[_text(i) for i in entry.iter("i")] for entry in entries] == [["sic", "B"], ["B"]]
+    styled = [element.get("class") for entry in entries for element in entry.iter()
+              if {"sic", "citation", "italique"} & set((element.get("class") or "").split())]
+    assert styled == []
+    assert [_text(span) for span in tree.xpath("//main//span[contains(@class, 'citation')]")] == ["Uos estis"]
+
+
 def test_the_apparatus_and_the_notes_are_two_series(project):
     # L'apparat, nombreux, appelé par des chiffres ; les notes par des lettres.
     apps = "".join(f'<app><rdg wit="#A">u{i}</rdg><rdg wit="#B">v{i}</rdg></app> ' for i in range(3))
@@ -206,6 +244,41 @@ def test_a_list_is_numbered_by_its_rend_or_its_type_and_titled_before_it(project
     assert lists == [("ol", ["a"]), ("ol", ["b"]), ("ul", ["c"])]
     head = next(h for h in main.iter("h3") if _text(h) == "Index")
     assert head.getparent().tag not in ("ol", "ul") and head.getnext().tag == "ol"
+
+
+def test_a_table_has_its_caption_its_header_cells_and_its_merged_cells(project):
+    """V0.9.3.0 : le <head> d'un tableau est sa légende ; une cellule
+    @role="label", ou d'une ligne @role="label", est un en-tête ; @cols et
+    @rows fusionnent les cellules, comme dans la feuille de l'aperçu."""
+    name = _write(project, "tableau.xml", '<div><p>x</p><table><head>Tabula</head>'
+                                          '<row role="label"><cell>Nomen</cell><cell>Folium</cell></row>'
+                                          '<row><cell role="label">Petrus</cell><cell cols="2" rows="2">12r</cell>'
+                                          '</row></table></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    table = tree.find(".//main").xpath(".//table")[0]
+    assert [_text(caption) for caption in table.xpath("caption")] == ["Tabula"]
+    assert [[(cell.tag, _text(cell), cell.get("colspan"), cell.get("rowspan")) for cell in row]
+            for row in table.xpath(".//tr")] == [[("th", "Nomen", None, None), ("th", "Folium", None, None)],
+                                                 [("th", "Petrus", None, None), ("td", "12r", "2", "2")]]
+    assert not table.xpath(".//h3")
+
+
+def test_the_reference_of_a_biblical_quotation_is_in_angle_brackets_the_others_are_notes(project):
+    """V0.9.3.0 : le <ref> d'une <cit type="bible"> suit la citation entre
+    chevrons ; celui d'une autre <cit> est une note de l'éditeur, appelée
+    par une lettre dans la même série que les <note> ; un <ref> hors d'une
+    <cit> ne change pas."""
+    name = _write(project, "citations.xml",
+                  '<div><p>Dixit <cit type="bible"><quote>Uos estis</quote><ref>Lc. 22:28</ref></cit> et '
+                  '<cit><quote>Ait Augustinus</quote><ref>Aug. Conf. 1</ref></cit> '
+                  'uidelicet<note>Nota editoris</note> <ref target="#x">alia</ref>.</p></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    main = tree.find(".//main")
+    assert [_text(sup) for sup in main.xpath(".//sup[contains(@class, 'appel-note')]")] == ["a", "b"]
+    assert _entries(tree, "notes") == [("a", "Aug. Conf. 1"), ("b", "Nota editoris")]
+    assert _main(tree) == ["Dixit Uos estis <Lc. 22:28> et Ait Augustinus uidelicet alia."]
 
 
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):
