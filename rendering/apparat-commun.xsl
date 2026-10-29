@@ -24,15 +24,72 @@
   Les deux feuilles mettent en forme ce que donne f:apparat (une map) :
   retenue (la leçon retenue, ou rien), lemme (montrer « leçon ] »),
   variantes (un tableau de maps : lecon, genre om|lacune|add|lecon, sigles).
+
+  Textes (Varians 0.9.3.1) : f:libelle lit la clé dans le catalogue i18n de
+  Varians de la langue demandée (paramètres langue et catalogues, que
+  Varians passe : la langue de l'interface, sauf si le scénario en fixe
+  une) ; sans catalogue, ou sans la clé, le français ci-dessous
+  (f:textes-fr, identique au catalogue français). Les abréviations de
+  l'apparat (om., add., lacuna incipit, lacuna desinit, sic) sont latines.
 -->
 <xsl:stylesheet version="3.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:xs="http://www.w3.org/2001/XMLSchema"
   xmlns:tei="http://www.tei-c.org/ns/1.0"
   xmlns:f="urn:varians:apparat"
+  xmlns:map="http://www.w3.org/2005/xpath-functions/map"
   exclude-result-prefixes="#all">
 
   <xsl:param name="temoin-de-base" as="xs:string" select="''"/>
+  <!-- Langue des textes (fr, en, de…) et adresse des catalogues i18n
+       (« file:…/i18n/ »). -->
+  <xsl:param name="langue" as="xs:string" select="'fr'"/>
+  <xsl:param name="catalogues" as="xs:string" select="''"/>
+
+  <xsl:variable name="f:catalogue" as="element()*"
+    select="let $uri := $catalogues || $langue || '.xml'
+            return if ($catalogues != '' and doc-available($uri)) then doc($uri)/translations/string else ()"/>
+  <!-- La langue des textes produits : le français sans catalogue. -->
+  <xsl:variable name="f:langue" as="xs:string" select="if (exists($f:catalogue)) then $langue else 'fr'"/>
+  <xsl:variable name="f:textes-fr" as="element()*">
+    <string key="publication.critique.title">Édition critique</string>
+    <string key="publication.critique.lemmas_only">Texte établi à partir des lemmes explicites, sans témoin choisi.</string>
+    <string key="publication.critique.witness">Leçon explicite prioritaire, sinon lecture du témoin {witness}.</string>
+    <string key="publication.critique.undefined">non défini</string>
+    <string key="publication.critique.rejected">Les variantes rejetées figurent dans l’apparat.</string>
+    <string key="publication.critique.highlight">Surligner les leçons hors &lt;lem&gt;</string>
+    <string key="publication.critique.sigla">Sigles des témoins</string>
+    <string key="publication.critique.footer">Édition produite à partir d’un document TEI · Apparat par division</string>
+    <string key="publication.critique.apparatus">Apparat critique</string>
+    <string key="publication.critique.notes">Notes</string>
+    <string key="publication.critique.apparatus_notes">Apparat critique et notes</string>
+    <string key="publication.critique.call_apparatus">Apparat {n}</string>
+    <string key="publication.critique.call_note">Note {n}</string>
+    <string key="publication.critique.back">Retour au texte</string>
+    <string key="publication.reference">[référence]</string>
+    <string key="publication.caesura">Césure</string>
+    <string key="publication.unclear">Lecture incertaine</string>
+    <string key="publication.sic">Leçon transmise (sic)</string>
+    <string key="publication.folio">Changement de folio ou de page</string>
+    <string key="publication.gap">[lacune]</string>
+    <string key="publication.gap.extent">[lacune : {extent}]</string>
+    <string key="publication.not_available">[lecture du témoin non disponible]</string>
+    <string key="publication.error.no_lemma">temoin-de-base=aucun : {count} apparat(s) sans lemme (lem). Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
+    <string key="publication.error.unknown_witness">Témoin inconnu : {witness} (témoins déclarés : {witnesses}).</string>
+  </xsl:variable>
+
+  <!-- Le texte d'une clé, dans la langue demandée, sinon en français. -->
+  <xsl:function name="f:libelle" as="xs:string">
+    <xsl:param name="cle" as="xs:string"/>
+    <xsl:sequence select="string(($f:catalogue[@key = $cle], $f:textes-fr[@key = $cle])[1])"/>
+  </xsl:function>
+  <!-- Le même, ses variables ({n}, {witness}…) remplacées. -->
+  <xsl:function name="f:libelle" as="xs:string">
+    <xsl:param name="cle" as="xs:string"/>
+    <xsl:param name="valeurs" as="map(xs:string, xs:anyAtomicType)"/>
+    <xsl:sequence select="fold-left(map:keys($valeurs), f:libelle($cle),
+      function($texte, $nom) { replace($texte, '{' || $nom || '}', string($valeurs($nom)), 'q') })"/>
+  </xsl:function>
 
   <xsl:variable name="f:temoins" as="xs:string*"
     select="(/tei:TEI/tei:teiHeader//tei:listWit//tei:witness/@xml:id) ! string()"/>
@@ -48,18 +105,18 @@
   <xsl:variable name="f:add" select="'add.'"/>
   <xsl:variable name="f:lacuna-incipit" select="'lacuna incipit'"/>
   <xsl:variable name="f:lacuna-desinit" select="'lacuna desinit'"/>
-  <xsl:variable name="f:non-disponible" select="'[lecture du témoin non disponible]'"/>
+  <xsl:variable name="f:non-disponible" select="f:libelle('publication.not_available')"/>
 
   <!-- Arrêt si le témoin choisi n'est pas déclaré, ou si « aucun » laisse
        un apparat sans lemme. -->
   <xsl:template name="f:verifier">
     <xsl:if test="$f:sans-temoin and exists(/tei:TEI/tei:text//tei:app[not(tei:lem or tei:rdgGrp//tei:lem)])">
-      <xsl:message terminate="yes">temoin-de-base=aucun : <xsl:value-of
-        select="count(/tei:TEI/tei:text//tei:app[not(tei:lem or tei:rdgGrp//tei:lem)])"/> apparat(s) sans lemme (lem). Ajoutez un lemme à chacun, ou choisissez un témoin.</xsl:message>
+      <xsl:message terminate="yes"><xsl:value-of select="f:libelle('publication.error.no_lemma',
+        map {'count': count(/tei:TEI/tei:text//tei:app[not(tei:lem or tei:rdgGrp//tei:lem)])})"/></xsl:message>
     </xsl:if>
     <xsl:if test="not($f:sans-temoin) and exists($f:temoins) and not($f:temoin = $f:temoins)">
-      <xsl:message terminate="yes">Témoin inconnu : <xsl:value-of select="$f:temoin"/> (témoins déclarés : <xsl:value-of
-        select="string-join($f:temoins, ', ')"/>).</xsl:message>
+      <xsl:message terminate="yes"><xsl:value-of select="f:libelle('publication.error.unknown_witness',
+        map {'witness': $f:temoin, 'witnesses': string-join($f:temoins, ', ')})"/></xsl:message>
     </xsl:if>
   </xsl:template>
 

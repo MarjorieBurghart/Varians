@@ -887,7 +887,9 @@ class TransformScenariosMixin:
         if not self._save_for_transform(scenario, current):
             return False
         output_dir = self._transform_preview_dir() if preview else None
-        request = scenario_request(scenario, self.project, current, output_dir)
+        i18n = current_i18n()
+        request = scenario_request(scenario, self.project, current, output_dir,
+                                   language=i18n.language if i18n is not None else None)
         if not preview:
             self._remember_transform_scenario(scenario)
         self._transform_running = (scenario, preview, request)

@@ -12,7 +12,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from lxml import html as lxml_html
+from lxml import etree, html as lxml_html
 
 from project_config import TransformScenario, load_project
 from transform_worker import run_in_process
@@ -377,6 +377,66 @@ def test_the_box_of_the_page_highlights_in_a_browser(project):
         assert page.evaluate(image) == "none"
         assert not errors, errors
         browser.close()
+
+
+# --- Textes de la page dans la langue de l'interface (V0.9.3.1) --------------------------------------
+# Les textes de la page viennent des catalogues i18n (``langue``,
+# ``catalogues``) ; sans catalogue, le français. Les abréviations de
+# l'apparat (om., add., lacuna incipit…) restent latines.
+
+TEXTES = HORS_LEMME.replace("</p></div>", ' <app><lem wit="#A">x</lem><rdg wit="#B"/></app> y<note>nota</note></p></div>')
+
+
+def _catalog(language):
+    root = etree.parse(str(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml")).getroot()
+    return {string.get("key"): string.text for string in root.findall("string")}
+
+
+@pytest.mark.parametrize("language", ["en", "ja"])
+def test_the_texts_of_the_page_are_in_the_language_asked(project, language):
+    texts, french = _catalog(language), _catalog("fr")
+    name = _write(project, "langue.xml", TEXTES)
+    result, tree = _edition(project, name, "A", langue=language)
+    assert result.ok, result.error
+    assert tree.get("lang") == language
+    assert _text(tree.find(".//h1")) == texts["publication.critique.title"]
+    assert tree.find(".//title").text.startswith(texts["publication.critique.title"])
+    before, after = texts["publication.critique.witness"].split("{witness}")
+    assert _text(tree.find_class("chapeau")[0]) == " ".join(f"{before}A{after} {texts['publication.critique.rejected']}".split())
+    assert _text(tree.get_element_by_id("surligner").getparent()) == texts["publication.critique.highlight"]
+    assert _text(tree.find(".//section[@class='temoins']/h2")) == texts["publication.critique.sigla"]
+    aside = tree.find(".//aside")
+    assert aside.get("aria-label") == texts["publication.critique.apparatus_notes"]
+    assert [_text(h) for h in aside.iter("h3")] == [texts["publication.critique.apparatus"], texts["publication.critique.notes"]]
+    assert _text(tree.find(".//footer")) == texts["publication.critique.footer"]
+    calls = [a.get("aria-label") for a in tree.xpath("//sup[contains(@class, 'appel')]/a")]
+    assert texts["publication.critique.call_apparatus"].replace("{n}", "1") in calls
+    assert texts["publication.critique.call_note"].replace("{n}", "a") in calls
+    assert {a.get("aria-label") for a in tree.find_class("retour")} == {texts["publication.critique.back"]}
+    # Les abréviations latines restent ; plus aucun texte français.
+    assert any("om." in entry for _mark, entry in _entries(tree))
+    page = lxml_html.tostring(tree, encoding="unicode")
+    for key in ("publication.critique.title", "publication.critique.apparatus", "publication.critique.sigla",
+                "publication.critique.back", "publication.critique.footer"):
+        assert french[key] not in page, key
+
+
+def test_without_catalogs_the_texts_of_the_page_are_in_french(project):
+    french = _catalog("fr")
+    name = _write(project, "langue.xml", TEXTES)
+    result, tree = _edition(project, name, "A", langue="en", catalogues="")
+    assert result.ok, result.error
+    assert tree.get("lang") == "fr" and _text(tree.find(".//h1")) == french["publication.critique.title"]
+    assert _text(tree.find(".//footer")) == french["publication.critique.footer"]
+
+
+def test_the_messages_of_the_stylesheet_are_in_the_language_asked(project):
+    texts = _catalog("en")
+    name = _write(project, "langue.xml", TEXTES)
+    result, _tree = _edition(project, name, "Z", langue="en")
+    assert not result.ok
+    message = texts["publication.error.unknown_witness"].replace("{witness}", "Z").replace("{witnesses}", "A, B, C")
+    assert message in " ".join(detail for _code, detail in result.journal)
 
 
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):

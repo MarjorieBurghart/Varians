@@ -24,9 +24,13 @@
   - Leçons hors <lem> (V0.9.3.1) : le texte d'une leçon retenue qui n'est
     pas un <lem> est marqué (classe hors-lemme) ; une case de la page,
     « Surligner les leçons hors <lem> », le surligne en jaune.
+  - Textes de la page (V0.9.3.1) : dans la langue de l'interface, lus dans
+    les catalogues i18n de Varians (f:libelle, apparat-commun.xsl) ; le
+    français sans catalogue.
   Paramètres : temoin-de-base, montrer-folios, montrer-numeros-de-vers,
   sauts-lb (un saut de ligne du témoin choisi par <br>),
-  surligner-hors-lemme (case cochée au départ).
+  surligner-hors-lemme (case cochée au départ), langue et catalogues
+  (passés par Varians).
 -->
 <xsl:stylesheet version="3.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -114,11 +118,11 @@
   <xsl:template match="/tei:TEI">
     <xsl:call-template name="f:verifier"/>
     <xsl:variable name="titre" select="normalize-space(string((tei:teiHeader/tei:fileDesc/tei:titleStmt/tei:title)[1]))"/>
-    <html lang="fr">
+    <html lang="{$f:langue}">
       <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <title>Édition critique — <xsl:value-of select="$titre"/></title>
+        <title><xsl:value-of select="f:libelle('publication.critique.title')"/> — <xsl:value-of select="$titre"/></title>
         <style>
           :root {color-scheme:light; --encre:#29251f; --secondaire:#6d675d; --filet:#c3bcaf;}
           * {box-sizing:border-box;}
@@ -231,23 +235,29 @@
       <body>
         <xsl:if test="$hors-lemme and $surligner-hors-lemme"><xsl:attribute name="class">surligner</xsl:attribute></xsl:if>
         <header>
-          <h1>Édition critique</h1>
+          <h1><xsl:value-of select="f:libelle('publication.critique.title')"/></h1>
           <p class="source"><xsl:value-of select="$titre"/></p>
           <p class="chapeau">
             <xsl:choose>
-              <xsl:when test="$f:sans-temoin">Texte établi à partir des lemmes explicites, sans témoin choisi.</xsl:when>
-              <xsl:otherwise>Leçon explicite prioritaire, sinon lecture du témoin <i class="temoin"><xsl:value-of
-                select="if ($f:temoin ne '') then f:sigle($f:temoin) else 'non défini'"/></i>.</xsl:otherwise>
+              <xsl:when test="$f:sans-temoin"><xsl:value-of select="f:libelle('publication.critique.lemmas_only')"/></xsl:when>
+              <xsl:otherwise>
+                <!-- Le sigle du témoin, en italique, à la place de {witness}. -->
+                <xsl:variable name="phrase" select="f:libelle('publication.critique.witness')"/>
+                <xsl:value-of select="substring-before($phrase, '{witness}')"/>
+                <i class="temoin"><xsl:value-of select="if ($f:temoin ne '') then f:sigle($f:temoin)
+                  else f:libelle('publication.critique.undefined')"/></i>
+                <xsl:value-of select="substring-after($phrase, '{witness}')"/>
+              </xsl:otherwise>
             </xsl:choose>
-            Les variantes rejetées figurent dans l'apparat.</p>
+            <xsl:text> </xsl:text><xsl:value-of select="f:libelle('publication.critique.rejected')"/></p>
           <xsl:if test="$hors-lemme">
             <p class="surlignage"><label><input type="checkbox" id="surligner">
               <xsl:if test="$surligner-hors-lemme"><xsl:attribute name="checked">checked</xsl:attribute></xsl:if>
-            </input>Surligner les leçons hors &lt;lem&gt;</label></p>
+            </input><xsl:value-of select="f:libelle('publication.critique.highlight')"/></label></p>
           </xsl:if>
         </header>
         <xsl:if test="tei:teiHeader//tei:listWit/tei:witness">
-          <section class="temoins"><h2>Sigles des témoins</h2><dl>
+          <section class="temoins"><h2><xsl:value-of select="f:libelle('publication.critique.sigla')"/></h2><dl>
             <xsl:for-each select="tei:teiHeader//tei:listWit//tei:witness">
               <!-- Le libellé laisse de côté le sigle : <idno type="siglum">,
                    et tout élément qui ne contient que le sigle ou
@@ -267,7 +277,7 @@
           </xsl:if>
           <xsl:apply-templates select="tei:text/tei:front | tei:text/tei:body | tei:text/tei:back" mode="base"/>
         </main>
-        <footer class="mention">Édition produite à partir d'un document TEI · Apparat par division</footer>
+        <footer class="mention"><xsl:value-of select="f:libelle('publication.critique.footer')"/></footer>
         <xsl:if test="$hors-lemme">
           <script>
             var surligner = document.getElementById('surligner');
@@ -355,7 +365,7 @@
   </xsl:template>
 
   <xsl:template match="tei:caesura" mode="base">
-    <span class="cesure" aria-label="Césure">&#x2003;</span>
+    <span class="cesure" aria-label="{f:libelle('publication.caesura')}">&#x2003;</span>
   </xsl:template>
 
   <xsl:template match="tei:app" mode="base">
@@ -377,7 +387,8 @@
     <xsl:variable name="ancre" select="f:ancre(.)"/>
     <xsl:variable name="repere" select="f:repere(.)"/>
     <sup class="appel {if (self::tei:app) then 'appel-apparat' else 'appel-note'}"><a id="ref-{$ancre}"
-      href="#note-{$ancre}" aria-label="{if (self::tei:app) then 'Apparat' else 'Note'} {$repere}"><xsl:value-of
+      href="#note-{$ancre}" aria-label="{f:libelle(if (self::tei:app) then 'publication.critique.call_apparatus'
+                                         else 'publication.critique.call_note', map {'n': $repere})}"><xsl:value-of
       select="$repere"/></a></sup>
   </xsl:template>
 
@@ -385,9 +396,9 @@
     <xsl:param name="section" as="element()" required="yes"/>
     <xsl:variable name="appels" select="f:appels-de-section($section)"/>
     <xsl:if test="exists($appels)">
-      <aside class="appareil" aria-label="Apparat critique et notes">
+      <aside class="appareil" aria-label="{f:libelle('publication.critique.apparatus_notes')}">
         <xsl:if test="$appels[self::tei:app]">
-          <h3>Apparat critique</h3>
+          <h3><xsl:value-of select="f:libelle('publication.critique.apparatus')"/></h3>
           <ol class="apparat">
             <xsl:for-each select="$appels[self::tei:app]">
               <xsl:call-template name="entree"/>
@@ -395,7 +406,7 @@
           </ol>
         </xsl:if>
         <xsl:if test="$appels[not(self::tei:app)]">
-          <h3>Notes</h3>
+          <h3><xsl:value-of select="f:libelle('publication.critique.notes')"/></h3>
           <ol class="notes">
             <xsl:for-each select="$appels[not(self::tei:app)]">
               <xsl:call-template name="entree"/>
@@ -443,7 +454,7 @@
             <span class="note-editoriale"><xsl:apply-templates mode="lecture"/></span>
           </xsl:otherwise>
         </xsl:choose>
-        <a class="retour" href="#ref-{$ancre}" aria-label="Retour au texte">↩</a>
+        <a class="retour" href="#ref-{$ancre}" aria-label="{f:libelle('publication.critique.back')}">↩</a>
       </span>
     </li>
   </xsl:template>
@@ -541,10 +552,10 @@
     <xsl:call-template name="appel-de-note"/>
   </xsl:template>
   <xsl:template match="tei:ptr" mode="base lecture">
-    <xsl:if test="@target"><a href="{string(@target)}">[référence]</a></xsl:if>
+    <xsl:if test="@target"><a href="{string(@target)}"><xsl:value-of select="f:libelle('publication.reference')"/></a></xsl:if>
   </xsl:template>
   <xsl:template match="tei:unclear" mode="base lecture">
-    <span class="incertain" title="Lecture incertaine"><xsl:apply-templates mode="#current"/></span>
+    <span class="incertain" title="{f:libelle('publication.unclear')}"><xsl:apply-templates mode="#current"/></span>
   </xsl:template>
   <xsl:template match="tei:sic" mode="base lecture">
     <xsl:param name="dans-apparat" tunnel="yes" as="xs:boolean" select="false()"/>
@@ -553,7 +564,7 @@
       <xsl:when test="$dans-apparat">
         <xsl:apply-templates mode="#current"/><xsl:text> </xsl:text><i class="editeur">sic</i>
       </xsl:when>
-      <xsl:otherwise><span class="sic" title="Leçon transmise (sic)"><xsl:apply-templates mode="#current"/></span></xsl:otherwise>
+      <xsl:otherwise><span class="sic" title="{f:libelle('publication.sic')}"><xsl:apply-templates mode="#current"/></span></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:choice" mode="base lecture">
@@ -563,7 +574,8 @@
     <span class="incertain">[<xsl:apply-templates mode="#current"/>]</span>
   </xsl:template>
   <xsl:template match="tei:gap" mode="base lecture">
-    <span class="lacune">[lacune<xsl:if test="@extent"> : <xsl:value-of select="@extent"/></xsl:if>]</span>
+    <span class="lacune"><xsl:value-of select="if (@extent) then f:libelle('publication.gap.extent', map {'extent': string(@extent)})
+                                              else f:libelle('publication.gap')"/></span>
   </xsl:template>
   <xsl:template match="tei:add" mode="base lecture">
     <span class="ajout"><xsl:apply-templates mode="#current"/></span>
@@ -652,7 +664,7 @@
   </xsl:template>
   <xsl:template match="tei:pb" mode="base">
     <xsl:if test="$montrer-folios and f:folio-montre(.)">
-      <span class="folio" title="Changement de folio ou de page"><xsl:value-of select="f:folio(.)"/></span>
+      <span class="folio" title="{f:libelle('publication.folio')}"><xsl:value-of select="f:folio(.)"/></span>
     </xsl:if>
   </xsl:template>
   <xsl:template match="tei:pb" mode="lecture"/>

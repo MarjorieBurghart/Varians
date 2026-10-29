@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from project_config import DEFAULT_APPLICATION_XSLT, TransformScenario, load_project
-from xslt_scenarios import (VARIANS_STYLESHEETS, predefined_scenarios, resolve_path, saxon_available,
+from xslt_scenarios import (VARIANS_STYLESHEETS, catalogs_uri, predefined_scenarios, resolve_path, saxon_available,
                             scenario_problems, scenario_request, stylesheet_path)
 
 DATA = Path(__file__).resolve().parent / "data" / "sermons"
@@ -152,7 +152,23 @@ def test_the_pivot_witness_is_substituted_in_the_parameters(project):
     scenario = replace(BASE, params=(("temoin-de-base", "${pivot}"), ("titre", "Pivot ${pivot} !"), ("autre", "x")))
     params = scenario_request(scenario, project)["params"]
     pivot = project.base_witness
-    assert pivot and params == [["temoin-de-base", pivot], ["titre", f"Pivot {pivot} !"], ["autre", "x"]]
+    assert pivot and params[:3] == [["temoin-de-base", pivot], ["titre", f"Pivot {pivot} !"], ["autre", "x"]]
+
+
+def test_the_texts_of_the_stylesheets_follow_the_language_of_the_interface(project):
+    """V0.9.3.1 : Varians passe aux feuilles la langue de l'interface
+    (``langue``) et l'adresse de ses catalogues (``catalogues``), où les
+    feuilles livrées lisent leurs textes ; ``${langue}`` est la langue de
+    l'interface ; une valeur fixée par le scénario est gardée."""
+    assert catalogs_uri() == (VARIANS_STYLESHEETS.parent / "i18n").resolve().as_uri() + "/"
+    params = dict(scenario_request(BASE, project)["params"])
+    assert params["langue"] == project.language == "fr" and params["catalogues"] == catalogs_uri()
+    assert dict(scenario_request(BASE, project, language="en")["params"])["langue"] == "en"
+    scenario = replace(BASE, params=(("langue", "${langue}"),))
+    assert scenario_request(scenario, project, language="de")["params"][0] == ["langue", "de"]
+    scenario = replace(BASE, params=(("langue", "it"), ("catalogues", "")))
+    params = scenario_request(scenario, project, language="de")["params"]
+    assert params == [["langue", "it"], ["catalogues", ""]]
 
 
 def test_the_request_holds_absolute_paths_and_the_parameters(project):
@@ -163,10 +179,11 @@ def test_the_request_holds_absolute_paths_and_the_parameters(project):
     assert request["xslt"] == str(root / "rendering" / "personnes.xsl")
     assert request["css"] == str(root / "rendering" / "tei.css")
     assert request["output"] == str(root / "publications" / "personnes.html")
-    # Le nom de la CSS est passé à la feuille, sauf si le scénario le fixe.
-    assert request["params"] == [["titre", "Index"], ["css", "tei.css"]]
+    # Le nom de la CSS est passé à la feuille, sauf si le scénario le fixe ;
+    # la langue et les catalogues des textes aussi (V0.9.3.1).
+    assert request["params"] == [["titre", "Index"], ["css", "tei.css"], ["langue", "fr"], ["catalogues", catalogs_uri()]]
     scenario = replace(scenario, params=(("css", "autre.css"),))
-    assert scenario_request(scenario, project)["params"] == [["css", "autre.css"]]
+    assert scenario_request(scenario, project)["params"][:1] == [["css", "autre.css"]]
     assert str(root / "xml" / "edition.xml") in request["protected"]
     assert str(root / "rendering" / "personnes.xsl") in request["protected"]
 
@@ -299,7 +316,7 @@ def test_the_critical_edition_is_predefined_after_the_edition_of_varians(project
         "Édition critique (HTML)", "${varians}/edition-critique.xsl", "publications/edition-critique.html",
         engine="saxon", params=(("temoin-de-base", "${pivot}"), ("montrer-folios", "true"),
                                 ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false"),
-                                ("surligner-hors-lemme", "false")))
+                                ("surligner-hors-lemme", "false"), ("langue", "${langue}")))
     assert scenario_problems(critique, project) == []
     assert dict(scenario_request(critique, project)["params"])["temoin-de-base"] == "A"      # le pivot
 
@@ -341,7 +358,8 @@ def test_the_tei_folder_is_substituted_in_the_parameters(project):
     folder = tei_library().folder
     epub = next(scenario for scenario in predefined_scenarios() if scenario.name == "tei-epub")
     params = dict(scenario_request(epub, project)["params"])
-    assert params == {"cssFile": (folder / "tei.css").as_uri(), "cssPrintFile": (folder / "epub-print.css").as_uri()}
+    assert params == {"cssFile": (folder / "tei.css").as_uri(), "cssPrintFile": (folder / "epub-print.css").as_uri(),
+                      "langue": "fr", "catalogues": catalogs_uri()}
     assert Path(urllib.request.url2pathname(urllib.parse.urlparse(params["cssFile"]).path)) == folder / "tei.css"
 
 
