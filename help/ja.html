@@ -428,7 +428,7 @@ xml/sermons/s01.xml, s02.xml, s03.xml …</pre>
 <h4>4. 各テキストの同期方法を選ぶ</h4>
 <ul>
 <li><strong>テキストがピボットと同じ順に並び、伝本も同じ場合</strong>（便宜上分けたコレクション）：通し番号。一つのファイルからなる版と同じく、版全体について伝本ごとに1つの JSON を、プロジェクト設定で宣言します。ピボットの行は版の順にテキストからテキストへと数えられ、ピボットはこの順でテキストを含んでいなければなりません。</li>
-<li><strong>テキストごとに伝本が変わる場合</strong>（コーパス）：別に同期されるテキスト。フォルダー <code>alignments/&lt;nom du fichier du texte&gt;/</code> を作り、そのテキストについて伝本ごとに1つの JSON（通常の形式）を置きます：<code>alignments/s02/B.json</code>、<code>alignments/s02/D.json</code>。これらの JSON は、VariansSynchro でテキストのファイルから作ります。宣言は不要で、フォルダーがあれば十分です。このテキストの JSON はないが、テキスト中に自分の <code>&lt;pb edRef&gt;</code> を持つか、自分の <code>&lt;witness&gt;</code> に <code>&lt;locus target&gt;</code> を持つ伝本は、そこで自分のページをたどります。<a href="#xinclude">別に同期されるテキスト</a>を参照してください。</li>
+<li><strong>テキストごとに伝本が変わる場合</strong>（コーパス）：別に同期されるテキスト。フォルダー <code>alignments/&lt;nom du fichier du texte&gt;/</code> を作り、そのテキストについて伝本ごとに1つの JSON（通常の形式）を置きます：<code>alignments/s02/B.json</code>、<code>alignments/s02/D.json</code>。これらの JSON は、Varians-Synchro でテキストのファイルから作ります。宣言は不要で、フォルダーがあれば十分です。このテキストの JSON はないが、テキスト中に自分の <code>&lt;pb edRef&gt;</code> を持つか、自分の <code>&lt;witness&gt;</code> に <code>&lt;locus target&gt;</code> を持つ伝本は、そこで自分のページをたどります。<a href="#xinclude">別に同期されるテキスト</a>を参照してください。</li>
 <li><strong>両方を組み合わせることもできます</strong>：フォルダーを持つテキストは別に同期され、ほかのテキストは通し番号に従います。各伝本の全体用の JSON には、それらのテキストの行だけを含めます。</li>
 </ul>
 <h4>5. テキスト固有のピボットを宣言する</h4>
