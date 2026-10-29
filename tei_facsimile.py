@@ -16,6 +16,7 @@ import re
 import shutil
 import xml.etree.ElementTree as ET
 
+from i18n import Message
 from witness_ids import is_xml_id
 
 XML_NS = "http://www.w3.org/XML/1998/namespace"
@@ -364,7 +365,7 @@ def sync_facsimile_text(xml_text: str, pages: list[FacsimilePage], previous_labe
     try:
         ET.fromstring(xml_text)
     except ET.ParseError as exc:
-        report.conflicts.append(f"XML non bien formé : {exc}")
+        report.conflicts.append(Message("facsimile.conflict.malformed", error=str(exc)))
         return xml_text, report
 
     previous_labels = dict(previous_labels or {})
@@ -420,9 +421,7 @@ def sync_facsimile_text(xml_text: str, pages: list[FacsimilePage], previous_labe
         if page.surface_id in surfaces:
             continue
         if page.surface_id in all_ids:
-            report.conflicts.append(
-                f"{page.surface_id}: cet xml:id existe déjà sur un autre élément ; surface non ajoutée."
-            )
+            report.conflicts.append(Message("facsimile.conflict.id_used", surface=page.surface_id))
             continue
         missing.append(page)
         all_ids.add(page.surface_id)
@@ -485,7 +484,7 @@ def sync_facsimile_text(xml_text: str, pages: list[FacsimilePage], previous_labe
             text_re = re.compile(rf"<{re.escape(prefix)}text\b", re.I)
             tm = text_re.search(text)
             if not tm:
-                report.conflicts.append("Aucun élément <text> trouvé ; <facsimile> non créé.")
+                report.conflicts.append(Message("facsimile.conflict.no_text"))
                 return xml_text, report
             indent = _indent_before(text, tm.start())
             child_indent = indent + "  "

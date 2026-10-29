@@ -154,7 +154,7 @@ def _install_light_selection_palette(app):
 I18N = I18nManager(HERE / "i18n", "fr", "en")
 set_i18n(I18N)
 
-def _t(key, default=None, **values):
+def _t(key, /, default=None, **values):
     return tr(key, default=default, **values)
 
 
@@ -1248,16 +1248,29 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
 
             call_later(0, self, restore_xml_context)
 
+    def _xml_health_text(self, well_formed, line=0, column=0, error=""):
+        if well_formed:
+            return _t("xml.valid")
+        where = _t("xml.invalid.where", line=line, column=column + 1) if line else ""
+        return _t("xml.invalid", where=where, error=error)
+
+    def _retranslate_xml_health(self):
+        """Contrôle XML refait dans la nouvelle langue, comme au premier
+        affichage d'un onglet (red team 2, D6)."""
+        if getattr(self, "document", None) is None:
+            return
+        self._last_xml_health_revision = -1
+        self.validate_text(False)
+
     def _apply_xml_health_result(self, well_formed, line=0, column=0, error="", spans=None, show_message=False):
         if not well_formed:
-            where = f" — ligne {line}, colonne {column + 1}" if line else ""
-            msg = _t("xml.invalid", where=where, error=error)
+            msg = self._xml_health_text(False, line, column, error)
             self.xml_status.setText(msg); self.xml_status.setStyleSheet("color:#a13d32")
             self._set_document_health("malformed")
             if show_message:
                 QMessageBox.warning(self, _t("xml.invalid.title"), msg)
             return False
-        self.xml_status.setText(_t("xml.valid")); self.xml_status.setStyleSheet("color:#376b3c")
+        self.xml_status.setText(self._xml_health_text(True)); self.xml_status.setStyleSheet("color:#376b3c")
         if spans is not None:
             self._set_lb_spans(spans)
         current_revision = self.editor.document().revision()

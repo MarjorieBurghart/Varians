@@ -170,7 +170,54 @@ def message_fields(text: str) -> set[str]:
     return names
 
 
-def format_message(text: str, language: str, **values) -> str:
+_REFERENCE = None
+
+
+def reference_text(key: str, /, **values) -> str:
+    """Le message dans la langue de référence (le français des catalogues
+    livrés), sans Qt : pour les modules qui décrivent un problème avant que
+    l'interface ne le traduise."""
+    global _REFERENCE
+    if _REFERENCE is None:
+        _REFERENCE = I18nManager(Path(__file__).resolve().parent / "i18n", "fr", "fr")
+    return _REFERENCE.tr(key, **values)
+
+
+class Message(str):
+    """Message d'un module sans interface (red team 2, D7) : il vaut son
+    texte français (journaux, tests) et garde sa clé et ses valeurs, que
+    l'interface traduit dans sa langue (``message_text``)."""
+
+    def __new__(cls, key: str, /, **values):
+        message = super().__new__(cls, reference_text(key, **_shown(values, str)))
+        message.key, message.values = key, values
+        return message
+
+    def __reduce__(self):
+        return (_message, (self.key, self.values))
+
+
+def _message(key, values):
+    return Message(key, **values)
+
+
+def _shown(values, render):
+    """Valeurs d'un message prêtes à afficher : un message imbriqué par
+    ``render``, une liste de messages jointe par « ; »."""
+    return {name: "; ".join(render(x) for x in value) if isinstance(value, (list, tuple))
+            else render(value) if isinstance(value, Message) else value
+            for name, value in values.items()}
+
+
+def message_text(item, translate) -> str:
+    """Le texte d'un message dans la langue de ``translate`` (``tr`` ou
+    ``_t``) ; un texte ordinaire est rendu tel quel."""
+    if isinstance(item, Message):
+        return translate(item.key, **_shown(item.values, lambda x: message_text(x, translate)))
+    return str(item)
+
+
+def format_message(text: str, language: str, /, **values) -> str:
     """Le message, formes plurielles choisies et variables remplacées."""
     if not values:
         return text
@@ -237,7 +284,7 @@ class I18nManager:
         self.language = code
         return True
 
-    def tr(self, key: str, default: str | None = None, **values) -> str:
+    def tr(self, key: str, /, default: str | None = None, **values) -> str:
         # Le pluriel suit la langue du texte trouvé, celle de secours comprise.
         language = self.language
         text = self._catalogs.get(self.language, {}).get(key)

@@ -36,7 +36,7 @@ NUMBERS = (0, 1, 2, 3, 4, 5, 11, 12, 14, 21, 22, 25, 101, 111, 1000)
 # Variables qui comptent des choses (et non un sigle, un nom ou une durée).
 COUNTS = {"count", "lines", "witnesses", "variants", "documents", "sections", "problems", "downloaded",
           "paragraphs", "selected", "total", "pages", "marked", "eligible", "cached", "missing", "excluded",
-          "skipped", "failed", "index", "expected"}
+          "skipped", "failed", "index", "expected", "layout_lines", "sync_lines"}
 
 
 def _catalog(language):
@@ -221,3 +221,18 @@ def test_the_delivered_stylesheets_use_no_plural():
     for language in LANGUAGES:
         catalog = _catalog(language)
         assert [key for key in used if key in catalog and plural_constructs(catalog[key])] == [], language
+
+
+def test_a_variable_may_bear_the_name_of_a_parameter(tmp_path):
+    """« {text} », « {language} », « {key} » sont des variables comme les
+    autres (status.route_uncertain a {text} ; viewer.line_unresolved {key})."""
+    from i18n import Message, format_message
+    folder = tmp_path / "i18n"
+    folder.mkdir()
+    (folder / "fr.xml").write_text('<translations lang="fr" label="Français">'
+                                   '<string key="essai.d">{key} · {text} · {language} · {values}</string>'
+                                   '</translations>', encoding="utf-8")
+    manager = I18nManager(folder, "fr", "en")
+    assert manager.tr("essai.d", key="k", text="t", language="l", values="v") == "k · t · l · v"
+    assert format_message("{text} {language}", "fr", text="a", language="b") == "a b"
+    assert Message("viewer.line_unresolved", key="A::1").values == {"key": "A::1"}

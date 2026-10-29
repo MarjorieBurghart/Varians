@@ -3,6 +3,10 @@
 
 No positional links between OCR, sync pages and IIIF canvases. No Qt dependency.
 Existing TEI content and synchronization JSON are never modified in-place.
+
+Avertissements, erreurs et sources des lignes sont des messages
+(i18n.Message, red team 2, D7) : leur texte est le français des catalogues,
+l'interface les affiche dans sa langue.
 """
 from __future__ import annotations
 
@@ -17,9 +21,19 @@ from datetime import datetime
 import xml.etree.ElementTree as ET
 
 from alto_import import parse_layout_file
+from i18n import Message
 from iiif_page_selection import canvas_key, exact_image_stem, propose_exact_ocr_links
 from tei_facsimile import (project_facsimile_pages, FacsimilePage, sync_facsimile_text,
                            default_surface_id, TEI_NS, XML_NS, valid_xml_id)
+
+
+class ScaffoldError(ValueError):
+    """Refus du squelette : le code (« TEI_NOT_EMPTY »…) et le message à
+    afficher."""
+
+    def __init__(self, code: str, message: Message):
+        super().__init__(code)
+        self.message = message
 
 
 @dataclass(frozen=True)
@@ -88,10 +102,10 @@ def _load_sync_pages(witness, root, warnings):
         data = json.loads(path.read_text(encoding='utf-8-sig'))
         pages = data.get('pages') or []
         if not isinstance(pages, list):
-            raise ValueError('pages is not a list')
+            raise ValueError('"pages" is not a list')
         return [x for x in pages if isinstance(x, dict)]
     except (OSError, ValueError, TypeError) as exc:
-        warnings.append(f'Synchronisation illisible : {exc}')
+        warnings.append(Message('pivot.warning.sync_unreadable', error=str(exc)))
         return []
 
 
@@ -110,30 +124,29 @@ def _synced_line_count(page, label: str, warnings: list[str]) -> tuple[int, str]
     """
     rows = page.get('lines')
     if not isinstance(rows, list):
-        warnings.append(f'{label} : liste de lignes JSON invalide ; aucun lb généré')
-        return 0, 'JSON invalide'
+        warnings.append(Message('pivot.warning.lines_invalid', page=label))
+        return 0, Message('pivot.evidence.json_invalid')
     if not rows:
-        warnings.append(f'{label} : aucune ligne décrite dans le JSON (page conservée)')
-        return 0, 'JSON sans lignes'
+        warnings.append(Message('pivot.warning.no_lines', page=label))
+        return 0, Message('pivot.evidence.json_empty')
     if not all(isinstance(row, dict) for row in rows):
-        warnings.append(f'{label} : lignes JSON invalides ; aucun lb généré')
-        return 0, 'JSON invalide'
+        warnings.append(Message('pivot.warning.rows_invalid', page=label))
+        return 0, Message('pivot.evidence.json_invalid')
     numbers = [row.get('line') for row in rows]
     if not all(type(num) is int and num > 0 for num in numbers):
-        warnings.append(f'{label} : numéros de lignes JSON invalides ; aucun lb généré')
-        return 0, 'JSON invalide'
+        warnings.append(Message('pivot.warning.numbers_invalid', page=label))
+        return 0, Message('pivot.evidence.json_invalid')
     if len(set(numbers)) != len(numbers):
-        warnings.append(f'{label} : numéros de lignes JSON dupliqués ; aucun lb généré')
-        return 0, 'JSON ambigu'
+        warnings.append(Message('pivot.warning.numbers_duplicated', page=label))
+        return 0, Message('pivot.evidence.json_ambiguous')
     # Do not require min(numbers) == 1: the synchronization can start in the
     # middle of a physical folio. Never fill gaps by fabricating extra <lb/>.
     continuous = sorted(numbers) == list(range(min(numbers), max(numbers) + 1))
     if min(numbers) > 1 or not continuous:
-        warnings.append(f'{label} : extrait JSON de {len(rows)} lignes physiques '
-                        f'(numéros {min(numbers)}–{max(numbers)}) ; '
-                        'exhaustivité du folio à vérifier, lignes absentes non inventées')
-        return len(rows), 'JSON partiel'
-    warnings.append(f'{label} : exhaustivité des lignes JSON à vérifier')
+        warnings.append(Message('pivot.warning.partial', page=label, count=len(rows),
+                                first=min(numbers), last=max(numbers)))
+        return len(rows), Message('pivot.evidence.json_partial')
+    warnings.append(Message('pivot.warning.check_complete', page=label))
     return len(rows), 'JSON'
 
 
@@ -147,10 +160,10 @@ def build_pivot_plan(witnesses, base_witness: str, root, edition_path) -> PivotS
     root = Path(root).resolve()
     wid = str(base_witness or '').strip()
     if not valid_xml_id(wid):
-        raise ValueError('Invalid pivot witness xml:id')
+        raise ScaffoldError('INVALID_PIVOT_WITNESS', Message('pivot.error.invalid_witness', witness=wid))
     witness = next((w for w in witnesses if str(w.id) == wid), None)
     if witness is None:
-        raise ValueError('Pivot witness not found in project')
+        raise ScaffoldError('UNKNOWN_PIVOT_WITNESS', Message('pivot.error.unknown_witness', witness=wid))
     plan = PivotScaffoldPlan(wid)
     surfaces = [p for p in project_facsimile_pages([witness], root, edition_path)
                 if p.witness_id == wid]
@@ -164,7 +177,8 @@ def build_pivot_plan(witnesses, base_witness: str, root, edition_path) -> PivotS
             for page in parsed.pages:
                 layout_rows.append(dict(page, _layout_path=str(path)))
         except (OSError, ET.ParseError, ValueError) as exc:
-            plan.warnings.append(f'OCR illisible : {getattr(item,"path","")} : {exc}')
+            plan.warnings.append(Message('pivot.warning.ocr_unreadable', path=str(getattr(item, "path", "")),
+                                         error=str(exc)))
 
     layout_by_surface = {}
     sync_by_surface = {}
@@ -181,11 +195,11 @@ def build_pivot_plan(witnesses, base_witness: str, root, edition_path) -> PivotS
                 candidate = _resolve(root, img.get('path'))
                 graphic = str(candidate) if candidate.is_file() else ''
             if not graphic:
-                plan.warnings.append(f'Page JSON {page.get("id")}: aucune image fiable pour <surface>')
+                plan.warnings.append(Message('pivot.warning.no_image', page=str(page.get("id"))))
                 continue
             sid = str(page.get('tei_surface_id') or default_surface_id(wid, i)).strip()
             if not valid_xml_id(sid):
-                plan.warnings.append(f'Page JSON {page.get("id")}: surface id invalide')
+                plan.warnings.append(Message('pivot.warning.invalid_surface_id', page=str(page.get("id"))))
                 continue
             label = str(page.get('label') or remote.get('label') or
                         page.get('image_name') or page.get('id') or i).strip()
@@ -208,9 +222,10 @@ def build_pivot_plan(witnesses, base_witness: str, root, edition_path) -> PivotS
                     if match.key and match.key in sid_by_canvas:
                         sync_by_surface[sid_by_canvas[match.key]] = sync_pages[index]
                     elif match.status == 'ambiguous':
-                        plan.warnings.append(f'Canvas ambigu pour page JSON : {sync_pages[index].get("id")}')
+                        plan.warnings.append(Message('pivot.warning.ambiguous_canvas',
+                                                     page=str(sync_pages[index].get("id"))))
             except ValueError as exc:
-                plan.warnings.append(f'Liens IIIF invalides : {exc}')
+                plan.warnings.append(Message('pivot.warning.iiif_links', error=str(exc)))
             # Explicit OCR/canvas associations already curated by the editor.
             explicit = {}
             for path, canvas in getattr(witness, 'iiif_ocr_links', ()) or ():
@@ -232,13 +247,13 @@ def build_pivot_plan(witnesses, base_witness: str, root, edition_path) -> PivotS
                 sid = sid_by_canvas.get(canvas)
                 if not sid or len(paths) != 1:
                     if len(paths) > 1:
-                        plan.warnings.append(f'Plusieurs OCR pour canvas {canvas}')
+                        plan.warnings.append(Message('pivot.warning.several_ocr', canvas=canvas))
                     continue
                 rows = rows_by_path.get(next(iter(paths)), [])
                 if len(rows) == 1:
                     layout_by_surface[sid] = rows[0]
                 elif rows:
-                    plan.warnings.append(f'OCR multipage non résolu pour {canvas}')
+                    plan.warnings.append(Message('pivot.warning.multipage_ocr', canvas=canvas))
     else:
         # Local image witness: file-name or folio exact matching only.
         for surface in surfaces:
@@ -256,13 +271,12 @@ def build_pivot_plan(witnesses, base_witness: str, root, edition_path) -> PivotS
     for page in sync_pages:
         if id(page) not in associated_sync_ids:
             label = str(page.get('label') or page.get('id') or '?')
-            plan.warnings.append(f'{label} : page du JSON sans image/surface '
-                                 'associée dans le périmètre sélectionné ; aucun pb généré')
+            plan.warnings.append(Message('pivot.warning.unassociated_page', page=label))
 
     seen = set()
     for surface in surfaces:
         if surface.surface_id in seen:
-            plan.warnings.append(f'Surface dupliquée : {surface.surface_id}')
+            plan.warnings.append(Message('pivot.warning.duplicate_surface', surface=surface.surface_id))
             continue
         seen.add(surface.surface_id)
         layout = layout_by_surface.get(surface.surface_id)
@@ -273,16 +287,17 @@ def build_pivot_plan(witnesses, base_witness: str, root, edition_path) -> PivotS
             if synced is not None:
                 synclines = len(synced.get('lines') or [])
                 if synclines != count:
-                    plan.warnings.append(f'{surface.label} : {count} lignes OCR, {synclines} lignes JSON ; OCR prioritaire')
+                    plan.warnings.append(Message('pivot.warning.ocr_priority', page=surface.label,
+                                                 layout_lines=count, sync_lines=synclines))
         elif synced is not None:
             count, evidence = _synced_line_count(synced, surface.label, plan.warnings)
         else:
             count = 0
-            evidence = 'image seule'
-            plan.warnings.append(f'{surface.label} : aucune liste de lignes sûrement associée')
+            evidence = Message('pivot.evidence.image_only')
+            plan.warnings.append(Message('pivot.warning.no_line_list', page=surface.label))
         plan.pages.append(PivotPage(surface.label, surface.surface_id, count, evidence))
     if not plan.pages:
-        plan.warnings.append('Aucune surface du témoin pivot disponible (sélectionnez les images utiles).')
+        plan.warnings.append(Message('pivot.warning.no_surface'))
     return plan
 
 
@@ -305,21 +320,23 @@ def scaffold_is_empty(xml_text: str) -> bool:
 def render_pivot_scaffold(xml_text: str, plan: PivotScaffoldPlan, *, include_lb=True):
     """Pure preview+render: never change a nonblank TEI, no implicit overwrite."""
     if not scaffold_is_empty(xml_text):
-        raise ValueError('TEI_NOT_EMPTY')
+        raise ScaffoldError('TEI_NOT_EMPTY', Message('pivot.not_empty'))
     if not plan.pages:
-        raise ValueError('PIVOT_HAS_NO_PAGES')
+        raise ScaffoldError('PIVOT_HAS_NO_PAGES', Message('pivot.no_pages'))
     if plan.missing_surfaces:
         xml_text, report = sync_facsimile_text(xml_text, plan.missing_surfaces)
         if report.conflicts:
-            raise ValueError('SURFACE_CREATION_CONFLICT: ' + '; '.join(report.conflicts))
+            raise ScaffoldError('SURFACE_CREATION_CONFLICT: ' + '; '.join(report.conflicts),
+                                Message('pivot.error.surface_conflict', conflicts=list(report.conflicts)))
     tree = ET.fromstring(xml_text)
     all_ids = {node.get(f'{{{XML_NS}}}id') for node in tree.iter() if node.get(f'{{{XML_NS}}}id')}
     surfaces = {node.get(f'{{{XML_NS}}}id') for node in tree.iter()
                 if node.tag.rsplit('}', 1)[-1] == 'surface'}
     if plan.witness_id not in all_ids:
-        raise ValueError('PIVOT_WITNESS_NOT_DECLARED')
+        raise ScaffoldError('PIVOT_WITNESS_NOT_DECLARED',
+                            Message('pivot.error.witness_not_declared', witness=plan.witness_id))
     if any(p.surface_id not in surfaces for p in plan.pages):
-        raise ValueError('MISSING_TEI_SURFACE')
+        raise ScaffoldError('MISSING_TEI_SURFACE', Message('pivot.error.missing_surface'))
     import html
     wid = html.escape(plan.witness_id, quote=True)
     marks = []
@@ -333,17 +350,17 @@ def render_pivot_scaffold(xml_text: str, plan: PivotScaffoldPlan, *, include_lb=
     # other bytes. Restrict the exact replacement to within <body>.
     open_body = re.search(r'<(?P<pre>[\w.-]+:)?body(?:\s[^<>]*)?>', xml_text)
     if not open_body:
-        raise ValueError('TEI_BODY_NOT_FOUND')
+        raise ScaffoldError('TEI_BODY_NOT_FOUND', Message('pivot.error.no_body'))
     pre = open_body.group('pre') or ''
     close_body = re.search(rf'</{re.escape(pre)}body\s*>', xml_text[open_body.end():])
     if not close_body:
-        raise ValueError('TEI_BODY_NOT_FOUND')
+        raise ScaffoldError('TEI_BODY_NOT_FOUND', Message('pivot.error.no_body'))
     stop = open_body.end() + close_body.start()
     segment = xml_text[open_body.end():stop]
     p_re = re.compile(r'<(?P<pre>[\w.-]+:)?(?P<tag>p|ab)\s*(?:/>|>\s*</(?P=pre)?(?P=tag)\s*>)', re.S)
     matches = list(p_re.finditer(segment))
     if len(matches) != 1:
-        raise ValueError('TEI_EMPTY_CONTAINER_NOT_FOUND')
+        raise ScaffoldError('TEI_EMPTY_CONTAINER_NOT_FOUND', Message('pivot.error.no_container'))
     m = matches[0]
     pfx = m.group('pre') or ''
     local = m.group('tag')

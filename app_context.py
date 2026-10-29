@@ -35,7 +35,7 @@ def current_i18n():
     return _i18n
 
 
-def tr(key, default=None, **values):
+def tr(key, /, default=None, **values):
     """Texte traduit dans la langue active (équivalent de ``_t``)."""
     return _i18n.tr(key, default=default, **values)
 

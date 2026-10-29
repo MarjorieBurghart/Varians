@@ -17,6 +17,7 @@ from project_management import ProjectDraft, WitnessDraft, LocalImageDraft, Alto
 from iiif_manifest import fetch_manifest, parse_manifest
 from tei_facsimile import default_surface_id, valid_xml_id
 from witness_ids import witness_id_for_siglum
+from i18n import message_text
 from iiif_page_selection import canvas_key, natural_key, propose_exact_ocr_links
 
 
@@ -1103,7 +1104,7 @@ def run_pivot_scaffold_dialog(tr, parent, witnesses, base_witness, project_root,
             QMessageBox.warning(parent, tr('pivot.title'), tr('pivot.no_pages'))
             return False
     except Exception as exc:
-        QMessageBox.warning(parent, tr('pivot.title'), str(exc))
+        QMessageBox.warning(parent, tr('pivot.title'), message_text(getattr(exc, 'message', exc), tr))
         return False
     message = QMessageBox(parent)
     message.setWindowTitle(tr('pivot.preview.title'))
@@ -1111,10 +1112,11 @@ def run_pivot_scaffold_dialog(tr, parent, witnesses, base_witness, project_root,
     sigla = {w.id: getattr(w, 'display_siglum', w.id) for w in witnesses}
     message.setText(tr('pivot.preview.summary', witness=sigla.get(plan.witness_id, plan.witness_id),
                        pages=len(plan.pages), lines=plan.line_count if include_lb else 0))
-    overview = '\n'.join(f'{x.label} → #{x.surface_id} : {x.line_count if include_lb else 0} lb ({x.evidence})'
-                         for x in plan.pages)
+    overview = '\n'.join(f'{x.label} → #{x.surface_id} : {x.line_count if include_lb else 0} lb '
+                         f'({message_text(x.evidence, tr)})' for x in plan.pages)
     if plan.warnings:
-        overview += '\n\n' + tr('pivot.preview.warnings') + '\n' + '\n'.join(plan.warnings)
+        overview += ('\n\n' + tr('pivot.preview.warnings') + '\n'
+                     + '\n'.join(message_text(w, tr) for w in plan.warnings))
     message.setDetailedText(overview)
     message.setInformativeText(tr('pivot.preview.confirm'))
     message.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
@@ -1124,7 +1126,7 @@ def run_pivot_scaffold_dialog(tr, parent, witnesses, base_witness, project_root,
     try:
         backup = write_pivot_scaffold(edition_path, plan, include_lb=include_lb)
     except Exception as exc:
-        QMessageBox.critical(parent, tr('pivot.title'), str(exc))
+        QMessageBox.critical(parent, tr('pivot.title'), message_text(getattr(exc, 'message', exc), tr))
         return False
     QMessageBox.information(parent, tr('pivot.title'),
                             tr('pivot.done', backup=backup or ''))

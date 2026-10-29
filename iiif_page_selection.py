@@ -9,6 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
+from i18n import Message
+
 
 def canvas_key(page: dict) -> str:
     image = page.get('image') or {}
@@ -88,10 +90,10 @@ def propose_exact_ocr_links(manifest, layout_files, existing_links=()):
         try:
             parsed = parse_layout_file(path)
         except (OSError, ValueError, ET.ParseError) as exc:
-            problems.append(f'{path.name}: {exc}')
+            problems.append(Message('iiif.ocr_link.unreadable', file=path.name, error=str(exc)))
             continue
         if len(parsed.pages) != 1:
-            problems.append(f'{path.name}: multi-page OCR')
+            problems.append(Message('iiif.ocr_link.multipage', file=path.name))
             continue
         # Prefer exact image metadata when provided, but refuse contradictions
         # with any other exact match derived from the XML basename.
@@ -100,7 +102,7 @@ def propose_exact_ocr_links(manifest, layout_files, existing_links=()):
                  exact_image_stem(path.name)} - {''}
         possible = set().union(*(filenames_to_canvases.get(stem, set()) for stem in stems))
         if len(possible) > 1:
-            problems.append(f'{path.name}: conflicting or duplicate IIIF names')
+            problems.append(Message('iiif.ocr_link.conflict', file=path.name))
             continue
         if not possible:
             continue  # Ordinary non-matches are not errors or guesses.
@@ -112,8 +114,7 @@ def propose_exact_ocr_links(manifest, layout_files, existing_links=()):
         if len(paths) == 1:
             proposed_by_canvas[key] = paths[0]
         else:
-            problems.extend(f'{Path(path).name}: multiple OCR files identify one canvas'
-                            for path in paths)
+            problems.extend(Message('iiif.ocr_link.shared_canvas', file=Path(path).name) for path in paths)
     return proposed_by_canvas, problems
 
 

@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 import segment_model
 from app_context import call_later, tr as _t
 from code_editor import text_positions
+from i18n import message_text
 from folio_navigation import (
     configure_surface_parts, facsimile_markup, facsimile_surfaces, folio_at_position, folio_marks,
     folios_for_witness, inspect_surface_part_split,
@@ -618,11 +619,12 @@ class WitnessSyncMixin:
         with_facsimile, report = sync_facsimile_text(edition, pages, previous_surface_labels(self.witness_configs))
         fatal_conflicts = [
             c for c in report.conflicts
-            if c.startswith("XML non bien formé") or c.startswith(f"{surface_id}:")
-            or c.startswith("Aucun élément <text>")
+            if getattr(c, "key", "") in ("facsimile.conflict.malformed", "facsimile.conflict.no_text")
+            or getattr(c, "values", {}).get("surface") == surface_id
         ]
         if fatal_conflicts:
-            QMessageBox.warning(self, _t("facsimile.warning.title"), "\n".join(fatal_conflicts))
+            QMessageBox.warning(self, _t("facsimile.warning.title"),
+                                "\n".join(message_text(c, _t) for c in fatal_conflicts))
             return
         # Le curseur d'origine doit être translaté si <facsimile> vient d'être
         # inséré avant <text>. Rechercher la portion commune permet de conserver

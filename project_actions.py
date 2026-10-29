@@ -15,6 +15,7 @@ from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 from app_context import (
     current_i18n, error_message, HERE, remember_recent_project, remove_recent_project, tr as _t,
 )
+from i18n import message_text
 from project_dialogs import NewProjectDialog, ProjectSettingsDialog, run_pivot_scaffold_dialog
 from project_management import (
     create_local_xslt_if_needed, create_new_transcription_project, create_portable_project,
@@ -318,7 +319,8 @@ class ProjectActionsMixin:
         if facsimile_report is not None and facsimile_report.conflicts:
             QMessageBox.warning(
                 self, _t("facsimile.warning.title"),
-                _t("facsimile.warning.preserved") + "\n\n" + "\n".join(facsimile_report.conflicts),
+                _t("facsimile.warning.preserved") + "\n\n"
+                + "\n".join(message_text(c, _t) for c in facsimile_report.conflicts),
             )
         notes = [_t(key, witnesses=", ".join(sigla)) for key, sigla in (
             ("project.listwit.added", listwit_report.added),

@@ -736,7 +736,7 @@ def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False, cac
             transform = LET.XSLT(xsl_doc, access_control=access)
             cache[cache_key] = transform
         xslt_params = {str(k): LET.XSLT.strparam(str(v)) for k, v in (params or {}).items()}
-        return str(transform(xml_doc, **xslt_params)), "lxml (XSLT en cache)"
+        return str(transform(xml_doc, **xslt_params)), "lxml"
     except Exception as exc:
         # Seules les erreurs XSLT ont un journal propre à la transformation ;
         # celui d'une erreur de syntaxe XML est global et contient aussi les
@@ -841,10 +841,7 @@ class FormattedEditionWidget(QWidget):
 
         top = QHBoxLayout()
         self.xsl_label = QLabel(self.xsl_path.name)
-        self.xsl_label.setToolTip(
-            _t("project.xslt.mode.builtin" if self.main.project.xslt_mode == "builtin"
-               else "project.xslt.mode.file") + "\n" + str(self.xsl_path)
-        )
+        self._update_xsl_label()
         self.css_label = QLabel(self.css_path.name)
         self.xsl_btn = QPushButton("XSLT…")
         self.css_btn = QPushButton("CSS…")
@@ -932,6 +929,7 @@ class FormattedEditionWidget(QWidget):
         # L'étiquette nomme l'élément ouvert (« <p> ») : jamais du HTML.
         self.frag_label.setTextFormat(Qt.TextFormat.PlainText)
         self.fragment_visual_wrap = QCheckBox(_t("source.visual_wrap"), frag_box)
+        self.fragment_visual_wrap.setToolTip(_t("source.visual_wrap"))     # texte entier, la case pouvant être réduite
         _fragment_wrap_setting = _settings().value(
             "fragmentVisualWrap", _settings().value("sourceVisualWrap", False)
         )
@@ -1086,7 +1084,15 @@ class FormattedEditionWidget(QWidget):
         self.fragment_editor.set_visual_wrap(bool(enabled))
         _settings().setValue("fragmentVisualWrap", bool(enabled))
 
+    def _update_xsl_label(self):
+        self.xsl_label.setToolTip(
+            _t("project.xslt.mode.builtin" if self.main.project.xslt_mode == "builtin"
+               else "project.xslt.mode.file") + "\n" + str(self.xsl_path)
+        )
+
     def retranslate_ui(self):
+        self._update_xsl_label()
+        self.edit_paragraph_action.setText(_t("preview.edit_paragraph"))
         self.refresh_btn.setText(_t("preview.refresh"))
         self.auto_check.setText(_t("preview.auto"))
         self.font_minus_btn.setToolTip(_t("preview.font_minus.tip"))
