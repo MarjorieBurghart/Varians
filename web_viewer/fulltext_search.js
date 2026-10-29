@@ -10,7 +10,7 @@
   root.VariansFullText = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
   'use strict';
-  const RENDERED = new Set(['p', 'head', 'l', 'item', 'cell', 'caption', 'note']);
+  const RENDERED = new Set(['p', 'head', 'l', 'item', 'cell', 'caption', 'note', 'speaker', 'stage']);
   function normalize(value, options = {}) {
     const map = [], out = [];
     for (let i = 0; i < String(value ?? '').length;) {

@@ -217,10 +217,10 @@ def test_a_title_page_keeps_its_parts_apart():
 
 
 def test_every_block_is_a_division_or_rendered():
-    assert RENDERED_BLOCKS == {"p", "head", "l", "item", "cell", "caption", "note"}
+    assert RENDERED_BLOCKS == {"p", "head", "l", "item", "cell", "caption", "note", "speaker", "stage"}
     reading = _reading('<div><head>T</head><lg><l>a</l></lg><list><item>b</item></list>'
                        '<table><row><cell>c</cell></row></table><figure><figDesc>d</figDesc></figure>'
-                       '<note>e</note><p>f</p></div>')
+                       '<note>e</note><p>f</p><sp><speaker>g</speaker><stage>h</stage></sp></div>')
     assert {block["type"] for block in reading["blocks"]} == RENDERED_BLOCKS | {"div"}
 
 
@@ -412,3 +412,34 @@ def test_the_lines_of_a_long_reading_not_shown_are_spread_over_the_text_shown():
     assert _text(reading["blocks"][1]) == "alpha beta gamma delta epsilon zeta b"
     keys = [(seg["text"].strip(), seg["line_key"]) for seg in _segments(reading) if seg["kind"] == "text"]
     assert keys == [("alpha beta", "P::1"), ("gamma delta", "P::2"), ("epsilon zeta", "P::3"), ("b", "P::3")]
+
+
+# --- Théâtre (V0.9.3.1) ---------------------------------------------------------------------------
+# Une réplique (<sp>) réunit son locuteur (<speaker>), ses vers ou ses
+# paragraphes et ses didascalies (<stage>) ; une didascalie entre deux
+# répliques est un bloc, dans une phrase un style.
+
+DRAMA = ('<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
+         '<sp who="#h"><speaker>HAMLETUS</speaker><l n="1">Esse aut non esse,</l><l n="2">haec quaestio.</l></sp>'
+         '<sp who="#o"><speaker>OPHELIA</speaker><p>Domine <stage>ad eum accedit</stage> quomodo uales?</p>'
+         '<stage>Exit.</stage></sp></div>')
+
+
+def test_a_speech_has_its_speaker_its_lines_and_its_stage_directions():
+    reading = _reading(DRAMA)
+    assert _blocks(reading, "sp", "group") == [
+        ("div", "", {}), ("head", "Scena prima", {}), ("stage", "Intrat Hamletus.", {}),
+        ("speaker", "HAMLETUS", {"sp": 1}), ("l", "Esse aut non esse,", {"sp": 1, "group": 1}),
+        ("l", "haec quaestio.", {"sp": 1, "group": 1}),
+        ("speaker", "OPHELIA", {"sp": 2}), ("p", "Domine ad eum accedit quomodo uales?", {"sp": 2}),
+        ("stage", "Exit.", {"sp": 2})]
+    styles = [seg["styles"] for seg in _segments(reading) if seg.get("text", "").strip() == "ad eum accedit"]
+    assert styles == [["stage"]]
+    assert {"speaker", "stage"} <= RENDERED_BLOCKS
+
+
+def test_two_speeches_in_verse_keep_their_lines_apart():
+    """Sans locuteur, les vers de deux répliques ne font pas un même groupe."""
+    reading = _reading('<div><sp><l>Quis ibi?</l></sp><sp><l>Amicus.</l></sp></div>')
+    assert _blocks(reading, "sp", "group") == [
+        ("div", "", {}), ("l", "Quis ibi?", {"sp": 1, "group": 1}), ("l", "Amicus.", {"sp": 2, "group": 2})]

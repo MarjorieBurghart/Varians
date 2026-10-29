@@ -170,3 +170,44 @@ def test_old_sermon_blocks_are_gone():
                       "document": {"blocks": []},
                       "i18n": {"default": "fr", "fallback": "en", "catalogs": {"fr": {}}, "languages": []}})
     assert "sermon" not in html
+
+
+# --- Théâtre (V0.9.3.1) ---------------------------------------------------------------------------
+
+SCENE = ('<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
+         '<sp who="#h"><speaker>HAMLETUS</speaker><l n="1">Esse aut non esse,</l><l n="2">haec quaestio.</l></sp>'
+         '<sp who="#o"><speaker>OPHELIA</speaker><p>Domine <stage>susurrat</stage> quomodo uales?</p>'
+         '<stage>Exit.</stage></sp></div>')
+
+
+def test_a_scene_shows_its_speeches_their_speakers_and_the_stage_directions(browser, tmp_path):
+    project = copy_example(tmp_path / "exemple")
+    edition = project.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    assert text.count('<div xml:id="RLS_184">') == 1
+    edition.write_text(text.replace('<div xml:id="RLS_184">', SCENE + '<div xml:id="RLS_184">'), encoding="utf-8")
+    output, _missing, _data = generate(project)
+    page = browser.new_page()
+    errors = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    page.route("http://**", lambda route: route.abort())
+    page.route("https://**", lambda route: route.abort())
+    try:
+        page.goto(output.as_uri())
+        speeches = page.eval_on_selector_all("#document .tei-sp", """els=>els.map(e=>[
+            e.querySelector('.tei-speaker')?.innerText.trim(), e.querySelectorAll('.tei-lg .tei-l').length,
+            e.querySelectorAll('.tei-p').length, [...e.querySelectorAll('.tei-stage')].map(s=>s.innerText.trim())])""")
+        assert speeches == [["HAMLETUS", 2, 0, []], ["OPHELIA", 0, 1, ["Exit."]]]
+        assert _texts(page, "#document > .tei-stage") == ["Intrat Hamletus."]
+        assert page.eval_on_selector("#document .tei-speaker", "e=>getComputedStyle(e).fontVariantCaps") == "small-caps"
+        inline = page.locator("#document .tei-sp .tei-p .tei-stage-inline")
+        assert inline.inner_text().strip() == "susurrat"
+        assert inline.evaluate("e=>getComputedStyle(e).fontStyle") == "italic"
+        assert page.eval_on_selector("#document > .tei-stage", "e=>getComputedStyle(e).fontStyle") == "italic"
+        # La recherche trouve le locuteur et les didascalies (« Hamletus » : le locuteur et la didascalie).
+        assert page.evaluate("()=>[F=VariansFullText.makeIndex(DATA.document.blocks),"
+                             "VariansFullText.find(F,'OPHELIA').length,VariansFullText.find(F,'susurrat').length,"
+                             "VariansFullText.find(F,'Hamletus').length].slice(1)") == [1, 1, 2]
+        assert not errors, errors
+    finally:
+        page.close()

@@ -244,7 +244,7 @@ LACUNA_TAGS = ("lacunaStart", "lacunaEnd")
 
 # Texte de lecture (V0.9.3.0) : blocs affichés par le viewer. Un bloc « div »
 # marque le début d'une division ; il n'a pas de texte.
-RENDERED_BLOCKS = frozenset({"p", "head", "l", "item", "cell", "caption", "note"})
+RENDERED_BLOCKS = frozenset({"p", "head", "l", "item", "cell", "caption", "note", "speaker", "stage"})
 DIVISION_TAGS = frozenset({"div", "div1", "div2", "div3", "div4", "div5", "div6", "div7"})
 # Repères posés entre deux blocs : ils ne font pas de bloc à eux seuls.
 MILESTONE_TAGS = frozenset({"pb", "lb", "cb", "milestone", "anchor"})
@@ -659,6 +659,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         # entre deux blocs (<pb/>, lacune…) reste dans le bloc précédent.
         "sticky": False,
         "divs": 0, "lists": 0, "tables": 0, "groups": {}, "list_depth": 0,
+        # Théâtre (V0.9.3.1) : le rang de la réplique en cours, que portent ses blocs.
+        "sps": 0, "sp": None,
         # Choix du texte : le manque en cours (témoin choisi sans leçon), le
         # @wit de la leçon affichée, le nombre de manques.
         "missing": None, "shown_wit": None, "missing_count": 0,
@@ -687,7 +689,10 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         return state["line_key"]
 
     def start_block(kind="p", attrs=None):
-        block = {"type": kind, "attrs": attrs or {}, "segments": []}
+        attrs = dict(attrs or {})
+        if state["sp"]:
+            attrs["sp"] = state["sp"]
+        block = {"type": kind, "attrs": attrs, "segments": []}
         blocks.append(block)
         state["pending_lb_sep"] = None
         return block
@@ -943,6 +948,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             styles.append("sic")
         elif tag == "quote":
             styles.append("quote")
+        elif tag == "stage":
+            styles.append("stage")
         return styles
 
     def advance_line(node):
@@ -1266,6 +1273,16 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
 
         walk_children(node, level, sticky=True, special=special)
 
+    def walk_speech(node, level):
+        """Une réplique (``<sp>``, V0.9.3.1) : son locuteur (bloc
+        ``speaker``), ses vers, paragraphes et didascalies (bloc ``stage``)
+        portent ``sp``, le rang de la réplique."""
+        old = state["sp"]
+        state["sps"] += 1
+        state["sp"] = state["sps"]
+        walk_children(node, level)
+        state["sp"] = old
+
     def walk_container(node, level=0, parent=None):
         tag = lname(node.tag)
         enter(node)
@@ -1306,6 +1323,10 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             walk_block(node, "caption", level=level)
         elif tag == "note":
             walk_inline_block(node, "note")
+        elif tag == "sp":
+            walk_speech(node, level)
+        elif tag in ("speaker", "stage"):
+            walk_block(node, tag, level=level)
         elif _phrase_only(node):
             # Contenu de phrase entre deux blocs (citation, <cit>, <app>…) : un paragraphe.
             walk_inline_block(node)
