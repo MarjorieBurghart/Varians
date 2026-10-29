@@ -1039,6 +1039,33 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.3.3 — RED TEAM : INTÉGRITÉ DES DONNÉES ET SÉCURITÉ
+
+Compte rendu complet : docs/RED_TEAM.md (pistes, corrections, tests,
+limites connues).
+
+• Texte exact : les espaces insécables (U+00A0) et U+2028 ne sont plus
+  changés à l'enregistrement ; après un caractère hors du plan de base
+  (𝔄), formatage, complétion, Ctrl+E, synchronisation… tombent juste.
+• Enregistrer : un fichier modifié hors de Varians depuis sa lecture n'est
+  plus écrasé sans un mot (Écraser / Recharger / Annuler) ; un encodage
+  déclaré autre que UTF-8 est corrigé après accord ; droits et fins de
+  ligne CRLF gardés ; un fichier en lecture seule n'est pas remplacé, et
+  Varians le dit ; project.xml écrit de façon atomique avec copie .bak,
+  ses commentaires et le choix du texte du viewer web gardés.
+• Schémas et règles d'un document reçu : seul le site de la TEI
+  (tei-c.org) est consulté sans accord, une question par autre site ; les
+  règles Schematron s'exécutent sans réseau et n'écrivent aucun fichier ;
+  celles prises hors du projet ne sont appliquées qu'avec accord ; F8
+  repose les questions refusées ; le cache des schémas ne déborde jamais
+  de son dossier.
+• Vérifier une feuille XSLT ou des règles affichées ne consulte plus le
+  réseau. Un scénario Saxon n'écrit que dans le dossier de son résultat.
+• Sorties : le viewer web ne peut plus exécuter de script venu du texte ;
+  l'Édition critique ne garde que des liens sûrs ; les libellés IIIF sont
+  affichés en texte brut ; l'export web ne copie que de vraies images, et
+  une image IIIF file:// n'est plus lue.
+
 VARIANS V0.9.3.2 — FRAPPE PLUS RAPIDE AVEC DES FAC-SIMILÉS
 
 • Frappe dans une édition dont les pages ont des tei_surface_id : à chaque
