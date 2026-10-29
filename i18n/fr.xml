@@ -141,6 +141,16 @@
   <string key="webgen.wrong_file.title">Viewer web</string>
   <string key="webgen.wrong_file.text">Le générateur utilise le fichier &lt;edition&gt; déclaré dans project.xml. Le fichier actuellement ouvert n’est pas ce fichier de projet.</string>
   <string key="webgen.error.title">Génération du viewer web</string>
+  <string key="webgen.text.title">Générer le viewer web</string>
+  <string key="webgen.text.label">Texte du viewer :</string>
+  <string key="webgen.text.established">Texte établi : le &lt;lem&gt;, à défaut la leçon du témoin choisi</string>
+  <string key="webgen.text.witness">Texte du témoin choisi, même quand il n'est pas le &lt;lem&gt;</string>
+  <string key="webgen.text.chosen">Témoin :</string>
+  <string key="webgen.text.pivot">Pivot (de chaque texte)</string>
+  <string key="webgen.text.missing_hint">Les passages où le témoin choisi n'a pas de leçon sont signalés dans le viewer.</string>
+  <string key="webgen.text.generate">Générer</string>
+  <string key="webgen.text.missing">\n\n{count} passage(s) sans leçon de {witness}, signalé(s) dans le viewer.</string>
+  <string key="webgen.text.unknown">\n\nTémoin inconnu dans project.xml : {witness} ; le pivot est pris à sa place.</string>
   <string key="webgen.done.title">Viewer web généré</string>
   <string key="webgen.done.text">Viewer généré :\n{output}\n\n{witnesses} témoin(s), {lines} lignes du témoin pivot.</string>
   <string key="webgen.missing">\n\nPages absentes du cache du témoin pivot : {pages}</string>

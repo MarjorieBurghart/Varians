@@ -20,7 +20,7 @@ from project_management import (
     create_local_xslt_if_needed, create_new_transcription_project, create_portable_project,
     prepare_alignment_files_for_project, prepare_alto_files_for_project,
     prepare_iiif_manifests_for_project, prepare_local_images_for_project,
-    write_project_xml,
+    update_project_web_text, write_project_xml,
 )
 from tei_listwit import add_witnesses_to_listwit_file
 from tei_facsimile import (
@@ -41,6 +41,10 @@ class ProjectActionsMixin:
         et chaque partie modifiée le sont aussi. Un échec annule l'export ;
         les autres documents ne sont pas concernés. Les problèmes
         d'assemblage (partie absente…) sont dans le compte rendu.
+
+        Choix du texte (V0.9.3.0) : une boîte le demande d'abord
+        (``_ask_web_text``) ; « Annuler » n'enregistre ni n'exporte rien. Le
+        compte rendu donne le nombre de passages sans leçon du témoin choisi.
         """
         edition = self.edition_session
         if edition.path is None:
@@ -49,6 +53,9 @@ class ProjectActionsMixin:
             QMessageBox.warning(
                 self, _t("webgen.wrong_file.title"), _t("webgen.wrong_file.text")
             )
+            return
+        choice = self._ask_web_text()
+        if choice is None:
             return
         if not self._save_edition_for_export():
             return
@@ -60,13 +67,21 @@ class ProjectActionsMixin:
             visible = set(self._visible_witness_ids)
             display_ids = [wid for wid in self._witness_display_order if wid in visible]
             output, missing, data = generate(
-                self.project.path, display_witness_ids=display_ids)
+                self.project.path, display_witness_ids=display_ids,
+                text_mode=choice[0], text_witness=choice[1])
         except Exception as exc:
             QMessageBox.critical(self, _t("webgen.error.title"), str(exc))
             return
         msg = _t("webgen.done.text", output=output, witnesses=len(data.get("witnesses", [])), lines=data.get("meta", {}).get("lines", 0))
         if missing:
             msg += _t("webgen.missing", pages=", ".join(missing))
+        text = data.get("meta", {}).get("text") or {}
+        chosen = self.project.witness_by_id.get(text.get("witness") or "")
+        if text.get("missing"):
+            msg += _t("webgen.text.missing", count=text["missing"],
+                      witness=chosen.display_siglum if chosen else _t("viewer.text.pivot"))
+        if text.get("unknown"):
+            msg += _t("webgen.text.unknown", witness=text["unknown"])
         problems = data.get("meta", {}).get("assembly_problems") or []
         if problems:
             msg += _t("webgen.assembly_problems", problems="\n".join(
@@ -80,6 +95,26 @@ class ProjectActionsMixin:
         box.exec()
         if box.clickedButton() is open_btn:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(output)))
+
+    def _ask_web_text(self):
+        """Texte du viewer (V0.9.3.0) : ``(mode, témoin)``, ou None si la
+        boîte est annulée. Elle s'ouvre sur le choix de project.xml ; un
+        choix modifié y est enregistré."""
+        from web_text_dialog import WebTextDialog
+        project = self.project
+        dialog = WebTextDialog(project.witnesses, project.web_text_mode, project.web_text_witness, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        mode, witness = dialog.choice()
+        if (mode, witness) != (project.web_text_mode, project.web_text_witness):
+            try:
+                update_project_web_text(project.path, mode, witness)
+            except OSError as exc:
+                QMessageBox.warning(self, _t("webgen.error.title"), str(exc))
+            else:
+                from dataclasses import replace
+                self.project = replace(project, web_text_mode=mode, web_text_witness=witness)
+        return mode, witness
 
     def _save_edition_for_export(self):
         """Fragment non appliqué, édition et parties modifiées : enregistrés

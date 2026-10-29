@@ -150,6 +150,16 @@
   <string key="webgen.wrong_file.title">Веб-просмотрщик</string>
   <string key="webgen.wrong_file.text">Генератор использует файл &lt;edition&gt;, указанный в project.xml. Открытый сейчас файл не является этим файлом проекта.</string>
   <string key="webgen.error.title">Создание веб-просмотрщика</string>
+  <string key="webgen.text.title">Создать веб-просмотрщик</string>
+  <string key="webgen.text.label">Текст просмотрщика:</string>
+  <string key="webgen.text.established">Установленный текст: &lt;lem&gt;, иначе чтение выбранного свидетеля</string>
+  <string key="webgen.text.witness">Текст выбранного свидетеля, даже если это не &lt;lem&gt;</string>
+  <string key="webgen.text.chosen">Свидетель:</string>
+  <string key="webgen.text.pivot">Опорный (для каждого текста)</string>
+  <string key="webgen.text.missing_hint">Места, где у выбранного свидетеля нет чтения, отмечены в просмотрщике.</string>
+  <string key="webgen.text.generate">Создать</string>
+  <string key="webgen.text.missing">\n\nМест без чтения свидетеля {witness}: {count} (отмечены в просмотрщике).</string>
+  <string key="webgen.text.unknown">\n\nНеизвестный свидетель в project.xml: {witness}; вместо него используется опорный.</string>
   <string key="webgen.done.title">Веб-просмотрщик создан</string>
   <string key="webgen.done.text">Просмотрщик создан:
 {output}

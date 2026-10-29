@@ -150,6 +150,16 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="webgen.wrong_file.title">Viewer web</string>
   <string key="webgen.wrong_file.text">Il generatore usa il file &lt;edition&gt; dichiarato in project.xml. Il file attualmente aperto non è quel file di progetto.</string>
   <string key="webgen.error.title">Generazione viewer web</string>
+  <string key="webgen.text.title">Genera il viewer web</string>
+  <string key="webgen.text.label">Testo del viewer:</string>
+  <string key="webgen.text.established">Testo stabilito: il &lt;lem&gt;, altrimenti la lezione del testimone scelto</string>
+  <string key="webgen.text.witness">Testo del testimone scelto, anche quando non è il &lt;lem&gt;</string>
+  <string key="webgen.text.chosen">Testimone:</string>
+  <string key="webgen.text.pivot">Pivot (di ogni testo)</string>
+  <string key="webgen.text.missing_hint">I passi in cui il testimone scelto non ha lezione sono segnalati nel viewer.</string>
+  <string key="webgen.text.generate">Genera</string>
+  <string key="webgen.text.missing">\n\n{count} passo/i senza lezione di {witness}, segnalato/i nel viewer.</string>
+  <string key="webgen.text.unknown">\n\nTestimone sconosciuto in project.xml: {witness}; si usa al suo posto il pivot.</string>
   <string key="webgen.done.title">Viewer web generato</string>
   <string key="webgen.done.text">Viewer generato:
 {output}

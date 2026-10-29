@@ -150,6 +150,16 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="webgen.wrong_file.title">Web-Viewer</string>
   <string key="webgen.wrong_file.text">Der Generator verwendet die in project.xml deklarierte &lt;edition&gt;-Datei. Die derzeit geöffnete Datei ist nicht diese Projektdatei.</string>
   <string key="webgen.error.title">Erzeugung des Web-Viewers</string>
+  <string key="webgen.text.title">Web-Viewer erzeugen</string>
+  <string key="webgen.text.label">Text des Viewers:</string>
+  <string key="webgen.text.established">Konstituierter Text: das &lt;lem&gt;, sonst die Lesart des gewählten Textzeugen</string>
+  <string key="webgen.text.witness">Text des gewählten Textzeugen, auch wenn er nicht das &lt;lem&gt; ist</string>
+  <string key="webgen.text.chosen">Textzeuge:</string>
+  <string key="webgen.text.pivot">Pivot (jedes Textes)</string>
+  <string key="webgen.text.missing_hint">Stellen ohne Lesart des gewählten Textzeugen werden im Viewer markiert.</string>
+  <string key="webgen.text.generate">Erzeugen</string>
+  <string key="webgen.text.missing">\n\n{count} Stelle(n) ohne Lesart von {witness}, im Viewer markiert.</string>
+  <string key="webgen.text.unknown">\n\nUnbekannter Textzeuge in project.xml: {witness}; stattdessen wird der Pivot verwendet.</string>
   <string key="webgen.done.title">Web-Viewer erzeugt</string>
   <string key="webgen.done.text">Viewer erzeugt:
 {output}

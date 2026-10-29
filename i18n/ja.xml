@@ -150,6 +150,16 @@
   <string key="webgen.wrong_file.title">Webビューア</string>
   <string key="webgen.wrong_file.text">ジェネレータはproject.xmlで宣言された&lt;edition&gt;ファイルを使用します。現在開いているファイルは、そのプロジェクトファイルではありません。</string>
   <string key="webgen.error.title">Webビューア生成</string>
+  <string key="webgen.text.title">Web ビューアを生成</string>
+  <string key="webgen.text.label">ビューアの本文：</string>
+  <string key="webgen.text.established">校訂本文：&lt;lem&gt;、なければ選んだ伝本の読み</string>
+  <string key="webgen.text.witness">選んだ伝本の本文（&lt;lem&gt; でない場合も）</string>
+  <string key="webgen.text.chosen">伝本：</string>
+  <string key="webgen.text.pivot">ピボット（各テキストの）</string>
+  <string key="webgen.text.missing_hint">選んだ伝本に読みがない箇所はビューアで示されます。</string>
+  <string key="webgen.text.generate">生成</string>
+  <string key="webgen.text.missing">\n\n{witness} の読みがない箇所 {count}件（ビューアで表示）。</string>
+  <string key="webgen.text.unknown">\n\nproject.xml の伝本 {witness} は不明です。代わりにピボットを使います。</string>
   <string key="webgen.done.title">Webビューアを生成しました</string>
   <string key="webgen.done.text">ビューアを生成しました：
 {output}

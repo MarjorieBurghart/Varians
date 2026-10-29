@@ -11,7 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtGui import QColor, QImage
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QDialog, QMessageBox
 
 LINE = "In principio erat verbum"
 
@@ -76,6 +76,7 @@ def test_transcribe_save_reopen_and_export(tmp_path, editor_module, open_window,
 
     # Export du viewer web autonome ; la boîte finale est fermée sans
     # ouvrir le navigateur.
+    dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)
     reopened.generate_web_viewer()
     output = reopened.project.web_output_dir / reopened.project.web_filename
