@@ -8,6 +8,7 @@ n'annonce plus les versions : les tests « announces_version_… » ont disparu
 avec les sections de version, l'historique est dans DEVELOPER_HANDOFF.md."""
 from __future__ import annotations
 
+import html
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -476,9 +477,36 @@ def test_each_help_explains_the_critical_edition():
                      "<code>montrer-numeros-de-vers</code>", "<code>sauts-lb</code>", "lacuna incipit",
                      "lacuna desinit", "<code>&lt;rdgGrp&gt;</code>", "<code>publications/edition-critique.html</code>",
                      "<code>@n</code>", "om.", "add.", 'href="#tei-stylesheets"', 'href="#transformations"',
-                     # V0.9.3.1 : la case de la page (en français) et son paramètre.
-                     "Surligner les leçons hors &lt;lem&gt;", "<code>surligner-hors-lemme</code>"):
+                     # V0.9.3.1 : la case de la page et son paramètre ; la langue de la page.
+                     html.escape(catalog["publication.critique.highlight"], quote=False),
+                     "<code>surligner-hors-lemme</code>", "<code>langue</code>", "${langue}",
+                     catalog["transform.param.interface_language"]):
             assert text in section, (language, text)
+        # Les textes de la page suivent la langue de l'interface : l'aide les
+        # cite dans sa langue, sans les libellés français d'autrefois.
+        for key in ("publication.not_available", "publication.critique.apparatus", "publication.critique.notes"):
+            assert catalog[key] in section, (language, key)
+        if language != "fr":
+            for french in ("Apparat critique", "Surligner les leçons", "lecture du témoin non disponible"):
+                assert french not in section, (language, french)
+
+
+def test_each_help_says_the_shipped_stylesheets_follow_the_interface_language():
+    """V0.9.3.1 : Varians passe langue et catalogues à la feuille ; la Vue XSLT /
+    CSS montre ses marques dans la langue de l'interface (« [lacune] »…)."""
+    for language in LANGUAGES:
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+        section = page[page.index('<section id="transformations">'):]
+        section = section[:section.index("</section>")]
+        for text in ("<code>langue</code>", "<code>catalogues</code>", "${langue}"):
+            assert text in section, (language, text)
+        section = page[page.index('<h3 id="preview-rendering">'):]
+        section = section[:section.index("</section>")]
+        assert catalog["publication.gap"] in section, language
+        if language != "fr":
+            assert "[lacune]" not in section, language
 
 
 def test_the_apparatus_is_called_by_numbers_and_the_notes_by_letters():
@@ -490,7 +518,10 @@ def test_the_apparatus_is_called_by_numbers_and_the_notes_by_letters():
         section = section[:section.index("</section>")]
         letters = section.index("aa…")
         # En japonais, le complément précède le nom : « 文字（…）で呼び出される … Notes ».
-        anchor = "Apparat critique</strong>" if language == "ja" else "<strong>Notes</strong>"
+        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
+        catalog = {string.get("key"): string.text for string in root.findall("string")}
+        anchor = (f"{catalog['publication.critique.apparatus']}</strong>" if language == "ja"
+                  else f"<strong>{catalog['publication.critique.notes']}</strong>")
         assert letters > section.index(anchor), language
 
 

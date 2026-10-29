@@ -1055,6 +1055,19 @@ VARIANS V0.9.3.1 — THÉÂTRE, LEÇONS HORS <LEM>, AIDE REFAITE
   « Surligner les leçons hors <lem> » de la page, cochée au départ par le
   paramètre surligner-hors-lemme. Dans la boîte d'un scénario, les
   paramètres oui/non de l'édition critique sont des cases à cocher.
+• Textes des feuilles livrées dans la langue de l'interface : Édition
+  critique (titres, phrases, infobulles, messages d'erreur), apparat en
+  notes des scénarios DOCX et ODT, Vue XSLT / CSS (infobulles, « [lacune] »,
+  « page »). Ils viennent des catalogues i18n (clés publication.*, 7
+  langues) ; Varians passe à la feuille, sauf si le scénario les fixe,
+  langue (la langue de l'interface ; ${langue} dans une valeur) et
+  catalogues (l'adresse de ses catalogues). Le scénario « Édition
+  critique » a un paramètre langue, choisi dans une liste (« Langue de
+  l'interface », puis chaque langue) pour publier dans une autre langue.
+  Les abréviations latines de l'apparat (om., add., lacuna incipit et
+  desinit, sic) restent en latin. Sans catalogue (langue inconnue, copie
+  hors de Varians), les textes sont en français, comme le repli .NET de
+  l'aperçu.
 • Menu Aide : « Guide des éléments TEI » (les éléments de TEI P5 sur le
   site du TEI Consortium), entre « Dictionnaire de Latin » et « Aide du
   logiciel », entre deux séparateurs.
