@@ -70,6 +70,21 @@ def test_the_reading_document_follows_the_pivot_of_each_text(corpus):
     assert after["line_key"] is None or after["line_key"] in KEYS[0]
 
 
+def test_the_established_text_takes_the_lem_and_the_pivot_of_each_text_otherwise(corpus):
+    # Choix du texte (V0.9.3.0) : le <lem> de D dans s02 ; « pivot » est
+    # celui de chaque texte (B pour s02). Les lignes de B gardent leurs clés.
+    document, lookup = corpus
+    for choice, shown, hidden in ((dict(text_mode="established"), "cecinit", "dixit"),
+                                  (dict(text_mode="witness"), "dixit", "cecinit")):
+        reading = extract_reading_document(None, "#A", include_foreign_pagebreaks=True, **choice,
+                                           **_options(document, lookup))
+        s02 = [s for s in _segments(reading) if s["kind"] == "text" and s.get("seg") == 1]
+        words = "".join(s["text"] for s in s02)
+        assert shown in words and hidden not in words, choice
+        assert {s["line_key"] for s in s02 if s["line_key"]} == set(KEYS[1])
+        assert reading["missing_readings"] == 0
+
+
 def test_the_page_breaks_of_the_pivot_of_a_text_are_visible(corpus):
     document, lookup = corpus
     reading = extract_reading_document(None, "#A", include_foreign_pagebreaks=True, **_options(document, lookup))

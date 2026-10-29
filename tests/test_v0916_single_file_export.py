@@ -12,7 +12,9 @@ V0.9.3.0 : les blocs « sermon » deviennent des blocs « div » (identifiant,
 niveau, titre tiré du premier <head>, sinon de @n) ; la division englobante
 <div n="pr"> en a un. Le texte et les positions ne changent pas. Puis,
 comme « Édition critique », le <ref> d'une <cit> sans @type « bible » est
-un repère de note (les 34 citations du projet exemple)."""
+un repère de note (les 34 citations du projet exemple). Puis le document
+compte les passages où le témoin choisi n'a pas de leçon
+(``missing_readings`` : 0 ici, le texte ne change pas)."""
 from __future__ import annotations
 
 import hashlib
@@ -22,7 +24,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "67923c6100d2052e4c1c832c8a38f8dce1c0c05425231cb64b52275cce5989fa"
+DIGEST = "3993ab2dae2e87a3402405f1f678990deda6810bfeb2eadb38d6d73fead86664"
 
 
 def _digest(data):

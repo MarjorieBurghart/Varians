@@ -92,27 +92,92 @@ READING_TAGS = ("lem", "rdg", "wit")
 CHOICE_ORDER = ("corr", "reg", "expan", "sic", "orig", "abbr")
 
 
-def app_readings(app: ET.Element):
-    """Leçons d'un ``<app>`` dans l'ordre : ``<lem>``, ``<rdg>`` (et la
-    coquille ``<wit>``), celles d'un ``<rdgGrp>`` comprises."""
+def reading_witnesses(app: ET.Element):
+    """``[(leçon, @wit)]`` d'un ``<app>`` dans l'ordre : ``<lem>``, ``<rdg>``
+    (et la coquille ``<wit>``), celles d'un ``<rdgGrp>`` comprises ; le
+    ``@wit`` est celui de la leçon, sinon celui de son ``<rdgGrp>``."""
     found = []
-    for child in app:
-        tag = lname(child.tag)
-        if tag in READING_TAGS:
-            found.append(child)
-        elif tag == "rdgGrp":
-            found.extend(app_readings(child))
+
+    def visit(node, inherited):
+        for child in node:
+            tag = lname(child.tag)
+            if tag in READING_TAGS:
+                found.append((child, child.attrib.get("wit") or inherited))
+            elif tag == "rdgGrp":
+                visit(child, child.attrib.get("wit") or inherited)
+
+    visit(app, None)
     return found
 
 
-def choose_reading(app: ET.Element, target: str):
-    """Leçon du témoin ``target``, sinon le ``<lem>``, sinon la première."""
-    readings = app_readings(app)
-    for reading in readings:
-        if witness_matches(reading.attrib.get("wit"), target):
-            return reading
-    lem = next((reading for reading in readings if lname(reading.tag) == "lem"), None)
-    return lem if lem is not None else (readings[0] if readings else None)
+def app_readings(app: ET.Element):
+    """Leçons d'un ``<app>`` dans l'ordre (``reading_witnesses``)."""
+    return [reading for reading, _wit in reading_witnesses(app)]
+
+
+TEXT_MODES = ("established", "witness")
+
+
+def choose_reading_status(app: ET.Element, target: str, mode: str = "witness", witness: str | None = None):
+    """``(leçon, @wit, manque)`` : la leçon affichée d'un ``<app>`` (V0.9.3.0).
+
+    ``witness`` : le témoin choisi, sinon le pivot ``target``. Mode
+    ``established`` (texte établi, comme « Édition critique ») : le
+    ``<lem>``, sinon la leçon du témoin choisi, sinon celle du pivot, sinon
+    la première. Mode ``witness`` (texte d'un témoin) : la leçon du témoin
+    choisi, sinon le ``<lem>``, sinon celle du pivot, sinon la première.
+    ``manque`` : None, ou ``{"wit", "fallback"}`` quand on retombe faute
+    d'une leçon du témoin choisi (aucune leçon ne le nomme ; une leçon vide
+    qui le nomme est sa leçon) ; ``fallback`` : ``lem`` ou le premier témoin
+    de la leçon affichée."""
+    readings = reading_witnesses(app)
+    chosen = (witness or target).lstrip("#")
+    own = next((pair for pair in readings if witness_matches(pair[1], chosen)), None)
+    lem = next((pair for pair in readings if lname(pair[0].tag) == "lem"), None)
+    pivot = next((pair for pair in readings if witness_matches(pair[1], target)), None)
+    first = readings[0] if readings else None
+    if mode == "established":
+        order, lacking = (lem, own, pivot, first), lem is None and own is None
+    else:
+        order, lacking = (own, lem, pivot, first), own is None
+    shown = next((pair for pair in order if pair is not None), None)
+    if shown is None:
+        return None, None, None
+    missing = None
+    if lacking:
+        fallback = "lem" if lname(shown[0].tag) == "lem" else next(iter(wit_tokens(shown[1])), "")
+        missing = {"wit": chosen, "fallback": fallback}
+    return shown[0], shown[1], missing
+
+
+def choose_reading(app: ET.Element, target: str, mode: str = "witness", witness: str | None = None):
+    """La leçon affichée d'un ``<app>`` (``choose_reading_status``) ; sans
+    choix, celle du pivot ``target``, sinon le ``<lem>``, sinon la
+    première."""
+    return choose_reading_status(app, target, mode, witness)[0]
+
+
+def pivot_marks_in(reading: ET.Element, is_mark):
+    """``(début, fin)`` : les éléments ``is_mark`` (``<lb>``, ``<pb>`` du
+    pivot) d'une leçon non affichée, selon qu'ils précèdent tout texte de
+    cette leçon ou non (V0.9.3.0). Les notes ne sont pas parcourues."""
+    leading, trailing = [], []
+    seen = False
+
+    def visit(node):
+        nonlocal seen
+        if node.text and node.text.strip():
+            seen = True
+        for child in node:
+            if is_mark(child):
+                (trailing if seen else leading).append(child)
+            elif lname(child.tag) != "note":
+                visit(child)
+            if child.tail and child.tail.strip():
+                seen = True
+
+    visit(reading)
+    return leading, trailing
 
 
 def describe_readings(app: ET.Element):
@@ -507,7 +572,8 @@ def variant_tooltip(ann, witness_labels):
 # =============================================================================
 
 def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks: bool = False, page_resolver=None, base_line_keys=None, *,
-                             root=None, line_anchors=None, segment_of=None, target_of=None, pb_line_keys=False):
+                             root=None, line_anchors=None, segment_of=None, target_of=None, pb_line_keys=False,
+                             text_mode="witness", text_witness=None):
     """Construit une vue de lecture par blocs (paragraphes/titres) sans matérialiser les <lb>.
 
     Les <lb> restent uniquement des ancres vers les lignes physiques. Chaque segment
@@ -547,6 +613,16 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     ``@reason`` et son ``@extent`` dans ``alt`` ; ``<space>`` une espace.
     Les leçons d'un ``<rdgGrp>`` sont lues (``app_readings``). ``lang`` :
     le ``@xml:lang`` du texte, sinon de la racine.
+
+    Choix du texte (V0.9.3.0) : ``text_mode`` (``established`` : le
+    ``<lem>`` d'abord ; ``witness`` : la leçon du témoin d'abord) et
+    ``text_witness`` (le témoin choisi, sinon le pivot de chaque texte),
+    voir ``choose_reading_status`` ; sans eux, le pivot, comme avant. Le
+    texte de repli d'un ``<app>`` où le témoin choisi n'a pas de leçon porte
+    ``missing`` (``{"wit", "fallback"}``), un repli vide un segment
+    ``missing`` (« ∅ ») ; ``missing_readings`` les compte. Les ``<lb>`` et
+    ``<pb>`` du pivot d'une leçon non affichée restent des repères
+    (``pivot_marks_in``) : chaque ligne du pivot garde sa clé.
     """
     # The very same ordinal-to-JSON association that drives desktop cursor
     # navigation. PageResolver remains relevant for page-only witnesses, but
@@ -580,6 +656,9 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         # entre deux blocs (<pb/>, lacune…) reste dans le bloc précédent.
         "sticky": False,
         "divs": 0, "lists": 0, "tables": 0, "groups": {}, "list_depth": 0,
+        # Choix du texte : le manque en cours (témoin choisi sans leçon), le
+        # @wit de la leçon affichée, le nombre de manques.
+        "missing": None, "shown_wit": None, "missing_count": 0,
     }
 
     def enter(node):
@@ -647,6 +726,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         })
         if variant_id:
             seg["variant_id"] = variant_id
+        if state["missing"]:
+            seg["missing"] = dict(state["missing"])
         if extra_classes:
             seg["classes"] = list(extra_classes)
         if alt:
@@ -659,6 +740,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             prev.get("variant_id") == seg.get("variant_id") and
             prev.get("classes") == seg.get("classes") and
             prev.get("alt") == seg.get("alt") and
+            prev.get("missing") == seg.get("missing") and
             prev.get("seg") == seg.get("seg")):
             prev["text"] += text
         else:
@@ -724,7 +806,63 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         }))
 
     def choose_app_reading(node):
-        return choose_reading(node, target_of(node))
+        """``(leçon, @wit, manque)`` selon le choix du texte."""
+        return choose_reading_status(node, target_of(node), text_mode, text_witness)
+
+    def foreign_to_shown(node):
+        """Un ``<lb>`` ou ``<pb>`` sans ``@edRef`` d'une leçon affichée qui
+        n'est pas celle du pivot : une coupure de ses témoins, pas du pivot."""
+        shown = state["shown_wit"]
+        return shown is not None and not witness_matches(shown, target_of(node))
+
+    def is_pivot_mark(element, wit, pivot):
+        """Un ``<lb>`` ou ``<pb>`` du pivot dans une leçon non affichée de
+        témoins ``wit`` : son ``@edRef`` est le pivot, ou il n'en a pas et la
+        leçon est celle du pivot. Avec un index des lignes, un ``<lb>`` doit
+        y être."""
+        tag = lname(element.tag)
+        if tag not in ("lb", "pb"):
+            return False
+        edref = element.attrib.get("edRef")
+        if not (witness_matches(edref, pivot) if edref else witness_matches(wit, pivot)):
+            return False
+        return tag == "pb" or lb_anchor_lookup is None or id(element) in lb_anchor_lookup
+
+    def hidden_marks(node, selected):
+        """``(début, fin)`` : repères du pivot des leçons non affichées."""
+        pivot = target_of(node)
+        leading, trailing = [], []
+        for reading, wit in reading_witnesses(node):
+            if reading is not selected:
+                first, last = pivot_marks_in(reading, lambda e, w=wit: is_pivot_mark(e, w, pivot))
+                leading += first
+                trailing += last
+        return leading, trailing
+
+    def add_hidden_marks(elements):
+        """Repères invisibles : la ligne ou la page du pivot change, sans
+        texte ni espace."""
+        for element in elements:
+            enter(element)
+            if lname(element.tag) == "lb":
+                advance_line(element)
+            else:
+                walk(element)
+
+    def walk_shown(selected, wit, missing, walker):
+        """Parcourt la leçon affichée (``walker``), marquée si le témoin
+        choisi n'en a pas ; un repli vide donne le repère « ∅ »."""
+        saved = state["missing"], state["shown_wit"]
+        state["missing"] = missing or saved[0]
+        state["shown_wit"] = wit
+        walker()
+        state["missing"], state["shown_wit"] = saved
+        if missing:
+            state["missing_count"] += 1
+            if not clean_text(flatten_editorial_text(selected)):
+                block = ensure_block()
+                block["segments"].append(tagged({"kind": "missing", "missing": dict(missing),
+                                                 "line_key": current_line_key()}))
 
     def describe_app(node):
         return describe_readings(node)
@@ -763,6 +901,16 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             styles.append("quote")
         return styles
 
+    def advance_line(node):
+        """Un ``<lb>`` du pivot : la ligne courante devient la sienne."""
+        if lb_anchor_lookup is not None:
+            state["line_key"] = lb_anchor_lookup.get(id(node))
+        elif state["page"]:
+            state["line_index"] += 1
+            if page_resolver is not None:
+                state["line_counts_by_physical_page"][state["page"]] = state["line_index"]
+            state["line_key"] = f"{state['page']}::{state['line_index'] + 1}"
+
     def walk(node, styles=None, variant_id=None, alt=None):
         styles = list(styles or [])
         tag = lname(node.tag)
@@ -773,7 +921,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             edref = node.attrib.get("edRef") or ""
             page = node.attrib.get("n")
             facs = node.attrib.get("facs") or ""
-            if edref and not witness_matches(edref, target_of(node)):
+            if (edref and not witness_matches(edref, target_of(node))) or (not edref and foreign_to_shown(node)):
                 # V0.8.2 : le texte de lecture reste celui du témoin cible, mais
                 # les changements de page des autres témoins peuvent être gardés
                 # comme ancres invisibles par le viewer générique. Ils ne doivent
@@ -797,17 +945,11 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             return
         if tag == "lb":
             edref = node.attrib.get("edRef")
-            if edref and not witness_matches(edref, target_of(node)):
-                # Les <lb> de l'autre témoin sont des ancres invisibles et ne
-                # doivent surtout pas casser la lecture continue de Troyes 816.
+            if (edref and not witness_matches(edref, target_of(node))) or (not edref and foreign_to_shown(node)):
+                # Les <lb> d'un autre témoin sont des ancres invisibles et ne
+                # doivent pas casser la lecture continue du pivot.
                 return
-            if lb_anchor_lookup is not None:
-                state["line_key"] = lb_anchor_lookup.get(id(node))
-            elif state["page"]:
-                state["line_index"] += 1
-                if page_resolver is not None:
-                    state["line_counts_by_physical_page"][state["page"]] = state["line_index"]
-                state["line_key"] = f"{state['page']}::{state['line_index'] + 1}"
+            advance_line(node)
             trim_last_visible_right()
             state["pending_lb_sep"] = "\u2060" if node.attrib.get("break") == "no" else " "
             return
@@ -836,7 +978,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             add_editorial_ref(flatten_editorial_text(node, include_notes=True, include_refs=True))
             return
         if tag == "app":
-            selected = choose_app_reading(node)
+            selected, wit, missing = choose_app_reading(node)
             if selected is None:
                 return
             aid = new_ann_id("v")
@@ -845,13 +987,18 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 "selected": flatten_editorial_text(selected, include_notes=False, include_refs=False),
                 "target": target_of(node).lstrip("#"), "readings": describe_app(node),
             }
+            if missing:
+                ann["missing"] = dict(missing)
             annotations[aid] = ann
+            leading, trailing = hidden_marks(node, selected)
+            add_hidden_marks(leading)
 
             def readings_of(container):
                 # Dans l'ordre : la leçon retenue, les repères de lacune des autres.
                 for other in list(container):
                     if other is selected:
-                        walk(selected, styles=styles, variant_id=aid, alt=alt)
+                        walk_shown(selected, wit, missing,
+                                   lambda: walk(selected, styles=styles, variant_id=aid, alt=alt))
                     elif lname(other.tag) == "rdgGrp" and any(x is selected for x in other.iter()):
                         readings_of(other)
                     else:
@@ -860,6 +1007,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             readings_of(node)
             enter(node)
             add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
+            add_hidden_marks(trailing)
             return
         if tag == "choice":
             # Comme « Édition critique » : une forme, les autres en infobulle.
@@ -1115,7 +1263,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     def walk_structural_app(node, level):
         """``<app>`` dont la leçon retenue contient des blocs : ses blocs, puis
         le repère de la variante."""
-        selected = choose_app_reading(node)
+        selected, wit, missing = choose_app_reading(node)
         if selected is None:
             return
         aid = new_ann_id("v")
@@ -1124,13 +1272,18 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             "selected": flatten_editorial_text(selected, include_notes=False, include_refs=False),
             "target": target_of(node).lstrip("#"), "readings": describe_app(node),
         }
+        if missing:
+            ann["missing"] = dict(missing)
         annotations[aid] = ann
+        leading, trailing = hidden_marks(node, selected)
+        add_hidden_marks(leading)
         for other in app_readings(node):
             if other is not selected:
                 add_lacunae_in(other)
-        walk_children(selected, level)
+        walk_shown(selected, wit, missing, lambda: walk_children(selected, level))
         enter(node)
         add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
+        add_hidden_marks(trailing)
 
     for text in texts:
         walk_container(text)
@@ -1160,7 +1313,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if b.get("type") in ("div", "cell") or any(seg.get("kind") != "text" or seg.get("text", "").strip()
                                                     for seg in b["segments"]):
             cleaned.append(b)
-    document = {"blocks": cleaned, "annotations": annotations}
+    document = {"blocks": cleaned, "annotations": annotations, "missing_readings": state["missing_count"]}
     # Langue du texte (césure, lecteurs d'écran) : @xml:lang du <text>, sinon de la racine.
     lang = next((value for value in [text.attrib.get(XML_LANG) for text in texts] + [root.attrib.get(XML_LANG)]
                  if value and value.strip()), None)

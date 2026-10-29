@@ -332,3 +332,71 @@ def test_the_reference_of_a_biblical_quotation_stays_in_angle_brackets_the_other
     annotation = reading["annotations"][note["ann_id"]]
     assert (annotation["kind"], annotation["text"], annotation["type"]) == ("note", "Aug. Conf. 1", "ref")
     assert "Aug." not in _text(reading["blocks"][1])
+
+
+# --- Choix du texte (V0.9.3.0) ------------------------------------------------------------------
+# Texte établi : le <lem>, sinon la leçon du témoin choisi (sinon du pivot) ;
+# texte d'un témoin : sa leçon, même quand elle n'est pas le <lem>. Sans
+# choix, l'extracteur suit le pivot, comme avant.
+
+def _chosen(body, keys=None, **choice):
+    return extract_reading_document(None, "#A", root=_root(body), base_line_keys=keys, **choice)
+
+
+def test_the_text_follows_the_chosen_mode_and_witness():
+    body = ('<div><p>a <app><lem wit="#B">ille</lem><rdg wit="#A">iste</rdg><rdgGrp wit="#C"><rdg>yste'
+            '</rdg></rdgGrp></app> b <app><rdg wit="#A">c</rdg><rdg wit="#C">k</rdg></app></p></div>')
+
+    def text(**choice):
+        return _text(_chosen(body, **choice)["blocks"][1])
+
+    assert text() == "a iste b c"                                         # le pivot, comme avant
+    assert text(text_mode="established") == "a ille b c"                  # le <lem>, sinon le pivot
+    assert text(text_mode="established", text_witness="C") == "a ille b k"
+    assert text(text_mode="witness", text_witness="C") == "a yste b k"    # @wit du <rdgGrp>
+    assert text(text_mode="witness", text_witness="B") == "a ille b c"
+
+
+def test_a_chosen_witness_without_reading_is_signalled():
+    # Absent de l'<app> : le texte de repli est marqué ; une omission
+    # (<rdg wit="#C"/>) est sa leçon et ne l'est pas ; un repli vide donne
+    # le repère « ∅ ».
+    body = ('<div><p>a <app><lem wit="#A">ille</lem><rdg wit="#B">iste</rdg></app> b <app><lem wit="#A">c</lem>'
+            '<rdg wit="#C"/></app> d <app><lem/><rdg wit="#B">e</rdg></app> f</p></div>')
+    reading = _chosen(body, text_mode="witness", text_witness="C")
+    assert _text(reading["blocks"][1]) == "a ille b d f"
+    flagged = [(seg["kind"], seg.get("text", "").strip(), seg["missing"]) for seg in _segments(reading)
+               if seg.get("missing")]
+    assert flagged == [("text", "ille", {"wit": "C", "fallback": "lem"}),
+                       ("missing", "", {"wit": "C", "fallback": "lem"})]
+    assert reading["missing_readings"] == 2
+    missing = [ann.get("missing") for ann in reading["annotations"].values() if ann["kind"] == "variant"]
+    assert missing == [{"wit": "C", "fallback": "lem"}, None, {"wit": "C", "fallback": "lem"}]
+    # Texte établi : signalé quand il n'y a ni <lem> ni leçon du témoin choisi.
+    reading = _chosen('<div><p><app><rdg wit="#A">iste</rdg><rdg wit="#B">ille</rdg></app> '
+                      '<app><lem>x</lem><rdg wit="#A">y</rdg></app></p></div>', text_mode="established",
+                      text_witness="C")
+    assert [seg["missing"] for seg in _segments(reading) if seg.get("missing")] == [{"wit": "C", "fallback": "A"}]
+    assert reading["missing_readings"] == 1
+    # Sans choix, le témoin choisi est le pivot (A), absent du troisième <app>.
+    assert _chosen(body)["missing_readings"] == 1
+
+
+def test_the_lines_of_the_pivot_in_a_reading_not_shown_keep_their_keys():
+    # Une ligne du pivot ouverte dans sa leçon non affichée garde sa clé : au
+    # début de l'<app> si elle précède le texte de cette leçon, sinon à la
+    # fin ; sans espace ni mot soudé. Un <lb/> sans @edRef d'une leçon
+    # affichée d'un autre témoin n'est pas une ligne du pivot.
+    body = ('<div><p><lb edRef="#A"/>a <app><lem wit="#B">il<lb/>le</lem><rdg wit="#A">is<lb edRef="#A" '
+            'break="no"/>te</rdg></app> b <app><lem wit="#B">alter</lem><rdg wit="#A"><lb edRef="#A"/>alius</rdg>'
+            '</app> c</p></div>')
+    reading = _chosen(body, keys=["P::1", "P::2", "P::3"], text_mode="established")
+    assert _text(reading["blocks"][1]) == "a ille b alter c"
+    keys = [(seg["text"].strip(), seg["line_key"]) for seg in _segments(reading) if seg["kind"] == "text"]
+    assert keys == [("a", "P::1"), ("ille", "P::1"), ("b", "P::2"), ("alter", "P::3"), ("c", "P::3")]
+
+
+def test_a_page_of_the_pivot_in_a_reading_not_shown_is_kept():
+    reading = _chosen('<div><p>a <app><lem wit="#B">ille</lem><rdg wit="#A">iste <pb edRef="#A" n="2r"/></rdg>'
+                      '</app> b</p></div>', text_mode="established")
+    assert [(seg["label"], seg["foreign"]) for seg in _segments(reading) if seg["kind"] == "pb"] == [("2r", False)]
