@@ -900,7 +900,7 @@ def test_each_help_explains_the_reading_text_of_the_web_viewer():
         paragraph = viewer[viewer.index('<p id="viewer-text">'):]
         paragraph = paragraph[:paragraph.index("</p>")]
         for name in ("head", "front", "back", "group", "lg", "l", "table", "note", "choice", "del", "add",
-                     "supplied", "gap", "rdgGrp"):
+                     "supplied", "gap", "rdgGrp", "cit", "ref"):
             assert f"<code>&lt;{name}&gt;</code>" in paragraph, (language, name)
         for attribute in ("@n", "@xml:id", "@xml:lang", '@role="label"', "@cols", "@rows"):
             assert f"<code>{attribute}</code>" in paragraph, (language, attribute)
@@ -912,6 +912,7 @@ def test_each_help_announces_version_0930():
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
         version = _help_section(page, "v0930")
         for text in ('href="#viewer-text"', "<code>&lt;table&gt;</code>", "<code>&lt;rdgGrp&gt;</code>",
-                     "<code>@xml:id</code>", "<code>project.xml</code>"):
+                     "<code>@xml:id</code>", "<code>project.xml</code>", "<code>&lt;cit&gt;</code>",
+                     "<code>&lt;ref&gt;</code>", '<code>type="bible"</code>', "✎", "XPath"):
             assert text in version, (language, text)
         assert page.index('<section id="v0929">') < page.index('<section id="v0930">'), language

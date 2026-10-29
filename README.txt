@@ -29,6 +29,19 @@ VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
 • Feuille de l'aperçu (tei-to-html.xsl, scénario « Édition HTML ») et
   « Édition critique » : tableaux avec légende, en-têtes et cellules
   fusionnées ; le crayon ✎ d'un tableau entre dans sa légende.
+• Références des citations : dans l'aperçu de la Vue XSLT / CSS, le <ref>
+  d'une <cit> (autrefois omis) suit la citation, entre chevrons et en gris.
+  Dans « Édition critique » et le viewer web, le <ref> d'une
+  <cit type="bible"> est entre chevrons ; celui d'une autre <cit> est une
+  note (dans l'Édition critique, appelée par une lettre comme les autres
+  notes ; dans le viewer, un rond « n »). Un <ref> hors d'une <cit> ne
+  change pas.
+• Le crayon ✎ de l'aperçu est un petit signe gris, et non plus un lien
+  bleu souligné : ses règles de style, ajoutées après la CSS du projet,
+  étaient ignorées par Qt.
+• Un résultat de recherche XPath sélectionné dans la source reste
+  sélectionné en passant à la Vue XSLT / CSS, même s'il contient un apparat
+  ou s'il s'agit d'un paragraphe entier (seule la position était gardée).
 • Vue XSLT / CSS : une strophe (<lg>) est un seul bloc en retrait, ses
   vers séparés par des retours à la ligne ; auparavant, l'aperçu (Qt), qui
   ne regroupe pas des blocs imbriqués, en faisait autant de paragraphes.
