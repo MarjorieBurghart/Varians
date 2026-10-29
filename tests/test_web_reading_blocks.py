@@ -203,7 +203,7 @@ def test_lacunae_stay_in_place_in_rendered_blocks():
 def test_an_anonymous_block_is_a_paragraph_and_a_variant_keeps_one_reading():
     reading = _reading('<div><ab>x <app><lem wit="#A">ille</lem><rdg wit="#B">iste</rdg></app></ab>'
                        '<quote><p>q1</p><p>q2</p></quote>'
-                       '<cit><quote>Verbum</quote><ref>Io 1, 1</ref></cit></div>')
+                       '<cit type="bible"><quote>Verbum</quote><ref>Io 1, 1</ref></cit></div>')
     assert _blocks(reading)[1:] == [("p", "x ille", {}), ("p", "q1", {}), ("p", "q2", {}), ("p", "Verbum", {})]
     cit = reading["blocks"][-1]["segments"]
     assert [seg["kind"] for seg in cit] == ["text", "editorial-ref"]
@@ -316,3 +316,19 @@ def test_the_lines_for_the_facsimile_show_one_form_of_a_choice_and_a_reading_gro
                  '<app><lem wit="#B">ille</lem><rdgGrp><rdg wit="#A">iste</rdg></rdgGrp></app></p></div>')
     pages, _labels = extract_corrected_pages(None, "#A", root=root, base_line_keys=["P::1"])
     assert pages["P"][0]["text"] == "Isti erant iste"
+
+
+def test_the_reference_of_a_biblical_quotation_stays_in_angle_brackets_the_others_are_notes():
+    """V0.9.3.0 : comme « Édition critique », le <ref> d'une <cit
+    type="bible"> reste une référence entre chevrons ; celui d'une autre
+    <cit> est un repère de note ; un <ref> hors d'une <cit> ne change pas."""
+    reading = _reading('<div><p>Dixit <cit type="bible"><quote>Uos estis</quote><ref>Lc. 22:28</ref></cit> et '
+                       '<cit><quote>Ait Augustinus</quote><ref>Aug. Conf. 1</ref></cit> '
+                       '<ref target="#x">alia</ref>.</p></div>')
+    segments = reading["blocks"][1]["segments"]
+    assert [(seg["kind"], seg.get("text", "").strip()) for seg in segments if seg["kind"] != "text"] == [
+        ("editorial-ref", "Lc. 22:28"), ("note", ""), ("editorial-ref", "alia")]
+    note = next(seg for seg in segments if seg["kind"] == "note")
+    annotation = reading["annotations"][note["ann_id"]]
+    assert (annotation["kind"], annotation["text"], annotation["type"]) == ("note", "Aug. Conf. 1", "ref")
+    assert "Aug." not in _text(reading["blocks"][1])

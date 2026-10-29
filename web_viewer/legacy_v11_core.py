@@ -215,6 +215,20 @@ def reading_texts(root: ET.Element):
     return found
 
 
+def cit_is_biblical(cit) -> bool:
+    """Une citation biblique : son ``@type`` contient « bible »."""
+    return "bible" in (cit.attrib.get("type") or "").split()
+
+
+def reference_notes(root) -> set:
+    """``{id(ref)}`` des ``<ref>`` qui sont des notes (V0.9.3.0, comme
+    « Édition critique ») : le ``<ref>`` d'une ``<cit>`` qui n'est pas
+    biblique. Celui d'une citation biblique, ou hors d'une ``<cit>``, reste
+    une référence éditoriale entre chevrons."""
+    return {id(ref) for cit in root.iter() if lname(cit.tag) == "cit" and not cit_is_biblical(cit)
+            for ref in cit if lname(ref.tag) == "ref"}
+
+
 def _phrase_only(node) -> bool:
     """Vrai si ``node`` ne contient que du contenu de phrase (``PHRASE_TAGS``) ;
     le contenu d'une note n'est pas examiné."""
@@ -545,6 +559,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     for text in texts:
         lacunae.update(lacuna_witnesses(text))
     taken_ids = {e.attrib.get(XML_ID) for e in root.iter()}
+    ref_notes = reference_notes(root)
 
     blocks = []
     annotations = {}
@@ -796,7 +811,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if tag in LACUNA_TAGS:
             add_lacuna(node)
             return
-        if tag == "note":
+        if tag == "note" or (tag == "ref" and id(node) in ref_notes):
+            # La référence d'une citation non biblique est une note (V0.9.3.0).
             add_lacunae_in(node)
             enter(node)
             txt = flatten_editorial_text(node, include_notes=True, include_refs=True)
@@ -804,7 +820,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 aid = new_ann_id("n")
                 annotations[aid] = {
                     "id": aid, "kind": "note", "text": txt,
-                    "type": node.attrib.get("type", ""),
+                    "type": "ref" if tag == "ref" else node.attrib.get("type", ""),
                     "anchored": node.attrib.get("anchored", ""),
                 }
                 add_marker("note", aid, txt)
