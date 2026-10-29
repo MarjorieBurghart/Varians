@@ -259,7 +259,8 @@ def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenar
     scenarios.append(TransformScenario(name("edition-critique"), VARIANS_PREFIX + "edition-critique.xsl",
                                        "publications/edition-critique.html", engine="saxon",
                                        params=(("temoin-de-base", PIVOT), ("montrer-folios", "true"),
-                                               ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false"))))
+                                               ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false"),
+                                               ("surligner-hors-lemme", "false"))))
     languages = (("lang", language), ("documentationLanguage", language)) if language else ()
     for key, profile, output, package in TEI_SCENARIOS:
         css, params = "", ()
@@ -393,6 +394,9 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
 # notes) : la boîte d'un scénario le propose dans une liste (V0.9.2.7).
 WITNESS_PARAM = "temoin-de-base"
 NO_WITNESS = "aucun"
+# Paramètres oui/non de l'édition critique (true, false) : une case à cocher
+# dans la boîte d'un scénario (V0.9.3.1).
+BOOLEAN_PARAMS = ("montrer-folios", "montrer-numeros-de-vers", "sauts-lb", "surligner-hors-lemme")
 
 
 def witness_choices(project) -> list[str]:

@@ -298,7 +298,8 @@ def test_the_critical_edition_is_predefined_after_the_edition_of_varians(project
     assert critique == TransformScenario(
         "Édition critique (HTML)", "${varians}/edition-critique.xsl", "publications/edition-critique.html",
         engine="saxon", params=(("temoin-de-base", "${pivot}"), ("montrer-folios", "true"),
-                                ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false")))
+                                ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false"),
+                                ("surligner-hors-lemme", "false")))
     assert scenario_problems(critique, project) == []
     assert dict(scenario_request(critique, project)["params"])["temoin-de-base"] == "A"      # le pivot
 

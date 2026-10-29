@@ -26,7 +26,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
-    QAbstractItemView, QButtonGroup, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout,
+    QAbstractItemView, QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout,
     QHeaderView, QLineEdit, QMenu, QMessageBox, QProgressDialog, QPushButton, QRadioButton, QTableWidget,
     QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
@@ -39,7 +39,7 @@ from tei_stylesheets_ui import TeiStylesheetsDialog
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
-from xslt_scenarios import (NO_WITNESS, PIVOT, TEI_PREFIX, VARIANS_PREFIX, WITNESS_PARAM, customization_name,
+from xslt_scenarios import (BOOLEAN_PARAMS, NO_WITNESS, PIVOT, TEI_PREFIX, VARIANS_PREFIX, WITNESS_PARAM, customization_name,
                             customization_text, included_stylesheets, predefined_scenarios, project_sources,
                             resolve_path, saxon_available, scenario_path, scenario_problems, scenario_request,
                             scenario_source, stylesheet_path, witness_choices)
@@ -79,6 +79,14 @@ def predefined():
     i18n = current_i18n()
     return predefined_scenarios(lambda key: _t("preview.toc") if key == "toc" else _t(f"transform.predefined.{key}"),
                                 i18n.language if i18n is not None else None)
+
+
+def _widget_value(widget):
+    """La valeur d'un paramètre choisie dans sa cellule : le menu des témoins
+    (sa donnée) ou la case oui/non (``true``, ``false``)."""
+    if isinstance(widget, QCheckBox):
+        return "true" if widget.isChecked() else "false"
+    return widget.currentData()
 
 
 class _PathField(QWidget):
@@ -267,18 +275,34 @@ class ScenarioDialog(QDialog):
         le témoin pivot en tête (enregistré ``${pivot}``), les autres témoins,
         « aucun » ; sans valeur, le pivot ; une autre valeur est gardée telle
         quelle. Le menu garde la valeur : la cellule, dessous, reste vide (son
-        texte se voyait à travers le menu sous Windows)."""
+        texte se voyait à travers le menu sous Windows). Un paramètre oui/non
+        de l'édition critique (``BOOLEAN_PARAMS``) valant true, false ou rien
+        est une case à cocher (V0.9.3.1)."""
         name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
         if name_item is None or value_item is None:
             return
-        combo = self.params_table.cellWidget(row, 1)
-        if name_item.text().strip() != WITNESS_PARAM:
-            if combo is not None:
-                value_item.setText(combo.currentData())
-                value_item.setFlags(value_item.flags() | Qt.ItemFlag.ItemIsEditable)
-                self.params_table.removeCellWidget(row, 1)
+        widget = self.params_table.cellWidget(row, 1)
+        name = name_item.text().strip()
+        if name == WITNESS_PARAM:
+            wanted = QComboBox
+        elif name in BOOLEAN_PARAMS and (isinstance(widget, QCheckBox)
+                                         or value_item.text().strip() in ("", "true", "false")):
+            wanted = QCheckBox
+        else:
+            wanted = None
+        if widget is not None and (wanted is None or not isinstance(widget, wanted)):
+            value_item.setText(_widget_value(widget))
+            value_item.setFlags(value_item.flags() | Qt.ItemFlag.ItemIsEditable)
+            self.params_table.removeCellWidget(row, 1)
+            widget = None
+        if wanted is None or widget is not None:
             return
-        if combo is not None:
+        if wanted is QCheckBox:
+            box = QCheckBox(self.params_table)
+            box.setChecked(value_item.text().strip() == "true")
+            value_item.setText("")
+            value_item.setFlags(value_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.params_table.setCellWidget(row, 1, box)
             return
         if self._witnesses is None:
             self._witnesses = witness_choices(self._project)
@@ -313,9 +337,9 @@ class ScenarioDialog(QDialog):
         for row in range(self.params_table.rowCount()):
             name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
             name = (name_item.text() if name_item else "").strip()
-            combo = self.params_table.cellWidget(row, 1)
+            widget = self.params_table.cellWidget(row, 1)
             if name and name not in params:
-                params[name] = combo.currentData() if combo is not None else (value_item.text() if value_item else "")
+                params[name] = _widget_value(widget) if widget is not None else (value_item.text() if value_item else "")
         return tuple(params.items())
 
     def scenario(self):

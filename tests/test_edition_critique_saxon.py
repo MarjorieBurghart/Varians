@@ -6,6 +6,7 @@ retouche, puis le scénario prédéfini sur le jeu d'essai « sermons ». Tests
 ignorés sans Saxon."""
 from __future__ import annotations
 
+import os
 import re
 import shutil
 from pathlib import Path
@@ -307,6 +308,75 @@ def test_the_parentheses_of_a_stage_direction_hug_its_text(project):
     result, tree = _edition(project, name)
     assert result.ok, result.error
     assert [e.text_content() for e in tree.find(".//main").find_class("didascalie")] == ["(ridet)", "(Exeunt)"]
+
+
+# --- Leçons hors <lem> surlignées (V0.9.3.1) -----------------------------------------------------
+# Le texte d'une leçon retenue qui n'est pas un <lem> (et tout ce qu'elle
+# contient) est marqué ; une case de la page le surligne en jaune, cochée au
+# départ selon le paramètre surligner-hors-lemme (non, par défaut).
+
+HORS_LEMME = ('<div><p>a <app><lem wit="#B">ille</lem><rdg wit="#A">iste</rdg></app> b'
+              '<app><rdg wit="#A"> seruos <hi rend="italic">solent</hi> nunc </rdg><rdg wit="#B">z</rdg></app>c '
+              '<app><rdg wit="#A">d<app><lem wit="#A">x</lem><rdg wit="#B">y</rdg></app></rdg>'
+              '<rdg wit="#C">k</rdg></app></p></div>')
+
+
+def _body_classes(tree):
+    return (tree.find(".//body").get("class") or "").split()
+
+
+def test_the_readings_outside_a_lem_are_marked_and_a_box_of_the_page_highlights_them(project):
+    name = _write(project, "hors-lemme.xml", HORS_LEMME)
+    result, tree = _edition(project, name, "A")
+    assert result.ok, result.error
+    assert _main(tree)[0] == "a ille b seruos solent nunc c dx"
+    # Les mots de la leçon, sans les blancs qui l'entourent ; un <app> dans
+    # une leçon hors <lem> l'est tout entier ; rien dans l'apparat.
+    assert [m.text_content() for m in tree.find(".//main").find_class("hors-lemme")] == \
+        ["seruos ", "solent", " nunc", "d", "x"]
+    assert not tree.xpath("//aside//*[contains(@class, 'hors-lemme')]")
+    box = tree.get_element_by_id("surligner")
+    assert box.get("type") == "checkbox" and box.get("checked") is None
+    assert _text(box.getparent()) == "Surligner les leçons hors <lem>"
+    assert "surligner" not in _body_classes(tree)
+    css = "".join(tree.xpath("//style/text()"))
+    assert ".surligner .hors-lemme" in css and "#ffd84d" in css
+    # Le paramètre fixe l'état de départ.
+    _result, tree = _edition(project, name, "A", **{"surligner-hors-lemme": "true"})
+    assert tree.get_element_by_id("surligner").get("checked") is not None and "surligner" in _body_classes(tree)
+
+
+def test_without_readings_outside_a_lem_the_page_has_no_box(project):
+    name = _write(project, "lemmes.xml", '<div><p>a <app><lem wit="#A">b</lem><rdg wit="#B">c</rdg></app> d</p></div>')
+    result, tree = _edition(project, name, "A", **{"surligner-hors-lemme": "true"})
+    assert result.ok, result.error
+    assert not tree.find_class("hors-lemme") and not tree.xpath("//*[@id='surligner']")
+    assert "surligner" not in _body_classes(tree)
+
+
+def test_the_box_of_the_page_highlights_in_a_browser(project):
+    sync_api = pytest.importorskip("playwright.sync_api")
+    name = _write(project, "hors-lemme.xml", HORS_LEMME)
+    assert _edition(project, name, "A")[0].ok
+    output = project.root_dir / "publications" / "critique.html"
+    with sync_api.sync_playwright() as playwright:
+        try:
+            browser = playwright.chromium.launch(headless=True, executable_path=os.environ.get("CHROMIUM") or None,
+                                                 args=["--no-sandbox"])
+        except Exception as exc:          # Chromium absent
+            pytest.skip(f"Chromium indisponible : {exc}")
+        page = browser.new_page()
+        errors = []
+        page.on("pageerror", lambda error: errors.append(str(error)))
+        page.goto(output.as_uri())
+        image = "()=>getComputedStyle(document.querySelector('.hors-lemme')).backgroundImage"
+        assert page.evaluate(image) == "none"
+        page.click("#surligner")
+        assert "linear-gradient" in page.evaluate(image)
+        page.click("#surligner")
+        assert page.evaluate(image) == "none"
+        assert not errors, errors
+        browser.close()
 
 
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):

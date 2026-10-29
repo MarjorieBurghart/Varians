@@ -21,8 +21,12 @@
   - Vers (<l>, <lg>) et strophes gardent leur structure ; divisions,
     citations, listes, tableaux, répliques et marques de transcription sont
     rendues ; un élément inconnu laisse passer son texte.
+  - Leçons hors <lem> (V0.9.3.1) : le texte d'une leçon retenue qui n'est
+    pas un <lem> est marqué (classe hors-lemme) ; une case de la page,
+    « Surligner les leçons hors <lem> », le surligne en jaune.
   Paramètres : temoin-de-base, montrer-folios, montrer-numeros-de-vers,
-  sauts-lb (un saut de ligne du témoin choisi par <br>).
+  sauts-lb (un saut de ligne du témoin choisi par <br>),
+  surligner-hors-lemme (case cochée au départ).
 -->
 <xsl:stylesheet version="3.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -47,6 +51,12 @@
   <!-- Un <lb> est un repère de transcription ; avec sauts-lb, ceux du
        témoin choisi deviennent des sauts de ligne. -->
   <xsl:param name="sauts-lb" as="xs:boolean" select="false()"/>
+  <!-- Leçons hors <lem> surlignées au départ ; le lecteur coche ou décoche
+       la case de la page. -->
+  <xsl:param name="surligner-hors-lemme" as="xs:boolean" select="false()"/>
+  <!-- Une leçon retenue qui n'est pas un <lem>, dans le texte établi. -->
+  <xsl:variable name="hors-lemme" as="xs:boolean"
+    select="exists(/tei:TEI/tei:text//tei:app[not(ancestor::tei:note)][f:choix(.)/self::tei:rdg][f:dans-texte-etabli(.)])"/>
 
   <!-- L'unité de l'apparat : la division la plus proche (div, div1…div7),
        à défaut front, body ou back. -->
@@ -199,6 +209,9 @@
           .groupe-vers-variant {display:inline-block; vertical-align:top; margin:0 .2em;}
           .vers-variant {display:block; white-space:normal;}
           .mention {font-size:.8rem; color:var(--secondaire); text-align:center; margin-top:3rem;}
+          .surlignage {text-align:center; font-size:.85em; color:var(--secondaire); margin:-.6em 0 1.5em;}
+          .surlignage input {vertical-align:-.1em; margin-right:.4em;}
+          .surligner .hors-lemme {background-image:linear-gradient(transparent 60%, #ffd84d 60%);}
           @page {size:A4; margin:22mm 24mm;}
           @media print {
             html {background:white;} body {max-width:none; margin:0; padding:0; box-shadow:none;
@@ -206,6 +219,7 @@
             .division {break-before:auto;}
             .appareil {break-before:avoid;}
             .strophe,.vers,.appareil li {break-inside:avoid;}
+            .surlignage {display:none;}
           }
           @media (max-width:650px) {
             body {margin:0; padding:1.3rem 1rem; font-size:16px; box-shadow:none;}
@@ -215,6 +229,7 @@
         </style>
       </head>
       <body>
+        <xsl:if test="$hors-lemme and $surligner-hors-lemme"><xsl:attribute name="class">surligner</xsl:attribute></xsl:if>
         <header>
           <h1>Édition critique</h1>
           <p class="source"><xsl:value-of select="$titre"/></p>
@@ -225,6 +240,11 @@
                 select="if ($f:temoin ne '') then f:sigle($f:temoin) else 'non défini'"/></i>.</xsl:otherwise>
             </xsl:choose>
             Les variantes rejetées figurent dans l'apparat.</p>
+          <xsl:if test="$hors-lemme">
+            <p class="surlignage"><label><input type="checkbox" id="surligner">
+              <xsl:if test="$surligner-hors-lemme"><xsl:attribute name="checked">checked</xsl:attribute></xsl:if>
+            </input>Surligner les leçons hors &lt;lem&gt;</label></p>
+          </xsl:if>
         </header>
         <xsl:if test="tei:teiHeader//tei:listWit/tei:witness">
           <section class="temoins"><h2>Sigles des témoins</h2><dl>
@@ -248,6 +268,14 @@
           <xsl:apply-templates select="tei:text/tei:front | tei:text/tei:body | tei:text/tei:back" mode="base"/>
         </main>
         <footer class="mention">Édition produite à partir d'un document TEI · Apparat par division</footer>
+        <xsl:if test="$hors-lemme">
+          <script>
+            var surligner = document.getElementById('surligner');
+            function suivre() { document.body.classList.toggle('surligner', surligner.checked); }
+            surligner.addEventListener('change', suivre);
+            suivre();
+          </script>
+        </xsl:if>
       </body>
     </html>
   </xsl:template>
@@ -427,6 +455,25 @@
   </xsl:template>
   <xsl:template match="text()" mode="base lecture">
     <xsl:value-of select="f:texte-net(.)"/>
+  </xsl:template>
+  <!-- Le texte d'une leçon retenue hors <lem>, et tout ce qu'elle contient :
+       marqué, sans les blancs au bord de la leçon (V0.9.3.1). -->
+  <xsl:template match="text()[ancestor::tei:rdg[ancestor::tei:app]]" mode="base">
+    <xsl:variable name="s" select="f:texte-net(.)"/>
+    <xsl:variable name="textes" select="ancestor::tei:rdg[ancestor::tei:app][last()]//text()
+      [not(ancestor::tei:note)][f:dans-texte-etabli(.)][normalize-space()]"/>
+    <xsl:variable name="debut" select="if (. is $textes[1])
+      then string-length($s) - string-length(replace($s, '^\s+', '')) else 0"/>
+    <xsl:variable name="fin" select="if (. is $textes[last()])
+      then string-length($s) - string-length(replace($s, '\s+$', '')) else 0"/>
+    <xsl:choose>
+      <xsl:when test="normalize-space($s) = ''"><xsl:value-of select="$s"/></xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="substring($s, 1, $debut)"/>
+        <span class="hors-lemme"><xsl:value-of select="substring($s, $debut + 1, string-length($s) - $debut - $fin)"/></span>
+        <xsl:value-of select="substring($s, string-length($s) - $fin + 1)"/>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:lem | tei:rdg | tei:rdgGrp | tei:cit | tei:seg | tei:anchor" mode="base lecture">
     <xsl:apply-templates mode="#current"/>
