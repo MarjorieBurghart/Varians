@@ -134,6 +134,7 @@ L’inserimento è stato annullato per evitare una marcatura imprevista.</string
   <string key="file.open.error.title">Impossibile aprire il file</string>
   <string key="file.save_as.title">Salva edizione TEI</string>
   <string key="file.save.error.title">Errore di salvataggio</string>
+  <string key="file.save.read_only">Il file {path} è di sola lettura: Varians non lo sostituisce. Salvalo con un altro nome ({menu} ▸ {command}), oppure rendilo modificabile e salva di nuovo.</string>
   <string key="file.structure.title">Struttura {base} modificata</string>
   <string key="file.structure.text">L’XML contiene {count} righe {base} invece di {expected}.
 

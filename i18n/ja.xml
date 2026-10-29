@@ -134,6 +134,7 @@
   <string key="file.open.error.title">ファイルを開けません</string>
   <string key="file.save_as.title">TEI校訂本文を保存</string>
   <string key="file.save.error.title">保存エラー</string>
+  <string key="file.save.read_only">ファイル {path} は読み取り専用のため、Varians は置き換えません。別の名前で保存するか（{menu} ▸ {command}）、書き込み可能にしてから保存し直してください。</string>
   <string key="file.structure.title">{base} の構造が変更されました</string>
   <string key="file.structure.text">XMLには{expected}行ではなく{count}行の{base}行があります。
 

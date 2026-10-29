@@ -7,7 +7,7 @@ from pathlib import Path
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app_context import call_later, HERE, tr as _t
-from save_io import atomic_write_text_with_backup
+from save_io import ReadOnlyFileError, atomic_write_text_with_backup
 from xml_assembly import find_includes
 
 
@@ -120,6 +120,10 @@ class DocumentIOMixin:
         try:
             path=Path(path)
             atomic_write_text_with_backup(path, text, encoding="utf-8")
+        except ReadOnlyFileError:
+            QMessageBox.critical(self, _t("file.save.error.title"),
+                                 _t("file.save.read_only", path=path, menu=_t("menu.file"), command=_t("toolbar.save_as")))
+            return False
         except Exception as exc:
             QMessageBox.critical(self,_t("file.save.error.title"),str(exc)); return False
         self.document.mark_saved(path)

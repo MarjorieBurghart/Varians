@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -73,6 +72,7 @@ from app_context import (
     forget_open_project,
 )
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
+from save_io import atomic_write_text_with_backup
 from pivot_lines import pivot_lb_pattern
 from formatted_view import (
     _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget,
@@ -241,9 +241,7 @@ class CtrlEConfigDialog(QDialog):
             QMessageBox.warning(self, _t("ctrl_e.config.editor.invalid.title"), str(exc))
             return False
         try:
-            if self.path.exists():
-                shutil.copy2(self.path, self.path.with_suffix(self.path.suffix + ".bak"))
-            self.path.write_text(text, encoding="utf-8")
+            atomic_write_text_with_backup(self.path, text)          # .bak, écriture atomique
             self.editor.document().setModified(False)
             QMessageBox.information(self, _t("ctrl_e.config.editor.saved.title"), _t("ctrl_e.config.editor.saved", path=self.path))
             return True

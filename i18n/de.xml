@@ -134,6 +134,7 @@ Die Einfügung wurde abgebrochen, um unerwartetes Markup zu vermeiden.</string>
   <string key="file.open.error.title">Datei konnte nicht geöffnet werden</string>
   <string key="file.save_as.title">TEI-Edition speichern</string>
   <string key="file.save.error.title">Fehler beim Speichern</string>
+  <string key="file.save.read_only">Die Datei {path} ist schreibgeschützt: Varians ersetzt sie nicht. Speichern Sie sie unter einem anderen Namen ({menu} ▸ {command}) oder heben Sie den Schreibschutz auf und speichern Sie erneut.</string>
   <string key="file.structure.title">Struktur von {base} geändert</string>
   <string key="file.structure.text">Das XML enthält {count} Zeilen für {base} statt {expected}.
 

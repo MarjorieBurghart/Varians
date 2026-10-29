@@ -127,6 +127,7 @@
   <string key="file.open.error.title">Could not open file</string>
   <string key="file.save_as.title">Save TEI edition</string>
   <string key="file.save.error.title">Save error</string>
+  <string key="file.save.read_only">The file {path} is read-only: Varians does not replace it. Save it under another name ({menu} ▸ {command}), or make it writable and save again.</string>
   <string key="file.structure.title">{base} structure changed</string>
   <string key="file.structure.text">The XML contains {count} {base} lines instead of {expected}.\n\nThe file can be saved, but the image alignment caches will then need to be realigned.</string>
   <string key="file.unsaved.title">Unsaved changes</string>

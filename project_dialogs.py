@@ -1394,4 +1394,7 @@ class ProjectSettingsDialog(QDialog):
             xpath_queries=list(self.project.xpath_queries),
             parts=list(self.project.parts),
             transformations=list(self.project.transformations),
+            web_text_mode=self.project.web_text_mode,
+            web_text_witness=self.project.web_text_witness,
+            web_highlight_nonlem=self.project.web_highlight_nonlem,
         )

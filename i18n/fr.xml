@@ -127,6 +127,7 @@
   <string key="file.open.error.title">Impossible d'ouvrir le fichier</string>
   <string key="file.save_as.title">Enregistrer l'édition TEI</string>
   <string key="file.save.error.title">Erreur d'enregistrement</string>
+  <string key="file.save.read_only">Le fichier {path} est en lecture seule : Varians ne le remplace pas. Enregistrez-le sous un autre nom ({menu} ▸ {command}), ou rendez-le modifiable, puis enregistrez de nouveau.</string>
   <string key="file.structure.title">Structure {base} modifiée</string>
   <string key="file.structure.text">Le XML contient {count} lignes {base} au lieu de {expected}.\n\nLe fichier peut être sauvegardé, mais les caches d'images devront ensuite être réalignés.</string>
   <string key="file.unsaved.title">Modifications non enregistrées</string>

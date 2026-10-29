@@ -12,6 +12,7 @@ import shutil
 import tempfile
 import xml.etree.ElementTree as ET
 
+from save_io import XmlFile
 from project_config import DEFAULT_APPLICATION_XSLT, WEB_TEXT_MODES, DocumentConfig
 
 
@@ -99,6 +100,11 @@ class ProjectDraft:
     xpath_queries: list = field(default_factory=list)
     parts: list = field(default_factory=list)
     transformations: list = field(default_factory=list)
+    # Choix du texte du viewer web (V0.9.3.0, V0.9.3.1) : gardé quand
+    # Projet ▸ Paramètres… réécrit project.xml (red team, A6).
+    web_text_mode: str = "established"
+    web_text_witness: str = ""
+    web_highlight_nonlem: bool = False
 
 
 
@@ -251,10 +257,16 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
     if draft.xslt_mode == "file":
         rendering_attrs["xslt"] = portable_path(root_dir, draft.xslt)
     ET.SubElement(root, "rendering", rendering_attrs)
-    ET.SubElement(root, "webViewer", {
+    web_el = ET.SubElement(root, "webViewer", {
         "outputDir": portable_path(root_dir, draft.web_output_dir),
         "filename": draft.web_filename or "viewer.html",
     })
+    if draft.web_text_mode != "established" or draft.web_text_witness.strip():
+        web_el.set("text", draft.web_text_mode if draft.web_text_mode in WEB_TEXT_MODES else "established")
+    if draft.web_text_witness.strip():
+        web_el.set("textWitness", draft.web_text_witness.strip())
+    if draft.web_highlight_nonlem:
+        web_el.set("highlightNonLem", "true")
     witnesses_el = ET.SubElement(root, "witnesses", {"base": draft.base_witness})
     for w in draft.witnesses:
         attrs = {"id": w.id.strip()}
@@ -353,11 +365,9 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
     if transformations_el is not None:
         root.append(transformations_el)
 
-    tree = ET.ElementTree(root)
-    ET.indent(tree, space="  ")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tree.write(path, encoding="utf-8", xml_declaration=True)
-    return path
+    # Écriture atomique, ancienne version en .bak, commentaires d'avant et
+    # d'après l'élément racine gardés (red team, A5, A8).
+    return XmlFile(path, ET.ElementTree(root)).write()
 
 
 def documents_element(root_dir: Path, documents) -> ET.Element | None:
@@ -462,8 +472,8 @@ def update_project_web_text(path: str | Path, mode: str, witness: str = "",
     if mode not in WEB_TEXT_MODES:
         raise ValueError(f"Choix du texte inconnu : {mode}")
     path = Path(path).expanduser().resolve()
-    tree = _parse_project(path)
-    root = tree.getroot()
+    project = XmlFile(path)
+    root = project.tree.getroot()
     web_el = root.find("webViewer")
     if web_el is None:
         web_el = ET.Element("webViewer", {"outputDir": "web_output", "filename": "viewer.html"})
@@ -478,28 +488,15 @@ def update_project_web_text(path: str | Path, mode: str, witness: str = "",
         web_el.set("highlightNonLem", "true")
     elif highlight_nonlem is not None:
         web_el.attrib.pop("highlightNonLem", None)
-    return _write_project(path, tree)
-
-
-def _parse_project(path: Path) -> ET.ElementTree:
-    """project.xml, commentaires et instructions de traitement compris."""
-    parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True))
-    return ET.parse(path, parser)
-
-
-def _write_project(path: Path, tree: ET.ElementTree) -> Path:
-    """Écrit project.xml, après une copie ``.bak`` de l'ancienne version."""
-    shutil.copy2(path, path.with_suffix(path.suffix + ".bak"))
-    ET.indent(tree, space="  ")
-    tree.write(path, encoding="utf-8", xml_declaration=True)
-    return path
+    return project.write()
 
 
 def _replace_project_element(path: Path, tag: str, new_el: ET.Element | None) -> Path:
     """Remplace (ou retire, si ``new_el`` est None) l'élément ``tag`` de
-    project.xml, à sa place, sans toucher au reste ; copie ``.bak`` préalable."""
-    tree = _parse_project(path)
-    root = tree.getroot()
+    project.xml, à sa place, sans toucher au reste (commentaires compris) ;
+    écriture atomique, ancienne version en ``.bak`` (``save_io.XmlFile``)."""
+    project = XmlFile(path)
+    root = project.tree.getroot()
     old_el = root.find(tag)
     if old_el is not None:
         index = list(root).index(old_el)
@@ -508,7 +505,7 @@ def _replace_project_element(path: Path, tag: str, new_el: ET.Element | None) ->
             root.insert(index, new_el)
     elif new_el is not None:
         root.append(new_el)
-    return _write_project(path, tree)
+    return project.write()
 
 
 

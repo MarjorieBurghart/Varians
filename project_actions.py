@@ -248,8 +248,7 @@ class ProjectActionsMixin:
             # initialiser une copie locale si elle n'existe pas, sans jamais
             # remplacer un fichier personnalisé déjà présent.
             create_local_xslt_if_needed(self.project.path.parent, draft)
-            if self.project.path.exists():
-                shutil.copy2(self.project.path, self.project.path.with_suffix(self.project.path.suffix + ".bak"))
+            # Écriture atomique, ancienne version en .bak (save_io).
             write_project_xml(self.project.path, draft)
             # Existing TEI surfaces belong to the edition. They are never
             # silently deleted when a new IIIF page selection excludes them.
