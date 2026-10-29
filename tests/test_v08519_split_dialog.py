@@ -200,4 +200,5 @@ def test_all_seven_translations_and_help_include_fix():
         strings={x.get('key'):x.text for x in root.findall('string')}
         for name in ('no_surface_ref','page_not_found','xml_invalid','missing_surface','existing_zones','created_synced'):
             assert strings[f'folio.split.{name}']
-        assert '0.8.5.19' in (ROOT/'help'/f'{lang}.html').read_text(encoding='utf-8')
+        # V0.9.3.1 : l'aide n'annonce plus les versions ; elle nomme le bouton.
+        assert strings['folio.split.button'] in (ROOT/'help'/f'{lang}.html').read_text(encoding='utf-8')

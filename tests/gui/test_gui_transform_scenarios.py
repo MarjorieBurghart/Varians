@@ -204,7 +204,7 @@ def test_the_witness_parameter_is_chosen_in_a_list(open_window, sermons_project,
 
     def choose(dialog):
         combo = dialog.params_table.cellWidget(0, 1)
-        seen["combo"] = isinstance(combo, QComboBox) and dialog.params_table.cellWidget(1, 1) is None
+        seen["combo"] = isinstance(combo, QComboBox) and not isinstance(dialog.params_table.cellWidget(1, 1), QComboBox)
         seen["items"] = [(combo.itemText(i), combo.itemData(i)) for i in range(combo.count())]
         seen["current"] = combo.currentData()
         combo.setCurrentIndex(combo.findData("C"))
@@ -251,6 +251,97 @@ def test_the_witness_parameter_is_chosen_in_a_list(open_window, sermons_project,
     saved = load_project(sermons_project).transformations
     assert saved[0].params == (("temoin-de-base", "C"), ("montrer-folios", "true"))
     assert saved[1].params == (("temoin-de-base", "#Z"),)
+
+
+def test_the_switches_of_the_critical_edition_are_checkboxes(open_window, sermons_project, dialogs):
+    # V0.9.3.1 : montrer-folios, montrer-numeros-de-vers, sauts-lb et
+    # surligner-hors-lemme valent true ou false ; une case à cocher les
+    # donne. Une autre valeur reste un texte.
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QCheckBox
+    critique = TransformScenario("Critique", "${varians}/edition-critique.xsl", "publications/critique.html",
+                                 engine="saxon", params=(("montrer-folios", "true"), ("surligner-hors-lemme", "false"),
+                                                         ("sauts-lb", "oui")))
+    window = open_window(_with_scenarios(sermons_project, critique))
+    seen = {}
+
+    def edit(dialog):
+        dialog.tree.setCurrentItem(dialog.project_group.child(0))
+        dialog.edit_scenario()
+
+    def check(dialog):
+        table = dialog.params_table
+        boxes = [table.cellWidget(row, 1) for row in range(3)]
+        seen["kinds"] = [isinstance(box, QCheckBox) for box in boxes]
+        seen["states"] = [boxes[0].isChecked(), boxes[1].isChecked()]
+        under = table.item(0, 1)
+        seen["hidden"] = under.text() == "" and not under.flags() & Qt.ItemFlag.ItemIsEditable
+        boxes[1].setChecked(True)
+        # Un paramètre renommé reçoit la case, et la perd s'il change de nom.
+        dialog.add_param_row("autre", "true")
+        seen["plain"] = table.cellWidget(3, 1) is None
+        table.item(3, 0).setText("montrer-numeros-de-vers")
+        seen["renamed"] = isinstance(table.cellWidget(3, 1), QCheckBox) and table.cellWidget(3, 1).isChecked()
+        table.cellWidget(3, 1).setChecked(False)
+        table.item(3, 0).setText("autre")
+        back = table.item(3, 1)
+        seen["back"] = table.cellWidget(3, 1) is None and back.text() == "false" \
+            and bool(back.flags() & Qt.ItemFlag.ItemIsEditable)
+        dialog.remove_param_row(3)
+
+    dialogs.expect("dialog", _in_list(edit))
+    dialogs.expect("dialog", _scenario(check))
+    if not saxon_available():
+        dialogs.expect("question", QMessageBox.StandardButton.Yes)
+    window.transform_scenarios_dialog()
+    assert seen == {"kinds": [True, True, False], "states": [True, False], "hidden": True, "plain": True,
+                    "renamed": True, "back": True}
+    assert load_project(sermons_project).transformations[0].params == (
+        ("montrer-folios", "true"), ("surligner-hors-lemme", "true"), ("sauts-lb", "oui"))
+
+
+def test_the_language_of_the_texts_is_chosen_in_a_list(open_window, sermons_project, dialogs):
+    # V0.9.3.1 : le paramètre langue se choisit dans une liste : la langue de
+    # l'interface (${langue}) en tête, puis chaque langue des catalogues ;
+    # une autre valeur est gardée.
+    from PySide6.QtWidgets import QComboBox
+    from app_context import current_i18n
+    critique = TransformScenario("Critique", "${varians}/edition-critique.xsl", "publications/critique.html",
+                                 engine="saxon", params=(("langue", "${langue}"), ("temoin-de-base", "${pivot}"),
+                                                         ("autre", "xx")))
+    window = open_window(_with_scenarios(sermons_project, critique))
+    seen = {}
+
+    def edit(dialog):
+        dialog.tree.setCurrentItem(dialog.project_group.child(0))
+        dialog.edit_scenario()
+
+    def choose(dialog):
+        table = dialog.params_table
+        combo = table.cellWidget(0, 1)
+        seen["items"] = [(combo.itemText(i), combo.itemData(i)) for i in range(combo.count())]
+        seen["current"] = combo.currentData()
+        combo.setCurrentIndex(combo.findData("en"))
+        # Renommé en langue, un paramètre reçoit cette liste et garde sa valeur
+        # inconnue ; temoin-de-base renommé en langue change de liste.
+        table.item(2, 0).setText("langue")
+        other = table.cellWidget(2, 1)
+        seen["renamed"] = isinstance(other, QComboBox) and other.currentData() == "xx"
+        table.item(1, 0).setText("langue")
+        seen["switched"] = table.cellWidget(1, 1).findData("${langue}") == 0
+        table.item(1, 0).setText("temoin-de-base")
+        table.item(2, 0).setText("autre")
+
+    dialogs.expect("dialog", _in_list(edit))
+    dialogs.expect("dialog", _scenario(choose))
+    if not saxon_available():
+        dialogs.expect("question", QMessageBox.StandardButton.Yes)
+    window.transform_scenarios_dialog()
+    languages = [(info.label, info.code) for info in current_i18n().available_languages()]
+    assert seen["items"] == [(tr("transform.param.interface_language"), "${langue}")] + languages
+    assert len(languages) == 7 and seen["current"] == "${langue}" and seen["renamed"] and seen["switched"]
+    assert load_project(sermons_project).transformations[0].params == (
+        ("langue", "en"), ("temoin-de-base", "${pivot}"), ("autre", "xx"))
 
 
 def test_the_prepass_of_a_scenario_is_shown_and_kept(open_window, sermons_project, dialogs):

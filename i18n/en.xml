@@ -145,6 +145,7 @@
   <string key="webgen.text.label">Text of the viewer:</string>
   <string key="webgen.text.established">Established text: the &lt;lem&gt;, otherwise the reading of the chosen witness</string>
   <string key="webgen.text.witness">Text of the chosen witness, even when it is not the &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Highlight in yellow the readings that do not come from a &lt;lem&gt; (the reader can change this)</string>
   <string key="webgen.text.chosen">Witness:</string>
   <string key="webgen.text.pivot">Pivot (of each text)</string>
   <string key="webgen.text.missing_hint">Passages where the chosen witness has no reading are marked in the viewer.</string>
@@ -191,6 +192,31 @@
   <string key="viewer.form.expan">Expansion</string>
   <string key="viewer.form.detail">{label}: {value}</string>
   <string key="viewer.form.gap">Gap</string>
+  <string key="publication.critique.title">Critical edition</string>
+  <string key="publication.critique.lemmas_only">Text established from the explicit lemmas only, with no chosen witness.</string>
+  <string key="publication.critique.witness">Explicit lemma first, otherwise the reading of witness {witness}.</string>
+  <string key="publication.critique.undefined">undefined</string>
+  <string key="publication.critique.rejected">Rejected variants are given in the apparatus.</string>
+  <string key="publication.critique.highlight">Highlight the readings outside &lt;lem&gt;</string>
+  <string key="publication.critique.sigla">Sigla of the witnesses</string>
+  <string key="publication.critique.footer">Edition produced from a TEI document · Apparatus by division</string>
+  <string key="publication.critique.apparatus">Critical apparatus</string>
+  <string key="publication.critique.notes">Notes</string>
+  <string key="publication.critique.apparatus_notes">Critical apparatus and notes</string>
+  <string key="publication.critique.call_apparatus">Apparatus {n}</string>
+  <string key="publication.critique.call_note">Note {n}</string>
+  <string key="publication.critique.back">Back to the text</string>
+  <string key="publication.reference">[reference]</string>
+  <string key="publication.caesura">Caesura</string>
+  <string key="publication.unclear">Uncertain reading</string>
+  <string key="publication.sic">Transmitted reading (sic)</string>
+  <string key="publication.folio">Change of folio or page</string>
+  <string key="publication.gap">[gap]</string>
+  <string key="publication.gap.extent">[gap: {extent}]</string>
+  <string key="publication.page">Page: {n}</string>
+  <string key="publication.not_available">[witness reading not available]</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} apparatus entries without a lemma (lem). Add a lemma to each one, or choose a witness.</string>
+  <string key="publication.error.unknown_witness">Unknown witness: {witness} (declared witnesses: {witnesses}).</string>
   <string key="viewer.language">Language</string>
   <string key="viewer.variant">variant</string>
   <string key="viewer.note">note</string>
@@ -486,6 +512,7 @@ Save anyway?</string>
   <string key="menu.help">Help</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Latin Dictionary</string>
+  <string key="help.tei_guide">Guide to TEI Elements</string>
   <string key="help.software">Software Help</string>
   <string key="help.search.placeholder">Search the help (Ctrl+F)</string>
   <string key="help.search.summary">{sections} section(s), {count} occurrence(s)</string>
@@ -819,6 +846,8 @@ The file is not deleted: it stays on disk.</string>
   <string key="viewer.show_variants.tip">Show or hide the variant markers (v) in the text</string>
   <string key="viewer.show_notes">Notes</string>
   <string key="viewer.show_notes.tip">Show or hide the note markers (n) in the text</string>
+  <string key="viewer.show_nonlem">Readings outside &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Highlight in yellow the readings that do not come from a &lt;lem&gt;</string>
   <string key="completion.ids.label">Project identifiers for @{attribute} in &lt;{element}&gt;:</string>
   <string key="references.goto">Go to target</string>
   <string key="references.back">Go back</string>
@@ -1084,6 +1113,7 @@ Save anyway?</string>
   <string key="transform.param.value">Value</string>
   <string key="transform.param.pivot">{witness} (pivot)</string>
   <string key="transform.param.no_witness">aucun (lemmas only)</string>
+  <string key="transform.param.interface_language">Interface language</string>
   <string key="transform.param.add">Add a parameter</string>
   <string key="transform.param.remove">Remove the parameter</string>
   <string key="transform.browse.file">Source file of the scenario</string>

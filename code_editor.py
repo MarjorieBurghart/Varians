@@ -317,10 +317,20 @@ class CodeEditor(QPlainTextEdit):
         self.setTextCursor(c)
         self._closing_completer.popup().hide()
 
+    @staticmethod
+    def _chosen_completion(completer):
+        """Entrée ou Tab : l'entrée surlignée dans la liste (choisie avec les
+        flèches), et non la ligne courante du compléteur, qui reste la
+        première ; sans entrée surlignée, la première de la liste."""
+        index = completer.popup().currentIndex()
+        if index.isValid():
+            return index.data(completer.completionRole())
+        return completer.currentCompletion()
+
     def keyPressEvent(self, event):
         vpopup = self._value_completer.popup()
         if vpopup.isVisible() and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab):
-            self._accept_value_completion(self._value_completer.currentCompletion())
+            self._accept_value_completion(self._chosen_completion(self._value_completer))
             event.accept()
             return
         if vpopup.isVisible() and event.key() == Qt.Key.Key_Escape:
@@ -329,7 +339,7 @@ class CodeEditor(QPlainTextEdit):
             return
         apopup = self._attribute_completer.popup()
         if apopup.isVisible() and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab):
-            self._accept_attribute_completion(self._attribute_completer.currentCompletion())
+            self._accept_attribute_completion(self._chosen_completion(self._attribute_completer))
             event.accept()
             return
         if apopup.isVisible() and event.key() == Qt.Key.Key_Escape:
@@ -340,7 +350,7 @@ class CodeEditor(QPlainTextEdit):
         if popup.isVisible() and event.key() in (
             Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab
         ):
-            self._accept_closing_completion(self._closing_completer.currentCompletion())
+            self._accept_closing_completion(self._chosen_completion(self._closing_completer))
             event.accept()
             return
         if popup.isVisible() and event.key() == Qt.Key.Key_Escape:

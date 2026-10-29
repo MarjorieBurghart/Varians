@@ -12,7 +12,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
   'use strict';
   // Blocs affichés du texte de lecture ; un bloc « div » n'a pas de segment.
-  const RENDERED = new Set(['p', 'head', 'l', 'item', 'cell', 'caption', 'note']);
+  const RENDERED = new Set(['p', 'head', 'l', 'item', 'cell', 'caption', 'note', 'speaker', 'stage']);
   // Index du texte de lecture : pour chaque position, le texte (seg) et la
   // ligne du pivot de ce texte ouverte à cet endroit ; les repères de lacune.
   // La ligne courante est propre à chaque texte et suit aussi les blocs non

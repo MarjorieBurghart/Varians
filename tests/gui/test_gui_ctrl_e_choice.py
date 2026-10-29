@@ -3,7 +3,8 @@
 surlignée que si elle est réellement sélectionnée ; Entrée insère l'entrée
 sélectionnée, sinon le texte saisi. Tab ou ↓ depuis le champ sélectionne
 la première entrée ; retaper dans le champ efface la sélection.
-Ctrl+Espace (sans texte libre) garde la première entrée présélectionnée."""
+Ctrl+Espace (sans texte libre) garde la première entrée présélectionnée ;
+↓ dans le champ y passe aussi à la liste, et descend à la deuxième."""
 from __future__ import annotations
 
 import re
@@ -136,3 +137,40 @@ def test_ctrl_e_in_the_xml_wraps_with_the_chosen_entry_or_the_typed_text(open_wi
     assert seen
     # Avec les attributs que custom-elements.xml lui donne.
     assert re.search(rf"<{seen[0]}\b[^>]*>{word}</{seen[0]}>", editor.toPlainText())
+
+
+# Ctrl+Espace comme Ctrl+E : ↓ dans le champ passe à la liste et descend d'une
+# entrée ; la première étant présélectionnée, c'est la deuxième (V0.9.3.1).
+
+def test_ctrl_space_down_from_the_field_moves_to_the_next_entry(ctrl_e):
+    dialog = ctrl_e(allow_custom=False)
+    QTest.keyClick(dialog.filter_box, Qt.Key.Key_Down)
+    assert dialog.focusWidget() is dialog.list_widget and _selected(dialog) == ["person"]
+    QTest.keyClick(dialog.list_widget, Qt.Key.Key_Down)
+    assert _selected(dialog) == ["placeName"]
+    QTest.keyClick(dialog.list_widget, Qt.Key.Key_Return)
+    assert dialog.result() == dialog.DialogCode.Accepted and dialog.selected_value == "placeName"
+
+
+def test_ctrl_space_down_after_filtering(ctrl_e):
+    dialog = ctrl_e(allow_custom=False)
+    QTest.keyClicks(dialog.filter_box, "pers")
+    assert _selected(dialog) == ["persName"]
+    QTest.keyClick(dialog.filter_box, Qt.Key.Key_Down)
+    assert _selected(dialog) == ["person"]
+    QTest.keyClick(dialog.list_widget, Qt.Key.Key_Return)
+    assert dialog.selected_value == "person"
+
+
+def test_ctrl_space_tab_from_the_field_keeps_the_first_entry(ctrl_e):
+    dialog = ctrl_e(allow_custom=False)
+    QTest.keyClick(dialog.filter_box, Qt.Key.Key_Tab)
+    assert dialog.focusWidget() is dialog.list_widget and _selected(dialog) == ["persName"]
+    QTest.keyClick(dialog.list_widget, Qt.Key.Key_Return)
+    assert dialog.selected_value == "persName"
+
+
+def test_ctrl_space_down_on_the_last_entry_stays_there(ctrl_e):
+    dialog = ctrl_e(items=[("persName", "rng")], allow_custom=False)
+    QTest.keyClick(dialog.filter_box, Qt.Key.Key_Down)
+    assert dialog.focusWidget() is dialog.list_widget and _selected(dialog) == ["persName"]

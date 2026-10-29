@@ -452,10 +452,13 @@ def update_project_transformations(path: str | Path, scenarios) -> Path:
                                     transformations_element(scenarios))
 
 
-def update_project_web_text(path: str | Path, mode: str, witness: str = "") -> Path:
+def update_project_web_text(path: str | Path, mode: str, witness: str = "",
+                            highlight_nonlem: bool | None = None) -> Path:
     """Choix du texte du viewer web (V0.9.3.0) : ``text`` et ``textWitness``
     de <webViewer> (``textWitness`` absent : le pivot de chaque texte), sans
-    toucher au reste ; copie ``.bak`` préalable."""
+    toucher au reste ; copie ``.bak`` préalable. ``highlight_nonlem``
+    (V0.9.3.1) : True écrit ``highlightNonLem="true"``, False le retire, None
+    le laisse tel quel."""
     if mode not in WEB_TEXT_MODES:
         raise ValueError(f"Choix du texte inconnu : {mode}")
     path = Path(path).expanduser().resolve()
@@ -471,6 +474,10 @@ def update_project_web_text(path: str | Path, mode: str, witness: str = "") -> P
         web_el.set("textWitness", witness.strip())
     else:
         web_el.attrib.pop("textWitness", None)
+    if highlight_nonlem:
+        web_el.set("highlightNonLem", "true")
+    elif highlight_nonlem is not None:
+        web_el.attrib.pop("highlightNonLem", None)
     return _write_project(path, tree)
 
 

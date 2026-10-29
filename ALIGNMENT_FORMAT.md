@@ -110,7 +110,7 @@ rangés dans `alignments/<nom du fichier du texte>/<témoin>.json`, au même
 format : le JSON du pivot du texte (celui du projet, ou celui de
 `<part name base>`) donne ses lignes de référence, `page_id::line`, qui
 correspondent aux `<lb edRef="#pivot"/>` du texte seul ; les `base_keys` des
-autres témoins désignent ces lignes. VariansSynchro les produit sur le
+autres témoins désignent ces lignes. Varians-Synchro les produit sur le
 fichier du texte. Le nom du fichier JSON est le sigle déclaré dans
 `project.xml` ; un JSON d'un témoin non déclaré est ignoré et signalé.
 

@@ -20,6 +20,9 @@ from help_dialogs import (
 from project_config import load_project, update_project_language
 from text_search import SearchOptions
 
+# Liste des éléments des Guidelines du TEI Consortium (Aide → Guide des éléments TEI).
+TEI_GUIDE_URL = "https://tei-c.org/release/doc/tei-p5-doc/en/html/REF-ELEMENTS.html"
+
 
 def _setting_flag(name):
     value = _settings().value(name, False)
@@ -402,6 +405,7 @@ class MainMenusMixin:
             _t("help.latin_dictionary"), "", lambda: _open_latin_dictionary(self)
         )
         self.action_latin_dictionary.setShortcuts([QKeySequence("Ctrl+?")])
+        self.action_tei_guide = self._make_action(_t("help.tei_guide"), "", lambda: _open_external(TEI_GUIDE_URL))
         self.action_software_help = self._make_action(
             _t("help.software"), "F1", lambda: _show_software_help(self)
         )
@@ -411,12 +415,15 @@ class MainMenusMixin:
         self.action_about = self._make_action(
             _t("help.about"), "", lambda: _show_about(self)
         )
-        # « Débugger l'apparat » en tête, puis les ressources en ligne ;
-        # l'aide du logiciel reste en bas, juste au-dessus de « À propos ».
+        # « Débugger l'apparat » en tête, puis les ressources en ligne, le
+        # guide des éléments TEI à part (V0.9.3.1) ; l'aide du logiciel reste
+        # en bas, juste au-dessus de « À propos ».
         menu.addAction(self.action_debug_apparatus)
         menu.addSeparator()
         menu.addAction(self.action_enigma)
         menu.addAction(self.action_latin_dictionary)
+        menu.addSeparator()
+        menu.addAction(self.action_tei_guide)
         menu.addSeparator()
         menu.addAction(self.action_software_help)
         menu.addAction(self.action_about)
@@ -496,6 +503,7 @@ class MainMenusMixin:
         self.help_menu_button.setText(_t("menu.help"))
         self.action_enigma.setText(_t("help.enigma"))
         self.action_latin_dictionary.setText(_t("help.latin_dictionary"))
+        self.action_tei_guide.setText(_t("help.tei_guide"))
         self.action_software_help.setText(_t("help.software"))
         self.action_debug_apparatus.setText(_t("apparatus.menu"))
         self.action_debug_apparatus.setToolTip(_t("apparatus.menu.tip"))

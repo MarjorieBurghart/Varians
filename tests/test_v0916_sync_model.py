@@ -283,7 +283,8 @@ STRUCTURED = ('<TEI xmlns="http://www.tei-c.org/ns/1.0"><teiHeader/><text><body>
               '<lg><l n="1"><lb edRef="#A"/>uersus primus</l><pb n="2r" facs="#f2r"/><l n="2">uersus secundus</l></lg>'
               '<list><item>primum<list><item>sub</item></list></item></list><note>inter</note>'
               '<table><head>Tabula</head><row><cell role="label">Folium</cell><cell>12r</cell></row></table>'
-              '<figure><figDesc>Imago</figDesc></figure></div></body></text></TEI>')
+              '<figure><figDesc>Imago</figDesc></figure>'
+              '<sp><speaker>Petrus</speaker><p>dixit</p><stage>Exit.</stage></sp></div></body></text></TEI>')
 
 
 def test_every_rendered_block_has_the_same_positions_in_the_render_the_search_and_python(tmp_path):
@@ -303,12 +304,14 @@ def test_every_rendered_block_has_the_same_positions_in_the_render_the_search_an
       const hits=q=>F.find(search,q).map(h=>h.docPos);
       return {kinds:index.items.map(s=>s.kind), bad, rendered:[...S.RENDERED].sort(), search:[...F.RENDERED].sort(),
               title:hits('Titulus'), verse:hits('secundus'), item:hits('sub'), cell:hits('Folium'), caption:hits('Imago'),
+              speaker:hits('Petrus'), stage:hits('Exit'),
               lines:index.lines};""", reading)
     assert out["rendered"] == out["search"] == sorted(RENDERED_BLOCKS)
     assert out["kinds"] == [seg["kind"] for seg in flat] and out["bad"] == []
     texts = {seg.get("text", "").strip(): positions[id(seg)] for seg in flat if seg["kind"] == "text"}
     assert out["title"] == [texts["Titulus"]] and out["verse"] == [texts["uersus secundus"]]
     assert out["item"] == [texts["sub"]] and out["cell"] == [texts["Folium"]] and out["caption"] == [texts["Imago"]]
+    assert out["speaker"] == [texts["Petrus"]] and out["stage"] == [texts["(Exit.)"]]
     # La ligne ouverte à chaque position : celle du titre, puis celle des vers.
     assert out["lines"][texts["Titulus"]] == "P::1" and out["lines"][texts["uersus secundus"]] == "P::2"
     # Un <pb/> entre deux vers : sa position est entre eux.

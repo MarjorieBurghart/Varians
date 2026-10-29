@@ -68,7 +68,7 @@ class ProjectActionsMixin:
             display_ids = [wid for wid in self._witness_display_order if wid in visible]
             output, missing, data = generate(
                 self.project.path, display_witness_ids=display_ids,
-                text_mode=choice[0], text_witness=choice[1])
+                text_mode=choice[0], text_witness=choice[1], highlight_nonlem=choice[2])
         except Exception as exc:
             QMessageBox.critical(self, _t("webgen.error.title"), str(exc))
             return
@@ -97,24 +97,26 @@ class ProjectActionsMixin:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(output)))
 
     def _ask_web_text(self):
-        """Texte du viewer (V0.9.3.0) : ``(mode, témoin)``, ou None si la
-        boîte est annulée. Elle s'ouvre sur le choix de project.xml ; un
-        choix modifié y est enregistré."""
+        """Texte du viewer (V0.9.3.0) : ``(mode, témoin, surlignage des
+        leçons hors <lem>)``, ou None si la boîte est annulée. Elle s'ouvre
+        sur le choix de project.xml ; un choix modifié y est enregistré."""
         from web_text_dialog import WebTextDialog
         project = self.project
-        dialog = WebTextDialog(project.witnesses, project.web_text_mode, project.web_text_witness, self)
+        saved = (project.web_text_mode, project.web_text_witness, project.web_highlight_nonlem)
+        dialog = WebTextDialog(project.witnesses, *saved[:2], self, highlight=saved[2])
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return None
-        mode, witness = dialog.choice()
-        if (mode, witness) != (project.web_text_mode, project.web_text_witness):
+        choice = (*dialog.choice(), dialog.highlight())
+        if choice != saved:
             try:
-                update_project_web_text(project.path, mode, witness)
+                update_project_web_text(project.path, *choice[:2], highlight_nonlem=choice[2])
             except OSError as exc:
                 QMessageBox.warning(self, _t("webgen.error.title"), str(exc))
             else:
                 from dataclasses import replace
-                self.project = replace(project, web_text_mode=mode, web_text_witness=witness)
-        return mode, witness
+                self.project = replace(project, web_text_mode=choice[0], web_text_witness=choice[1],
+                                       web_highlight_nonlem=choice[2])
+        return choice
 
     def _save_edition_for_export(self):
         """Fragment non appliqué, édition et parties modifiées : enregistrés

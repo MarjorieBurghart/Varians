@@ -2,7 +2,8 @@
 """Rendu de la feuille de Varians (rendering/tei-to-html.xsl), V0.9.2.9 :
 vers (chaque <l> sur sa ligne, chaque <lg> en bloc), <head> en titre,
 <list> en liste, <figure> en bloc. Ces éléments sont désormais modifiables
-avec le crayon ✎ de la Vue XSLT / CSS. V0.9.3.0 : <table> en tableau."""
+avec le crayon ✎ de la Vue XSLT / CSS. V0.9.3.0 : <table> en tableau.
+V0.9.3.1 : répliques (<sp>)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,10 +15,12 @@ BUILTIN = ROOT / "rendering" / "tei-to-html.xsl"
 TEI_NS = "http://www.tei-c.org/ns/1.0"
 
 
-def _page(body, header="", text=""):
+def _page(body, header="", text="", params=None, access_control=None):
     tei = (f'<TEI xmlns="{TEI_NS}"><teiHeader><fileDesc><titleStmt><title>T</title></titleStmt>{header}</fileDesc>'
            f'</teiHeader><text{text}><body>{body}</body></text></TEI>')
-    result = etree.XSLT(etree.parse(str(BUILTIN)))(etree.fromstring(tei.encode("utf-8")))
+    transform = etree.XSLT(etree.parse(str(BUILTIN)), access_control=access_control)
+    values = {name: etree.XSLT.strparam(value) for name, value in (params or {}).items()}
+    result = transform(etree.fromstring(tei.encode("utf-8")), **values)
     return html.fromstring(str(result))
 
 
@@ -150,6 +153,57 @@ def test_editorial_phenomena_as_in_the_critical_edition():
     assert [e.get("title") for e in paragraph.xpath('.//span[@class="lacune"]')] == ["Lacune : illegible", "Lacune"]
 
 
+PHENOMENA = ('<div><p><pb n="2r"/>Isti <choice><sic>erat</sic><corr>erant</corr></choice> '
+             '<choice><abbr>dns</abbr><expan>dominus</expan></choice> <sic>solum</sic> <unclear>forte</unclear> '
+             '<choice><orig>uita</orig><reg>vita</reg></choice> fin<gap reason="illegible" extent="2 uerba"/>is <gap/>.</p></div>')
+
+
+def _marks(page):
+    paragraph = page.xpath("//main//p")[0]
+    return (" ".join(paragraph.text_content().split()),
+            [e.get("title") for e in paragraph.xpath('.//span[@class="choice"]')],
+            [e.get("title") for e in paragraph.xpath('.//span[@class="lacune"]')],
+            [paragraph.xpath(f'.//span[@class="{name}"]')[0].get("title") for name in ("pb", "sic", "unclear")])
+
+
+def test_the_texts_of_the_view_follow_the_language_of_the_interface():
+    """V0.9.3.1 : infobulles et marques de la feuille dans la langue de
+    l'interface (``langue``, ``catalogues``) ; le français pour une langue
+    sans catalogue."""
+    from xslt_scenarios import catalogs_uri
+    text, choices, gaps, titles = _marks(_page(PHENOMENA, params={"langue": "en", "catalogues": catalogs_uri()}))
+    assert text == "[2r]Isti erant dominus solum forte vita fin[gap: 2 uerba]is [gap]."
+    assert choices == ["Transmitted reading: erat", "Abbreviation: dns", "Original spelling: uita"]
+    assert gaps == ["Gap: illegible", "Gap"]
+    assert titles == ["Page: 2r", "Transmitted reading (sic)", "Uncertain reading"]
+    french = _marks(_page(PHENOMENA))
+    # Une langue sans catalogue : Varians ne passe pas de catalogue (XSLT 1.0
+    # ne sait pas vérifier qu'un fichier existe).
+    assert catalogs_uri("xx") == ""
+    assert _marks(_page(PHENOMENA, params={"langue": "xx", "catalogues": catalogs_uri("xx")})) == french
+    assert french[1][0] == "Leçon transmise : erat" and french[3][0] == "Page : 2r"
+
+
+def test_without_catalogs_the_view_reads_no_file():
+    """Le moteur .NET de secours interdit document() : sans catalogue, la
+    feuille n'en appelle pas, et garde le français."""
+    page = _page(PHENOMENA, access_control=etree.XSLTAccessControl.DENY_ALL)
+    assert _marks(page)[2] == ["Lacune : illegible", "Lacune"]
+
+
+def test_the_preview_passes_the_language_of_the_interface():
+    import app_context
+    from formatted_view import publication_params
+    from i18n import I18nManager
+    from xslt_scenarios import catalogs_uri
+    saved = app_context.current_i18n()
+    try:
+        app_context.set_i18n(I18nManager(ROOT / "i18n", "de", "en"))
+        assert publication_params() == {"langue": "de", "catalogues": catalogs_uri()}
+    finally:
+        app_context.set_i18n(saved)
+
+
 def test_renditions_of_hi_and_italic_elements():
     page = _page('<div><p><hi rend="bold">a</hi> <hi rend="underline">b</hi> <hi rend="sup">c</hi> '
                  '<hi rend="subscript">d</hi> <hi rend="smallcaps">e</hi> <hi rend="italic bold">f</hi> '
@@ -165,6 +219,44 @@ def test_renditions_of_hi_and_italic_elements():
     assert _texts(page, '//p/span[@class="quote"]') == ["g"]
 
 
+SCENE = ('<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
+         '<sp who="#h"><speaker>HAMLETUS</speaker><lg><l>Esse aut non esse,</l><stage>ridet</stage>'
+         '<l>haec quaestio.</l></lg></sp>'
+         '<sp who="#o"><speaker>OPHELIA</speaker><p>Domine <stage>susurrat</stage> quomodo uales?</p>'
+         '<stage>Exit.</stage></sp></div>')
+
+
+def test_a_speech_has_its_speaker_its_lines_and_its_stage_directions():
+    """V0.9.3.1, comme le viewer web : chaque réplique est un bloc, son
+    locuteur en tête ; une didascalie, entre parenthèses comme dans
+    « Édition critique », est un bloc entre deux blocs, une ligne dans une
+    strophe, en italique dans une phrase."""
+    page = _page(SCENE)
+    speeches = page.xpath('//main//div[@class="sp"]')
+    assert [_texts(sp, 'div[@class="speaker"]') for sp in speeches] == [["HAMLETUS"], ["OPHELIA"]]
+    assert _texts(speeches[0], 'div[@class="lg"]/span[@class="l"]') == ["Esse aut non esse,", "haec quaestio."]
+    assert [child.tag for child in speeches[0].xpath('div[@class="lg"]')[0]] == ["span", "br", "span", "br", "span"]
+    assert _texts(speeches[0], 'div[@class="lg"]/span[@class="stage"]') == ["(ridet)"]
+    assert _texts(speeches[1], 'p/span[@class="stage"]') == ["(susurrat)"]
+    assert _texts(page, '//main//div[@class="stage"]') == ["(Intrat Hamletus.)", "(Exit.)"]
+    assert _texts(speeches[1], 'div[@class="stage"]') == ["(Exit.)"]
+
+
+def test_the_parentheses_of_a_stage_direction_hug_its_text():
+    page = _page('<div><sp><speaker>A</speaker><p>Ita <stage>\n  ridet <hi rend="italic">multum</hi>\n</stage> est.</p>'
+                 '<stage>\n    Exeunt\n  </stage></sp></div>')
+    assert [element.text_content() for element in page.xpath('//main//*[@class="stage"]')] == [
+        "(ridet multum)", "(Exeunt)"]
+
+
+def test_the_preview_styles_the_speeches_even_with_the_stylesheet_of_an_older_project():
+    from formatted_view import PREVIEW_BASE_CSS
+    for rule in (".speaker {", ".stage {", "div.stage {"):
+        assert rule in PREVIEW_BASE_CSS, rule
+    assert "small-caps" in PREVIEW_BASE_CSS.split(".speaker {")[1].split("}")[0]
+    assert "italic" in PREVIEW_BASE_CSS.split(".stage {")[1].split("}")[0]
+
+
 def test_paragraphs_are_unchanged():
     page = _page("<div><p>Commune <hi rend=\"italic\">sanctorum</hi></p></div>")
     assert _texts(page, "//main//p") == ["Commune sanctorum"]
@@ -173,7 +265,7 @@ def test_paragraphs_are_unchanged():
 def test_the_stylesheet_of_new_projects_styles_them():
     css = (ROOT / "rendering" / "tei.css").read_text(encoding="utf-8")
     for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table", ".ref",
-                     ".rature", ".ajout", ".sic", ".lacune", ".petites-capitales"):
+                     ".rature", ".ajout", ".sic", ".lacune", ".petites-capitales", ".sp", ".speaker", ".stage"):
         assert f"\n{selector} " in css or f"\n{selector}," in css, selector
     # Qt ignore toute règle placée après un @media : il reste à la fin.
     assert css.rindex("@media") > css.rindex(".lg br")

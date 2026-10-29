@@ -17,7 +17,15 @@ compte les passages où le témoin choisi n'a pas de leçon
 (``missing_readings`` : 0 ici, le texte ne change pas). Puis, par décision
 explicite, le texte exporté par défaut est le texte établi, comme
 « Édition critique » : le <lem>, à défaut la leçon du pivot (et non plus
-la leçon du pivot d'abord) ; ``meta.text`` dit ce choix."""
+la leçon du pivot d'abord) ; ``meta.text`` dit ce choix.
+
+V0.9.3.1 : dans le texte établi, les segments d'une leçon qui ne vient pas
+d'un <lem> portent ``nonlem`` (surlignage au choix du lecteur) ; le document
+les compte (``nonlem_readings``), ``meta.text`` aussi, avec l'état de départ
+du surlignage (``highlight``). Ces marques retirées, l'empreinte est celle
+d'avant : le texte ne change pas. Les blancs au bord d'une telle leçon sont
+détachés dans leur propre segment, non marqué : le texte affiché et les mots
+marqués restent les mêmes."""
 from __future__ import annotations
 
 import hashlib
@@ -27,7 +35,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "712a789261bbb101791dfb39a67a2e29289ea2a06688cf429350268f940f4e51"
+DIGEST = "8ba3f7663afc5684c7628de9f344921d3baac34a6c559799fac7e2432607cda5"
 
 
 def _digest(data):

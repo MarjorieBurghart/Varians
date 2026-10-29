@@ -62,3 +62,44 @@ def test_generate_keeps_the_choice_and_exports_with_it(open_window, example_proj
     before, after = tr("webgen.text.missing", count="§", witness="P").split("§")
     found = re.search(re.escape(before) + r"(\d+)" + re.escape(after), dialogs.seen[-1][2])
     assert found and int(found.group(1)) > 0
+
+
+# --- Leçons hors <lem> surlignées (V0.9.3.1) -----------------------------------------------------
+# Une case, active dans le texte établi seulement, fixe l'état de départ du
+# surlignage ; elle s'ouvre sur le réglage de project.xml, qui garde le choix.
+
+def test_the_highlight_box_follows_the_project_and_the_text_mode(open_window, example_project, dialogs):
+    update_project_web_text(example_project, "established", "", highlight_nonlem=True)
+    window = open_window(example_project)
+    seen = {}
+
+    def look(dialog):
+        seen["label"] = dialog.highlight_box.text()
+        seen["opened"] = (dialog.highlight_box.isChecked(), dialog.highlight_box.isEnabled(), dialog.highlight())
+        dialog.witness_mode.setChecked(True)
+        seen["witness"] = dialog.highlight_box.isEnabled()
+        dialog.established.setChecked(True)
+        seen["established"] = dialog.highlight_box.isEnabled()
+        return QDialog.DialogCode.Rejected
+
+    dialogs.expect("dialog", look)
+    window.generate_web_viewer()
+    assert seen["label"] == tr("webgen.text.highlight")
+    assert seen["opened"] == (True, True, True)
+    assert seen["witness"] is False and seen["established"] is True
+
+
+def test_generate_keeps_the_highlight_and_exports_with_it(open_window, example_project, dialogs):
+    window = open_window(example_project)
+
+    def choose(dialog):
+        assert dialog.highlight() is False                                 # sans réglage : non surligné
+        dialog.set_choice("established", "", highlight=True)
+        return QDialog.DialogCode.Accepted
+
+    dialogs.expect("dialog", choose)
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)
+    window.generate_web_viewer()
+    assert load_project(example_project).web_highlight_nonlem is True
+    assert window.project.web_highlight_nonlem is True
+    assert '"highlight":true' in _output(window).read_text(encoding="utf-8")

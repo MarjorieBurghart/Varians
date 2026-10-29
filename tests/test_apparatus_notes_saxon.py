@@ -215,3 +215,20 @@ def test_no_note_is_left_inside_another_note(project):
     assert not tree.xpath("//t:note[ancestor::t:note]", namespaces=NS)
     end = tree.find(".//t:note[@place='end']", NS)
     assert _text(end) == "Une note (interne) sur hoc [hoc ] hic B]."
+
+
+def test_the_texts_of_the_notes_are_in_the_language_asked(project):
+    """V0.9.3.1 : « lecture du témoin non disponible » dans la langue de
+    l'interface, comme l'Édition critique ; om., add., lacuna… en latin."""
+    root = etree.parse(str(Path(__file__).resolve().parents[1] / "i18n" / "en.xml")).getroot()
+    unavailable = next(s.text for s in root.findall("string") if s.get("key") == "publication.not_available")
+    scenario = TransformScenario("Notes", VARIANS_PREFIX + "apparat-en-notes.xsl", "publications/notes.xml",
+                                 source="file", file="xml/essai.xml", engine="saxon",
+                                 params=(("temoin-de-base", "Z2"), ("langue", "en")))
+    source = SOURCE.replace('<witness xml:id="C">Troyes</witness>', '<witness xml:id="C">Troyes</witness><witness xml:id="Z2">Zurich</witness>')
+    (project.root_dir / "xml" / "essai.xml").write_text(source, encoding="utf-8")
+    result = run(scenario_request(scenario, project))
+    assert result.ok, result.error
+    notes = etree.parse(str(project.root_dir / "publications" / "notes.xml"))
+    text = " ".join(_text(n) for n in notes.iter(f"{{{TEI}}}note"))
+    assert unavailable in text and "lecture du témoin non disponible" not in text

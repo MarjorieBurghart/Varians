@@ -279,6 +279,9 @@ PREVIEW_BASE_CSS = (
     ".sic { font-style: italic; }\n"
     ".lacune { color: #8a8177; }\n"
     ".petites-capitales { font-variant: small-caps; }\n"
+    ".speaker { font-variant: small-caps; font-weight: 600; letter-spacing: 0.04em; margin-top: 0.6em; }\n"
+    ".stage { font-style: italic; color: #5d554c; }\n"
+    "div.stage { margin-left: 1.6em; margin-bottom: 0.4em; }\n"
     "a.tei-edit-marker { color:#8a8177; text-decoration:none; font-family:sans-serif; font-size:0.75em;"
     " padding-right:0.35em; }\n"
     "a.tei-line-marker { color: transparent; text-decoration:none; font-size:0; line-height:0; margin:0;"
@@ -670,6 +673,16 @@ def lxml_available():
         return True
     except Exception:
         return False
+
+
+def publication_params():
+    """Langue de l'interface et catalogues i18n, où la feuille de Varians
+    lit ses textes (V0.9.3.1)."""
+    from app_context import current_i18n
+    from xslt_scenarios import catalogs_uri
+    i18n = current_i18n()
+    language = i18n.language if i18n is not None else "fr"
+    return {"langue": language, "catalogues": catalogs_uri(language)}
 
 
 def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
@@ -1562,7 +1575,8 @@ class FormattedEditionWidget(QWidget):
         t0 = time.perf_counter()
         try:
             html_text, engine = transform_with_xslt(
-                xml_text, self.xsl_path, {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc")},
+                xml_text, self.xsl_path,
+                {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc"), **publication_params()},
                 edit_markers=True)
             html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
             html_text, marked = place_edit_markers(html_text, _t("preview.edit_paragraph"))

@@ -59,6 +59,22 @@ VARIANS_PREFIX = "${varians}/"
 TEI_PREFIX = "${tei}/"
 # Dans la valeur d'un paramètre : le témoin pivot du projet (V0.9.2.7).
 PIVOT = "${pivot}"
+# Textes des feuilles livrées (V0.9.3.1) : Varians leur passe la langue de
+# l'interface (``langue`` ; ``${langue}`` dans une valeur) et l'adresse de
+# ses catalogues i18n (``catalogues``), où elles lisent leurs textes.
+LANGUAGE = "${langue}"
+LANGUAGE_PARAM = "langue"
+CATALOGS_PARAM = "catalogues"
+
+
+def catalogs_uri(language=None) -> str:
+    """Adresse (``file:``, finie par « / ») des catalogues i18n de Varians ;
+    rien si *language* n'y a pas de catalogue : la feuille garde alors le
+    français (une feuille XSLT 1.0 ne sait pas vérifier qu'un fichier existe)."""
+    folder = VARIANS_STYLESHEETS.parent / "i18n"
+    if language is not None and not (folder / f"{language}.xml").is_file():
+        return ""
+    return folder.resolve().as_uri() + "/"
 SOURCES = ("edition", "current", "file")
 ENGINES = ("lxml", "saxon")
 PROBLEM_CODES = ("unknown_source", "no_file", "file_missing", "no_current", "unknown_engine", "saxon_missing",
@@ -259,7 +275,8 @@ def predefined_scenarios(translate=None, language=None) -> tuple[TransformScenar
     scenarios.append(TransformScenario(name("edition-critique"), VARIANS_PREFIX + "edition-critique.xsl",
                                        "publications/edition-critique.html", engine="saxon",
                                        params=(("temoin-de-base", PIVOT), ("montrer-folios", "true"),
-                                               ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false"))))
+                                               ("montrer-numeros-de-vers", "true"), ("sauts-lb", "false"),
+                                               ("surligner-hors-lemme", "false"), ("langue", LANGUAGE))))
     languages = (("lang", language), ("documentationLanguage", language)) if language else ()
     for key, profile, output, package in TEI_SCENARIOS:
         css, params = "", ()
@@ -393,6 +410,9 @@ def scenario_problems(scenario, project, current=None, sources=None) -> list[Sce
 # notes) : la boîte d'un scénario le propose dans une liste (V0.9.2.7).
 WITNESS_PARAM = "temoin-de-base"
 NO_WITNESS = "aucun"
+# Paramètres oui/non de l'édition critique (true, false) : une case à cocher
+# dans la boîte d'un scénario (V0.9.3.1).
+BOOLEAN_PARAMS = ("montrer-folios", "montrer-numeros-de-vers", "sauts-lb", "surligner-hors-lemme")
 
 
 def witness_choices(project) -> list[str]:
@@ -411,11 +431,13 @@ def witness_choices(project) -> list[str]:
     return list(dict.fromkeys(str(sigle).strip() for sigle in found if str(sigle).strip()))
 
 
-def substitute(value, project) -> str:
+def substitute(value, project, language=None) -> str:
     """*value*, la valeur d'un paramètre, où ``${pivot}`` (V0.9.2.7) devient
-    l'identifiant du témoin pivot du projet, et ``${tei}/`` l'adresse
-    (``file:``) du dossier des TEI Stylesheets installées."""
+    l'identifiant du témoin pivot du projet, ``${langue}`` (V0.9.3.1) la
+    langue de l'interface (*language*, sinon celle du projet), et ``${tei}/``
+    l'adresse (``file:``) du dossier des TEI Stylesheets installées."""
     value = str(value).replace(PIVOT, project.base_witness or "")
+    value = value.replace(LANGUAGE, language or project.language)
     if TEI_PREFIX in value:
         library = tei_library()
         if library is not None:
@@ -423,7 +445,7 @@ def substitute(value, project) -> str:
     return value
 
 
-def scenario_request(scenario, project, current=None, output_dir=None, sources=None) -> dict:
+def scenario_request(scenario, project, current=None, output_dir=None, sources=None, language=None) -> dict:
     """Requête d'exécution (sérialisable en JSON) d'un scénario sans
     problème : chemins absolus, paramètres (avec ``css``, le nom de la CSS,
     sauf si le scénario le fixe, et ``${pivot}`` remplacé par le témoin
@@ -431,15 +453,23 @@ def scenario_request(scenario, project, current=None, output_dir=None, sources=N
     pré-passage (``prepare``), et pour un paquet
     (``xslt_packages``) son format, le modèle des TEI Stylesheets (DOCX,
     ODT) et la feuille qui en corrige les styles (DOCX). ``output_dir`` :
-    dossier où écrire le résultat à la place du sien (aperçu)."""
+    dossier où écrire le résultat à la place du sien (aperçu). ``language`` :
+    la langue de l'interface (sinon celle du projet), passée comme
+    ``langue`` avec ``catalogues`` (V0.9.3.1), sauf si le scénario les fixe."""
     source, assemble_source = scenario_source(scenario, project, current)
     css = resolve_path(project, scenario.css)
     output = resolve_path(project, scenario.output)
     if output_dir is not None:
         output = Path(output_dir) / output.name
-    params = [[name, substitute(value, project)] for name, value in scenario.params]
-    if css is not None and all(name != "css" for name, _value in scenario.params):
+    language = language or project.language
+    params = [[name, substitute(value, project, language)] for name, value in scenario.params]
+    names = {name for name, _value in scenario.params}
+    if css is not None and "css" not in names:
         params.append(["css", css.name])
+    if LANGUAGE_PARAM not in names:
+        params.append([LANGUAGE_PARAM, language])
+    if CATALOGS_PARAM not in names:
+        params.append([CATALOGS_PARAM, catalogs_uri(dict(params)[LANGUAGE_PARAM])])
     xslt = stylesheet_path(scenario, project)
     request = {
         "name": scenario.name,

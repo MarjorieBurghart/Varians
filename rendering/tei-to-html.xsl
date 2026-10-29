@@ -9,6 +9,70 @@
   <xsl:param name="tocTitle" select="'Contents'"/>
   <!-- Scénarios de transformation (V0.9.2.0) : nom de la CSS copiée à côté du résultat. -->
   <xsl:param name="css" select="'tei.css'"/>
+  <!-- Textes de la feuille (V0.9.3.1) : langue de l'interface et adresse
+       des catalogues i18n de Varians (« file:…/i18n/ »), passées par Varians. -->
+  <xsl:param name="langue" select="'fr'"/>
+  <xsl:param name="catalogues" select="''"/>
+
+  <!-- Le texte d'une clé dans le catalogue de la langue demandée, sinon le
+       français. document() n'est appelé qu'avec un catalogue : le moteur
+       .NET de secours (sans lxml) l'interdit. -->
+  <xsl:template name="texte">
+    <xsl:param name="cle"/>
+    <xsl:variable name="traduit">
+      <xsl:if test="$catalogues != ''">
+        <xsl:value-of select="document(concat($catalogues, $langue, '.xml'))/translations/string[@key = $cle]"/>
+      </xsl:if>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="string($traduit) != ''"><xsl:value-of select="$traduit"/></xsl:when>
+      <xsl:otherwise><xsl:call-template name="texte-fr"><xsl:with-param name="cle" select="$cle"/></xsl:call-template></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- Le français, identique au catalogue français. -->
+  <xsl:template name="texte-fr">
+    <xsl:param name="cle"/>
+    <xsl:choose>
+      <xsl:when test="$cle = 'viewer.form.sic'">Leçon transmise</xsl:when>
+      <xsl:when test="$cle = 'viewer.form.corr'">Correction</xsl:when>
+      <xsl:when test="$cle = 'viewer.form.orig'">Graphie originale</xsl:when>
+      <xsl:when test="$cle = 'viewer.form.reg'">Graphie normalisée</xsl:when>
+      <xsl:when test="$cle = 'viewer.form.abbr'">Abréviation</xsl:when>
+      <xsl:when test="$cle = 'viewer.form.expan'">Développement</xsl:when>
+      <xsl:when test="$cle = 'viewer.form.gap'">Lacune</xsl:when>
+      <xsl:when test="$cle = 'viewer.form.detail'">{label} : {value}</xsl:when>
+      <xsl:when test="$cle = 'publication.page'">Page : {n}</xsl:when>
+      <xsl:when test="$cle = 'publication.unclear'">Lecture incertaine</xsl:when>
+      <xsl:when test="$cle = 'publication.sic'">Leçon transmise (sic)</xsl:when>
+      <xsl:when test="$cle = 'publication.gap'">[lacune]</xsl:when>
+      <xsl:when test="$cle = 'publication.gap.extent'">[lacune : {extent}]</xsl:when>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- Le texte d'une clé, sa variable {nom} remplacée par valeur. -->
+  <xsl:template name="texte-avec">
+    <xsl:param name="cle"/>
+    <xsl:param name="nom"/>
+    <xsl:param name="valeur"/>
+    <xsl:variable name="texte"><xsl:call-template name="texte"><xsl:with-param name="cle" select="$cle"/></xsl:call-template></xsl:variable>
+    <xsl:variable name="marque" select="concat('{', $nom, '}')"/>
+    <xsl:choose>
+      <xsl:when test="contains($texte, $marque)">
+        <xsl:value-of select="concat(substring-before($texte, $marque), $valeur, substring-after($texte, $marque))"/>
+      </xsl:when>
+      <xsl:otherwise><xsl:value-of select="$texte"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- « Libellé : valeur » (viewer.form.detail). -->
+  <xsl:template name="detail">
+    <xsl:param name="libelle"/>
+    <xsl:param name="valeur"/>
+    <xsl:variable name="modele"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.detail'"/></xsl:call-template></xsl:variable>
+    <xsl:variable name="debut" select="concat(substring-before($modele, '{label}'), $libelle, substring-after($modele, '{label}'))"/>
+    <xsl:value-of select="concat(substring-before($debut, '{value}'), $valeur, substring-after($debut, '{value}'))"/>
+  </xsl:template>
 
   <xsl:output method="html" encoding="UTF-8" indent="yes" doctype-system="about:legacy-compat"/>
 
@@ -172,6 +236,35 @@
     <div class="l"><xsl:apply-templates/></div>
   </xsl:template>
 
+  <!-- THEATRE (Varians 0.9.3.1), comme le viewer web : chaque réplique
+       (<sp>) est un bloc, son locuteur (<speaker>) en tête. Une didascalie
+       (<stage>), entre parenthèses comme dans « Édition critique », est un
+       bloc entre deux blocs, une ligne dans une strophe, en italique dans
+       une phrase ; les parenthèses touchent son texte (voir text()). -->
+  <xsl:template match="tei:sp">
+    <div class="sp"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <xsl:template match="tei:speaker">
+    <div class="speaker"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <xsl:template match="tei:stage">
+    <span class="stage">(<xsl:apply-templates/>)</span>
+  </xsl:template>
+
+  <xsl:template match="tei:lg/tei:stage">
+    <span class="stage">(<xsl:apply-templates/>)</span>
+    <xsl:if test="following-sibling::tei:l"><br/></xsl:if>
+  </xsl:template>
+
+  <xsl:template match="tei:stage[parent::tei:sp or parent::tei:spGrp or parent::tei:body or parent::tei:front
+                       or parent::tei:back or parent::tei:div or parent::tei:div1 or parent::tei:div2
+                       or parent::tei:div3 or parent::tei:div4 or parent::tei:div5 or parent::tei:div6
+                       or parent::tei:div7]">
+    <div class="stage">(<xsl:apply-templates/>)</div>
+  </xsl:template>
+
   <!-- HEAD (Varians 0.9.2.9) -->
   <xsl:template match="tei:head">
     <h3 class="head"><xsl:apply-templates/></h3>
@@ -244,7 +337,14 @@
 
   <!-- PAGE BREAK -->
   <xsl:template match="tei:pb">
-    <span class="pb" title="Page : {@n}">[<xsl:value-of select="@n"/>]</span>
+    <span class="pb">
+      <xsl:attribute name="title">
+        <xsl:call-template name="texte-avec">
+          <xsl:with-param name="cle" select="'publication.page'"/>
+          <xsl:with-param name="nom" select="'n'"/>
+          <xsl:with-param name="valeur" select="string(@n)"/>
+        </xsl:call-template>
+      </xsl:attribute>[<xsl:value-of select="@n"/>]</span>
   </xsl:template>
 
   <!-- LINE BREAK -->
@@ -273,8 +373,11 @@
   -->
   <xsl:template match="text()">
     <xsl:variable name="s" select="."/>
-    <xsl:variable name="afterBreakNo" select="preceding-sibling::node()[1][self::tei:lb[@break='no']]"/>
-    <xsl:variable name="beforeBreakNo" select="following-sibling::node()[1][self::tei:lb[@break='no']]"/>
+    <!-- Le premier et le dernier texte d'une didascalie touchent ses parenthèses. -->
+    <xsl:variable name="afterBreakNo" select="preceding-sibling::node()[1][self::tei:lb[@break='no']]
+      or (ancestor::tei:stage and generate-id(ancestor::tei:stage[1]/descendant::text()[1]) = generate-id())"/>
+    <xsl:variable name="beforeBreakNo" select="following-sibling::node()[1][self::tei:lb[@break='no']]
+      or (ancestor::tei:stage and generate-id(ancestor::tei:stage[1]/descendant::text()[last()]) = generate-id())"/>
     <xsl:choose>
       <!--
         A text node can be BETWEEN two <lb break="no"/> elements belonging
@@ -430,14 +533,18 @@
 
   <!-- UNCLEAR -->
   <xsl:template match="tei:unclear">
-    <span class="unclear" title="Lecture incertaine"><xsl:apply-templates/></span>
+    <span class="unclear">
+      <xsl:attribute name="title"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'publication.unclear'"/></xsl:call-template></xsl:attribute>
+      <xsl:apply-templates/>
+    </span>
   </xsl:template>
 
   <!-- PHÉNOMÈNES ÉDITORIAUX (Varians 0.9.3.0), comme « Édition critique » :
        un <choice> montre la première forme présente parmi corr, reg, expan,
        sic, orig, abbr (sinon la première), les autres en infobulle ; <sic>
        signalé ; <del> et <surplus> barrés, <add> marqué ; <supplied> entre
-       crochets ; <gap> « [lacune] » ; <space> une espace. -->
+       crochets ; <gap> « [lacune] » (dans la langue de l'interface,
+       V0.9.3.1) ; <space> une espace. -->
   <xsl:template match="tei:choice">
     <xsl:variable name="forme">
       <xsl:choose>
@@ -455,9 +562,10 @@
         <xsl:attribute name="title">
           <xsl:for-each select="*[local-name() != $forme][normalize-space()]">
             <xsl:if test="position() &gt; 1"> · </xsl:if>
-            <xsl:call-template name="nom-de-forme"/>
-            <xsl:text> : </xsl:text>
-            <xsl:value-of select="normalize-space(.)"/>
+            <xsl:call-template name="detail">
+              <xsl:with-param name="libelle"><xsl:call-template name="nom-de-forme"/></xsl:with-param>
+              <xsl:with-param name="valeur" select="normalize-space(.)"/>
+            </xsl:call-template>
           </xsl:for-each>
         </xsl:attribute>
       </xsl:if>
@@ -467,18 +575,21 @@
 
   <xsl:template name="nom-de-forme">
     <xsl:choose>
-      <xsl:when test="self::tei:sic">Leçon transmise</xsl:when>
-      <xsl:when test="self::tei:corr">Correction</xsl:when>
-      <xsl:when test="self::tei:orig">Graphie originale</xsl:when>
-      <xsl:when test="self::tei:reg">Graphie normalisée</xsl:when>
-      <xsl:when test="self::tei:abbr">Abréviation</xsl:when>
-      <xsl:when test="self::tei:expan">Développement</xsl:when>
+      <xsl:when test="self::tei:sic"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.sic'"/></xsl:call-template></xsl:when>
+      <xsl:when test="self::tei:corr"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.corr'"/></xsl:call-template></xsl:when>
+      <xsl:when test="self::tei:orig"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.orig'"/></xsl:call-template></xsl:when>
+      <xsl:when test="self::tei:reg"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.reg'"/></xsl:call-template></xsl:when>
+      <xsl:when test="self::tei:abbr"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.abbr'"/></xsl:call-template></xsl:when>
+      <xsl:when test="self::tei:expan"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.expan'"/></xsl:call-template></xsl:when>
       <xsl:otherwise><xsl:value-of select="local-name()"/></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
 
   <xsl:template match="tei:sic">
-    <span class="sic" title="Leçon transmise (sic)"><xsl:apply-templates/></span>
+    <span class="sic">
+      <xsl:attribute name="title"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'publication.sic'"/></xsl:call-template></xsl:attribute>
+      <xsl:apply-templates/>
+    </span>
   </xsl:template>
 
   <xsl:template match="tei:del | tei:surplus">
@@ -495,13 +606,28 @@
 
   <xsl:template match="tei:gap">
     <span class="lacune">
+      <xsl:variable name="lacune"><xsl:call-template name="texte"><xsl:with-param name="cle" select="'viewer.form.gap'"/></xsl:call-template></xsl:variable>
       <xsl:attribute name="title">
-        <xsl:text>Lacune</xsl:text>
-        <xsl:if test="normalize-space(@reason)"> : <xsl:value-of select="normalize-space(@reason)"/></xsl:if>
+        <xsl:choose>
+          <xsl:when test="normalize-space(@reason)">
+            <xsl:call-template name="detail">
+              <xsl:with-param name="libelle" select="$lacune"/>
+              <xsl:with-param name="valeur" select="normalize-space(@reason)"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise><xsl:value-of select="$lacune"/></xsl:otherwise>
+        </xsl:choose>
       </xsl:attribute>
-      <xsl:text>[lacune</xsl:text>
-      <xsl:if test="normalize-space(@extent)"> : <xsl:value-of select="normalize-space(@extent)"/></xsl:if>
-      <xsl:text>]</xsl:text>
+      <xsl:choose>
+        <xsl:when test="normalize-space(@extent)">
+          <xsl:call-template name="texte-avec">
+            <xsl:with-param name="cle" select="'publication.gap.extent'"/>
+            <xsl:with-param name="nom" select="'extent'"/>
+            <xsl:with-param name="valeur" select="normalize-space(@extent)"/>
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:otherwise><xsl:call-template name="texte"><xsl:with-param name="cle" select="'publication.gap'"/></xsl:call-template></xsl:otherwise>
+      </xsl:choose>
     </span>
   </xsl:template>
 

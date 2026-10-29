@@ -46,4 +46,4 @@ def test_all_catalogues_have_navigation_warnings():
             if key == 'viewer.line_unresolved':
                 assert '{key}' in node.text
         html = (ROOT / 'help' / (lang+'.html')).read_text(encoding='utf-8')
-        assert 'web-text-click-085252' in html
+        assert '<h2 id="viewer">' in html                   # V0.9.3.1 : l'aide sans versions

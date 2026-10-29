@@ -26,8 +26,8 @@ from pathlib import Path
 from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
-    QAbstractItemView, QButtonGroup, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout,
-    QHeaderView, QLineEdit, QMenu, QMessageBox, QProgressDialog, QPushButton, QRadioButton, QTableWidget,
+    QAbstractItemView, QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
+    QHBoxLayout, QHeaderView, QLineEdit, QMenu, QMessageBox, QProgressDialog, QPushButton, QRadioButton, QTableWidget,
     QTableWidgetItem, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 import xslt_packages
@@ -39,8 +39,9 @@ from tei_stylesheets_ui import TeiStylesheetsDialog
 from transform_runner import TransformRunner
 from xml_assembly import path_key
 from xslt_engines import JOURNAL_CODES
-from xslt_scenarios import (NO_WITNESS, PIVOT, TEI_PREFIX, VARIANS_PREFIX, WITNESS_PARAM, customization_name,
-                            customization_text, included_stylesheets, predefined_scenarios, project_sources,
+from xslt_scenarios import (BOOLEAN_PARAMS, LANGUAGE, LANGUAGE_PARAM, NO_WITNESS, PIVOT, TEI_PREFIX, VARIANS_PREFIX,
+                            WITNESS_PARAM, customization_name, customization_text, included_stylesheets,
+                            predefined_scenarios, project_sources,
                             resolve_path, saxon_available, scenario_path, scenario_problems, scenario_request,
                             scenario_source, stylesheet_path, witness_choices)
 
@@ -79,6 +80,22 @@ def predefined():
     i18n = current_i18n()
     return predefined_scenarios(lambda key: _t("preview.toc") if key == "toc" else _t(f"transform.predefined.{key}"),
                                 i18n.language if i18n is not None else None)
+
+
+def _select_value(combo, value):
+    """*combo* sur *value* ; une valeur inconnue est ajoutée, gardée telle quelle."""
+    if combo.findData(value) < 0:
+        combo.addItem(value, value)
+    combo.setCurrentIndex(combo.findData(value))
+    return combo
+
+
+def _widget_value(widget):
+    """La valeur d'un paramètre choisie dans sa cellule : le menu des témoins
+    (sa donnée) ou la case oui/non (``true``, ``false``)."""
+    if isinstance(widget, QCheckBox):
+        return "true" if widget.isChecked() else "false"
+    return widget.currentData()
 
 
 class _PathField(QWidget):
@@ -267,19 +284,42 @@ class ScenarioDialog(QDialog):
         le témoin pivot en tête (enregistré ``${pivot}``), les autres témoins,
         « aucun » ; sans valeur, le pivot ; une autre valeur est gardée telle
         quelle. Le menu garde la valeur : la cellule, dessous, reste vide (son
-        texte se voyait à travers le menu sous Windows)."""
+        texte se voyait à travers le menu sous Windows). Un paramètre oui/non
+        de l'édition critique (``BOOLEAN_PARAMS``) valant true, false ou rien
+        est une case à cocher, et ``langue`` se choisit dans la liste des
+        langues, la langue de l'interface (``${langue}``) en tête (V0.9.3.1)."""
         name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
         if name_item is None or value_item is None:
             return
-        combo = self.params_table.cellWidget(row, 1)
-        if name_item.text().strip() != WITNESS_PARAM:
-            if combo is not None:
-                value_item.setText(combo.currentData())
-                value_item.setFlags(value_item.flags() | Qt.ItemFlag.ItemIsEditable)
-                self.params_table.removeCellWidget(row, 1)
+        widget = self.params_table.cellWidget(row, 1)
+        name = name_item.text().strip()
+        if name in (WITNESS_PARAM, LANGUAGE_PARAM):
+            kind = name
+        elif name in BOOLEAN_PARAMS and (isinstance(widget, QCheckBox)
+                                         or value_item.text().strip() in ("", "true", "false")):
+            kind = "boolean"
+        else:
+            kind = None
+        if widget is not None and widget.property("param_kind") != kind:
+            value_item.setText(_widget_value(widget))
+            value_item.setFlags(value_item.flags() | Qt.ItemFlag.ItemIsEditable)
+            self.params_table.removeCellWidget(row, 1)
+            widget = None
+        if kind is None or widget is not None:
             return
-        if combo is not None:
-            return
+        if kind == "boolean":
+            widget = QCheckBox(self.params_table)
+            widget.setChecked(value_item.text().strip() == "true")
+        elif kind == LANGUAGE_PARAM:
+            widget = self._language_combo(value_item.text().strip())
+        else:
+            widget = self._witness_combo(value_item.text().strip())
+        widget.setProperty("param_kind", kind)
+        value_item.setText("")
+        value_item.setFlags(value_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.params_table.setCellWidget(row, 1, widget)
+
+    def _witness_combo(self, value):
         if self._witnesses is None:
             self._witnesses = witness_choices(self._project)
         pivot = self._project.base_witness
@@ -292,15 +332,17 @@ class ScenarioDialog(QDialog):
             else:
                 combo.addItem(sigla.get(witness, witness), witness)
         combo.addItem(_t("transform.param.no_witness"), NO_WITNESS)
-        value = value_item.text().strip()
         if pivot and value in ("", pivot):                    # sans valeur : le pivot
             value = PIVOT
-        if combo.findData(value) < 0:                         # valeur inconnue : gardée
-            combo.addItem(value, value)
-        combo.setCurrentIndex(combo.findData(value))
-        value_item.setText("")
-        value_item.setFlags(value_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-        self.params_table.setCellWidget(row, 1, combo)
+        return _select_value(combo, value)
+
+    def _language_combo(self, value):
+        combo = QComboBox(self.params_table)
+        combo.addItem(_t("transform.param.interface_language"), LANGUAGE)
+        i18n = current_i18n()
+        for info in (i18n.available_languages() if i18n is not None else []):
+            combo.addItem(info.label, info.code)
+        return _select_value(combo, value or LANGUAGE)       # sans valeur : la langue de l'interface
 
     def remove_param_row(self, row):
         if 0 <= row < self.params_table.rowCount():
@@ -313,9 +355,10 @@ class ScenarioDialog(QDialog):
         for row in range(self.params_table.rowCount()):
             name_item, value_item = self.params_table.item(row, 0), self.params_table.item(row, 1)
             name = (name_item.text() if name_item else "").strip()
-            combo = self.params_table.cellWidget(row, 1)
+            widget = self.params_table.cellWidget(row, 1)
             if name and name not in params:
-                params[name] = combo.currentData() if combo is not None else (value_item.text() if value_item else "")
+                params[name] = (_widget_value(widget) if widget is not None
+                                else value_item.text() if value_item else "")
         return tuple(params.items())
 
     def scenario(self):
@@ -863,7 +906,9 @@ class TransformScenariosMixin:
         if not self._save_for_transform(scenario, current):
             return False
         output_dir = self._transform_preview_dir() if preview else None
-        request = scenario_request(scenario, self.project, current, output_dir)
+        i18n = current_i18n()
+        request = scenario_request(scenario, self.project, current, output_dir,
+                                   language=i18n.language if i18n is not None else None)
         if not preview:
             self._remember_transform_scenario(scenario)
         self._transform_running = (scenario, preview, request)

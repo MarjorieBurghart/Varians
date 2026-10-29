@@ -145,6 +145,7 @@
   <string key="webgen.text.label">Texte du viewer :</string>
   <string key="webgen.text.established">Texte établi : le &lt;lem&gt;, à défaut la leçon du témoin choisi</string>
   <string key="webgen.text.witness">Texte du témoin choisi, même quand il n'est pas le &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Surligner en jaune les leçons qui ne viennent pas d’un &lt;lem&gt; (le lecteur peut changer ce réglage)</string>
   <string key="webgen.text.chosen">Témoin :</string>
   <string key="webgen.text.pivot">Pivot (de chaque texte)</string>
   <string key="webgen.text.missing_hint">Les passages où le témoin choisi n'a pas de leçon sont signalés dans le viewer.</string>
@@ -191,6 +192,31 @@
   <string key="viewer.form.expan">Développement</string>
   <string key="viewer.form.detail">{label} : {value}</string>
   <string key="viewer.form.gap">Lacune</string>
+  <string key="publication.critique.title">Édition critique</string>
+  <string key="publication.critique.lemmas_only">Texte établi à partir des lemmes explicites, sans témoin choisi.</string>
+  <string key="publication.critique.witness">Leçon explicite prioritaire, sinon lecture du témoin {witness}.</string>
+  <string key="publication.critique.undefined">non défini</string>
+  <string key="publication.critique.rejected">Les variantes rejetées figurent dans l’apparat.</string>
+  <string key="publication.critique.highlight">Surligner les leçons hors &lt;lem&gt;</string>
+  <string key="publication.critique.sigla">Sigles des témoins</string>
+  <string key="publication.critique.footer">Édition produite à partir d’un document TEI · Apparat par division</string>
+  <string key="publication.critique.apparatus">Apparat critique</string>
+  <string key="publication.critique.notes">Notes</string>
+  <string key="publication.critique.apparatus_notes">Apparat critique et notes</string>
+  <string key="publication.critique.call_apparatus">Apparat {n}</string>
+  <string key="publication.critique.call_note">Note {n}</string>
+  <string key="publication.critique.back">Retour au texte</string>
+  <string key="publication.reference">[référence]</string>
+  <string key="publication.caesura">Césure</string>
+  <string key="publication.unclear">Lecture incertaine</string>
+  <string key="publication.sic">Leçon transmise (sic)</string>
+  <string key="publication.folio">Changement de folio ou de page</string>
+  <string key="publication.gap">[lacune]</string>
+  <string key="publication.gap.extent">[lacune : {extent}]</string>
+  <string key="publication.page">Page : {n}</string>
+  <string key="publication.not_available">[lecture du témoin non disponible]</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun : {count} apparat(s) sans lemme (lem). Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
+  <string key="publication.error.unknown_witness">Témoin inconnu : {witness} (témoins déclarés : {witnesses}).</string>
   <string key="viewer.language">Langue</string>
   <string key="viewer.variant">variante</string>
   <string key="viewer.note">note</string>
@@ -486,6 +512,7 @@ Enregistrer quand même ?</string>
   <string key="menu.help">Aide</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Dictionnaire de Latin</string>
+  <string key="help.tei_guide">Guide des éléments TEI</string>
   <string key="help.software">Aide du logiciel</string>
   <string key="help.search.placeholder">Rechercher dans l’aide (Ctrl+F)</string>
   <string key="help.search.summary">{sections} section(s), {count} occurrence(s)</string>
@@ -819,6 +846,8 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="viewer.show_variants.tip">Afficher ou masquer les marqueurs de variantes (v) dans le texte</string>
   <string key="viewer.show_notes">Notes</string>
   <string key="viewer.show_notes.tip">Afficher ou masquer les marqueurs de notes (n) dans le texte</string>
+  <string key="viewer.show_nonlem">Leçons hors &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Surligner en jaune les leçons qui ne viennent pas d’un &lt;lem&gt;</string>
   <string key="completion.ids.label">Identifiants du projet pour @{attribute} dans &lt;{element}&gt; :</string>
   <string key="references.goto">Aller à la cible</string>
   <string key="references.back">Revenir</string>
@@ -1084,6 +1113,7 @@ Enregistrer quand même ?</string>
   <string key="transform.param.value">Valeur</string>
   <string key="transform.param.pivot">{witness} (pivot)</string>
   <string key="transform.param.no_witness">aucun (lemmes seuls)</string>
+  <string key="transform.param.interface_language">Langue de l’interface</string>
   <string key="transform.param.add">Ajouter un paramètre</string>
   <string key="transform.param.remove">Retirer le paramètre</string>
   <string key="transform.browse.file">Fichier source du scénario</string>

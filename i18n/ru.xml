@@ -154,6 +154,7 @@
   <string key="webgen.text.label">Текст просмотрщика:</string>
   <string key="webgen.text.established">Установленный текст: &lt;lem&gt;, иначе чтение выбранного свидетеля</string>
   <string key="webgen.text.witness">Текст выбранного свидетеля, даже если это не &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Выделить жёлтым чтения, взятые не из &lt;lem&gt; (читатель может это изменить)</string>
   <string key="webgen.text.chosen">Свидетель:</string>
   <string key="webgen.text.pivot">Опорный (для каждого текста)</string>
   <string key="webgen.text.missing_hint">Места, где у выбранного свидетеля нет чтения, отмечены в просмотрщике.</string>
@@ -205,6 +206,31 @@
   <string key="viewer.form.expan">Раскрытие</string>
   <string key="viewer.form.detail">{label}: {value}</string>
   <string key="viewer.form.gap">Лакуна</string>
+  <string key="publication.critique.title">Критическое издание</string>
+  <string key="publication.critique.lemmas_only">Текст установлен только по явным леммам, без выбранного свидетеля.</string>
+  <string key="publication.critique.witness">Приоритет у явной леммы, иначе — чтение свидетеля {witness}.</string>
+  <string key="publication.critique.undefined">не задан</string>
+  <string key="publication.critique.rejected">Отвергнутые варианты приведены в аппарате.</string>
+  <string key="publication.critique.highlight">Выделить чтения вне &lt;lem&gt;</string>
+  <string key="publication.critique.sigla">Сиглы свидетелей</string>
+  <string key="publication.critique.footer">Издание создано по документу TEI · Аппарат по разделам</string>
+  <string key="publication.critique.apparatus">Критический аппарат</string>
+  <string key="publication.critique.notes">Примечания</string>
+  <string key="publication.critique.apparatus_notes">Критический аппарат и примечания</string>
+  <string key="publication.critique.call_apparatus">Аппарат {n}</string>
+  <string key="publication.critique.call_note">Примечание {n}</string>
+  <string key="publication.critique.back">Вернуться к тексту</string>
+  <string key="publication.reference">[ссылка]</string>
+  <string key="publication.caesura">Цезура</string>
+  <string key="publication.unclear">Неуверенное прочтение</string>
+  <string key="publication.sic">Переданное чтение (sic)</string>
+  <string key="publication.folio">Смена листа или страницы</string>
+  <string key="publication.gap">[лакуна]</string>
+  <string key="publication.gap.extent">[лакуна: {extent}]</string>
+  <string key="publication.page">Страница: {n}</string>
+  <string key="publication.not_available">[чтение свидетеля недоступно]</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} единиц аппарата без леммы (lem). Добавьте лемму к каждой или выберите свидетеля.</string>
+  <string key="publication.error.unknown_witness">Неизвестный свидетель: {witness} (объявленные свидетели: {witnesses}).</string>
   <string key="viewer.language">Язык</string>
   <string key="viewer.variant">разночтение</string>
   <string key="viewer.note">примечание</string>
@@ -500,6 +526,7 @@
   <string key="menu.help">Справка</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Словарь латинского языка</string>
+  <string key="help.tei_guide">Справочник элементов TEI</string>
   <string key="help.software">Справка Varians</string>
   <string key="help.search.placeholder">Поиск в справке (Ctrl+F)</string>
   <string key="help.search.summary">Разделов: {sections}, совпадений: {count}</string>
@@ -833,6 +860,8 @@
   <string key="viewer.show_variants.tip">Показать или скрыть метки разночтений (v) в тексте</string>
   <string key="viewer.show_notes">Примечания</string>
   <string key="viewer.show_notes.tip">Показать или скрыть метки примечаний (n) в тексте</string>
+  <string key="viewer.show_nonlem">Чтения вне &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Выделить жёлтым чтения, взятые не из &lt;lem&gt;</string>
   <string key="completion.ids.label">Идентификаторы проекта для @{attribute} в &lt;{element}&gt;:</string>
   <string key="references.goto">Перейти к цели</string>
   <string key="references.back">Вернуться</string>
@@ -1098,6 +1127,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="transform.param.value">Значение</string>
   <string key="transform.param.pivot">{witness} (опорный)</string>
   <string key="transform.param.no_witness">aucun (только леммы)</string>
+  <string key="transform.param.interface_language">Язык интерфейса</string>
   <string key="transform.param.add">Добавить параметр</string>
   <string key="transform.param.remove">Убрать параметр</string>
   <string key="transform.browse.file">Исходный файл сценария</string>

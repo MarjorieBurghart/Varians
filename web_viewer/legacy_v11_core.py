@@ -20,6 +20,7 @@ le bureau. Le XML est lu avec ``xml.etree.ElementTree``.
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 from collections import OrderedDict
@@ -244,7 +245,7 @@ LACUNA_TAGS = ("lacunaStart", "lacunaEnd")
 
 # Texte de lecture (V0.9.3.0) : blocs affichés par le viewer. Un bloc « div »
 # marque le début d'une division ; il n'a pas de texte.
-RENDERED_BLOCKS = frozenset({"p", "head", "l", "item", "cell", "caption", "note"})
+RENDERED_BLOCKS = frozenset({"p", "head", "l", "item", "cell", "caption", "note", "speaker", "stage"})
 DIVISION_TAGS = frozenset({"div", "div1", "div2", "div3", "div4", "div5", "div6", "div7"})
 # Repères posés entre deux blocs : ils ne font pas de bloc à eux seuls.
 MILESTONE_TAGS = frozenset({"pb", "lb", "cb", "milestone", "anchor"})
@@ -659,9 +660,14 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         # entre deux blocs (<pb/>, lacune…) reste dans le bloc précédent.
         "sticky": False,
         "divs": 0, "lists": 0, "tables": 0, "groups": {}, "list_depth": 0,
+        # Théâtre (V0.9.3.1) : le rang de la réplique en cours, que portent ses blocs.
+        "sps": 0, "sp": None,
         # Choix du texte : le manque en cours (témoin choisi sans leçon), le
         # @wit de la leçon affichée, le nombre de manques.
         "missing": None, "shown_wit": None, "missing_count": 0,
+        # Texte établi (V0.9.3.1) : dans une leçon affichée qui n'est pas un
+        # <lem> ; le nombre de ces leçons.
+        "nonlem": False, "nonlem_count": 0, "nonlem_edges": None,
     }
 
     def enter(node):
@@ -687,7 +693,10 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         return state["line_key"]
 
     def start_block(kind="p", attrs=None):
-        block = {"type": kind, "attrs": attrs or {}, "segments": []}
+        attrs = dict(attrs or {})
+        if state["sp"]:
+            attrs["sp"] = state["sp"]
+        block = {"type": kind, "attrs": attrs, "segments": []}
         blocks.append(block)
         state["pending_lb_sep"] = None
         return block
@@ -713,6 +722,12 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             return
         block = ensure_block()
         text = re.sub(r"\s+", " ", text)
+        if state.get("hug"):
+            # Juste après une parenthèse ouvrante : pas de blanc (V0.9.3.1).
+            text = text.lstrip()
+            if not text:
+                return
+            state["hug"] = False
         sep = state.get("pending_lb_sep")
         if sep is not None:
             text = text.lstrip()
@@ -731,6 +746,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             seg["variant_id"] = variant_id
         if state["missing"]:
             seg["missing"] = dict(state["missing"])
+        if state["nonlem"]:
+            seg["nonlem"] = True
         if extra_classes:
             seg["classes"] = list(extra_classes)
         if alt:
@@ -744,10 +761,48 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             prev.get("classes") == seg.get("classes") and
             prev.get("alt") == seg.get("alt") and
             prev.get("missing") == seg.get("missing") and
+            prev.get("nonlem") == seg.get("nonlem") and
             prev.get("seg") == seg.get("seg")):
             prev["text"] += text
+            seg = prev
         else:
             block["segments"].append(seg)
+        if state["nonlem"]:
+            edges = state["nonlem_edges"]
+            state["nonlem_edges"] = [edges[0] if edges else (block, seg), (block, seg)]
+
+    def unflag_edges(edges):
+        """Les blancs au bord d'une leçon hors <lem> ne sont pas surlignés :
+        détachés du premier et du dernier segment marqués (V0.9.3.1)."""
+        for (block, seg), pattern in zip(edges, (r"^\s+", r"\s+$")):
+            match = re.search(pattern, seg["text"])
+            if not match:
+                continue
+            if match.group(0) == seg["text"]:
+                seg.pop("nonlem", None)
+                continue
+            blank = copy.deepcopy(seg)
+            blank.pop("nonlem")
+            blank["text"] = match.group(0)
+            seg["text"] = seg["text"][:match.start()] + seg["text"][match.end():]
+            index = next(i for i, item in enumerate(block["segments"]) if item is seg)
+            block["segments"].insert(index if match.start() == 0 else index + 1, blank)
+
+    def open_parenthesis(styles, **extra):
+        """Parenthèse ouvrante d'une didascalie, collée au texte qui suit."""
+        add_text("(", styles, **extra)
+        state["hug"] = True
+
+    def close_parenthesis(styles, **extra):
+        """Parenthèse fermante, collée au texte qui précède."""
+        state["hug"] = False
+        block = state["block"]
+        if block and block["segments"] and block["segments"][-1].get("kind") == "text":
+            last = block["segments"][-1]
+            last["text"] = last["text"].rstrip()
+            if not last["text"]:
+                block["segments"].pop()
+        add_text(")", styles, **extra)
 
     def add_marker(kind, ann_id, tooltip=""):
         block = ensure_block()
@@ -896,11 +951,21 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     def walk_shown(selected, wit, missing, walker):
         """Parcourt la leçon affichée (``walker``), marquée si le témoin
         choisi n'en a pas ; un repli vide donne le repère « ∅ »."""
-        saved = state["missing"], state["shown_wit"]
+        saved = state["missing"], state["shown_wit"], state["nonlem"]
+        # Texte établi : une leçon qui n'est pas un <lem> est marquée, avec
+        # tout ce qu'elle contient (V0.9.3.1).
+        nonlem = text_mode == "established" and lname(selected.tag) != "lem"
         state["missing"] = missing or saved[0]
         state["shown_wit"] = wit
+        state["nonlem"] = nonlem or saved[2]
+        if nonlem and not saved[2]:
+            state["nonlem_edges"] = None
         walker()
-        state["missing"], state["shown_wit"] = saved
+        state["missing"], state["shown_wit"], state["nonlem"] = saved
+        if nonlem and not saved[2]:
+            state["nonlem_count"] += 1
+            if state["nonlem_edges"]:
+                unflag_edges(state["nonlem_edges"])
         if missing:
             state["missing_count"] += 1
             if not clean_text(flatten_editorial_text(selected)):
@@ -943,6 +1008,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             styles.append("sic")
         elif tag == "quote":
             styles.append("quote")
+        elif tag == "stage":
+            styles.append("stage")
         return styles
 
     def advance_line(node):
@@ -1091,6 +1158,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         new_styles = style_for(node, styles)
         if tag == "supplied":
             add_text("[", new_styles, variant_id=variant_id, alt=alt)
+        elif tag == "stage":
+            open_parenthesis(new_styles, variant_id=variant_id, alt=alt)
         if node.text:
             add_text(node.text, new_styles, variant_id=variant_id, alt=alt)
         for child in list(node):
@@ -1100,6 +1169,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 add_text(child.tail, new_styles, variant_id=variant_id, alt=alt)
         if tag == "supplied":
             add_text("]", new_styles, variant_id=variant_id, alt=alt)
+        elif tag == "stage":
+            close_parenthesis(new_styles, variant_id=variant_id, alt=alt)
 
     def new_div_id():
         while True:
@@ -1121,7 +1192,11 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         old = state["block"]
         first = block = state["block"] = start_block(kind, attrs)
         enter(node)
-        styles = style_for(node, [])
+        # Une didascalie en bloc est en italique par son bloc : pas de style « stage » en plus.
+        styles = [] if kind == "stage" else style_for(node, [])
+        if kind == "stage":
+            # Entre parenthèses, comme dans « Édition critique » (V0.9.3.1).
+            open_parenthesis(styles)
         if node.text:
             add_text(node.text, styles)
         for child in list(node):
@@ -1136,6 +1211,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             enter(node)
             if child.tail:
                 add_text(child.tail, styles)
+        if kind == "stage":
+            close_parenthesis(styles)
         finish_block(block, old)
         return first
 
@@ -1266,6 +1343,16 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
 
         walk_children(node, level, sticky=True, special=special)
 
+    def walk_speech(node, level):
+        """Une réplique (``<sp>``, V0.9.3.1) : son locuteur (bloc
+        ``speaker``), ses vers, paragraphes et didascalies (bloc ``stage``)
+        portent ``sp``, le rang de la réplique."""
+        old = state["sp"]
+        state["sps"] += 1
+        state["sp"] = state["sps"]
+        walk_children(node, level)
+        state["sp"] = old
+
     def walk_container(node, level=0, parent=None):
         tag = lname(node.tag)
         enter(node)
@@ -1306,6 +1393,10 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             walk_block(node, "caption", level=level)
         elif tag == "note":
             walk_inline_block(node, "note")
+        elif tag == "sp":
+            walk_speech(node, level)
+        elif tag in ("speaker", "stage"):
+            walk_block(node, tag, level=level)
         elif _phrase_only(node):
             # Contenu de phrase entre deux blocs (citation, <cit>, <app>…) : un paragraphe.
             walk_inline_block(node)
@@ -1368,7 +1459,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if b.get("type") in ("div", "cell") or any(seg.get("kind") != "text" or seg.get("text", "").strip()
                                                     for seg in b["segments"]):
             cleaned.append(b)
-    document = {"blocks": cleaned, "annotations": annotations, "missing_readings": state["missing_count"]}
+    document = {"blocks": cleaned, "annotations": annotations, "missing_readings": state["missing_count"],
+                "nonlem_readings": state["nonlem_count"]}
     # Langue du texte (césure, lecteurs d'écran) : @xml:lang du <text>, sinon de la racine.
     lang = next((value for value in [text.attrib.get(XML_LANG) for text in texts] + [root.attrib.get(XML_LANG)]
                  if value and value.strip()), None)

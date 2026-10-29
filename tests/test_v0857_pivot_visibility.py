@@ -44,6 +44,5 @@ def test_scaffold_confirmation_and_opt_in_are_preserved():
 def test_help_pages_explain_new_location_in_all_languages():
     for lang in ('fr','en','de','ja','cs','it','ru'):
         help_text=(ROOT/'help'/f'{lang}.html').read_text(encoding='utf8')
-        assert '0.8.5.7' in help_text
-        assert '<h3>' in help_text and '&lt;lb/&gt;' in help_text
-        assert 'Varians 0.8.5.7' in help_text
+        # V0.9.3.1 : l'aide n'annonce plus les versions.
+        assert '<h3' in help_text and '&lt;lb/&gt;' in help_text

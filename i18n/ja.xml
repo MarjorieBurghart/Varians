@@ -154,6 +154,7 @@
   <string key="webgen.text.label">ビューアの本文：</string>
   <string key="webgen.text.established">校訂本文：&lt;lem&gt;、なければ選んだ伝本の読み</string>
   <string key="webgen.text.witness">選んだ伝本の本文（&lt;lem&gt; でない場合も）</string>
+  <string key="webgen.text.highlight">&lt;lem&gt; に由来しない読みを黄色で強調表示する（閲覧者が変更できます）</string>
   <string key="webgen.text.chosen">伝本：</string>
   <string key="webgen.text.pivot">ピボット（各テキストの）</string>
   <string key="webgen.text.missing_hint">選んだ伝本に読みがない箇所はビューアで示されます。</string>
@@ -205,6 +206,31 @@
   <string key="viewer.form.expan">展開形</string>
   <string key="viewer.form.detail">{label}：{value}</string>
   <string key="viewer.form.gap">欠落</string>
+  <string key="publication.critique.title">校訂版</string>
+  <string key="publication.critique.lemmas_only">明示されたレンマ（lem）のみから本文を確定（伝本の指定なし）。</string>
+  <string key="publication.critique.witness">明示されたレンマを優先し、ない場合は伝本 {witness} の読み。</string>
+  <string key="publication.critique.undefined">未指定</string>
+  <string key="publication.critique.rejected">採用しなかった異読は校異に示す。</string>
+  <string key="publication.critique.highlight">&lt;lem&gt; 以外の読みを強調表示</string>
+  <string key="publication.critique.sigla">伝本のシグラム</string>
+  <string key="publication.critique.footer">TEI文書から作成した校訂版・校異は区分ごと</string>
+  <string key="publication.critique.apparatus">校異</string>
+  <string key="publication.critique.notes">注</string>
+  <string key="publication.critique.apparatus_notes">校異と注</string>
+  <string key="publication.critique.call_apparatus">校異 {n}</string>
+  <string key="publication.critique.call_note">注 {n}</string>
+  <string key="publication.critique.back">本文に戻る</string>
+  <string key="publication.reference">［参照］</string>
+  <string key="publication.caesura">中間休止</string>
+  <string key="publication.unclear">不確かな読み</string>
+  <string key="publication.sic">伝承の読み（sic）</string>
+  <string key="publication.folio">丁またはページの変わり目</string>
+  <string key="publication.gap">［欠落］</string>
+  <string key="publication.gap.extent">［欠落：{extent}］</string>
+  <string key="publication.page">ページ：{n}</string>
+  <string key="publication.not_available">［伝本の読みなし］</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun：レンマ（lem）のない校異が {count} 件あります。それぞれにレンマを加えるか、伝本を選んでください。</string>
+  <string key="publication.error.unknown_witness">不明な伝本：{witness}（宣言されている伝本：{witnesses}）。</string>
   <string key="viewer.language">言語</string>
   <string key="viewer.variant">異読</string>
   <string key="viewer.note">注記</string>
@@ -500,6 +526,7 @@
   <string key="menu.help">ヘルプ</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">ラテン語辞書</string>
+  <string key="help.tei_guide">TEI要素ガイド</string>
   <string key="help.software">Variansヘルプ</string>
   <string key="help.search.placeholder">ヘルプを検索（Ctrl+F）</string>
   <string key="help.search.summary">{sections} 節、{count} 件</string>
@@ -794,8 +821,8 @@
   <string key="fold.none">すべて展開する</string>
   <string key="viewer.external_iiif_notice">外部IIIF画像：{count}件。閲覧にはネットワーク接続とアクセス権が必要です。</string>
   <string key="viewer.line_no_anchor">このテキスト部分には確認可能なTEI行アンカーがありません。写本表示は移動していません。</string>
-  <string key="viewer.line_unresolved">TEI行 {key} は書き出された基準写本の行に存在しません。対応関係は推測していません。</string>
-  <string key="viewer.pivot_lb_mismatch">基準写本のTEI行マーカー：{markers}件、物理行：{physical}行。不足する対応関係は推測しません。</string>
+  <string key="viewer.line_unresolved">TEI行 {key} は書き出されたピボット伝本の行に存在しません。対応関係は推測していません。</string>
+  <string key="viewer.pivot_lb_mismatch">ピボット伝本のTEI行マーカー：{markers}件、物理行：{physical}行。不足する対応関係は推測しません。</string>
   <string key="viewer.search.medieval">中世の異綴りを許容</string>
   <string key="viewer.search.run">検索</string>
   <string key="viewer.search.close">検索を閉じる</string>
@@ -833,6 +860,8 @@
   <string key="viewer.show_variants.tip">本文中の異読マーカー（v）を表示または非表示にする</string>
   <string key="viewer.show_notes">注</string>
   <string key="viewer.show_notes.tip">本文中の注マーカー（n）を表示または非表示にする</string>
+  <string key="viewer.show_nonlem">&lt;lem&gt; 以外の読み</string>
+  <string key="viewer.show_nonlem.tip">&lt;lem&gt; に由来しない読みを黄色で強調表示する</string>
   <string key="completion.ids.label">&lt;{element}&gt; の @{attribute} に使えるプロジェクト内の識別子：</string>
   <string key="references.goto">参照先へ移動</string>
   <string key="references.back">戻る</string>
@@ -1098,6 +1127,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.param.value">値</string>
   <string key="transform.param.pivot">{witness}（ピボット）</string>
   <string key="transform.param.no_witness">aucun（レンマのみ）</string>
+  <string key="transform.param.interface_language">インターフェースの言語</string>
   <string key="transform.param.add">パラメータを追加</string>
   <string key="transform.param.remove">パラメータを削除</string>
   <string key="transform.browse.file">シナリオの入力ファイル</string>

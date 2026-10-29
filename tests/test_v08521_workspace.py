@@ -232,7 +232,7 @@ def test_all_seven_locales_have_identical_and_complete_workspace_translations():
         assert len(values)==len(root.findall('string'))==CATALOG_SIZE
         assert len(new)==11 and all(values[k] for k in new)
         assert '{witness}' in values['workspace.detached.title']
-        assert '0.8.5.24' in (ROOT/'help'/f'{lang}.html').read_text(encoding='utf-8')
+        assert (ROOT/'help'/f'{lang}.html').is_file()         # V0.9.3.1 : l'aide sans versions
         if not keys:keys=new
         else:assert new==keys
 

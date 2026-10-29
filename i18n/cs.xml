@@ -154,6 +154,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="webgen.text.label">Text prohlížeče:</string>
   <string key="webgen.text.established">Ustavený text: &lt;lem&gt;, jinak čtení zvoleného svědka</string>
   <string key="webgen.text.witness">Text zvoleného svědka, i když to není &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Žlutě zvýraznit čtení, která nepocházejí z &lt;lem&gt; (čtenář to může změnit)</string>
   <string key="webgen.text.chosen">Svědek:</string>
   <string key="webgen.text.pivot">Pivot (každého textu)</string>
   <string key="webgen.text.missing_hint">Místa, kde zvolený svědek nemá čtení, jsou v prohlížeči označena.</string>
@@ -205,6 +206,31 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="viewer.form.expan">Rozvedení</string>
   <string key="viewer.form.detail">{label}: {value}</string>
   <string key="viewer.form.gap">Mezera</string>
+  <string key="publication.critique.title">Kritická edice</string>
+  <string key="publication.critique.lemmas_only">Text stanovený pouze podle výslovných lemmat, bez zvoleného svědka.</string>
+  <string key="publication.critique.witness">Přednost má výslovné lemma, jinak čtení svědka {witness}.</string>
+  <string key="publication.critique.undefined">neurčen</string>
+  <string key="publication.critique.rejected">Odmítnuté varianty jsou uvedeny v aparátu.</string>
+  <string key="publication.critique.highlight">Zvýraznit čtení mimo &lt;lem&gt;</string>
+  <string key="publication.critique.sigla">Sigly svědků</string>
+  <string key="publication.critique.footer">Edice vytvořená z dokumentu TEI · Aparát po oddílech</string>
+  <string key="publication.critique.apparatus">Kritický aparát</string>
+  <string key="publication.critique.notes">Poznámky</string>
+  <string key="publication.critique.apparatus_notes">Kritický aparát a poznámky</string>
+  <string key="publication.critique.call_apparatus">Aparát {n}</string>
+  <string key="publication.critique.call_note">Poznámka {n}</string>
+  <string key="publication.critique.back">Zpět k textu</string>
+  <string key="publication.reference">[odkaz]</string>
+  <string key="publication.caesura">Cezura</string>
+  <string key="publication.unclear">Nejisté čtení</string>
+  <string key="publication.sic">Dochované čtení (sic)</string>
+  <string key="publication.folio">Změna folia nebo strany</string>
+  <string key="publication.gap">[mezera]</string>
+  <string key="publication.gap.extent">[mezera: {extent}]</string>
+  <string key="publication.page">Strana: {n}</string>
+  <string key="publication.not_available">[čtení svědka není k dispozici]</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} položek aparátu bez lemmatu (lem). Doplňte ke každé lemma, nebo zvolte svědka.</string>
+  <string key="publication.error.unknown_witness">Neznámý svědek: {witness} (deklarovaní svědkové: {witnesses}).</string>
   <string key="viewer.language">Jazyk</string>
   <string key="viewer.variant">varianta</string>
   <string key="viewer.note">poznámka</string>
@@ -500,6 +526,7 @@ Přesto uložit?</string>
   <string key="menu.help">Nápověda</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Latinský slovník</string>
+  <string key="help.tei_guide">Průvodce prvky TEI</string>
   <string key="help.software">Nápověda k Varians</string>
   <string key="help.search.placeholder">Hledat v nápovědě (Ctrl+F)</string>
   <string key="help.search.summary">Oddíly: {sections}, výskyty: {count}</string>
@@ -709,7 +736,7 @@ Identifikátory (výběr): {ids}</string>
   <string key="pivot.not_empty">Transkripce již obsahuje text nebo značky; nic nebylo změněno. Funkce je určena pouze pro původně prázdné tělo TEI.</string>
   <string key="pivot.no_pages">Pro pivotního svědka nejsou dostupné stránky s plochami &lt;surface&gt;. Vyberte příslušné snímky.</string>
   <string key="pivot.preview.title">Náhled před vytvořením značek TEI</string>
-  <string key="pivot.preview.summary">Výchozí rukopis {witness}: {pages} stran, {lines} začátků řádků k vložení.</string>
+  <string key="pivot.preview.summary">Pivotní svědek {witness}: {pages} stran, {lines} začátků řádků k vložení.</string>
   <string key="pivot.preview.warnings">Upozornění a přehled stran</string>
   <string key="pivot.preview.confirm">Potvrdit vložení? Před úpravou bude vytvořena záloha s časovým údajem. Text OCR se nekopíruje.</string>
   <string key="pivot.done">Značky byly vytvořeny. Záloha: {backup}.</string>
@@ -794,8 +821,8 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="fold.none">Rozbalit vše</string>
   <string key="viewer.external_iiif_notice">Vzdálené obrázky IIIF: {count}. Je nutné připojení k síti a přístupové oprávnění.</string>
   <string key="viewer.line_no_anchor">Tato část textu nemá ověřitelnou značku řádku TEI. Zobrazení rukopisu se nezměnilo.</string>
-  <string key="viewer.line_unresolved">Řádek TEI {key} chybí mezi exportovanými řádky výchozího svědka. Žádná vazba nebyla odvozena.</string>
-  <string key="viewer.pivot_lb_mismatch">Značky řádků TEI výchozího svědka: {markers}; fyzické řádky: {physical}. Chybějící vazby se neodvozují.</string>
+  <string key="viewer.line_unresolved">Řádek TEI {key} chybí mezi exportovanými řádky pivotního svědka. Žádná vazba nebyla odvozena.</string>
+  <string key="viewer.pivot_lb_mismatch">Značky řádků TEI pivotního svědka: {markers}; fyzické řádky: {physical}. Chybějící vazby se neodvozují.</string>
   <string key="viewer.search.medieval">Středověké pravopisné varianty</string>
   <string key="viewer.search.run">Hledat</string>
   <string key="viewer.search.close">Zavřít hledání</string>
@@ -833,6 +860,8 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="viewer.show_variants.tip">Zobrazit nebo skrýt značky variant (v) v textu</string>
   <string key="viewer.show_notes">Poznámky</string>
   <string key="viewer.show_notes.tip">Zobrazit nebo skrýt značky poznámek (n) v textu</string>
+  <string key="viewer.show_nonlem">Čtení mimo &lt;lem&gt;</string>
+  <string key="viewer.show_nonlem.tip">Žlutě zvýraznit čtení, která nepocházejí z &lt;lem&gt;</string>
   <string key="completion.ids.label">Identifikátory projektu pro @{attribute} v &lt;{element}&gt;:</string>
   <string key="references.goto">Přejít na cíl</string>
   <string key="references.back">Zpět</string>
@@ -1098,6 +1127,7 @@ Přesto uložit?</string>
   <string key="transform.param.value">Hodnota</string>
   <string key="transform.param.pivot">{witness} (pivotní)</string>
   <string key="transform.param.no_witness">aucun (jen lemmata)</string>
+  <string key="transform.param.interface_language">Jazyk rozhraní</string>
   <string key="transform.param.add">Přidat parametr</string>
   <string key="transform.param.remove">Odebrat parametr</string>
   <string key="transform.browse.file">Zdrojový soubor scénáře</string>

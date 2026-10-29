@@ -217,10 +217,10 @@ def test_a_title_page_keeps_its_parts_apart():
 
 
 def test_every_block_is_a_division_or_rendered():
-    assert RENDERED_BLOCKS == {"p", "head", "l", "item", "cell", "caption", "note"}
+    assert RENDERED_BLOCKS == {"p", "head", "l", "item", "cell", "caption", "note", "speaker", "stage"}
     reading = _reading('<div><head>T</head><lg><l>a</l></lg><list><item>b</item></list>'
                        '<table><row><cell>c</cell></row></table><figure><figDesc>d</figDesc></figure>'
-                       '<note>e</note><p>f</p></div>')
+                       '<note>e</note><p>f</p><sp><speaker>g</speaker><stage>h</stage></sp></div>')
     assert {block["type"] for block in reading["blocks"]} == RENDERED_BLOCKS | {"div"}
 
 
@@ -412,3 +412,77 @@ def test_the_lines_of_a_long_reading_not_shown_are_spread_over_the_text_shown():
     assert _text(reading["blocks"][1]) == "alpha beta gamma delta epsilon zeta b"
     keys = [(seg["text"].strip(), seg["line_key"]) for seg in _segments(reading) if seg["kind"] == "text"]
     assert keys == [("alpha beta", "P::1"), ("gamma delta", "P::2"), ("epsilon zeta", "P::3"), ("b", "P::3")]
+
+
+# --- Théâtre (V0.9.3.1) ---------------------------------------------------------------------------
+# Une réplique (<sp>) réunit son locuteur (<speaker>), ses vers ou ses
+# paragraphes et ses didascalies (<stage>) ; une didascalie entre deux
+# répliques est un bloc, dans une phrase un style.
+
+DRAMA = ('<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
+         '<sp who="#h"><speaker>HAMLETUS</speaker><l n="1">Esse aut non esse,</l><l n="2">haec quaestio.</l></sp>'
+         '<sp who="#o"><speaker>OPHELIA</speaker><p>Domine <stage>ad eum accedit</stage> quomodo uales?</p>'
+         '<stage>Exit.</stage></sp></div>')
+
+
+def test_a_speech_has_its_speaker_its_lines_and_its_stage_directions():
+    reading = _reading(DRAMA)
+    assert _blocks(reading, "sp", "group") == [
+        ("div", "", {}), ("head", "Scena prima", {}), ("stage", "(Intrat Hamletus.)", {}),
+        ("speaker", "HAMLETUS", {"sp": 1}), ("l", "Esse aut non esse,", {"sp": 1, "group": 1}),
+        ("l", "haec quaestio.", {"sp": 1, "group": 1}),
+        ("speaker", "OPHELIA", {"sp": 2}), ("p", "Domine (ad eum accedit) quomodo uales?", {"sp": 2}),
+        ("stage", "(Exit.)", {"sp": 2})]
+    # Une didascalie est entre parenthèses (V0.9.3.1), comme dans « Édition critique » ;
+    # dans une phrase, parenthèses comprises, elle porte le style « stage ».
+    inline = "".join(seg["text"] for seg in _segments(reading) if "stage" in seg.get("styles", []))
+    assert inline == "(ad eum accedit)"
+    # Une didascalie en bloc est en italique par son bloc : pas de style en plus.
+    assert all(not seg.get("styles") for block in reading["blocks"] if block["type"] == "stage"
+               for seg in block["segments"] if seg["kind"] == "text")
+
+
+def test_the_parentheses_of_a_stage_direction_hug_its_text():
+    reading = _reading('<div><sp><speaker>A</speaker><p>Ita <stage>\n   ridet\n </stage> est.</p>'
+                       '<stage>\n    Exeunt\n    omnes.\n  </stage></sp></div>')
+    assert [(block["type"], _text(block)) for block in reading["blocks"]][-2:] == [
+        ("p", "Ita (ridet) est."), ("stage", "(Exeunt omnes.)")]
+    assert {"speaker", "stage"} <= RENDERED_BLOCKS
+
+
+def test_two_speeches_in_verse_keep_their_lines_apart():
+    """Sans locuteur, les vers de deux répliques ne font pas un même groupe."""
+    reading = _reading('<div><sp><l>Quis ibi?</l></sp><sp><l>Amicus.</l></sp></div>')
+    assert _blocks(reading, "sp", "group") == [
+        ("div", "", {}), ("l", "Quis ibi?", {"sp": 1, "group": 1}), ("l", "Amicus.", {"sp": 2, "group": 2})]
+
+
+def test_in_the_established_text_the_readings_not_from_a_lem_are_flagged():
+    """V0.9.3.1 : dans le texte établi, une leçon affichée qui n'est pas un
+    <lem> (un <app> sans <lem> : la leçon du témoin choisi, sinon du pivot)
+    porte ``nonlem`` ; ``nonlem_readings`` les compte. Le texte d'un témoin
+    n'a pas de telles marques. Un <app> dans une leçon hors <lem> l'est
+    tout entier."""
+    body = ('<div><p>a <app><lem wit="#B">ille</lem><rdg wit="#A">iste</rdg></app> b '
+            '<app><rdg wit="#A">c<app><lem wit="#A">x</lem><rdg wit="#B">y</rdg></app></rdg><rdg wit="#C">k</rdg></app>'
+            ' d <app><lem/><rdg wit="#A">e</rdg></app> f</p></div>')
+    reading = _chosen(body, text_mode="established")
+    assert _text(reading["blocks"][1]) == "a ille b cx d f"
+    assert "".join(seg["text"] for seg in _segments(reading) if seg.get("nonlem")) == "cx"
+    assert reading["nonlem_readings"] == 1
+    reading = _chosen(body, text_mode="established", text_witness="C")
+    assert [seg["text"] for seg in _segments(reading) if seg.get("nonlem")] == ["k"]
+    reading = _chosen(body, text_mode="witness", text_witness="C")
+    assert not [seg for seg in _segments(reading) if seg.get("nonlem")] and reading["nonlem_readings"] == 0
+
+
+def test_the_spaces_around_a_reading_outside_a_lem_are_not_flagged():
+    """Le surlignage couvre les mots de la leçon, pas les blancs qui
+    l'entourent ; ceux du dedans restent marqués, le texte ne change pas."""
+    body = ('<div><p>a<app><rdg wit="#A"> seruos <hi rend="italic">solent</hi> nunc </rdg><rdg wit="#B">z</rdg></app>b '
+            '<app><rdg wit="#A"> </rdg><rdg wit="#B">y</rdg></app> c</p></div>')
+    reading = _chosen(body, text_mode="established")
+    assert _text(reading["blocks"][1]) == "a seruos solent nunc b c"
+    flagged = [seg["text"] for seg in _segments(reading) if seg.get("nonlem")]
+    assert flagged == ["seruos ", "solent", " nunc"]
+    assert reading["nonlem_readings"] == 2

@@ -6,12 +6,13 @@ retouche, puis le scénario prédéfini sur le jeu d'essai « sermons ». Tests
 ignorés sans Saxon."""
 from __future__ import annotations
 
+import os
 import re
 import shutil
 from pathlib import Path
 
 import pytest
-from lxml import html as lxml_html
+from lxml import etree, html as lxml_html
 
 from project_config import TransformScenario, load_project
 from transform_worker import run_in_process
@@ -279,6 +280,163 @@ def test_the_reference_of_a_biblical_quotation_is_in_angle_brackets_the_others_a
     assert [_text(sup) for sup in main.xpath(".//sup[contains(@class, 'appel-note')]")] == ["a", "b"]
     assert _entries(tree, "notes") == [("a", "Aug. Conf. 1"), ("b", "Nota editoris")]
     assert _main(tree) == ["Dixit Uos estis <Lc. 22:28> et Ait Augustinus uidelicet alia."]
+
+
+def test_a_speech_has_its_speaker_and_a_stage_direction_between_two_blocks_is_a_block(project):
+    """V0.9.3.1 : chaque réplique est un bloc, son locuteur en tête ; une
+    didascalie est entre parenthèses, en italique : un bloc entre deux
+    blocs (entre deux répliques, deux vers), dans la phrase sinon."""
+    name = _write(project, "scene.xml",
+                  '<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
+                  '<sp who="#h"><speaker>HAMLETUS</speaker><lg><l>Esse aut non esse,</l><stage>ridet</stage>'
+                  '<l>haec quaestio.</l></lg></sp>'
+                  '<sp who="#o"><speaker>OPHELIA</speaker><p>Domine <stage>susurrat</stage> quomodo uales?</p>'
+                  '<stage>Exit.</stage></sp></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    main = tree.find(".//main")
+    speeches = main.find_class("discours")
+    assert [[_text(e) for e in sp.find_class("locuteur")] for sp in speeches] == [["HAMLETUS"], ["OPHELIA"]]
+    assert [(e.tag, _text(e)) for e in main.find_class("didascalie")] == [
+        ("div", "(Intrat Hamletus.)"), ("div", "(ridet)"), ("span", "(susurrat)"), ("div", "(Exit.)")]
+    assert [_text(e) for e in speeches[0].find_class("vers")] == ["Esse aut non esse,", "haec quaestio."]
+
+
+def test_the_parentheses_of_a_stage_direction_hug_its_text(project):
+    name = _write(project, "scene-blancs.xml", '<div><sp><speaker>A</speaker><p>Ita <stage>\n  ridet\n</stage> est.</p>'
+                                               '<stage>\n    Exeunt\n  </stage></sp></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    assert [e.text_content() for e in tree.find(".//main").find_class("didascalie")] == ["(ridet)", "(Exeunt)"]
+
+
+# --- Leçons hors <lem> surlignées (V0.9.3.1) -----------------------------------------------------
+# Le texte d'une leçon retenue qui n'est pas un <lem> (et tout ce qu'elle
+# contient) est marqué ; une case de la page le surligne en jaune, cochée au
+# départ selon le paramètre surligner-hors-lemme (non, par défaut).
+
+HORS_LEMME = ('<div><p>a <app><lem wit="#B">ille</lem><rdg wit="#A">iste</rdg></app> b'
+              '<app><rdg wit="#A"> seruos <hi rend="italic">solent</hi> nunc </rdg><rdg wit="#B">z</rdg></app>c '
+              '<app><rdg wit="#A">d<app><lem wit="#A">x</lem><rdg wit="#B">y</rdg></app></rdg>'
+              '<rdg wit="#C">k</rdg></app></p></div>')
+
+
+def _body_classes(tree):
+    return (tree.find(".//body").get("class") or "").split()
+
+
+def test_the_readings_outside_a_lem_are_marked_and_a_box_of_the_page_highlights_them(project):
+    name = _write(project, "hors-lemme.xml", HORS_LEMME)
+    result, tree = _edition(project, name, "A")
+    assert result.ok, result.error
+    assert _main(tree)[0] == "a ille b seruos solent nunc c dx"
+    # Les mots de la leçon, sans les blancs qui l'entourent ; un <app> dans
+    # une leçon hors <lem> l'est tout entier ; rien dans l'apparat.
+    assert [m.text_content() for m in tree.find(".//main").find_class("hors-lemme")] == \
+        ["seruos ", "solent", " nunc", "d", "x"]
+    assert not tree.xpath("//aside//*[contains(@class, 'hors-lemme')]")
+    box = tree.get_element_by_id("surligner")
+    assert box.get("type") == "checkbox" and box.get("checked") is None
+    assert _text(box.getparent()) == "Surligner les leçons hors <lem>"
+    assert "surligner" not in _body_classes(tree)
+    css = "".join(tree.xpath("//style/text()"))
+    assert ".surligner .hors-lemme" in css and "#ffd84d" in css
+    # Le paramètre fixe l'état de départ.
+    _result, tree = _edition(project, name, "A", **{"surligner-hors-lemme": "true"})
+    assert tree.get_element_by_id("surligner").get("checked") is not None and "surligner" in _body_classes(tree)
+
+
+def test_without_readings_outside_a_lem_the_page_has_no_box(project):
+    name = _write(project, "lemmes.xml", '<div><p>a <app><lem wit="#A">b</lem><rdg wit="#B">c</rdg></app> d</p></div>')
+    result, tree = _edition(project, name, "A", **{"surligner-hors-lemme": "true"})
+    assert result.ok, result.error
+    assert not tree.find_class("hors-lemme") and not tree.xpath("//*[@id='surligner']")
+    assert "surligner" not in _body_classes(tree)
+
+
+def test_the_box_of_the_page_highlights_in_a_browser(project):
+    sync_api = pytest.importorskip("playwright.sync_api")
+    name = _write(project, "hors-lemme.xml", HORS_LEMME)
+    assert _edition(project, name, "A")[0].ok
+    output = project.root_dir / "publications" / "critique.html"
+    with sync_api.sync_playwright() as playwright:
+        try:
+            browser = playwright.chromium.launch(headless=True, executable_path=os.environ.get("CHROMIUM") or None,
+                                                 args=["--no-sandbox"])
+        except Exception as exc:          # Chromium absent
+            pytest.skip(f"Chromium indisponible : {exc}")
+        page = browser.new_page()
+        errors = []
+        page.on("pageerror", lambda error: errors.append(str(error)))
+        page.goto(output.as_uri())
+        image = "()=>getComputedStyle(document.querySelector('.hors-lemme')).backgroundImage"
+        assert page.evaluate(image) == "none"
+        page.click("#surligner")
+        assert "linear-gradient" in page.evaluate(image)
+        page.click("#surligner")
+        assert page.evaluate(image) == "none"
+        assert not errors, errors
+        browser.close()
+
+
+# --- Textes de la page dans la langue de l'interface (V0.9.3.1) --------------------------------------
+# Les textes de la page viennent des catalogues i18n (``langue``,
+# ``catalogues``) ; sans catalogue, le français. Les abréviations de
+# l'apparat (om., add., lacuna incipit…) restent latines.
+
+TEXTES = HORS_LEMME.replace("</p></div>", ' <app><lem wit="#A">x</lem><rdg wit="#B"/></app> y<note>nota</note></p></div>')
+
+
+def _catalog(language):
+    root = etree.parse(str(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml")).getroot()
+    return {string.get("key"): string.text for string in root.findall("string")}
+
+
+@pytest.mark.parametrize("language", ["en", "ja"])
+def test_the_texts_of_the_page_are_in_the_language_asked(project, language):
+    texts, french = _catalog(language), _catalog("fr")
+    name = _write(project, "langue.xml", TEXTES)
+    result, tree = _edition(project, name, "A", langue=language)
+    assert result.ok, result.error
+    assert tree.get("lang") == language
+    assert _text(tree.find(".//h1")) == texts["publication.critique.title"]
+    assert tree.find(".//title").text.startswith(texts["publication.critique.title"])
+    before, after = texts["publication.critique.witness"].split("{witness}")
+    assert _text(tree.find_class("chapeau")[0]) == " ".join(f"{before}A{after} {texts['publication.critique.rejected']}".split())
+    assert _text(tree.get_element_by_id("surligner").getparent()) == texts["publication.critique.highlight"]
+    assert _text(tree.find(".//section[@class='temoins']/h2")) == texts["publication.critique.sigla"]
+    aside = tree.find(".//aside")
+    assert aside.get("aria-label") == texts["publication.critique.apparatus_notes"]
+    assert [_text(h) for h in aside.iter("h3")] == [texts["publication.critique.apparatus"], texts["publication.critique.notes"]]
+    assert _text(tree.find(".//footer")) == texts["publication.critique.footer"]
+    calls = [a.get("aria-label") for a in tree.xpath("//sup[contains(@class, 'appel')]/a")]
+    assert texts["publication.critique.call_apparatus"].replace("{n}", "1") in calls
+    assert texts["publication.critique.call_note"].replace("{n}", "a") in calls
+    assert {a.get("aria-label") for a in tree.find_class("retour")} == {texts["publication.critique.back"]}
+    # Les abréviations latines restent ; plus aucun texte français.
+    assert any("om." in entry for _mark, entry in _entries(tree))
+    page = lxml_html.tostring(tree, encoding="unicode")
+    for key in ("publication.critique.title", "publication.critique.apparatus", "publication.critique.sigla",
+                "publication.critique.back", "publication.critique.footer"):
+        assert french[key] not in page, key
+
+
+def test_without_catalogs_the_texts_of_the_page_are_in_french(project):
+    french = _catalog("fr")
+    name = _write(project, "langue.xml", TEXTES)
+    result, tree = _edition(project, name, "A", langue="en", catalogues="")
+    assert result.ok, result.error
+    assert tree.get("lang") == "fr" and _text(tree.find(".//h1")) == french["publication.critique.title"]
+    assert _text(tree.find(".//footer")) == french["publication.critique.footer"]
+
+
+def test_the_messages_of_the_stylesheet_are_in_the_language_asked(project):
+    texts = _catalog("en")
+    name = _write(project, "langue.xml", TEXTES)
+    result, _tree = _edition(project, name, "Z", langue="en")
+    assert not result.ok
+    message = texts["publication.error.unknown_witness"].replace("{witness}", "Z").replace("{witnesses}", "A, B, C")
+    assert message in " ".join(detail for _code, detail in result.journal)
 
 
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):

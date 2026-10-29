@@ -240,8 +240,7 @@ def test_translations_7_languages_all_present_and_unambiguous():
         trans={e.attrib['key']:e.text for e in root.findall('string')}
         for key in ('view.witnesses.hint','view.witnesses.move_up','view.witnesses.move_down'):
             assert trans[key] and len(trans[key])>1
-        assert (ROOT/'help'/f'{language}.html').exists()
-        assert '0.8.5.19' in (ROOT/'help'/f'{language}.html').read_text(encoding='utf-8')
+        assert (ROOT/'help'/f'{language}.html').exists()      # V0.9.3.1 : l'aide sans versions
 
 
 def test_hidden_panel_height_survives_other_panels_being_resized():

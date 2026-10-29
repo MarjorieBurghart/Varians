@@ -56,11 +56,11 @@ def test_editor_goto_xpath_uses_selection_anchor_and_current_version():
 def test_help_is_current_and_covers_new_workflows_in_both_languages():
     fr = (ROOT / 'help' / 'fr.html').read_text(encoding='utf-8')
     en = (ROOT / 'help' / 'en.html').read_text(encoding='utf-8')
+    # V0.9.3.1 : l'aide n'annonce plus les versions.
     for text in (fr, en):
-        assert '0.8.4.2' in text
         assert '&lt;facsimile&gt;' in text
         assert 'base_keys' in text
         assert 'XPath' in text
         assert 'ALTO' in text
-    assert 'sélectionne l’élément XML complet' in fr
-    assert 'selects the complete XML element' in en
+    assert 'sélectionne l’élément entier' in fr
+    assert 'selects the whole element' in en

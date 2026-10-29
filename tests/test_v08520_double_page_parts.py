@@ -169,7 +169,8 @@ def test_new_labels_available_in_all_seven_locales():
         for key in ('folio.split.left','folio.split.right','folio.split.loading','folio.split.drag_tip',
                     'folio.mark.choose_title','folio.mark.choose_prompt','folio.mark.stale_target'):
             assert data.get(key), (language,key)
-        assert '0.8.5.20' in (ROOT/'help'/f'{language}.html').read_text(encoding='utf-8')
+        # V0.9.3.1 : l'aide n'annonce plus les versions ; elle explique la double page.
+        assert data['folio.split.button'] in (ROOT/'help'/f'{language}.html').read_text(encoding='utf-8')
 
 from folio_navigation import inspect_surface_part_split, configure_surface_parts
 
