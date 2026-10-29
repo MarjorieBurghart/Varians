@@ -550,7 +550,15 @@ Le label est volontairement écrit dans la langue concernée afin que le sélect
 2. ajouter la même clé aux autres catalogues ;
 3. conserver les placeholders exactement ;
 4. ajouter/adapter le test de parité des catalogues ;
-5. si le libellé est visible dans une fenêtre déjà ouverte, vérifier `retranslate_ui()`.
+5. si le libellé est visible dans une fenêtre déjà ouverte, vérifier `retranslate_ui()` (`tests/gui/test_gui_language_switch.py` cherche, après un changement de langue, tout texte resté dans l'ancienne).
+
+### Nombres : formes plurielles (0.9.3.4)
+
+Un nombre qui compte des choses prend la forme de chaque langue, en syntaxe ICU : `{count, plural, one {# ligne} other {# lignes}}`. `#` est le nombre, `=0 {…}` une valeur exacte ; une catégorie absente retombe sur `other`. Catégories (CLDR, nombres entiers) : `fr` one pour 0 et 1 ; `en`, `de`, `it` one pour 1 ; `cs` one, few (2–4), other ; `ru` one (1, 21, 101…), few (2–4, 22…), many (0, 5–20, 11–14…) ; `ja` other seul. L'éditeur (`i18n.plural_category`, `expand_plurals`, `format_message`) et le viewer (`web_viewer/plurals.js`, appelé par `t()`) suivent les mêmes règles ; `tr` emploie la langue où le texte a été trouvé (celle de secours comprise). Jamais « (s) », « /i », « (en) » : `tests/test_i18n_plurals.py` les refuse, comme un nom compté hors pluriel (« {count} lignes »). Les feuilles livrées (`f:libelle`) ne remplacent que `{nom}` : leurs textes n'ont pas de pluriel. Les intitulés « Замен : {count} » n'en ont pas besoin.
+
+### Messages d'un module sans interface (0.9.3.4)
+
+Un module sans Qt (`tei_facsimile`, `tei_pivot_scaffold`, `iiif_page_selection`…) rend un `i18n.Message(clé, **valeurs)` : il vaut le texte français du catalogue (journaux, tests) et garde sa clé et ses valeurs ; l'interface l'affiche par `message_text(message, _t)`. Une erreur porte son message (`tei_pivot_scaffold.ScaffoldError.message`). Les paramètres de `tr`, `format_message` et `Message` sont positionnels : une variable peut s'appeler `text`, `language` ou `key`.
 
 Les textes TEI/XML, noms de standards (TEI, ALTO, IIIF, XPath, RELAX NG, Schematron, XSLT, CSS) ne doivent pas être « traduits » en termes locaux inventés.
 
@@ -1039,6 +1047,34 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.3.4 — RED TEAM 2 : ROBUSTESSE ET COHÉRENCE
+
+Compte rendu complet : docs/RED_TEAM.md, seconde partie.
+
+• Grands documents : la frappe reste fluide (1 Mo : 130 → 10 ms par
+  frappe) ; « Tout lister » ne fige plus la fenêtre ; recherche XPath et
+  formateur linéaires ; l'aperçu automatique se fait hors du fil de la
+  fenêtre ; les documents très imbriqués sont lus par l'aperçu, l'export
+  web et les paquets DOCX/ODT/EPUB.
+• Formateur : une espace insécable n'est plus prise pour un blanc ;
+  xml:space lu dans l'arbre.
+• Lignes du pivot : un <lb/> dans un commentaire, une CDATA ou une
+  instruction n'est plus compté ; numérotation d'une édition en parties
+  recalculée quand sa structure change.
+• Fichiers abîmés : un JSON d'alignement illisible n'empêche plus d'ouvrir
+  le projet (message traduit, avec l'endroit) ; U+2029 écrit &#x2029; à
+  l'ouverture ; inclusions XInclude en éventail arrêtées.
+• Cohérence des sorties, l'Édition critique faisant référence : <lb> des
+  autres témoins selon la règle TEI dans le viewer ; fenêtre d'une
+  variante du viewer comme l'apparat de l'Édition critique ; apparat dans
+  une note, folios, hi, préliminaires et annexes dans l'Édition critique,
+  le pré-passage DOCX/ODT et l'aperçu.
+• Textes : formes plurielles de chaque langue ; plus de texte resté dans
+  l'ancienne langue après un changement ; messages des conflits du
+  <facsimile>, du squelette du pivot et des associations OCR traduits ;
+  un témoin sans données pour le texte affiché le dit au bureau comme sur
+  le web.
+
 VARIANS V0.9.3.3 — RED TEAM : INTÉGRITÉ DES DONNÉES ET SÉCURITÉ
 
 Compte rendu complet : docs/RED_TEAM.md (pistes, corrections, tests,

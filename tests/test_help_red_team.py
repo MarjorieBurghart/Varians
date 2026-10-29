@@ -51,3 +51,25 @@ def test_the_new_questions_are_described_with_their_buttons(language, anchor):
 def test_the_tei_site_is_named(language):
     page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
     assert "tei-c.org" in _section(page, "rng-background"), language
+
+
+# Red team 2 (robustesse et cohérence), dans la section concernée.
+NUMBERS = {"fr": ("10 000", "2 000 000"), "en": ("10,000", "2,000,000"), "de": ("10.000", "2.000.000"),
+           "it": ("10.000", "2.000.000"), "cs": ("10 000", "2 000 000"), "ru": ("10 000", "2 000 000"),
+           "ja": ("10,000", "2,000,000")}
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_second_red_team_is_described(language):
+    catalog = _catalog(language)
+    page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
+    long_line, inclusions = NUMBERS[language]
+    start = page.index('id="editing"')
+    editing = page[start:page.index("<h2", start + 5)]          # tout le chapitre
+    assert "U+2029" in editing and "&amp;#x2029;" in editing and long_line in editing
+    assert catalog["file.paragraph_separator.title"] in editing
+    assert catalog["alignment.damaged.title"] in _section(page, "witness-sync")
+    assert catalog["diagnostics.refresh"] in _section(page, "witness-sync")
+    assert inclusions in _section(page, "xinclude")
+    viewer = page[page.index('id="viewer-text"'):page.index('id="viewer-text-choice"')]
+    assert 'break="no"' in viewer and "<i>om.</i>" in viewer and "lacuna incipit" in viewer
