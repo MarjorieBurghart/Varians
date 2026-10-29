@@ -171,3 +171,20 @@ def test_a_stanza_is_one_indented_block(open_window, verse_project, qtbot, old_s
     paragraph = view.preview.document().findBlock(text.index("Commune sanctorum"))
     assert paragraph.blockFormat().leftMargin() == 0
 
+
+
+def test_the_pencil_is_a_small_grey_mark_not_a_blue_underlined_link(open_window, verse_project, qtbot):
+    """V0.9.3.0 : les règles de Varians pour le crayon (et les repères de
+    ligne) sont placées avant la CSS du projet ; ajoutées après elle, Qt les
+    ignorait (règles après un @media) et le crayon était un lien bleu
+    souligné."""
+    from PySide6.QtGui import QTextCursor
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    marker = view.preview._paragraph_markers[0][0]
+    cursor = QTextCursor(view.preview.document())
+    cursor.setPosition(marker + 1)
+    assert view.preview.toPlainText()[marker] == "✎"
+    fmt = cursor.charFormat()
+    assert fmt.isAnchor() and not fmt.fontUnderline()
+    assert fmt.foreground().color().name() == "#8a8177"
