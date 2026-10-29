@@ -500,6 +500,7 @@
   <string key="menu.help">Справка</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Словарь латинского языка</string>
+  <string key="help.tei_guide">Справочник элементов TEI</string>
   <string key="help.software">Справка Varians</string>
   <string key="help.search.placeholder">Поиск в справке (Ctrl+F)</string>
   <string key="help.search.summary">Разделов: {sections}, совпадений: {count}</string>

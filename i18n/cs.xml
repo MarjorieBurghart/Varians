@@ -500,6 +500,7 @@ Přesto uložit?</string>
   <string key="menu.help">Nápověda</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Latinský slovník</string>
+  <string key="help.tei_guide">Průvodce prvky TEI</string>
   <string key="help.software">Nápověda k Varians</string>
   <string key="help.search.placeholder">Hledat v nápovědě (Ctrl+F)</string>
   <string key="help.search.summary">Oddíly: {sections}, výskyty: {count}</string>

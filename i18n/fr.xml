@@ -486,6 +486,7 @@ Enregistrer quand même ?</string>
   <string key="menu.help">Aide</string>
   <string key="help.enigma">Enigma</string>
   <string key="help.latin_dictionary">Dictionnaire de Latin</string>
+  <string key="help.tei_guide">Guide des éléments TEI</string>
   <string key="help.software">Aide du logiciel</string>
   <string key="help.search.placeholder">Rechercher dans l’aide (Ctrl+F)</string>
   <string key="help.search.summary">{sections} section(s), {count} occurrence(s)</string>

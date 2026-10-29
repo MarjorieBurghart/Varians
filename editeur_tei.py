@@ -87,7 +87,7 @@ from replace_bar import ReplaceBarMixin
 from search_results import SearchResultsMixin
 from witness_sync import WitnessSyncMixin, flatten_primary, flatten_secondary
 from project_actions import ProjectActionsMixin
-from main_menus import MainMenusMixin
+from main_menus import MainMenusMixin, TEI_GUIDE_URL
 from help_dialogs import (
     _build_varians_card, _open_external, _open_latin_dictionary, _show_about, _show_software_help,
 )
@@ -1464,6 +1464,7 @@ class WelcomeWindow(QMainWindow):
             _t("help.latin_dictionary"), "", lambda: _open_latin_dictionary(self)
         )
         self.action_latin_dictionary.setShortcuts([QKeySequence("Ctrl+?")])
+        self.action_tei_guide = self._make_action(_t("help.tei_guide"), "", lambda: _open_external(TEI_GUIDE_URL))
         self.action_software_help = self._make_action(
             _t("help.software"), "F1", lambda: _show_software_help(self)
         )
@@ -1472,6 +1473,8 @@ class WelcomeWindow(QMainWindow):
         )
         self.help_menu.addAction(self.action_enigma)
         self.help_menu.addAction(self.action_latin_dictionary)
+        self.help_menu.addSeparator()
+        self.help_menu.addAction(self.action_tei_guide)
         self.help_menu.addSeparator()
         self.help_menu.addAction(self.action_software_help)
         self.help_menu.addSeparator()

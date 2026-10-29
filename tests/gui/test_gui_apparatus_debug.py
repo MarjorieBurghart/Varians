@@ -49,8 +49,22 @@ def test_the_command_opens_the_help_menu(open_window, example_project):
     assert [separator if action.isSeparator() else action for action in window.help_menu.actions()] == [
         window.action_debug_apparatus, separator,
         window.action_enigma, window.action_latin_dictionary, separator,
+        window.action_tei_guide, separator,
         window.action_software_help, window.action_about]
     assert window.action_debug_apparatus.text() == tr("apparatus.menu")
+
+
+def test_the_guide_of_tei_elements_opens_the_reference_of_the_tei_consortium(open_window, example_project,
+                                                                             monkeypatch):
+    """V0.9.3.1 : Aide → Guide des éléments TEI, un lien vers la liste des
+    éléments des Guidelines du TEI Consortium."""
+    import main_menus
+    window = open_window(example_project)
+    opened = []
+    monkeypatch.setattr(main_menus, "_open_external", opened.append)
+    assert window.action_tei_guide.text() == tr("help.tei_guide")
+    window.action_tei_guide.trigger()
+    assert opened == ["https://tei-c.org/release/doc/tei-p5-doc/en/html/REF-ELEMENTS.html"]
 
 
 def test_repeated_witness_check_runs_in_the_xpath_panel(open_window, example_project, dialogs):
