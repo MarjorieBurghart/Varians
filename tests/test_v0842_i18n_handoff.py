@@ -55,8 +55,7 @@ def test_language_specific_help_exists_and_is_current():
         path = ROOT / "help" / f"{code}.html"
         assert path.is_file(), code
         text = path.read_text(encoding="utf-8")
-        assert "0.8.5.4" in text
-        assert "<h1" in text.lower()
+        assert "<h1" in text.lower()           # V0.9.3.1 : sans numéro de version
         assert "TODO" not in text
 
 

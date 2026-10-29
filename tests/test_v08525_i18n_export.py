@@ -14,5 +14,5 @@ def test_seven_iiif_dependency_translations_are_nonempty_and_unique():
         translated = {node.attrib['key']: node.text for node in nodes}
         assert '{count}' in translated['viewer.external_iiif_notice']
         text = (root / 'help' / (lang + '.html')).read_text(encoding='utf8')
-        assert '<section id="web-iiif-v08525">' in text
+        assert 'IIIF' in text[text.index('<h2 id="viewer">'):]   # V0.9.3.1 : l'aide sans versions
         assert text.count('</body></html>') == 1

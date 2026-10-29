@@ -87,4 +87,4 @@ def test_languages_and_help_maintained():
         assert all(mapping.get('viewer.search.'+k) for k in ('medieval','run','close','count'))
         assert '{count}' in mapping['viewer.search.count']
         page=(ROOT/'help'/f'{lang}.html').read_text(encoding='utf8')
-        assert 'id="interim-08526"' in page
+        assert mapping['viewer.search.medieval'] in page      # V0.9.3.1 : l'aide sans versions

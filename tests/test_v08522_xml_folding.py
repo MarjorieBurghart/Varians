@@ -134,4 +134,5 @@ def test_all_locales_and_help_pages():
         for key in ('fold.menu','fold.current','fold.all','fold.none'):
             assert translations[key]
         help_text=(ROOT/'help'/f'{lang}.html').read_text(encoding='utf-8')
-        assert '0.8.5.22' in help_text and 'xml-fold-v08522' in help_text
+        # V0.9.3.1 : l'aide n'annonce plus les versions ; le menu Affichage nomme le repliage.
+        assert translations['fold.menu'] in help_text
