@@ -17,7 +17,7 @@ import shiboken6
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QSettings, QTimer, QTranslator
 
 HERE = Path(__file__).resolve().parent
-APP_VERSION = "0.9.3.1"
+APP_VERSION = "0.9.3.2"
 
 # --- Traductions --------------------------------------------------------------
 

@@ -1039,6 +1039,27 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.3.2 — FRAPPE PLUS RAPIDE AVEC DES FAC-SIMILÉS
+
+• Frappe dans une édition dont les pages ont des tei_surface_id : à chaque
+  pause de la frappe, la synchronisation des témoins relisait les folios
+  de chaque témoin (libellé de chaque page, avec le chemin de son image
+  résolu sur le disque ; tout le document analysé une fois par témoin ;
+  liste des folios du panneau reconstruite), puis tout le texte jusqu'au
+  curseur pour chaque témoin suivi par pages. Désormais : libellés des
+  pages calculés une fois par liste de pages ; folios lus dans le seul
+  <facsimile>, une fois pour tous les témoins et seulement quand il
+  change ; liste d'un panneau reconstruite seulement si ses folios
+  changent ; <pb> lus une fois par texte. Sur un essai de 700 Ko, trois
+  témoins de 300 pages : environ 90 ms par frappe avant, 11 ms après ;
+  déplacer le curseur sans modifier le texte : 20 ms avant, 0,2 ms après
+  (Linux ; davantage sous Windows, où la résolution des chemins coûte
+  plus).
+• Un texte momentanément mal formé hors du <facsimile> (balise en cours
+  de frappe) ne fait plus disparaître les zones des folios (1v/2r d'une
+  double page) de la liste du panneau ; un <facsimile> mal formé ramène
+  toujours aux seules surfaces.
+
 VARIANS V0.9.3.1 — THÉÂTRE, LEÇONS HORS <LEM>, AIDE REFAITE
 
 • Théâtre : chaque réplique (<sp>) est un bloc, son locuteur (<speaker>) en
