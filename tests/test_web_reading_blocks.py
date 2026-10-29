@@ -435,6 +435,9 @@ def test_a_speech_has_its_speaker_its_lines_and_its_stage_directions():
         ("stage", "Exit.", {"sp": 2})]
     styles = [seg["styles"] for seg in _segments(reading) if seg.get("text", "").strip() == "ad eum accedit"]
     assert styles == [["stage"]]
+    # Une didascalie en bloc est en italique par son bloc : pas de style en plus.
+    assert [seg.get("styles", []) for seg in _segments(reading) if seg.get("text", "").strip() in
+            ("Intrat Hamletus.", "Exit.")] == [[], []]
     assert {"speaker", "stage"} <= RENDERED_BLOCKS
 
 

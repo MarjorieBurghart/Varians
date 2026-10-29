@@ -1128,7 +1128,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         old = state["block"]
         first = block = state["block"] = start_block(kind, attrs)
         enter(node)
-        styles = style_for(node, [])
+        # Une didascalie en bloc est en italique par son bloc : pas de style « stage » en plus.
+        styles = [] if kind == "stage" else style_for(node, [])
         if node.text:
             add_text(node.text, styles)
         for child in list(node):
