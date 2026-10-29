@@ -383,9 +383,130 @@
     </xsl:element>
   </xsl:template>
   
+  <!-- Autres rendus de <hi> (Varians 0.9.3.0, comme « Édition critique » et
+       le viewer web) : italique, gras, souligné, exposant, indice, petites
+       capitales, par les éléments HTML que l'aperçu (Qt) sait afficher sans
+       CSS ; l'italique seul reste ci-dessus. -->
+  <xsl:template match="tei:hi">
+    <xsl:variable name="r" select="concat(' ', translate(normalize-space(@rend),
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), ' ')"/>
+    <xsl:call-template name="hi-couches">
+      <xsl:with-param name="couches">
+        <xsl:if test="contains($r, ' italic ') or contains($r, ' italics ')">i </xsl:if>
+        <xsl:if test="contains($r, ' bold ')">b </xsl:if>
+        <xsl:if test="contains($r, ' underline ')">u </xsl:if>
+        <xsl:if test="contains($r, ' sup ') or contains($r, ' superscript ')">sup </xsl:if>
+        <xsl:if test="contains($r, ' sub ') or contains($r, ' subscript ')">sub </xsl:if>
+        <xsl:if test="contains($r, ' smallcaps ') or contains($r, ' small-caps ')">sc </xsl:if>
+      </xsl:with-param>
+    </xsl:call-template>
+  </xsl:template>
+
+  <xsl:template name="hi-couches">
+    <xsl:param name="couches"/>
+    <xsl:variable name="c" select="substring-before($couches, ' ')"/>
+    <xsl:choose>
+      <xsl:when test="$c = ''"><xsl:apply-templates/></xsl:when>
+      <xsl:when test="$c = 'sc'">
+        <span class="petites-capitales">
+          <xsl:call-template name="hi-couches">
+            <xsl:with-param name="couches" select="substring-after($couches, ' ')"/>
+          </xsl:call-template>
+        </span>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:element name="{$c}">
+          <xsl:call-template name="hi-couches">
+            <xsl:with-param name="couches" select="substring-after($couches, ' ')"/>
+          </xsl:call-template>
+        </xsl:element>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="tei:emph | tei:title | tei:foreign">
+    <i><xsl:apply-templates/></i>
+  </xsl:template>
+
   <!-- UNCLEAR -->
   <xsl:template match="tei:unclear">
     <span class="unclear" title="Lecture incertaine"><xsl:apply-templates/></span>
+  </xsl:template>
+
+  <!-- PHÉNOMÈNES ÉDITORIAUX (Varians 0.9.3.0), comme « Édition critique » :
+       un <choice> montre la première forme présente parmi corr, reg, expan,
+       sic, orig, abbr (sinon la première), les autres en infobulle ; <sic>
+       signalé ; <del> et <surplus> barrés, <add> marqué ; <supplied> entre
+       crochets ; <gap> « [lacune] » ; <space> une espace. -->
+  <xsl:template match="tei:choice">
+    <xsl:variable name="forme">
+      <xsl:choose>
+        <xsl:when test="tei:corr">corr</xsl:when>
+        <xsl:when test="tei:reg">reg</xsl:when>
+        <xsl:when test="tei:expan">expan</xsl:when>
+        <xsl:when test="tei:sic">sic</xsl:when>
+        <xsl:when test="tei:orig">orig</xsl:when>
+        <xsl:when test="tei:abbr">abbr</xsl:when>
+        <xsl:otherwise><xsl:value-of select="local-name(*[1])"/></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <span class="choice">
+      <xsl:if test="*[local-name() != $forme][normalize-space()]">
+        <xsl:attribute name="title">
+          <xsl:for-each select="*[local-name() != $forme][normalize-space()]">
+            <xsl:if test="position() &gt; 1"> · </xsl:if>
+            <xsl:call-template name="nom-de-forme"/>
+            <xsl:text> : </xsl:text>
+            <xsl:value-of select="normalize-space(.)"/>
+          </xsl:for-each>
+        </xsl:attribute>
+      </xsl:if>
+      <xsl:apply-templates select="*[local-name() = $forme][1]"/>
+    </span>
+  </xsl:template>
+
+  <xsl:template name="nom-de-forme">
+    <xsl:choose>
+      <xsl:when test="self::tei:sic">Leçon transmise</xsl:when>
+      <xsl:when test="self::tei:corr">Correction</xsl:when>
+      <xsl:when test="self::tei:orig">Graphie originale</xsl:when>
+      <xsl:when test="self::tei:reg">Graphie normalisée</xsl:when>
+      <xsl:when test="self::tei:abbr">Abréviation</xsl:when>
+      <xsl:when test="self::tei:expan">Développement</xsl:when>
+      <xsl:otherwise><xsl:value-of select="local-name()"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template match="tei:sic">
+    <span class="sic" title="Leçon transmise (sic)"><xsl:apply-templates/></span>
+  </xsl:template>
+
+  <xsl:template match="tei:del | tei:surplus">
+    <span class="rature"><xsl:apply-templates/></span>
+  </xsl:template>
+
+  <xsl:template match="tei:add">
+    <span class="ajout"><xsl:apply-templates/></span>
+  </xsl:template>
+
+  <xsl:template match="tei:supplied">
+    <span class="restitution">[<xsl:apply-templates/>]</span>
+  </xsl:template>
+
+  <xsl:template match="tei:gap">
+    <span class="lacune">
+      <xsl:attribute name="title">
+        <xsl:text>Lacune</xsl:text>
+        <xsl:if test="normalize-space(@reason)"> : <xsl:value-of select="normalize-space(@reason)"/></xsl:if>
+      </xsl:attribute>
+      <xsl:text>[lacune</xsl:text>
+      <xsl:if test="normalize-space(@extent)"> : <xsl:value-of select="normalize-space(@extent)"/></xsl:if>
+      <xsl:text>]</xsl:text>
+    </span>
+  </xsl:template>
+
+  <xsl:template match="tei:space">
+    <xsl:text> </xsl:text>
   </xsl:template>
 
   <!-- NOTE -->

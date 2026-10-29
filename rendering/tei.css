@@ -185,6 +185,27 @@ p {
   color: var(--color-muted);
 }
 
+/* Phénomènes éditoriaux, comme « Édition critique ». */
+.rature {
+  text-decoration: line-through;
+}
+
+.ajout {
+  text-decoration: underline dotted;
+}
+
+.sic {
+  font-style: italic;
+}
+
+.lacune {
+  color: var(--color-muted);
+}
+
+.petites-capitales {
+  font-variant: small-caps;
+}
+
 /* ---------- Unclear readings ----------------------------------- */
 .unclear {
   color: var(--color-unclear);

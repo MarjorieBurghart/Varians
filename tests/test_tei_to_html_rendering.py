@@ -128,6 +128,43 @@ def test_the_reference_of_a_quotation_is_shown_in_angle_brackets():
         "Dixit Uos estis <Lc. 22:28> et In principio <Io 1, 1> alia."
 
 
+def test_editorial_phenomena_as_in_the_critical_edition():
+    """V0.9.3.0, comme « Édition critique » : une forme d'un <choice> (corr,
+    reg, expan, sinon sic, orig, abbr), les autres en infobulle ; <sic>
+    signalé ; <del> et <surplus> barrés, <add> marqué ; <supplied> entre
+    crochets ; <gap> « [lacune] » ; <space> une espace."""
+    page = _page('<div><p>Isti <choice><sic>erat</sic><corr>erant</corr></choice> '
+                 '<choice><abbr>dns</abbr><expan>dominus</expan></choice> <sic>solum</sic> '
+                 '<choice><orig>uita</orig><reg>vita</reg></choice> '
+                 '<del>deleta</del> <add>addita</add> <surplus>et</surplus> Pe<supplied>trus</supplied>'
+                 '<space/>fin<gap reason="illegible" extent="2 uerba"/>is <gap/>.</p></div>')
+    paragraph = page.xpath("//main//p")[0]
+    assert " ".join(paragraph.text_content().split()) == (
+        "Isti erant dominus solum vita deleta addita et Pe[trus] fin[lacune : 2 uerba]is [lacune].")
+    assert [e.get("title") for e in paragraph.xpath('.//span[@class="choice"]')] == [
+        "Leçon transmise : erat", "Abréviation : dns", "Graphie originale : uita"]
+    assert _texts(page, '//span[@class="rature"]') == ["deleta", "et"]
+    assert _texts(page, '//span[@class="ajout"]') == ["addita"]
+    assert _texts(page, '//span[@class="sic"]') == ["solum"]
+    assert _texts(page, '//span[@class="restitution"]') == ["[trus]"]
+    assert [e.get("title") for e in paragraph.xpath('.//span[@class="lacune"]')] == ["Lacune : illegible", "Lacune"]
+
+
+def test_renditions_of_hi_and_italic_elements():
+    page = _page('<div><p><hi rend="bold">a</hi> <hi rend="underline">b</hi> <hi rend="sup">c</hi> '
+                 '<hi rend="subscript">d</hi> <hi rend="smallcaps">e</hi> <hi rend="italic bold">f</hi> '
+                 '<hi rend="italic">g</hi> <emph>h</emph> <title>Summa</title> <foreign>logos</foreign></p></div>')
+    paragraph = page.xpath("//main//p")[0]
+    assert [e.text_content() for e in paragraph.xpath(".//b")] == ["a", "f"]
+    assert [e.text_content() for e in paragraph.xpath(".//u")] == ["b"]
+    assert [e.text_content() for e in paragraph.xpath(".//sup")] == ["c"]
+    assert [e.text_content() for e in paragraph.xpath(".//sub")] == ["d"]
+    assert _texts(page, '//span[@class="petites-capitales"]') == ["e"]
+    assert [e.text_content() for e in paragraph.xpath(".//i")] == ["f", "h", "Summa", "logos"]
+    assert paragraph.xpath(".//i/b")[0].text_content() == "f"
+    assert _texts(page, '//p/span[@class="quote"]') == ["g"]
+
+
 def test_paragraphs_are_unchanged():
     page = _page("<div><p>Commune <hi rend=\"italic\">sanctorum</hi></p></div>")
     assert _texts(page, "//main//p") == ["Commune sanctorum"]
@@ -135,7 +172,8 @@ def test_paragraphs_are_unchanged():
 
 def test_the_stylesheet_of_new_projects_styles_them():
     css = (ROOT / "rendering" / "tei.css").read_text(encoding="utf-8")
-    for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table", ".ref"):
+    for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table", ".ref",
+                     ".rature", ".ajout", ".sic", ".lacune", ".petites-capitales"):
         assert f"\n{selector} " in css or f"\n{selector}," in css, selector
     # Qt ignore toute règle placée après un @media : il reste à la fin.
     assert css.rindex("@media") > css.rindex(".lg br")

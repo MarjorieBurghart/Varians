@@ -209,3 +209,31 @@ def test_the_reference_of_a_quotation_is_grey_in_angle_brackets(open_window, ver
     if old_stylesheet:
         assert grey.name() == "#8a8177"
 
+
+PHENOMENA = ('<p>Isti <choice><sic>erat</sic><corr>erant</corr></choice> <del>deleta</del> '
+             '<add>addita</add> <hi rend="smallcaps">capitulum</hi></p>\n')
+
+
+@pytest.mark.parametrize("old_stylesheet", [False, True])
+def test_editorial_phenomena_are_shown_in_the_preview(open_window, verse_project, qtbot, old_stylesheet):
+    """V0.9.3.0 : une forme d'un <choice>, rature barrée, ajout souligné,
+    petites capitales, même avec la CSS d'un projet ancien."""
+    from PySide6.QtGui import QFont, QTextCursor
+    edition = verse_project.parent / "xml" / "edition.xml"
+    edition.write_text(edition.read_text(encoding="utf-8").replace(VERSE, VERSE + PHENOMENA), encoding="utf-8")
+    if old_stylesheet:
+        (verse_project.parent / "rendering" / "tei.css").write_text(OLD_CSS, encoding="utf-8")
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    text = view.preview.toPlainText()
+    assert "Isti erant deleta addita" in text and "erat" not in text[text.index("Isti"):text.index("addita")]
+    cursor = QTextCursor(view.preview.document())
+
+    def char_format(word):
+        cursor.setPosition(text.index(word) + 2)
+        return cursor.charFormat()
+
+    assert char_format("deleta").fontStrikeOut()
+    assert char_format("addita").fontUnderline()
+    assert char_format("capitulum").fontCapitalization() == QFont.Capitalization.SmallCaps
+

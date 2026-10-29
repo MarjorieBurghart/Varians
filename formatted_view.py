@@ -274,6 +274,11 @@ def resolve_css_variables(css_text):
 PREVIEW_BASE_CSS = (
     ".lg { margin-top: 0.5em; margin-bottom: 1em; margin-left: 2em; line-height: 150%; }\n"
     ".ref { color: #8a8177; }\n"
+    ".rature { text-decoration: line-through; }\n"
+    ".ajout { text-decoration: underline; }\n"
+    ".sic { font-style: italic; }\n"
+    ".lacune { color: #8a8177; }\n"
+    ".petites-capitales { font-variant: small-caps; }\n"
     "a.tei-edit-marker { color:#8a8177; text-decoration:none; font-family:sans-serif; font-size:0.75em;"
     " padding-right:0.35em; }\n"
     "a.tei-line-marker { color: transparent; text-decoration:none; font-size:0; line-height:0; margin:0;"
