@@ -218,6 +218,11 @@ class WitnessHeader(QWidget):
         self.title.setStyleSheet("font-weight:700;border:0")
         self.status = QLabel("—", self)
         self.status.setStyleSheet("color:#746b61;border:0")
+        # Nom du témoin et libellé de la page (d'un manifeste IIIF) : du
+        # texte, jamais du HTML (red team, C3 : une image <img> d'un partage
+        # réseau y était chargée).
+        for text_label in (self.title, self.status):
+            text_label.setTextFormat(Qt.TextFormat.PlainText)
         self.title.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.status.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         layout.addWidget(self.title)

@@ -103,6 +103,16 @@
     <xsl:variable name="rang" select="count($memes[. &lt;&lt; $n]) + 1"/>
     <xsl:sequence select="if ($n/self::tei:app) then string($rang) else format-integer($rang, 'a')"/>
   </xsl:function>
+  <!-- L'adresse d'un <ref> ou d'un <ptr> devient un lien si elle est
+       relative, web (http, https), de courriel ou une ancre ; une autre
+       (javascript:, data:, file:…) ne l'est pas (Varians 0.9.3.3). Les
+       blancs, que le navigateur ôterait, ne la déguisent pas. -->
+  <xsl:function name="f:lien" as="xs:boolean">
+    <xsl:param name="cible" as="xs:string?"/>
+    <xsl:variable name="nue" select="replace(string($cible), '\s', '')"/>
+    <xsl:sequence select="$nue != '' and (not(matches($nue, '^[A-Za-z][A-Za-z0-9+.\-]*:'))
+                          or matches($nue, '^(https?|mailto):', 'i'))"/>
+  </xsl:function>
 
   <xsl:function name="f:cle-section" as="xs:string">
     <xsl:param name="section" as="element()"/>
@@ -447,7 +457,7 @@
               <i class="temoin"><xsl:value-of select="?sigles"/></i>
             </xsl:for-each>
           </xsl:when>
-          <xsl:when test="self::tei:ref and @target">
+          <xsl:when test="self::tei:ref and f:lien(@target)">
             <span class="note-editoriale"><a href="{string(@target)}"><xsl:apply-templates mode="lecture"/></a></span>
           </xsl:when>
           <xsl:otherwise>
@@ -538,7 +548,7 @@
     <span class="scripture-ref">
       <xsl:if test="$biblique">&lt;</xsl:if>
       <xsl:choose>
-        <xsl:when test="@target">
+        <xsl:when test="f:lien(@target)">
           <a href="{string(@target)}"><xsl:apply-templates mode="#current"/></a>
         </xsl:when>
         <xsl:otherwise><xsl:apply-templates mode="#current"/></xsl:otherwise>
@@ -552,7 +562,7 @@
     <xsl:call-template name="appel-de-note"/>
   </xsl:template>
   <xsl:template match="tei:ptr" mode="base lecture">
-    <xsl:if test="@target"><a href="{string(@target)}"><xsl:value-of select="f:libelle('publication.reference')"/></a></xsl:if>
+    <xsl:if test="f:lien(@target)"><a href="{string(@target)}"><xsl:value-of select="f:libelle('publication.reference')"/></a></xsl:if>
   </xsl:template>
   <xsl:template match="tei:unclear" mode="base lecture">
     <span class="incertain" title="{f:libelle('publication.unclear')}"><xsl:apply-templates mode="#current"/></span>

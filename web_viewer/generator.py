@@ -904,6 +904,25 @@ def _safe_web_name(value: str) -> str:
     out = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(value or "")).strip("._")
     return out or "witness"
 
+# Signatures des images qu'un navigateur affiche (JPEG, PNG, GIF, TIFF, BMP,
+# JPEG 2000, WebP, AVIF).
+_IMAGE_SIGNATURES = (b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n", b"GIF87a", b"GIF89a", b"II*\x00", b"MM\x00*",
+                     b"BM", b"\x00\x00\x00\x0cjP  \r\n\x87\n", b"\xff\x4f\xff\x51")
+
+
+def _is_image(path: Path) -> bool:
+    """*path* commence-t-il comme une image ? Un JSON d'alignement reçu peut
+    désigner n'importe quel fichier : seules les images sont publiées
+    (red team, D2)."""
+    try:
+        with open(path, "rb") as stream:
+            head = stream.read(16)
+    except OSError:
+        return False
+    return (head.startswith(_IMAGE_SIGNATURES) or (head[:4] == b"RIFF" and head[8:12] == b"WEBP")
+            or head[4:12] in (b"ftypavif", b"ftypavis"))
+
+
 def package_local_images(data: dict, project, output_dir: str | Path) -> None:
     """Copie les images locales utilisées par le viewer dans web_output/images.
 
@@ -942,9 +961,11 @@ def package_local_images(data: dict, project, output_dir: str | Path) -> None:
             if src in copied:
                 image["path"] = copied[src]
                 continue
-            if not src.is_file():
+            problem = ("local_image_missing" if not src.is_file()
+                       else "local_image_not_image" if not _is_image(src) else None)
+            if problem:
                 warnings.append({"witness": raw_id, "page": str(page.get("id") or ""),
-                                 "problem": "local_image_missing", "filename": src.name})
+                                 "problem": problem, "filename": src.name})
                 remote = image.get("remote_iiif")
                 image.clear()
                 image.update(remote if isinstance(remote, dict) and remote.get("type") == "iiif" else {"type": "none"})
