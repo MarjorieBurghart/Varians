@@ -2,12 +2,14 @@
 """Sources de l'aperçu d'une édition assemblée (V0.9.1.5), sans Qt.
 
 La Vue XSLT / CSS d'une édition en parties (XInclude) rend le document
-assemblé. Pour y éditer un paragraphe (✎), y cliquer une ligne ou y reporter
+assemblé. Pour y éditer un élément (✎), y cliquer une ligne ou y reporter
 une sélection, chaque élément compté par l'aperçu est rattaché à son fichier
 et à sa place dans ce fichier :
 
-- ``paragraphs`` : chaque ``<p>`` du ``<body>`` assemblé, dans l'ordre du
-  document (l'ordre des ✎ de l'aperçu) ;
+- ``paragraphs`` : chaque élément modifiable (``fragment_units``, V0.9.2.9 ;
+  auparavant chaque ``<p>``) du ``<body>`` assemblé, dans l'ordre du
+  document ; le texte de l'aperçu porte son rang (``vx:edit``), celui de
+  son crayon ✎ ;
 - ``lines`` : chaque ``<lb edRef="#pivot"/>`` du ``<body>`` assemblé (l'ordre
   des repères de ligne de l'aperçu).
 
@@ -28,11 +30,12 @@ from pathlib import Path
 from lxml import etree
 
 from document_session import LbIndex
+from fragment_units import TEI_UNIT_NAMES, mark_unit_elements, unit_elements
 from pivot_lines import _match_by_line, pivot_lb_pattern
 from xml_assembly import assemble, path_key
 
 TEI = "{http://www.tei-c.org/ns/1.0}"
-_P_TAG_RE = re.compile(r"<(/?)(?:[A-Za-z_][\w.-]*:)?p\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*?(/?)>", re.S)
+_TAG_RE = re.compile(r"<(/?)(?:[A-Za-z_][\w.-]*:)?([A-Za-z_][\w.-]*)(?:[^>\"']|\"[^\"]*\"|'[^']*')*?(/?)>", re.S)
 _IGNORED_RE = (
     re.compile(r"<!--.*?(?:-->|$)", re.S),
     re.compile(r"<!\[CDATA\[.*?(?:\]\]>|$)", re.S),
@@ -42,7 +45,7 @@ _IGNORED_RE = (
 
 @dataclass(frozen=True)
 class SourceSpan:
-    """Un ``<p>`` dans son fichier : ``text[start:end]``."""
+    """Un élément modifiable dans son fichier : ``text[start:end]``."""
     path: Path
     start: int
     end: int
@@ -61,8 +64,8 @@ class PreviewSources:
         self.texts = dict(texts)
 
     def paragraph_at(self, path, position):
-        """Rang du ``<p>`` de l'aperçu qui contient ``position`` dans le
-        fichier ``path`` (le plus intérieur), ou None."""
+        """Rang de l'élément modifiable de l'aperçu qui contient ``position``
+        dans le fichier ``path`` (le plus intérieur), ou None."""
         key = path_key(path)
         found = None
         for index, span in enumerate(self.paragraphs):
@@ -94,23 +97,24 @@ def _outside(spans, ignored):
     return [span for span in spans if not any(a <= span[0] < b for a, b in ignored)]
 
 
-def _p_spans(text):
+def _element_spans(text, names):
     """``(début, fin de la balise ouvrante, fin de l'élément)`` de chaque
-    ``<p>`` de ``text``, dans l'ordre des balises ouvrantes."""
+    élément de ``text`` dont le nom est dans ``names``, à tout niveau, dans
+    l'ordre des balises ouvrantes."""
     ignored = _ignored(text)
-    found, stack = [], []
-    for match in _P_TAG_RE.finditer(text):
-        if any(a <= match.start() < b for a, b in ignored):
+    found, stacks = [], defaultdict(list)
+    for match in _TAG_RE.finditer(text):
+        closing, name, empty = match.group(1), match.group(2), match.group(3)
+        if name not in names or any(a <= match.start() < b for a, b in ignored):
             continue
-        closing, empty = match.group(1), match.group(2)
         if closing:
-            if stack:
-                index = stack.pop()
+            if stacks[name]:
+                index = stacks[name].pop()
                 found[index] = (found[index][0], found[index][1], match.end())
         elif empty:
             found.append((match.start(), match.end(), match.end()))
         else:
-            stack.append(len(found))
+            stacks[name].append(len(found))
             found.append((match.start(), match.end(), None))
     return [span for span in found if span[2] is not None]
 
@@ -168,23 +172,27 @@ def _file_texts(assembly, master_text, texts):
     return found
 
 
-def preview_sources(edition_text, edition_path, texts=None, base_id="", pattern=None):
+def preview_sources(edition_text, edition_path, texts=None, base_id="", pattern=None, names=TEI_UNIT_NAMES):
     """Sources de l'aperçu de l'édition ``edition_text`` (fichier
     ``edition_path``), avec ``texts`` (``{chemin: texte}`` des parties
     ouvertes) ; ``base_id`` : le pivot du projet, dont les ``<lb/>`` font les
-    repères de ligne. None si l'édition est mal formée."""
+    repères de ligne ; ``names`` : les noms des éléments modifiables. None si
+    l'édition est mal formée."""
     assembly = assemble(edition_text, edition_path, texts)
     if assembly.root is None:
         return None
     files = _file_texts(assembly, edition_text, texts)
-    paragraphs = _in_body(assembly.root.iter(f"{TEI}p"))
+    units = unit_elements(assembly.root, names)
+    # Tous les éléments de ces noms sont retrouvés dans leur fichier, pour que
+    # le rang de chacun dans sa ligne y soit le même que dans l'assemblage.
+    named = [e for e in assembly.root.iter() if isinstance(e.tag, str) and etree.QName(e).localname in names]
 
-    def p_positions(text):
-        spans = _p_spans(text)
+    def unit_positions(text):
+        spans = _element_spans(text, names)
         return [tag_end - 1 for _start, tag_end, _end in spans], [(start, end) for start, _tag_end, end in spans]
 
-    located = _locate(assembly, paragraphs, files, p_positions)
-    spans = [SourceSpan(item[0], *item[1]) if item else None for item in located]
+    located = dict(zip(map(id, named), _locate(assembly, named, files, unit_positions)))
+    spans = [SourceSpan(item[0], *item[1]) if item else None for item in (located.get(id(e)) for e in units)]
     edref = f"#{base_id}"
     lbs = _in_body(e for e in assembly.root.iter(f"{TEI}lb") if e.get("edRef") == edref)
     regex = pattern or pivot_lb_pattern(base_id)
@@ -196,4 +204,7 @@ def preview_sources(edition_text, edition_path, texts=None, base_id="", pattern=
     lines = _locate(assembly, lbs, files, lb_positions)
     texts_by_path = {path: files[path_key(path)] for path in [assembly.master, *assembly.parts]
                      if path_key(path) in files}
+    # Le rang de chaque élément modifiable, pour la feuille enveloppe des
+    # crayons (fragment_units.edit_stylesheet).
+    mark_unit_elements(units)
     return PreviewSources(etree.tostring(assembly.root, encoding="unicode"), spans, lines, texts_by_path)

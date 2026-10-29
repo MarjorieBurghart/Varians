@@ -29,6 +29,7 @@ from selection_sync import choose_occurrence, occurrence_index_for_position
 from tei_facsimile import position_inside_xml_markup
 from text_search import SearchError
 from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
+from fragment_units import edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers, unit_spans
 from replace_bar import search_error_text
 from xslt_engines import xslt_error_text as _xslt_error_text
 
@@ -225,23 +226,6 @@ def pick_xml_occurrence(xml_text, visible, descriptor, start=0, end=None):
     return choose_occurrence(occurrences, descriptor.get("occurrence"), target)
 
 
-P_ELEMENT_RE = re.compile(
-    r"<(?:[A-Za-z_][\w.-]*:)?p\b[^>]*>.*?</(?:[A-Za-z_][\w.-]*:)?p\s*>",
-    re.IGNORECASE | re.DOTALL,
-)
-
-
-def paragraph_spans(xml_text):
-    """Plages des <p> du tei:body uniquement, avec offsets absolus dans le XML source."""
-    body_open = re.search(r"<(?:[A-Za-z_][\w.-]*:)?body\b[^>]*>", xml_text, re.I)
-    body_close = re.search(r"</(?:[A-Za-z_][\w.-]*:)?body\s*>", xml_text, re.I)
-    if not body_open or not body_close or body_close.start() <= body_open.end():
-        return [(m.start(), m.end()) for m in P_ELEMENT_RE.finditer(xml_text)]
-    start = body_open.end()
-    chunk = xml_text[start:body_close.start()]
-    return [(start + m.start(), start + m.end()) for m in P_ELEMENT_RE.finditer(chunk)]
-
-
 def resolve_css_variables(css_text):
     """Résout les variables CSS :root pour le moteur HTML simplifié de Qt."""
     m = re.search(r":root\s*\{(.*?)\}", css_text, re.I | re.S)
@@ -252,32 +236,6 @@ def resolve_css_variables(css_text):
     for name, value in variables.items():
         out = out.replace(f"var({name})", value.strip())
     return out
-
-
-def inject_edit_markers(html_text, max_paragraphs):
-    """Ajoute un petit crayon au début des <p> de <main>, sans modifier la XSLT de l'utilisateur."""
-    m = re.search(r"(<main\b[^>]*>)(.*?)(</main>)", html_text, re.I | re.S)
-    if not m:
-        return html_text, 0
-    body = m.group(2)
-    counter = 0
-
-    def repl(pm):
-        nonlocal counter
-        attrs = pm.group(1) or ""
-        if counter >= max_paragraphs:
-            return pm.group(0)
-        n = counter
-        counter += 1
-        marker = (
-            f'<a href="tei-edit://p/{n}" class="tei-edit-marker" '
-            f'title="{html_lib.escape(_t("preview.edit_paragraph"), quote=True)}">✎</a> '
-        )
-        return f"<p{attrs}>{marker}"
-
-    body2 = re.sub(r"<p(\s[^>]*)?>", repl, body, flags=re.I)
-    return html_text[:m.start(2)] + body2 + html_text[m.end(2):], counter
-
 
 
 LINE_MARKER_RE = re.compile(
@@ -404,7 +362,7 @@ class ClickablePreview(QTextBrowser):
         normalized = []
         for marker_pos, after_anchor, pidx in sorted(paragraphs):
             content_pos = int(after_anchor)
-            # inject_edit_markers ajoute exactement un espace après le crayon.
+            # place_edit_markers ajoute exactement un espace après le crayon.
             if 0 <= content_pos < len(plain) and plain[content_pos].isspace():
                 content_pos += 1
             normalized.append((marker_pos, content_pos, pidx))
@@ -599,32 +557,41 @@ def lxml_available():
         return False
 
 
-def transform_with_xslt(xml_text, xsl_path, params=None):
+def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False):
     """Transformation XSLT 1.0 optimisée.
 
     Avec lxml, la feuille XSLT compilée est mise en cache tant que le fichier
     n'a pas changé ; une erreur de la feuille ou de la transformation est
     signalée telle quelle. Le moteur .NET/PowerShell ne sert que de secours si
     lxml n'est pas installé.
+
+    Avec ``edit_markers`` (V0.9.2.9), la feuille est importée par l'enveloppe
+    de ``fragment_units.edit_stylesheet`` : les éléments numérotés par
+    ``mark_units`` reçoivent leur crayon ✎, quelle que soit la feuille.
     """
     try:
         from lxml import etree as LET
     except ImportError as exc:
-        return _transform_without_lxml(xml_text, xsl_path, params, exc)
+        return _transform_without_lxml(xml_text, xsl_path, params, exc, edit_markers)
     try:
         parser = LET.XMLParser(resolve_entities=False, no_network=True, recover=False)
         xml_doc = LET.fromstring(xml_text.encode("utf-8"), parser=parser)
         xp = Path(xsl_path).resolve()
         st = xp.stat()
-        cache_key = (str(xp), st.st_mtime_ns, st.st_size)
+        cache_key = (str(xp), st.st_mtime_ns, st.st_size, bool(edit_markers))
         transform = _LXML_TRANSFORM_CACHE.get(cache_key)
         if transform is None:
-            # Une seule version compilée par chemin suffit ; jeter les anciennes
-            # entrées si la feuille a été modifiée sur disque.
+            # Une seule version compilée par chemin (avec ou sans crayons)
+            # suffit ; jeter les anciennes si la feuille a été modifiée sur
+            # disque.
             for k in list(_LXML_TRANSFORM_CACHE):
-                if k[0] == str(xp):
+                if k[0] == str(xp) and k[3] == cache_key[3]:
                     _LXML_TRANSFORM_CACHE.pop(k, None)
-            xsl_doc = LET.parse(str(xp), parser=parser)
+            if edit_markers:
+                xsl_doc = LET.fromstring(edit_stylesheet(xp).encode("utf-8"), parser=parser,
+                                         base_url=edit_stylesheet_url(xp))
+            else:
+                xsl_doc = LET.parse(str(xp), parser=parser)
             # Une feuille peut lire des fichiers locaux (document(), import),
             # mais jamais écrire de fichier, créer de dossier ni accéder au
             # réseau.
@@ -644,13 +611,17 @@ def transform_with_xslt(xml_text, xsl_path, params=None):
         raise RuntimeError(_xslt_error_text(exc, xsl_path, log)) from exc
 
 
-def _transform_without_lxml(xml_text, xsl_path, params, first_error):
+def _transform_without_lxml(xml_text, xsl_path, params, first_error, edit_markers=False):
     """Secours sans lxml : moteur .NET via PowerShell (Windows)."""
     ps = shutil.which("powershell.exe") or shutil.which("powershell") or shutil.which("pwsh")
     if ps:
         try:
             with tempfile.TemporaryDirectory(prefix="tei_xslt_") as td:
                 td = Path(td)
+                if edit_markers:
+                    wrapper = td / "varians-edit.xsl"
+                    wrapper.write_text(edit_stylesheet(xsl_path), encoding="utf-8")
+                    xsl_path = wrapper
                 xmlf = td / "edition.xml"
                 outf = td / "edition.html"
                 psf = td / "transform.ps1"
@@ -705,6 +676,10 @@ class FormattedEditionWidget(QWidget):
         # Édition en parties (V0.9.1.5) : fichier et place de chaque
         # paragraphe et repère de ligne de l'aperçu (preview_sources).
         self.sources = None
+        # Noms des éléments modifiables de l'aperçu affiché (V0.9.2.9),
+        # relevés à son actualisation : le crayon, F2, le fragment et les
+        # reports de sélection s'y tiennent jusqu'à la suivante.
+        self.unit_names = None
         self._cached_css_key = None
         self._cached_css_text = None
         self._last_preview_engine = None
@@ -803,6 +778,8 @@ class FormattedEditionWidget(QWidget):
         frag_layout.setContentsMargins(0, 4, 0, 0)
         frag_head = QHBoxLayout()
         self.frag_label = QLabel(_t("fragment.initial"))
+        # L'étiquette nomme l'élément ouvert (« <p> ») : jamais du HTML.
+        self.frag_label.setTextFormat(Qt.TextFormat.PlainText)
         self.fragment_visual_wrap = QCheckBox(_t("source.visual_wrap"), frag_box)
         _fragment_wrap_setting = _settings().value(
             "fragmentVisualWrap", _settings().value("sourceVisualWrap", False)
@@ -1428,15 +1405,18 @@ class FormattedEditionWidget(QWidget):
 
     def refresh_preview(self, force=False):
         # Édition en parties (XInclude) : l'aperçu montre l'édition assemblée,
-        # quel que soit le document affiché ; ses paragraphes et ses lignes
-        # restent rattachés à leur fichier (V0.9.1.5).
+        # quel que soit le document affiché ; ses éléments modifiables et ses
+        # lignes restent rattachés à leur fichier (V0.9.1.5). Chaque élément
+        # modifiable porte son rang (vx:edit), celui de son crayon ✎.
+        names = self.main.fragment_unit_names()
         if self.main._edition_has_parts():
-            self.sources = self.main._assembled_preview_sources()
+            self.sources = self.main._assembled_preview_sources(names)
             xml_text = (self.sources.text if self.sources is not None
                         else self.main.edition_session.text_document.toPlainText())
+            spans = self.sources.paragraphs if self.sources is not None else ()
         else:
             self.sources = None
-            xml_text = self.main.editor.toPlainText()
+            xml_text, spans = mark_units(self.main.editor.toPlainText(), names)
         if not self.xsl_path.exists() or not self.css_path.exists():
             self.info.setText(_t("preview.files_missing"))
             self.info.setStyleSheet("color:#a14b2f")
@@ -1445,7 +1425,7 @@ class FormattedEditionWidget(QWidget):
         # Empreinte légère : évite de reconstruire le gros QTextDocument quand
         # rien n'a changé (clic sur Actualiser, changement d'onglet, etc.).
         xml_digest = hashlib.blake2b(xml_text.encode("utf-8"), digest_size=12).hexdigest()
-        preview_key = (xml_digest, self._file_signature(self.xsl_path), self._file_signature(self.css_path))
+        preview_key = (xml_digest, self._file_signature(self.xsl_path), self._file_signature(self.css_path), names)
         if not force and preview_key == self._last_preview_key:
             self.dirty_preview = False
             engine = self._last_preview_engine or "cache"
@@ -1470,10 +1450,11 @@ class FormattedEditionWidget(QWidget):
         old_ratio = (old_bar.value() / old_bar.maximum()) if old_bar.maximum() > 0 else 0.0
         t0 = time.perf_counter()
         try:
-            html_text, engine = transform_with_xslt(xml_text, self.xsl_path, {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc")})
-            spans = self.sources.paragraphs if self.sources is not None else paragraph_spans(xml_text)
+            html_text, engine = transform_with_xslt(
+                xml_text, self.xsl_path, {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc")},
+                edit_markers=True)
             html_text, clickable_lines, text_links = make_line_segments_clickable(html_text)
-            html_text, marked = inject_edit_markers(html_text, len(spans))
+            html_text, marked = place_edit_markers(html_text, _t("preview.edit_paragraph"))
             css = self._resolved_css_cached()
 
             # setHtml() et zoomIn()/zoomOut() n’ont pas des sémantiques identiques
@@ -1483,6 +1464,7 @@ class FormattedEditionWidget(QWidget):
             self.preview.document().setDefaultStyleSheet(css)
             self.preview.setHtml(html_text)
             self.preview.rebuild_line_markers()
+            self.unit_names = names
             self._preview_applied_zoom_steps = 0
             self._reapply_preview_zoom()
 
@@ -1629,17 +1611,21 @@ class FormattedEditionWidget(QWidget):
             return True
         return False
 
+    def _unit_names(self):
+        return self.unit_names or self.main.fragment_unit_names()
+
     def _fragment_source(self, idx):
-        """Le ``<p>`` de rang ``idx`` de l'aperçu dans son fichier :
-        ``(session, texte, début, fin, nombre de paragraphes)``, ou None.
+        """L'élément modifiable de rang ``idx`` de l'aperçu (V0.9.2.9 ;
+        auparavant le ``<p>``) dans son fichier : ``(session, texte, début,
+        fin, nombre d'éléments)``, ou None.
 
         Pour une édition en parties (V0.9.1.5), le fichier est celui qui
-        contient le paragraphe, édition ou partie, lu au besoin sans être
+        contient l'élément, édition ou partie, lu au besoin sans être
         affiché ; sinon, c'est le document affiché."""
         main = self.main
         if not main._edition_has_parts():
             text = main.editor.toPlainText()
-            spans = paragraph_spans(text)
+            spans = unit_spans(text, self._unit_names())
             if not 0 <= idx < len(spans):
                 return None
             return (main.document, text, *spans[idx], len(spans))
@@ -1655,11 +1641,15 @@ class FormattedEditionWidget(QWidget):
     def _update_fragment_label(self):
         if self.current_paragraph is None:
             self.frag_label.setText(_t("fragment.initial"))
-        elif self.main._edition_has_parts() and self.fragment_session is not None:
-            self.frag_label.setText(_t("fragment.label.file", index=self.current_paragraph + 1,
+            return
+        # Nom de l'élément ouvert (V0.9.2.9), sans préfixe : « <lg> ».
+        name = re.match(r"\s*<(?:[^\s/>:!?]+:)?([^\s/>:!?]+)", self.fragment_original or "")
+        element = f"<{name.group(1)}>" if name else ""
+        if self.main._edition_has_parts() and self.fragment_session is not None:
+            self.frag_label.setText(_t("fragment.label.file", element=element, index=self.current_paragraph + 1,
                                        total=self._fragment_total, file=Path(self.fragment_session.path).name))
         else:
-            self.frag_label.setText(_t("fragment.label", index=self.current_paragraph + 1,
+            self.frag_label.setText(_t("fragment.label", element=element, index=self.current_paragraph + 1,
                                        total=self._fragment_total))
 
     def load_fragment(self, idx):
@@ -1824,7 +1814,7 @@ class FormattedEditionWidget(QWidget):
         self.refresh_preview()
         # Les plages ont pu changer ; recharge le même numéro ordinal si possible.
         total = (len(self.sources.paragraphs) if self.sources is not None
-                 else len(paragraph_spans(self.main.editor.toPlainText())))
+                 else len(unit_spans(self.main.editor.toPlainText(), self._unit_names())))
         self.load_fragment(min(idx, max(0, total - 1)))
         return True
 

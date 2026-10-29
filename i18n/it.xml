@@ -69,7 +69,7 @@
   <string key="preview.font_plus.tip">Aumenta la dimensione del testo nell’anteprima</string>
   <string key="preview.search.label">Cerca nell’anteprima:</string>
   <string key="preview.search.placeholder">parola o espressione</string>
-  <string key="preview.info.default">La vista è generata con XSLT + CSS. Le modifiche vengono reinserite paragrafo per paragrafo dopo la validazione XML.</string>
+  <string key="preview.info.default">La vista è generata con XSLT + CSS. Le modifiche vengono reinserite elemento per elemento dopo la validazione XML.</string>
   <string key="preview.search.found">Ricerca anteprima: occorrenza {n}/{total} — {query}</string>
   <string key="preview.search.none">Ricerca anteprima: nessuna occorrenza — {query}</string>
   <string key="preview.files_missing">File XSLT o CSS non trovato. Seleziona i file con i pulsanti qui sopra.</string>
@@ -80,9 +80,9 @@
   <string key="preview.transform_error">Errore di trasformazione XSLT: {error}</string>
   <string key="preview.base_selected">Riga {line} del testimone pivot selezionata · testimoni sincronizzati.</string>
   <string key="preview.toc">Indice</string>
-  <string key="preview.edit_paragraph">Modifica questo paragrafo TEI</string>
+  <string key="preview.edit_paragraph">Modifica questo elemento TEI</string>
   <string key="fragment.initial">Frammento TEI: fai clic su ✎ nell’anteprima</string>
-  <string key="fragment.label">Frammento TEI · paragrafo {index}/{total}</string>
+  <string key="fragment.label">Frammento TEI · {element} {index}/{total}</string>
   <string key="fragment.apply_xml">Applica all’XML</string>
   <string key="fragment.reload">Ricarica frammento</string>
   <string key="fragment.close">Chiudi</string>
@@ -92,19 +92,19 @@
   <string key="fragment.search.prev.tip">Occorrenza precedente (Maiusc+F3)</string>
   <string key="fragment.search.next.tip">Occorrenza successiva (F3)</string>
   <string key="fragment.search.close.tip">Chiudi ricerca</string>
-  <string key="fragment.placeholder">Il paragrafo TEI selezionato apparirà qui.</string>
+  <string key="fragment.placeholder">L’elemento TEI selezionato apparirà qui.</string>
   <string key="fragment.wrap">Racchiudi o inserisci un elemento…</string>
   <string key="fragment.unapplied.title">Modifiche non applicate</string>
   <string key="fragment.unapplied.text">Il frammento TEI corrente contiene modifiche non ancora applicate all’XML.</string>
-  <string key="fragment.unapplied.question">Che cosa vuoi fare prima di aprire l’altro paragrafo?</string>
+  <string key="fragment.unapplied.question">Che cosa vuoi fare prima di aprire l’altro elemento?</string>
   <string key="fragment.apply_continue">Applica e continua</string>
   <string key="fragment.ignore_continue">Scarta e continua</string>
   <string key="fragment.close.title">Chiudi frammento</string>
   <string key="fragment.close.text">Il frammento contiene modifiche non ancora applicate all’XML.</string>
   <string key="fragment.moved.title">Frammento spostato</string>
-  <string key="fragment.moved.text">La struttura dei paragrafi è cambiata. Aggiorna l’anteprima e seleziona nuovamente il paragrafo.</string>
+  <string key="fragment.moved.text">La struttura dell’edizione è cambiata. Aggiorna l’anteprima e seleziona nuovamente l’elemento.</string>
   <string key="fragment.source_changed.title">Sorgente XML modificato</string>
-  <string key="fragment.source_changed.text">Questo paragrafo è stato modificato nella scheda XML da quando è stato caricato. Sostituire comunque la versione corrente?</string>
+  <string key="fragment.source_changed.text">Questo elemento è stato modificato nella scheda XML da quando è stato caricato. Sostituire comunque la versione corrente?</string>
   <string key="fragment.invalid.title">Frammento XML non valido</string>
   <string key="fragment.invalid.text">La modifica non è stata applicata perché renderebbe il documento non ben formato:
 
@@ -187,8 +187,8 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="console.missing_pages">Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="preview.choose_xslt">Scegli foglio di stile XSLT</string>
   <string key="preview.choose_css">Scegli foglio di stile CSS</string>
-  <string key="preview.updated.timed.lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} paragrafi modificabili · {lines} righe cliccabili del testimone pivot.</string>
-  <string key="preview.updated.timed.no_lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} paragrafi modificabili. Questo XSLT non produce marcatori di riga del testimone pivot.</string>
+  <string key="preview.updated.timed.lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} elementi modificabili · {lines} righe cliccabili del testimone pivot.</string>
+  <string key="preview.updated.timed.no_lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs} elementi modificabili. Questo XSLT non produce marcatori di riga del testimone pivot.</string>
   <string key="viewer.image_unavailable">Immagine IIIF non disponibile</string>
   <string key="status.base_line">Riga {base} {line}/{total}</string>
   <string key="common.all_files">Tutti i file</string>
@@ -927,7 +927,7 @@ Salvata in un’altra cartella, non le troverebbe più. Copiate anche le parti, 
   <string key="diagnostics.route.uncertain">Ordine dei testi in {witness}: {runs}; posizione incerta di {texts}, lasciati nell’ordine dell’edizione.</string>
   <string key="diagnostics.route.edition">edizione</string>
   <string key="status.route_uncertain">Posizione incerta di {text} in {witness}: ordine dell’edizione.</string>
-  <string key="fragment.label.file">Frammento TEI · paragrafo {index}/{total} · {file}</string>
+  <string key="fragment.label.file">Frammento TEI · {element} {index}/{total} · {file}</string>
   <string key="menu.transform_scenarios">Scenari di trasformazione…</string>
   <string key="transform.title">Scenari di trasformazione</string>
   <string key="transform.group.project">Scenari del progetto</string>

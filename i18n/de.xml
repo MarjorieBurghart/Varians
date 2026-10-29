@@ -69,7 +69,7 @@
   <string key="preview.font_plus.tip">Text in der Vorschau vergrößern</string>
   <string key="preview.search.label">Vorschau durchsuchen:</string>
   <string key="preview.search.placeholder">Wort oder Ausdruck</string>
-  <string key="preview.info.default">Die Ansicht wird mit XSLT + CSS erzeugt. Änderungen werden nach XML-Prüfung absatzweise in den Quelltext zurückgeschrieben.</string>
+  <string key="preview.info.default">Die Ansicht wird mit XSLT + CSS erzeugt. Änderungen werden nach XML-Prüfung elementweise in den Quelltext zurückgeschrieben.</string>
   <string key="preview.search.found">Vorschau-Suche: Treffer {n}/{total} — {query}</string>
   <string key="preview.search.none">Vorschau-Suche: kein Treffer — {query}</string>
   <string key="preview.files_missing">XSLT- oder CSS-Datei nicht gefunden. Wählen Sie die Dateien mit den Schaltflächen oben aus.</string>
@@ -80,9 +80,9 @@
   <string key="preview.transform_error">Fehler bei der XSLT-Transformation: {error}</string>
   <string key="preview.base_selected">Zeile {line} des Pivot-Textzeugen ausgewählt · Textzeugen synchronisiert.</string>
   <string key="preview.toc">Inhalt</string>
-  <string key="preview.edit_paragraph">Diesen TEI-Absatz bearbeiten</string>
+  <string key="preview.edit_paragraph">Dieses TEI-Element bearbeiten</string>
   <string key="fragment.initial">TEI-Fragment: Klicken Sie in der Vorschau auf ✎</string>
-  <string key="fragment.label">TEI-Fragment · Absatz {index}/{total}</string>
+  <string key="fragment.label">TEI-Fragment · {element} {index}/{total}</string>
   <string key="fragment.apply_xml">Auf XML anwenden</string>
   <string key="fragment.reload">Fragment neu laden</string>
   <string key="fragment.close">Schließen</string>
@@ -92,19 +92,19 @@
   <string key="fragment.search.prev.tip">Vorheriger Treffer (Umschalt+F3)</string>
   <string key="fragment.search.next.tip">Nächster Treffer (F3)</string>
   <string key="fragment.search.close.tip">Suche schließen</string>
-  <string key="fragment.placeholder">Der ausgewählte TEI-Absatz erscheint hier.</string>
+  <string key="fragment.placeholder">Das ausgewählte TEI-Element erscheint hier.</string>
   <string key="fragment.wrap">Element umschließen oder einfügen…</string>
   <string key="fragment.unapplied.title">Nicht angewendete Änderungen</string>
   <string key="fragment.unapplied.text">Das aktuelle TEI-Fragment enthält Änderungen, die noch nicht auf das XML angewendet wurden.</string>
-  <string key="fragment.unapplied.question">Was möchten Sie tun, bevor Sie den anderen Absatz öffnen?</string>
+  <string key="fragment.unapplied.question">Was möchten Sie tun, bevor Sie das andere Element öffnen?</string>
   <string key="fragment.apply_continue">Anwenden und fortfahren</string>
   <string key="fragment.ignore_continue">Verwerfen und fortfahren</string>
   <string key="fragment.close.title">Fragment schließen</string>
   <string key="fragment.close.text">Das Fragment enthält Änderungen, die noch nicht auf das XML angewendet wurden.</string>
   <string key="fragment.moved.title">Fragment verschoben</string>
-  <string key="fragment.moved.text">Die Absatzstruktur hat sich geändert. Aktualisieren Sie die Vorschau und wählen Sie den Absatz erneut aus.</string>
+  <string key="fragment.moved.text">Die Struktur der Edition hat sich geändert. Aktualisieren Sie die Vorschau und wählen Sie das Element erneut aus.</string>
   <string key="fragment.source_changed.title">XML-Quelltext geändert</string>
-  <string key="fragment.source_changed.text">Dieser Absatz wurde seit dem Laden im XML-Reiter geändert. Die aktuelle Fassung trotzdem ersetzen?</string>
+  <string key="fragment.source_changed.text">Dieses Element wurde seit dem Laden im XML-Reiter geändert. Die aktuelle Fassung trotzdem ersetzen?</string>
   <string key="fragment.invalid.title">Ungültiges XML-Fragment</string>
   <string key="fragment.invalid.text">Die Änderung wurde nicht angewendet, da das Dokument dadurch nicht wohlgeformt wäre:
 
@@ -187,8 +187,8 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="console.missing_pages">Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="preview.choose_xslt">XSLT-Stylesheet auswählen</string>
   <string key="preview.choose_css">CSS-Stylesheet auswählen</string>
-  <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Absätze · {lines} anklickbare Zeilen des Pivot-Textzeugen.</string>
-  <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Absätze. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
+  <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Elemente · {lines} anklickbare Zeilen des Pivot-Textzeugen.</string>
+  <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs} bearbeitbare Elemente. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
   <string key="viewer.image_unavailable">IIIF-Bild nicht verfügbar</string>
   <string key="status.base_line">{base} Zeile {line}/{total}</string>
   <string key="common.all_files">Alle Dateien</string>
@@ -927,7 +927,7 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="diagnostics.route.uncertain">Reihenfolge der Texte in {witness}: {runs}; unsichere Stelle von {texts}, in der Reihenfolge der Edition belassen.</string>
   <string key="diagnostics.route.edition">Edition</string>
   <string key="status.route_uncertain">Unsichere Stelle von {text} in {witness}: Reihenfolge der Edition.</string>
-  <string key="fragment.label.file">TEI-Fragment · Absatz {index}/{total} · {file}</string>
+  <string key="fragment.label.file">TEI-Fragment · {element} {index}/{total} · {file}</string>
   <string key="menu.transform_scenarios">Transformationsszenarien…</string>
   <string key="transform.title">Transformationsszenarien</string>
   <string key="transform.group.project">Szenarien des Projekts</string>

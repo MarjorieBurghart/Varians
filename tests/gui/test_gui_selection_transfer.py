@@ -17,7 +17,7 @@ import re
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QTextCursor
 
-from formatted_view import paragraph_spans
+from fragment_units import unit_spans
 
 WJ = "⁠"          # WORD JOINER technique de l'aperçu
 
@@ -35,7 +35,7 @@ def _source_occurrences(window, word, paragraph):
     couper le mot."""
     pattern = r"(?:\s*<lb\b[^>]*/>\s*)?".join(re.escape(ch) for ch in word)
     text = window.editor.toPlainText()
-    start, end = paragraph_spans(text)[paragraph]
+    start, end = unit_spans(text)[paragraph]
     return [(start + m.start(), start + m.end()) for m in re.finditer(pattern, text[start:end])]
 
 
@@ -222,7 +222,7 @@ def test_a_modified_fragment_is_searched_in_its_current_text(open_window, exampl
     view.preview.textSelected.emit()
     # Même rang, à sa nouvelle place dans le texte du fragment.
     expected = _fragment_occurrences(view, "premium")[2]
-    assert expected[0] > _source_occurrences(window, "premium", 2)[2][0] - paragraph_spans(
+    assert expected[0] > _source_occurrences(window, "premium", 2)[2][0] - unit_spans(
         window.editor.toPlainText())[2][0]
     assert _selection(view.fragment_editor) == expected
 

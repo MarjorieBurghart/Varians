@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QMenu, QMessageBox, QPlainTextDocume
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import XMLHighlighter
 from document_session import DocumentSession
+from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
 from preview_sources import preview_sources
 from project_management import update_project_documents
@@ -209,11 +210,12 @@ class DocumentTabsMixin:
         assemblée."""
         return any(session.is_part for session in self.documents)
 
-    def _assembled_preview_sources(self):
+    def _assembled_preview_sources(self, names=None):
         """Sources de l'aperçu de l'édition assemblée (``preview_sources``),
         parties comprises (texte en mémoire des parties ouvertes), quel que
         soit le document affiché ; None pour une édition sans parties, ou mal
-        formée."""
+        formée. ``names`` : les éléments modifiables, par défaut ceux de
+        l'aperçu affiché."""
         if not self._edition_has_parts():
             return None
         edition = self.edition_session
@@ -221,7 +223,27 @@ class DocumentTabsMixin:
                  if s.is_part and s.text_document is not None}
         base = self.project.base_witness
         return preview_sources(edition.text_document.toPlainText(), edition.path or self.project.edition,
-                               parts, base, pivot_lb_pattern(base))
+                               parts, base, pivot_lb_pattern(base), names or self._preview_unit_names())
+
+    def fragment_unit_names(self):
+        """Noms des éléments modifiables comme fragment (V0.9.2.9) : les
+        classes model.divPart et model.inter du schéma RELAX NG trouvé par la
+        dernière validation de l'édition (sans accès au réseau), sinon la
+        liste de TEI P5 (fragment_units)."""
+        sessions = (getattr(self, "edition_session", None), getattr(self, "document", None))
+        for session in sessions:
+            resolution = getattr(session, "last_schema_resolution", None)
+            path = getattr(resolution, "schema_path", None)
+            if path:
+                return unit_names_from_schema(path) or TEI_UNIT_NAMES
+        return TEI_UNIT_NAMES
+
+    def _preview_unit_names(self):
+        """Éléments modifiables de l'aperçu affiché : ceux de sa dernière
+        actualisation, pour que les rangs des crayons ne changent pas avant
+        la suivante."""
+        view = getattr(self, "formatted_view", None)
+        return getattr(view, "unit_names", None) or self.fragment_unit_names()
 
     def _edition_file_session(self, path, load=False):
         """Document du fichier ``path`` de l'édition (l'édition ou l'une de ses

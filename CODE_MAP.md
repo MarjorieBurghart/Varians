@@ -27,6 +27,8 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Marquer la page : tout identifiant XML (V0.9.2.8.2) | `tei_facsimile.valid_xml_id`, `safe_id_component`, `apparatus_xpath` | `test_mark_page_xml_ids.py` |
 | Crayon ✎ et F2 de la vue XSLT / CSS (V0.9.2.8.2) | `formatted_view.py` | `gui/test_gui_pencil_selection.py` |
 | Contenu des publications (V0.9.2.8.2) | `.gitattributes`, `tests/data/exemple`, `web_viewer/generator.py` | `test_release_contents.py` |
+| Éléments modifiables comme fragment (V0.9.2.9) | `fragment_units.py`, `formatted_view.py`, `preview_sources.py`, `document_tabs.fragment_unit_names` | `test_fragment_units.py`, `test_edit_markers.py`, `test_preview_sources.py`, `gui/test_gui_fragment_units.py`, `gui/test_gui_xslt_transform.py` |
+| Rendu des vers, titres, listes, figures (V0.9.2.9) | `rendering/tei-to-html.xsl`, `rendering/tei.css` | `test_tei_to_html_rendering.py` |
 | Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
@@ -339,3 +341,16 @@ Fonctionnement : aide, « Sigle et identifiant d'un témoin » (`witness-siglum`
 - `tei_listwit.py` (nouveau, sans Qt) : `add_witnesses_to_listwit` (insertion textuelle à la fin de la première `<listWit>` de l'en-tête, style et préfixe conservés ; compte rendu `ListWitReport` : `added`, `declared`, `id_used`, `no_listwit`, `malformed`), `add_witnesses_to_listwit_file` (octets, `.bak`) ; appelé par `project_settings_dialog` pour les témoins nouveaux, messages `project.listwit.*`.
 - `tei_facsimile.valid_xml_id` = `witness_ids.is_xml_id` (NCName, toutes écritures) ; `safe_id_component` garde les caractères permis (« Σ-p0001 ») ; `apparatus_xpath._cites` suit la même règle.
 - Projet de test dans `tests/data/exemple` (`corpus_data.copy_example`) ; `.gitattributes` : `/tests export-ignore` ; `MainWindow(project_path)` sans projet par défaut ; `web_viewer.generator.main([])` rend 2.
+
+## V0.9.2.9 — éléments modifiables comme fragment
+
+Fonctionnement : aide, paragraphe « Éléments modifiables » (`fragment-units`, après `fragment-selection`).
+
+- `fragment_units.py` (nouveau, sans Qt) : la règle (élément de `model.divPart`, de `model.inter`, `<head>`, `<figure>`, `<note>`, du `<body>` ou de tout le document s'il n'en a pas, sauf dans un autre élément de l'ensemble) sur le texte (`unit_spans`, balayage des balises hors commentaires, CDATA, instructions de traitement, DOCTYPE) et sur un arbre lxml (`unit_elements`) ; `TEI_UNIT_NAMES` (TEI P5 4.10.2, 57 noms) ; `unit_names_from_schema` (classes et sous-classes développées par `rng_completion._GrammarIndex`, noms des `<element>`, cache par fichier ; None sans ces classes).
+- Numérotation : `mark_units` (attribut `vx:edit`, espace de noms `EDIT_NS`, dans le texte donné à la XSLT) ; `mark_unit_elements` (arbre de l'édition assemblée, `preview_sources`).
+- Crayons : `edit_stylesheet` (feuille enveloppe, `xsl:import` de la feuille de la vue, modèle `*[@vx:edit]` : crayon devant ce qu'elle produit, rien si elle ne produit rien), `edit_stylesheet_url` (base distincte : une feuille ne peut s'importer elle-même), `place_edit_markers` (crayon au début du premier bloc qui suit, infobulle) ; `formatted_view.transform_with_xslt(..., edit_markers=True)` (cache distinct, secours PowerShell compris).
+- `document_tabs.fragment_unit_names` (schéma de `last_schema_resolution` de l'édition, sinon `TEI_UNIT_NAMES`), `_preview_unit_names` (noms de la dernière actualisation, `FormattedEditionWidget.unit_names`, aussi dans la clé du cache de l'aperçu) ; `preview_sources(..., names)` (éléments retrouvés dans leur fichier parmi tous les éléments des mêmes noms : `_element_spans`).
+- `formatted_view` : `unit_spans` remplace `paragraph_spans` (fragment, F2, application) ; `editeur_tei._source_selection_descriptor` / `_select_xml_text_in_paragraph` aussi ; étiquette du fragment en texte brut avec le nom de l'élément (`{element}`).
+- `rendering/tei-to-html.xsl` : `lg`, `l`, `head`, `list`/`item`, `figure`/`figDesc` ; styles dans `rendering/tei.css`.
+- Listes, `tei-to-html.xsl` et `edition-critique.xsl` : numérotées si `@rend` contient `numbered` ou si `@type` vaut `ordered` ou `numbered` ; le `<head>` d'une liste avant elle.
+- `tei-to-html.xsl` : division titrée par son premier `<head>`, sinon `@n` (jamais `@xml:id`) ; sommaire par niveaux (mode `toc`, libellé `toc-label` sans notes ni leçons), ancre `@xml:id` ou `generate-id()` ; en-tête réduit au titre ; `lang` d'après `@xml:lang`.

@@ -473,10 +473,18 @@
   <xsl:template match="tei:head | tei:p | tei:ab" mode="lecture">
     <span><xsl:apply-templates mode="lecture"/></span>
   </xsl:template>
+  <!-- Liste (Varians 0.9.2.9) : numérotée si @rend contient « numbered »
+       ou si @type vaut « ordered » ou « numbered », comme dans la feuille de
+       l'aperçu ; son <head> est placé avant elle, hors de la liste HTML. -->
   <xsl:template match="tei:list" mode="base">
+    <xsl:apply-templates select="tei:head" mode="base"/>
     <xsl:choose>
-      <xsl:when test="@type=('ordered','numbered')"><ol class="liste-tei"><xsl:apply-templates mode="base"/></ol></xsl:when>
-      <xsl:otherwise><ul class="liste-tei"><xsl:apply-templates mode="base"/></ul></xsl:otherwise>
+      <xsl:when test="@type = ('ordered', 'numbered') or tokenize(string(@rend)) = 'numbered'">
+        <ol class="liste-tei"><xsl:apply-templates select="node() except tei:head" mode="base"/></ol>
+      </xsl:when>
+      <xsl:otherwise>
+        <ul class="liste-tei"><xsl:apply-templates select="node() except tei:head" mode="base"/></ul>
+      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:item" mode="base">

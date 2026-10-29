@@ -2,9 +2,10 @@
 """Sources de l'aperçu d'une édition assemblée (V0.9.1.5), sans Qt.
 
 La Vue XSLT / CSS d'une édition en parties rend le document assemblé. Pour y
-éditer un paragraphe, y cliquer une ligne ou y reporter une sélection, chaque
-``<p>`` et chaque repère de ligne (``<lb edRef="#pivot"/>``) de l'aperçu doit
-être rattaché à son fichier et à sa place dans ce fichier.
+éditer un élément, y cliquer une ligne ou y reporter une sélection, chaque
+élément modifiable (``fragment_units``, V0.9.2.9) et chaque repère de ligne
+(``<lb edRef="#pivot"/>``) de l'aperçu doit être rattaché à son fichier et à
+sa place dans ce fichier.
 
 Jeu « sermons » (tests/data/sermons) : s01 est un fragment ; s02 un document
 TEI complet inclus par identifiant ; s03 un document TEI complet inclus par
@@ -16,6 +17,7 @@ from pathlib import Path
 
 from lxml import etree
 
+from fragment_units import EDIT_NS
 from preview_sources import preview_sources
 from xml_assembly import path_key
 
@@ -42,20 +44,45 @@ def _file_text(path, **texts):
     return texts.get(Path(path).stem, None) or _read(path)
 
 
-def test_each_paragraph_of_the_preview_comes_from_its_file():
+def _tag(xml):
+    return xml[1:].split(">", 1)[0].split()[0]
+
+
+def test_each_editable_element_of_the_preview_comes_from_its_file():
+    """V0.9.2.9 : les éléments modifiables (fragment_units) de l'édition
+    assemblée, ici le <head> et les <p> de chaque sermon ; chacun porte son
+    rang (vx:edit) dans le texte de l'aperçu."""
     sources = _sources()
     root = etree.fromstring(sources.text.encode("utf-8"))
-    paragraphs = [p for p in root.iter(f"{TEI}p") if any(a.tag == f"{TEI}body" for a in p.iterancestors())]
-    assert len(sources.paragraphs) == len(paragraphs)
+    numbered = [e for e in root.iter() if e.get(f"{{{EDIT_NS}}}edit") is not None]
+    assert [int(e.get(f"{{{EDIT_NS}}}edit")) for e in numbered] == list(range(len(sources.paragraphs)))
     files = [Path(span.path).name for span in sources.paragraphs]
     # Le <p> de la préface (<front>) et ceux des en-têtes de s02 et s03
     # ne sont pas dans le <body> assemblé.
-    assert files == ["s01.xml"] * 3 + ["s02.xml"] * 3 + ["s03.xml"] * 3 + ["s04.xml"] * 2 + ["s04_exemplum.xml"]
-    for element, span in zip(paragraphs, sources.paragraphs):
+    assert files == ["s01.xml"] * 4 + ["s02.xml"] * 4 + ["s03.xml"] * 4 + ["s04.xml"] * 3 + ["s04_exemplum.xml"]
+    tags = [_tag(_read(span.path)[span.start:span.end]) for span in sources.paragraphs]
+    assert tags == (["head"] + ["p"] * 3) * 3 + ["head", "p", "p", "p"]
+    for element, span in zip(numbered, sources.paragraphs):
         xml = _read(span.path)[span.start:span.end]
-        assert xml.startswith("<p") and xml.endswith("</p>")
-        assert _text_of(xml.replace("<p", '<p xmlns="http://www.tei-c.org/ns/1.0"', 1)) == \
+        name = _tag(xml)
+        assert etree.QName(element).localname == name and xml.endswith(f"</{name}>")
+        assert _text_of(xml.replace(f"<{name}", f'<{name} xmlns="http://www.tei-c.org/ns/1.0"', 1)) == \
             " ".join("".join(element.itertext()).split())
+
+
+def test_the_names_of_the_editable_elements_can_be_given():
+    paragraphs = preview_sources(_read(EDITION), EDITION, {}, "A", names=frozenset({"p"})).paragraphs
+    assert [_tag(_read(span.path)[span.start:span.end]) for span in paragraphs] == ["p"] * 12
+
+
+def test_a_verse_group_of_a_part_is_one_editable_element():
+    s01 = _read(SERMONS / "s01.xml")
+    tag = '<p xml:id="s01_p1">'
+    s01 = s01.replace(tag, "<lg><l>Uersus primus</l>\n<l>uersus secundus</l></lg>" + tag, 1)
+    sources = _sources(s01=s01)
+    span = sources.paragraphs[1]
+    assert s01[span.start:span.end] == "<lg><l>Uersus primus</l>\n<l>uersus secundus</l></lg>"
+    assert s01[sources.paragraphs[2].start:].startswith(tag)
 
 
 def test_each_line_marker_of_the_preview_comes_from_its_file():
@@ -76,16 +103,16 @@ def test_the_unsaved_text_of_a_part_is_used():
     tag = '<p xml:id="s01_p1">'
     s01 = _read(SERMONS / "s01.xml").replace(tag, "<!-- <p>vetus</p> -->" + tag + "Additum. ", 1)
     sources = _sources(s01=s01)
-    span = sources.paragraphs[0]
+    span = sources.paragraphs[1]                                        # après le <head>
     assert s01[span.start:span.end].startswith(tag + "Additum. ")
     assert "Additum." in sources.text
 
 
 def test_from_a_place_of_a_file_to_the_preview():
     sources = _sources()
-    span = sources.paragraphs[4]                                        # le second <p> de s02
-    assert sources.paragraph_at(span.path, span.start + 5) == 4
-    assert sources.paragraph_at(span.path, span.end + 1) is None or sources.paragraph_at(span.path, span.end + 1) != 4
+    span = sources.paragraphs[6]                                        # le second <p> de s02
+    assert sources.paragraph_at(span.path, span.start + 5) == 6
+    assert sources.paragraph_at(span.path, span.end + 1) is None or sources.paragraph_at(span.path, span.end + 1) != 6
     assert sources.paragraph_at(SERMONS / "inconnu.xml", 10) is None
     path, end = sources.lines[12]
     assert sources.line_before(path, end + 3) == 12

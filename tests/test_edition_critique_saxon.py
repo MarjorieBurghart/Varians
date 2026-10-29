@@ -191,6 +191,23 @@ def test_line_breaks_of_several_witnesses_are_one_break(project):
 
 # --- Scénario prédéfini -------------------------------------------------------------------------
 
+def test_a_list_is_numbered_by_its_rend_or_its_type_and_titled_before_it(project):
+    """V0.9.2.9 : une liste est numérotée si @rend contient « numbered » ou
+    si @type vaut « ordered » ou « numbered », comme dans la feuille de
+    l'aperçu ; son <head> est placé avant elle, hors de la liste HTML."""
+    name = _write(project, "listes.xml", '<div><p>x</p><list rend="numbered"><head>Index</head><item>a</item></list>'
+                                         '<list type="ordered"><item>b</item></list>'
+                                         '<list rend="bulleted"><item>c</item></list></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    main = tree.find(".//main")
+    lists = [(element.tag, [_text(li) for li in element.iter("li")])
+             for element in main.xpath(".//*[contains(@class, 'liste-tei')]")]
+    assert lists == [("ol", ["a"]), ("ol", ["b"]), ("ul", ["c"])]
+    head = next(h for h in main.iter("h3") if _text(h) == "Index")
+    assert head.getparent().tag not in ("ol", "ul") and head.getnext().tag == "ol"
+
+
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):
     scenario = next(s for s in predefined_scenarios() if s.name == "edition-critique")
     result = run_in_process(scenario_request(scenario, project), timeout=120)

@@ -31,7 +31,8 @@ def test_the_assembled_preview_has_its_pencils_and_line_markers(open_window, ser
     window = open_window(sermons_project)
     view = _preview(window)
     html = view.preview.toHtml()
-    assert html.count("tei-edit://p/") == len(view.sources.paragraphs) == 12
+    # Le <head> et les <p> de chaque sermon (V0.9.2.9).
+    assert html.count("tei-edit://p/") == len(view.sources.paragraphs) == 16
     assert len(view.preview._marker_lines) == len(view.sources.lines) == 27
 
 
