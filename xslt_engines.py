@@ -453,10 +453,12 @@ def _lxml_issues(log, xslt, issues, failed=True):
 #
 # Les fichiers supplémentaires (xsl:result-document) : un premier passage les
 # garde en mémoire, sans rien écrire, pour connaître leurs chemins. S'ils sont
-# tous dans le dossier du résultat, un second passage laisse Saxon les écrire,
-# avec leur mise en forme exacte, dans un dossier temporaire ; sinon,
-# l'exécution est refusée. Le second passage n'a lieu que si la feuille
-# produit d'autres fichiers.
+# tous dans le dossier du résultat, un second passage les obtient mis en forme
+# (fn:transform, résultats « serialized »), toujours en mémoire, et Varians
+# écrit ceux qui sont dans ce dossier ; sinon, l'exécution est refusée. Saxon
+# n'écrit jamais lui-même : une feuille qui changerait de comportement au
+# second passage n'écrirait pas ailleurs pour autant (red team, B3). Le second
+# passage n'a lieu que si la feuille produit d'autres fichiers.
 
 _SAXON = None
 _SAXON_PARSER_FEATURES = (
@@ -541,6 +543,53 @@ def _saxon_journal(executable, stderr, journal, xslt):
             journal.append(["warning", _saxon_block_text(block, Path(xslt).name)])
 
 
+# Encodage déclaré d'un fichier mis en forme : déclaration XML, sinon
+# <meta charset> d'une page HTML ; UTF-8 par défaut.
+_DECLARED_ENCODING = re.compile(r"""^\ufeff?<\?xml[^>]*?\bencoding\s*=\s*["']([A-Za-z0-9._-]+)""")
+_META_CHARSET = re.compile(r"""<meta\b[^>]*?\bcharset\s*=\s*["']?([A-Za-z0-9._-]+)""", re.I)
+
+
+def _encoded(text):
+    """Les octets d'un fichier mis en forme par Saxon, dans l'encodage qu'il
+    déclare ; un caractère que cet encodage n'a pas devient une référence."""
+    match = _DECLARED_ENCODING.match(text) or _META_CHARSET.search(text[:4096])
+    try:
+        return text.encode(match.group(1) if match else "utf-8", errors="xmlcharrefreplace")
+    except LookupError:
+        return text.encode("utf-8")
+
+
+def _serialized_results(processor, xslt, source, params, base):
+    """Second passage : ``{uri: octets}`` des fichiers de la feuille, mis en
+    forme comme Saxon les écrirait, sans rien écrire (``fn:transform``)."""
+    xpath = processor.new_xpath_processor()
+    xpath.declare_namespace("map", "http://www.w3.org/2005/xpath-functions/map")
+    xpath.declare_namespace("xs", "http://www.w3.org/2001/XMLSchema")
+    values = {"xslt": Path(xslt).as_uri(), "base": base.as_uri()}
+    entries = []
+    for number, (name, value) in enumerate(params.items()):
+        namespace, _brace, local = name[1:].partition("}") if name.startswith("{") else ("", "", name)
+        values.update({f"u{number}": namespace, f"n{number}": local, f"v{number}": value})
+        entries.append(f"map{{QName($u{number}, $n{number}): xs:untypedAtomic($v{number})}}")
+    for name, value in values.items():
+        xpath.declare_variable(name)
+        xpath.set_parameter(name, processor.make_string_value(value))
+    xpath.declare_variable("source")
+    xpath.set_parameter("source", source)
+    results = xpath.evaluate_single(
+        "transform(map{'stylesheet-location': $xslt, 'source-node': $source, 'base-output-uri': $base,"
+        " 'delivery-format': 'serialized', 'stylesheet-params': map:merge((" + ", ".join(entries) + "))})")
+    return {str(key.string_value): _encoded(results.get(key).head.string_value) for key in results.keys()}
+
+
+def _refuse_result_documents(executable, journal):
+    """Les fichiers qu'une feuille sans fichiers à écrire (pré-passage, styles
+    d'un DOCX) a produits, gardés en mémoire : signalés, jamais écrits
+    (red team, B4)."""
+    for uri in executable.get_result_documents() or {}:
+        journal.append(["write_refused", str(_uri_path(uri) or uri)])
+
+
 def _uri_path(uri):
     parsed = urllib.parse.urlparse(uri)
     if parsed.scheme != "file":
@@ -609,9 +658,12 @@ def _run_saxon(request, journal):
             """``stylesheet`` appliquée au fichier ``document`` (styles du DOCX)."""
             try:
                 executable = processor.new_xslt30_processor().compile_stylesheet(stylesheet_file=str(stylesheet))
-                return executable.transform_to_string(source_file=str(document)).encode("utf-8")
+                executable.set_capture_result_documents(True)
+                data = executable.transform_to_string(source_file=str(document)).encode("utf-8")
             except PySaxonApiError as exc:
                 raise _saxon_failure(exc, stderr(), stylesheet, "transform_failed") from exc
+            _refuse_result_documents(executable, journal)
+            return data
 
         first = compiled()
         builder = processor.new_document_builder()
@@ -638,12 +690,14 @@ def _run_saxon(request, journal):
             for name, value in params.items():
                 executable.set_parameter(name, processor.make_atomic_value("untypedAtomic", value))
             executable.set_save_xsl_message(True)
+            executable.set_capture_result_documents(True)
             try:
                 prepared = executable.transform_to_string(xdm_node=source)
             except PySaxonApiError as exc:
                 _saxon_journal(executable, "", journal, prepare)
                 raise _saxon_failure(exc, stderr(), prepare, "transform_failed") from exc
             _saxon_journal(executable, "", journal, prepare)
+            _refuse_result_documents(executable, journal)
             builder.set_base_uri(Path(request["source"]).as_uri())
             try:
                 source = builder.parse_xml(xml_text=prepared)
@@ -680,34 +734,32 @@ def _run_saxon(request, journal):
                 refused.append(str(path or uri))
         if refused:
             raise TransformError("write_refused", " ; ".join(sorted(refused)))
+        # 2e passage : les fichiers mis en forme, en mémoire. Seuls ceux que
+        # le premier passage a annoncés, dans le dossier permis, sont gardés.
+        try:
+            results = _serialized_results(processor, xslt, source, params, base)
+        except PySaxonApiError as exc:
+            raise _saxon_failure(exc, stderr(), xslt, "transform_failed") from exc
+        data, extra = main.read_bytes(), []
+        for uri, content in sorted(results.items()):
+            path = _uri_path(uri)
+            if path is not None and _path_key(path) == _path_key(base):
+                continue                              # le résultat principal, déjà là
+            if path is None or _path_key(path) not in wanted:
+                journal.append(["write_refused", str(path or uri)])
+            elif package == "pages" and _path_key(path) == _path_key(output):
+                data = content                        # index.html, le résultat du scénario
+            else:
+                extra.append((path, content))
         if folder is not None:
-            # 2e passage d'une archive : Saxon écrit ses fichiers dans le
-            # dossier de travail, mis ensuite en archive.
-            main = temp / "principal" / output.name
-            executable = compiled()
-            transform(executable, main, False, base)
-            executable.clear_xsl_messages()
+            # Une archive : les fichiers vont dans son dossier de travail.
             try:
-                return xslt_packages.finish(package, folder, main.read_bytes()), []
+                for path, content in extra:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(content)
+                return xslt_packages.finish(package, folder, data), []
             except OSError as exc:
                 raise TransformError("output_failed", f"{exc.filename or folder}: {exc.strerror or exc}") from exc
-        # 2e passage : Saxon écrit les fichiers, avec leur mise en forme,
-        # dans un dossier temporaire.
-        second = temp / "second"
-        main = second / base.name
-        executable = compiled()
-        transform(executable, main, False, main)
-        executable.clear_xsl_messages()
-        data, extra = main.read_bytes(), []
-        for path in sorted(second.rglob("*")):
-            if path.is_file() and path != main:
-                target = output.parent / path.relative_to(second)
-                if _path_key(target) not in wanted:
-                    journal.append(["write_refused", str(target)])
-                elif package == "pages" and _path_key(target) == _path_key(output):
-                    data = path.read_bytes()          # index.html, le résultat du scénario
-                else:
-                    extra.append((target, path.read_bytes()))
         return data, extra
 
 def _check_saxon(request, issues):
