@@ -711,7 +711,7 @@ Identifikátory (výběr): {ids}</string>
   <string key="pivot.not_empty">Transkripce již obsahuje text nebo značky; nic nebylo změněno. Funkce je určena pouze pro původně prázdné tělo TEI.</string>
   <string key="pivot.no_pages">Pro pivotního svědka nejsou dostupné stránky s plochami &lt;surface&gt;. Vyberte příslušné snímky.</string>
   <string key="pivot.preview.title">Náhled před vytvořením značek TEI</string>
-  <string key="pivot.preview.summary">Výchozí rukopis {witness}: {pages} stran, {lines} začátků řádků k vložení.</string>
+  <string key="pivot.preview.summary">Pivotní svědek {witness}: {pages} stran, {lines} začátků řádků k vložení.</string>
   <string key="pivot.preview.warnings">Upozornění a přehled stran</string>
   <string key="pivot.preview.confirm">Potvrdit vložení? Před úpravou bude vytvořena záloha s časovým údajem. Text OCR se nekopíruje.</string>
   <string key="pivot.done">Značky byly vytvořeny. Záloha: {backup}.</string>
@@ -796,8 +796,8 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="fold.none">Rozbalit vše</string>
   <string key="viewer.external_iiif_notice">Vzdálené obrázky IIIF: {count}. Je nutné připojení k síti a přístupové oprávnění.</string>
   <string key="viewer.line_no_anchor">Tato část textu nemá ověřitelnou značku řádku TEI. Zobrazení rukopisu se nezměnilo.</string>
-  <string key="viewer.line_unresolved">Řádek TEI {key} chybí mezi exportovanými řádky výchozího svědka. Žádná vazba nebyla odvozena.</string>
-  <string key="viewer.pivot_lb_mismatch">Značky řádků TEI výchozího svědka: {markers}; fyzické řádky: {physical}. Chybějící vazby se neodvozují.</string>
+  <string key="viewer.line_unresolved">Řádek TEI {key} chybí mezi exportovanými řádky pivotního svědka. Žádná vazba nebyla odvozena.</string>
+  <string key="viewer.pivot_lb_mismatch">Značky řádků TEI pivotního svědka: {markers}; fyzické řádky: {physical}. Chybějící vazby se neodvozují.</string>
   <string key="viewer.search.medieval">Středověké pravopisné varianty</string>
   <string key="viewer.search.run">Hledat</string>
   <string key="viewer.search.close">Zavřít hledání</string>

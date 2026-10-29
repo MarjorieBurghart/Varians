@@ -796,8 +796,8 @@
   <string key="fold.none">すべて展開する</string>
   <string key="viewer.external_iiif_notice">外部IIIF画像：{count}件。閲覧にはネットワーク接続とアクセス権が必要です。</string>
   <string key="viewer.line_no_anchor">このテキスト部分には確認可能なTEI行アンカーがありません。写本表示は移動していません。</string>
-  <string key="viewer.line_unresolved">TEI行 {key} は書き出された基準写本の行に存在しません。対応関係は推測していません。</string>
-  <string key="viewer.pivot_lb_mismatch">基準写本のTEI行マーカー：{markers}件、物理行：{physical}行。不足する対応関係は推測しません。</string>
+  <string key="viewer.line_unresolved">TEI行 {key} は書き出されたピボット伝本の行に存在しません。対応関係は推測していません。</string>
+  <string key="viewer.pivot_lb_mismatch">ピボット伝本のTEI行マーカー：{markers}件、物理行：{physical}行。不足する対応関係は推測しません。</string>
   <string key="viewer.search.medieval">中世の異綴りを許容</string>
   <string key="viewer.search.run">検索</string>
   <string key="viewer.search.close">検索を閉じる</string>
