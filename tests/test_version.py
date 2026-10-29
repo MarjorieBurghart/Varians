@@ -27,12 +27,3 @@ def test_readme_starts_with_current_version():
     head = (ROOT / "README.txt").read_text(encoding="utf-8")[:2000]
     assert f"VARIANS V{CURRENT_VERSION}" in head
 
-
-def test_each_help_file_has_a_section_for_current_version():
-    section_id = "v" + CURRENT_VERSION.replace(".", "")
-    for lang in LANGUAGES:
-        page = (ROOT / "help" / f"{lang}.html").read_text(encoding="utf-8")
-        start = page.find(f'<section id="{section_id}">')
-        assert start >= 0, lang
-        section = page[start:page.index("</section>", start)]
-        assert CURRENT_VERSION in section, lang

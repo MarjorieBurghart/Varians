@@ -1039,6 +1039,32 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.3.1 — THÉÂTRE, LEÇONS HORS <LEM>, AIDE REFAITE
+
+• Théâtre : chaque réplique (<sp>) est un bloc, son locuteur (<speaker>) en
+  tête, en petites capitales, dans le viewer web, l'aperçu (Vue XSLT / CSS)
+  et l'Édition critique. Une didascalie (<stage>) est partout entre
+  parenthèses, en italique : un bloc entre deux répliques ou deux
+  paragraphes, une ligne dans une strophe, dans la phrase quand elle est
+  dans un paragraphe ; les parenthèses touchent son texte.
+• Leçons hors <lem> : dans le texte établi, les leçons retenues faute de
+  <lem> (celles qui restent à trancher) peuvent être surlignées en jaune.
+  Viewer web : case « Leçons hors <lem> » de l'en-tête ; son état de départ
+  se choisit dans la boîte « Générer viewer web » et se garde dans
+  project.xml (<webViewer highlightNonLem="true">). Édition critique : case
+  « Surligner les leçons hors <lem> » de la page, cochée au départ par le
+  paramètre surligner-hors-lemme. Dans la boîte d'un scénario, les
+  paramètres oui/non de l'édition critique sont des cases à cocher.
+• Menu Aide : « Guide des éléments TEI » (les éléments de TEI P5 sur le
+  site du TEI Consortium), entre « Dictionnaire de Latin » et « Aide du
+  logiciel », entre deux séparateurs.
+• Aide refaite, dans les 7 langues : présentation, démarrage rapide, notions
+  clés, puis un chapitre par tâche (projets, édition, validation, aperçu,
+  témoins, apparat, parties, viewer, publication, référence) ; elle
+  n'annonce plus les versions (cet historique en tient lieu).
+• README.txt ne présente plus que le logiciel, son installation et son
+  lancement ; l'historique des versions est ici.
+
 VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
 
 • Le viewer web lit tous les textes de l'édition : <front>, <body> et
