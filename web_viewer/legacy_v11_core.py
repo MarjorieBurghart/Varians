@@ -664,6 +664,9 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         # Choix du texte : le manque en cours (témoin choisi sans leçon), le
         # @wit de la leçon affichée, le nombre de manques.
         "missing": None, "shown_wit": None, "missing_count": 0,
+        # Texte établi (V0.9.3.1) : dans une leçon affichée qui n'est pas un
+        # <lem> ; le nombre de ces leçons.
+        "nonlem": False, "nonlem_count": 0,
     }
 
     def enter(node):
@@ -742,6 +745,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             seg["variant_id"] = variant_id
         if state["missing"]:
             seg["missing"] = dict(state["missing"])
+        if state["nonlem"]:
+            seg["nonlem"] = True
         if extra_classes:
             seg["classes"] = list(extra_classes)
         if alt:
@@ -755,6 +760,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             prev.get("classes") == seg.get("classes") and
             prev.get("alt") == seg.get("alt") and
             prev.get("missing") == seg.get("missing") and
+            prev.get("nonlem") == seg.get("nonlem") and
             prev.get("seg") == seg.get("seg")):
             prev["text"] += text
         else:
@@ -923,11 +929,17 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     def walk_shown(selected, wit, missing, walker):
         """Parcourt la leçon affichée (``walker``), marquée si le témoin
         choisi n'en a pas ; un repli vide donne le repère « ∅ »."""
-        saved = state["missing"], state["shown_wit"]
+        saved = state["missing"], state["shown_wit"], state["nonlem"]
+        # Texte établi : une leçon qui n'est pas un <lem> est marquée, avec
+        # tout ce qu'elle contient (V0.9.3.1).
+        nonlem = text_mode == "established" and lname(selected.tag) != "lem"
         state["missing"] = missing or saved[0]
         state["shown_wit"] = wit
+        state["nonlem"] = nonlem or saved[2]
         walker()
-        state["missing"], state["shown_wit"] = saved
+        state["missing"], state["shown_wit"], state["nonlem"] = saved
+        if nonlem and not saved[2]:
+            state["nonlem_count"] += 1
         if missing:
             state["missing_count"] += 1
             if not clean_text(flatten_editorial_text(selected)):
@@ -1421,7 +1433,8 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if b.get("type") in ("div", "cell") or any(seg.get("kind") != "text" or seg.get("text", "").strip()
                                                     for seg in b["segments"]):
             cleaned.append(b)
-    document = {"blocks": cleaned, "annotations": annotations, "missing_readings": state["missing_count"]}
+    document = {"blocks": cleaned, "annotations": annotations, "missing_readings": state["missing_count"],
+                "nonlem_readings": state["nonlem_count"]}
     # Langue du texte (césure, lecteurs d'écran) : @xml:lang du <text>, sinon de la racine.
     lang = next((value for value in [text.attrib.get(XML_LANG) for text in texts] + [root.attrib.get(XML_LANG)]
                  if value and value.strip()), None)

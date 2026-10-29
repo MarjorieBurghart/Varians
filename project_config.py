@@ -219,6 +219,9 @@ class ProjectConfig:
     # la leçon du témoin choisi. Témoin vide : le pivot de chaque texte.
     web_text_mode: str = "established"
     web_text_witness: str = ""
+    # Texte établi (V0.9.3.1) : leçons hors <lem> surlignées au départ
+    # (<webViewer highlightNonLem="true">) ; le lecteur le change dans l'en-tête.
+    web_highlight_nonlem: bool = False
 
     @property
     def root_dir(self) -> Path:
@@ -423,6 +426,7 @@ def load_project(path: str | Path) -> ProjectConfig:
     if web_text_mode not in WEB_TEXT_MODES:
         web_text_mode = "established"
     web_text_witness = (web_el.get("textWitness") or "").strip() if web_el is not None else ""
+    web_highlight_nonlem = web_el is not None and (web_el.get("highlightNonLem") or "").strip() == "true"
 
     schema_mode, schema, schema_type = _parse_schema(root, root_dir)
 
@@ -583,6 +587,7 @@ def load_project(path: str | Path) -> ProjectConfig:
         web_filename=web_filename,
         web_text_mode=web_text_mode,
         web_text_witness=web_text_witness,
+        web_highlight_nonlem=web_highlight_nonlem,
         translations_dir=translations_dir,
         language=language,
         fallback_language=fallback_language,

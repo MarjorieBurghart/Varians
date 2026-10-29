@@ -213,7 +213,7 @@ def _line_order(order, keys_by_segment, prefixes):
     return order
 
 
-def build_dataset(project, display_witness_ids=None, text_mode=None, text_witness=None):
+def build_dataset(project, display_witness_ids=None, text_mode=None, text_witness=None, highlight_nonlem=None):
     """Build an export without rewriting the project's scientific witness order.
 
     ``display_witness_ids`` is an optional ordered snapshot of the GUI's
@@ -230,6 +230,11 @@ def build_dataset(project, display_witness_ids=None, text_mode=None, text_witnes
     sinon ceux de project.xml ; ``meta.text`` les donne, avec le nombre de
     passages où le témoin choisi n'a pas de leçon (``missing``) et un
     témoin inconnu (``unknown``), remplacé par le pivot.
+
+    Leçons hors <lem> (V0.9.3.1) : dans le texte établi, ``meta.text``
+    compte les leçons affichées qui ne viennent pas d'un <lem> (``nonlem``)
+    et dit si elles sont surlignées au départ (``highlight``) :
+    ``highlight_nonlem``, sinon le réglage de project.xml.
     """
     base_id = project.base_witness
     known_ids = [w.id for w in project.witnesses]
@@ -306,6 +311,10 @@ def build_dataset(project, display_witness_ids=None, text_mode=None, text_witnes
         page_resolver=page_resolver, base_line_keys=anchor_keys, pb_line_keys=bool(texts),
         text_mode=text_mode, text_witness=text_meta["witness"] or None, **reading_options)
     text_meta["missing"] = reading_document.get("missing_readings", 0)
+    text_meta["nonlem"] = reading_document.get("nonlem_readings", 0)
+    if highlight_nonlem is None:
+        highlight_nonlem = getattr(project, "web_highlight_nonlem", False)
+    text_meta["highlight"] = bool(text_mode == "established" and text_meta["nonlem"] and highlight_nonlem)
 
     # Do NOT use only TEI-extracted lines as the pivot's physical navigation
     # data. Desktop includes every JSON line (even when a TEI page lacks a
@@ -974,10 +983,11 @@ def make_html(data):
 
 
 def generate(project_path: str | Path, output: str | Path | None = None,
-             *, display_witness_ids=None, text_mode=None, text_witness=None):
+             *, display_witness_ids=None, text_mode=None, text_witness=None, highlight_nonlem=None):
     project = load_project(project_path)
     data, missing = build_dataset(project, display_witness_ids=display_witness_ids,
-                                  text_mode=text_mode, text_witness=text_witness)
+                                  text_mode=text_mode, text_witness=text_witness,
+                                  highlight_nonlem=highlight_nonlem)
     project.web_output_dir.mkdir(parents=True, exist_ok=True)
     output = Path(output) if output else project.web_output_dir / project.web_filename
     if not output.is_absolute(): output = (project.root_dir / output).resolve()

@@ -455,3 +455,22 @@ def test_two_speeches_in_verse_keep_their_lines_apart():
     reading = _reading('<div><sp><l>Quis ibi?</l></sp><sp><l>Amicus.</l></sp></div>')
     assert _blocks(reading, "sp", "group") == [
         ("div", "", {}), ("l", "Quis ibi?", {"sp": 1, "group": 1}), ("l", "Amicus.", {"sp": 2, "group": 2})]
+
+
+def test_in_the_established_text_the_readings_not_from_a_lem_are_flagged():
+    """V0.9.3.1 : dans le texte établi, une leçon affichée qui n'est pas un
+    <lem> (un <app> sans <lem> : la leçon du témoin choisi, sinon du pivot)
+    porte ``nonlem`` ; ``nonlem_readings`` les compte. Le texte d'un témoin
+    n'a pas de telles marques. Un <app> dans une leçon hors <lem> l'est
+    tout entier."""
+    body = ('<div><p>a <app><lem wit="#B">ille</lem><rdg wit="#A">iste</rdg></app> b '
+            '<app><rdg wit="#A">c<app><lem wit="#A">x</lem><rdg wit="#B">y</rdg></app></rdg><rdg wit="#C">k</rdg></app>'
+            ' d <app><lem/><rdg wit="#A">e</rdg></app> f</p></div>')
+    reading = _chosen(body, text_mode="established")
+    assert _text(reading["blocks"][1]) == "a ille b cx d f"
+    assert "".join(seg["text"] for seg in _segments(reading) if seg.get("nonlem")) == "cx"
+    assert reading["nonlem_readings"] == 1
+    reading = _chosen(body, text_mode="established", text_witness="C")
+    assert [seg["text"] for seg in _segments(reading) if seg.get("nonlem")] == ["k"]
+    reading = _chosen(body, text_mode="witness", text_witness="C")
+    assert not [seg for seg in _segments(reading) if seg.get("nonlem")] and reading["nonlem_readings"] == 0

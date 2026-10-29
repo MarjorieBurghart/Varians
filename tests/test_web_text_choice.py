@@ -96,7 +96,8 @@ def test_the_export_follows_the_choice_of_project_xml_or_the_one_given(tmp_path)
     _lem_differs(project_xml)
     data = build_dataset(load_project(project_xml))[0]
     assert "Vosestis" in _words(data) and "Uosestis" not in _words(data)        # texte établi, par défaut
-    assert data["meta"]["text"] == {"mode": "established", "witness": "", "missing": 0}
+    text = data["meta"]["text"]                       # ``nonlem`` : voir plus bas (V0.9.3.1)
+    assert text == {"mode": "established", "witness": "", "missing": 0, "nonlem": text["nonlem"], "highlight": False}
     data = build_dataset(load_project(project_xml), text_mode="witness", text_witness="T2")[0]
     assert "Vosestis" in _words(data)
     assert data["meta"]["text"]["mode"] == "witness" and data["meta"]["text"]["witness"] == "T2"
@@ -111,7 +112,8 @@ def test_an_unknown_witness_falls_back_to_the_pivot(tmp_path):
     project_xml = copy_example(tmp_path / "exemple")
     _web_viewer(project_xml, 'text="witness" textWitness="Z"')
     data = build_dataset(load_project(project_xml))[0]
-    assert data["meta"]["text"] == {"mode": "witness", "witness": "", "missing": 0, "unknown": "Z"}
+    assert data["meta"]["text"] == {"mode": "witness", "witness": "", "missing": 0, "unknown": "Z",
+                                    "nonlem": 0, "highlight": False}
 
 
 def test_every_line_of_the_pivot_keeps_its_place_whatever_the_choice(tmp_path):
@@ -130,3 +132,41 @@ def test_every_line_of_the_pivot_keeps_its_place_whatever_the_choice(tmp_path):
         assert found == keys, choice
         anchors = [seg for seg in segments if seg["kind"] == "line-anchor"]
         assert len(anchors) == (5 if choice.get("text_witness") == "T2" else 0), choice
+
+
+# --- Leçons hors <lem> surlignées (V0.9.3.1) -----------------------------------------------------
+# Texte établi : la boîte « Générer viewer web » fixe l'état de départ du
+# surlignage (``<webViewer highlightNonLem="true"/>``) ; le lecteur le change
+# dans l'en-tête du viewer.
+
+@pytest.mark.parametrize("attributes, expected", [('', False), ('highlightNonLem="true"', True),
+                                                  ('highlightNonLem="false"', False)])
+def test_the_highlight_of_readings_outside_a_lem_is_read_from_project_xml(tmp_path, attributes, expected):
+    project_xml = copy_example(tmp_path / "exemple")
+    if attributes:
+        _web_viewer(project_xml, attributes)
+    assert load_project(project_xml).web_highlight_nonlem is expected
+
+
+def test_the_highlight_is_written_with_the_text_choice(tmp_path):
+    project_xml = copy_example(tmp_path / "exemple")
+    update_project_web_text(project_xml, "established", "", highlight_nonlem=True)
+    assert 'highlightNonLem="true"' in project_xml.read_text(encoding="utf-8")
+    assert load_project(project_xml).web_highlight_nonlem is True
+    update_project_web_text(project_xml, "witness", "T2")                 # sans avis : inchangé
+    assert load_project(project_xml).web_highlight_nonlem is True
+    update_project_web_text(project_xml, "established", "", highlight_nonlem=False)
+    assert "highlightNonLem" not in project_xml.read_text(encoding="utf-8")
+
+
+def test_the_export_counts_the_readings_outside_a_lem_and_gives_the_starting_state(tmp_path):
+    from web_viewer.generator import build_dataset
+    project_xml = copy_example(tmp_path / "exemple")
+    text = build_dataset(load_project(project_xml))[0]["meta"]["text"]
+    assert text["nonlem"] > 0 and text["highlight"] is False
+    text = build_dataset(load_project(project_xml), highlight_nonlem=True)[0]["meta"]["text"]
+    assert text["highlight"] is True
+    update_project_web_text(project_xml, "established", "", highlight_nonlem=True)
+    assert build_dataset(load_project(project_xml))[0]["meta"]["text"]["highlight"] is True
+    text = build_dataset(load_project(project_xml), text_mode="witness", text_witness="T2")[0]["meta"]["text"]
+    assert text["nonlem"] == 0 and text["highlight"] is False
