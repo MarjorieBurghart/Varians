@@ -34,6 +34,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+import xslt_engines
 from xslt_engines import TransformResult, check, run
 
 _APPLICATION_DIR = Path(__file__).resolve().parent
@@ -101,6 +102,8 @@ def serve(input_fd=0, output_fd=1):
         result = TransformResult(False, error_code="internal", error=f"invalid JSON: {exc}")
     else:
         if isinstance(request, dict):
+            # Vérifier une feuille ne consulte pas le réseau (red team, B5).
+            xslt_engines.CHECKS_LOCAL_ONLY = request.get("op") == "check"
             result = check(request) if request.get("op") == "check" else run(request)
         else:
             result = TransformResult(False, error_code="internal", error="request must be a JSON object")

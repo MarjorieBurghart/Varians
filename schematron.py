@@ -401,14 +401,22 @@ def rules_text(path, text=None, texts=None) -> str | None:
     return etree.tostring(schema, encoding="unicode")
 
 
+# Processus de validation (relaxng_worker) : Saxon n'y lit que des fichiers
+# locaux (red team, B2, B5) ; la restriction vaut pour tout le processus.
+LOCAL_ONLY = False
+
+
 def _processor():
     """Le processeur Saxon du processus, partagé avec les scénarios de
     transformation (SaxonC n'en veut qu'un)."""
-    from xslt_engines import TransformError, _saxon_processor
+    from xslt_engines import TransformError, _saxon_processor, saxon_without_network
     try:
-        return _saxon_processor()
+        processor = _saxon_processor()
     except TransformError as exc:
         raise _SaxonMissing() from exc
+    if LOCAL_ONLY:
+        saxon_without_network(processor)
+    return processor
 
 
 def _transpiler(check=False):

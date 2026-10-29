@@ -257,15 +257,20 @@ class _NetworkReadError(Exception):
     pass
 
 
-def _network_resolver(journal, failures):
+def _network_resolver(journal, failures, allowed=True):
     """Résolveur lxml des URL http(s) : lecture notée au journal ; un échec
-    est gardé dans ``failures`` et arrête l'exécution."""
+    est gardé dans ``failures`` et arrête l'exécution. Sans *allowed*
+    (vérification d'une feuille, red team B5), toute lecture réseau est
+    refusée."""
     from lxml import etree
 
     class NetworkResolver(etree.Resolver):
         def resolve(self, url, pubid, context):
             if not url.lower().startswith(("http://", "https://")):
                 return None
+            if not allowed:
+                failures.append(f"{url}: réseau non consulté pendant la vérification")
+                raise _NetworkReadError(url)
             journal.append(["network_read", url])
             try:
                 with urllib.request.urlopen(url, timeout=NETWORK_TIMEOUT) as response:
@@ -389,7 +394,7 @@ def _check_lxml(request, issues):
     from lxml import etree
     failures = []
     parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=True)
-    parser.resolvers.add(_network_resolver([], failures))
+    parser.resolvers.add(_network_resolver([], failures, allowed=False))
     xslt = Path(request["xslt"])
     text = request.get("text")
     # Le journal d'erreurs de libxslt garde celles des compilations
@@ -406,9 +411,12 @@ def _check_lxml(request, issues):
     except OSError as exc:
         raise TransformError("xslt_missing", f"{xslt}: {exc}") from exc
     access = etree.XSLTAccessControl(read_file=True, write_file=False, create_dir=False,
-                                     read_network=True, write_network=False)
+                                     read_network=False, write_network=False)
     try:
         transform = etree.XSLT(tree, access_control=access)
+    except _NetworkReadError:
+        _issue(issues, xslt, 0, "error", failures[0])
+        return
     except etree.XSLTParseError as exc:
         _lxml_issues(exc.error_log, xslt, issues)
         if not any(issue[2] == "error" for issue in issues):
@@ -461,6 +469,11 @@ def _lxml_issues(log, xslt, issues, failed=True):
 # passage n'a lieu que si la feuille produit d'autres fichiers.
 
 _SAXON = None
+_SAXON_LOCAL_ONLY = False         # saxon_without_network
+# Processus de vérification d'une feuille (transform_worker, op « check ») :
+# Saxon n'y lit que des fichiers locaux (red team, B5). Réglé par le
+# processus, la restriction de Saxon valant pour tout le processus.
+CHECKS_LOCAL_ONLY = False
 _SAXON_PARSER_FEATURES = (
     "http%3A//xml.org/sax/features/external-general-entities",
     "http%3A//xml.org/sax/features/external-parameter-entities",
@@ -487,6 +500,20 @@ def _saxon_processor():
 
 def _saxon_version():
     return _saxon_processor().version.replace(" from Saxonica", "")
+
+
+def saxon_without_network(processor):
+    """Saxon ne lit plus que des fichiers locaux, pour tout le processus
+    (red team, B5) : la vérification d'une feuille et les règles Schematron.
+    Saxon évalue à la compilation les paramètres statiques et ``use-when`` :
+    une feuille reçue pouvait y lire un fichier et l'envoyer dans une
+    adresse web. La propriété reste acquise au processus : chaque
+    vérification a le sien, les exécutions aussi ; ce sont ces processus qui
+    la demandent (``CHECKS_LOCAL_ONLY``, ``schematron.LOCAL_ONLY``)."""
+    global _SAXON_LOCAL_ONLY
+    if not _SAXON_LOCAL_ONLY:
+        processor.set_configuration_property("http://saxon.sf.net/feature/allowedProtocols", "file")
+        _SAXON_LOCAL_ONLY = True
 
 
 def _saxon_catalogs(processor, request):
@@ -762,10 +789,37 @@ def _run_saxon(request, journal):
                 raise TransformError("output_failed", f"{exc.filename or folder}: {exc.strerror or exc}") from exc
         return data, extra
 
+_CATALOG_NS = "{urn:oasis:names:tc:entity:xmlns:xml:catalog}"
+
+
+def _catalog_rewrites(catalogs):
+    """``(début d'adresse, préfixe local)`` des ``rewriteURI`` des catalogues :
+    l'adresse officielle des TEI Stylesheets et leur dossier installé."""
+    import xml.etree.ElementTree as ET
+    rewrites = []
+    for catalog in catalogs or ():
+        try:
+            root = ET.parse(catalog).getroot()
+        except (OSError, ET.ParseError):
+            continue
+        for entry in root.iter(f"{_CATALOG_NS}rewriteURI"):
+            start, prefix = entry.get("uriStartString"), entry.get("rewritePrefix")
+            if start and prefix is not None:
+                local = (Path(catalog).parent / prefix).resolve().as_uri()
+                rewrites.append((start, local if local.endswith("/") or not start.endswith("/") else local + "/"))
+    return rewrites
+
+
 def _check_saxon(request, issues):
     from saxonche import PySaxonApiError
     processor = _saxon_processor()
+    # Sans réseau (red team, B5) : les adresses que les catalogues renvoient
+    # vers des fichiers installés (TEI Stylesheets) sont écrites directement
+    # en fichiers, Saxon jugeant l'accès sur l'adresse d'origine. Le
+    # catalogue est chargé avant : son chargement a besoin d'autres protocoles.
     _saxon_catalogs(processor, request)
+    if CHECKS_LOCAL_ONLY:
+        saxon_without_network(processor)
     xslt = Path(request["xslt"])
     log = Path(request["stderr_log"]) if request.get("stderr_log") else None
     start = log.stat().st_size if log is not None and log.exists() else 0
@@ -785,12 +839,21 @@ def _check_saxon(request, issues):
 
     compiler = processor.new_xslt30_processor()
     node = None
-    if request.get("text") is not None:
+    text = request.get("text")
+    rewrites = _catalog_rewrites(request.get("catalogs"))
+    if text is None and rewrites:
+        try:
+            text = xslt.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            text = None
+    if text is not None:
+        for official, local in rewrites:
+            text = text.replace(official, local)
         builder = processor.new_document_builder()
         builder.set_line_numbering(True)
         builder.set_base_uri(xslt.resolve().as_uri())
         try:
-            node = builder.parse_xml(xml_text=request["text"])
+            node = builder.parse_xml(xml_text=text)
         except PySaxonApiError as exc:
             report(str(exc).strip())
             raise TransformError("xslt_malformed", issues[0][3] if issues else str(exc)) from exc
