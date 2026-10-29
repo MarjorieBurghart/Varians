@@ -283,3 +283,44 @@ def test_markup_or_a_simple_cursor_move_changes_nothing(open_window, example_pro
     view.fragment_editor.setTextCursor(cursor)                        # sans sélection
     qtbot.wait(400)
     assert not view.preview.textCursor().hasSelection()
+
+
+# --- Résultat d'une recherche XPath (V0.9.3.0) ---------------------------------
+# Un résultat XPath sélectionne tout un élément, balises comprises : son texte
+# (leçons d'un apparat, notes…) n'est pas celui de l'aperçu. La sélection y est
+# retrouvée par la structure : les éléments modifiables couverts, sinon les
+# premiers et derniers mots, près de leur place.
+
+def _xpath_to_preview(window, qtbot, query):
+    window.xpath_query.setText(query)
+    window.run_xpath_search()
+    assert window.xpath_table.rowCount() >= 1
+    window.goto_xpath_result(0)
+    cursor = window.editor.textCursor()
+    source = (cursor.selectionStart(), cursor.selectionEnd())
+    view = _show_preview(window, qtbot)
+    qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=5000)
+    return source, " ".join(view.preview.textCursor().selectedText().replace(WJ, "").split())
+
+
+def test_an_xpath_result_holding_an_apparatus_stays_selected_in_the_preview(open_window, example_project, qtbot):
+    from formatted_view import _selection_xml_to_visible_text
+    window = open_window(example_project)
+    text = window.editor.toPlainText()
+    (start, end), selected = _xpath_to_preview(window, qtbot, '//tei:quote[@xml:id="RLS_184_q4"]')
+    words = _selection_xml_to_visible_text(text[start:end]).split()
+    assert "<app" in text[start:end]
+    assert selected.startswith(words[0]) and selected.endswith(words[-1])
+    assert len(selected) < 200
+
+
+def test_a_whole_paragraph_chosen_by_xpath_is_selected_in_the_preview(open_window, example_project, qtbot):
+    from fragment_units import unit_spans
+    window = open_window(example_project)
+    text = window.editor.toPlainText()
+    (start, end), selected = _xpath_to_preview(window, qtbot, '(//tei:div[@xml:id="RLS_184"]/tei:p)[1]')
+    spans = unit_spans(text, window._preview_unit_names())
+    index = next(i for i, (a, b) in enumerate(spans) if (a, b) == (start, end))
+    a, b = window.formatted_view.preview.paragraph_bounds(index)
+    expected = " ".join(window.formatted_view.preview.toPlainText()[a:b].replace(WJ, "").split())
+    assert selected == expected and len(selected) > 200

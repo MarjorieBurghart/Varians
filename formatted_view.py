@@ -210,6 +210,33 @@ def xml_selection_descriptor(xml_text, visible, selection_start, start=0, end=No
     }
 
 
+def xml_selection_structure(xml_text, selection_start, selection_end, units, words=3):
+    """Repère structurel d'une sélection de la source (V0.9.3.0), pour
+    l'aperçu, quand son texte n'y apparaît pas tel quel (élément entier choisi
+    par une recherche XPath, leçons d'un apparat, note…). ``units`` : les
+    éléments modifiables de la source, ``(rang dans l'aperçu, début, fin)``.
+
+    Renvoie le premier et le dernier élément touchés (``first``, ``last``),
+    si la sélection couvre le début du premier et la fin du dernier
+    (``from_start``, ``to_end``), ses premiers et derniers mots visibles
+    (``head``, ``tail``) et leur décalage visible dans leur élément
+    (``head_relative``, ``tail_relative``) ; None si elle ne touche aucun
+    élément modifiable ou n'a pas de texte."""
+    start, end = int(selection_start), int(selection_end)
+    touched = [(index, a, b) for index, a, b in units if a < end and b > start]
+    visible = _selection_xml_to_visible_text(xml_text[start:end]).split()
+    if not touched or not visible:
+        return None
+    first, fa, fb = touched[0]
+    last, la, lb = touched[-1]
+    return {
+        "first": first, "last": last, "from_start": start <= fa, "to_end": end >= lb,
+        "head": " ".join(visible[:words]), "tail": " ".join(visible[-words:]),
+        "head_relative": len(_selection_xml_to_visible_text(xml_text[fa:max(fa, start)])),
+        "tail_relative": len(_selection_xml_to_visible_text(xml_text[la:min(end, lb)])),
+    }
+
+
 def pick_xml_occurrence(xml_text, visible, descriptor, start=0, end=None):
     """Occurrence de ``visible`` décrite par ``descriptor`` (rang, sinon
     décalage visible depuis ``start``), ou None."""
@@ -457,6 +484,73 @@ class ClickablePreview(QTextBrowser):
         if focus:
             self.setFocus()
         line = self.line_for_position(a)
+        if line is not None:
+            self.active_line_ordinal = line
+        return True
+
+    def _words_in(self, words, start, end, target, at_end):
+        """Position des mots ``words`` (les plus nombreux qu'on trouve, en
+        partant de tous) entre ``start`` et ``end``, l'occurrence la plus
+        proche de ``target`` : son début, ou sa fin avec ``at_end``."""
+        words = words.split()
+        for count in range(len(words), 0, -1):
+            part = " ".join(words[-count:] if at_end else words[:count])
+            pattern = _rich_selection_pattern(part)
+            if not pattern:
+                continue
+            expr = QRegularExpression(pattern)
+            found = []
+            scan = QTextCursor(self.document())
+            scan.setPosition(start)
+            while True:
+                hit = self.document().find(expr, scan)
+                if hit.isNull() or hit.selectionStart() >= end:
+                    break
+                if hit.selectionEnd() <= end:
+                    found.append((hit.selectionStart(), hit.selectionEnd()))
+                scan = QTextCursor(self.document())
+                scan.setPosition(max(hit.selectionEnd(), hit.selectionStart() + 1))
+            if found:
+                a, b = min(found, key=lambda ab: abs((ab[1] if at_end else ab[0]) - target))
+                return b if at_end else a
+        return None
+
+    def select_structure(self, structure):
+        """Sélectionne dans l'aperçu une sélection de la source décrite par
+        ``xml_selection_structure`` (V0.9.3.0) : de l'élément modifiable
+        ``first`` à ``last``, entiers s'ils sont couverts, sinon de leurs
+        premiers à leurs derniers mots. False si ces mots n'y sont pas."""
+        if not structure:
+            return False
+        first = self.paragraph_bounds(structure["first"])
+        last = self.paragraph_bounds(structure["last"])
+        if not first or not last:
+            return False
+        if structure["from_start"]:
+            start = first[0]
+        else:
+            start = self._words_in(structure["head"], first[0], first[1],
+                                   first[0] + int(structure["head_relative"]), at_end=False)
+        if start is None:
+            return False
+        if structure["to_end"]:
+            end = last[1]
+            text = self.toPlainText()
+            while end > start and (text[end - 1].isspace() or text[end - 1] == "\u2060"):
+                end -= 1
+        else:
+            end = self._words_in(structure["tail"], start, last[1],
+                                 last[0] + int(structure["tail_relative"]), at_end=True)
+        if end is None or end <= start:
+            return False
+        self.clearSearchMatch()
+        cursor = QTextCursor(self.document())
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        self.setTextCursor(cursor)
+        self.ensureCursorVisible()
+        self.setFocus()
+        line = self.line_for_position(start)
         if line is not None:
             self.active_line_ordinal = line
         return True
