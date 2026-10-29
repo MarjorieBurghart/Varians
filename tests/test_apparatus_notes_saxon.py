@@ -142,7 +142,9 @@ def test_the_notes_of_the_editor_become_endnotes(project):
     editor = [(note.get("place"), _text(note)) for note in tree.iterfind(".//t:note", NS)
               if note.get("type") != "apparatus"]
     # Une note sans @place est une note de fin : une autre série que l'apparat.
-    assert editor == [("end", "Une note."), ("margin", "En marge.")]
+    # Une note en marge aussi (red team 2, décision explicite : elle coupait
+    # le paragraphe dans le DOCX).
+    assert editor == [("end", "Une note."), ("end", "En marge.")]
 
 
 def test_another_witness_gives_another_text(project):

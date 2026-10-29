@@ -234,6 +234,19 @@
       or $f:temoin = (tokenize(normalize-space($pb/@edRef), '\s+') ! replace(., '^.*#', ''))"/>
   </xsl:function>
 
+  <!-- Une citation biblique : son @type contient « bible ». -->
+  <xsl:function name="f:biblique" as="xs:boolean">
+    <xsl:param name="cit" as="element()?"/>
+    <xsl:sequence select="tokenize(normalize-space(string($cit/@type)), ' ') = 'bible'"/>
+  </xsl:function>
+
+  <!-- Le texte d'un <gap> : « [lacune] », ou « [lacune : étendue] ». -->
+  <xsl:function name="f:texte-gap" as="xs:string">
+    <xsl:param name="gap" as="element()"/>
+    <xsl:sequence select="if ($gap/@extent) then f:libelle('publication.gap.extent', map {'extent': string($gap/@extent)})
+                          else f:libelle('publication.gap')"/>
+  </xsl:function>
+
   <!-- Les <pb> à montrer des leçons non retenues d'un apparat (red team 2) :
        ceux du témoin choisi (par @edRef, sinon par les témoins de leur
        leçon) ; tous avec « aucun ». Ils ne sont pas perdus avec leur leçon. -->

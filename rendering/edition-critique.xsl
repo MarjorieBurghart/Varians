@@ -79,12 +79,8 @@
 
   <!-- La référence d'une citation qui n'est pas biblique (le <ref> d'une
        <cit> sans @type « bible ») est une note de l'éditeur (Varians
-       0.9.3.0) ; celle d'une citation biblique suit la citation, entre
-       chevrons. -->
-  <xsl:function name="f:biblique" as="xs:boolean">
-    <xsl:param name="cit" as="element()?"/>
-    <xsl:sequence select="tokenize(normalize-space(string($cit/@type)), ' ') = 'bible'"/>
-  </xsl:function>
+       0.9.3.0) ; celle d'une citation biblique (f:biblique) suit la
+       citation, entre chevrons. -->
   <xsl:function name="f:ref-en-note" as="xs:boolean">
     <xsl:param name="n" as="element()"/>
     <xsl:sequence select="exists($n/self::tei:ref/parent::tei:cit) and not(f:biblique($n/parent::tei:cit))"/>
@@ -610,8 +606,7 @@
     <span class="incertain">[<xsl:apply-templates mode="#current"/>]</span>
   </xsl:template>
   <xsl:template match="tei:gap" mode="base lecture">
-    <span class="lacune"><xsl:value-of select="if (@extent) then f:libelle('publication.gap.extent', map {'extent': string(@extent)})
-                                              else f:libelle('publication.gap')"/></span>
+    <span class="lacune"><xsl:value-of select="f:texte-gap(.)"/></span>
   </xsl:template>
   <xsl:template match="tei:add" mode="base lecture">
     <span class="ajout"><xsl:apply-templates mode="#current"/></span>
