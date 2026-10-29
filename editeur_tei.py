@@ -97,7 +97,7 @@ from completion_ui import CompletionMixin
 from validation_panel import ValidationPanelMixin
 from xpath_panel import XPathPanelMixin
 from document_tabs import DocumentTabsMixin
-from text_segments import TextSegmentsMixin
+from text_segments import TEXT_ABSENT, TextSegmentsMixin
 from document_display import DocumentDisplayMixin
 from document_dialogs import DocumentDialogsMixin
 from references_ui import ReferencesMixin
@@ -613,6 +613,10 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 page_image_source(page, self.project.root_dir).available
                 for page in (cache.get("pages", []) or [])
             ) or (w.id in self._text_witness_ids() and getattr(w, "image_source_type", "auto") != "none")
+            # Sans donnée pour l'édition, dans un projet à textes à part : le
+            # panneau le dit, comme le viewer web (red team 2, D5).
+            if not self.witness_display_items[w.id] and self._text_witness_ids():
+                panel.set_absent(TEXT_ABSENT)
             self.witness_splitter.addWidget(panel)
             # Ces commandes écrivent dans l'édition : refusées si un autre
             # document est affiché.

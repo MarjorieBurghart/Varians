@@ -396,12 +396,16 @@ class TextSegmentsMixin:
         valid_pivot_keys = set(state.base_by_key)
         base_label = self.witness_titles[base]
         witnesses = project.witness_by_id
+        with_texts = bool(self._text_witness_ids())
         for w in self.witness_configs:
             panel = self.panels[w.id]
             panel.set_base(w.id == base, base_label)
-            # Un témoin par pages sans aucune image (V0.9.1.3) n'a rien à montrer.
-            if w.id not in witnesses or (w.id in getattr(project, "page_witnesses", ())
-                                         and not state.display_items.get(w.id)):
+            # Un témoin par pages sans aucune image (V0.9.1.3) n'a rien à
+            # montrer ; dans un projet à textes à part, un témoin sans
+            # données pour le texte affiché, l'édition comprise, le dit,
+            # comme le viewer web (red team 2, D5).
+            if w.id not in witnesses or (not state.display_items.get(w.id) and (
+                    with_texts or w.id in getattr(project, "page_witnesses", ()))):
                 panel.set_absent(TEXT_ABSENT)
                 continue
             panel.absent_key = None
