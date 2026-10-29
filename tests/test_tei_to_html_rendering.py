@@ -117,6 +117,17 @@ def test_a_table_is_a_table():
     assert not page.xpath('//main//h3[@class="head"]')
 
 
+def test_the_reference_of_a_quotation_is_shown_in_angle_brackets():
+    """V0.9.3.0 : le <ref> d'une <cit> (autrefois omis) suit la citation,
+    entre chevrons, grisé ; un <ref> hors d'une <cit> ne change pas."""
+    page = _page('<div><p>Dixit <cit><quote>Uos estis</quote><ref>Lc. 22:28</ref></cit> et '
+                 '<cit type="bible"><quote>In principio</quote> <ref>Io 1, 1</ref></cit> '
+                 '<ref target="#x">alia</ref>.</p></div>')
+    assert _texts(page, '//main//span[@class="ref"]') == ["<Lc. 22:28>", "<Io 1, 1>"]
+    assert " ".join(page.xpath("//main//p")[0].text_content().split()) == \
+        "Dixit Uos estis <Lc. 22:28> et In principio <Io 1, 1> alia."
+
+
 def test_paragraphs_are_unchanged():
     page = _page("<div><p>Commune <hi rend=\"italic\">sanctorum</hi></p></div>")
     assert _texts(page, "//main//p") == ["Commune sanctorum"]
@@ -124,7 +135,7 @@ def test_paragraphs_are_unchanged():
 
 def test_the_stylesheet_of_new_projects_styles_them():
     css = (ROOT / "rendering" / "tei.css").read_text(encoding="utf-8")
-    for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table"):
+    for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table", ".ref"):
         assert f"\n{selector} " in css or f"\n{selector}," in css, selector
     # Qt ignore toute règle placée après un @media : il reste à la fin.
     assert css.rindex("@media") > css.rindex(".lg br")

@@ -188,3 +188,24 @@ def test_the_pencil_is_a_small_grey_mark_not_a_blue_underlined_link(open_window,
     fmt = cursor.charFormat()
     assert fmt.isAnchor() and not fmt.fontUnderline()
     assert fmt.foreground().color().name() == "#8a8177"
+
+
+@pytest.mark.parametrize("old_stylesheet", [False, True])
+def test_the_reference_of_a_quotation_is_grey_in_angle_brackets(open_window, verse_project, qtbot, old_stylesheet):
+    """V0.9.3.0 : « <Lc. 22:28> » suit sa citation, grisé, même avec la CSS
+    d'un projet créé par une version antérieure (sans règle .ref)."""
+    from PySide6.QtGui import QTextCursor
+    if old_stylesheet:
+        (verse_project.parent / "rendering" / "tei.css").write_text(OLD_CSS, encoding="utf-8")
+    window = open_window(verse_project)
+    view = _show_preview(window, qtbot)
+    text = view.preview.toPlainText()
+    at = text.index("<Lc. 22:28>")
+    cursor = QTextCursor(view.preview.document())
+    cursor.setPosition(at + 2)
+    grey = cursor.charFormat().foreground().color()
+    cursor.setPosition(text.index("Commune sanctorum") + 2)
+    assert grey.name() != cursor.charFormat().foreground().color().name()
+    if old_stylesheet:
+        assert grey.name() == "#8a8177"
+

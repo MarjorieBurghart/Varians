@@ -180,6 +180,11 @@ p {
   color: var(--color-quote);
 }
 
+/* Référence d'une citation (<cit>/<ref>), entre chevrons. */
+.ref {
+  color: var(--color-muted);
+}
+
 /* ---------- Unclear readings ----------------------------------- */
 .unclear {
   color: var(--color-unclear);

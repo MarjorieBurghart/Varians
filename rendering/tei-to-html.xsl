@@ -361,8 +361,15 @@
   </xsl:template>
   -->
   
+  <!-- CITATION (Varians 0.9.3.0) : la citation, puis sa référence entre
+       chevrons, grisée (classe « ref »). -->
   <xsl:template match="tei:cit">
-    <xsl:apply-templates select="tei:quote"/>
+    <xsl:apply-templates/>
+  </xsl:template>
+
+  <xsl:template match="tei:cit/tei:ref">
+    <xsl:text> </xsl:text>
+    <span class="ref">&lt;<xsl:apply-templates/>&gt;</span>
   </xsl:template>
   
   <!-- HI -->

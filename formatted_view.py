@@ -246,6 +246,7 @@ def resolve_css_variables(css_text):
 # n'étaient pas appliquées (le crayon était un lien bleu souligné).
 PREVIEW_BASE_CSS = (
     ".lg { margin-top: 0.5em; margin-bottom: 1em; margin-left: 2em; line-height: 150%; }\n"
+    ".ref { color: #8a8177; }\n"
     "a.tei-edit-marker { color:#8a8177; text-decoration:none; font-family:sans-serif; font-size:0.75em;"
     " padding-right:0.35em; }\n"
     "a.tei-line-marker { color: transparent; text-decoration:none; font-size:0; line-height:0; margin:0;"
