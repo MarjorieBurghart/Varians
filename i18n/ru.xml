@@ -154,6 +154,7 @@
   <string key="webgen.text.label">Текст просмотрщика:</string>
   <string key="webgen.text.established">Установленный текст: &lt;lem&gt;, иначе чтение выбранного свидетеля</string>
   <string key="webgen.text.witness">Текст выбранного свидетеля, даже если это не &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Выделить жёлтым чтения, взятые не из &lt;lem&gt; (читатель может это изменить)</string>
   <string key="webgen.text.chosen">Свидетель:</string>
   <string key="webgen.text.pivot">Опорный (для каждого текста)</string>
   <string key="webgen.text.missing_hint">Места, где у выбранного свидетеля нет чтения, отмечены в просмотрщике.</string>

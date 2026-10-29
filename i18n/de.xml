@@ -154,6 +154,7 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="webgen.text.label">Text des Viewers:</string>
   <string key="webgen.text.established">Konstituierter Text: das &lt;lem&gt;, sonst die Lesart des gewählten Textzeugen</string>
   <string key="webgen.text.witness">Text des gewählten Textzeugen, auch wenn er nicht das &lt;lem&gt; ist</string>
+  <string key="webgen.text.highlight">Lesarten, die nicht aus einem &lt;lem&gt; stammen, gelb hervorheben (der Leser kann dies ändern)</string>
   <string key="webgen.text.chosen">Textzeuge:</string>
   <string key="webgen.text.pivot">Pivot (jedes Textes)</string>
   <string key="webgen.text.missing_hint">Stellen ohne Lesart des gewählten Textzeugen werden im Viewer markiert.</string>

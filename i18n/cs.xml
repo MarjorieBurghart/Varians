@@ -154,6 +154,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="webgen.text.label">Text prohlížeče:</string>
   <string key="webgen.text.established">Ustavený text: &lt;lem&gt;, jinak čtení zvoleného svědka</string>
   <string key="webgen.text.witness">Text zvoleného svědka, i když to není &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Žlutě zvýraznit čtení, která nepocházejí z &lt;lem&gt; (čtenář to může změnit)</string>
   <string key="webgen.text.chosen">Svědek:</string>
   <string key="webgen.text.pivot">Pivot (každého textu)</string>
   <string key="webgen.text.missing_hint">Místa, kde zvolený svědek nemá čtení, jsou v prohlížeči označena.</string>

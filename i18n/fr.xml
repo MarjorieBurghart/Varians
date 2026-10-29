@@ -145,6 +145,7 @@
   <string key="webgen.text.label">Texte du viewer :</string>
   <string key="webgen.text.established">Texte établi : le &lt;lem&gt;, à défaut la leçon du témoin choisi</string>
   <string key="webgen.text.witness">Texte du témoin choisi, même quand il n'est pas le &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Surligner en jaune les leçons qui ne viennent pas d’un &lt;lem&gt; (le lecteur peut changer ce réglage)</string>
   <string key="webgen.text.chosen">Témoin :</string>
   <string key="webgen.text.pivot">Pivot (de chaque texte)</string>
   <string key="webgen.text.missing_hint">Les passages où le témoin choisi n'a pas de leçon sont signalés dans le viewer.</string>

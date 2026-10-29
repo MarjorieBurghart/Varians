@@ -154,6 +154,7 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="webgen.text.label">Testo del viewer:</string>
   <string key="webgen.text.established">Testo stabilito: il &lt;lem&gt;, altrimenti la lezione del testimone scelto</string>
   <string key="webgen.text.witness">Testo del testimone scelto, anche quando non è il &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Evidenzia in giallo le lezioni che non provengono da un &lt;lem&gt; (il lettore può cambiarlo)</string>
   <string key="webgen.text.chosen">Testimone:</string>
   <string key="webgen.text.pivot">Pivot (di ogni testo)</string>
   <string key="webgen.text.missing_hint">I passi in cui il testimone scelto non ha lezione sono segnalati nel viewer.</string>

@@ -145,6 +145,7 @@
   <string key="webgen.text.label">Text of the viewer:</string>
   <string key="webgen.text.established">Established text: the &lt;lem&gt;, otherwise the reading of the chosen witness</string>
   <string key="webgen.text.witness">Text of the chosen witness, even when it is not the &lt;lem&gt;</string>
+  <string key="webgen.text.highlight">Highlight in yellow the readings that do not come from a &lt;lem&gt; (the reader can change this)</string>
   <string key="webgen.text.chosen">Witness:</string>
   <string key="webgen.text.pivot">Pivot (of each text)</string>
   <string key="webgen.text.missing_hint">Passages where the chosen witness has no reading are marked in the viewer.</string>
