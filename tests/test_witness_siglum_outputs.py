@@ -65,6 +65,22 @@ def test_the_critical_edition_shows_the_idno_siglum(critique):
     assert "_1760" not in tree.text_content()
 
 
+def test_an_element_holding_only_the_siglum_is_not_repeated_in_the_label(critique):
+    # <abbr type="siglum">, <label>… : le sigle n'est pas répété dans le
+    # libellé, collé à lui (« AAvranches ») (V0.9.3.0). Le texte du libellé
+    # qui commence par le sigle reste entier.
+    from test_edition_critique_saxon import _edition, _text
+    path = critique.root_dir / "xml" / "kit_1760.xml"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace('<witness xml:id="A">', '<witness xml:id="A"><abbr type="siglum">A</abbr>')
+    text = text.replace('<idno type="siglum">1760</idno>', '<idno type="siglum">1760</idno><label>1760</label>')
+    path.write_text(text, encoding="utf-8")
+    result, tree = _edition(critique, "kit_1760.xml")
+    assert result.ok, result.error
+    witnesses = [(_text(div.find("dt")), _text(div.find("dd"))) for div in tree.xpath("//section[@class='temoins']//div")]
+    assert witnesses == [("A", "Témoin fictif A (premier de la liste)."), ("1760", "Témoin fictif B.")]
+
+
 # --- Aperçu XSLT / CSS (tei-to-html.xsl, XSLT 1.0) ---------------------------------------------
 
 def test_the_preview_shows_the_idno_siglum():
@@ -92,6 +108,17 @@ def test_the_viewer_labels_leave_the_idno_out():
         '<witness xml:id="_1761"><idno type="siglum">1761</idno></witness>'
         '<witness xml:id="B"/></listWit>')
     assert extract_witness_labels(root) == {"A": "Témoin A", "_1760": "Troyes 1760", "_1761": "1761", "B": "B"}
+
+
+def test_the_viewer_labels_leave_an_element_holding_only_the_siglum_out():
+    from web_viewer.legacy_v11_core import extract_witness_labels
+    root = ET.fromstring(
+        f'<listWit xmlns="{TEI}"><witness xml:id="P"><abbr type="siglum">P</abbr>Paris, BnF</witness>'
+        '<witness xml:id="T1"><label>T1</label>Troyes 816</witness>'
+        '<witness xml:id="_1760"><idno type="siglum">1760</idno><abbr>1760</abbr>Troyes 1760</witness>'
+        '<witness xml:id="A">A la marge</witness></listWit>')
+    assert extract_witness_labels(root) == {"P": "Paris, BnF", "T1": "Troyes 816", "_1760": "Troyes 1760",
+                                            "A": "A la marge"}
 
 
 def test_the_viewer_data_carries_the_sigla(tmp_path):

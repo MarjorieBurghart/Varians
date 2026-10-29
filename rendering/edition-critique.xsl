@@ -227,9 +227,15 @@
         <xsl:if test="tei:teiHeader//tei:listWit/tei:witness">
           <section class="temoins"><h2>Sigles des témoins</h2><dl>
             <xsl:for-each select="tei:teiHeader//tei:listWit//tei:witness">
-              <div><dt><xsl:value-of select="f:sigle(string(@xml:id))"/></dt>
+              <!-- Le libellé laisse de côté le sigle : <idno type="siglum">,
+                   et tout élément qui ne contient que le sigle ou
+                   l'identifiant (<abbr>, <label>…). -->
+              <xsl:variable name="sigles" select="f:sigle(string(@xml:id)), string(@xml:id)"/>
+              <xsl:variable name="marques" select="descendant::tei:idno[@type = 'siglum']
+                                                   | descendant::*[normalize-space() = $sigles]"/>
+              <div><dt><xsl:value-of select="$sigles[1]"/></dt>
                 <dd><xsl:value-of select="normalize-space(string-join(
-                  descendant::text()[empty(ancestor::tei:idno[@type = 'siglum'])], ''))"/></dd></div>
+                  descendant::text()[empty(ancestor::* intersect $marques)], ''))"/></dd></div>
             </xsl:for-each>
           </dl></section>
         </xsl:if>
