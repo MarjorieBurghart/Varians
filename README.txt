@@ -36,6 +36,12 @@ VARIANS V0.9.3.0 — TEXTE DE LECTURE DU VIEWER WEB
   note (dans l'Édition critique, appelée par une lettre comme les autres
   notes ; dans le viewer, un rond « n »). Un <ref> hors d'une <cit> ne
   change pas.
+• Feuille de l'aperçu (tei-to-html.xsl, scénario « Édition HTML »), comme
+  « Édition critique » : une forme d'un <choice> (corr, reg, expan, sinon
+  sic, orig, abbr), les autres en infobulle ; <sic> signalé ; <del> et
+  <surplus> barrés, <add> souligné ; <supplied> entre crochets ; <gap>
+  « [lacune : étendue] » ; <space>. <hi rend> : gras, souligné, exposant,
+  indice, petites capitales ; <emph>, <title>, <foreign> en italique.
 • Le crayon ✎ de l'aperçu est un petit signe gris, et non plus un lien
   bleu souligné : ses règles de style, ajoutées après la CSS du projet,
   étaient ignorées par Qt.
