@@ -18,14 +18,14 @@ from PySide6.QtWidgets import (
 import segment_model
 from app_context import call_later, tr as _t
 from folio_navigation import (
-    configure_surface_parts, folio_at_position, folio_marks, folios_for_witness,
-    inspect_surface_part_split,
+    configure_surface_parts, facsimile_markup, facsimile_surfaces, folio_at_position, folio_marks,
+    folios_for_witness, inspect_surface_part_split,
 )
 from iiif_local import apply_working_copy
 from image_fetch import FetchWorker
 from image_sources import (
     image_only_items, matched_line_center, page_image_dimensions, page_image_request as generic_image_request,
-    page_image_source, page_label as image_page_label, page_navigation_items, valid_matched_indices,
+    page_image_source, page_navigation_items, surface_labels, valid_matched_indices,
 )
 from lacunae import lacuna_events, lacunae_at
 from pivot_lines import include_spans
@@ -348,11 +348,23 @@ class WitnessSyncMixin:
         revision = document.revision()
         if not force and getattr(self, '_folio_revision', None) == revision:
             return
+        # Les folios ne dépendent que du <facsimile> (V0.9.3.2) : taper dans le
+        # texte ne les relit pas ; il est analysé une fois pour tous les témoins.
+        markup = facsimile_markup(text)
+        surfaces = None
         for wid, panel in self.panels.items():
-            ids = list(panel._surface_indices)
-            labels = {str(it['p']['tei_surface_id']): image_page_label(it['p'], self.project.root_dir)
-                      for it in panel.items if it.get('p', {}).get('tei_surface_id')}
-            panel.set_folios(folios_for_witness(text, wid, ids, labels))
+            ids = tuple(panel._surface_indices)
+            labels = surface_labels(panel, self.project.root_dir)
+            key = (markup, ids, labels)
+            if not force and getattr(panel, '_folio_key', None) == key:
+                continue
+            if surfaces is None:
+                surfaces = facsimile_surfaces(text, markup)
+            folios = folios_for_witness(text, wid, ids, labels, surfaces=surfaces or {})
+            # Un <facsimile> mal formé (surfaces None) est relu à la frappe suivante.
+            panel._folio_key = key if surfaces is not None else None
+            if force or folios != list(panel.folios):
+                panel.set_folios(folios)
         self._folio_revision = revision
 
     def _sync_page_panels_to_cursor(self, force=False, lacunae=None):
@@ -405,10 +417,7 @@ class WitnessSyncMixin:
                 surface = facsimile_ref_at_position(
                     text, pos, witness_id=witness_id,
                     surface_ids=panel._surface_indices.keys(),
-                    surface_labels={
-                        str(it['p']['tei_surface_id']): image_page_label(it['p'], self.project.root_dir)
-                        for it in panel.items if it.get('p', {}).get('tei_surface_id')
-                    },
+                    surface_labels=surface_labels(panel, self.project.root_dir),
                 )
                 if surface:
                     refs[witness_id] = surface

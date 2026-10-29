@@ -116,6 +116,19 @@ def page_label(page: dict, project_root: str | Path | None = None) -> str:
     return src.label or str((page or {}).get("id") or "")
 
 
+def surface_labels(panel, project_root: str | Path | None = None, label=page_label) -> dict:
+    """``{tei_surface_id: libellé}`` des pages d'un panneau (``panel.items``),
+    calculé une fois par liste de pages (V0.9.3.2) : le libellé d'une image
+    locale résout son chemin sur le disque, trop lent pour chaque frappe."""
+    cached = getattr(panel, "_surface_labels", None)
+    if cached is not None and cached[0] is panel.items and cached[1] == project_root:
+        return cached[2]
+    labels = {str(it["p"]["tei_surface_id"]): label(it["p"], project_root)
+              for it in panel.items if (it.get("p") or {}).get("tei_surface_id")}
+    panel._surface_labels = (panel.items, project_root, labels)
+    return labels
+
+
 def page_image_dimensions(page: dict, project_root: str | Path | None = None) -> tuple[float, float]:
     src = page_image_source(page, project_root)
     aw = float((page or {}).get("alto_width") or 1)

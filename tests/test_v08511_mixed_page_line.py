@@ -7,7 +7,7 @@ import textwrap
 from types import SimpleNamespace
 
 from tei_facsimile import facsimile_ref_at_position
-from image_sources import page_label as image_page_label
+from image_sources import page_label as image_page_label, surface_labels
 from project_management import ProjectDraft, WitnessDraft, LocalImageDraft, write_project_xml
 from project_config import load_project
 from web_viewer.generator import build_dataset
@@ -63,6 +63,7 @@ def _editor_method(name):
     cls = next(x for x in module.body if isinstance(x, ast.ClassDef) and x.name == 'MainWindow')
     fn = next(x for x in cls.body if isinstance(x, ast.FunctionDef) and x.name == name)
     ns = {'facsimile_ref_at_position': facsimile_ref_at_position, 'image_page_label': image_page_label,
+          'surface_labels': surface_labels,
           '_t': lambda *args, **kwargs: ''}
     exec(textwrap.dedent(node_source(fn)), ns)
     return ns[name]

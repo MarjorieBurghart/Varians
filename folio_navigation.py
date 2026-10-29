@@ -28,26 +28,58 @@ def _local(tag):
     return str(tag).split('}')[-1].split(':')[-1]
 
 
+# Les éléments <facsimile> du document, hors commentaires et sections CDATA
+# (V0.9.3.2) : les deux premières branches les sautent.
+_FACSIMILE_RE = re.compile(
+    r'<!--.*?(?:-->|$)|<!\[CDATA\[.*?(?:\]\]>|$)'
+    r'|<(?:[\w.-]+:)?facsimile\b[^>]*?(?:/>|>.*?</(?:[\w.-]+:)?facsimile\s*>)', re.S)
+
+
+def facsimile_markup(xml_text: str) -> str:
+    """Les éléments ``<facsimile>`` du document, tels qu'écrits (V0.9.3.2) :
+    la partie qui décrit les surfaces et leurs zones. Taper dans le texte ne
+    la change pas."""
+    return ''.join(m.group() for m in _FACSIMILE_RE.finditer(str(xml_text or ''))
+                   if not m.group().startswith('<!'))
+
+
+def facsimile_surfaces(xml_text: str, markup: str | None = None) -> dict | None:
+    """``{xml:id: <surface>}`` du document (V0.9.3.2), ou None si rien ne
+    s'analyse.
+
+    Le ``<facsimile>`` (``markup``) est analysé seul : un texte
+    momentanément mal formé ailleurs, pendant la frappe d'une balise, ne
+    fait pas perdre les zones. S'il ne s'analyse pas seul (préfixe déclaré
+    plus haut), le document entier. Un ``<facsimile>`` mal formé donne None :
+    les folios reviennent aux surfaces, sans zone, plutôt que de donner une
+    fausse zone."""
+    markup = facsimile_markup(xml_text) if markup is None else markup
+    for source in ((f'<r>{markup}</r>',) if markup else ()) + (str(xml_text or ''),):
+        try:
+            root = ET.fromstring(source)
+        except ET.ParseError:
+            continue
+        surfaces = {}
+        for surface in root.iter():
+            sid = surface.get('{http://www.w3.org/XML/1998/namespace}id')
+            if _local(surface.tag) == 'surface' and sid and sid not in surfaces:
+                surfaces[sid] = surface
+        return surfaces
+    return None
+
+
 def folios_for_witness(xml_text: str, witness_id: str, surface_ids,
-                       default_labels=None) -> list[Folio]:
+                       default_labels=None, surfaces=None) -> list[Folio]:
     """Parcours dans l'ordre physique des surfaces configurées pour CE témoin.
 
-    Le document peut être temporairement invalide pendant la saisie : dans ce
-    cas on conserve le navigateur de base plutôt que de donner une fausse zone.
+    Les surfaces et leurs zones viennent du ``<facsimile>`` (voir
+    ``facsimile_surfaces`` ; ``surfaces`` : déjà lues, pour plusieurs
+    témoins).
     """
     ids = [str(s) for s in surface_ids if s]
     labels = default_labels or {}
-    surfaces = {}
-    try:
-        root = ET.fromstring(xml_text)
-        for surface in root.iter():
-            if _local(surface.tag) != 'surface':
-                continue
-            sid = surface.get('{http://www.w3.org/XML/1998/namespace}id')
-            if sid in ids and sid not in surfaces:
-                surfaces[sid] = surface
-    except ET.ParseError:
-        pass
+    if surfaces is None:
+        surfaces = facsimile_surfaces(xml_text) or {}
     out = []
     for sid in ids:
         surface = surfaces.get(sid)
