@@ -1068,6 +1068,10 @@ VARIANS V0.9.3.1 — THÉÂTRE, LEÇONS HORS <LEM>, AIDE REFAITE
   desinit, sic) restent en latin. Sans catalogue (langue inconnue, copie
   hors de Varians), les textes sont en français, comme le repli .NET de
   l'aperçu.
+• Correction : dans la liste ouverte en tapant « # » dans un attribut de
+  référence (@wit, @ref…), et dans celle des noms d'attributs, Entrée ou
+  Tab insèrent l'entrée choisie avec les flèches ; ils inséraient toujours
+  la première de la liste (un mauvais témoin dans @wit, sans avertissement).
 • Menu Aide : « Guide des éléments TEI » (les éléments de TEI P5 sur le
   site du TEI Consortium), entre « Dictionnaire de Latin » et « Aide du
   logiciel », entre deux séparateurs.

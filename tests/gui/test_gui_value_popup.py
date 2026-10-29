@@ -103,3 +103,58 @@ def test_identifiers_present_in_two_documents_name_their_file(open_window, proje
     assert _popup_values(window) == ["personnes.xml#petrus"]
     qtbot.keyClick(window.editor, Qt.Key.Key_Return)
     assert '<persName ref="personnes.xml#petrus"></persName>' in window.editor.toPlainText()
+
+
+def _choose_with_arrows(qtbot, popup, downs, key=Qt.Key.Key_Return):
+    """Comme au clavier : la liste ouverte reçoit les flèches, puis Entrée (ou Tab)."""
+    for _ in range(downs):
+        qtbot.keyClick(popup, Qt.Key.Key_Down)
+    qtbot.keyClick(popup, key)
+
+
+def test_the_witness_chosen_with_the_arrows_is_the_one_inserted(open_window, example_project, qtbot):
+    """V0.9.3.1 : Entrée insérait le premier témoin de la liste, quel que soit
+    celui que les flèches avaient choisi (une erreur silencieuse dans @wit)."""
+    window = open_window(example_project)
+    _cursor_inside(window, '<app><rdg wit=""></rdg></app>', 'wit="')
+    qtbot.keyClicks(window.editor, "#")
+    popup = window.editor._value_completer.popup()
+    assert _popup_values(window) == ["#T1", "#T2", "#P"]
+    _choose_with_arrows(qtbot, popup, 3)
+    assert not _popup_visible(window)
+    assert '<rdg wit="#P">' in window.editor.toPlainText()
+
+    qtbot.keyClicks(window.editor, " #")                     # second pointeur : #T1 et #T2 restent
+    assert _popup_values(window) == ["#T1", "#T2"]
+    _choose_with_arrows(qtbot, popup, 2, Qt.Key.Key_Tab)
+    assert '<rdg wit="#P #T2">' in window.editor.toPlainText()
+
+
+def test_the_attribute_chosen_with_the_arrows_is_the_one_inserted(qtbot):
+    """Même défaut pour la liste des noms d'attributs (le schéma de test n'en
+    déclare qu'un : fournisseur de noms factice)."""
+    from types import SimpleNamespace
+    from code_editor import CodeEditor
+
+    names = ("wit", "witDetail", "wordCount")
+
+    def provider(editor):
+        text, position = editor.toPlainText(), editor.textCursor().position()
+        start = text.rfind(" ", 0, position) + 1
+        prefix = text[start:position]
+        return (tuple(name for name in names if name.startswith(prefix)),
+                SimpleNamespace(kind="attribute", prefix=prefix, replace_start=start, replace_end=position))
+
+    editor = CodeEditor()
+    qtbot.addWidget(editor)
+    editor.attribute_completion_provider = provider
+    editor.setPlainText("<rdg ></rdg>")
+    cursor = editor.textCursor()
+    cursor.setPosition(len("<rdg "))
+    editor.setTextCursor(cursor)
+    editor.show()
+    editor.setFocus()
+    qtbot.keyClicks(editor, "w")
+    assert editor._attribute_completer.popup().isVisible()
+    _choose_with_arrows(qtbot, editor._attribute_completer.popup(), 2)
+    assert editor.toPlainText() == '<rdg witDetail=""></rdg>'
