@@ -108,10 +108,17 @@ def default_schema_cache_dir() -> Path:
 
 
 def _url_cache_path(url: str, cache_dir: Path) -> Path:
+    """Place du schéma distant ``url`` dans le cache : son hôte, puis le
+    chemin de l'adresse. Ce chemin ne sort jamais du cache (V0.9.3.3) : les
+    segments vides, « . » et « .. » sont écartés, « \\ » sépare aussi, et les
+    caractères qui désignent un lecteur ou sont interdits sous Windows sont
+    remplacés, quel que soit l'encodage de l'adresse (« %2e%2e »…)."""
     parsed = urlparse(url)
     host = re.sub(r"[^A-Za-z0-9._-]+", "_", parsed.netloc or "remote")
-    rel = unquote(parsed.path or "/schema.rng").lstrip("/") or "schema.rng"
-    path = cache_dir / host / rel
+    segments = [re.sub(r'[<>:"|?*\x00-\x1f]', "_", segment)
+                for segment in re.split(r"[/\\]+", unquote(parsed.path or ""))
+                if segment not in ("", ".", "..")]
+    path = cache_dir.joinpath(host, *(segments or ["schema.rng"]))
     if parsed.query:
         digest = hashlib.sha256(parsed.query.encode("utf-8")).hexdigest()[:12]
         path = path.with_name(path.name + ".q-" + digest)
@@ -130,6 +137,8 @@ def _fetch_remote_rng(url: str, cache_dir: Path, visited: set[str] | None = None
     visited.add(url)
 
     dest = _url_cache_path(url, cache_dir)
+    if not dest.resolve().is_relative_to(Path(cache_dir).resolve()):
+        raise ValueError(f"Chemin hors du cache des schémas : {url}")
     if dest.is_file() and not force:
         return dest, True
 
