@@ -130,6 +130,31 @@ p {
   text-indent: -1.5em;
 }
 
+/* Théâtre (0.9.3.1) : la réplique, son locuteur, les didascalies. */
+.sp {
+  margin: 0 0 1em;
+}
+
+.speaker {
+  font-variant: small-caps;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0.6em 0 0.15em;
+}
+
+.stage {
+  font-style: italic;
+  color: #5d554c;
+}
+
+div.stage {
+  margin: 0.2em 0 0.8em 1.6em;
+}
+
+.lg .stage {
+  display: block;
+}
+
 .head {
   font-size: 1.1rem;
   font-weight: 600;

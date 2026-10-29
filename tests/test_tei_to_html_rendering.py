@@ -2,7 +2,8 @@
 """Rendu de la feuille de Varians (rendering/tei-to-html.xsl), V0.9.2.9 :
 vers (chaque <l> sur sa ligne, chaque <lg> en bloc), <head> en titre,
 <list> en liste, <figure> en bloc. Ces éléments sont désormais modifiables
-avec le crayon ✎ de la Vue XSLT / CSS. V0.9.3.0 : <table> en tableau."""
+avec le crayon ✎ de la Vue XSLT / CSS. V0.9.3.0 : <table> en tableau.
+V0.9.3.1 : répliques (<sp>)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -165,6 +166,36 @@ def test_renditions_of_hi_and_italic_elements():
     assert _texts(page, '//p/span[@class="quote"]') == ["g"]
 
 
+SCENE = ('<div><head>Scena prima</head><stage>Intrat Hamletus.</stage>'
+         '<sp who="#h"><speaker>HAMLETUS</speaker><lg><l>Esse aut non esse,</l><stage>ridet</stage>'
+         '<l>haec quaestio.</l></lg></sp>'
+         '<sp who="#o"><speaker>OPHELIA</speaker><p>Domine <stage>susurrat</stage> quomodo uales?</p>'
+         '<stage>Exit.</stage></sp></div>')
+
+
+def test_a_speech_has_its_speaker_its_lines_and_its_stage_directions():
+    """V0.9.3.1, comme le viewer web : chaque réplique est un bloc, son
+    locuteur en tête ; une didascalie est un bloc entre deux blocs, une ligne
+    dans une strophe, en italique dans une phrase."""
+    page = _page(SCENE)
+    speeches = page.xpath('//main//div[@class="sp"]')
+    assert [_texts(sp, 'div[@class="speaker"]') for sp in speeches] == [["HAMLETUS"], ["OPHELIA"]]
+    assert _texts(speeches[0], 'div[@class="lg"]/span[@class="l"]') == ["Esse aut non esse,", "haec quaestio."]
+    assert [child.tag for child in speeches[0].xpath('div[@class="lg"]')[0]] == ["span", "br", "span", "br", "span"]
+    assert _texts(speeches[0], 'div[@class="lg"]/span[@class="stage"]') == ["ridet"]
+    assert _texts(speeches[1], 'p/span[@class="stage"]') == ["susurrat"]
+    assert _texts(page, '//main//div[@class="stage"]') == ["Intrat Hamletus.", "Exit."]
+    assert _texts(speeches[1], 'div[@class="stage"]') == ["Exit."]
+
+
+def test_the_preview_styles_the_speeches_even_with_the_stylesheet_of_an_older_project():
+    from formatted_view import PREVIEW_BASE_CSS
+    for rule in (".speaker {", ".stage {", "div.stage {"):
+        assert rule in PREVIEW_BASE_CSS, rule
+    assert "small-caps" in PREVIEW_BASE_CSS.split(".speaker {")[1].split("}")[0]
+    assert "italic" in PREVIEW_BASE_CSS.split(".stage {")[1].split("}")[0]
+
+
 def test_paragraphs_are_unchanged():
     page = _page("<div><p>Commune <hi rend=\"italic\">sanctorum</hi></p></div>")
     assert _texts(page, "//main//p") == ["Commune sanctorum"]
@@ -173,7 +204,7 @@ def test_paragraphs_are_unchanged():
 def test_the_stylesheet_of_new_projects_styles_them():
     css = (ROOT / "rendering" / "tei.css").read_text(encoding="utf-8")
     for selector in (".lg", ".lg br", ".l", ".head", ".figure", ".figdesc", ".table", ".ref",
-                     ".rature", ".ajout", ".sic", ".lacune", ".petites-capitales"):
+                     ".rature", ".ajout", ".sic", ".lacune", ".petites-capitales", ".sp", ".speaker", ".stage"):
         assert f"\n{selector} " in css or f"\n{selector}," in css, selector
     # Qt ignore toute règle placée après un @media : il reste à la fin.
     assert css.rindex("@media") > css.rindex(".lg br")

@@ -172,6 +172,34 @@
     <div class="l"><xsl:apply-templates/></div>
   </xsl:template>
 
+  <!-- THEATRE (Varians 0.9.3.1), comme le viewer web : chaque réplique
+       (<sp>) est un bloc, son locuteur (<speaker>) en tête. Une didascalie
+       (<stage>) est un bloc entre deux blocs, une ligne dans une strophe,
+       en italique dans une phrase. -->
+  <xsl:template match="tei:sp">
+    <div class="sp"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <xsl:template match="tei:speaker">
+    <div class="speaker"><xsl:apply-templates/></div>
+  </xsl:template>
+
+  <xsl:template match="tei:stage">
+    <span class="stage"><xsl:apply-templates/></span>
+  </xsl:template>
+
+  <xsl:template match="tei:lg/tei:stage">
+    <span class="stage"><xsl:apply-templates/></span>
+    <xsl:if test="following-sibling::tei:l"><br/></xsl:if>
+  </xsl:template>
+
+  <xsl:template match="tei:stage[parent::tei:sp or parent::tei:spGrp or parent::tei:body or parent::tei:front
+                       or parent::tei:back or parent::tei:div or parent::tei:div1 or parent::tei:div2
+                       or parent::tei:div3 or parent::tei:div4 or parent::tei:div5 or parent::tei:div6
+                       or parent::tei:div7]">
+    <div class="stage"><xsl:apply-templates/></div>
+  </xsl:template>
+
   <!-- HEAD (Varians 0.9.2.9) -->
   <xsl:template match="tei:head">
     <h3 class="head"><xsl:apply-templates/></h3>
