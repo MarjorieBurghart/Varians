@@ -226,6 +226,23 @@ def test_a_table_has_its_caption_its_header_cells_and_its_merged_cells(project):
     assert not table.xpath(".//h3")
 
 
+def test_the_reference_of_a_biblical_quotation_is_in_angle_brackets_the_others_are_notes(project):
+    """V0.9.3.0 : le <ref> d'une <cit type="bible"> suit la citation entre
+    chevrons ; celui d'une autre <cit> est une note de l'éditeur, appelée
+    par une lettre dans la même série que les <note> ; un <ref> hors d'une
+    <cit> ne change pas."""
+    name = _write(project, "citations.xml",
+                  '<div><p>Dixit <cit type="bible"><quote>Uos estis</quote><ref>Lc. 22:28</ref></cit> et '
+                  '<cit><quote>Ait Augustinus</quote><ref>Aug. Conf. 1</ref></cit> '
+                  'uidelicet<note>Nota editoris</note> <ref target="#x">alia</ref>.</p></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    main = tree.find(".//main")
+    assert [_text(sup) for sup in main.xpath(".//sup[contains(@class, 'appel-note')]")] == ["a", "b"]
+    assert _entries(tree, "notes") == [("a", "Aug. Conf. 1"), ("b", "Nota editoris")]
+    assert _main(tree) == ["Dixit Uos estis <Lc. 22:28> et Ait Augustinus uidelicet alia."]
+
+
 def test_the_predefined_scenario_publishes_the_edition_of_the_project(project):
     scenario = next(s for s in predefined_scenarios() if s.name == "edition-critique")
     result = run_in_process(scenario_request(scenario, project), timeout=120)

@@ -55,10 +55,25 @@
        or self::tei:front or self::tei:body or self::tei:back][1]"/>
   </xsl:function>
 
-  <!-- Les apparats et les notes du texte établi d'une section. -->
+  <!-- La référence d'une citation qui n'est pas biblique (le <ref> d'une
+       <cit> sans @type « bible ») est une note de l'éditeur (Varians
+       0.9.3.0) ; celle d'une citation biblique suit la citation, entre
+       chevrons. -->
+  <xsl:function name="f:biblique" as="xs:boolean">
+    <xsl:param name="cit" as="element()?"/>
+    <xsl:sequence select="tokenize(normalize-space(string($cit/@type)), ' ') = 'bible'"/>
+  </xsl:function>
+  <xsl:function name="f:ref-en-note" as="xs:boolean">
+    <xsl:param name="n" as="element()"/>
+    <xsl:sequence select="exists($n/self::tei:ref/parent::tei:cit) and not(f:biblique($n/parent::tei:cit))"/>
+  </xsl:function>
+
+  <!-- Les apparats et les notes du texte établi d'une section ; les notes
+       comprennent les références en note (f:ref-en-note). -->
   <xsl:function name="f:appels-de-section" as="element()*">
     <xsl:param name="section" as="element()"/>
-    <xsl:sequence select="$section/descendant::*[self::tei:app or self::tei:note]
+    <xsl:sequence select="$section/descendant::*[self::tei:app or self::tei:note
+                                                 or (self::tei:ref and f:ref-en-note(.))]
       [f:section(.) is $section][f:dans-texte-etabli(.)][not(ancestor::tei:note)]"/>
   </xsl:function>
 
@@ -66,7 +81,8 @@
        note (a… z, aa…). -->
   <xsl:function name="f:repere" as="xs:string">
     <xsl:param name="n" as="element()"/>
-    <xsl:variable name="memes" select="f:appels-de-section(f:section($n))[node-name(.) = node-name($n)]"/>
+    <xsl:variable name="memes" select="f:appels-de-section(f:section($n))
+      [if ($n/self::tei:app) then self::tei:app else not(self::tei:app)]"/>
     <xsl:variable name="rang" select="count($memes[. &lt;&lt; $n]) + 1"/>
     <xsl:sequence select="if ($n/self::tei:app) then string($rang) else format-integer($rang, 'a')"/>
   </xsl:function>
@@ -339,10 +355,10 @@
             </xsl:for-each>
           </ol>
         </xsl:if>
-        <xsl:if test="$appels[self::tei:note]">
+        <xsl:if test="$appels[not(self::tei:app)]">
           <h3>Notes</h3>
           <ol class="notes">
-            <xsl:for-each select="$appels[self::tei:note]">
+            <xsl:for-each select="$appels[not(self::tei:app)]">
               <xsl:call-template name="entree"/>
             </xsl:for-each>
           </ol>
@@ -380,6 +396,9 @@
               <xsl:text> </xsl:text>
               <i class="temoin"><xsl:value-of select="?sigles"/></i>
             </xsl:for-each>
+          </xsl:when>
+          <xsl:when test="self::tei:ref and @target">
+            <span class="note-editoriale"><a href="{string(@target)}"><xsl:apply-templates mode="lecture"/></a></span>
           </xsl:when>
           <xsl:otherwise>
             <span class="note-editoriale"><xsl:apply-templates mode="lecture"/></span>
@@ -431,14 +450,23 @@
     <i class="italique"><xsl:apply-templates mode="#current"/></i>
   </xsl:template>
   <xsl:template match="tei:ref" mode="base lecture">
+    <xsl:variable name="biblique" select="exists(parent::tei:cit) and f:biblique(parent::tei:cit)"/>
+    <xsl:if test="$biblique"><xsl:text> </xsl:text></xsl:if>
     <span class="scripture-ref">
+      <xsl:if test="$biblique">&lt;</xsl:if>
       <xsl:choose>
         <xsl:when test="@target">
           <a href="{string(@target)}"><xsl:apply-templates mode="#current"/></a>
         </xsl:when>
         <xsl:otherwise><xsl:apply-templates mode="#current"/></xsl:otherwise>
       </xsl:choose>
+      <xsl:if test="$biblique">&gt;</xsl:if>
     </span>
+  </xsl:template>
+  <!-- Dans le texte établi, la référence d'une citation non biblique est
+       une note : son appel seulement. -->
+  <xsl:template match="tei:ref[f:ref-en-note(.)]" mode="base" priority="1">
+    <xsl:call-template name="appel-de-note"/>
   </xsl:template>
   <xsl:template match="tei:ptr" mode="base lecture">
     <xsl:if test="@target"><a href="{string(@target)}">[référence]</a></xsl:if>
