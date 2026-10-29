@@ -7,7 +7,7 @@ import re
 from PySide6.QtCore import QRect, QSize, QStringListModel, Qt
 from PySide6.QtGui import (
     QColor, QFont, QPainter, QStandardItem, QStandardItemModel, QSyntaxHighlighter,
-    QTextCharFormat, QTextCursor, QTextFormat,
+    QTextCharFormat, QTextCursor, QTextDocument, QTextFormat,
 )
 from PySide6.QtWidgets import (
     QCompleter, QPlainTextDocumentLayout, QPlainTextEdit, QTextEdit, QWidget,
@@ -19,6 +19,47 @@ from xml_tag_pairs import (
     closing_rename_mirror_for_change, closing_tag_suggestion, exact_selected_opening_pair,
     opening_pair_for_name_change, opening_tag_at, pair_at_context,
 )
+
+
+def raw_text(document) -> str:
+    """Le texte exact de *document*. ``toPlainText`` de Qt change les espaces
+    insécables (U+00A0) en espaces et les séparateurs de ligne (U+2028) en
+    sauts de ligne : enregistré ainsi, un fichier les perdait (red team, A1).
+    ``toRawText`` les garde ; seuls les blocs y sont séparés par U+2029."""
+    return document.toRawText().replace("\u2029", "\n")
+
+
+class TextDocument(QTextDocument):
+    """Document d'un fichier ouvert : ``toPlainText`` en donne le texte exact."""
+
+    def toPlainText(self):
+        return raw_text(self)
+
+
+# Aucun caractère au-delà de U+FFFF : positions Python et Qt identiques.
+_SAME_POSITIONS = Utf16Positions("")
+
+
+def text_positions(document, text) -> Utf16Positions:
+    """Indices Python de *text*, texte de *document*, ↔ positions Qt. Qt
+    compte en UTF-16 : un caractère au-delà de U+FFFF (𝔄, idéogramme rare…)
+    y occupe deux positions (red team, A2). Sans un tel caractère, le cas
+    courant, les deux se confondent, ce qui se voit sans parcourir le texte."""
+    if document.characterCount() == len(text) + 1:
+        return _SAME_POSITIONS
+    return Utf16Positions(text)
+
+
+def python_change(document, old_text, new_text, position, removed, added):
+    """La modification ``contentsChange`` de Qt (positions UTF-16) en indices
+    Python : ``(position, retirés, ajoutés)``. *old_text* et *new_text* sont
+    le texte de *document* avant et après."""
+    units = document.characterCount() - 1
+    if len(new_text) == units and len(old_text) == units - added + removed:
+        return position, removed, added
+    old, new = Utf16Positions(old_text), Utf16Positions(new_text)
+    start = old.python(position)
+    return start, old.python(position + removed) - start, new.python(position + added) - start
 
 
 class XMLHighlighter(QSyntaxHighlighter):
@@ -76,6 +117,9 @@ class CodeEditor(QPlainTextEdit):
         self._pair_edit_guard = False
         self._pair_previous_text = self.toPlainText()
         self._pending_pair_rename = None
+        # Rappel facultatif à chaque modification du document affiché, en
+        # indices Python : ``(position, retirés, ajoutés, texte)``.
+        self.text_change_listener = None
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
         self.document().contentsChange.connect(self._pair_document_contents_changed)
         self.textChanged.connect(self.clearSearchMatch)
@@ -125,11 +169,20 @@ class CodeEditor(QPlainTextEdit):
         self.reference_click_provider = None
         self.context_menu_provider = None
 
+    def toPlainText(self):
+        """Le texte exact (``raw_text``), espaces insécables compris."""
+        return raw_text(self.document())
+
+    def positions(self, text=None):
+        """Indices Python du texte affiché (*text*, s'il est déjà lu) ↔
+        positions Qt (``text_positions``)."""
+        return text_positions(self.document(), self.toPlainText() if text is None else text)
+
     def mousePressEvent(self, event):
         if (event.button() == Qt.MouseButton.LeftButton
                 and event.modifiers() & Qt.KeyboardModifier.ControlModifier
                 and callable(self.reference_click_provider)):
-            position = self.cursorForPosition(event.position().toPoint()).position()
+            position = self.positions().python(self.cursorForPosition(event.position().toPoint()).position())
             if self.reference_click_provider(position):
                 event.accept()
                 return
@@ -142,7 +195,7 @@ class CodeEditor(QPlainTextEdit):
         # Comme QPlainTextEdit lui-même : menu non bloquant, détruit à sa fermeture.
         menu = self.createStandardContextMenu(event.pos())
         menu.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.context_menu_provider(menu, self.cursorForPosition(event.pos()).position())
+        self.context_menu_provider(menu, self.positions().python(self.cursorForPosition(event.pos()).position()))
         menu.popup(event.globalPos())
 
     def _value_proposals(self):
@@ -195,14 +248,16 @@ class CodeEditor(QPlainTextEdit):
             self._value_completer.popup().hide()
             return
         start, end = int(context.replace_start), int(context.replace_end)
-        replacement, final_pos = format_pointer_list_insertion(self.toPlainText(), start, end, str(value))
+        text = self.toPlainText()
+        replacement, final_pos = format_pointer_list_insertion(text, start, end, str(value))
+        qt = self.positions(text)
         cursor = self.textCursor()
         cursor.beginEditBlock()
-        cursor.setPosition(start)
-        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(qt.qt(start))
+        cursor.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
         cursor.insertText(replacement)
         cursor.endEditBlock()
-        cursor.setPosition(final_pos)
+        cursor.setPosition(self.positions().qt(final_pos))
         self.setTextCursor(cursor)
         self._value_completer.popup().hide()
         self.ensureCursorVisible()
@@ -254,14 +309,15 @@ class CodeEditor(QPlainTextEdit):
         # Respecter un = déjà présent : ne pas dupliquer l'attribut.
         has_value = bool(re.match(r"\s*=", after))
         replacement = lead + str(displayed) + ("" if has_value else '=""')
+        qt = self.positions(text)
         cursor = self.textCursor()
         cursor.beginEditBlock()
-        cursor.setPosition(start)
-        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(qt.qt(start))
+        cursor.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
         cursor.insertText(replacement)
         cursor.endEditBlock()
         if not has_value:
-            cursor.setPosition(start + len(lead) + len(str(displayed)) + 2)
+            cursor.setPosition(qt.qt(start) + len(lead) + len(str(displayed)) + 2)
         self.setTextCursor(cursor)
         self._attribute_completer.popup().hide()
         self.ensureCursorVisible()
@@ -271,7 +327,11 @@ class CodeEditor(QPlainTextEdit):
         if not popup.isVisible():
             return
         c = self.textCursor()
-        if c.hasSelection() or closing_tag_suggestion(self.toPlainText(), c.position()) is None:
+        if c.hasSelection():
+            popup.hide()
+            return
+        text = self.toPlainText()
+        if closing_tag_suggestion(text, self.positions(text).python(c.position())) is None:
             popup.hide()
 
     def show_closing_tag_completion(self, force=False):
@@ -281,8 +341,9 @@ class CodeEditor(QPlainTextEdit):
         manuelle continue si l'utilisateur l'ignore ou presse Échap.
         """
         c = self.textCursor()
+        text = self.toPlainText()
         suggestion = None if c.hasSelection() else closing_tag_suggestion(
-            self.toPlainText(), c.position()
+            text, self.positions(text).python(c.position())
         )
         popup = self._closing_completer.popup()
         if suggestion is None:
@@ -304,14 +365,16 @@ class CodeEditor(QPlainTextEdit):
         """Recontrôle le contexte avant insertion (pas de suggestion périmée)."""
         c = self.textCursor()
         text = self.toPlainText()
-        suggestion = closing_tag_suggestion(text, c.position())
+        qt = self.positions(text)
+        position = qt.python(c.position())
+        suggestion = closing_tag_suggestion(text, position)
         if suggestion is None or str(displayed) != suggestion.label:
             self._closing_completer.popup().hide()
             return
-        suffix = "" if text[c.position():c.position()+1] == ">" else ">"
+        suffix = "" if text[position:position+1] == ">" else ">"
         c.beginEditBlock()
-        c.setPosition(suggestion.replace_start)
-        c.setPosition(suggestion.replace_end, QTextCursor.MoveMode.KeepAnchor)
+        c.setPosition(qt.qt(suggestion.replace_start))
+        c.setPosition(qt.qt(suggestion.replace_end), QTextCursor.MoveMode.KeepAnchor)
         c.insertText(suggestion.name + suffix)
         c.endEditBlock()
         self.setTextCursor(c)
@@ -503,7 +566,7 @@ class CodeEditor(QPlainTextEdit):
             # la sélection active pourrait rester dans un bloc masqué.
             cursor = self.textCursor()
             if region.first_hidden_line <= cursor.blockNumber() <= region.closing_line:
-                cursor.setPosition(region.opening_offset)
+                cursor.setPosition(self.positions().qt(region.opening_offset))
                 self.setTextCursor(cursor)
         if line in self._folded_opening_lines:
             self._folded_opening_lines.remove(line)
@@ -536,7 +599,7 @@ class CodeEditor(QPlainTextEdit):
             cursor = self.textCursor()
             first_region = next((r for r in regions if r.opening_line == top[0]), None)
             if first_region is not None:
-                cursor.setPosition(first_region.opening_offset)
+                cursor.setPosition(self.positions().qt(first_region.opening_offset))
                 self.setTextCursor(cursor)
         self._folded_opening_lines = set(top)
         self._apply_xml_fold_visibility()
@@ -611,9 +674,11 @@ class CodeEditor(QPlainTextEdit):
         # que le curseur soit dans l'ouverture ou la fermeture. QTextCursor
         # d'édition et historique d'annulation sont totalement inchangés.
         cursor = self.textCursor()
+        text = self.toPlainText()
+        qt = self.positions(text)
         pair = pair_at_context(
-            self.toPlainText(), cursor.position(),
-            cursor.selectionStart(), cursor.selectionEnd(),
+            text, qt.python(cursor.position()),
+            qt.python(cursor.selectionStart()), qt.python(cursor.selectionEnd()),
         )
         if pair is not None:
             for token in (pair.opening, pair.closing):
@@ -621,8 +686,8 @@ class CodeEditor(QPlainTextEdit):
                 matching.format.setBackground(QColor("#d9ecff"))
                 matching.format.setForeground(QColor("#111111"))
                 matching.cursor = QTextCursor(self.document())
-                matching.cursor.setPosition(token.start)
-                matching.cursor.setPosition(token.end, QTextCursor.MoveMode.KeepAnchor)
+                matching.cursor.setPosition(qt.qt(token.start))
+                matching.cursor.setPosition(qt.qt(token.end), QTextCursor.MoveMode.KeepAnchor)
                 selections.append(matching)
 
         if self._search_match is not None:
@@ -674,10 +739,11 @@ class CodeEditor(QPlainTextEdit):
         if new_text[close_start:close_end] != expected:
             return False
 
+        qt = self.positions(new_text)
         edit = QTextCursor(self.document())
         edit.joinPreviousEditBlock()
-        edit.setPosition(close_start)
-        edit.setPosition(close_end, QTextCursor.MoveMode.KeepAnchor)
+        edit.setPosition(qt.qt(close_start))
+        edit.setPosition(qt.qt(close_end), QTextCursor.MoveMode.KeepAnchor)
         edit.removeSelectedText()
         edit.endEditBlock()
         return True
@@ -688,15 +754,20 @@ class CodeEditor(QPlainTextEdit):
         Le signal Qt fournit directement la zone modifiée : aucune comparaison
         O(n) de tout le document n'est nécessaire à chaque frappe. Un petit état
         transitoire conserve aussi la paire si l'utilisateur efface entièrement
-        le QName puis commence à en retaper un autre.
+        le QName puis commence à en retaper un autre. La zone, en positions Qt,
+        est convertie en indices Python (``python_change``), puis transmise à
+        ``text_change_listener``.
         """
         new_text = self.toPlainText()
-        if self._pair_edit_guard:
-            self._pair_previous_text = new_text
-            return
         old_text = self._pair_previous_text
-        if old_text is None:
-            self._pair_previous_text = new_text
+        # Texte de référence d'une modification faite ci-dessous (fermeture).
+        self._pair_previous_text = new_text
+        if old_text is not None:
+            position, chars_removed, chars_added = python_change(
+                self.document(), old_text, new_text, position, chars_removed, chars_added)
+        if callable(self.text_change_listener):
+            self.text_change_listener(position, chars_removed, chars_added, new_text)
+        if self._pair_edit_guard or old_text is None:
             return
 
         self._pair_edit_guard = True
@@ -736,10 +807,11 @@ class CodeEditor(QPlainTextEdit):
                     if opening is not None:
                         old_close_name = str(pending["close_name"])
                         if new_text[close_start:close_end] == old_close_name:
+                            qt = self.positions(new_text)
                             edit = QTextCursor(self.document())
                             edit.joinPreviousEditBlock()
-                            edit.setPosition(close_start)
-                            edit.setPosition(close_end, QTextCursor.MoveMode.KeepAnchor)
+                            edit.setPosition(qt.qt(close_start))
+                            edit.setPosition(qt.qt(close_end), QTextCursor.MoveMode.KeepAnchor)
                             edit.insertText(opening.name)
                             edit.endEditBlock()
                         self._pending_pair_rename = None
@@ -756,12 +828,13 @@ class CodeEditor(QPlainTextEdit):
                 pair=pair_before,
             )
             if mirror is not None:
+                qt = self.positions(new_text)
                 edit = QTextCursor(self.document())
                 # Le QName fermant appartient à la même intention d'édition :
                 # Ctrl+Z restaure les deux côtés de la paire simultanément.
                 edit.joinPreviousEditBlock()
-                edit.setPosition(mirror.start)
-                edit.setPosition(mirror.end, QTextCursor.MoveMode.KeepAnchor)
+                edit.setPosition(qt.qt(mirror.start))
+                edit.setPosition(qt.qt(mirror.end), QTextCursor.MoveMode.KeepAnchor)
                 edit.insertText(mirror.new_name)
                 edit.endEditBlock()
                 self._pending_pair_rename = None
@@ -814,7 +887,7 @@ def find_in_plain_editor(editor, query, backwards=False, options=None, exact=Fal
     # Liste des occurrences, y compris celles qui se chevauchent en recherche
     # littérale : utile pour des recherches éditoriales très courtes. Les
     # positions sont celles de Qt (UTF-16).
-    qt = Utf16Positions(text)
+    qt = text_positions(editor.document(), text)
     positions = [(qt.qt(start), qt.qt(end)) for start, end in find_spans(text, query, options)]
     if not positions:
         editor.clearSearchMatch()
@@ -878,7 +951,7 @@ def replace_in_plain_editor(editor, query, template, options=None):
     current = editor._search_match
     if query and current is not None:
         text = editor.toPlainText()
-        qt = Utf16Positions(text)
+        qt = text_positions(editor.document(), text)
         match = match_at(text, qt.python(current[0]), qt.python(current[1]), query, options)
         if match is not None:
             value = replacement_for(match, template, options)
@@ -901,7 +974,7 @@ def replace_all_in_plain_editor(editor, query, template, options=None):
     found = replacements(text, query, template, options)
     if not found:
         return 0
-    qt = Utf16Positions(text)
+    qt = text_positions(editor.document(), text)
     _replace_spans(editor, [(qt.qt(start), qt.qt(end), value) for start, end, value in found])
     editor.clearSearchMatch()
     return len(found)

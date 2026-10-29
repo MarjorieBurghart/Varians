@@ -189,9 +189,12 @@ class ReferencesMixin:
         ``position``) ; renvoie True si elle est affichée. Une cible définie
         plusieurs fois est choisie dans une liste ; le point de départ est
         mémorisé pour Alt+←."""
+        # Positions Python dans le texte de la source (red team, A2).
         cursor = self.editor.textCursor()
-        origin = (cursor.anchor(), cursor.position()) if position is None else (position, position)
-        reference = self._reference_under(cursor.position() if position is None else int(position))
+        qt = self.editor.positions()
+        origin = ((qt.python(cursor.anchor()), qt.python(cursor.position())) if position is None
+                  else (position, position))
+        reference = self._reference_under(origin[1])
         if reference is None:
             self.statusBar().showMessage(_t("references.none_here"), _STATUS_MSEC)
             return False
@@ -243,8 +246,9 @@ class ReferencesMixin:
 
     def _show_location(self, session, anchor, position):
         """Affiche ``session`` dans la source et sélectionne ``anchor``…
-        ``position``, au centre de l'éditeur. Un document masqué retrouve
-        durablement son onglet. False si l'affichage est refusé."""
+        ``position`` (indices Python de son texte), au centre de l'éditeur.
+        Un document masqué retrouve durablement son onglet. False si
+        l'affichage est refusé."""
         if not self.show_document(session):
             return False
         self.show_document_tab(session)
@@ -254,10 +258,11 @@ class ReferencesMixin:
         def select(shown=session):
             if self.document is not shown:
                 return
-            last = max(0, self.editor.document().characterCount() - 1)
+            text = self.editor.toPlainText()
+            qt = self.editor.positions(text)
             cursor = QTextCursor(self.editor.document())
-            cursor.setPosition(min(anchor, last))
-            cursor.setPosition(min(position, last), QTextCursor.MoveMode.KeepAnchor)
+            cursor.setPosition(qt.qt(min(anchor, len(text))))
+            cursor.setPosition(qt.qt(min(position, len(text))), QTextCursor.MoveMode.KeepAnchor)
             self.editor.setTextCursor(cursor)
             self.editor.centerCursor()
             self.editor.setFocus()

@@ -19,6 +19,7 @@ from pivot_lines import include_spans, pivot_lines
 from tei_facsimile import facsimile_ref_at_position
 from varians_source import method_source
 from image_sources import surface_labels
+from text_search import Utf16Positions
 
 DATA = Path(__file__).resolve().parent / "data" / "sermons" / "xml"
 EDITION = DATA / "edition.xml"
@@ -62,6 +63,9 @@ class Editor:
 
     def toPlainText(self):
         return self.text
+
+    def positions(self, text=None):
+        return Utf16Positions(self.text if text is None else text)
 
     def document(self):
         return self
@@ -149,7 +153,8 @@ def _mark_host(position, displayed_edition=False):
     text = EDITION_XML if displayed_edition else PART_XML
     host = SimpleNamespace(
         editor=SimpleNamespace(toPlainText=lambda: text,
-                               textCursor=lambda: SimpleNamespace(position=lambda: position)),
+                               textCursor=lambda: SimpleNamespace(position=lambda: position),
+                               positions=lambda value=None: Utf16Positions(text if value is None else value)),
         panels={}, witness_configs=[],
         project=SimpleNamespace(root_dir=DATA.parent, edition=DATA / "edition.xml"),
         _edition_displayed=lambda: displayed_edition, _edition_text=lambda: EDITION_XML,

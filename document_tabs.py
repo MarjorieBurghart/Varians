@@ -20,11 +20,11 @@ from dataclasses import replace
 from pathlib import Path
 
 from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QActionGroup, QColor, QFont, QFontMetrics, QTextCursor, QTextDocument
+from PySide6.QtGui import QActionGroup, QColor, QFont, QFontMetrics, QTextCursor
 from PySide6.QtWidgets import (QHBoxLayout, QMenu, QMessageBox, QPlainTextDocumentLayout, QStyle, QStyleOptionTab,
                                QStylePainter, QTabBar, QToolButton, QVBoxLayout, QWidget)
 from app_context import call_later, current_i18n, tr as _t
-from code_editor import XMLHighlighter
+from code_editor import TextDocument, XMLHighlighter
 from document_session import DocumentSession
 from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines
@@ -259,15 +259,15 @@ class DocumentTabsMixin:
         return session
 
     def _show_file_position(self, path, position):
-        """Place le curseur à ``position`` dans le fichier ``path`` de
-        l'édition, affiché au besoin (l'aperçu reste à l'écran)."""
+        """Place le curseur à ``position`` (indice Python) dans le fichier
+        ``path`` de l'édition, affiché au besoin (l'aperçu reste à l'écran)."""
         session = self._edition_file_session(path)
         if session is None or not self.show_document(session):
             return False
         self.show_document_tab(session)
-        text_length = self.editor.document().characterCount() - 1
+        text = self.editor.toPlainText()
         cursor = self.editor.textCursor()
-        cursor.setPosition(max(0, min(int(position), text_length)))
+        cursor.setPosition(self.editor.positions(text).qt(max(0, min(int(position), len(text)))))
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         return True
@@ -341,7 +341,7 @@ class DocumentTabsMixin:
                                 include_spans(self.editor.toPlainText()))
 
     def _base_ordinal_at_cursor(self):
-        return self._base_ordinal_at(self.editor.textCursor().position())
+        return self._base_ordinal_at(self.editor.positions().python(self.editor.textCursor().position()))
 
     def _base_line_count(self):
         """Nombre de <lb/> du pivot : dans l'édition assemblée si elle a des
@@ -396,7 +396,7 @@ class DocumentTabsMixin:
                 return None
             position = spans[index][1]
         cursor = self.editor.textCursor()
-        cursor.setPosition(position)
+        cursor.setPosition(self.editor.positions().qt(position))
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         if switched is not None:
@@ -607,7 +607,7 @@ class DocumentTabsMixin:
     def _load_session_text(self, session, text):
         """Crée le QTextDocument d'une session et y place ``text``, avant tout
         affichage : aucun signal n'atteint encore la fenêtre."""
-        document = QTextDocument(self)
+        document = TextDocument(self)
         document.setDocumentLayout(QPlainTextDocumentLayout(document))
         # Coloration attachée AVANT le texte : attachée à un document déjà
         # rempli, sa passe différée incrémenterait la révision, que la fenêtre
@@ -627,8 +627,7 @@ class DocumentTabsMixin:
             timer.stop()
         self._remember_document_view(previous)
         old = previous.text_document
-        for signal, slot in ((old.contentsChange, self._source_contents_changed),
-                             (old.contentsChanged, self._text_changed),
+        for signal, slot in ((old.contentsChanged, self._text_changed),
                              (old.contentsChanged, self._assembly_changed)):
             try:
                 signal.disconnect(slot)
@@ -637,8 +636,8 @@ class DocumentTabsMixin:
         # La session doit être courante AVANT que l'éditeur n'affiche son texte :
         # les signaux émis pendant le changement (curseur, texte) la concernent.
         self.document = session
+        # Ses modifications parviennent à _source_contents_changed par l'éditeur.
         self.editor.set_text_document(session.text_document)
-        session.text_document.contentsChange.connect(self._source_contents_changed)
         session.text_document.contentsChanged.connect(self._text_changed)
         session.text_document.contentsChanged.connect(self._assembly_changed)
         # Les numéros de révision sont propres à chaque document.

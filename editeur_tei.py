@@ -81,7 +81,7 @@ from formatted_view import (
 from fragment_units import unit_spans
 from xml_assembly import path_key
 from manuscript_panel import ManuscriptPanel
-from code_editor import CodeEditor, find_in_plain_editor, XMLHighlighter
+from code_editor import CodeEditor, TextDocument, find_in_plain_editor, XMLHighlighter
 from text_search import SearchError
 from replace_bar import ReplaceBarMixin
 from search_results import SearchResultsMixin
@@ -120,7 +120,7 @@ from selection_sync import containing_span_index
 
 try:
     from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot, QRunnable, QThreadPool, QEvent
-    from PySide6.QtGui import QTextCursor, QAction, QKeySequence, QTextDocument
+    from PySide6.QtGui import QTextCursor, QAction, QKeySequence
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QSplitter, QToolBar, QFileDialog, QMessageBox,
         QLabel, QSizePolicy, QVBoxLayout, QHBoxLayout, QCheckBox, QScrollArea, QFrame,
@@ -467,7 +467,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
 
         self.editor = CodeEditor()
         # Le QTextDocument appartient au document ouvert, non à l'éditeur.
-        self.document.text_document = QTextDocument(self)
+        self.document.text_document = TextDocument(self)
         self.editor.set_text_document(self.document.text_document)
         self.highlighter = XMLHighlighter(self.editor.document())
         self.formatted_view = FormattedEditionWidget(self)
@@ -476,10 +476,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.editor.value_completion_provider = self._auto_value_choices
         self.formatted_view.fragment_editor.value_completion_provider = self._auto_value_choices
         # Invalidation incrémentale : les points lexicaux antérieurs à l'édition
-        # restent valides et accélèrent les Ctrl+Espace suivants.
-        self.editor.document().contentsChange.connect(self._source_contents_changed)
-        self.formatted_view.fragment_editor.document().contentsChange.connect(
-            lambda position, _removed, _added: self._fragment_completion_context_cache.invalidate_from(position)
+        # restent valides et accélèrent les Ctrl+Espace suivants. Les
+        # modifications arrivent en indices Python (red team, A2).
+        self.editor.text_change_listener = self._source_contents_changed
+        self.formatted_view.fragment_editor.text_change_listener = (
+            lambda position, _removed, _added, _text: self._fragment_completion_context_cache.invalidate_from(position)
         )
 
         self.source_wrap_element_action = QAction(_t("fragment.wrap"), self.editor)
@@ -817,9 +818,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             self.statusBar().showMessage(_t("format_xml.no_change"), 3500)
             return
 
+        # Positions Python du texte formaté (red team, A2).
+        qt = self.editor.positions(source)
         old_cursor = self.editor.textCursor()
-        old_pos = old_cursor.position()
-        old_anchor = old_cursor.anchor()
+        old_pos = qt.python(old_cursor.position())
+        old_anchor = qt.python(old_cursor.anchor())
         new_pos = result.map_position(old_pos)
         new_anchor = result.map_position(old_anchor)
 
@@ -832,19 +835,22 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         edit = QTextCursor(self.editor.document())
         edit.beginEditBlock()
         try:
+            # Du bas vers le haut : le texte qui précède chacun est intact.
             for repl in reversed(result.replacements):
-                edit.setPosition(repl.start)
-                edit.setPosition(repl.end, QTextCursor.MoveMode.KeepAnchor)
+                edit.setPosition(qt.qt(repl.start))
+                edit.setPosition(qt.qt(repl.end), QTextCursor.MoveMode.KeepAnchor)
                 edit.insertText(repl.text)
         finally:
             edit.endEditBlock()
             self.editor._pair_edit_guard = previous_guard
             self.editor._pair_previous_text = self.editor.toPlainText()
 
+        formatted = self.editor.toPlainText()
+        qt = self.editor.positions(formatted)
         restored = QTextCursor(self.editor.document())
-        restored.setPosition(max(0, min(self.editor.document().characterCount() - 1, new_anchor)))
+        restored.setPosition(qt.qt(max(0, min(len(formatted), new_anchor))))
         restored.setPosition(
-            max(0, min(self.editor.document().characterCount() - 1, new_pos)),
+            qt.qt(max(0, min(len(formatted), new_pos))),
             QTextCursor.MoveMode.KeepAnchor if new_pos != new_anchor else QTextCursor.MoveMode.MoveAnchor,
         )
         self.editor.setTextCursor(restored)
@@ -944,25 +950,19 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.setWindowTitle(_t("app.window.file", project=self.project.title, name=name, mark=mark))
         self._refresh_document_tab(self.document)
 
-    @Slot(int, int, int)
-    def _source_contents_changed(self, position, chars_removed, chars_added):
-        """Invalide seulement ce que l'édition rend réellement obsolète."""
+    def _source_contents_changed(self, position, chars_removed, chars_added, text):
+        """Invalide seulement ce que l'édition rend réellement obsolète.
+        Rappel de l'éditeur (``text_change_listener``) : indices Python de
+        ``text``, le texte après la modification."""
         self._source_completion_context_cache.invalidate_from(position)
         lb = self.document.lb
         if lb.dirty:
             return
         start = max(0, int(position))
-        cursor = QTextCursor(self.editor.document())
-        inserted = ""
-        if chars_added:
-            cursor.setPosition(start)
-            cursor.setPosition(start + max(0, int(chars_added)), QTextCursor.MoveMode.KeepAnchor)
-            inserted = cursor.selectedText()
+        inserted = text[start:start + max(0, int(chars_added))]
         # Texte qui précède la modification : permet de savoir si elle a lieu
         # à l'intérieur d'une balise.
-        cursor.setPosition(max(0, start - LB_EDIT_LOOKBACK))
-        cursor.setPosition(start, QTextCursor.MoveMode.KeepAnchor)
-        lb.apply_edit(position, chars_removed, chars_added, inserted, cursor.selectedText())
+        lb.apply_edit(position, chars_removed, chars_added, inserted, text[max(0, start - LB_EDIT_LOOKBACK):start])
 
     def _set_lb_spans(self, spans):
         self.document.lb.set(spans)
@@ -1000,7 +1000,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return self.document.lb.ordinal_at(position)
 
     def ordinal_at_cursor(self):
-        return self.ordinal_at_position(self.editor.textCursor().position())
+        return self.ordinal_at_position(self.editor.positions().python(self.editor.textCursor().position()))
 
     def _source_selection_descriptor(self, text, selection_start):
         """Élément modifiable de l'aperçu (V0.9.2.9 ; auparavant le
@@ -1035,7 +1035,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         else:
             units = [(index, a, b) for index, (a, b)
                      in enumerate(unit_spans(source, self._preview_unit_names()))]
-        return xml_selection_structure(source, cursor.selectionStart(), cursor.selectionEnd(), units)
+        qt = self.editor.positions(source)
+        return xml_selection_structure(source, qt.python(cursor.selectionStart()), qt.python(cursor.selectionEnd()),
+                                       units)
 
     def _select_xml_text_in_paragraph(self, text, descriptor):
         """Sélectionne dans la source l'occurrence décrite par ``descriptor``.
@@ -1063,9 +1065,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return True
 
     def _select_source_span(self, start, end):
+        """Sélectionne ``start``…``end`` (indices Python) dans la source."""
+        qt = self.editor.positions()
         cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(start)
-        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(qt.qt(start))
+        cursor.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
@@ -1087,15 +1091,16 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             return False
         if not matches:
             return False
-        anchor = self.editor.textCursor().position()
+        qt = self.editor.positions(source)
+        anchor = qt.python(self.editor.textCursor().position())
         spans = self.lb_spans()
         if ordinal is not None and spans:
             n = max(0, min(len(spans) - 1, int(ordinal)))
             anchor = spans[n][0]
         match = min(matches, key=lambda m: abs(m.start() - anchor))
         cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(match.start())
-        cursor.setPosition(match.end(), QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(qt.qt(match.start()))
+        cursor.setPosition(qt.qt(match.end()), QTextCursor.MoveMode.KeepAnchor)
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
@@ -1152,7 +1157,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # plusieurs fois). On transporte aussi le paragraphe et le rang de
             # l'occurrence à l'intérieur de ce paragraphe.
             source_cursor = self.editor.textCursor()
-            source_pos = source_cursor.selectionStart() if source_cursor.hasSelection() else source_cursor.position()
+            qt = self.editor.positions()
+            source_pos = qt.python(source_cursor.selectionStart() if source_cursor.hasSelection()
+                                   else source_cursor.position())
             if parts:
                 sources = self._assembled_preview_sources()
                 ordinal = sources.line_before(self.document.path, source_pos) if sources is not None else None
@@ -1171,7 +1178,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             # l'aperçu y reste, le retour à la source rend celle de départ.
             self._preview_round_trip = None
             round_trip = (self.document, self.editor.document().revision(),
-                          source_cursor.selectionStart(), source_cursor.selectionEnd())
+                          qt.python(source_cursor.selectionStart()), qt.python(source_cursor.selectionEnd()))
             self.formatted_view.became_visible()
 
             def restore_preview_context(n=ordinal, selected=selected_visible, desc=descriptor, shape=structure):

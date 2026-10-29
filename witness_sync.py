@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 import segment_model
 from app_context import call_later, tr as _t
+from code_editor import text_positions
 from folio_navigation import (
     configure_surface_parts, facsimile_markup, facsimile_surfaces, folio_at_position, folio_marks,
     folios_for_witness, inspect_surface_part_split,
@@ -319,10 +320,11 @@ def _patch_text_document(document, old_text, new_text):
         suffix += 1
     old_end = len(old_text) - suffix
     new_end = len(new_text) - suffix
+    qt = text_positions(document, old_text)
     c = QTextCursor(document)
     c.beginEditBlock()
-    c.setPosition(prefix)
-    c.setPosition(old_end, QTextCursor.MoveMode.KeepAnchor)
+    c.setPosition(qt.qt(prefix))
+    c.setPosition(qt.qt(old_end), QTextCursor.MoveMode.KeepAnchor)
     c.insertText(new_text[prefix:new_end])
     c.endEditBlock()
     return c
@@ -386,7 +388,7 @@ class WitnessSyncMixin:
                 panel.set_lacuna(LACUNA if witness_id in lacunae else None)
         cursor = self.editor.textCursor()
         text = self.editor.toPlainText()
-        pos = cursor.position()
+        pos = self.editor.positions(text).python(cursor.position())
         if hasattr(self, '_refresh_folio_navigation'):
             self._refresh_folio_navigation(text)
         # Édition en parties (V0.9.1.0) : le dernier pb précédent est cherché
@@ -471,7 +473,9 @@ class WitnessSyncMixin:
             return
         c = _patch_text_document(self.editor.document(), old_text, new_text)
         if target_position is not None:
-            c.setPosition(max(0, min(self.editor.document().characterCount()-1, int(target_position))))
+            # Indice Python dans le nouveau texte (red team, A2).
+            qt = self.editor.positions(new_text)
+            c.setPosition(qt.qt(max(0, min(len(new_text), int(target_position)))))
         self.editor.setTextCursor(c)
         self.editor.centerCursor()
 
@@ -582,7 +586,7 @@ class WitnessSyncMixin:
         Dans une partie de l'édition (V0.9.1.0), le pb est inséré dans la
         partie et le facsimile complété dans l'édition, même non affichée."""
         old = self.editor.toPlainText()
-        original_pos = self.editor.textCursor().position()
+        original_pos = self.editor.positions(old).python(self.editor.textCursor().position())
         # Règle conservatrice : « Marquer la page » n'édite jamais une balise
         # existante. S'il est dans du markup XML, le curseur est probablement là
         # par erreur ; surtout, ne pas créer non plus <facsimile> avant de sortir.
@@ -678,7 +682,7 @@ class WitnessSyncMixin:
         cache = self.__dict__.get("_lacuna_events_cache")
         if cache is None or cache[0] is not self.document or cache[1] != revision:
             cache = self._lacuna_events_cache = (self.document, revision, lacuna_events(text))
-        position = self.editor.textCursor().position()
+        position = self.editor.positions(text).python(self.editor.textCursor().position())
         lines = self._pivot_lines()
         if lines is not None:
             return lines.lacunae_at(self.document.path, position, text, include_spans(text), cache[2])
@@ -1022,7 +1026,7 @@ class WitnessSyncMixin:
         if ends:
             position = min(ends, key=lambda end: abs(end - position))
         cursor = self.editor.textCursor()
-        cursor.setPosition(max(0, min(int(position), len(text))))
+        cursor.setPosition(self.editor.positions(text).qt(max(0, min(int(position), len(text)))))
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         return True

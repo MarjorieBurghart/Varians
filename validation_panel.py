@@ -53,6 +53,7 @@ from app_context import call_later, tr as _t
 from project_config import DocumentConfig
 from relaxng_validation import ValidationIssue, lxml_available, relaxng_schema_token
 from schema_resolution import detect_xml_models, resolve_schema
+from text_search import Utf16Positions
 from validation_worker import worker_client
 from xml_assembly import path_key
 
@@ -327,10 +328,11 @@ class ValidationPanelMixin:
         if not block.isValid():
             return
         cursor = QTextCursor(block)
-        # Les colonnes libxml2 sont 1-based lorsqu'elles sont connues.
-        offset = max(0, int(column or 1) - 1)
-        offset = min(offset, max(0, block.length() - 1))
-        cursor.setPosition(block.position() + offset)
+        # Les colonnes libxml2 sont 1-based lorsqu'elles sont connues ; elles
+        # comptent des caractères, Qt des unités UTF-16 (red team, A2).
+        line_text = block.text()
+        offset = min(max(0, int(column or 1) - 1), len(line_text))
+        cursor.setPosition(block.position() + Utf16Positions(line_text).qt(offset))
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()

@@ -1224,7 +1224,8 @@ class FormattedEditionWidget(QWidget):
         # d'abord les éléments réellement admissibles à cette position. Le champ
         # reste éditable : la personnalisation de saisie et les documents en cours
         # de correction ne sont donc pas bloqués par le sélecteur.
-        suggestion_pos = cursor.selectionStart() if has_selection else cursor.position()
+        suggestion_pos = target_editor.positions().python(cursor.selectionStart() if has_selection
+                                                          else cursor.position())
         suggestion_provider = getattr(self.main, "rng_element_suggestions", None)
         suggestions = (
             suggestion_provider(target_editor, suggestion_pos)
@@ -1288,9 +1289,10 @@ class FormattedEditionWidget(QWidget):
             return
 
         # Le QTextCursor capture la sélection avant l'ouverture du dialogue.
-        # Qt représente les fins de paragraphes par U+2029/U+2028 : les
-        # restituer en LF conserve exactement le XML multiligne sélectionné.
-        selected = cursor.selectedText().replace("\u2029", "\n").replace("\u2028", "\n")
+        # Qt y sépare les lignes par U+2029 : les restituer en LF conserve
+        # exactement le XML multiligne sélectionné. Un U+2028 du texte reste
+        # tel quel (red team, A1).
+        selected = cursor.selectedText().replace("\u2029", "\n")
         selection_start = cursor.selectionStart()
         # Préserver aussi le sens de la sélection : Qt place position() à
         # gauche pour une sélection faite de droite à gauche.
@@ -1830,12 +1832,14 @@ class FormattedEditionWidget(QWidget):
         descriptor = self.preview.selection_descriptor(text, cursor.selectionStart())
         if not descriptor or descriptor.get("paragraph") != self.current_paragraph:
             return False
-        chosen = pick_xml_occurrence(self.fragment_editor.toPlainText(), text, descriptor)
+        fragment = self.fragment_editor.toPlainText()
+        chosen = pick_xml_occurrence(fragment, text, descriptor)
         if not chosen:
             return False
+        qt = self.fragment_editor.positions(fragment)
         selection = QTextCursor(self.fragment_editor.document())
-        selection.setPosition(chosen[0])
-        selection.setPosition(chosen[1], QTextCursor.MoveMode.KeepAnchor)
+        selection.setPosition(qt.qt(chosen[0]))
+        selection.setPosition(qt.qt(chosen[1]), QTextCursor.MoveMode.KeepAnchor)
         self.fragment_editor.setTextCursor(selection)
         # La sélection vient de l'aperçu : elle n'y est pas renvoyée.
         self._fragment_selection_timer.stop()
@@ -1856,7 +1860,9 @@ class FormattedEditionWidget(QWidget):
         text = _selection_xml_to_visible_text(cursor.selectedText())
         if not text:
             return False
-        descriptor = xml_selection_descriptor(self.fragment_editor.toPlainText(), text, cursor.selectionStart())
+        fragment = self.fragment_editor.toPlainText()
+        descriptor = xml_selection_descriptor(fragment, text,
+                                              self.fragment_editor.positions(fragment).python(cursor.selectionStart()))
         descriptor["paragraph"] = self.current_paragraph
         return self.preview.select_visible_text_in_paragraph(text, descriptor, focus=False)
 
@@ -1924,9 +1930,10 @@ class FormattedEditionWidget(QWidget):
             QMessageBox.warning(self, _t("fragment.invalid.title"), _t("fragment.invalid.text", error=exc))
             return False
         if session is self.main.document:
+            qt = self.main.editor.positions(text)
             c = QTextCursor(self.main.editor.document())
-            c.setPosition(start)
-            c.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            c.setPosition(qt.qt(start))
+            c.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
             c.insertText(frag)
             self.main.editor.setTextCursor(c)
             self.main.sync_panels_to_cursor(True)

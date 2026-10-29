@@ -85,6 +85,7 @@ def test_editor_highlights_both_tokens_and_is_pure_visual():
     assert 'pair_at_context(' in fragment
     assert 'for token in (pair.opening, pair.closing):' in fragment
     assert 'matching.format.setBackground(QColor("#d9ecff"))' in fragment
-    assert 'matching.cursor.setPosition(token.start)' in fragment
-    assert 'matching.cursor.setPosition(token.end, QTextCursor.MoveMode.KeepAnchor)' in fragment
+    # Indices Python des balises, positions Qt du curseur (red team, A2).
+    assert 'matching.cursor.setPosition(qt.qt(token.start))' in fragment
+    assert 'matching.cursor.setPosition(qt.qt(token.end), QTextCursor.MoveMode.KeepAnchor)' in fragment
     assert 'setPlainText' not in fragment and 'insertText' not in fragment
