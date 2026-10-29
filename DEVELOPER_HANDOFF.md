@@ -1072,6 +1072,10 @@ VARIANS V0.9.3.1 — THÉÂTRE, LEÇONS HORS <LEM>, AIDE REFAITE
   référence (@wit, @ref…), et dans celle des noms d'attributs, Entrée ou
   Tab insèrent l'entrée choisie avec les flèches ; ils inséraient toujours
   la première de la liste (un mauvais témoin dans @wit, sans avertissement).
+  Dans la boîte de Ctrl+Espace, comme dans celle de Ctrl+E, ↓ dans le champ
+  de filtre passe à la liste et descend d'une entrée (la première étant
+  présélectionnée, la deuxième) ; Tab passe à la liste sans changer
+  d'entrée.
 • Menu Aide : « Guide des éléments TEI » (les éléments de TEI P5 sur le
   site du TEI Consortium), entre « Dictionnaire de Latin » et « Aide du
   logiciel », entre deux séparateurs.

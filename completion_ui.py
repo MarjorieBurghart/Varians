@@ -34,7 +34,9 @@ class CompletionDialog(QDialog):
     texte libre : rien n'est sélectionné (surligné) tant que l'on ne choisit
     pas une entrée (clic, Tab ou ↓ depuis le champ, flèches) ; Entrée
     insère l'entrée sélectionnée, sinon le texte saisi, et retaper dans le
-    champ efface la sélection.
+    champ efface la sélection. Dans les deux cas (V0.9.3.1), ↓ dans le champ
+    passe à la liste et descend d'une entrée : la première si aucune n'est
+    sélectionnée, sinon la suivante.
     """
 
     def __init__(self, title, label, items, prefix="", parent=None, allow_custom=False):
@@ -85,8 +87,7 @@ class CompletionDialog(QDialog):
         self.filter_box.returnPressed.connect(self._accept_current)
         self.list_widget.itemActivated.connect(lambda _item: self._accept_current())
         self.list_widget.itemDoubleClicked.connect(lambda _item: self._accept_current())
-        if self._allow_custom:
-            self.filter_box.installEventFilter(self)
+        self.filter_box.installEventFilter(self)
         self.filter_box.setText(prefix or "")
         self._refilter(prefix or "")
         self.filter_box.setFocus()
@@ -112,14 +113,19 @@ class CompletionDialog(QDialog):
             self.list_widget.setCurrentRow(0)
 
     def eventFilter(self, watched, event):
-        """Ctrl+E : ↓ ou Tab dans le champ passe à la liste et sélectionne sa
-        première entrée (sauf si une entrée l'est déjà)."""
+        """↓ ou Tab dans le champ passe à la liste. Sans entrée sélectionnée
+        (Ctrl+E), la première l'est ; sinon ↓ descend d'une entrée (Ctrl+Espace,
+        où la première est présélectionnée) et Tab la garde."""
         if (watched is self.filter_box and event.type() == QEvent.Type.KeyPress
                 and event.key() in (Qt.Key.Key_Down, Qt.Key.Key_Tab, Qt.Key.Key_Backtab)
                 and self.list_widget.count()):
             self.list_widget.setFocus(Qt.FocusReason.TabFocusReason)
-            if not self.list_widget.selectedItems():
+            selected = self.list_widget.selectedItems()
+            if not selected:
                 self.list_widget.setCurrentRow(0)
+            elif event.key() == Qt.Key.Key_Down:
+                row = self.list_widget.row(selected[0])
+                self.list_widget.setCurrentRow(min(row + 1, self.list_widget.count() - 1))
             return True
         return super().eventFilter(watched, event)
 

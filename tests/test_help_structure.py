@@ -100,3 +100,15 @@ def test_stage_directions_are_said_to_be_between_parentheses(language):
         part = part[:part.index(end)]
         stage = part.index("<code>&lt;stage&gt;</code>")
         assert PARENTHESES[language] in part[stage:stage + 300].lower(), (language, start)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_down_arrow_is_explained_for_ctrl_e_and_ctrl_space(language):
+    """V0.9.3.1 : ↓ dans le champ de filtre passe à la liste, avec Ctrl+E comme
+    avec Ctrl+Espace ; chacun l'explique dans son paragraphe."""
+    paragraphs = [p for p in html.fromstring(_page(language)).iter("p")
+                  if "↓" in [kbd.text_content() for kbd in p.iter("kbd")]]
+    assert len(paragraphs) == 2, language
+    keys = [{kbd.text_content() for kbd in p.iter("kbd")} for p in paragraphs]
+    assert any("Ctrl+E" in found for found in keys), language
+    assert any(any(key.startswith("Ctrl+") and key != "Ctrl+E" for key in found) for found in keys), language
