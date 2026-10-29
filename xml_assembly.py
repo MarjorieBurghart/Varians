@@ -65,12 +65,19 @@ class AssemblyProblem:
     l'erreur), ou, à la ligne du ``xi:include`` : ``missing``, ``fallback``
     (partie absente, ``xi:fallback`` non pris en charge), ``circular``,
     ``parse_text``, ``parse_invalid``, ``href_unsupported``,
-    ``xpointer_unsupported``, ``xpointer_not_found``.
+    ``xpointer_unsupported``, ``xpointer_not_found``, ``too_large`` (plus
+    de ``MAX_ASSEMBLED_ELEMENTS`` éléments inclus : l'assemblage s'arrête).
     """
     file: Path
     line: int
     code: str
     detail: str = ""
+
+
+# Au-delà de ce nombre d'éléments inclus, l'assemblage s'arrête : des
+# inclusions en éventail (une partie incluse dix fois, qui en inclut dix…)
+# croissaient sans borne (red team 2, B8).
+MAX_ASSEMBLED_ELEMENTS = 2_000_000
 
 
 class Assembly:
@@ -239,6 +246,8 @@ class _Assembler:
         self.problems = []
         self.origins = {}
         self.sites = {}
+        self.included_elements = 0
+        self.too_large = False
 
     def _load(self, path):
         """Racine de la partie ``path`` (lue une fois) ; ``None`` si elle est mal
@@ -292,6 +301,12 @@ class _Assembler:
         selected = _select(root, include.xpointer)
         if isinstance(selected, str):
             return problem(selected, include.xpointer)
+        if self.too_large:
+            return None
+        self.included_elements += sum(1 for _ in selected.iter())
+        if self.included_elements > MAX_ASSEMBLED_ELEMENTS:
+            self.too_large = True
+            return problem("too_large", str(MAX_ASSEMBLED_ELEMENTS))
         piece = copy.deepcopy(selected)
         piece.tail = None
         self.origins[piece] = target

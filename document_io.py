@@ -8,13 +8,18 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 from app_context import call_later, HERE, tr as _t
-from document_session import file_stamp
+from document_session import file_stamp, protect_paragraph_separators
 from save_io import ReadOnlyFileError, atomic_write_text_with_backup, declared_encoding, is_utf8
 from xml_assembly import find_includes, path_key
 
 
 class DocumentIOMixin:
     """Méthodes de MainWindow : voir la docstring du module."""
+
+    def _report_paragraph_separators(self, path):
+        """Les U+2029 d'un fichier ouvert sont écrits &#x2029; (red team 2, B2)."""
+        QMessageBox.information(self, _t("file.paragraph_separator.title"),
+                                _t("file.paragraph_separator", file=Path(path).name))
 
     def open_path(self,path):
         # Un changement de document invalide immédiatement tous les diagnostics
@@ -23,6 +28,9 @@ class DocumentIOMixin:
             self._reset_validation_state()
         try: text=Path(path).read_text(encoding="utf-8")
         except Exception as exc: QMessageBox.critical(self,_t("file.open.error.title"),str(exc)); return
+        text, separators = protect_paragraph_separators(text)
+        if separators:
+            call_later(0, self, lambda p=Path(path): self._report_paragraph_separators(p))
         self._loading_editor_document = True
         try:
             self.editor.blockSignals(True)

@@ -28,7 +28,8 @@ from folio_navigation import folio_marks, page_folios, witness_loci
 from pivot_lines import pivot_lb_pattern
 from project_config import has_line_synchronization
 from text_alignments import text_project, text_syncs
-from witness_resource_refresh import RuntimeState, assemble_resources, flatten_primary, read_alignment_json
+from witness_resource_refresh import (RuntimeState, alignment_error_text, assemble_resources, flatten_primary,
+                                      read_alignment_json)
 from witness_route import PageMark, Source, witness_route
 from xml_assembly import path_key
 
@@ -350,7 +351,8 @@ class TextSegmentsMixin:
                 try:
                     state = assemble_resources(project)
                 except Exception as exc:
-                    self.statusBar().showMessage(_t("text_sync.error", name=sync.name, error=exc), 8000)
+                    self.statusBar().showMessage(_t("text_sync.error", name=sync.name,
+                                                    error=alignment_error_text(exc, _t)), 8000)
                     project = text_project(self.project, replace(sync, alignments={}))
                     state = empty_runtime_state()
                 states[segment] = (state, project)

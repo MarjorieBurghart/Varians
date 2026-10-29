@@ -974,6 +974,20 @@ Enregistrée dans un autre dossier, elle ne les trouverait plus. Copiez aussi le
   <string key="manuscript.text_absent">Pas d’alignement de ce témoin pour ce texte.</string>
   <string key="status.structure.text.tip">Lignes de {base} dans le texte {name}, synchronisé à part avec ses propres alignements (dossier alignments/{name}/).</string>
   <string key="text_sync.error">Alignements du texte {name} illisibles : {error}</string>
+  <string key="alignment.damaged.title">Fichier d’alignement illisible</string>
+  <string key="alignment.damaged">Le fichier d’alignement du témoin {witness} est illisible :
+{file}
+{detail}
+Le projet s’ouvre ; seule la synchronisation de ce témoin est coupée. Corrigez le fichier, puis « Actualiser les synchronisations… ».</string>
+  <string key="alignment.error.read">lecture impossible : {message}</string>
+  <string key="alignment.error.json">JSON incorrect, ligne {line}, colonne {column} : {message}</string>
+  <string key="alignment.error.root">la racine doit être un objet avec un tableau « pages »</string>
+  <string key="alignment.error.page">page {page} : un objet avec un tableau « lines » est attendu</string>
+  <string key="alignment.error.line">page {page}, ligne {line} : un objet est attendu</string>
+  <string key="alignment.error.keys">page {page}, ligne {line} : « {field} » doit être un tableau d’identifiants (chaînes de caractères)</string>
+  <string key="file.paragraph_separator.title">Séparateurs de paragraphe Unicode</string>
+  <string key="file.paragraph_separator">Le fichier {file} contient des séparateurs de paragraphe Unicode (U+2029). L’éditeur ne peut pas les garder tels quels : ils sont écrits &amp;#x2029;, le même caractère pour XML, et seront enregistrés ainsi.</string>
+  <string key="rng.xinclude.too_large">Assemblage arrêté : les inclusions donnent plus de {detail} éléments (une partie incluse un très grand nombre de fois ?)</string>
   <string key="diagnostics.scope.edition">Portée : l’édition, pivot {base}.</string>
   <string key="diagnostics.scope.text">Portée : le texte {name}, synchronisé à part (alignments/{name}/), pivot {base}.</string>
   <string key="diagnostics.texts">Textes synchronisés à part : {texts}.</string>

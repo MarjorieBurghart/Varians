@@ -988,6 +988,20 @@ Salvata in un’altra cartella, non le troverebbe più. Copiate anche le parti, 
   <string key="manuscript.text_absent">Nessun allineamento di questo testimone per questo testo.</string>
   <string key="status.structure.text.tip">Righe di {base} nel testo {name}, sincronizzato a parte con i propri allineamenti (cartella alignments/{name}/).</string>
   <string key="text_sync.error">Allineamenti del testo {name} illeggibili: {error}</string>
+  <string key="alignment.damaged.title">File di allineamento illeggibile</string>
+  <string key="alignment.damaged">Il file di allineamento del testimone {witness} è illeggibile:
+{file}
+{detail}
+Il progetto si apre; solo la sincronizzazione di questo testimone è interrotta. Correggete il file, poi scegliete «Aggiorna sincronizzazione…».</string>
+  <string key="alignment.error.read">lettura impossibile: {message}</string>
+  <string key="alignment.error.json">JSON non valido, riga {line}, colonna {column}: {message}</string>
+  <string key="alignment.error.root">la radice deve essere un oggetto con un array «pages»</string>
+  <string key="alignment.error.page">pagina {page}: è atteso un oggetto con un array «lines»</string>
+  <string key="alignment.error.line">pagina {page}, riga {line}: è atteso un oggetto</string>
+  <string key="alignment.error.keys">pagina {page}, riga {line}: «{field}» deve essere un array di identificatori (stringhe)</string>
+  <string key="file.paragraph_separator.title">Separatori di paragrafo Unicode</string>
+  <string key="file.paragraph_separator">Il file {file} contiene separatori di paragrafo Unicode (U+2029). L’editor non può conservarli così come sono: sono scritti &amp;#x2029;, lo stesso carattere per XML, e saranno salvati così.</string>
+  <string key="rng.xinclude.too_large">Assemblaggio interrotto: le inclusioni danno più di {detail} elementi (una parte inclusa un numero molto grande di volte?)</string>
   <string key="diagnostics.scope.edition">Ambito: l’edizione, pivot {base}.</string>
   <string key="diagnostics.scope.text">Ambito: il testo {name}, sincronizzato a parte (alignments/{name}/), pivot {base}.</string>
   <string key="diagnostics.texts">Testi sincronizzati a parte: {texts}.</string>

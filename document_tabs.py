@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QMenu, QMessageBox, QPlainTextDocume
                                QStylePainter, QTabBar, QToolButton, QVBoxLayout, QWidget)
 from app_context import call_later, current_i18n, tr as _t
 from code_editor import TextDocument, XMLHighlighter
-from document_session import DocumentSession
+from document_session import DocumentSession, protect_paragraph_separators
 from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines, structure_signature
 from preview_sources import preview_sources
@@ -626,6 +626,9 @@ class DocumentTabsMixin:
         # rempli, sa passe différée incrémenterait la révision, que la fenêtre
         # prendrait pour une modification.
         session.highlighter = XMLHighlighter(document)
+        text, separators = protect_paragraph_separators(text)
+        if separators:
+            call_later(0, self, lambda p=session.path: self._report_paragraph_separators(p))
         document.setPlainText(text)
         document.setModified(False)
         session.text_document = document

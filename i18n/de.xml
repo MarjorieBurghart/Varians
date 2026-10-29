@@ -988,6 +988,20 @@ In einem anderen Ordner gespeichert, würde sie sie nicht mehr finden. Kopieren 
   <string key="manuscript.text_absent">Kein Alignment dieses Textzeugen für diesen Text.</string>
   <string key="status.structure.text.tip">Zeilen von {base} im Text {name}, separat mit eigenen Alignments synchronisiert (Ordner alignments/{name}/).</string>
   <string key="text_sync.error">Alignments des Textes {name} nicht lesbar: {error}</string>
+  <string key="alignment.damaged.title">Alignment-Datei nicht lesbar</string>
+  <string key="alignment.damaged">Die Alignment-Datei des Textzeugen {witness} ist nicht lesbar:
+{file}
+{detail}
+Das Projekt wird geöffnet; nur die Synchronisierung dieses Textzeugen ist unterbrochen. Korrigieren Sie die Datei und wählen Sie dann „Synchronisierung aktualisieren…“.</string>
+  <string key="alignment.error.read">Datei nicht lesbar: {message}</string>
+  <string key="alignment.error.json">ungültiges JSON, Zeile {line}, Spalte {column}: {message}</string>
+  <string key="alignment.error.root">die Wurzel muss ein Objekt mit einem Array „pages“ sein</string>
+  <string key="alignment.error.page">Seite {page}: ein Objekt mit einem Array „lines“ wird erwartet</string>
+  <string key="alignment.error.line">Seite {page}, Zeile {line}: ein Objekt wird erwartet</string>
+  <string key="alignment.error.keys">Seite {page}, Zeile {line}: „{field}“ muss ein Array von Kennungen (Zeichenketten) sein</string>
+  <string key="file.paragraph_separator.title">Unicode-Absatztrenner</string>
+  <string key="file.paragraph_separator">Die Datei {file} enthält Unicode-Absatztrenner (U+2029). Der Editor kann sie nicht unverändert behalten: Sie werden als &amp;#x2029; geschrieben, für XML dasselbe Zeichen, und so gespeichert.</string>
+  <string key="rng.xinclude.too_large">Zusammenfügen abgebrochen: Die Einbindungen ergeben mehr als {detail} Elemente (ein Teil, der sehr oft eingebunden wird?)</string>
   <string key="diagnostics.scope.edition">Bereich: die Edition, Pivot {base}.</string>
   <string key="diagnostics.scope.text">Bereich: der Text {name}, separat synchronisiert (alignments/{name}/), Pivot {base}.</string>
   <string key="diagnostics.texts">Separat synchronisierte Texte: {texts}.</string>

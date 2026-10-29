@@ -15,7 +15,6 @@ récupérées en Python (urllib). Elle ne contient aucun navigateur HTML embarqu
 """
 from __future__ import annotations
 
-import json
 import re
 import sys
 import xml.etree.ElementTree as ET
@@ -85,6 +84,7 @@ from code_editor import CodeEditor, TextDocument, find_in_plain_editor, XMLHighl
 from text_search import SearchError
 from replace_bar import ReplaceBarMixin
 from search_results import SearchResultsMixin
+from witness_resource_refresh import AlignmentError, alignment_error_text, read_alignment_json
 from witness_sync import WitnessSyncMixin, flatten_primary, flatten_secondary
 from project_actions import ProjectActionsMixin
 from main_menus import MainMenusMixin, TEI_GUIDE_URL
@@ -156,11 +156,6 @@ set_i18n(I18N)
 
 def _t(key, default=None, **values):
     return tr(key, default=default, **values)
-
-
-def load_json(path: Path):
-    with open(path, "r", encoding="utf-8") as fh:
-        return json.load(fh)
 
 
 class XmlHealthSignals(QObject):
@@ -387,10 +382,17 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         # une synchronisation et ne doit jamais imposer ce nombre.
         self._base_sync_line_count = None
         self._secondary_sync_link_counts = {}
+        # Un fichier d'alignement abîmé (red team 2, B5) : le projet s'ouvre,
+        # sans synchroniser ce seul témoin, et c'est dit.
+        self._alignment_problems = []
         for w in self.witness_configs:
-            alignment_available = has_line_synchronization(w)
-            if alignment_available:
-                cache = load_json(w.alignment)
+            cache = None
+            if has_line_synchronization(w):
+                try:
+                    cache = read_alignment_json(w.alignment)
+                except AlignmentError as exc:
+                    self._alignment_problems.append((w, exc))
+            if cache is not None:
                 if w.is_base:
                     self._base_sync_line_count = primary_sync_line_count(cache)
                 else:
@@ -427,6 +429,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 self.witness_items[w.id] = items
                 self.base_maps[w.id] = by_base
         self.base_items = self.witness_items.get(self.base_id, [])
+        if self._alignment_problems:
+            call_later(0, self, self._report_alignment_problems)
         base_cfg = self.project.witness_by_id[self.base_id]
         # V0.8.4 : un fichier JSON vide/provisoire n'active pas le mode ligne.
         # Le nombre est mesuré avant toute superposition ALTO, afin qu'un ALTO
@@ -725,6 +729,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.editor.document().contentsChanged.connect(self._assembly_changed)
         self.open_path(self.project.edition)
         remember_open_project(self.project.path)
+
+    def _report_alignment_problems(self):
+        texts = [_t("alignment.damaged", witness=self.witness_siglum(w.id), file=str(w.alignment),
+                    detail=alignment_error_text(exc, _t)) for w, exc in self._alignment_problems]
+        QMessageBox.warning(self, _t("alignment.damaged.title"), "\n\n".join(texts))
 
     def witness_siglum(self, witness_id):
         """Sigle du témoin ``witness_id`` pour l'affichage : le sigle saisi

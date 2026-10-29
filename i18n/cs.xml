@@ -988,6 +988,20 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="manuscript.text_absent">Pro tento text nemá tento svědek žádné zarovnání.</string>
   <string key="status.structure.text.tip">Řádky {base} v textu {name}, synchronizovaném zvlášť s vlastními zarovnáními (složka alignments/{name}/).</string>
   <string key="text_sync.error">Zarovnání textu {name} nelze přečíst: {error}</string>
+  <string key="alignment.damaged.title">Nečitelný soubor zarovnání</string>
+  <string key="alignment.damaged">Soubor zarovnání svědka {witness} nelze přečíst:
+{file}
+{detail}
+Projekt se otevře; přerušena je jen synchronizace tohoto svědka. Opravte soubor a pak zvolte „Aktualizovat synchronizaci…“.</string>
+  <string key="alignment.error.read">soubor nelze přečíst: {message}</string>
+  <string key="alignment.error.json">neplatný JSON, řádek {line}, sloupec {column}: {message}</string>
+  <string key="alignment.error.root">kořen musí být objekt s polem „pages“</string>
+  <string key="alignment.error.page">strana {page}: očekává se objekt s polem „lines“</string>
+  <string key="alignment.error.line">strana {page}, řádek {line}: očekává se objekt</string>
+  <string key="alignment.error.keys">strana {page}, řádek {line}: „{field}“ musí být pole identifikátorů (řetězců)</string>
+  <string key="file.paragraph_separator.title">Oddělovače odstavců Unicode</string>
+  <string key="file.paragraph_separator">Soubor {file} obsahuje oddělovače odstavců Unicode (U+2029). Editor je nemůže zachovat beze změny: zapisují se jako &amp;#x2029;, pro XML tentýž znak, a tak budou i uloženy.</string>
+  <string key="rng.xinclude.too_large">Sestavení zastaveno: vložení dávají více než {detail} prvků (část vložená velmi mnohokrát?)</string>
   <string key="diagnostics.scope.edition">Rozsah: edice, pivot {base}.</string>
   <string key="diagnostics.scope.text">Rozsah: text {name}, synchronizovaný zvlášť (alignments/{name}/), pivot {base}.</string>
   <string key="diagnostics.texts">Texty synchronizované zvlášť: {texts}.</string>

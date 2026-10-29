@@ -988,6 +988,20 @@
   <string key="manuscript.text_absent">この伝本には、このテキストの整列がありません。</string>
   <string key="status.structure.text.tip">テキスト {name} の {base} の行。このテキストは独自の整列（フォルダー alignments/{name}/）で別に同期されています。</string>
   <string key="text_sync.error">テキスト {name} の整列を読み込めません：{error}</string>
+  <string key="alignment.damaged.title">読み込めない整列ファイル</string>
+  <string key="alignment.damaged">伝本 {witness} の整列ファイルを読み込めません：
+{file}
+{detail}
+プロジェクトは開きます。この伝本の同期だけが切断されます。ファイルを修正してから「同期データを再読み込み…」を選んでください。</string>
+  <string key="alignment.error.read">ファイルを読み込めません：{message}</string>
+  <string key="alignment.error.json">不正な JSON（{line} 行目、{column} 列目）：{message}</string>
+  <string key="alignment.error.root">ルートは「pages」配列を持つオブジェクトでなければなりません</string>
+  <string key="alignment.error.page">{page} ページ目：「lines」配列を持つオブジェクトが必要です</string>
+  <string key="alignment.error.line">{page} ページ目、{line} 行目：オブジェクトが必要です</string>
+  <string key="alignment.error.keys">{page} ページ目、{line} 行目：「{field}」は識別子（文字列）の配列でなければなりません</string>
+  <string key="file.paragraph_separator.title">Unicode の段落区切り</string>
+  <string key="file.paragraph_separator">ファイル {file} に Unicode の段落区切り（U+2029）が含まれています。エディターはこれをそのまま保持できないため、XML では同じ文字である &amp;#x2029; として書き、そのまま保存します。</string>
+  <string key="rng.xinclude.too_large">組み立てを中止しました：取り込みにより要素が {detail} 個を超えます（非常に多くの回数取り込まれる部分はありませんか？）</string>
   <string key="diagnostics.scope.edition">対象：版（ピボット {base}）。</string>
   <string key="diagnostics.scope.text">対象：別に同期されるテキスト {name}（alignments/{name}/）、ピボット {base}。</string>
   <string key="diagnostics.texts">別に同期されるテキスト：{texts}。</string>

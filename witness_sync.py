@@ -35,7 +35,7 @@ from tei_facsimile import (
     project_facsimile_pages, sync_facsimile_text, upsert_pb_at_position,
 )
 from witness_resource_refresh import (
-    assemble_resources, changed_witnesses, diagnostic_rows, RuntimeState,
+    alignment_error_text, assemble_resources, changed_witnesses, diagnostic_rows, RuntimeState,
 )
 from witness_route import Stop, page_identity
 from xml_assembly import path_key
@@ -832,7 +832,7 @@ class WitnessSyncMixin:
             staged = assemble_resources(project)
             new_rows = diagnostic_rows(project, staged)
         except Exception as exc:
-            refresh_error = str(exc)
+            refresh_error = alignment_error_text(exc, _t)
         else:
             refresh_error = None
         finally:

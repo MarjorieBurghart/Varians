@@ -82,7 +82,9 @@ def test_project_roundtrip_without_sync_then_with_sync():
 
 def test_v076_editor_applies_alignment_before_independent_alto_and_images():
     source=application_source()
-    assert 'load_json(w.alignment)' in source
+    # Red team 2 (B5) : l'alignement est lu par read_alignment_json, qui décrit
+    # un fichier abîmé au lieu d'empêcher d'ouvrir le projet.
+    assert 'read_alignment_json(w.alignment)' in source
     section=source[source.index('self.alignment_caches = {}'):source.index('self.witness_display_items = {}')]
-    assert section.index('load_json(w.alignment)') < section.index('apply_witness_alto_policy') < section.index('apply_witness_image_policy')
+    assert section.index('read_alignment_json(w.alignment)') < section.index('apply_witness_alto_policy') < section.index('apply_witness_image_policy')
     assert 'prepare_alignment_files_for_project' in source

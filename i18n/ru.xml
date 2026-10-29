@@ -988,6 +988,20 @@
   <string key="manuscript.text_absent">Для этого текста нет выравнивания этого свидетеля.</string>
   <string key="status.structure.text.tip">Строки {base} в тексте {name}, синхронизируемом отдельно, со своими выравниваниями (папка alignments/{name}/).</string>
   <string key="text_sync.error">Не удаётся прочитать выравнивания текста {name}: {error}</string>
+  <string key="alignment.damaged.title">Файл выравнивания не читается</string>
+  <string key="alignment.damaged">Не удаётся прочитать файл выравнивания свидетеля {witness}:
+{file}
+{detail}
+Проект открывается; отключена только синхронизация этого свидетеля. Исправьте файл, затем выберите «Обновить синхронизацию…».</string>
+  <string key="alignment.error.read">не удаётся прочитать файл: {message}</string>
+  <string key="alignment.error.json">неверный JSON, строка {line}, столбец {column}: {message}</string>
+  <string key="alignment.error.root">корень должен быть объектом с массивом «pages»</string>
+  <string key="alignment.error.page">страница {page}: ожидается объект с массивом «lines»</string>
+  <string key="alignment.error.line">страница {page}, строка {line}: ожидается объект</string>
+  <string key="alignment.error.keys">страница {page}, строка {line}: «{field}» должен быть массивом идентификаторов (строк)</string>
+  <string key="file.paragraph_separator.title">Разделители абзацев Unicode</string>
+  <string key="file.paragraph_separator">Файл {file} содержит разделители абзацев Unicode (U+2029). Редактор не может сохранить их как есть: они записываются как &amp;#x2029; — для XML это тот же символ — и так и будут сохранены.</string>
+  <string key="rng.xinclude.too_large">Сборка остановлена: включения дают более {detail} элементов (часть, включённая очень много раз?)</string>
   <string key="diagnostics.scope.edition">Охват: издание, опорный свидетель {base}.</string>
   <string key="diagnostics.scope.text">Охват: текст {name}, синхронизируемый отдельно (alignments/{name}/), опорный свидетель {base}.</string>
   <string key="diagnostics.texts">Тексты, синхронизируемые отдельно: {texts}.</string>

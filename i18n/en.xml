@@ -974,6 +974,20 @@ Saved in another folder, it would no longer find them. Copy the parts as well, o
   <string key="manuscript.text_absent">No alignment of this witness for this text.</string>
   <string key="status.structure.text.tip">{base} lines in the text {name}, synchronized separately with its own alignments (folder alignments/{name}/).</string>
   <string key="text_sync.error">Unreadable alignments for the text {name}: {error}</string>
+  <string key="alignment.damaged.title">Unreadable alignment file</string>
+  <string key="alignment.damaged">The alignment file of the witness {witness} cannot be read:
+{file}
+{detail}
+The project opens; only the synchronization of this witness is cut. Correct the file, then use “Refresh synchronization…”.</string>
+  <string key="alignment.error.read">the file cannot be read: {message}</string>
+  <string key="alignment.error.json">invalid JSON, line {line}, column {column}: {message}</string>
+  <string key="alignment.error.root">the root must be an object with a “pages” array</string>
+  <string key="alignment.error.page">page {page}: an object with a “lines” array is expected</string>
+  <string key="alignment.error.line">page {page}, line {line}: an object is expected</string>
+  <string key="alignment.error.keys">page {page}, line {line}: “{field}” must be an array of identifiers (strings)</string>
+  <string key="file.paragraph_separator.title">Unicode paragraph separators</string>
+  <string key="file.paragraph_separator">The file {file} contains Unicode paragraph separators (U+2029). The editor cannot keep them as they are: they are written &amp;#x2029;, the same character for XML, and will be saved that way.</string>
+  <string key="rng.xinclude.too_large">Assembly stopped: the inclusions give more than {detail} elements (a part included a very large number of times?)</string>
   <string key="diagnostics.scope.edition">Scope: the edition, pivot {base}.</string>
   <string key="diagnostics.scope.text">Scope: the text {name}, synchronized separately (alignments/{name}/), pivot {base}.</string>
   <string key="diagnostics.texts">Texts synchronized separately: {texts}.</string>

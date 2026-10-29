@@ -40,6 +40,15 @@ def _inside_tag(preceding: str) -> bool:
     return start >= 0 and _CLOSED_TAG_RE.match(preceding, start) is None
 
 
+def protect_paragraph_separators(text: str) -> tuple[str, int]:
+    """``(texte, nombre)`` : chaque U+2029 (séparateur de paragraphe
+    Unicode) de *text* écrit « &#x2029; », le même caractère pour XML. Qt
+    coupe ses blocs à ce caractère : gardé tel quel, il devenait un saut de
+    ligne à l'enregistrement (red team 2, B2)."""
+    count = text.count("\u2029")
+    return (text.replace("\u2029", "&#x2029;"), count) if count else (text, 0)
+
+
 def file_stamp(path) -> Optional[tuple[int, int]]:
     """(date de modification en ns, taille) du fichier *path* ; None s'il
     est introuvable. Un fichier modifié hors de Varians depuis sa lecture
