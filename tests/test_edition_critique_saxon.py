@@ -144,6 +144,25 @@ def test_a_lacuna_is_named_in_the_apparatus(project):
     assert _main(tree) == ["et fuit diu sic finis"]
 
 
+def test_the_words_of_the_editor_in_the_apparatus_are_in_italics(project):
+    # Tout texte de l'apparat qui ne vient pas d'un témoin est en italique :
+    # sigles, om., add., lacuna incipit / desinit, leçon non disponible ;
+    # les leçons restent en romain.
+    name = _write(project, "mentions.xml", '<div><p>et <app><rdg wit="#A">fuit</rdg><rdg wit="#B"/><rdg wit="#C">'
+                                           '<lacunaStart/></rdg></app> <app><rdg wit="#A"/><rdg wit="#B">breue</rdg>'
+                                           '</app> diu <app><rdg wit="#B">sic</rdg><rdg wit="#C"><lacunaEnd/></rdg>'
+                                           '</app> finis</p></div>')
+    result, tree = _edition(project, name, "A")
+    assert result.ok, result.error
+    entries = tree.xpath("//aside//ol[contains(@class, 'apparat')]/li//span[@class='entree']")
+    italics = [[" ".join(i.text_content().split()) for i in entry.iter("i")] for entry in entries]
+    assert italics == [["om.", "B", "lacuna incipit", "C"], ["add.", "B"],
+                       ["[lecture du témoin non disponible]", "B", "lacuna desinit", "C"]]
+    roman = [" ".join("".join(entry.xpath(".//text()[not(ancestor::i) and not(ancestor::a)]")).split())
+             for entry in entries]
+    assert roman == ["fuit ] ;", "breue", "] sic ;"]
+
+
 def test_the_apparatus_and_the_notes_are_two_series(project):
     # L'apparat, nombreux, appelé par des chiffres ; les notes par des lettres.
     apps = "".join(f'<app><rdg wit="#A">u{i}</rdg><rdg wit="#B">v{i}</rdg></app> ' for i in range(3))

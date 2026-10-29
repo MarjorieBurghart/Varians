@@ -90,6 +90,18 @@ def test_each_app_becomes_its_reading_and_a_footnote(project):
         assert tree.find(f".//t:text//t:{name}", NS) is None, name
 
 
+def test_the_words_of_the_editor_in_a_note_are_in_italics(project):
+    # Comme dans « Édition critique » : sigles, om., add., lacuna incipit et
+    # desinit en italique ; la leçon garde sa propre mise en forme (« re »).
+    _result, tree = _notes(project, "A")
+    italics = [[_text(hi) for hi in note.iterfind("t:hi[@rend='italic']", NS)]
+               for note in tree.iterfind(".//t:note[@type='apparatus']", NS)]
+    assert italics == [["re", "B C"], ["add.", "B"], ["A", "B", "C"], ["lacuna incipit", "C"], ["lacuna desinit", "C"]]
+    _result, tree = _notes(project, "B")
+    note = tree.findall(".//t:note[@type='apparatus']", NS)[1]
+    assert [_text(hi) for hi in note.iterfind("t:hi[@rend='italic']", NS)] == ["om.", "A"]
+
+
 def test_only_the_pages_of_the_witness_are_kept_as_folio_marks(project):
     _result, tree = _notes(project, "A")
     assert tree.find(".//t:pb", NS) is None                   # pas de saut de page dans Word

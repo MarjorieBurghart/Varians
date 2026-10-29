@@ -7,8 +7,9 @@
 
   - Chaque <app> devient sa leçon retenue, suivie d'une note de bas de page
     <note place="foot" type="apparatus"> : « leçon ] variante sigles ; … »,
-    les sigles en italique, avec om., add., lacuna incipit et lacuna
-    desinit, comme dans l'édition critique HTML.
+    avec om., add., lacuna incipit et lacuna desinit, comme dans l'édition
+    critique HTML : tout texte de la note qui ne vient pas d'un témoin
+    (sigles, om., add., lacunes, commentaires) est en italique.
   - Une note de l'éditeur sans @place devient une note de fin
     (place="end") : une autre série que celle de l'apparat. Dans une
     note, une note devient « (…) » et l'entrée d'un apparat se met entre
@@ -84,7 +85,7 @@
     <xsl:if test="$apparat?lemme">
       <xsl:choose>
         <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()" mode="note"/></xsl:when>
-        <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
+        <xsl:otherwise><hi rend="italic"><xsl:value-of select="$f:non-disponible"/></hi></xsl:otherwise>
       </xsl:choose>
       <xsl:text> ] </xsl:text>
     </xsl:if>
@@ -92,12 +93,12 @@
       <xsl:if test="position() gt 1"><xsl:text> ; </xsl:text></xsl:if>
       <xsl:choose>
         <xsl:when test="?genre = 'om'">
-          <xsl:value-of select="$f:om"/>
+          <hi rend="italic"><xsl:value-of select="$f:om"/></hi>
           <xsl:apply-templates select="?lecon//tei:note" mode="note"/>
         </xsl:when>
         <xsl:otherwise>
           <xsl:apply-templates select="?lecon/node()" mode="note"/>
-          <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><xsl:value-of select="$f:add"/></xsl:if>
+          <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><hi rend="italic"><xsl:value-of select="$f:add"/></hi></xsl:if>
         </xsl:otherwise>
       </xsl:choose>
       <xsl:text> </xsl:text>
@@ -172,26 +173,24 @@
     <xsl:variable name="retenue" select="f:choix(.)"/>
     <xsl:choose>
       <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()" mode="note"/></xsl:when>
-      <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
+      <xsl:otherwise><hi rend="italic"><xsl:value-of select="$f:non-disponible"/></hi></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:choice" mode="note">
     <xsl:apply-templates select="(tei:corr, tei:reg, tei:expan, tei:sic, tei:orig, tei:abbr, *[1])[1]" mode="note"/>
   </xsl:template>
   <xsl:template match="tei:note" mode="note">
-    <xsl:text> (</xsl:text><xsl:apply-templates mode="note"/><xsl:text>)</xsl:text>
+    <xsl:text> (</xsl:text><hi rend="italic"><xsl:apply-templates mode="note"/></hi><xsl:text>)</xsl:text>
   </xsl:template>
   <xsl:template match="tei:lb" mode="note">
     <xsl:if test="f:lb-espace(.)"><xsl:text> </xsl:text></xsl:if>
   </xsl:template>
   <xsl:template match="tei:pb | tei:cb | tei:milestone | tei:fw" mode="note"/>
-  <xsl:template match="tei:lacunaStart" mode="note">
-    <xsl:value-of select="$f:lacuna-incipit"/>
-    <xsl:if test="f:sigles-lacune(.) != ''"><xsl:text> </xsl:text><xsl:value-of select="f:sigles-lacune(.)"/></xsl:if>
-  </xsl:template>
-  <xsl:template match="tei:lacunaEnd" mode="note">
-    <xsl:value-of select="$f:lacuna-desinit"/>
-    <xsl:if test="f:sigles-lacune(.) != ''"><xsl:text> </xsl:text><xsl:value-of select="f:sigles-lacune(.)"/></xsl:if>
+  <xsl:template match="tei:lacunaStart | tei:lacunaEnd" mode="note">
+    <hi rend="italic">
+      <xsl:value-of select="if (self::tei:lacunaStart) then $f:lacuna-incipit else $f:lacuna-desinit"/>
+      <xsl:if test="f:sigles-lacune(.) != ''"><xsl:text> </xsl:text><xsl:value-of select="f:sigles-lacune(.)"/></xsl:if>
+    </hi>
   </xsl:template>
   <xsl:template match="tei:gap" mode="note">
     <xsl:text>[…]</xsl:text>

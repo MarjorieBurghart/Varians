@@ -11,8 +11,10 @@
     des scénarios DOCX et ODT : apparat-commun.xsl.
   - Apparat après chaque division, en deux séries : l'apparat critique,
     appelé par des chiffres, et les notes, moins nombreuses, appelées par
-    des lettres (a, b… z, aa…). La leçon précède ses sigles, en italique ; om., add., lacuna
-    incipit, lacuna desinit ; les leçons d'un <rdgGrp> comptent.
+    des lettres (a, b… z, aa…). La leçon précède ses sigles ; om., add., lacuna
+    incipit, lacuna desinit ; les leçons d'un <rdgGrp> comptent. Tout texte
+    de l'apparat qui ne vient pas d'un témoin (sigles, om., add., lacunes,
+    commentaires) est en italique.
   - Titre d'une division sans <head> : son @n, sinon rien.
   - Folios : ceux du témoin choisi (et sans @edRef) ; tous avec « aucun ».
   - Vers (<l>, <lg>) et strophes gardent leur structure ; divisions,
@@ -188,6 +190,7 @@
              margin:.14rem 0; overflow-wrap:anywhere; break-inside:avoid;}
           .repere {font-weight:bold; text-align:right;}
           .temoin {font-variant:normal; font-style:italic; font-weight:normal;}
+          .editeur {font-style:italic; font-weight:normal;}
           .separateur {color:var(--secondaire); margin:0 .2em;}
           .commentaire {font-style:italic; color:var(--secondaire);}
           .retour {text-decoration:none; font-size:.8em; margin-left:.4em;}
@@ -379,7 +382,7 @@
               <span class="lecon-retenue">
                 <xsl:choose>
                   <xsl:when test="exists($apparat?retenue)"><xsl:apply-templates select="$apparat?retenue/node()" mode="lecture"/></xsl:when>
-                  <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
+                  <xsl:otherwise><i class="editeur"><xsl:value-of select="$f:non-disponible"/></i></xsl:otherwise>
                 </xsl:choose>
               </span>
               <xsl:if test="array:size($apparat?variantes) gt 0"><xsl:text> ] </xsl:text></xsl:if>
@@ -388,11 +391,11 @@
               <xsl:if test="position() gt 1"><span class="separateur"> ; </span></xsl:if>
               <span class="variantes">
                 <xsl:choose>
-                  <xsl:when test="?genre = 'om'"><xsl:value-of select="$f:om"/><xsl:apply-templates select="?lecon//tei:note" mode="lecture"/></xsl:when>
+                  <xsl:when test="?genre = 'om'"><i class="editeur"><xsl:value-of select="$f:om"/></i><xsl:apply-templates select="?lecon//tei:note" mode="lecture"/></xsl:when>
                   <xsl:otherwise><xsl:apply-templates select="?lecon/node()" mode="lecture"/></xsl:otherwise>
                 </xsl:choose>
               </span>
-              <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><xsl:value-of select="$f:add"/></xsl:if>
+              <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><i class="editeur"><xsl:value-of select="$f:add"/></i></xsl:if>
               <xsl:text> </xsl:text>
               <i class="temoin"><xsl:value-of select="?sigles"/></i>
             </xsl:for-each>
@@ -581,15 +584,17 @@
        ne sont pas ceux de sa leçon. -->
   <xsl:template match="tei:lacunaStart | tei:lacunaEnd" mode="base"/>
   <xsl:template match="tei:lacunaStart | tei:lacunaEnd" mode="lecture">
-    <xsl:value-of select="if (self::tei:lacunaStart) then $f:lacuna-incipit else $f:lacuna-desinit"/>
-    <xsl:if test="f:sigles-lacune(.) != ''"><xsl:text> </xsl:text><xsl:value-of select="f:sigles-lacune(.)"/></xsl:if>
+    <i class="editeur">
+      <xsl:value-of select="if (self::tei:lacunaStart) then $f:lacuna-incipit else $f:lacuna-desinit"/>
+      <xsl:if test="f:sigles-lacune(.) != ''"><xsl:text> </xsl:text><xsl:value-of select="f:sigles-lacune(.)"/></xsl:if>
+    </i>
   </xsl:template>
 
   <xsl:template match="tei:app" mode="lecture">
     <xsl:variable name="retenue" select="f:choix(.)"/>
     <xsl:choose>
       <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()" mode="lecture"/></xsl:when>
-      <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
+      <xsl:otherwise><i class="editeur"><xsl:value-of select="$f:non-disponible"/></i></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:note" mode="lecture">
