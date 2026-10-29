@@ -93,6 +93,20 @@ def extract_witness_labels(root: ET.Element):
     return labels
 
 
+def extract_witness_sigla(root: ET.Element):
+    """``{identifiant: sigle}`` des témoins qui ont un ``<idno
+    type="siglum">``, comme ``f:sigle`` de l'apparat commun (red team 2)."""
+    sigla = {}
+    for wit in root.iter():
+        wid = wit.attrib.get(XML_ID) or wit.attrib.get("id") if lname(wit.tag) == "witness" else None
+        siglum = next((clean_text("".join(child.itertext())) for child in wit
+                       if lname(child.tag) == "idno" and child.attrib.get("type") == "siglum"
+                       and clean_text("".join(child.itertext()))), "") if wid else ""
+        if siglum:
+            sigla[wid] = siglum
+    return sigla
+
+
 READING_TAGS = ("lem", "rdg", "wit")
 # Forme montrée d'un <choice>, comme « Édition critique » : la première
 # présente dans cet ordre, sinon le premier enfant.
@@ -190,13 +204,260 @@ def pivot_marks_in(reading: ET.Element, is_mark):
     return leading, [(element, before / count) for element, before in following]
 
 
-def describe_readings(app: ET.Element):
-    return [{
-        "role": lname(reading.tag),
-        "wit": wit_tokens(reading.attrib.get("wit")),
-        "text": flatten_editorial_text(reading, include_notes=False, include_refs=False),
-        "notes": notes_inside(reading),
-    } for reading in app_readings(app)]
+def describe_readings(app: ET.Element, choose=None, shown=None):
+    """Les leçons d'un ``<app>`` pour la fenêtre de sa variante, dites comme
+    dans l'apparat de « Édition critique » (red team 2) : ``role``, ``wit``
+    (celui de la leçon, sinon de son ``<rdgGrp>``), ``parts``
+    (``reading_parts``) et ``text`` (leur texte seul). ``choose(app)`` : la
+    leçon affichée d'un apparat imbriqué ; ``shown`` : la leçon affichée de
+    ``app``, dont les notes ont leur repère dans le texte."""
+    if choose is None:
+        choose = lambda nested: choose_reading(nested, "")  # noqa: E731
+    described = []
+    for reading, wit in reading_witnesses(app):
+        tokens = wit_tokens(wit)
+        parts = reading_parts(reading, choose, tokens, skip_notes=reading is shown)
+        described.append({
+            "role": lname(reading.tag),
+            "wit": tokens,
+            "text": clean_text("".join(part.get("text", "") for part in parts)),
+            "parts": parts,
+        })
+    return described
+
+
+# Fenêtre d'une variante (red team 2, C2–C5) : une leçon y est dite comme
+# dans l'apparat de « Édition critique » (apparat-commun.xsl, et le mode
+# « lecture » d'edition-critique.xsl).
+LACUNA_WORDS = {"lacunaStart": "lacuna incipit", "lacunaEnd": "lacuna desinit"}
+# Ce qui donne valeur de leçon à une leçon sans texte (f:omission).
+NOT_OMISSION = frozenset({"gap", "space", "app", "graphic", "lacunaStart", "lacunaEnd"})
+# Repères sans texte ni espace dans une leçon.
+SILENT_IN_READING = frozenset({"pb", "cb", "milestone", "anchor"})
+# Vers, paragraphes… d'une leçon : séparés par une espace.
+SPACED_IN_READING = frozenset({"l", "lg", "p", "ab", "head", "item"})
+# Styles d'une leçon : l'italique est réservé au texte de l'éditeur.
+TRANSCRIPTION_STYLES = {"del": "del", "surplus": "del", "add": "add", "unclear": "unclear"}
+
+
+def hi_styles(rend: str | None):
+    """Styles d'un ``<hi rend>`` : italic, bold, smallcaps, sup, sub, underline."""
+    rend = (rend or "").lower()
+    tokens = set(re.split(r"[\s,;]+", rend))
+    styles = []
+    if "italic" in rend or "italics" in rend:
+        styles.append("italic")
+    if "bold" in rend:
+        styles.append("bold")
+    if "smallcaps" in rend or "small-caps" in rend:
+        styles.append("smallcaps")
+    if tokens & {"sup", "superscript", "super"}:
+        styles.append("sup")
+    if tokens & {"sub", "subscript"}:
+        styles.append("sub")
+    if "underline" in rend:
+        styles.append("underline")
+    return styles
+
+
+def _text_outside_notes(element) -> str:
+    parts = [element.text or ""]
+    for child in element:
+        if lname(child.tag) != "note":
+            parts.append(_text_outside_notes(child))
+        parts.append(child.tail or "")
+    return "".join(parts)
+
+
+def reading_is_omission(reading) -> bool:
+    """Une omission, comme ``f:omission`` : ni texte (hors des notes), ni
+    lacune, ni rien qui ait valeur de leçon (``<gap>``, ``<space>``…)."""
+    return not _text_outside_notes(reading).strip(_XML_BLANK_CHARS) and not any(
+        lname(node.tag) in NOT_OMISSION for node in reading.iter() if node is not reading)
+
+
+def _notes_of(element):
+    """Les ``<note>`` d'un élément, hors de celles d'une note."""
+    for child in element:
+        if lname(child.tag) == "note":
+            yield child
+        else:
+            yield from _notes_of(child)
+
+
+def reading_parts(reading, choose, wit=(), skip_notes=False):
+    """Les parties d'une leçon : ``{"text", "styles"?}``, ``{"editor"}`` (mot
+    de l'éditeur, en italique : om., lacuna incipit, lacuna desinit, sic ;
+    ``wit`` : les témoins d'une balise de lacune qui ne sont pas ceux de la
+    leçon), ``{"label"}`` (texte du catalogue : [lacune]…) et ``{"note":
+    parties}`` (entre parenthèses). Un ``<lb>`` suit la règle TEI, des
+    ``<lb>`` contigus faisant une seule coupure ; un ``<pb>`` ne met pas
+    d'espace ; un apparat imbriqué donne sa leçon ``choose(app)``."""
+    if reading_is_omission(reading):
+        notes = [] if skip_notes else [{"note": _resolve_reading(_reading_tokens(note, choose, wit, False))}
+                                       for note in _notes_of(reading)]
+        return [{"editor": "om."}, *notes]
+    return _resolve_reading(_reading_tokens(reading, choose, wit, skip_notes))
+
+
+def note_parts(note, choose, describe):
+    """Les parties d'une note, comme ``reading_parts`` ; l'italique y reste
+    (texte de l'éditeur) et un apparat donne sa leçon ``choose(app)`` puis
+    ``{"apparatus": describe(app, leçon)}``, entre crochets, comme dans le
+    DOCX (red team 2, C2)."""
+    return _resolve_reading(_reading_tokens(note, choose, (), False, roman=False, describe=describe))
+
+
+def _reading_tokens(element, choose, wit, skip_notes, roman=True, describe=None):
+    """``("text", texte, styles)``, ``("lb", soude)`` et ``("item", partie)``.
+    ``roman`` : une leçon, en romain ; sinon une note, où l'italique reste."""
+    tokens = []
+    own = sorted(wit)
+
+    def text(value, styles):
+        if value:
+            tokens.append(("text", value, tuple(styles)))
+
+    def children(node, styles):
+        text(node.text, styles)
+        for child in node:
+            visit(child, styles, node)
+            text(child.tail, styles)
+
+    def visit(node, styles, parent):
+        tag = lname(node.tag)
+        if not tag or tag in SILENT_IN_READING:
+            return
+        if tag == "note":
+            if not skip_notes:
+                tokens.append(("item", {"note": _resolve_reading(
+                    _reading_tokens(node, choose, wit, False, roman, describe))}))
+        elif tag == "lb":
+            tokens.append(("lb", node.attrib.get("break") == "no"))
+        elif tag in LACUNA_WORDS:
+            word = {"editor": LACUNA_WORDS[tag]}
+            mark = wit_tokens(node.attrib.get("wit"))
+            if mark and sorted(mark) != own:
+                word["wit"] = mark
+            tokens.append(("item", word))
+        elif tag == "gap":
+            extent = node.attrib.get("extent")
+            tokens.append(("item", {"label": "publication.gap.extent", "extent": extent} if extent is not None
+                           else {"label": "publication.gap"}))
+        elif tag == "space":
+            text(" ", styles)
+        elif tag == "caesura":
+            text(" | ", styles)
+        elif tag == "ptr":
+            if node.attrib.get("target"):
+                tokens.append(("item", {"label": "publication.reference"}))
+        elif tag == "choice":
+            form = choose_choice_form(node)
+            if form is not None:
+                visit(form, styles, node)
+        elif tag == "app":
+            chosen = choose(node)
+            if chosen is not None:
+                children(chosen, styles)
+            readings = describe(node, chosen) if describe is not None else []
+            if len(readings) > 1:
+                tokens.append(("item", {"apparatus": readings}))
+        elif tag == "sic":
+            children(node, styles)
+            text(" ", ())
+            tokens.append(("item", {"editor": "sic"}))
+        elif tag == "supplied":
+            text("[", styles)
+            children(node, styles)
+            text("]", styles)
+        elif tag == "ref" and parent is not None and lname(parent.tag) == "cit" and cit_is_biblical(parent):
+            text(" <", styles)
+            children(node, styles)
+            text(">", styles)
+        elif tag in SPACED_IN_READING:
+            text(" ", ())
+            children(node, styles)
+            text(" ", ())
+        elif tag == "hi":
+            children(node, [*styles, *(s for s in hi_styles(node.attrib.get("rend")) if not roman or s != "italic")])
+        elif tag in {"emph", "title", "foreign"} and not roman:
+            children(node, [*styles, "italic"])
+        elif tag in TRANSCRIPTION_STYLES:
+            children(node, [*styles, TRANSCRIPTION_STYLES[tag]])
+        else:
+            children(node, styles)
+
+    children(element, ())
+    return tokens
+
+
+def _resolve_reading(tokens):
+    """Les parties d'une leçon à partir de ``_reading_tokens`` : coupures de
+    ligne résolues, blancs XML réduits à une espace, sans blanc aux bords."""
+    out = []
+    strip_next = False
+
+    def strip_end():
+        while out and out[-1][0] == "text":
+            kept = out[-1][1].rstrip(_XML_BLANK_CHARS)
+            if kept:
+                out[-1] = ("text", kept, out[-1][2])
+                return
+            out.pop()
+
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token[0] == "lb":
+            # Des <lb> contigus, séparés au plus par des blancs : une coupure.
+            solder = False
+            while index < len(tokens) and (tokens[index][0] == "lb" or (
+                    tokens[index][0] == "text" and not tokens[index][1].strip(_XML_BLANK_CHARS))):
+                solder = solder or (tokens[index][0] == "lb" and tokens[index][1])
+                index += 1
+            if solder:
+                strip_end()
+                strip_next = True
+            else:
+                out.append(("text", " ", ()))
+            continue
+        index += 1
+        if token[0] == "text":
+            value = _XML_BLANKS.sub(" ", token[1])
+            if strip_next:
+                value = value.lstrip(" ")
+                if not value:
+                    continue
+                strip_next = False
+            out.append(("text", value, token[2]))
+        else:
+            if "note" in token[1]:
+                strip_end()
+            strip_next = False
+            out.append(token)
+    # Une seule espace entre deux textes, aucune aux bords.
+    parts = []
+    for token in out:
+        if token[0] != "text":
+            parts.append(token[1])
+            continue
+        value = token[1]
+        previous = parts[-1] if parts and "text" in parts[-1] else None
+        if previous is not None and previous["text"].endswith(" "):
+            value = value.lstrip(" ")
+        if not parts:
+            value = value.lstrip(" ")
+        if not value:
+            continue
+        if previous is not None and tuple(previous.get("styles", ())) == token[2]:
+            previous["text"] += value
+        else:
+            parts.append({"text": value, **({"styles": list(token[2])} if token[2] else {})})
+    if parts and "text" in parts[-1]:
+        parts[-1]["text"] = parts[-1]["text"].rstrip(" ")
+        if not parts[-1]["text"]:
+            parts.pop()
+    return parts
 
 
 def choose_choice_form(choice: ET.Element):
@@ -235,16 +496,6 @@ def flatten_editorial_text(el: ET.Element, include_notes=False, include_refs=Fal
 
     walk(el)
     return clean_text("".join(parts))
-
-
-def notes_inside(el: ET.Element):
-    out = []
-    for n in el.iter():
-        if lname(n.tag) == "note":
-            txt = flatten_editorial_text(n, include_notes=True, include_refs=True)
-            if txt:
-                out.append(txt)
-    return out
 
 
 LACUNA_TAGS = ("lacunaStart", "lacunaEnd")
@@ -1007,27 +1258,17 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                 block["segments"].append(tagged({"kind": "missing", "missing": dict(missing),
                                                  "line_key": current_line_key()}))
 
-    def describe_app(node):
-        return describe_readings(node)
+    def choose_shown(node):
+        return choose_app_reading(node)[0]
+
+    def describe_app(node, shown):
+        return describe_readings(node, choose_shown, shown)
 
     def style_for(node, inherited):
         styles = list(inherited)
         tag = lname(node.tag)
         if tag == "hi":
-            rend = (node.attrib.get("rend") or "").lower()
-            tokens = set(re.split(r"[\s,;]+", rend))
-            if "italic" in rend or "italics" in rend:
-                styles.append("italic")
-            if "bold" in rend:
-                styles.append("bold")
-            if "smallcaps" in rend or "small-caps" in rend:
-                styles.append("smallcaps")
-            if tokens & {"sup", "superscript", "super"}:
-                styles.append("sup")
-            if tokens & {"sub", "subscript"}:
-                styles.append("sub")
-            if "underline" in rend:
-                styles.append("underline")
+            styles.extend(hi_styles(node.attrib.get("rend")))
         elif tag in {"del", "surplus"}:
             styles.append("del")
         elif tag == "add":
@@ -1106,11 +1347,12 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             # La référence d'une citation non biblique est une note (V0.9.3.0).
             add_lacunae_in(node)
             enter(node)
-            txt = flatten_editorial_text(node, include_notes=True, include_refs=True)
+            parts = note_parts(node, choose_shown, describe_app)
+            txt = clean_text("".join(part.get("text", "") for part in parts))
             if txt:
                 aid = new_ann_id("n")
                 annotations[aid] = {
-                    "id": aid, "kind": "note", "text": txt,
+                    "id": aid, "kind": "note", "text": txt, "parts": parts,
                     "type": "ref" if tag == "ref" else node.attrib.get("type", ""),
                     "anchored": node.attrib.get("anchored", ""),
                 }
@@ -1132,7 +1374,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             ann = {
                 "id": aid, "kind": "variant",
                 "selected": flatten_editorial_text(selected, include_notes=False, include_refs=False),
-                "target": target_of(node).lstrip("#"), "readings": describe_app(node),
+                "target": target_of(node).lstrip("#"), "readings": describe_app(node, selected),
             }
             if missing:
                 ann["missing"] = dict(missing)
@@ -1452,7 +1694,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         ann = {
             "id": aid, "kind": "variant",
             "selected": flatten_editorial_text(selected, include_notes=False, include_refs=False),
-            "target": target_of(node).lstrip("#"), "readings": describe_app(node),
+            "target": target_of(node).lstrip("#"), "readings": describe_app(node, selected),
         }
         if missing:
             ann["missing"] = dict(missing)
@@ -1496,7 +1738,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                                                     for seg in b["segments"]):
             cleaned.append(b)
     document = {"blocks": cleaned, "annotations": annotations, "missing_readings": state["missing_count"],
-                "nonlem_readings": state["nonlem_count"]}
+                "nonlem_readings": state["nonlem_count"], "sigla": extract_witness_sigla(root)}
     # Langue du texte (césure, lecteurs d'écran) : @xml:lang du <text>, sinon de la racine.
     lang = next((value for value in [text.attrib.get(XML_LANG) for text in texts] + [root.attrib.get(XML_LANG)]
                  if value and value.strip()), None)

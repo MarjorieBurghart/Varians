@@ -239,6 +239,7 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="publication.gap.extent">[Lücke: {extent}]</string>
   <string key="publication.page">Seite: {n}</string>
   <string key="publication.not_available">[Lesart des Textzeugen nicht verfügbar]</string>
+  <string key="publication.editor_siglum">Hg.</string>
   <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} Apparateinträge ohne Lemma (lem). Fügen Sie jedem ein Lemma hinzu oder wählen Sie einen Textzeugen.</string>
   <string key="publication.error.unknown_witness">Unbekannter Textzeuge: {witness} (deklarierte Textzeugen: {witnesses}).</string>
   <string key="viewer.language">Sprache</string>

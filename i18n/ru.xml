@@ -239,6 +239,7 @@
   <string key="publication.gap.extent">[лакуна: {extent}]</string>
   <string key="publication.page">Страница: {n}</string>
   <string key="publication.not_available">[чтение свидетеля недоступно]</string>
+  <string key="publication.editor_siglum">изд.</string>
   <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} единиц аппарата без леммы (lem). Добавьте лемму к каждой или выберите свидетеля.</string>
   <string key="publication.error.unknown_witness">Неизвестный свидетель: {witness} (объявленные свидетели: {witnesses}).</string>
   <string key="viewer.language">Язык</string>

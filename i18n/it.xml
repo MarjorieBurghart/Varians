@@ -239,6 +239,7 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="publication.gap.extent">[lacuna: {extent}]</string>
   <string key="publication.page">Pagina: {n}</string>
   <string key="publication.not_available">[lezione del testimone non disponibile]</string>
+  <string key="publication.editor_siglum">ed.</string>
   <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} voci d’apparato senza lemma (lem). Aggiungete un lemma a ciascuna, oppure scegliete un testimone.</string>
   <string key="publication.error.unknown_witness">Testimone sconosciuto: {witness} (testimoni dichiarati: {witnesses}).</string>
   <string key="viewer.language">Lingua</string>

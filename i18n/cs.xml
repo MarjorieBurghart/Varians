@@ -239,6 +239,7 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="publication.gap.extent">[mezera: {extent}]</string>
   <string key="publication.page">Strana: {n}</string>
   <string key="publication.not_available">[čtení svědka není k dispozici]</string>
+  <string key="publication.editor_siglum">ed.</string>
   <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} položek aparátu bez lemmatu (lem). Doplňte ke každé lemma, nebo zvolte svědka.</string>
   <string key="publication.error.unknown_witness">Neznámý svědek: {witness} (deklarovaní svědkové: {witnesses}).</string>
   <string key="viewer.language">Jazyk</string>

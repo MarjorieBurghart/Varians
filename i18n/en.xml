@@ -225,6 +225,7 @@
   <string key="publication.gap.extent">[gap: {extent}]</string>
   <string key="publication.page">Page: {n}</string>
   <string key="publication.not_available">[witness reading not available]</string>
+  <string key="publication.editor_siglum">ed.</string>
   <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} apparatus entries without a lemma (lem). Add a lemma to each one, or choose a witness.</string>
   <string key="publication.error.unknown_witness">Unknown witness: {witness} (declared witnesses: {witnesses}).</string>
   <string key="viewer.language">Language</string>

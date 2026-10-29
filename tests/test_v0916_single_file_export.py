@@ -32,7 +32,18 @@ le pivot suit la règle TEI, comme dans « Édition critique » et l'aperçu :
 sans break="no", une fin de mot. Les 30 « XX<lb edRef="#T2"/>II » du projet
 exemple (sans doute des break="no" oubliés) deviennent « XX II », comme
 ailleurs. L'en-tête compte les variantes et les notes de l'apparat du texte
-de lecture (366 notes au lieu des 333 rattachées aux lignes du pivot)."""
+de lecture (366 notes au lieu des 333 rattachées aux lignes du pivot).
+Puis la fenêtre d'une variante dit les leçons comme l'apparat de « Édition
+critique » : chaque leçon porte ses parties (``parts`` : om., [lacune],
+notes entre parenthèses…) et le @wit de son <rdgGrp> ; le document porte
+les sigles de <listWit> (``sigla``). Dans le projet exemple, 50 leçons
+non affichées perdent une espace parasite (un <lb break="no"/> ou un <pb/>
+dans un mot : « Magna tes » devient « Magnates ») et 64 omissions sont
+dites « om. » ; le texte de lecture ne change pas (seul le ``tooltip``
+des repères de variante, que le viewer n'affiche pas, suit ces leçons).
+Une note suit les mêmes règles (``parts``) : l'apparat de la note
+« stellarum ????nalia… » donne sa leçon, puis son entrée entre crochets,
+au lieu de toutes ses leçons collées (« ????naliamagnalia »)."""
 from __future__ import annotations
 
 import hashlib
@@ -42,7 +53,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "a79a76c7c85ffe03c99626c7d659e33b88a326fc84ce46bc6cf9a95090438f65"
+DIGEST = "5bbc3814e50fc91a370c099adedf794d08c06d42d260b1dd678fe4d0d08ddb0d"
 
 
 def _digest(data):

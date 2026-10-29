@@ -239,6 +239,7 @@
   <string key="publication.gap.extent">［欠落：{extent}］</string>
   <string key="publication.page">ページ：{n}</string>
   <string key="publication.not_available">［伝本の読みなし］</string>
+  <string key="publication.editor_siglum">校訂者</string>
   <string key="publication.error.no_lemma">temoin-de-base=aucun：レンマ（lem）のない校異が {count} 件あります。それぞれにレンマを加えるか、伝本を選んでください。</string>
   <string key="publication.error.unknown_witness">不明な伝本：{witness}（宣言されている伝本：{witnesses}）。</string>
   <string key="viewer.language">言語</string>
