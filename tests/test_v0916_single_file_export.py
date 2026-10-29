@@ -14,7 +14,10 @@ niveau, titre tiré du premier <head>, sinon de @n) ; la division englobante
 comme « Édition critique », le <ref> d'une <cit> sans @type « bible » est
 un repère de note (les 34 citations du projet exemple). Puis le document
 compte les passages où le témoin choisi n'a pas de leçon
-(``missing_readings`` : 0 ici, le texte ne change pas)."""
+(``missing_readings`` : 0 ici, le texte ne change pas). Puis, par décision
+explicite, le texte exporté par défaut est le texte établi, comme
+« Édition critique » : le <lem>, à défaut la leçon du pivot (et non plus
+la leçon du pivot d'abord) ; ``meta.text`` dit ce choix."""
 from __future__ import annotations
 
 import hashlib
@@ -24,7 +27,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "3993ab2dae2e87a3402405f1f678990deda6810bfeb2eadb38d6d73fead86664"
+DIGEST = "712a789261bbb101791dfb39a67a2e29289ea2a06688cf429350268f940f4e51"
 
 
 def _digest(data):

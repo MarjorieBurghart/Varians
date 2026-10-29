@@ -150,6 +150,17 @@ def test_a_lacuna_marker_gives_the_line_open_at_its_place(tmp_path):
     assert _node(tmp_path, "return S.lastLinked(S.docIndex(D),1);", blocks) == "p::2"
 
 
+def test_a_line_anchor_gives_the_place_of_a_line_omitted_by_the_text_shown(tmp_path):
+    # V0.9.3.0 : quand le témoin affiché omet un passage, la ligne du pivot
+    # ouverte dans ce passage n'a pas de texte ; son repère donne sa place.
+    blocks = [{"type": "p", "segments": [
+        {"kind": "text", "text": "a", "line_key": "p::1"},
+        {"kind": "line-anchor", "line_key": "p::2"},
+        {"kind": "text", "text": "b", "line_key": "p::3"}]}]
+    assert _node(tmp_path, "const i=S.docIndex(D);return [S.positionOf(i,'p::2'),S.lastLinked(i,1)];",
+                 blocks) == [1, "p::2"]
+
+
 def test_the_route_of_a_panel_of_one_text_is_that_of_witness_route(tmp_path):
     from witness_resource_refresh import flatten_primary, flatten_secondary
     from witness_route import Source, witness_route

@@ -178,6 +178,13 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="viewer.info.no_line">Nessuna riga.</string>
   <string key="viewer.stats">{witnesses} testimone/i · {lines} righe del testimone pivot · {variants} varianti</string>
   <string key="viewer.toc">Indice</string>
+  <string key="viewer.text.established">Testo stabilito (&lt;lem&gt;), altrimenti {witness}</string>
+  <string key="viewer.text.witness">Testo di {witness}</string>
+  <string key="viewer.text.pivot">il testimone pivot</string>
+  <string key="viewer.text.missing">{count} passo/i senza lezione di {witness}, segnalato/i</string>
+  <string key="viewer.missing">Nessuna lezione di {witness} qui: {fallback}</string>
+  <string key="viewer.missing.lem">testo del &lt;lem&gt;</string>
+  <string key="viewer.missing.reading">lezione di {witness}</string>
   <string key="viewer.part.front">Parti preliminari</string>
   <string key="viewer.part.back">Appendici</string>
   <string key="viewer.form.sic">Lezione tràdita</string>

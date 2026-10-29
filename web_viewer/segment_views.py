@@ -52,7 +52,7 @@ def page_marks(reading, witness_id, folios_by_segment, ranks_by_segment) -> dict
         counted = block.get("type") in RENDERED_BLOCKS
         for segment in block.get("segments", []) or []:
             k = segment.get("seg", 0)
-            if segment.get("kind") == "text" and segment.get("line_key"):
+            if segment.get("kind") in ("text", "line-anchor") and segment.get("line_key"):
                 rank = ranks_by_segment.get(k, {}).get(segment["line_key"])
                 if rank is not None:
                     last[k] = rank

@@ -158,26 +158,29 @@ def choose_reading(app: ET.Element, target: str, mode: str = "witness", witness:
 
 
 def pivot_marks_in(reading: ET.Element, is_mark):
-    """``(début, fin)`` : les éléments ``is_mark`` (``<lb>``, ``<pb>`` du
-    pivot) d'une leçon non affichée, selon qu'ils précèdent tout texte de
-    cette leçon ou non (V0.9.3.0). Les notes ne sont pas parcourues."""
-    leading, trailing = [], []
-    seen = False
+    """``(début, suite)`` : les éléments ``is_mark`` (``<lb>``, ``<pb>`` du
+    pivot) d'une leçon non affichée (V0.9.3.0). ``début`` : ceux qui
+    précèdent tout texte de cette leçon ; ``suite`` : ``(élément, part)``,
+    ``part`` étant la part du texte de la leçon qui le précède (de 0 à 1,
+    espaces non comptées). Les notes ne sont pas parcourues."""
+    leading, following = [], []
+    count = 0
 
     def visit(node):
-        nonlocal seen
-        if node.text and node.text.strip():
-            seen = True
+        nonlocal count
+        count += len(re.sub(r"\s+", "", node.text or ""))
         for child in node:
             if is_mark(child):
-                (trailing if seen else leading).append(child)
+                if count:
+                    following.append((child, count))
+                else:
+                    leading.append(child)
             elif lname(child.tag) != "note":
                 visit(child)
-            if child.tail and child.tail.strip():
-                seen = True
+            count += len(re.sub(r"\s+", "", child.tail or ""))
 
     visit(reading)
-    return leading, trailing
+    return leading, [(element, before / count) for element, before in following]
 
 
 def describe_readings(app: ET.Element):
@@ -831,13 +834,54 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
     def hidden_marks(node, selected):
         """``(début, fin)`` : repères du pivot des leçons non affichées."""
         pivot = target_of(node)
-        leading, trailing = [], []
+        leading, following = [], []
         for reading, wit in reading_witnesses(node):
             if reading is not selected:
-                first, last = pivot_marks_in(reading, lambda e, w=wit: is_pivot_mark(e, w, pivot))
+                first, rest = pivot_marks_in(reading, lambda e, w=wit: is_pivot_mark(e, w, pivot))
                 leading += first
-                trailing += last
-        return leading, trailing
+                following += rest
+        return leading, following
+
+    def spread_lines(segments, start, marks):
+        """Les ``<lb>`` du pivot de sa leçon non affichée (``(élément,
+        part)``) : la ligne change dans le texte affiché (``segments[start:]``)
+        à la même part, au début d'un mot ; s'il n'y en a plus, après lui.
+        Chaque ligne du pivot garde ainsi du texte ; sans texte affiché (le
+        témoin omet le passage), un repère ``line-anchor`` marque sa place."""
+        full = "".join(segments[i]["text"] for i in range(start, len(segments)) if segments[i]["kind"] == "text")
+        letters = [k for k, ch in enumerate(full) if not ch.isspace()]
+        cuts = []
+        for element, part in marks:
+            advance_line(element)
+            if not letters:
+                segments.append(tagged({"kind": "line-anchor", "line_key": state["line_key"]}))
+                continue
+            target = letters[min(len(letters) - 1, int(part * len(letters)))]
+            if target and not full[target - 1].isspace():
+                word = re.search(r"\s\S", full[target:])
+                target = target + word.start() + 1 if word else None
+            if target is not None:
+                cuts.append((max(target, cuts[-1][0]) if cuts else target, state["line_key"]))
+        if not cuts:
+            return
+        out, offset, current, index = segments[:start], 0, None, 0
+        for seg in segments[start:]:
+            if seg["kind"] != "text":
+                if current is not None and "line_key" in seg:
+                    seg["line_key"] = current
+                out.append(seg)
+                continue
+            text, begin, piece = seg["text"], offset, 0
+            offset += len(text)
+            while index < len(cuts) and cuts[index][0] < offset:
+                cut = cuts[index][0] - begin
+                if cut > piece:
+                    out.append(dict(seg, text=text[piece:cut], **({"line_key": current} if current is not None else {})))
+                    piece = cut
+                current = cuts[index][1]
+                index += 1
+            out.append(dict(seg, text=text[piece:], **({"line_key": current} if current is not None else {})))
+        segments[:] = out
 
     def add_hidden_marks(elements):
         """Repères invisibles : la ligne ou la page du pivot change, sans
@@ -990,8 +1034,10 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
             if missing:
                 ann["missing"] = dict(missing)
             annotations[aid] = ann
-            leading, trailing = hidden_marks(node, selected)
+            leading, following = hidden_marks(node, selected)
             add_hidden_marks(leading)
+            block = ensure_block()
+            start = len(block["segments"])
 
             def readings_of(container):
                 # Dans l'ordre : la leçon retenue, les repères de lacune des autres.
@@ -1005,9 +1051,18 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
                         add_lacunae_in(other)
 
             readings_of(node)
+            # Les <lb> qui précèdent le premier <pb> se répartissent dans le
+            # texte affiché ; le reste suit l'<app>.
+            spread = []
+            while following and lname(following[0][0].tag) == "lb":
+                spread.append(following.pop(0))
+            if spread and state["block"] is block:
+                spread_lines(block["segments"], start, spread)
+            else:
+                following = spread + following
             enter(node)
             add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
-            add_hidden_marks(trailing)
+            add_hidden_marks([element for element, _part in following])
             return
         if tag == "choice":
             # Comme « Édition critique » : une forme, les autres en infobulle.
@@ -1275,7 +1330,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         if missing:
             ann["missing"] = dict(missing)
         annotations[aid] = ann
-        leading, trailing = hidden_marks(node, selected)
+        leading, following = hidden_marks(node, selected)
         add_hidden_marks(leading)
         for other in app_readings(node):
             if other is not selected:
@@ -1283,7 +1338,7 @@ def extract_reading_document(path: Path, target: str, include_foreign_pagebreaks
         walk_shown(selected, wit, missing, lambda: walk_children(selected, level))
         enter(node)
         add_marker("variant-marker", aid, variant_tooltip(ann, witness_labels))
-        add_hidden_marks(trailing)
+        add_hidden_marks([element for element, _part in following])
 
     for text in texts:
         walk_container(text)

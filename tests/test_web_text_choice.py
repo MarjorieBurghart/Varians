@@ -69,3 +69,64 @@ def test_a_project_without_web_viewer_element_receives_one(tmp_path):
     project = load_project(project_xml)
     assert (project.web_text_mode, project.web_text_witness) == ("witness", "P")
     assert project.web_filename == "viewer.html"
+
+
+# --- Générateur (E.3) -------------------------------------------------------------------------
+
+def _lem_differs(project_xml):
+    """Un <app> du projet exemple dont le <lem> n'est pas la leçon du pivot
+    (T1), et un autre où T2 n'a pas de leçon."""
+    edition = project_xml.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    old = "Uos estis"
+    assert old in text
+    edition.write_text(text.replace(old, '<app><lem wit="#T2">Vosestis</lem><rdg wit="#T1">Uosestis</rdg></app>'
+                                         '<app><lem wit="#T1">qui</lem><rdg wit="#P">que</rdg></app>', 1),
+                       encoding="utf-8")
+
+
+def _words(data):
+    return " ".join(seg.get("text", "") for block in data["document"]["blocks"] for seg in block["segments"]
+                    if seg["kind"] == "text")
+
+
+def test_the_export_follows_the_choice_of_project_xml_or_the_one_given(tmp_path):
+    from web_viewer.generator import build_dataset
+    project_xml = copy_example(tmp_path / "exemple")
+    _lem_differs(project_xml)
+    data = build_dataset(load_project(project_xml))[0]
+    assert "Vosestis" in _words(data) and "Uosestis" not in _words(data)        # texte établi, par défaut
+    assert data["meta"]["text"] == {"mode": "established", "witness": "", "missing": 0}
+    data = build_dataset(load_project(project_xml), text_mode="witness", text_witness="T2")[0]
+    assert "Vosestis" in _words(data)
+    assert data["meta"]["text"]["mode"] == "witness" and data["meta"]["text"]["witness"] == "T2"
+    assert data["meta"]["text"]["missing"] >= 1                                 # « qui » : pas de T2
+    update_project_web_text(project_xml, "witness", "T1")
+    data = build_dataset(load_project(project_xml))[0]
+    assert "Uosestis" in _words(data) and "Vosestis" not in _words(data)
+
+
+def test_an_unknown_witness_falls_back_to_the_pivot(tmp_path):
+    from web_viewer.generator import build_dataset
+    project_xml = copy_example(tmp_path / "exemple")
+    _web_viewer(project_xml, 'text="witness" textWitness="Z"')
+    data = build_dataset(load_project(project_xml))[0]
+    assert data["meta"]["text"] == {"mode": "witness", "witness": "", "missing": 0, "unknown": "Z"}
+
+
+def test_every_line_of_the_pivot_keeps_its_place_whatever_the_choice(tmp_path):
+    # Chaque ligne du pivot garde du texte, ou, quand le témoin choisi omet
+    # le passage, un repère invisible à sa place (T2 omet deux passages, où
+    # s'ouvrent cinq lignes de T1).
+    from web_viewer.generator import build_dataset
+    project_xml = copy_example(tmp_path / "exemple")
+    keys = None
+    for choice in ({}, dict(text_mode="established"), dict(text_mode="witness", text_witness="T2"),
+                   dict(text_mode="witness", text_witness="P")):
+        data = build_dataset(load_project(project_xml), **choice)[0]
+        segments = [seg for block in data["document"]["blocks"] for seg in block["segments"]]
+        found = {seg["line_key"] for seg in segments if seg["kind"] in ("text", "line-anchor") and seg.get("line_key")}
+        keys = found if keys is None else keys
+        assert found == keys, choice
+        anchors = [seg for seg in segments if seg["kind"] == "line-anchor"]
+        assert len(anchors) == (5 if choice.get("text_witness") == "T2" else 0), choice

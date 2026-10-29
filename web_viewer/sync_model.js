@@ -23,11 +23,12 @@
       const rendered = RENDERED.has(block.type);
       for (const seg of block.segments || []) {
         const k = Number(seg.seg || 0);
-        if ((seg.kind === 'text' || seg.kind === 'pb' || seg.kind === 'lacuna') && seg.line_key) current.set(k, String(seg.line_key));
+        // Un repère de ligne (V0.9.3.0) : la place d'une ligne du pivot que le texte affiché omet.
+        if ((seg.kind === 'text' || seg.kind === 'pb' || seg.kind === 'lacuna' || seg.kind === 'line-anchor') && seg.line_key) current.set(k, String(seg.line_key));
         if (!rendered) continue;
         const pos = segs.length;
         segs.push(k); lines.push(current.has(k) ? current.get(k) : null); items.push(seg);
-        if (seg.kind === 'text' && seg.line_key && !firstPos.has(String(seg.line_key))) firstPos.set(String(seg.line_key), pos);
+        if ((seg.kind === 'text' || seg.kind === 'line-anchor') && seg.line_key && !firstPos.has(String(seg.line_key))) firstPos.set(String(seg.line_key), pos);
         if (seg.kind === 'lacuna') lacunae.push({pos, seg: k, start: !!seg.start, wit: (seg.wit || []).map(String)});
       }
     }

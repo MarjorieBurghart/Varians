@@ -164,6 +164,13 @@
   <string key="viewer.info.no_line">No line.</string>
   <string key="viewer.stats">{witnesses} witness(es) · {lines} pivot-witness lines · {variants} variants</string>
   <string key="viewer.toc">Contents</string>
+  <string key="viewer.text.established">Established text (&lt;lem&gt;), otherwise {witness}</string>
+  <string key="viewer.text.witness">Text of {witness}</string>
+  <string key="viewer.text.pivot">the pivot witness</string>
+  <string key="viewer.text.missing">{count} passage(s) without a reading of {witness}, marked</string>
+  <string key="viewer.missing">No reading of {witness} here: {fallback}</string>
+  <string key="viewer.missing.lem">text of the &lt;lem&gt;</string>
+  <string key="viewer.missing.reading">reading of {witness}</string>
   <string key="viewer.part.front">Front matter</string>
   <string key="viewer.part.back">Back matter</string>
   <string key="viewer.form.sic">Transmitted reading</string>

@@ -178,6 +178,13 @@
   <string key="viewer.info.no_line">Строки нет.</string>
   <string key="viewer.stats">свидетелей: {witnesses} · строк опорного свидетеля: {lines} · разночтений: {variants}</string>
   <string key="viewer.toc">Содержание</string>
+  <string key="viewer.text.established">Установленный текст (&lt;lem&gt;), иначе {witness}</string>
+  <string key="viewer.text.witness">Текст свидетеля {witness}</string>
+  <string key="viewer.text.pivot">опорный свидетель</string>
+  <string key="viewer.text.missing">мест без чтения свидетеля {witness}: {count} (отмечены)</string>
+  <string key="viewer.missing">Здесь нет чтения свидетеля {witness}: {fallback}</string>
+  <string key="viewer.missing.lem">текст &lt;lem&gt;</string>
+  <string key="viewer.missing.reading">чтение свидетеля {witness}</string>
   <string key="viewer.part.front">Вступительная часть</string>
   <string key="viewer.part.back">Приложения</string>
   <string key="viewer.form.sic">Переданное чтение</string>

@@ -164,6 +164,13 @@
   <string key="viewer.info.no_line">Aucune ligne.</string>
   <string key="viewer.stats">{witnesses} témoin(s) · {lines} lignes du témoin pivot · {variants} variantes</string>
   <string key="viewer.toc">Sommaire</string>
+  <string key="viewer.text.established">Texte établi (&lt;lem&gt;), à défaut {witness}</string>
+  <string key="viewer.text.witness">Texte de {witness}</string>
+  <string key="viewer.text.pivot">le témoin pivot</string>
+  <string key="viewer.text.missing">{count} passage(s) sans leçon de {witness}, signalé(s)</string>
+  <string key="viewer.missing">Pas de leçon de {witness} ici : {fallback}</string>
+  <string key="viewer.missing.lem">texte du &lt;lem&gt;</string>
+  <string key="viewer.missing.reading">leçon de {witness}</string>
   <string key="viewer.part.front">Préliminaires</string>
   <string key="viewer.part.back">Annexes</string>
   <string key="viewer.form.sic">Leçon transmise</string>

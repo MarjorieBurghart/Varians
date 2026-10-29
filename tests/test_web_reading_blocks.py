@@ -400,3 +400,15 @@ def test_a_page_of_the_pivot_in_a_reading_not_shown_is_kept():
     reading = _chosen('<div><p>a <app><lem wit="#B">ille</lem><rdg wit="#A">iste <pb edRef="#A" n="2r"/></rdg>'
                       '</app> b</p></div>', text_mode="established")
     assert [(seg["label"], seg["foreign"]) for seg in _segments(reading) if seg["kind"] == "pb"] == [("2r", False)]
+
+
+def test_the_lines_of_a_long_reading_not_shown_are_spread_over_the_text_shown():
+    # Les lignes du pivot ouvertes dans sa leçon non affichée se répartissent
+    # dans le texte affiché, à la même proportion, au début d'un mot : chaque
+    # ligne garde du texte.
+    body = ('<div><p><lb edRef="#A"/><app><lem wit="#B">alpha beta gamma delta epsilon zeta</lem><rdg wit="#A">'
+            'una duo <lb edRef="#A"/>tres quattuor <lb edRef="#A"/>quinque sex</rdg></app> b</p></div>')
+    reading = _chosen(body, keys=["P::1", "P::2", "P::3"], text_mode="established")
+    assert _text(reading["blocks"][1]) == "alpha beta gamma delta epsilon zeta b"
+    keys = [(seg["text"].strip(), seg["line_key"]) for seg in _segments(reading) if seg["kind"] == "text"]
+    assert keys == [("alpha beta", "P::1"), ("gamma delta", "P::2"), ("epsilon zeta", "P::3"), ("b", "P::3")]

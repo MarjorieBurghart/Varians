@@ -178,6 +178,13 @@ Im Cache des Pivot-Textzeugen fehlende Seiten: {pages}</string>
   <string key="viewer.info.no_line">Keine Zeile.</string>
   <string key="viewer.stats">{witnesses} Textzeuge(n) · {lines} Zeilen des Pivot-Textzeugen · {variants} Varianten</string>
   <string key="viewer.toc">Inhalt</string>
+  <string key="viewer.text.established">Konstituierter Text (&lt;lem&gt;), sonst {witness}</string>
+  <string key="viewer.text.witness">Text von {witness}</string>
+  <string key="viewer.text.pivot">der Pivot-Textzeuge</string>
+  <string key="viewer.text.missing">{count} Stelle(n) ohne Lesart von {witness}, markiert</string>
+  <string key="viewer.missing">Keine Lesart von {witness} hier: {fallback}</string>
+  <string key="viewer.missing.lem">Text des &lt;lem&gt;</string>
+  <string key="viewer.missing.reading">Lesart von {witness}</string>
   <string key="viewer.part.front">Vorspann</string>
   <string key="viewer.part.back">Anhang</string>
   <string key="viewer.form.sic">Überlieferte Lesart</string>

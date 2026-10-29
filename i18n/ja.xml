@@ -178,6 +178,13 @@
   <string key="viewer.info.no_line">行なし。</string>
   <string key="viewer.stats">伝本 {witnesses}件 · ピボット伝本行 {lines}行 · 異読 {variants}件</string>
   <string key="viewer.toc">目次</string>
+  <string key="viewer.text.established">校訂本文（&lt;lem&gt;）、なければ {witness}</string>
+  <string key="viewer.text.witness">{witness} の本文</string>
+  <string key="viewer.text.pivot">ピボット伝本</string>
+  <string key="viewer.text.missing">{witness} の読みがない箇所 {count}件（表示あり）</string>
+  <string key="viewer.missing">ここには {witness} の読みがありません：{fallback}</string>
+  <string key="viewer.missing.lem">&lt;lem&gt; の本文</string>
+  <string key="viewer.missing.reading">{witness} の読み</string>
   <string key="viewer.part.front">前付け</string>
   <string key="viewer.part.back">後付け</string>
   <string key="viewer.form.sic">伝承の読み</string>
