@@ -223,7 +223,13 @@ class ProjectActionsMixin:
             return
         languages = [(info.code, info.label) for info in I18N.available_languages()]
         dlg = ProjectSettingsDialog(_t, self.project, languages, self)
-        if dlg.exec() != QDialog.DialogCode.Accepted:
+        result = dlg.exec()
+        if result == ProjectSettingsDialog.RENAME and dlg.rename_witness_id:
+            # « Changer le sigle… » (V0.9.4.0) : sa propre boîte, d'un bloc.
+            from witness_rename_ui import run_witness_rename
+            run_witness_rename(self, dlg.rename_witness_id, _t)
+            return
+        if result != QDialog.DialogCode.Accepted:
             return
         try:
             draft = dlg.draft()

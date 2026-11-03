@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
@@ -310,7 +310,7 @@ class IIIFCanvasPicker(QDialog):
 class WitnessEditDialog(QDialog):
     IMAGE_FILTER = "Images (*.jpg *.jpeg *.png *.tif *.tiff *.bmp *.webp)"
 
-    def __init__(self, tr, witness=None, parent=None, project_root=None):
+    def __init__(self, tr, witness=None, parent=None, project_root=None, siglum_locked=False):
         super().__init__(parent)
         self.tr = tr
         self.project_root = Path(project_root).resolve() if project_root else None
@@ -332,6 +332,14 @@ class WitnessEditDialog(QDialog):
         self._original_siglum = getattr(witness, "display_siglum", None) or self._original_id
         self.id_edit = QLineEdit(self._original_siglum)
         self.xml_id_hint = QLabel()
+        # Témoin déjà enregistré dans le projet (V0.9.4.0) : son sigle change
+        # par « Changer le sigle… » des paramètres du projet, qui met à jour
+        # tout ce qui le cite ; ici, il le changerait en nouveau témoin.
+        self.id_edit.setReadOnly(bool(siglum_locked))
+        self.siglum_lock_hint = QLabel(tr("witness_rename.locked"))
+        self.siglum_lock_hint.setWordWrap(True)
+        self.siglum_lock_hint.setTextFormat(Qt.TextFormat.PlainText)
+        self.siglum_lock_hint.setVisible(bool(siglum_locked))
         self.label_edit = QLineEdit(getattr(witness, "label", ""))
         self.image_source = QComboBox()
         self.image_source.addItem(tr("project.witness.images.none"), "none")
@@ -349,6 +357,7 @@ class WitnessEditDialog(QDialog):
         )
         form.addRow(tr("project.witness.id"), self.id_edit)
         form.addRow("", self.xml_id_hint)
+        form.addRow("", self.siglum_lock_hint)
         self.id_edit.textChanged.connect(self._siglum_changed)
         self._siglum_changed()
         form.addRow(tr("project.witness.label"), self.label_edit)
@@ -873,10 +882,16 @@ class WitnessEditDialog(QDialog):
 
 
 class WitnessTable(QWidget):
-    def __init__(self, tr, witnesses=None, base_witness="", parent=None, project_root=None):
+    # « Changer le sigle… » (V0.9.4.0) : identifiant du témoin choisi.
+    rename_requested = Signal(str)
+
+    def __init__(self, tr, witnesses=None, base_witness="", parent=None, project_root=None, saved_ids=None):
         super().__init__(parent)
         self.tr = tr
         self.project_root = Path(project_root).resolve() if project_root else None
+        # Identifiants des témoins déjà enregistrés dans le projet ; None pour
+        # un nouveau projet, où un sigle se change librement.
+        self.saved_ids = None if saved_ids is None else set(saved_ids)
         lay = QVBoxLayout(self); lay.setContentsMargins(0, 0, 0, 0)
         self.table = QTableWidget(0, 6)
         self.table.setHorizontalHeaderLabels([
@@ -899,7 +914,16 @@ class WitnessTable(QWidget):
         self.remove_btn = QPushButton(tr("project.witness.remove"))
         self.base_btn = QPushButton(tr("project.witness.set_base"))
         self.base_btn.setToolTip(tr("project.witness.pivot_tip"))
-        row.addWidget(self.add_btn); row.addWidget(self.edit_btn); row.addWidget(self.remove_btn); row.addWidget(self.base_btn); row.addStretch(1)
+        row.addWidget(self.add_btn); row.addWidget(self.edit_btn); row.addWidget(self.remove_btn); row.addWidget(self.base_btn)
+        self.rename_btn = None
+        if self.saved_ids is not None:
+            self.rename_btn = QPushButton(tr("witness_rename.button"))
+            self.rename_btn.setToolTip(tr("witness_rename.button.tip"))
+            self.rename_btn.setEnabled(False)
+            self.rename_btn.clicked.connect(self._rename_clicked)
+            row.addWidget(self.rename_btn)
+            self.table.itemSelectionChanged.connect(self._update_rename_button)
+        row.addStretch(1)
         lay.addLayout(row)
         self.add_btn.clicked.connect(self.add_witness)
         self.edit_btn.clicked.connect(self.edit_witness)
@@ -908,6 +932,23 @@ class WitnessTable(QWidget):
         self.table.doubleClicked.connect(lambda *_: self.edit_witness())
         for w in witnesses or []:
             self._append(w, w.id == base_witness or getattr(w, "role", "") == "base")
+
+    def _saved_witness_at(self, r):
+        """Identifiant du témoin de la ligne ``r`` s'il est déjà enregistré
+        dans le projet, sinon None."""
+        if self.saved_ids is None or r < 0 or self.table.item(r, 0) is None:
+            return None
+        ident = self.table.item(r, 0).data(Qt.ItemDataRole.UserRole + 1)
+        return ident if ident in self.saved_ids else None
+
+    def _update_rename_button(self):
+        if self.rename_btn is not None:
+            self.rename_btn.setEnabled(self._saved_witness_at(self.table.currentRow()) is not None)
+
+    def _rename_clicked(self):
+        ident = self._saved_witness_at(self.table.currentRow())
+        if ident is not None:
+            self.rename_requested.emit(ident)
 
     def _image_source_label(self, image_type, count=0):
         if image_type == "files":
@@ -996,7 +1037,8 @@ class WitnessTable(QWidget):
         r = self.table.currentRow()
         if r < 0: return
         old = self.witness_at(r)
-        dlg = WitnessEditDialog(self.tr, old, self, project_root=self.project_root)
+        dlg = WitnessEditDialog(self.tr, old, self, project_root=self.project_root,
+                                siglum_locked=self._saved_witness_at(r) is not None)
         if dlg.exec() != QDialog.DialogCode.Accepted: return
         new = dlg.witness()
         conflict = self._identity_conflict(new, skip_row=r)
@@ -1256,9 +1298,13 @@ class NewProjectDialog(QDialog):
 
 
 class ProjectSettingsDialog(QDialog):
+    # Code de retour de exec() : changer le sigle de ``rename_witness_id``.
+    RENAME = 2
+
     def __init__(self, tr, project, languages, parent=None):
         super().__init__(parent)
         self.tr = tr; self.project = project
+        self.rename_witness_id = None
         self.setWindowTitle(f'{tr("project.settings.title")} — Varians 0.8.5.10')
         self.resize(980, 740)
         outer = QVBoxLayout(self)
@@ -1329,12 +1375,33 @@ class ProjectSettingsDialog(QDialog):
         pivot_box.addWidget(self.pivot_lines)
         root.addWidget(self.pivot_section)
         group = QGroupBox(tr("project.witnesses")); gl = QVBoxLayout(group)
-        self.witnesses_table = WitnessTable(tr, project.witnesses, project.base_witness, self, project_root=project.root_dir); gl.addWidget(self.witnesses_table)
+        self.witnesses_table = WitnessTable(tr, project.witnesses, project.base_witness, self, project_root=project.root_dir,
+                                            saved_ids={w.id for w in project.witnesses}); gl.addWidget(self.witnesses_table)
+        self.witnesses_table.rename_requested.connect(self._rename_requested)
         root.addWidget(group, 1)
         # Refresh is an explicit manager action; saving settings never refetches
         # existing IIIF images without a deliberate user request.
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self._accept); buttons.rejected.connect(self.reject); outer.addWidget(buttons)
+        self._initial_draft = self._current_draft()
+
+    def _current_draft(self):
+        try:
+            return self.draft()
+        except Exception:
+            return None
+
+    def _rename_requested(self, witness_id):
+        """« Changer le sigle… » : la boîte se ferme (code RENAME) et Varians
+        ouvre celle du changement de sigle, qui écrit aussitôt sur le disque.
+        D'autres modifications en cours des paramètres sont d'abord à
+        enregistrer ou à annuler."""
+        current = self._current_draft()
+        if current is None or current != self._initial_draft:
+            QMessageBox.information(self, self.tr("witness_rename.title"), self.tr("witness_rename.pending_settings"))
+            return
+        self.rename_witness_id = witness_id
+        self.done(self.RENAME)
 
     def _schema_mode_changed(self, *_):
         mode = self.schema_mode.currentData() or "auto"
