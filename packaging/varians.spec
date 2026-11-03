@@ -27,6 +27,10 @@ VERSION = re.search(r'^APP_VERSION\s*=\s*"([^"]+)"', (ROOT / "app_context.py").r
 # Dossiers de données, copiés tels quels (sans __pycache__) ; self_test.py
 # vérifie qu'ils sont bien là, ainsi que les scripts du viewer web.
 DATA_FOLDERS = ("i18n", "help", "rendering", "resources")
+# Icône de l'exécutable (Windows) et du paquet Varians.app : la même que
+# celle des fenêtres (app_context.ICON_PATH), convertie par PyInstaller
+# (Pillow) en .ico ou .icns.
+ICON = "resources/icons/varians.png"
 WEB_VIEWER_FILES = ("*.js",)
 
 
@@ -39,21 +43,6 @@ def _data_files():
     for pattern in WEB_VIEWER_FILES:
         files += [(str(path), "web_viewer") for path in sorted((ROOT / "web_viewer").glob(pattern))]
     return files
-
-
-def _icon():
-    """Icône carrée tirée du logo (convertie en .ico ou .icns par
-    PyInstaller, avec Pillow)."""
-    from PIL import Image
-    logo = Image.open(ROOT / "resources" / "varians_logo.png").convert("RGBA")
-    side = max(logo.size)
-    square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-    square.paste(logo, ((side - logo.width) // 2, (side - logo.height) // 2))
-    square = square.resize((512, 512), Image.LANCZOS)
-    path = Path(workpath) / "varians-icon.png"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    square.save(path)
-    return str(path)
 
 
 # Saxon (saxonche) n'est cherché que par importlib.util.find_spec : à
@@ -108,7 +97,7 @@ def _wanted(entry):
 a.binaries = [entry for entry in a.binaries if _wanted(entry)]
 a.datas = [entry for entry in a.datas if _wanted(entry)]
 pyz = PYZ(a.pure)
-icon = _icon()
+icon = str(ROOT / ICON)
 exe = EXE(
     pyz,
     a.scripts,

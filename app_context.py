@@ -13,12 +13,35 @@ from __future__ import annotations
 
 from pathlib import Path
 import os
+import sys
 
 import shiboken6
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QSettings, QTimer, QTranslator
 
 HERE = Path(__file__).resolve().parent
 APP_VERSION = "0.9.4.0"
+# Icône de Varians : le logo sur un carré blanc arrondi (packaging/make_icon.py).
+ICON_PATH = HERE / "resources" / "icons" / "varians.png"
+# Identifiant d'application Windows (barre des tâches) en mode source.
+WINDOWS_APP_ID = "Varians.Editor"
+
+
+def apply_application_icon(app):
+    """Icône de l'application : barre des tâches de Windows, fenêtres, Dock
+    de macOS. Sous Windows, en mode source, Varians prend son propre
+    identifiant d'application, sans quoi la barre des tâches montrerait
+    l'icône de Python ; une version construite garde celui de Varians.exe
+    (un raccourci épinglé reste ainsi le même bouton que la fenêtre)."""
+    from PySide6.QtGui import QIcon
+    icon = QIcon(str(ICON_PATH))
+    app.setWindowIcon(icon)
+    if os.name == "nt" and not getattr(sys, "frozen", False):
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(WINDOWS_APP_ID)
+        except (AttributeError, OSError):
+            pass
+    return icon
 
 # --- Traductions --------------------------------------------------------------
 
