@@ -66,7 +66,7 @@ from project_management import create_portable_project, create_new_transcription
 from project_dialogs import NewProjectDialog, run_pivot_scaffold_dialog
 from i18n import I18nManager
 from app_context import (
-    apply_qt_language, call_later, error_message, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
+    apply_application_icon, apply_qt_language, call_later, error_message, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
     remove_recent_project, clear_recent_projects, last_open_project_path, remember_open_project,
     forget_open_project,
 )
@@ -1691,6 +1691,7 @@ class WelcomeWindow(QMainWindow):
 
 def main():
     app = QApplication.instance() or QApplication(sys.argv)
+    apply_application_icon(app)
     _install_light_selection_palette(app)
     startup_language = str(_settings().value("startupLanguage", "fr") or "fr")
     I18N.set_language(startup_language)

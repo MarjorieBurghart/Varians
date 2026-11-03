@@ -14,7 +14,8 @@
   l'interface Qt (``worker_problem``) ;
 - ``transform_lxml``, ``transform_saxon`` : une transformation XSLT dans
   son processus, avec chacun des deux moteurs, de même sans l'interface ;
-- ``window`` : le projet ouvert dans la fenêtre de Varians, puis fermé.
+- ``window`` : le projet ouvert dans la fenêtre de Varians, avec son icône,
+  puis fermé.
 
 Elle sert à vérifier, sur chaque système, la version prête à l'emploi
 construite par PyInstaller (packaging/) : une application Windows sans
@@ -39,7 +40,7 @@ RESOURCES = (
     "rendering/apparat-en-notes.xsl", "rendering/custom-elements.xml",
     "resources/templates/project-template.xml", "resources/schxslt2", "resources/schemas",
     "resources/tei-stylesheets/tei-xsl-7.61.0.zip", "resources/icons/feuilleter.svg",
-    "resources/varians_logo.png",
+    "resources/varians_logo.png", "resources/icons/varians.png",
     "web_viewer/geometry.js", "web_viewer/iiif.js", "web_viewer/fulltext_search.js",
     "web_viewer/sync_model.js", "web_viewer/plurals.js",
 )
@@ -179,7 +180,9 @@ def _transform(project_path, engine):
 
 def _window(project_path, window_class):
     from PySide6.QtWidgets import QApplication
+    from app_context import apply_application_icon
     app = QApplication.instance() or QApplication([sys.argv[0]])
+    apply_application_icon(app)
     window = window_class(project_path)
     try:
         window.show()
@@ -187,6 +190,8 @@ def _window(project_path, window_class):
             app.processEvents()
         if window.project.title != "Vérification" or "principio" not in window.editor.toPlainText():
             raise AssertionError("projet mal ouvert")
+        if window.windowIcon().isNull() or not window.windowIcon().availableSizes():
+            raise AssertionError("icône de Varians non chargée")
         return f"{len(window.project.witnesses)} témoins, {window.editor.document().blockCount()} lignes"
     finally:
         window._force_close = True

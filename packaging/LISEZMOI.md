@@ -73,3 +73,8 @@ emportées dans l'archive.
 - **Linux** : construit sur Ubuntu 22.04, l'archive demande glibc 2.35 ou
   plus récent (Ubuntu 22.04, Debian 12, Fedora 36…).
 - **Saxon HE** (saxonche) fait à lui seul près de 100 Mo décompressé.
+- **Icône** : `resources/icons/varians.png`, le logo sur un carré blanc arrondi
+  (lisible sur une barre des tâches sombre), produite par `make_icon.py` à
+  partir de `resources/varians_logo.png`. C'est l'icône de l'exécutable et du
+  paquet `.app` (`ICON` dans la recette) et celle des fenêtres
+  (`app_context.apply_application_icon`, appelée par `main()`).
