@@ -498,7 +498,9 @@ class _Planner:
 
     def _move(self, source, target, *, required=False, mapping=None):
         source, target = _entry_path(source), _entry_path(target)
-        if source == target:
+        # Comparaison exacte : sous Windows, deux Path qui ne diffèrent que par
+        # la casse sont égaux, alors que P → p est bien un renommage.
+        if str(source) == str(target):
             return
         exists = os.path.lexists(source)
         other = self._shared_with(source, target, mapping)
