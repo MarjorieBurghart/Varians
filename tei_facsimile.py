@@ -335,7 +335,7 @@ def project_facsimile_pages(witnesses, project_root: str | Path, edition_path: s
                         continue
                     out.append(FacsimilePage(
                         wid, default_surface_id(wid, i + 1),
-                        str(page.get("label") or block.get("label") or f"Page {i}"), graphic,
+                        str(page.get("label") or block.get("label") or f"Page {i + 1}"), graphic,
                     ))
     return out
 
