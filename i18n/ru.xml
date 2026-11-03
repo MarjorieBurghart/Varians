@@ -1285,4 +1285,17 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="transform.error.worker_failed">Процесс преобразования остановился: {detail}</string>
   <string key="transform.error.internal">Внутренняя ошибка: {detail}</string>
   <string key="transform.error.cancelled">Преобразование отменено.{detail}</string>
+  <string key="witness_rename.empty">Новая сигла пуста.</string>
+  <string key="witness_rename.same">{siglum} уже является сиглой этого свидетеля.</string>
+  <string key="witness_rename.unknown">Свидетель {witness} не входит в число свидетелей проекта.</string>
+  <string key="witness_rename.taken">Сигла {siglum} уже занята свидетелем {witness} (без учёта регистра).</string>
+  <string key="witness_rename.id_used">Идентификатор {id} уже существует: &lt;{element}&gt;, {file}, строка {line}.</string>
+  <string key="witness_rename.target_exists">{file} уже существует: сначала переместите или удалите его.</string>
+  <string key="witness_rename.unreadable">Не удаётся прочитать {file}: {error}</string>
+  <string key="witness_rename.malformed">{file} не является правильно построенным XML (строка {line}): сначала исправьте его.</string>
+  <string key="witness_rename.shared_surfaces">У страниц свидетеля {witness} идентификаторы поверхностей того же вида ({prefix}-p0001…): выберите более отличную сиглу.</string>
+  <string key="witness_rename.external_file">{file} находится вне папки проекта, но тоже должен измениться: сначала скопируйте его в проект (параметры свидетеля).</string>
+  <string key="witness_rename.other_target">{file}: там #{id} обозначает &lt;{element}&gt;, а не свидетеля; эти указатели не меняются.</string>
+  <string key="witness_rename.outside_pointer">{file}, строка {line}: {token} указывает на файл вне проекта; он не меняется.</string>
+  <string key="witness_rename.external_meta">{file} находится вне папки проекта и не изменяется: его meta.witness сохраняет старую сиглу.</string>
 </translations>

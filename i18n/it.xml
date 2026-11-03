@@ -1285,4 +1285,17 @@ Un foglio scrive solo il suo risultato e, con Saxon, altri file nella cartella d
   <string key="transform.error.worker_failed">Il processo di trasformazione si è arrestato: {detail}</string>
   <string key="transform.error.internal">Errore interno: {detail}</string>
   <string key="transform.error.cancelled">Trasformazione annullata.{detail}</string>
+  <string key="witness_rename.empty">La nuova sigla è vuota.</string>
+  <string key="witness_rename.same">{siglum} è già la sigla di questo testimone.</string>
+  <string key="witness_rename.unknown">Il testimone {witness} non è un testimone del progetto.</string>
+  <string key="witness_rename.taken">La sigla {siglum} è già presa dal testimone {witness} (senza distinguere maiuscole e minuscole).</string>
+  <string key="witness_rename.id_used">L’identificatore {id} esiste già: &lt;{element}&gt;, {file}, riga {line}.</string>
+  <string key="witness_rename.target_exists">{file} esiste già: spostalo o eliminalo prima.</string>
+  <string key="witness_rename.unreadable">Impossibile leggere {file}: {error}</string>
+  <string key="witness_rename.malformed">{file} non è ben formato (riga {line}): correggilo prima.</string>
+  <string key="witness_rename.shared_surfaces">Le pagine del testimone {witness} hanno identificatori di superficie della stessa forma ({prefix}-p0001…): scegli una sigla più distinta.</string>
+  <string key="witness_rename.external_file">{file}, fuori dalla cartella del progetto, dovrebbe cambiare anch’esso: copialo prima nel progetto (impostazioni del testimone).</string>
+  <string key="witness_rename.other_target">{file}: #{id} vi designa un &lt;{element}&gt;, non il testimone; questi puntatori non cambiano.</string>
+  <string key="witness_rename.outside_pointer">{file}, riga {line}: {token} punta a un file fuori dal progetto; non cambia.</string>
+  <string key="witness_rename.external_meta">{file}, fuori dalla cartella del progetto, non viene modificato: il suo meta.witness conserva la vecchia sigla.</string>
 </translations>

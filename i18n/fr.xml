@@ -1271,4 +1271,17 @@ Une feuille n’écrit que son résultat, et, avec Saxon, d’autres fichiers da
   <string key="transform.error.worker_failed">Le processus de transformation s’est arrêté : {detail}</string>
   <string key="transform.error.internal">Erreur interne : {detail}</string>
   <string key="transform.error.cancelled">Transformation annulée.{detail}</string>
+  <string key="witness_rename.empty">Le nouveau sigle est vide.</string>
+  <string key="witness_rename.same">{siglum} est déjà le sigle de ce témoin.</string>
+  <string key="witness_rename.unknown">Le témoin {witness} n’est pas un témoin du projet.</string>
+  <string key="witness_rename.taken">Le sigle {siglum} est déjà pris par le témoin {witness} (à la casse près).</string>
+  <string key="witness_rename.id_used">L’identifiant {id} existe déjà : &lt;{element}&gt;, {file}, ligne {line}.</string>
+  <string key="witness_rename.target_exists">{file} existe déjà : déplacez-le ou supprimez-le d’abord.</string>
+  <string key="witness_rename.unreadable">{file} ne peut pas être lu : {error}</string>
+  <string key="witness_rename.malformed">{file} n’est pas bien formé (ligne {line}) : corrigez-le d’abord.</string>
+  <string key="witness_rename.shared_surfaces">Les pages du témoin {witness} ont des identifiants de surface de même forme ({prefix}-p0001…) : choisissez un sigle plus distinct.</string>
+  <string key="witness_rename.external_file">{file}, hors du dossier du projet, devrait changer aussi : copiez-le d’abord dans le projet (paramètres du témoin).</string>
+  <string key="witness_rename.other_target">{file} : #{id} y désigne un &lt;{element}&gt;, pas le témoin ; ces pointeurs ne changent pas.</string>
+  <string key="witness_rename.outside_pointer">{file}, ligne {line} : {token} vise un fichier hors du projet ; il ne change pas.</string>
+  <string key="witness_rename.external_meta">{file}, hors du dossier du projet, n’est pas modifié : son meta.witness garde l’ancien sigle.</string>
 </translations>

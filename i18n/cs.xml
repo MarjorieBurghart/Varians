@@ -1285,4 +1285,17 @@ Styl zapisuje jen svůj výsledek a se Saxonem i další soubory ve složce výs
   <string key="transform.error.worker_failed">Proces transformace se zastavil: {detail}</string>
   <string key="transform.error.internal">Interní chyba: {detail}</string>
   <string key="transform.error.cancelled">Transformace zrušena.{detail}</string>
+  <string key="witness_rename.empty">Nová sigla je prázdná.</string>
+  <string key="witness_rename.same">{siglum} už je siglou tohoto svědka.</string>
+  <string key="witness_rename.unknown">Svědek {witness} není svědkem projektu.</string>
+  <string key="witness_rename.taken">Siglu {siglum} už má svědek {witness} (bez ohledu na velikost písmen).</string>
+  <string key="witness_rename.id_used">Identifikátor {id} už existuje: &lt;{element}&gt;, {file}, řádek {line}.</string>
+  <string key="witness_rename.target_exists">{file} už existuje: nejprve ho přesuňte nebo smažte.</string>
+  <string key="witness_rename.unreadable">{file} nelze přečíst: {error}</string>
+  <string key="witness_rename.malformed">{file} není správně utvořený (řádek {line}): nejprve ho opravte.</string>
+  <string key="witness_rename.shared_surfaces">Stránky svědka {witness} mají identifikátory povrchů stejného tvaru ({prefix}-p0001…): zvolte odlišnější siglu.</string>
+  <string key="witness_rename.external_file">{file} je mimo složku projektu a musel by se také změnit: nejprve ho zkopírujte do projektu (nastavení svědka).</string>
+  <string key="witness_rename.other_target">{file}: #{id} tam označuje &lt;{element}&gt;, ne svědka; tyto odkazy se nemění.</string>
+  <string key="witness_rename.outside_pointer">{file}, řádek {line}: {token} odkazuje na soubor mimo projekt; nemění se.</string>
+  <string key="witness_rename.external_meta">{file} je mimo složku projektu a nemění se: jeho meta.witness si ponechá starou siglu.</string>
 </translations>

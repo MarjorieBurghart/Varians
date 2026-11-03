@@ -1271,4 +1271,17 @@ A stylesheet writes only its result and, with Saxon, other files in the folder o
   <string key="transform.error.worker_failed">The transformation process stopped: {detail}</string>
   <string key="transform.error.internal">Internal error: {detail}</string>
   <string key="transform.error.cancelled">Transformation cancelled.{detail}</string>
+  <string key="witness_rename.empty">The new siglum is empty.</string>
+  <string key="witness_rename.same">{siglum} is already the siglum of this witness.</string>
+  <string key="witness_rename.unknown">The witness {witness} is not a witness of the project.</string>
+  <string key="witness_rename.taken">The siglum {siglum} is already taken by the witness {witness} (ignoring case).</string>
+  <string key="witness_rename.id_used">The identifier {id} already exists: &lt;{element}&gt;, {file}, line {line}.</string>
+  <string key="witness_rename.target_exists">{file} already exists: move or delete it first.</string>
+  <string key="witness_rename.unreadable">{file} cannot be read: {error}</string>
+  <string key="witness_rename.malformed">{file} is not well formed (line {line}): correct it first.</string>
+  <string key="witness_rename.shared_surfaces">The pages of the witness {witness} have surface identifiers of the same form ({prefix}-p0001…): choose a more distinct siglum.</string>
+  <string key="witness_rename.external_file">{file}, outside the project folder, would have to change too: copy it into the project first (witness settings).</string>
+  <string key="witness_rename.other_target">{file}: #{id} there designates a &lt;{element}&gt;, not the witness; these pointers do not change.</string>
+  <string key="witness_rename.outside_pointer">{file}, line {line}: {token} points to a file outside the project; it does not change.</string>
+  <string key="witness_rename.external_meta">{file}, outside the project folder, is not modified: its meta.witness keeps the old siglum.</string>
 </translations>

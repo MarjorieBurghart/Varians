@@ -1285,4 +1285,17 @@ Ein Stylesheet schreibt nur sein Ergebnis und, mit Saxon, weitere Dateien im Erg
   <string key="transform.error.worker_failed">Der Transformationsprozess wurde beendet: {detail}</string>
   <string key="transform.error.internal">Interner Fehler: {detail}</string>
   <string key="transform.error.cancelled">Transformation abgebrochen.{detail}</string>
+  <string key="witness_rename.empty">Die neue Sigle ist leer.</string>
+  <string key="witness_rename.same">{siglum} ist bereits die Sigle dieses Textzeugen.</string>
+  <string key="witness_rename.unknown">Der Textzeuge {witness} ist kein Textzeuge des Projekts.</string>
+  <string key="witness_rename.taken">Die Sigle {siglum} ist bereits vom Textzeugen {witness} belegt (ohne Berücksichtigung der Groß- und Kleinschreibung).</string>
+  <string key="witness_rename.id_used">Die Kennung {id} existiert bereits: &lt;{element}&gt;, {file}, Zeile {line}.</string>
+  <string key="witness_rename.target_exists">{file} existiert bereits: verschieben oder löschen Sie die Datei zuerst.</string>
+  <string key="witness_rename.unreadable">{file} kann nicht gelesen werden: {error}</string>
+  <string key="witness_rename.malformed">{file} ist nicht wohlgeformt (Zeile {line}): korrigieren Sie die Datei zuerst.</string>
+  <string key="witness_rename.shared_surfaces">Die Seiten des Textzeugen {witness} haben Oberflächenkennungen derselben Form ({prefix}-p0001…): wählen Sie eine deutlicher verschiedene Sigle.</string>
+  <string key="witness_rename.external_file">{file} liegt außerhalb des Projektordners und müsste ebenfalls geändert werden: kopieren Sie die Datei zuerst in das Projekt (Einstellungen des Textzeugen).</string>
+  <string key="witness_rename.other_target">{file}: #{id} bezeichnet dort ein &lt;{element}&gt;, nicht den Textzeugen; diese Verweise bleiben unverändert.</string>
+  <string key="witness_rename.outside_pointer">{file}, Zeile {line}: {token} verweist auf eine Datei außerhalb des Projekts; der Verweis bleibt unverändert.</string>
+  <string key="witness_rename.external_meta">{file} liegt außerhalb des Projektordners und wird nicht geändert: sein meta.witness behält die alte Sigle.</string>
 </translations>

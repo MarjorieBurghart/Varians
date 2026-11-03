@@ -1285,4 +1285,17 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="transform.error.worker_failed">変換プロセスが停止しました：{detail}</string>
   <string key="transform.error.internal">内部エラー：{detail}</string>
   <string key="transform.error.cancelled">変換をキャンセルしました。{detail}</string>
+  <string key="witness_rename.empty">新しいシグラムが空です。</string>
+  <string key="witness_rename.same">{siglum} はすでにこの伝本のシグラムです。</string>
+  <string key="witness_rename.unknown">伝本 {witness} はプロジェクトの伝本ではありません。</string>
+  <string key="witness_rename.taken">シグラム {siglum} はすでに伝本 {witness} が使用しています（大文字・小文字は区別されません）。</string>
+  <string key="witness_rename.id_used">識別子 {id} はすでに存在します：&lt;{element}&gt;、{file}、{line} 行目。</string>
+  <string key="witness_rename.target_exists">{file} はすでに存在します。先に移動または削除してください。</string>
+  <string key="witness_rename.unreadable">{file} を読み込めません：{error}</string>
+  <string key="witness_rename.malformed">{file} は整形式ではありません（{line} 行目）。先に修正してください。</string>
+  <string key="witness_rename.shared_surfaces">伝本 {witness} のページは同じ形のサーフェス識別子（{prefix}-p0001…）を持っています。より区別しやすいシグラムを選んでください。</string>
+  <string key="witness_rename.external_file">{file} はプロジェクトフォルダーの外にありますが、これも変更が必要です。先にプロジェクトにコピーしてください（伝本の設定）。</string>
+  <string key="witness_rename.other_target">{file}：そこでは #{id} は伝本ではなく &lt;{element}&gt; を指します。これらのポインターは変更されません。</string>
+  <string key="witness_rename.outside_pointer">{file}、{line} 行目：{token} はプロジェクト外のファイルを指しています。変更されません。</string>
+  <string key="witness_rename.external_meta">{file} はプロジェクトフォルダーの外にあるため変更されません。その meta.witness は古いシグラムのままです。</string>
 </translations>
