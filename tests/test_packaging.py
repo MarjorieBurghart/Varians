@@ -245,3 +245,19 @@ def test_windows_readmes_open_in_any_editor(tmp_path):
     build.add_documents(tmp_path, "0.9.4.0", system="win32")
     data = (tmp_path / "LISEZMOI.txt").read_bytes()
     assert data.startswith(b"\xef\xbb\xbf") and b"\r\n" in data and b"\n" not in data.replace(b"\r\n", b"")
+
+
+def test_the_workflows_use_actions_that_run_on_node_24():
+    """Node.js 20 est abandonné sur les serveurs de GitHub : les actions
+    sont à une version qui tourne sur Node.js 24 (checkout v5,
+    setup-python v6, upload-artifact v6, download-artifact v7 ou plus)."""
+    import re
+    minimum = {"actions/checkout": 5, "actions/setup-python": 6, "actions/upload-artifact": 6,
+               "actions/download-artifact": 7}
+    found = []
+    for workflow in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+        for action, major in re.findall(r"uses:\s*([\w.-]+/[\w.-]+)@v(\d+)", workflow.read_text(encoding="utf-8")):
+            assert action in minimum, (workflow.name, action)
+            assert int(major) >= minimum[action], (workflow.name, action, major)
+            found.append(action)
+    assert set(found) == set(minimum)

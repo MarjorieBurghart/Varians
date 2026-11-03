@@ -101,7 +101,7 @@ jobs:
           fi
 
       - name: Archive
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: Varians-${{ runner.os }}-${{ runner.arch }}
           path: |
@@ -112,7 +112,7 @@ jobs:
 
       - name: Rapport de vérification
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: diagnostic-${{ runner.os }}-${{ runner.arch }}
           path: |
@@ -133,7 +133,7 @@ jobs:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           pattern: Varians-*
           merge-multiple: true
