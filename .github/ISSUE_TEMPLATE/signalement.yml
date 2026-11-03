@@ -1,0 +1,128 @@
+name: "Signaler un problème / Report a problem"
+description: "Quelque chose ne marche pas dans Varians ? / Something does not work in Varians?"
+title: "[Signalement] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler ce problème ! Vous pouvez écrire dans la langue de votre choix parmi celles de Varians (français, English, Deutsch, 日本語, čeština, italiano, русский). Un seul problème par signalement, s'il vous plaît.
+        Ne joignez pas de fichiers que vous ne souhaitez pas rendre publics : ce signalement sera visible par tous.
+
+        Thank you for reporting this problem! You may write in any of Varians' languages. One problem per report, please. Do not attach files you do not want to make public: this report will be visible to everyone.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: "Ce qui s'est passé / What happened"
+      description: "Décrivez le problème : message d'erreur, fenêtre bloquée, résultat inattendu… / Describe the problem: error message, frozen window, unexpected result…"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Comment le reproduire / How to reproduce it"
+      description: "Les étapes, une par ligne, depuis l'ouverture de Varians. / The steps, one per line, from opening Varians."
+      placeholder: |
+        1. Fichier → Ouvrir un projet… / File → Open project…
+        2. …
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Ce que vous attendiez / What you expected"
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: "Version de Varians / Varians version"
+      description: "Aide → À propos… (Help → About…), ou l'écran d'accueil. / Help → About…, or the welcome screen."
+      placeholder: "0.9.4.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: system
+    attributes:
+      label: "Système / System"
+      options:
+        - "Windows"
+        - "macOS (Apple Silicon : M1, M2…)"
+        - "macOS (Intel)"
+        - "Linux"
+        - "Autre / Other"
+    validations:
+      required: true
+
+  - type: input
+    id: system_version
+    attributes:
+      label: "Version du système / System version"
+      placeholder: "Windows 11, macOS 15.3, Ubuntu 24.04…"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: "Installation"
+      options:
+        - "Version prête à l'emploi (archive de la page des versions) / Ready-to-use version (release archive)"
+        - "Avec Python (sources) / With Python (sources)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: "Langue de l'interface / Interface language"
+      options:
+        - "Français"
+        - "English"
+        - "Deutsch"
+        - "日本語"
+        - "Čeština"
+        - "Italiano"
+        - "Русский"
+    validations:
+      required: false
+
+  - type: textarea
+    id: self_test
+    attributes:
+      label: "Rapport de vérification / Self-test report"
+      description: |
+        Utile surtout si Varians ne démarre pas ou si une fonction manque. Varians vérifie lui-même son installation et écrit un rapport (environ une minute) ; collez ici le contenu du fichier rapport.json.
+        Mostly useful if Varians does not start or a feature is missing. Varians checks its own installation and writes a report (about one minute); paste the content of report.json here.
+
+        - Windows (invite de commandes, dans le dossier de Varians / command prompt, in the Varians folder) : `start /wait Varians.exe --self-test rapport.json`
+        - macOS : `/Applications/Varians.app/Contents/MacOS/Varians --self-test ~/rapport.json`
+        - Linux : `./Varians --self-test rapport.json`
+        - Avec Python / With Python : `python editeur_tei.py --self-test rapport.json`
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: files
+    attributes:
+      label: "Captures d'écran, fichiers / Screenshots, files"
+      description: |
+        Glissez ici des captures d'écran, ou un petit fichier XML (ou un project.xml) qui montre le problème. Un exemple réduit vaut mieux qu'une édition entière.
+        Drag screenshots here, or a small XML file (or a project.xml) that shows the problem. A small example is better than a whole edition.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: "Avant d'envoyer / Before sending"
+      options:
+        - label: "J'ai cherché si ce problème avait déjà été signalé. / I searched whether this problem was already reported."
+          required: false
