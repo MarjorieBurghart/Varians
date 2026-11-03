@@ -71,6 +71,8 @@ class XPathQueryDialog(QDialog):
         self.ok_button.setEnabled(bool(self.query().name and self.query().expression))
 
     def query(self):
+        """La requête saisie (``XPathQuery``) : nom et expression, sans les
+        blancs des bords. Elle n'est pas vérifiée ici (voir ``accept``)."""
         return XPathQuery(self.name_edit.text().strip(), self.expression_edit.text().strip())
 
     def accept(self):
@@ -234,6 +236,9 @@ class ApparatusDebugDialog(QDialog):
         return self._store(self._queries + [dialog.query()], len(self._queries))
 
     def edit_query(self):
+        """« Modifier… » (ou double clic sur une requête) : modifie la requête
+        personnelle choisie, puis enregistre la liste dans le projet. True si
+        elle a été modifiée et enregistrée."""
         row = self.queries_list.currentRow()
         if not 0 <= row < len(self._queries):
             return False
@@ -247,6 +252,8 @@ class ApparatusDebugDialog(QDialog):
         return self._store(queries, row)
 
     def remove_query(self):
+        """« Supprimer » : retire du projet la requête personnelle choisie,
+        après confirmation. True si la liste a été enregistrée sans elle."""
         row = self.queries_list.currentRow()
         if not 0 <= row < len(self._queries):
             return False

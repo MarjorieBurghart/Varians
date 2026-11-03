@@ -66,6 +66,9 @@ class DetachedWitnessWindow(QWidget):
         return siglum(self.witness_id) if siglum else self.witness_id
 
     def retranslate_ui(self):
+        """Remet dans la langue courante le titre de la fenêtre, la case
+        « Toujours au premier plan » et le bouton « Rattacher » ; le panneau
+        est retraduit par la fenêtre principale."""
         self.setWindowTitle(_t('workspace.detached.title', witness=self._siglum()))
         self.always_on_top.setText(_t('workspace.always_on_top'))
         self.dock_button.setText(_t('workspace.attach'))
@@ -169,6 +172,7 @@ class WitnessVisibilityDialog(QDialog):
                 for i in range(self.list.count())]
 
     def selected_ids(self):
+        """Identifiants des témoins cochés, dans l'ordre de la liste."""
         return [str(self.list.item(i).data(Qt.ItemDataRole.UserRole))
                 for i in range(self.list.count())
                 if self.list.item(i).checkState() == Qt.CheckState.Checked]
@@ -620,6 +624,10 @@ class WitnessWorkspaceMixin:
         self._refresh_detach_actions()
 
     def choose_visible_witnesses(self):
+        """« Choisir les témoins affichés… » : boîte où l'on coche les témoins
+        visibles et règle leur ordre (un témoin sans image ne peut être coché).
+        Acceptée, ses choix sont appliqués et gardés dans les réglages locaux
+        du projet."""
         dlg = WitnessVisibilityDialog(
             self.witness_configs,
             self._available_image_witness_ids(),

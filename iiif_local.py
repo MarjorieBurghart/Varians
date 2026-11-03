@@ -25,14 +25,23 @@ def _safe_id(wid: str) -> str:
 
 
 def store_dir(root: str | Path, wid: str) -> Path:
+    """Dossier de la copie de travail IIIF du témoin ``wid`` :
+    ``iiif/local/<wid>`` sous ``root`` (résolu), l'identifiant réduit aux
+    caractères sûrs pour un nom de dossier."""
     return Path(root).resolve() / 'iiif' / 'local' / _safe_id(wid)
 
 
 def index_path(root: str | Path, wid: str) -> Path:
+    """Index de la copie de travail du témoin ``wid`` : ``index.json`` de son
+    dossier, qui associe la clé de chaque image téléchargée (``remote_key``) à
+    son fichier et à son adresse source."""
     return store_dir(root, wid) / 'index.json'
 
 
 def remote_key(image: dict) -> str:
+    """Clé d'une image IIIF dans l'index de la copie de travail : empreinte
+    SHA-256 de son canevas, de son service, de son adresse, de sa version IIIF
+    et de ses dimensions."""
     return hashlib.sha256(json.dumps({key: image.get(key) for key in
         ('canvas', 'service', 'image', 'iiif_version', 'width', 'height')},
         sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
@@ -80,6 +89,10 @@ def _valid_entry(root: str | Path, wid: str, image: dict, entries: dict) -> Path
 
 
 def local_image_path(root: str | Path, wid: str, image: dict) -> Path | None:
+    """Fichier déjà téléchargé pour l'image IIIF ``image`` du témoin ``wid``,
+    ou None ; aucun accès au réseau. Si la clé de l'image a changé (manifeste
+    rechargé), un fichier n'est repris que si une seule entrée de l'index a la
+    même adresse de téléchargement."""
     return _valid_entry(root, wid, image, _read_index(root, wid))
 
 

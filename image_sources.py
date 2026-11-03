@@ -21,6 +21,10 @@ import re
 
 @dataclass(frozen=True)
 class PageImageSource:
+    """Source d'image d'une page, normalisée par ``page_image_source`` :
+    ``kind`` vaut ``none``, ``iiif`` (``service`` ou ``image_url``,
+    ``iiif_version``) ou ``file`` (``file_path``, chemin résolu) ; ``raw``
+    garde le bloc lu dans la page."""
     kind: str = "none"           # none | iiif | file
     label: str = ""
     width: int | None = None
@@ -33,6 +37,8 @@ class PageImageSource:
 
     @property
     def available(self) -> bool:
+        """L'image peut-elle être demandée : un service ou une adresse IIIF, un
+        chemin de fichier (son existence n'est pas vérifiée) ?"""
         if self.kind == "iiif":
             return bool(self.service or self.image_url)
         if self.kind == "file":
@@ -112,6 +118,8 @@ def page_image_source(page: dict, project_root: str | Path | None = None) -> Pag
 
 
 def page_label(page: dict, project_root: str | Path | None = None) -> str:
+    """Libellé d'une page : celui de sa source d'image (``page_image_source``),
+    à défaut l'``id`` de la page."""
     src = page_image_source(page, project_root)
     return src.label or str((page or {}).get("id") or "")
 
@@ -130,6 +138,9 @@ def surface_labels(panel, project_root: str | Path | None = None, label=page_lab
 
 
 def page_image_dimensions(page: dict, project_root: str | Path | None = None) -> tuple[float, float]:
+    """``(largeur, hauteur)`` de l'image d'une page dans son repère source :
+    celles que déclare sa source d'image, à défaut celles de la page ALTO
+    (``alto_width``, ``alto_height``), à défaut 1."""
     src = page_image_source(page, project_root)
     aw = float((page or {}).get("alto_width") or 1)
     ah = float((page or {}).get("alto_height") or 1)

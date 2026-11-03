@@ -87,6 +87,9 @@ def page_identity(page) -> str:
 
 
 def page_label(page) -> str:
+    """Étiquette d'une page d'un JSON : le ``label`` de son bloc ``iiif``, de
+    son bloc ``image`` ou de la page, sinon une chaîne vide. Sa foliotation
+    peut servir à placer un texte (``folio_number``)."""
     iiif = page.get("iiif") if isinstance(page.get("iiif"), dict) else {}
     image = page.get("image") if isinstance(page.get("image"), dict) else {}
     return str(iiif.get("label") or image.get("label") or page.get("label") or "")
@@ -201,6 +204,10 @@ def _carry_ordinals(stops):
 
 @dataclass(frozen=True)
 class WitnessRoute:
+    """Parcours d'un témoin (``witness_route``). ``stops`` : ses arrêts dans
+    l'ordre du manuscrit ; ``texts`` : les segments, dans l'ordre où le
+    parcours les rencontre ; ``uncertain`` : ceux qui n'ont pu être placés que
+    par l'ordre de l'édition."""
     witness: str
     stops: tuple
     texts: tuple
@@ -221,9 +228,11 @@ class WitnessRoute:
         return self.stops[target] if 0 <= target < len(self.stops) else None
 
     def first(self, segment):
+        """Premier arrêt du parcours dans le segment ``segment``, ou None."""
         return next((s for s in self.stops if s.segment == segment), None)
 
     def last(self, segment):
+        """Dernier arrêt du parcours dans le segment ``segment``, ou None."""
         return next((s for s in reversed(self.stops) if s.segment == segment), None)
 
     def on_page(self, identity):

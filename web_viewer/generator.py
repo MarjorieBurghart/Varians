@@ -1016,6 +1016,9 @@ def _all_pages(witness):
 
 
 def make_html(data):
+    """Page HTML autonome du viewer : ``HTML_TEMPLATE`` où sont insérés les
+    données (JSON sans aucun « < »), les scripts du dossier ``web_viewer``, le
+    titre et la langue."""
     # Aucun « < » dans le bloc des données (V0.9.3.3) : ni « </script », ni
     # « <!-- » venus du texte ne peuvent en sortir ; JSON.parse rend le texte.
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
@@ -1036,6 +1039,11 @@ def make_html(data):
 
 def generate(project_path: str | Path, output: str | Path | None = None,
              *, display_witness_ids=None, text_mode=None, text_witness=None, highlight_nonlem=None):
+    """Génère le viewer web du projet ``project_path`` : données
+    (``build_dataset``), images locales copiées à côté de la page, page HTML
+    écrite dans ``output`` (relatif au dossier du projet) ou, par défaut, dans
+    le dossier de sortie web du projet. Renvoie ``(chemin de la page, pages
+    manquantes, données)``."""
     project = load_project(project_path)
     data, missing = build_dataset(project, display_witness_ids=display_witness_ids,
                                   text_mode=text_mode, text_witness=text_witness,
@@ -1059,6 +1067,10 @@ def generate(project_path: str | Path, output: str | Path | None = None,
 
 
 def main(argv=None):
+    """Ligne de commande : ``python -m web_viewer.generator`` suivi du chemin
+    d'un project.xml. Génère le viewer du projet, puis affiche le chemin de la
+    page, le nombre de témoins et de lignes du témoin pivot, et les pages
+    manquantes. Sans argument : l'usage, et le code 2 ; sinon 0."""
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv:
         # Aucun projet n'est livré avec Varians : il faut en désigner un.

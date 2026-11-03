@@ -34,15 +34,19 @@ class BusyIndicator(QWidget):
         self.hide()
 
     def start(self):
+        """Montre l'indicateur et lance l'animation, si elle ne tourne pas
+        déjà."""
         if not self._timer.isActive():
             self._timer.start()
         self.show()
 
     def stop(self):
+        """Arrête l'animation et masque l'indicateur."""
         self._timer.stop()
         self.hide()
 
     def is_running(self):
+        """L'animation tourne-t-elle ?"""
         return self._timer.isActive()
 
     def _advance(self):
