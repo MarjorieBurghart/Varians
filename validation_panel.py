@@ -49,10 +49,12 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QFrame, QHBoxLayout, QHeaderView, QLabel, QMessageBox, QTableWidget,
     QTableWidgetItem, QToolButton, QVBoxLayout,
 )
-from app_context import call_later, tr as _t
+from app_context import (call_later, remember_rules_choice, remember_site_choice, rules_choice, site_choice,
+                         tr as _t)
 from project_config import DocumentConfig
 from relaxng_validation import ValidationIssue, lxml_available, relaxng_schema_token
-from schema_resolution import detect_xml_models, resolve_schema
+from schema_resolution import detect_xml_models, resolve_schema, rules_outside, schema_site
+from text_search import Utf16Positions
 from validation_worker import worker_client
 from xml_assembly import path_key
 
@@ -327,10 +329,11 @@ class ValidationPanelMixin:
         if not block.isValid():
             return
         cursor = QTextCursor(block)
-        # Les colonnes libxml2 sont 1-based lorsqu'elles sont connues.
-        offset = max(0, int(column or 1) - 1)
-        offset = min(offset, max(0, block.length() - 1))
-        cursor.setPosition(block.position() + offset)
+        # Les colonnes libxml2 sont 1-based lorsqu'elles sont connues ; elles
+        # comptent des caractères, Qt des unités UTF-16 (red team, A2).
+        line_text = block.text()
+        offset = min(max(0, int(column or 1) - 1), len(line_text))
+        cursor.setPosition(block.position() + Utf16Positions(line_text).qt(offset))
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
@@ -461,13 +464,14 @@ class ValidationPanelMixin:
                                        document_revision=revision, background=True)
 
     def validate_relaxng_manual(self):
-        self.validate_relaxng_document(show_panel=True, show_success_message=True)
+        self.validate_relaxng_document(show_panel=True, show_success_message=True, ask_rules=True)
 
     def refresh_schema_cache(self):
         """Force le rechargement d'un RNG distant déclaré par xml-model."""
         self._completion_model = None
         self._completion_model_key = None
-        self.validate_relaxng_document(show_panel=True, show_success_message=True, refresh_schema=True)
+        self.validate_relaxng_document(show_panel=True, show_success_message=True, refresh_schema=True,
+                                       ask_rules=True)
 
     def _set_schematron_label(self, text="", style="", tip=""):
         """L'étiquette Schematron de la barre d'état ; un clic ouvre la boîte
@@ -477,6 +481,87 @@ class ValidationPanelMixin:
         self.schematron_status.setText(text)
         self.schematron_status.setStyleSheet(style)
         self.schematron_status.setToolTip(tip)
+
+    # --- Règles hors du projet (red team, B2) --------------------------------
+
+    def _rules_to_confirm(self, resolution):
+        """Les sources de règles de *resolution* à confirmer : hors du
+        projet (``schema_resolution.rules_outside``)."""
+        sources = tuple(getattr(resolution, "schematron_sources", ()) or ())
+        trusted = (self._schema_file,) if self._schema_file else ()
+        return rules_outside(sources, self.project.root_dir, trusted=trusted) if sources else ()
+
+    def _allowed_rules(self, resolution):
+        """*resolution* sans les sources hors du projet que l'utilisatrice
+        n'a pas acceptées, rangées dans ``schematron_refused`` (sans
+        question)."""
+        refused = tuple(source for source in self._rules_to_confirm(resolution) if rules_choice(source) is not True)
+        if not refused:
+            return resolution
+        keys = {path_key(source) for source in refused}
+        return replace(resolution, schematron_refused=tuple(resolution.schematron_refused) + refused,
+                       schematron_sources=tuple(source for source in resolution.schematron_sources
+                                                if path_key(source) not in keys))
+
+    def _approved_rules(self, resolution, *, ask_refused=False):
+        """Demande s'il faut appliquer chaque source hors du projet sans
+        réponse mémorisée, ou (*ask_refused* : F8) refusée ; renvoie
+        *resolution* sans celles qui restent refusées."""
+        for source in self._rules_to_confirm(resolution):
+            choice = rules_choice(source)
+            if choice is None or (ask_refused and choice is False):
+                remember_rules_choice(source, self._ask_rules(source))
+        return self._allowed_rules(resolution)
+
+    def _ask_rules(self, source):
+        """La question pour la source *source* : True pour l'appliquer."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle(_t("schematron.outside.title"))
+        box.setText(_t("schematron.outside.text", path=str(Path(source)), command=_t("toolbar.validate_rng")))
+        apply_button = box.addButton(_t("schematron.outside.apply"), QMessageBox.ButtonRole.AcceptRole)
+        skip_button = box.addButton(_t("schematron.outside.skip"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(skip_button)
+        box.setEscapeButton(skip_button)
+        box.exec()
+        return box.clickedButton() is apply_button
+
+    # --- Schémas distants (red team, B2) ----------------------------------------
+
+    def _schema_site_policy(self, *, ask=True, ask_refused=False):
+        """``may_fetch`` de resolve_schema : un site accepté ou refusé est
+        mémorisé ; sans réponse (ou refusé, avec *ask_refused* : F8), la
+        question est posée si *ask*, une fois par site pendant la
+        résolution."""
+        answers = {}
+
+        def may_fetch(url):
+            site = schema_site(url)
+            if site not in answers:
+                choice = site_choice(site)
+                if ask and (choice is None or (ask_refused and choice is False)):
+                    choice = self._ask_site(site, url)
+                    remember_site_choice(site, choice)
+                answers[site] = bool(choice)
+            return answers[site]
+
+        return may_fetch
+
+    def _ask_site(self, site, url):
+        """La question pour le site *site* (adresse *url*) : True pour
+        télécharger."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Warning)
+        box.setTextFormat(Qt.TextFormat.PlainText)
+        box.setWindowTitle(_t("schemas.site.title"))
+        box.setText(_t("schemas.site.text", site=site, url=url, command=_t("toolbar.validate_rng")))
+        allow_button = box.addButton(_t("schemas.site.allow"), QMessageBox.ButtonRole.AcceptRole)
+        refuse_button = box.addButton(_t("schemas.site.refuse"), QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(refuse_button)
+        box.setEscapeButton(refuse_button)
+        box.exec()
+        return box.clickedButton() is allow_button
 
     def _update_schematron_status(self, resolution):
         """Avant la validation : l'étiquette Schematron quand aucune règle ne
@@ -517,6 +602,14 @@ class ValidationPanelMixin:
                      if phases.get(path_key(path)) else Path(path).name for path in applied]
             names = [self._source_tip_name(name, path, texts) for name, path in zip(names, applied)]
             tips.insert(0, _t("schematron.tip.sources", sources=", ".join(names)))
+        refused = tuple(getattr(resolution, "schematron_refused", ()) or ())
+        if refused:
+            tips.append(_t("schematron.tip.refused", files=", ".join(str(Path(path)) for path in refused)))
+        # Règles déclarées sur un site refusé (schéma compris).
+        sites = tuple(getattr(resolution, "refused_sites", ()) or ()) if getattr(resolution, "schematron", ()) else ()
+        if sites:
+            tips.append(_t("schematron.tip.site_refused", sites=", ".join(sites)))
+            refused += sites
         messages = [issue for issue in (result.issues if result is not None else ()) if _is_schematron(issue)]
         errors = sum(1 for issue in messages if _is_error(issue))
         if result is not None and result.schematron_error == "saxon_missing":
@@ -525,6 +618,8 @@ class ValidationPanelMixin:
         elif problems:
             self._set_schematron_label(_t("schematron.status.rules_error"), "color:#a13d32;font-weight:600",
                                        "\n".join(tips))
+        elif refused and not applied:
+            self._set_schematron_label(_t("schematron.status.refused"), "color:#a14b2f", "\n".join(tips))
         elif result is None or not (result.well_formed and result.schema_loaded):
             self._set_schematron_label()
         elif errors:
@@ -578,6 +673,7 @@ class ValidationPanelMixin:
         (V0.9.2.5) le texte non enregistré d'un fichier de règles ouvert."""
         if resolution is None:
             return None
+        resolution = self._allowed_rules(resolution)
         paths = [Path(resolution.schema_path)] if resolution.schema_path is not None else []
         paths += [Path(source) for source in resolution.schematron_sources if Path(source) not in paths]
         unsaved = {path_key(path) for path in self._rules_texts(resolution)}
@@ -602,11 +698,13 @@ class ValidationPanelMixin:
         # Des règles Schematron sans RELAX NG.
         return ", ".join(Path(path).name for path in resolution.schematron_sources)
 
-    def validate_relaxng_document(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False, background=False):
+    def validate_relaxng_document(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False, background=False, ask_rules=False):
         """Valide la révision courante, sans revalidation récursive du panneau.
 
         ``background`` : sans attendre la réponse (validation automatique) ;
-        renvoie alors None, le résultat est affiché à son arrivée."""
+        renvoie alors None, le résultat est affiché à son arrivée.
+        ``ask_rules`` (F8) : redemander pour les règles hors du projet
+        refusées (``_approved_rules``)."""
         if getattr(self, '_rng_validation_in_progress', False):
             return None
         self._rng_validation_in_progress = True
@@ -615,11 +713,12 @@ class ValidationPanelMixin:
                 show_panel=show_panel, show_success_message=show_success_message,
                 refresh_schema=refresh_schema, xml_text=xml_text,
                 document_revision=document_revision, automatic=automatic, background=background,
+                ask_rules=ask_rules,
             )
         finally:
             self._rng_validation_in_progress = False
 
-    def _validate_relaxng_document_impl(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False, background=False):
+    def _validate_relaxng_document_impl(self, *, show_panel=False, show_success_message=False, refresh_schema=False, xml_text=None, document_revision=None, automatic=False, background=False, ask_rules=False):
         """Résout puis valide le RNG actif.
 
         ``xml_text`` permet à Ctrl+S de réutiliser son unique instantané du
@@ -646,15 +745,20 @@ class ValidationPanelMixin:
             schema_text = edition.text_document.toPlainText()
             schema_xml_path = edition.path or self.project.edition
         key = self._schema_resolution_cache_key(schema_text)
-        if not refresh_schema and self._completion_resolution_key == key and self._completion_resolution is not None:
-            resolution = self._completion_resolution
+        cached = self._completion_resolution
+        if (not refresh_schema and self._completion_resolution_key == key and cached is not None
+                and not cached.refused_sites):
+            resolution = cached
         else:
+            # Hors du site de la TEI, un schéma n'est téléchargé qu'avec
+            # l'accord de l'utilisatrice (red team, B2).
             resolution = resolve_schema(
                 mode=self._schema_mode,
                 xml_text=schema_text,
                 xml_path=schema_xml_path,
                 project_schema=self._schema_file,
                 force_refresh=refresh_schema,
+                may_fetch=self._schema_site_policy(ask_refused=ask_rules),
             )
         # Le chargement/résolution du schéma peut être long (cache distant).
         # Si le document a changé entre-temps, ne jamais publier les anciennes
@@ -663,12 +767,15 @@ class ValidationPanelMixin:
             if self._rng_watch_enabled:
                 self.rng_refresh_timer.start(180)
             return None
-        self._last_schema_resolution = resolution
         # La validation explicite vient de faire le travail de résolution : la
         # complétion peut réutiliser exactement ce résultat tant que xml-model
         # n'est pas modifié.
         self._completion_resolution_key = self._schema_resolution_cache_key(schema_text)
         self._completion_resolution = resolution
+        # Règles hors du projet : appliquées seulement si l'utilisatrice les
+        # accepte (red team, B2).
+        resolution = self._approved_rules(resolution, ask_refused=ask_rules)
+        self._last_schema_resolution = resolution
         self._update_schematron_status(resolution)
 
         if self._schema_mode == "none":
@@ -687,9 +794,15 @@ class ValidationPanelMixin:
             self._last_rng_revision = revision
             self._clear_validation_table()
             self._show_schematron_result(resolution, None)
-            self.validation_summary.setText(_t("rng.panel.schema_resolution_error", error=resolution.error))
-            self.rng_status.setText(_t("rng.status.schema_error"))
-            self.rng_status.setStyleSheet("color:#a13d32;font-weight:600")
+            if resolution.rng_refused_site:                      # site refusé (red team, B2)
+                self.validation_summary.setText(_t("rng.panel.site_refused", sites=resolution.rng_refused_site,
+                                                   command=_t("toolbar.validate_rng")))
+                self.rng_status.setText(_t("rng.status.site_refused"))
+                self.rng_status.setStyleSheet("color:#a14b2f;font-weight:600")
+            else:
+                self.validation_summary.setText(_t("rng.panel.schema_resolution_error", error=resolution.error))
+                self.rng_status.setText(_t("rng.status.schema_error"))
+                self.rng_status.setStyleSheet("color:#a13d32;font-weight:600")
             if show_panel:
                 self.show_validation_panel()
             return None

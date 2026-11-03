@@ -386,8 +386,9 @@ def test_the_lines_of_the_pivot_in_a_reading_not_shown_keep_their_keys():
     # Une ligne du pivot ouverte dans sa leçon non affichée garde sa clé : au
     # début de l'<app> si elle précède le texte de cette leçon, sinon à la
     # fin ; sans espace ni mot soudé. Un <lb/> sans @edRef d'une leçon
-    # affichée d'un autre témoin n'est pas une ligne du pivot.
-    body = ('<div><p><lb edRef="#A"/>a <app><lem wit="#B">il<lb/>le</lem><rdg wit="#A">is<lb edRef="#A" '
+    # affichée d'un autre témoin n'est pas une ligne du pivot ; il soude le
+    # mot s'il porte break="no" (règle TEI, red team 2).
+    body = ('<div><p><lb edRef="#A"/>a <app><lem wit="#B">il<lb break="no"/>le</lem><rdg wit="#A">is<lb edRef="#A" '
             'break="no"/>te</rdg></app> b <app><lem wit="#B">alter</lem><rdg wit="#A"><lb edRef="#A"/>alius</rdg>'
             '</app> c</p></div>')
     reading = _chosen(body, keys=["P::1", "P::2", "P::3"], text_mode="established")

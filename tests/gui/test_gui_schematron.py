@@ -345,7 +345,7 @@ def test_saved_rules_are_applied_on_return_to_the_edition(open_window, example_p
 
 
 @needs_saxon
-def test_a_rules_file_outside_the_project_is_not_opened(open_window, example_project, tmp_path):
+def test_a_rules_file_outside_the_project_is_not_opened(open_window, example_project, tmp_path, dialogs):
     outside = tmp_path / "ailleurs" / "regles.sch"
     outside.parent.mkdir()
     outside.write_text(RULES.replace("@kind = ('a', 'b')", "@kind = ("), encoding="utf-8")
@@ -353,6 +353,8 @@ def test_a_rules_file_outside_the_project_is_not_opened(open_window, example_pro
     edition = example_project.parent / "xml" / "edition.xml"
     edition.write_text(edition.read_text(encoding="utf-8").replace('href="regles.sch"', f'href="{outside.as_uri()}"'),
                        encoding="utf-8")
+    # Règles hors du projet : appliquées après accord (red team, B2).
+    dialogs.expect("box", QMessageBox.ButtonRole.AcceptRole)
     window = open_window(example_project)
     window.validate_relaxng_manual()
     [row] = _rows(window)

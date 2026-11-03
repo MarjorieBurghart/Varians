@@ -15,13 +15,12 @@
   <string key="common.next">Další</string>
   <string key="common.none">žádná</string>
   <string key="common.line">řádek</string>
-  <string key="common.lines">řádky</string>
   <string key="common.score">skóre</string>
   <string key="common.page">Stránka ↗</string>
   <string key="common.frames">Rámečky</string>
   <string key="manuscript.frames.tip">Zobrazit obrysy řádků pouze pro tento rukopis. Oranžová: synchronizovaný řádek; modrá: ručně vybraný řádek.</string>
   <string key="manuscript.frames.no_geometry">Obrys řádku nelze vykreslit: pro tento řádek nejsou dostupné použitelné souřadnice.</string>
-  <string key="manuscript.iiif_unassociated_layout.tip">U {count} stránek ALTO/PAGE nebylo možné bezpečně určit odpovídající obraz IIIF. Obrazy zůstávají dostupné. Pro zobrazení obrysů řádků přiřaďte soubory OCR ke canvasům v nastavení svědka.</string>
+  <string key="manuscript.iiif_unassociated_layout.tip">U {count, plural, one {# stránky} other {# stránek}} ALTO/PAGE nebylo možné bezpečně určit odpovídající obraz IIIF. Obrazy zůstávají dostupné. Pro zobrazení obrysů řádků přiřaďte soubory OCR ke canvasům v nastavení svědka.</string>
   <string key="common.language">Jazyk:</string>
   <string key="toolbar.title">Synchronizace a hledání</string>
   <string key="toolbar.open">Otevřít</string>
@@ -43,9 +42,9 @@
   <string key="tab.preview">Zobrazení XSLT / CSS</string>
   <string key="status.xml.initial">XML: —</string>
   <string key="status.cursor">řádek {line}, sloupec {column}</string>
-  <string key="status.structure.expected">{base}: očekáváno {count} řádků</string>
-  <string key="status.structure.ok">{base}: {count} řádků ✓</string>
-  <string key="status.structure.changed">{base}: {count} řádků — očekáváno {expected}</string>
+  <string key="status.structure.expected">{base}: {count, plural, one {očekáván # řádek} few {očekávány # řádky} other {očekáváno # řádků}}</string>
+  <string key="status.structure.ok">{base}: {count, plural, one {# řádek} few {# řádky} other {# řádků}} ✓</string>
+  <string key="status.structure.changed">{base}: {count, plural, one {# řádek} few {# řádky} other {# řádků}} — očekáváno {expected}</string>
   <string key="status.saved">Uloženo: {path}</string>
   <string key="status.search.xml.found">Hledání v XML: výskyt {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Hledání v XML: bez výskytu — {query}</string>
@@ -75,8 +74,8 @@
   <string key="preview.files_missing">Soubor XSLT nebo CSS nebyl nalezen. Vyberte soubory tlačítky výše.</string>
   <string key="preview.up_to_date">Náhled je již aktuální · {engine}. Není třeba jej znovu načítat.</string>
   <string key="preview.xml_invalid">Náhled nebyl aktualizován: XML dočasně není správně utvořené ({error}). Zůstává zobrazen poslední platný náhled.</string>
-  <string key="preview.updated.lines">Náhled aktualizován: {paragraphs} upravitelných odstavců · {lines} klikacích řádků pivotního svědka.</string>
-  <string key="preview.updated.no_lines">Náhled aktualizován: {paragraphs} upravitelných odstavců. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
+  <string key="preview.updated.lines">Náhled aktualizován: {paragraphs, plural, one {# upravitelný odstavec} few {# upravitelné odstavce} other {# upravitelných odstavců}} · {lines, plural, one {# klikací řádek} few {# klikací řádky} other {# klikacích řádků}} pivotního svědka.</string>
+  <string key="preview.updated.no_lines">Náhled aktualizován: {paragraphs, plural, one {# upravitelný odstavec} few {# upravitelné odstavce} other {# upravitelných odstavců}}. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
   <string key="preview.transform_error">Chyba transformace XSLT: {error}</string>
   <string key="preview.base_selected">Vybrán řádek {line} pivotního svědka · svědci synchronizováni.</string>
   <string key="preview.toc">Obsah</string>
@@ -134,8 +133,16 @@ Vložení bylo zrušeno, aby se zabránilo neočekávanému značkování.</stri
   <string key="file.open.error.title">Soubor se nepodařilo otevřít</string>
   <string key="file.save_as.title">Uložit edici TEI</string>
   <string key="file.save.error.title">Chyba při ukládání</string>
+  <string key="file.save.read_only">Soubor {path} je jen pro čtení: Varians jej nenahradí. Uložte jej pod jiným názvem ({menu} ▸ {command}), nebo povolte zápis do souboru a uložte znovu.</string>
+  <string key="file.changed.title">Soubor změněn mimo Varians</string>
+  <string key="file.changed.text">{path}\n\nbyl změněn mimo Varians od chvíle, kdy jste jej otevřeli nebo uložili (jiným programem, synchronizací…).\n\nPřepsat: uložit vaši verzi místo něj (druhá zůstane v kopii .bak).\nZnovu načíst: zahodit vaše změny a zobrazit soubor tak, jak je nyní.\nZrušit: nic neukládat.</string>
+  <string key="file.changed.overwrite">Přepsat</string>
+  <string key="file.changed.reload">Znovu načíst</string>
+  <string key="file.encoding.title">Kódování dokumentu</string>
+  <string key="file.encoding.text">Tento dokument deklaruje kódování {encoding}, ale Varians vždy ukládá v UTF-8: s touto deklarací by jiné programy chybně četly jeho znaky s diakritikou.\n\nOpravit deklaraci na encoding="UTF-8" a uložit? (Zrušit: nic se neuloží.)</string>
+  <string key="file.encoding.fix">Opravit a uložit</string>
   <string key="file.structure.title">Struktura {base} se změnila</string>
-  <string key="file.structure.text">XML obsahuje {count} řádků {base} místo {expected}.
+  <string key="file.structure.text">XML obsahuje {count, plural, one {# řádek} few {# řádky} other {# řádků}} {base} místo {expected}.
 
 Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu zarovnat.</string>
   <string key="file.unsaved.title">Neuložené změny</string>
@@ -146,6 +153,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="file.discard_quit">Skončit bez uložení</string>
   <string key="xml.invalid.title">XML není správně utvořené</string>
   <string key="xml.invalid">XML není správně utvořené{where}: {error}</string>
+  <string key="xml.invalid.where"> — řádek {line}, sloupec {column}</string>
   <string key="xml.valid">XML je správně utvořené ✓</string>
   <string key="webgen.wrong_file.title">Webový prohlížeč</string>
   <string key="webgen.wrong_file.text">Generátor používá soubor &lt;edition&gt; deklarovaný v project.xml. Aktuálně otevřený soubor není tímto projektovým souborem.</string>
@@ -159,13 +167,13 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="webgen.text.pivot">Pivot (každého textu)</string>
   <string key="webgen.text.missing_hint">Místa, kde zvolený svědek nemá čtení, jsou v prohlížeči označena.</string>
   <string key="webgen.text.generate">Vytvořit</string>
-  <string key="webgen.text.missing">\n\n{count} míst bez čtení svědka {witness}, v prohlížeči označeno.</string>
+  <string key="webgen.text.missing">\n\n{count, plural, one {# místo bez čtení svědka {witness}, označené} few {# místa bez čtení svědka {witness}, označená} other {# míst bez čtení svědka {witness}, označených}} v prohlížeči.</string>
   <string key="webgen.text.unknown">\n\nNeznámý svědek v project.xml: {witness}; místo něj se použije pivot.</string>
   <string key="webgen.done.title">Webový prohlížeč vygenerován</string>
   <string key="webgen.done.text">Prohlížeč vygenerován:
 {output}
 
-{witnesses} svědků, {lines} základních řádků.</string>
+{witnesses, plural, one {# svědek} few {# svědci} other {# svědků}}, {lines, plural, one {# základní řádek} few {# základní řádky} other {# základních řádků}}.</string>
   <string key="webgen.missing">
 
 Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
@@ -187,12 +195,14 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="viewer.score"> · {score} %</string>
   <string key="viewer.info.line">{page} · řádek {line}</string>
   <string key="viewer.info.no_line">Žádný řádek.</string>
-  <string key="viewer.stats">{witnesses} svědků · {lines} základních řádků · {variants} variant</string>
+  <string key="viewer.stats">{witnesses, plural, one {# svědek} few {# svědci} other {# svědků}} · {lines, plural, one {# základní řádek} few {# základní řádky} other {# základních řádků}} · {variants, plural, one {# varianta} few {# varianty} other {# variant}}</string>
   <string key="viewer.toc">Obsah</string>
   <string key="viewer.text.established">Ustavený text (&lt;lem&gt;), jinak {witness}</string>
   <string key="viewer.text.witness">Text svědka {witness}</string>
   <string key="viewer.text.pivot">pivotní svědek</string>
-  <string key="viewer.text.missing">{count} míst bez čtení svědka {witness}, označeno</string>
+  <string key="viewer.text.missing">{count, plural, one {# místo bez čtení svědka {witness}, označené} few {# místa bez čtení svědka {witness}, označená} other {# míst bez čtení svědka {witness}, označených}}</string>
+  <string key="viewer.text.witness_pivot">Text pivotního svědka</string>
+  <string key="viewer.text.missing_pivot">{count, plural, one {# místo bez čtení pivotního svědka, označené} few {# místa bez čtení pivotního svědka, označená} other {# míst bez čtení pivotního svědka, označených}}</string>
   <string key="viewer.missing">Zde není čtení svědka {witness}: {fallback}</string>
   <string key="viewer.missing.lem">text &lt;lem&gt;</string>
   <string key="viewer.missing.reading">čtení svědka {witness}</string>
@@ -220,6 +230,8 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="publication.critique.call_apparatus">Aparát {n}</string>
   <string key="publication.critique.call_note">Poznámka {n}</string>
   <string key="publication.critique.back">Zpět k textu</string>
+  <string key="publication.critique.front_matter">Úvodní část</string>
+  <string key="publication.critique.back_matter">Přílohy</string>
   <string key="publication.reference">[odkaz]</string>
   <string key="publication.caesura">Cezura</string>
   <string key="publication.unclear">Nejisté čtení</string>
@@ -229,7 +241,8 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="publication.gap.extent">[mezera: {extent}]</string>
   <string key="publication.page">Strana: {n}</string>
   <string key="publication.not_available">[čtení svědka není k dispozici]</string>
-  <string key="publication.error.no_lemma">temoin-de-base=aucun: {count} položek aparátu bez lemmatu (lem). Doplňte ke každé lemma, nebo zvolte svědka.</string>
+  <string key="publication.editor_siglum">ed.</string>
+  <string key="publication.error.no_lemma">temoin-de-base=aucun: položky aparátu bez lemmatu (lem): {count}. Doplňte ke každé lemma, nebo zvolte svědka.</string>
   <string key="publication.error.unknown_witness">Neznámý svědek: {witness} (deklarovaní svědkové: {witnesses}).</string>
   <string key="viewer.language">Jazyk</string>
   <string key="viewer.variant">varianta</string>
@@ -240,8 +253,8 @@ Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="console.missing_pages">Stránky chybějící v mezipaměti pivotního svědka: {pages}</string>
   <string key="preview.choose_xslt">Vybrat styl XSLT</string>
   <string key="preview.choose_css">Vybrat styl CSS</string>
-  <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných prvků · {lines} klikacích řádků pivotního svědka.</string>
-  <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs} upravitelných prvků. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
+  <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}} · {lines, plural, one {# klikací řádek} few {# klikací řádky} other {# klikacích řádků}} pivotního svědka.</string>
+  <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}}. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
   <string key="viewer.image_unavailable">Obrázek IIIF není dostupný</string>
   <string key="status.base_line">{base} řádek {line}/{total}</string>
   <string key="common.all_files">Všechny soubory</string>
@@ -398,7 +411,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="toolbar.format_xml.tip">Odsadit pouze oblasti XML/TEI, které lze bezpečně formátovat</string>
   <string key="format_xml.invalid">Odsazení zrušeno: XML není správně utvořené ({error})</string>
   <string key="format_xml.no_change">Odsazení: žádná bezpečná změna formátování k provedení.</string>
-  <string key="format_xml.done">XML odsazeno: naformátováno {count} strukturálních oblastí.</string>
+  <string key="format_xml.done">XML odsazeno: {count, plural, one {naformátována # strukturální oblast} few {naformátovány # strukturální oblasti} other {naformátováno # strukturálních oblastí}}.</string>
   <string key="rng.panel.title">Validace RELAX NG a Schematron</string>
   <string key="rng.panel.no_validation">Dosud nebyla spuštěna žádná validace.</string>
   <string key="rng.panel.no_schema">K tomuto projektu není přiřazeno žádné schéma RELAX NG.</string>
@@ -406,9 +419,9 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="rng.panel.schema_error">Schéma {path} se nepodařilo načíst: {error}</string>
   <string key="rng.panel.xml_invalid">XML není správně utvořené; validaci RELAX NG nelze spustit.</string>
   <string key="rng.panel.valid">Dokument je podle {schema} platný.</string>
-  <string key="rng.panel.invalid">{count} validačních chyb podle {schema}. Dvojklikem na chybu přejdete na odpovídající řádek.</string>
-  <string key="rng.panel.invalid.schematron">{count} validačních chyb podle {schema}: {rng} RELAX NG, {schematron} Schematron. Dvojklikem na chybu přejdete na odpovídající řádek.</string>
-  <string key="rng.panel.valid.messages">Dokument je podle {schema} platný; pravidla Schematron hlásí {count} zpráv (varování, informace).</string>
+  <string key="rng.panel.invalid">{count, plural, one {# validační chyba} few {# validační chyby} other {# validačních chyb}} podle {schema}. Dvojklikem na chybu přejdete na odpovídající řádek.</string>
+  <string key="rng.panel.invalid.schematron">{count, plural, one {# validační chyba} few {# validační chyby} other {# validačních chyb}} podle {schema}: {rng} RELAX NG, {schematron} Schematron. Dvojklikem na chybu přejdete na odpovídající řádek.</string>
+  <string key="rng.panel.valid.messages">Dokument je podle {schema} platný; pravidla Schematron hlásí {count, plural, one {# zprávu} few {# zprávy} other {# zpráv}} (varování, informace).</string>
   <string key="rng.panel.close">Skrýt panel validace</string>
   <string key="rng.column.level">Úroveň</string>
   <string key="rng.column.origin">Původ</string>
@@ -431,7 +444,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="rng.status.schema_error">RNG: neplatné schéma</string>
   <string key="rng.status.xml_invalid">RNG: neplatné XML</string>
   <string key="rng.status.valid">RNG: platné ✓</string>
-  <string key="rng.status.invalid">RNG: {count} chyb</string>
+  <string key="rng.status.invalid">RNG: {count, plural, one {# chyba} few {# chyby} other {# chyb}}</string>
   <string key="rng.message.no_schema">K tomuto projektu není přiřazeno žádné schéma RELAX NG.</string>
   <string key="rng.message.valid">Validace RELAX NG: dokument je platný.</string>
   <string key="rng.lxml_missing.title">Validace RELAX NG není dostupná</string>
@@ -452,8 +465,8 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="rng.panel.schema_resolution_error">Deklarované schéma se nepodařilo vyřešit: {error}</string>
   <string key="rng.status.no_xml_model">RNG: bez xml-model</string>
   <string key="schematron.status.valid">Schematron: ✓</string>
-  <string key="schematron.status.errors">Schematron: {count} chyb</string>
-  <string key="schematron.status.messages">Schematron: {count} zpráv</string>
+  <string key="schematron.status.errors">Schematron: {count, plural, one {# chyba} few {# chyby} other {# chyb}}</string>
+  <string key="schematron.status.messages">Schematron: {count, plural, one {# zpráva} few {# zprávy} other {# zpráv}}</string>
   <string key="schematron.status.no_rules">Schematron: žádná pravidla</string>
   <string key="schematron.status.rules_error">Schematron: chybná pravidla</string>
   <string key="schematron.status.saxon_missing">Schematron: chybí Saxon</string>
@@ -468,6 +481,19 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="schematron.tip.unsaved">{name}, neuloženo</string>
   <string key="schematron.tip.unsaved_included">{name} (neuloženo: {files})</string>
   <string key="schematron.tip.click">Kliknutím zvolíte soubory pravidel a jejich fázi.</string>
+  <string key="schematron.outside.title">Pravidla Schematron mimo projekt</string>
+  <string key="schematron.outside.text">Tento dokument deklaruje pravidla Schematron umístěná mimo složku projektu:\n{path}\n\nVarians tato pravidla spouští, aby dokument ověřil. Nemohou zapisovat soubory ani přistupovat k síti, ale použijte je jen tehdy, pokud víte, odkud pocházejí.\n\nVaše odpověď se zapamatuje. U nepoužitých pravidel se „{command}“ (F8) zeptá znovu.</string>
+  <string key="schematron.outside.apply">Použít tato pravidla</string>
+  <string key="schematron.outside.skip">Nepoužívat je</string>
+  <string key="schematron.status.refused">Schematron: pravidla nepoužita</string>
+  <string key="schematron.tip.refused">Nepoužitá pravidla mimo projekt (F8 pro jejich přijetí): {files}</string>
+  <string key="schemas.site.title">Stáhnout z jiného webu?</string>
+  <string key="schemas.site.text">Tento dokument žádá o stažení schématu nebo pravidel Schematron z webu {site}:\n{url}\n\nBez vašeho souhlasu Varians stahuje pouze z webu TEI (tei-c.org). Stažení z jiného webu mu prozradí, že tento dokument otevíráte, a pravidla Schematron, která poskytuje, by byla použita.\n\nVaše odpověď platí pro celý web a zapamatuje se. U odmítnutého webu se „{command}“ (F8) zeptá znovu.</string>
+  <string key="schemas.site.allow">Stáhnout</string>
+  <string key="schemas.site.refuse">Nestahovat</string>
+  <string key="rng.status.site_refused">RNG: schéma nestaženo</string>
+  <string key="rng.panel.site_refused">Schéma nebylo staženo: web {sites} není povolen. Dokument není ověřen. „{command}“ (F8) se zeptá znovu.</string>
+  <string key="schematron.tip.site_refused">Nestaženo (web není povolen, F8 pro povolení): {sites}</string>
   <string key="schematron.panel.rules_button">Pravidla…</string>
   <string key="schematron.panel.rules_button.tip">Pravidla Schematron dokumentu: deklarované soubory pravidel a kontrolovaná fáze</string>
   <string key="schematron.dialog.title">Pravidla Schematron dokumentu</string>
@@ -504,7 +530,7 @@ Náhled XSLT a validace RELAX NG mohou zůstat nedostupné, dokud nebude opraven
 
 Přesto uložit?</string>
   <string key="file.save_rng_invalid.title">Dokument není platný</string>
-  <string key="file.save_rng_invalid.text">Dokument je správně utvořený, ale validace (RELAX NG, pravidla Schematron) hlásí {count} chyb. Můžete jej uložit a chyby opravit později.
+  <string key="file.save_rng_invalid.text">Dokument je správně utvořený, ale validace (RELAX NG, pravidla Schematron) hlásí {count, plural, one {# chybu} few {# chyby} other {# chyb}}. Můžete jej uložit a chyby opravit později.
 
 Přesto uložit?</string>
   <string key="xml.health.malformed.tooltip">XML není správně utvořené — po varování je uložení povoleno.</string>
@@ -554,9 +580,9 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="xpath.empty">Zadejte výraz XPath.</string>
   <string key="xpath.error">Neplatný výraz XPath nebo XML nelze analyzovat: {error}</string>
   <string key="xpath.scalar">Výsledek XPath: {value}</string>
-  <string key="xpath.found">Nalezeno {count} prvků. Kliknutím na výsledek přejdete na odpovídající místo v XML.</string>
-  <string key="xpath.found_tei_fallback">Nalezeno {count} prvků. Výraz byl v jmenném prostoru TEI interpretován jako: {expression}</string>
-  <string key="xpath.non_elements">Dotaz vrátil {count} výsledků, které nejsou prvky; v tomto panelu lze navigovat pouze na prvky XML.</string>
+  <string key="xpath.found">{count, plural, one {Nalezen # prvek} few {Nalezeny # prvky} other {Nalezeno # prvků}}. Kliknutím na výsledek přejdete na odpovídající místo v XML.</string>
+  <string key="xpath.found_tei_fallback">{count, plural, one {Nalezen # prvek} few {Nalezeny # prvky} other {Nalezeno # prvků}}. Výraz byl v jmenném prostoru TEI interpretován jako: {expression}</string>
+  <string key="xpath.non_elements">Dotaz vrátil {count, plural, one {# výsledek, který není prvkem} few {# výsledky, které nejsou prvky} other {# výsledků, které nejsou prvky}}; v tomto panelu lze navigovat pouze na prvky XML.</string>
   <string key="xpath.none">Tomuto výrazu XPath neodpovídá žádný prvek.</string>
   <string key="menu.close_project">Zavřít projekt</string>
   <string key="help.about">O aplikaci…</string>
@@ -574,7 +600,7 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="completion.custom.notice">Návrhy „Projekt“ pocházejí z custom-elements.xml a neovlivňují platnost podle RELAX NG.</string>
   <string key="completion.custom.replace_notice">Projektový seznam pro zápis: nahrazuje zde zobrazené návrhy, ale neomezuje platnost podle RELAX NG.</string>
   <string key="status.structure.no_alignment">{base}: bez synchronizace řádků</string>
-  <string key="status.structure.free">{base}: {count} řádků TEI (bez synchronizace)</string>
+  <string key="status.structure.free">{base}: {count, plural, one {# řádek TEI} few {# řádky TEI} other {# řádků TEI}} (bez synchronizace)</string>
   <string key="manuscript.no_image_source">K této stránce není přiřazen žádný zdroj obrázku.</string>
   <string key="project.witness.alignment.optional">Soubor synchronizace (volitelný)</string>
   <string key="project.witness.images.files">Místní obrázky</string>
@@ -596,7 +622,7 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="project.witness.iiif">Manifest IIIF</string>
   <string key="project.witness.iiif.load">Načíst / aktualizovat</string>
   <string key="project.witness.iiif.hint">Vložte URL manifestu IIIF Presentation 2 nebo 3. Varians uchová v projektu místní kopii jeho metadat.</string>
-  <string key="project.witness.iiif.loaded">Manifest načten: {count} stránek · Presentation API {version}.</string>
+  <string key="project.witness.iiif.loaded">Manifest načten: {count, plural, one {# stránka} few {# stránky} other {# stránek}} · Presentation API {version}.</string>
   <string key="project.witness.iiif.error.title">Manifest IIIF</string>
   <string key="project.validation.iiif_manifest_required">Zadejte URL manifestu IIIF.</string>
   <string key="project.witness.alto">ALTO (volitelné)</string>
@@ -628,8 +654,12 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="manuscript.mark_page.updated">Aktuální &lt;pb&gt; byl přiřazen ke stránce {page}.</string>
   <string key="manuscript.mark_page.inside_tag">Umístěte kurzor do textu nebo mezi značky.</string>
   <string key="facsimile.warning.title">Faksimile TEI</string>
+  <string key="facsimile.conflict.malformed">XML není správně utvořené: {error}</string>
+  <string key="facsimile.conflict.id_used">{surface}: toto xml:id už má jiný prvek; plocha nebyla přidána.</string>
+  <string key="facsimile.conflict.no_text">Prvek &lt;text&gt; nebyl nalezen; &lt;facsimile&gt; nebyl vytvořen.</string>
   <string key="facsimile.warning.preserved">Varians zachoval existující obsah TEI; některé automatické změny nebyly použity:</string>
-  <string key="viewer.pages">stránky</string>
+  <string key="viewer.card.lines">{count, plural, one {# řádek} few {# řádky} other {# řádků}}</string>
+  <string key="viewer.card.pages">{count, plural, one {# strana} few {# strany} other {# stran}}</string>
   <string key="viewer.info.page_lines">Řádky ALTO zjištěné na této stránce: {count}</string>
   <string key="menu.display">Zobrazení</string>
   <string key="view.witnesses.choose">Vybrat zobrazené svědky…</string>
@@ -652,13 +682,13 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="project.witness.iiif.download_progress">Stahování obrázků IIIF: {witness}</string>
   <string key="project.witness.iiif.download_page">Stahování IIIF: {witness} — strana {index}/{count}</string>
   <string key="project.witness.iiif.download_title">Neúplná místní kopie IIIF</string>
-  <string key="project.witness.iiif.download_partial">Staženo {downloaded} obrázků z {total} stran. Existující soubory jsou zachovány. Stahování lze později dokončit.</string>
+  <string key="project.witness.iiif.download_partial">{downloaded, plural, one {Stažen # obrázek} few {Staženy # obrázky} other {Staženo # obrázků}} z {total, plural, one {# strany} other {# stran}}. Existující soubory jsou zachovány. Stahování lze později dokončit.</string>
   <string key="iiif.manager.menu">Správce stahování IIIF…</string>
   <string key="iiif.manager.title">Stahování IIIF</string>
   <string key="iiif.manager.witness">Svědek:</string>
   <string key="iiif.manager.none">Projekt neobsahuje žádné svědky s IIIF.</string>
   <string key="iiif.manager.plan_error">Nelze připravit stahování: {error}</string>
-  <string key="iiif.manager.summary">{total} stran v manifestu · {eligible} vybráno · {cached} uloženo místně · {missing} ke stažení · {excluded} vynecháno</string>
+  <string key="iiif.manager.summary">{total, plural, one {# strana} few {# strany} other {# stran}} v manifestu · {eligible, plural, one {# vybrána} few {# vybrány} other {# vybráno}} · {cached, plural, one {# uložena} few {# uloženy} other {# uloženo}} místně · {missing} ke stažení · {excluded, plural, one {# vynechána} few {# vynechány} other {# vynecháno}}</string>
   <string key="iiif.manager.start">Stáhnout chybějící</string>
   <string key="iiif.manager.refresh">Znovu stáhnout výběr</string>
   <string key="iiif.manager.pause">Pozastavit</string>
@@ -667,8 +697,8 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="iiif.manager.running">Stahování probíhá (můžete pokračovat v práci).</string>
   <string key="iiif.manager.paused">Pozastaveno (po dokončení aktuálního obrázku).</string>
   <string key="iiif.manager.stopping">Zastavování po dokončení aktuálního obrázku…</string>
-  <string key="iiif.manager.page">{label} — zpracováno {index}/{count} stran</string>
-  <string key="iiif.manager.done">Dokončeno: {downloaded} staženo, {skipped} již uloženo, {failed} chyb.</string>
+  <string key="iiif.manager.page">{label} — zpracováno {index}/{count, plural, one {# strany} other {# stran}}</string>
+  <string key="iiif.manager.done">Dokončeno: {downloaded, plural, one {# stažena} few {# staženy} other {# staženo}}, {skipped, plural, one {# již uložena} few {# již uloženy} other {# již uloženo}}, {failed, plural, one {# chyba} few {# chyby} other {# chyb}}.</string>
   <string key="iiif.manager.failed">Chyba: {error}</string>
   <string key="iiif.manager.cancelled">Stahování zastaveno; již uložené obrázky zůstávají zachovány.</string>
   <string key="iiif.manager.warning">Neurčená shoda: {message}</string>
@@ -693,16 +723,16 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="iiif.picker.select_visible">Vybrat viditelné řádky</string>
   <string key="iiif.picker.clear_visible">Zrušit výběr viditelných</string>
   <string key="iiif.picker.preview">Náhled v prohlížeči</string>
-  <string key="iiif.picker.count">Vybráno {selected} z {total} obrázků</string>
+  <string key="iiif.picker.count">Vybráno {selected} z {total, plural, one {# obrázku} other {# obrázků}}</string>
   <string key="iiif.picker.mode.all">Celý manifest (původní chování)</string>
   <string key="iiif.picker.mode.selected">Jen obrázky vybrané pro edici</string>
   <string key="iiif.picker.open">Vybrat obrázky a přiřadit soubory OCR…</string>
   <string key="iiif.picker.duplicate">Tentýž soubor ALTO/PAGE nelze přiřadit více plátnům.</string>
   <string key="iiif.picker.multipage">Soubor {name} obsahuje více stran. Přiřazení celého souboru by bylo nejednoznačné; použijte samostatný soubor OCR pro každý obrázek.</string>
   <string key="iiif.prune.title">Volitelné odstranění nevyužitých ploch IIIF</string>
-  <string key="iiif.prune.question">U svědka „{witness}“ již není vybráno {count} automaticky vytvořených ploch IIIF. Neobsahují poznámky ani na ně tato TEI neodkazuje.
+  <string key="iiif.prune.question">U svědka „{witness}“ {count, plural, one {již není vybrána # automaticky vytvořená plocha IIIF. Neobsahuje poznámky ani na ni tato TEI neodkazuje.} few {již nejsou vybrány # automaticky vytvořené plochy IIIF. Neobsahují poznámky ani na ně tato TEI neodkazuje.} other {již není vybráno # automaticky vytvořených ploch IIIF. Neobsahují poznámky ani na ně tato TEI neodkazuje.}}
 
-Odstranit je z dokumentu? Vedle souboru TEI se uloží datovaná záloha.
+{count, plural, one {Odstranit ji} other {Odstranit je}} z dokumentu? Vedle souboru TEI se uloží datovaná záloha.
 
 Identifikátory (výběr): {ids}</string>
   <string key="iiif.picker.validate_reload">Před uložením výběru načtěte manifest IIIF.</string>
@@ -723,7 +753,7 @@ Identifikátory (výběr): {ids}</string>
   <string key="iiif.picker.status.ambiguous">Nejednoznačné: více možných Canvasů</string>
   <string key="iiif.picker.source.local">Zobrazení: místní kopie</string>
   <string key="iiif.picker.source.iiif">Zobrazení: služba IIIF</string>
-  <string key="iiif.picker.sync.unresolved">U {count} stránek JSON nelze Canvas jednoznačně určit. Zkontrolujte identifikátory nebo přiřaďte Canvas ručně.</string>
+  <string key="iiif.picker.sync.unresolved">U {count, plural, one {# stránky} other {# stránek}} JSON nelze Canvas jednoznačně určit. Zkontrolujte identifikátory nebo přiřaďte Canvas ručně.</string>
   <string key="iiif.picker.sync.duplicate">Jednu synchronizovanou stránku nelze přiřadit více Canvasům.</string>
   <string key="iiif.picker.sync.bad_canvas">Přiřazení odkazuje na nevybraný Canvas.</string>
   <string key="iiif.picker.sync.no_json">Nejprve načtěte synchronizační JSON.</string>
@@ -736,10 +766,46 @@ Identifikátory (výběr): {ids}</string>
   <string key="pivot.not_empty">Transkripce již obsahuje text nebo značky; nic nebylo změněno. Funkce je určena pouze pro původně prázdné tělo TEI.</string>
   <string key="pivot.no_pages">Pro pivotního svědka nejsou dostupné stránky s plochami &lt;surface&gt;. Vyberte příslušné snímky.</string>
   <string key="pivot.preview.title">Náhled před vytvořením značek TEI</string>
-  <string key="pivot.preview.summary">Pivotní svědek {witness}: {pages} stran, {lines} začátků řádků k vložení.</string>
+  <string key="pivot.preview.summary">Pivotní svědek {witness}: {pages, plural, one {# strana} few {# strany} other {# stran}}, {lines, plural, one {# začátek řádku} few {# začátky řádků} other {# začátků řádků}} k vložení.</string>
   <string key="pivot.preview.warnings">Upozornění a přehled stran</string>
   <string key="pivot.preview.confirm">Potvrdit vložení? Před úpravou bude vytvořena záloha s časovým údajem. Text OCR se nekopíruje.</string>
   <string key="pivot.done">Značky byly vytvořeny. Záloha: {backup}.</string>
+  <string key="pivot.error.invalid_witness">Neplatný identifikátor pivotního svědka: {witness}</string>
+  <string key="pivot.error.unknown_witness">Pivotní svědek {witness} není svědkem projektu.</string>
+  <string key="pivot.error.surface_conflict">Plochy v &lt;facsimile&gt; nebylo možné vytvořit: {conflicts}</string>
+  <string key="pivot.error.witness_not_declared">Pivotní svědek {witness} není v edici deklarován (žádný prvek s xml:id „{witness}“).</string>
+  <string key="pivot.error.missing_surface">Jedna stránka pivotního svědka nemá &lt;surface&gt; v &lt;facsimile&gt; edice.</string>
+  <string key="pivot.error.no_body">V edici nebyl nalezen prvek &lt;body&gt;.</string>
+  <string key="pivot.error.no_container">&lt;body&gt; edice musí obsahovat jediný prázdný &lt;p&gt; nebo &lt;ab&gt;.</string>
+  <string key="pivot.warning.sync_unreadable">Synchronizaci nelze přečíst: {error}</string>
+  <string key="pivot.warning.lines_invalid">{page}: neplatný seznam řádků JSON; žádné lb nevytvořeno</string>
+  <string key="pivot.warning.no_lines">{page}: JSON nepopisuje žádný řádek (stránka zachována)</string>
+  <string key="pivot.warning.rows_invalid">{page}: neplatné řádky JSON; žádné lb nevytvořeno</string>
+  <string key="pivot.warning.numbers_invalid">{page}: neplatná čísla řádků JSON; žádné lb nevytvořeno</string>
+  <string key="pivot.warning.numbers_duplicated">{page}: duplicitní čísla řádků JSON; žádné lb nevytvořeno</string>
+  <string key="pivot.warning.partial">{page}: výňatek JSON s {count, plural, one {# fyzickým řádkem} other {# fyzickými řádky}} (čísla {first}–{last}); ověřte úplnost folia, chybějící řádky se nevymýšlejí</string>
+  <string key="pivot.warning.check_complete">{page}: ověřte úplnost řádků JSON</string>
+  <string key="pivot.warning.ocr_unreadable">OCR nelze přečíst: {path}: {error}</string>
+  <string key="pivot.warning.no_image">Stránka JSON {page}: žádný spolehlivý obraz pro &lt;surface&gt;</string>
+  <string key="pivot.warning.invalid_surface_id">Stránka JSON {page}: neplatný identifikátor plochy</string>
+  <string key="pivot.warning.ambiguous_canvas">Nejednoznačný canvas pro stránku JSON {page}</string>
+  <string key="pivot.warning.iiif_links">Neplatné odkazy IIIF: {error}</string>
+  <string key="pivot.warning.several_ocr">Více souborů OCR pro canvas {canvas}</string>
+  <string key="pivot.warning.multipage_ocr">Nevyřešené vícestránkové OCR pro {canvas}</string>
+  <string key="pivot.warning.unassociated_page">{page}: stránka JSON bez přiřazeného obrazu/plochy ve vybraném rozsahu; žádné pb nevytvořeno</string>
+  <string key="pivot.warning.duplicate_surface">Duplicitní plocha: {surface}</string>
+  <string key="pivot.warning.ocr_priority">{page}: {layout_lines, plural, one {# řádek OCR} few {# řádky OCR} other {# řádků OCR}}, {sync_lines, plural, one {# řádek JSON} few {# řádky JSON} other {# řádků JSON}}; přednost má OCR</string>
+  <string key="pivot.warning.no_line_list">{page}: žádný spolehlivě přiřazený seznam řádků</string>
+  <string key="pivot.warning.no_surface">Není k dispozici žádná plocha pivotního svědka (vyberte potřebné obrazy).</string>
+  <string key="pivot.evidence.json_invalid">neplatný JSON</string>
+  <string key="pivot.evidence.json_empty">JSON bez řádků</string>
+  <string key="pivot.evidence.json_ambiguous">nejednoznačný JSON</string>
+  <string key="pivot.evidence.json_partial">částečný JSON</string>
+  <string key="pivot.evidence.image_only">pouze obraz</string>
+  <string key="iiif.ocr_link.unreadable">{file}: OCR nelze přečíst ({error})</string>
+  <string key="iiif.ocr_link.multipage">{file}: vícestránkové OCR</string>
+  <string key="iiif.ocr_link.conflict">{file}: rozporné nebo duplicitní názvy IIIF</string>
+  <string key="iiif.ocr_link.shared_canvas">{file}: více souborů OCR označuje tentýž canvas</string>
   <string key="project.witness.pivot_tip">Pivotní svědek slouží pouze jako technická reference pro synchronizaci; nemusí jít o základní rukopis kritické edice.</string>
   <string key="manuscript.sync.no_base_keys">Soubor JSON neobsahuje vazby na pivotního svědka: dostupná je pouze navigace po stránkách.</string>
   <string key="manuscript.sync.unmatched_base_keys">Vazby v JSON neodpovídají žádnému řádku pivotního svědka. Zkontrolujte identifikátory synchronizace.</string>
@@ -962,6 +1028,20 @@ Po uložení do jiné složky by je už nenašla. Zkopírujte i části, nebo ed
   <string key="manuscript.text_absent">Pro tento text nemá tento svědek žádné zarovnání.</string>
   <string key="status.structure.text.tip">Řádky {base} v textu {name}, synchronizovaném zvlášť s vlastními zarovnáními (složka alignments/{name}/).</string>
   <string key="text_sync.error">Zarovnání textu {name} nelze přečíst: {error}</string>
+  <string key="alignment.damaged.title">Nečitelný soubor zarovnání</string>
+  <string key="alignment.damaged">Soubor zarovnání svědka {witness} nelze přečíst:
+{file}
+{detail}
+Projekt se otevře; přerušena je jen synchronizace tohoto svědka. Opravte soubor a pak zvolte „Aktualizovat synchronizaci…“.</string>
+  <string key="alignment.error.read">soubor nelze přečíst: {message}</string>
+  <string key="alignment.error.json">neplatný JSON, řádek {line}, sloupec {column}: {message}</string>
+  <string key="alignment.error.root">kořen musí být objekt s polem „pages“</string>
+  <string key="alignment.error.page">strana {page}: očekává se objekt s polem „lines“</string>
+  <string key="alignment.error.line">strana {page}, řádek {line}: očekává se objekt</string>
+  <string key="alignment.error.keys">strana {page}, řádek {line}: „{field}“ musí být pole identifikátorů (řetězců)</string>
+  <string key="file.paragraph_separator.title">Oddělovače odstavců Unicode</string>
+  <string key="file.paragraph_separator">Soubor {file} obsahuje oddělovače odstavců Unicode (U+2029). Editor je nemůže zachovat beze změny: zapisují se jako &amp;#x2029;, pro XML tentýž znak, a tak budou i uloženy.</string>
+  <string key="rng.xinclude.too_large">Sestavení zastaveno: vložení dávají více než {detail} prvků (část vložená velmi mnohokrát?)</string>
   <string key="diagnostics.scope.edition">Rozsah: edice, pivot {base}.</string>
   <string key="diagnostics.scope.text">Rozsah: text {name}, synchronizovaný zvlášť (alignments/{name}/), pivot {base}.</string>
   <string key="diagnostics.texts">Texty synchronizované zvlášť: {texts}.</string>
@@ -1060,34 +1140,34 @@ Importuje šablonu {name} konsorcia TEI. Parametry (xsl:param) a pravidla (xsl:t
   <string key="xslt_check.action.tip">Zkompilovat zobrazenou šablonu XSLT bez spuštění, procesorem jejích scénářů (F8)</string>
   <string key="xslt_check.panel.title">Kontrola šablony XSLT</string>
   <string key="xslt_check.panel.valid">Šablona XSLT je podle {engines} v pořádku.</string>
-  <string key="xslt_check.panel.warnings">Šablona XSLT je podle {engines} v pořádku, s {count} varováním(i).</string>
-  <string key="xslt_check.panel.invalid">{count} chyb(a) v šabloně XSLT podle {engines}. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="xslt_check.panel.warnings">Šablona XSLT je podle {engines} v pořádku, s {count, plural, one {# varováním} other {# varováními}}.</string>
+  <string key="xslt_check.panel.invalid">{count, plural, one {# chyba} few {# chyby} other {# chyb}} v šabloně XSLT podle {engines}. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
   <string key="xslt_check.panel.malformed">Šablona není správně utvořený XML. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
   <string key="xslt_check.panel.failed">Kontrola pomocí {engine} není možná: {error}</string>
   <string key="xslt_check.status.running">XSLT: kontrola…</string>
   <string key="xslt_check.status.valid">{engines}: šablona v pořádku ✓</string>
-  <string key="xslt_check.status.invalid">{engines}: {count} chyb(a)</string>
+  <string key="xslt_check.status.invalid">{engines}: {count, plural, one {# chyba} few {# chyby} other {# chyb}}</string>
   <string key="xslt_check.status.malformed">XSLT: chybně utvořený XML</string>
   <string key="xslt_check.status.failed">XSLT: kontrola není možná</string>
   <string key="xslt_check.message.valid">Kontrola XSLT: šablona je v pořádku.</string>
   <string key="file.save_xslt_invalid.title">Chybná šablona XSLT</string>
-  <string key="file.save_xslt_invalid.text">Šablona je správně utvořená, ale její kompilace hlásí {count} chyb(u). Můžete ji uložit a chyby opravit později.
+  <string key="file.save_xslt_invalid.text">Šablona je správně utvořená, ale její kompilace hlásí {count, plural, one {# chybu} few {# chyby} other {# chyb}}. Můžete ji uložit a chyby opravit později.
 
 Přesto uložit?</string>
   <string key="schematron_check.action">Zkontrolovat pravidla Schematron</string>
   <string key="schematron_check.action.tip">Zkontrolovat zobrazený soubor Schematron bez jeho použití: struktura ISO Schematron a výrazy XPath (F8)</string>
   <string key="schematron_check.panel.title">Kontrola pravidel Schematron</string>
   <string key="schematron_check.panel.valid">Pravidla Schematron jsou v pořádku.</string>
-  <string key="schematron_check.panel.invalid">{count} chyb(a) v pravidlech Schematron. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
+  <string key="schematron_check.panel.invalid">{count, plural, one {# chyba} few {# chyby} other {# chyb}} v pravidlech Schematron. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
   <string key="schematron_check.panel.malformed">Soubor Schematron není správně utvořený XML. Dvojitým kliknutím na chybu přejdete na její řádek.</string>
   <string key="schematron_check.panel.saxon_missing">Výrazy XPath nebyly zkontrolovány: Saxon (balíček saxonche) není nainstalován.</string>
   <string key="schematron_check.status.running">Schematron: kontrola…</string>
   <string key="schematron_check.status.valid">Pravidla Schematron v pořádku ✓</string>
-  <string key="schematron_check.status.invalid">Pravidla Schematron: {count} chyb(a)</string>
+  <string key="schematron_check.status.invalid">Pravidla Schematron: {count, plural, one {# chyba} few {# chyby} other {# chyb}}</string>
   <string key="schematron_check.status.malformed">Schematron: chybně utvořený XML</string>
   <string key="schematron_check.message.valid">Kontrola Schematron: pravidla jsou v pořádku.</string>
   <string key="file.save_schematron_invalid.title">Chybná pravidla Schematron</string>
-  <string key="file.save_schematron_invalid.text">Soubor je správně utvořený, ale jeho kontrola hlásí {count} chyb(u). Můžete jej uložit a chyby opravit později.
+  <string key="file.save_schematron_invalid.text">Soubor je správně utvořený, ale jeho kontrola hlásí {count, plural, one {# chybu} few {# chyby} other {# chyb}}. Můžete jej uložit a chyby opravit později.
 
 Přesto uložit?</string>
   <string key="transform.copy_name">{name} (kopie)</string>

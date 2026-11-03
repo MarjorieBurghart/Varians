@@ -224,6 +224,39 @@ def test_another_file_never_overwrites_a_source_of_the_project(project):
     assert result.outputs == [str(output)]
 
 
+# Red team (intégrité et sécurité, B3, B4) : les fichiers d'une feuille ne sont
+# écrits que dans le dossier du résultat, même si elle se comporte autrement
+# d'une exécution à l'autre ; le pré-passage n'en écrit aucun. Le second
+# passage laissait Saxon écrire lui-même, où la feuille le voulait.
+
+@saxon
+def test_a_stylesheet_cannot_write_elsewhere_when_it_runs_again(project, tmp_path):
+    outside = tmp_path / "ailleurs" / "evade.txt"
+    real = (project.root_dir / "publications" / "essai.html").as_uri()
+    result, output = _run(project, '<xsl:template match="/">'
+                                   f'<xsl:variable name="autre" select="current-output-uri() ne \'{real}\'"/>'
+                                   '<xsl:result-document method="text" href="{if ($autre) then '
+                                   f"\'{outside.as_uri()}\' else \'dedans.txt\'}}\">x</xsl:result-document>"
+                                   '<r/></xsl:template>')
+    assert not outside.exists() and not outside.parent.exists()
+    assert result.ok, result.error
+    assert (output.parent / "dedans.txt").read_text(encoding="utf-8") == "x"
+
+
+@saxon
+def test_the_pre_pass_writes_no_file(project, tmp_path):
+    outside = tmp_path / "ailleurs" / "prepasse.txt"
+    prepare = _stylesheet(project, '<xsl:template match="/">'
+                                   f'<xsl:result-document href="{outside.as_uri()}" method="text">x</xsl:result-document>'
+                                   '<xsl:result-document href="voisin.txt" method="text">y</xsl:result-document>'
+                                   '<xsl:copy-of select="."/></xsl:template>', name="prepasse.xsl")
+    result, output = _run(project, '<xsl:template match="/"><r/></xsl:template>', prepare=prepare)
+    assert not outside.exists() and not outside.parent.exists()
+    assert result.ok, result.error
+    assert sorted(p.name for p in output.parent.iterdir()) == ["essai.html"]
+    assert ["write_refused", str(outside)] in result.journal
+
+
 # --- Réseau -----------------------------------------------------------------------------------
 
 @pytest.fixture

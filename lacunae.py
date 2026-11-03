@@ -27,16 +27,14 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from xml_tag_pairs import element_tag_pattern, element_tags
+
 # Leçons et balises de lacune ; le préfixe est libre. Groupes : « / » d'une
 # balise fermante, nom local, attributs (avec un éventuel « / » final).
-_TAG_RE = re.compile(
-    r"<(/?)(?:[A-Za-z_][\w.-]*:)?(rdg|lem|lacunaStart|lacunaEnd)\b((?:[^>\"']|\"[^\"]*\"|'[^']*')*)>", re.S)
+# Hors commentaires, CDATA, instructions et DOCTYPE, lus dans l'ordre (red
+# team 2, B6).
+_TAGS = element_tag_pattern("rdg", "lem", "lacunaStart", "lacunaEnd")
 _WIT_RE = re.compile(r"(?<![\w:.-])wit\s*=\s*(['\"])(.*?)\1", re.S)
-_IGNORED_RE = (
-    re.compile(r"<!--.*?(?:-->|$)", re.S),
-    re.compile(r"<!\[CDATA\[.*?(?:\]\]>|$)", re.S),
-    re.compile(r"<\?.*?(?:\?>|$)", re.S),
-)
 
 
 @dataclass(frozen=True)
@@ -68,13 +66,10 @@ def lacuna_events(text):
     text = str(text or "")
     if "lacunaStart" not in text and "lacunaEnd" not in text:
         return ()
-    ignored = [match.span() for rx in _IGNORED_RE for match in rx.finditer(text)]
     readings = []        # leçons ouvertes : (nom, témoins)
     events = []
-    for match in _TAG_RE.finditer(text):
-        if any(a <= match.start() < b for a, b in ignored):
-            continue
-        closing, name, attributes = match.group(1), match.group(2), match.group(3)
+    for match in element_tags(_TAGS, text):
+        closing, name, attributes = match.group("close"), match.group("name"), match.group("attrs")
         if name in ("rdg", "lem"):
             if closing:
                 while readings and readings.pop()[0] != name:

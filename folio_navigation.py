@@ -13,6 +13,7 @@ import html
 import re
 import xml.etree.ElementTree as ET
 
+from xml_tag_pairs import element_tag_pattern, element_tags
 from tei_facsimile import _ATTR_RE_TEMPLATE, _attr, _pointer_tokens, _PB_RE, valid_xml_id, _set_or_add_attr
 from image_sources import effective_line_bbox, page_image_dimensions
 
@@ -301,13 +302,9 @@ def _scan_folio_marks(xml_text: str, witness_id: str, folios: list[Folio],
     return marks
 
 
-# Commentaires / CDATA / instructions XML : un exemple textuel n'est pas un
-# vrai pb.
-_IGNORED_RES = (
-    re.compile(r'<!--.*?(?:-->|$)', re.S),
-    re.compile(r'<!\[CDATA\[.*?(?:\]\]>|$)', re.S),
-    re.compile(r'<\?.*?(?:\?>|$)', re.S),
-)
+# Balises <pb> hors commentaires, CDATA, instructions et DOCTYPE : un exemple
+# textuel n'est pas un vrai pb.
+_PB_TAGS = element_tag_pattern("pb")
 # Pb des derniers textes lus, partagés par tous les témoins (V0.9.3.2).
 _pb_memo = _TextMemo()
 # Les expressions de ``_attr`` pour les attributs d'un pb, compilées une fois.
@@ -328,17 +325,11 @@ def _pb_tags(text: str) -> tuple:
     tags = _pb_memo.get(text)
     if tags is not None:
         return tags
-    ignored = []
-    for start, end in sorted((m.start(), m.end()) for rx in _IGNORED_RES for m in rx.finditer(text)):
-        if ignored and start <= ignored[-1][1]:
-            ignored[-1][1] = max(ignored[-1][1], end)
-        else:
-            ignored.append([start, end])
-    starts = [start for start, _end in ignored]
     found = []
-    for m in _PB_RE.finditer(text):
-        i = bisect.bisect_right(starts, m.start()) - 1
-        if i >= 0 and m.start() < ignored[i][1]:
+    # Hors commentaires, CDATA, instructions et DOCTYPE, lus dans l'ordre
+    # (red team 2, B6) ; guillemets des attributs respectés.
+    for m in element_tags(_PB_TAGS, text):
+        if m.group("close"):
             continue
         tag = m.group()
         found.append((m.end(), tuple(_pointer_tokens(_pb_attr(tag, 'facs'))),

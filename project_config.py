@@ -2,6 +2,7 @@
 """Chargement du fichier de projet de l'éditeur TEI/manuscrits générique."""
 from __future__ import annotations
 
+from save_io import XmlFile
 from witness_ids import witness_title
 from dataclasses import dataclass
 from pathlib import Path
@@ -607,8 +608,9 @@ def load_project(path: str | Path) -> ProjectConfig:
 def update_project_language(path: str | Path, language: str) -> None:
     """Persist the selected interface language in project.xml."""
     path = Path(path).expanduser().resolve()
-    tree = ET.parse(path)
-    root = tree.getroot()
+    # Commentaires gardés, écriture atomique avec .bak (red team, A5, A8).
+    project = XmlFile(path)
+    root = project.tree.getroot()
     interface_el = root.find("interface")
     if interface_el is None:
         interface_el = ET.Element("interface")
@@ -619,5 +621,4 @@ def update_project_language(path: str | Path, language: str) -> None:
         interface_el.set("translationsDir", "i18n")
     if not interface_el.get("fallbackLanguage"):
         interface_el.set("fallbackLanguage", "en")
-    ET.indent(tree, space="  ")
-    tree.write(path, encoding="utf-8", xml_declaration=True)
+    project.write()

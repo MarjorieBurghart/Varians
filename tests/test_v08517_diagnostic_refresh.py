@@ -215,6 +215,7 @@ def _real_refresh_method(monkeypatch):
     globs={'assemble_resources':refresh_mod.assemble_resources,
            'diagnostic_rows':refresh_mod.diagnostic_rows,
            'changed_witnesses':refresh_mod.changed_witnesses,
+           'alignment_error_text':refresh_mod.alignment_error_text,
            'QApplication':Application,'QMessageBox':Messages,
            'Qt':SimpleNamespace(CursorShape=SimpleNamespace(WaitCursor=1)),
            '_t':lambda key,**kwargs:key.format(**kwargs) if kwargs else key}

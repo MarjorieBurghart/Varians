@@ -23,6 +23,14 @@
   - Une suite d'espaces devient une seule espace, l'appel d'une note suit
     son mot ; l'espace qui sépare deux éléments va dans un <seg>, que Word
     garde.
+  - Règle commune (Varians 0.9.3.4), comme « Édition critique », au lieu
+    des TEI Stylesheets : la forme retenue d'un <choice> (corr, reg,
+    expan…) ; une didascalie entre parenthèses, en italique ; la référence
+    d'une citation biblique entre chevrons, celle d'une autre citation en
+    note de fin ; une note en marge (ou à une autre place que foot, end,
+    inline) en note de fin ; <space/> une espace ; <gap/> « [lacune] » ;
+    les folios du témoin choisi dans une leçon non retenue ; la note d'un
+    lemme n'est pas répétée dans la note de l'apparat.
   Le reste du document est recopié.
 -->
 <xsl:stylesheet version="3.0"
@@ -57,6 +65,12 @@
   <xsl:template match="tei:text//tei:app">
     <xsl:variable name="apparat" select="f:apparat(.)"/>
     <xsl:variable name="retenue" select="$apparat?retenue"/>
+    <!-- Les folios du témoin choisi dans les leçons non retenues : avant
+         le texte s'ils précèdent tout texte de leur leçon, sinon après la
+         note. -->
+    <xsl:variable name="app" select="."/>
+    <xsl:variable name="folios" select="f:folios-ecartes(., $retenue)"/>
+    <xsl:apply-templates select="$folios[f:folio-en-tete(., $app)]"/>
     <xsl:choose>
       <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()"/></xsl:when>
       <xsl:otherwise><xsl:value-of select="$f:non-disponible"/></xsl:otherwise>
@@ -77,6 +91,7 @@
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
+    <xsl:apply-templates select="$folios[not(f:folio-en-tete(., $app))]"/>
   </xsl:template>
 
   <!-- « leçon ] variante sigles ; … » -->
@@ -85,7 +100,10 @@
     <xsl:variable name="retenue" select="$apparat?retenue"/>
     <xsl:if test="$apparat?lemme">
       <xsl:choose>
-        <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()" mode="note"/></xsl:when>
+        <xsl:when test="exists($retenue)">
+          <!-- La note du lemme a son appel dans le texte : pas ici. -->
+          <xsl:apply-templates select="$retenue/node()" mode="note"><xsl:with-param name="lemme" tunnel="yes" select="true()"/></xsl:apply-templates>
+        </xsl:when>
         <xsl:otherwise><hi rend="italic"><xsl:value-of select="$f:non-disponible"/></hi></xsl:otherwise>
       </xsl:choose>
       <xsl:text> ] </xsl:text>
@@ -112,10 +130,47 @@
     <xsl:text> (</xsl:text><xsl:apply-templates/><xsl:text>)</xsl:text>
   </xsl:template>
 
-  <xsl:template match="tei:text//tei:note[not(@place)]">
+  <!-- Une note sans @place, ou en marge (toute place autre que foot, end
+       et inline), devient une note de fin : en marge, elle coupait le
+       paragraphe (Varians 0.9.3.4). -->
+  <xsl:template match="tei:text//tei:note[not(@place = ('foot', 'end', 'inline'))]">
     <note place="end">
-      <xsl:apply-templates select="@* | node()"/>
+      <xsl:apply-templates select="(@* except @place) | node()"/>
     </note>
+  </xsl:template>
+
+  <!-- Règle commune (Varians 0.9.3.4) : la forme retenue d'un <choice>. -->
+  <xsl:template match="tei:text//tei:choice">
+    <xsl:apply-templates select="(tei:corr, tei:reg, tei:expan, tei:sic, tei:orig, tei:abbr, *[1])[1]/node()"/>
+  </xsl:template>
+  <!-- Une didascalie, entre parenthèses, en italique ; dans un paragraphe
+       ou un vers, sans y couper une ligne ; entre deux blocs, un bloc. -->
+  <xsl:template match="tei:text//tei:stage">
+    <xsl:text>(</xsl:text><hi rend="italic"><xsl:apply-templates/></hi><xsl:text>)</xsl:text>
+  </xsl:template>
+  <xsl:template match="tei:text//tei:stage[parent::tei:sp or parent::tei:spGrp or parent::tei:lg or parent::tei:body
+                       or parent::tei:front or parent::tei:back or parent::tei:*[matches(local-name(), '^div[1-7]?$')]]">
+    <xsl:copy>
+      <xsl:apply-templates select="@*"/>
+      <xsl:text>(</xsl:text><hi rend="italic"><xsl:apply-templates/></hi><xsl:text>)</xsl:text>
+    </xsl:copy>
+  </xsl:template>
+  <!-- La référence d'une citation biblique suit la citation, espacée,
+       entre chevrons ; celle d'une autre citation est une note de fin. -->
+  <xsl:template match="tei:text//tei:cit/tei:ref">
+    <xsl:choose>
+      <xsl:when test="f:biblique(parent::tei:cit)">
+        <xsl:text> &lt;</xsl:text><xsl:copy><xsl:apply-templates select="@* | node()"/></xsl:copy><xsl:text>&gt;</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <note place="end"><xsl:copy><xsl:apply-templates select="@* | node()"/></xsl:copy></note>
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+  <!-- <space/> : une espace ; <gap/> : « [lacune] », comme dans l'apparat. -->
+  <xsl:template match="tei:text//tei:space"><xsl:text> </xsl:text></xsl:template>
+  <xsl:template match="tei:text//tei:gap">
+    <hi rend="italic"><xsl:value-of select="f:texte-gap(.)"/></hi>
   </xsl:template>
 
   <xsl:template match="tei:text//tei:pb">
@@ -142,9 +197,13 @@
         and (empty($apres-note) or ($apres-note instance of text() and matches($apres-note, '^[\s,.;:!?)\]]'))))
       then replace($texte, ' $', '') else $texte"/>
     <xsl:variable name="precedent" select="preceding::text()[not(ancestor::tei:note[@type = 'apparatus'])][1]"/>
+    <!-- Une image ou un pointeur, sans texte, se voit : l'espace qui le
+         suit reste (Varians 0.9.3.4). -->
+    <xsl:variable name="visibles" select="$precedent/following::*[. &lt;&lt; current()]
+                                          [self::tei:graphic or self::tei:ptr or self::tei:figure]"/>
     <xsl:variable name="texte" select="if (starts-with($texte, ' ')
         and not(preceding-sibling::node()[1][self::tei:note[@type = 'apparatus']])
-        and matches(string($precedent), '\s$') and f:bloc($precedent) is f:bloc(.))
+        and matches(string($precedent), '\s$') and f:bloc($precedent) is f:bloc(.) and empty($visibles))
       then replace($texte, '^ ', '') else $texte"/>
     <xsl:choose>
       <xsl:when test="$texte = ' ' and preceding-sibling::node()[1][self::*] and following-sibling::node()[1][self::*]
@@ -194,7 +253,10 @@
     <xsl:apply-templates select="(tei:corr, tei:reg, tei:expan, tei:sic, tei:orig, tei:abbr, *[1])[1]" mode="note"/>
   </xsl:template>
   <xsl:template match="tei:note" mode="note">
-    <xsl:text> (</xsl:text><hi rend="italic"><xsl:apply-templates mode="note"/></hi><xsl:text>)</xsl:text>
+    <xsl:param name="lemme" tunnel="yes" as="xs:boolean" select="false()"/>
+    <xsl:if test="not($lemme)">
+      <xsl:text> (</xsl:text><hi rend="italic"><xsl:apply-templates mode="note"/></hi><xsl:text>)</xsl:text>
+    </xsl:if>
   </xsl:template>
   <xsl:template match="tei:lb" mode="note">
     <xsl:if test="f:lb-espace(.)"><xsl:text> </xsl:text></xsl:if>
@@ -207,7 +269,7 @@
     </hi>
   </xsl:template>
   <xsl:template match="tei:gap" mode="note">
-    <xsl:text>[…]</xsl:text>
+    <hi rend="italic"><xsl:value-of select="f:texte-gap(.)"/></hi>
   </xsl:template>
   <xsl:template match="tei:supplied" mode="note">
     <xsl:text>[</xsl:text><xsl:apply-templates mode="note"/><xsl:text>]</xsl:text>

@@ -13,6 +13,8 @@ import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from i18n import format_message
+
 ROOT = Path(__file__).resolve().parents[1]
 LANGUAGES = ("fr", "en", "de", "ja", "cs", "it", "ru")
 # _t("clé", …), tr("clé", …) ou self.tr("clé", …)
@@ -148,7 +150,7 @@ def test_each_help_has_a_guide_for_editions_in_parts():
         guide = guide[:guide.index("</section>")]
         for key in labels:
             assert catalog[key] in guide, (language, key)
-        ok = catalog["status.structure.ok"].format(base="B", count=8)
+        ok = format_message(catalog["status.structure.ok"], language, base="B", count=8)
         for text in ('xmlns:xi="http://www.w3.org/2001/XInclude"', 'xpointer="s02"', "alignments/s02/B.json",
                      "&lt;parts&gt;", '&lt;part name="s02" base="B"/&gt;', "xmllint --xinclude",
                      "<kbd>Ctrl+S</kbd>", 'href="#xinclude"', ok):
@@ -753,7 +755,7 @@ def test_the_fragment_messages_speak_of_elements():
         for key in ("fragment.label", "fragment.label.file"):
             assert "{element} {index}/{total}" in catalog[key], (language, key)
         for key in keys:
-            text = re.sub(r"\{\w+\}", "", catalog[key]).lower()          # hors noms de paramètres
+            text = re.sub(r"\{\w+(\}|, plural,)", "", catalog[key]).lower()   # hors noms de paramètres
             assert not any(word in text for word in paragraph[language]), (language, key)
 
 

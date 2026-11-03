@@ -152,12 +152,14 @@ class XPathPanelMixin:
             position, _line = data
             end_position = position
         self.left_tabs.setCurrentIndex(0)
+        # Indices Python du résultat, positions Qt du curseur (red team, A2).
+        text = self.editor.toPlainText()
+        qt = self.editor.positions(text)
         cursor = self.editor.textCursor()
-        doc_last = max(0, self.editor.document().characterCount() - 1)
-        start = max(0, min(int(position), doc_last))
-        end = max(start, min(int(end_position), doc_last))
-        cursor.setPosition(start)
-        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+        start = max(0, min(int(position), len(text)))
+        end = max(start, min(int(end_position), len(text)))
+        cursor.setPosition(qt.qt(start))
+        cursor.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()

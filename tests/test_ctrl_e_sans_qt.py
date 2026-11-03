@@ -26,6 +26,18 @@ def index_at_units(text, target):
             return idx
     raise AssertionError(f"Découpage UTF-16 impossible : {target}")
 
+class Positions:
+    """Indices Python ↔ positions UTF-16, comme ``CodeEditor.positions``."""
+
+    def __init__(self, text):
+        self.text = text
+
+    def qt(self, index):
+        return units(self.text[:index])
+
+    def python(self, position):
+        return index_at_units(self.text, position)
+
 class FakeCursor:
     class MoveMode:
         KeepAnchor = object()
@@ -85,6 +97,9 @@ class FakeEditor:
 
     def document(self):
         return self.doc
+
+    def positions(self, text=None):
+        return Positions(self.doc.text if text is None else text)
 
     def setFocus(self):
         self.focus_count += 1

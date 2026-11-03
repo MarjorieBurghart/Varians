@@ -28,6 +28,7 @@ from PySide6.QtWidgets import (
 )
 
 from app_context import tr as _t
+from code_editor import text_positions
 from schema_resolution import _local_href_path, _url_cache_path, default_schema_cache_dir
 from xml_model_edit import add_declaration, remove_declaration, schematron_declarations, set_phase
 
@@ -210,10 +211,11 @@ def replace_text(text_document, old, new):
     while end_old > start and end_new > start and old[end_old - 1] == new[end_new - 1]:
         end_old -= 1
         end_new -= 1
+    qt = text_positions(text_document, old)
     cursor = QTextCursor(text_document)
     cursor.beginEditBlock()
-    cursor.setPosition(start)
-    cursor.setPosition(end_old, QTextCursor.MoveMode.KeepAnchor)
+    cursor.setPosition(qt.qt(start))
+    cursor.setPosition(qt.qt(end_old), QTextCursor.MoveMode.KeepAnchor)
     cursor.insertText(new[start:end_new])
     cursor.endEditBlock()
 

@@ -80,6 +80,14 @@ def _first_v3_image(canvas):
     return None
 
 
+def _web(url):
+    """*url* si c'est une adresse web (http, https), sinon None : un
+    manifeste ne désigne ni un fichier de l'ordinateur, ni un partage réseau
+    (« file:// », que Windows ouvrirait avec les identifiants de la session ;
+    red team, D3)."""
+    return url if isinstance(url, str) and url.strip().lower().startswith(("http://", "https://")) else None
+
+
 def parse_manifest(data: dict, source: str = "") -> IIIFManifest:
     if isinstance(data, dict) and data.get("_format") == CACHE_FORMAT and isinstance(data.get("manifest"), dict):
         source = source or str(data.get("source") or "")
@@ -95,7 +103,7 @@ def parse_manifest(data: dict, source: str = "") -> IIIFManifest:
             if imgs: resource=(imgs[0] or {}).get("resource")
             resource=resource if isinstance(resource,dict) else {}
             service, iv = _service_info(resource.get("service"))
-            image_url=resource.get("@id") or resource.get("id")
+            service, image_url = _web(service), _web(resource.get("@id") or resource.get("id"))
             label=_text_label(c.get("label")) or f"Page {i}"
             width=resource.get("width") or c.get("width"); height=resource.get("height") or c.get("height")
             if not (service or image_url): continue
@@ -113,7 +121,7 @@ def parse_manifest(data: dict, source: str = "") -> IIIFManifest:
             if not isinstance(c,dict) or c.get("type") not in (None,"Canvas"): continue
             body=_first_v3_image(c) or {}
             service, iv=_service_info(body.get("service"))
-            image_url=body.get("id") or body.get("@id")
+            service, image_url = _web(service), _web(body.get("id") or body.get("@id"))
             label=_text_label(c.get("label")) or f"Page {i}"
             width=body.get("width") or c.get("width"); height=body.get("height") or c.get("height")
             if not (service or image_url): continue

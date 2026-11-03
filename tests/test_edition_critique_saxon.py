@@ -94,7 +94,7 @@ def test_the_example_without_lemmas_follows_the_chosen_witness(project, witness,
     assert _main(tree) == [expected]
 
 
-@pytest.mark.parametrize("witness, message", [("aucun", "2 apparat(s) sans lemme"), ("Z", "Témoin inconnu : Z")])
+@pytest.mark.parametrize("witness, message", [("aucun", "apparats sans lemme (lem) : 2"), ("Z", "Témoin inconnu : Z")])
 def test_aucun_without_lemmas_or_an_unknown_witness_is_refused(project, witness, message):
     result, _tree = _edition(project, "kit_edition_sans_lem.xml", witness)
     assert not result.ok and message in result.error + " ".join(detail for _code, detail in result.journal)
@@ -280,6 +280,28 @@ def test_the_reference_of_a_biblical_quotation_is_in_angle_brackets_the_others_a
     assert [_text(sup) for sup in main.xpath(".//sup[contains(@class, 'appel-note')]")] == ["a", "b"]
     assert _entries(tree, "notes") == [("a", "Aug. Conf. 1"), ("b", "Nota editoris")]
     assert _main(tree) == ["Dixit Uos estis <Lc. 22:28> et Ait Augustinus uidelicet alia."]
+
+
+@pytest.mark.parametrize("target", ["javascript:alert(1)", " JaVaScRiPt:alert(2)", "java\tscript:alert(3)",
+                                    "data:text/html,<script>alert(4)</script>", "vbscript:msgbox(5)",
+                                    "file:///etc/passwd"])
+def test_a_link_goes_only_to_the_web_a_mail_an_anchor_or_a_relative_address(project, target):
+    """Red team (C2) : l'adresse d'un <ref> ou d'un <ptr> devenait telle quelle
+    un lien de la page publiée ; « javascript: » s'y exécutait au clic."""
+    from xml.sax.saxutils import quoteattr
+
+    hostile = quoteattr(target).replace("\t", "&#9;")
+    name = _write(project, "liens.xml",
+                  f'<div><p><ref target={hostile}>a</ref> <ptr target={hostile}/> '
+                  f'<cit><quote>q</quote><ref target={hostile}>Aug.</ref></cit> '
+                  '<ref target="https://exemple.org/x">b</ref> <ref target="#x">c</ref> '
+                  '<ref target="notes.html#n1">d</ref> <ptr target="mailto:a@exemple.org"/></p></div>')
+    result, tree = _edition(project, name)
+    assert result.ok, result.error
+    hrefs = [a.get("href") for a in tree.iter("a")]
+    assert not [h for h in hrefs if re.sub(r"\s", "", h or "").lower().startswith(("javascript:", "data:", "vbscript:", "file:"))]
+    assert {"https://exemple.org/x", "#x", "notes.html#n1", "mailto:a@exemple.org"} <= set(hrefs)
+    assert "a" in _main(tree)[0].split() and "Aug." in [entry for _mark, entry in _entries(tree, "notes")]
 
 
 def test_a_speech_has_its_speaker_and_a_stage_direction_between_two_blocks_is_a_block(project):

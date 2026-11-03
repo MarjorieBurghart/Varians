@@ -103,6 +103,10 @@ def test_serve_answers_each_line_then_stops_at_end_of_input(schema):
     with os.fdopen(out_read, "rb") as output:
         responses = [json.loads(line) for line in output.read().splitlines()]
     assert [r.get("id") for r in responses] == [1, 2, None]
+    # Hors du processus de validation, les règles Schematron gardent ensuite
+    # l'accès au réseau : Saxon le retirerait à tout le processus.
+    import schematron
+    assert schematron.LOCAL_ONLY is False
     assert responses[0]["ok"] is True
     assert result_from_dict(responses[1]["result"]).valid
     assert "error" in responses[2]

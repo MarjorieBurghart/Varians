@@ -14,6 +14,7 @@ sys.path.insert(0,str(ROOT))
 from folio_navigation import folios_for_witness, markable_part_for_line, split_surface_into_folios
 from tei_facsimile import upsert_pb_at_position, position_inside_xml_markup
 from image_sources import page_image_source, page_image_dimensions
+from text_search import Utf16Positions
 from test_v08519_split_dialog import ui_method, Dialog, Widget, Input, Spin, DialogButtons, Messages, make_context, Hook
 
 XML='''<TEI xmlns="http://www.tei-c.org/ns/1.0"><facsimile>
@@ -227,7 +228,8 @@ def test_actual_marker_controller_inserts_zone_pb_not_canvas_pb():
     cursor_pos=editor_text.index('fin du passage')
     outputs=[];status=[]
     editor=SimpleNamespace(toPlainText=lambda:editor_text,
-                           textCursor=lambda:SimpleNamespace(position=lambda:cursor_pos))
+                           textCursor=lambda:SimpleNamespace(position=lambda:cursor_pos),
+                           positions=lambda text=None:Utf16Positions(editor_text if text is None else text))
     panel=SimpleNamespace(_surface_indices={'L-p0008':0})
     host=SimpleNamespace(editor=editor,panels={'L':panel},witness_configs=[],
            _edition_displayed=lambda:True,_edition_text=lambda:editor_text,
@@ -259,7 +261,8 @@ def test_marker_controller_rejects_removed_zone_without_edit():
     from tei_facsimile import position_inside_xml_markup
     outputs=[]
     editor=SimpleNamespace(toPlainText=lambda:XML,
-                           textCursor=lambda:SimpleNamespace(position=lambda:XML.index('texte') if 'texte' in XML else XML.index('fin du passage')))
+                           textCursor=lambda:SimpleNamespace(position=lambda:XML.index('texte') if 'texte' in XML else XML.index('fin du passage')),
+                           positions=lambda text=None:Utf16Positions(XML if text is None else text))
     panel=SimpleNamespace(_surface_indices={'L-p0008':0})
     host=SimpleNamespace(editor=editor,panels={'L':panel},
                          _edition_displayed=lambda:True,_edition_text=lambda:XML,

@@ -27,6 +27,11 @@
   - Textes de la page (V0.9.3.1) : dans la langue de l'interface, lus dans
     les catalogues i18n de Varians (f:libelle, apparat-commun.xsl) ; le
     français sans catalogue.
+  - Varians 0.9.3.4 : un apparat dans une note garde son entrée, entre
+    crochets ; les folios du témoin choisi dans une leçon non retenue sont
+    montrés ; les rendus d'un <hi> se cumulent ; la note d'un lemme n'est
+    pas répétée dans son entrée ; « Préliminaires », « Annexes » et « éd. »
+    sont traduits.
   Paramètres : temoin-de-base, montrer-folios, montrer-numeros-de-vers,
   sauts-lb (un saut de ligne du témoin choisi par <br>),
   surligner-hors-lemme (case cochée au départ), langue et catalogues
@@ -74,12 +79,8 @@
 
   <!-- La référence d'une citation qui n'est pas biblique (le <ref> d'une
        <cit> sans @type « bible ») est une note de l'éditeur (Varians
-       0.9.3.0) ; celle d'une citation biblique suit la citation, entre
-       chevrons. -->
-  <xsl:function name="f:biblique" as="xs:boolean">
-    <xsl:param name="cit" as="element()?"/>
-    <xsl:sequence select="tokenize(normalize-space(string($cit/@type)), ' ') = 'bible'"/>
-  </xsl:function>
+       0.9.3.0) ; celle d'une citation biblique (f:biblique) suit la
+       citation, entre chevrons. -->
   <xsl:function name="f:ref-en-note" as="xs:boolean">
     <xsl:param name="n" as="element()"/>
     <xsl:sequence select="exists($n/self::tei:ref/parent::tei:cit) and not(f:biblique($n/parent::tei:cit))"/>
@@ -102,6 +103,16 @@
       [if ($n/self::tei:app) then self::tei:app else not(self::tei:app)]"/>
     <xsl:variable name="rang" select="count($memes[. &lt;&lt; $n]) + 1"/>
     <xsl:sequence select="if ($n/self::tei:app) then string($rang) else format-integer($rang, 'a')"/>
+  </xsl:function>
+  <!-- L'adresse d'un <ref> ou d'un <ptr> devient un lien si elle est
+       relative, web (http, https), de courriel ou une ancre ; une autre
+       (javascript:, data:, file:…) ne l'est pas (Varians 0.9.3.3). Les
+       blancs, que le navigateur ôterait, ne la déguisent pas. -->
+  <xsl:function name="f:lien" as="xs:boolean">
+    <xsl:param name="cible" as="xs:string?"/>
+    <xsl:variable name="nue" select="replace(string($cible), '\s', '')"/>
+    <xsl:sequence select="$nue != '' and (not(matches($nue, '^[A-Za-z][A-Za-z0-9+.\-]*:'))
+                          or matches($nue, '^(https?|mailto):', 'i'))"/>
   </xsl:function>
 
   <xsl:function name="f:cle-section" as="xs:string">
@@ -171,6 +182,9 @@
           blockquote.citation-bloc {margin:1rem 2rem; font-size:.99em;}
           .italique {font-style:italic;}
           .souligne {text-decoration:underline;}
+          .petites-capitales {font-variant:small-caps;}
+          .exposant {vertical-align:super; font-size:.75em; line-height:0;}
+          .indice {vertical-align:sub; font-size:.75em; line-height:0;}
           .gras {font-weight:bold;}
           .rature {text-decoration:line-through;}
           .ajout {text-decoration:underline dotted;}
@@ -294,7 +308,8 @@
   <xsl:template match="tei:front | tei:body | tei:back" mode="base">
     <section class="partie" id="{f:cle-section(.)}">
       <xsl:if test="self::tei:front or self::tei:back">
-        <h2 class="titre-partie"><xsl:value-of select="if (self::tei:front) then 'Préliminaires' else 'Annexes'"/></h2>
+        <h2 class="titre-partie"><xsl:value-of select="f:libelle(if (self::tei:front) then 'publication.critique.front_matter'
+                                                                  else 'publication.critique.back_matter')"/></h2>
       </xsl:if>
       <xsl:apply-templates mode="base"/>
       <xsl:call-template name="imprimer-apparat">
@@ -370,6 +385,12 @@
 
   <xsl:template match="tei:app" mode="base">
     <xsl:variable name="retenue" select="f:choix(.)" as="element()?"/>
+    <!-- Les folios du témoin choisi dans les leçons non retenues (Varians
+         0.9.3.4) : avant le texte s'ils précèdent tout texte de leur
+         leçon, sinon après l'appel. -->
+    <xsl:variable name="app" select="."/>
+    <xsl:variable name="folios" select="f:folios-ecartes(., $retenue)"/>
+    <xsl:apply-templates select="$folios[f:folio-en-tete(., $app)]" mode="base"/>
     <xsl:choose>
       <xsl:when test="exists($retenue)">
         <xsl:apply-templates select="$retenue/node()" mode="base"/>
@@ -377,6 +398,7 @@
       <xsl:otherwise><span class="incertain"><xsl:value-of select="$f:non-disponible"/></span></xsl:otherwise>
     </xsl:choose>
     <xsl:call-template name="appel-de-note"/>
+    <xsl:apply-templates select="$folios[not(f:folio-en-tete(., $app))]" mode="base"/>
   </xsl:template>
 
   <xsl:template match="tei:note" mode="base">
@@ -424,30 +446,9 @@
       <span class="entree">
         <xsl:choose>
           <xsl:when test="self::tei:app">
-            <xsl:variable name="apparat" select="f:apparat(.)"/>
-            <xsl:if test="$apparat?lemme">
-              <span class="lecon-retenue">
-                <xsl:choose>
-                  <xsl:when test="exists($apparat?retenue)"><xsl:apply-templates select="$apparat?retenue/node()" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/></xsl:apply-templates></xsl:when>
-                  <xsl:otherwise><i class="editeur"><xsl:value-of select="$f:non-disponible"/></i></xsl:otherwise>
-                </xsl:choose>
-              </span>
-              <xsl:if test="array:size($apparat?variantes) gt 0"><xsl:text> ] </xsl:text></xsl:if>
-            </xsl:if>
-            <xsl:for-each select="$apparat?variantes?*">
-              <xsl:if test="position() gt 1"><span class="separateur"> ; </span></xsl:if>
-              <span class="variantes">
-                <xsl:choose>
-                  <xsl:when test="?genre = 'om'"><i class="editeur"><xsl:value-of select="$f:om"/></i><xsl:apply-templates select="?lecon//tei:note" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/></xsl:apply-templates></xsl:when>
-                  <xsl:otherwise><xsl:apply-templates select="?lecon/node()" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/></xsl:apply-templates></xsl:otherwise>
-                </xsl:choose>
-              </span>
-              <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><i class="editeur"><xsl:value-of select="$f:add"/></i></xsl:if>
-              <xsl:text> </xsl:text>
-              <i class="temoin"><xsl:value-of select="?sigles"/></i>
-            </xsl:for-each>
+            <xsl:call-template name="contenu-apparat"><xsl:with-param name="apparat" select="f:apparat(.)"/></xsl:call-template>
           </xsl:when>
-          <xsl:when test="self::tei:ref and @target">
+          <xsl:when test="self::tei:ref and f:lien(@target)">
             <span class="note-editoriale"><a href="{string(@target)}"><xsl:apply-templates mode="lecture"/></a></span>
           </xsl:when>
           <xsl:otherwise>
@@ -457,6 +458,33 @@
         <a class="retour" href="#ref-{$ancre}" aria-label="{f:libelle('publication.critique.back')}">↩</a>
       </span>
     </li>
+  </xsl:template>
+
+  <!-- « leçon ] variante sigles ; … ». La note d'un lemme, appelée dans le
+       texte, n'y est pas répétée (Varians 0.9.3.4). -->
+  <xsl:template name="contenu-apparat">
+    <xsl:param name="apparat" as="map(*)"/>
+    <xsl:if test="$apparat?lemme">
+      <span class="lecon-retenue">
+        <xsl:choose>
+          <xsl:when test="exists($apparat?retenue)"><xsl:apply-templates select="$apparat?retenue/node()" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/><xsl:with-param name="lemme" tunnel="yes" select="true()"/></xsl:apply-templates></xsl:when>
+          <xsl:otherwise><i class="editeur"><xsl:value-of select="$f:non-disponible"/></i></xsl:otherwise>
+        </xsl:choose>
+      </span>
+      <xsl:if test="array:size($apparat?variantes) gt 0"><xsl:text> ] </xsl:text></xsl:if>
+    </xsl:if>
+    <xsl:for-each select="$apparat?variantes?*">
+      <xsl:if test="position() gt 1"><span class="separateur"> ; </span></xsl:if>
+      <span class="variantes">
+        <xsl:choose>
+          <xsl:when test="?genre = 'om'"><i class="editeur"><xsl:value-of select="$f:om"/></i><xsl:apply-templates select="?lecon//tei:note" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/><xsl:with-param name="lemme" tunnel="yes" select="false()"/></xsl:apply-templates></xsl:when>
+          <xsl:otherwise><xsl:apply-templates select="?lecon/node()" mode="lecture"><xsl:with-param name="dans-apparat" tunnel="yes" select="true()"/><xsl:with-param name="lemme" tunnel="yes" select="false()"/></xsl:apply-templates></xsl:otherwise>
+        </xsl:choose>
+      </span>
+      <xsl:if test="?genre = 'add'"><xsl:text> </xsl:text><i class="editeur"><xsl:value-of select="$f:add"/></i></xsl:if>
+      <xsl:text> </xsl:text>
+      <i class="temoin"><xsl:value-of select="?sigles"/></i>
+    </xsl:for-each>
   </xsl:template>
 
   <!-- Rendu commun. Un élément TEI inconnu laisse passer son contenu :
@@ -506,23 +534,27 @@
       <xsl:otherwise><span class="citation"><xsl:apply-templates mode="lecture"/></span></xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+  <!-- Les rendus d'un <hi> se cumulent (Varians 0.9.3.4) : italique, gras,
+       souligné, petites capitales, exposant, indice. -->
   <xsl:template match="tei:hi | tei:emph" mode="base lecture">
     <xsl:param name="dans-apparat" tunnel="yes" as="xs:boolean" select="false()"/>
     <xsl:variable name="r" select="lower-case(string-join((@rend,@style), ' '))"/>
+    <xsl:variable name="mots" select="tokenize($r, '[\s,;:]+')"/>
+    <xsl:variable name="classes" as="xs:string*" select="
+      (if ((matches($r, 'italic|italique') or self::tei:emph) and not($dans-apparat)) then 'italique' else (),
+       if (matches($r, 'bold|gras')) then 'gras' else (),
+       if (matches($r, 'underline|souligne')) then 'souligne' else (),
+       if (matches($r, 'small-?caps|petites-capitales')) then 'petites-capitales' else (),
+       if ($mots = ('sup', 'superscript', 'super', 'exposant')) then 'exposant' else (),
+       if ($mots = ('sub', 'subscript', 'indice')) then 'indice' else ())"/>
     <xsl:choose>
-      <xsl:when test="(matches($r, 'italic|italique') or self::tei:emph) and $dans-apparat">
-        <xsl:apply-templates mode="#current"/>
-      </xsl:when>
-      <xsl:when test="matches($r, 'italic|italique') or self::tei:emph">
-        <i class="italique"><xsl:apply-templates mode="#current"/></i>
-      </xsl:when>
-      <xsl:when test="matches($r, 'bold|gras')">
-        <b class="gras"><xsl:apply-templates mode="#current"/></b>
-      </xsl:when>
-      <xsl:when test="matches($r, 'underline|souligne')">
-        <span class="souligne"><xsl:apply-templates mode="#current"/></span>
-      </xsl:when>
-      <xsl:otherwise><xsl:apply-templates mode="#current"/></xsl:otherwise>
+      <xsl:when test="empty($classes)"><xsl:apply-templates mode="#current"/></xsl:when>
+      <xsl:otherwise>
+        <xsl:element name="{if ($classes = 'italique') then 'i' else if ($classes = 'gras') then 'b' else 'span'}">
+          <xsl:attribute name="class" select="string-join($classes, ' ')"/>
+          <xsl:apply-templates mode="#current"/>
+        </xsl:element>
+      </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
   <xsl:template match="tei:title | tei:foreign" mode="base lecture">
@@ -538,7 +570,7 @@
     <span class="scripture-ref">
       <xsl:if test="$biblique">&lt;</xsl:if>
       <xsl:choose>
-        <xsl:when test="@target">
+        <xsl:when test="f:lien(@target)">
           <a href="{string(@target)}"><xsl:apply-templates mode="#current"/></a>
         </xsl:when>
         <xsl:otherwise><xsl:apply-templates mode="#current"/></xsl:otherwise>
@@ -552,7 +584,7 @@
     <xsl:call-template name="appel-de-note"/>
   </xsl:template>
   <xsl:template match="tei:ptr" mode="base lecture">
-    <xsl:if test="@target"><a href="{string(@target)}"><xsl:value-of select="f:libelle('publication.reference')"/></a></xsl:if>
+    <xsl:if test="f:lien(@target)"><a href="{string(@target)}"><xsl:value-of select="f:libelle('publication.reference')"/></a></xsl:if>
   </xsl:template>
   <xsl:template match="tei:unclear" mode="base lecture">
     <span class="incertain" title="{f:libelle('publication.unclear')}"><xsl:apply-templates mode="#current"/></span>
@@ -574,8 +606,7 @@
     <span class="incertain">[<xsl:apply-templates mode="#current"/>]</span>
   </xsl:template>
   <xsl:template match="tei:gap" mode="base lecture">
-    <span class="lacune"><xsl:value-of select="if (@extent) then f:libelle('publication.gap.extent', map {'extent': string(@extent)})
-                                              else f:libelle('publication.gap')"/></span>
+    <span class="lacune"><xsl:value-of select="f:texte-gap(.)"/></span>
   </xsl:template>
   <xsl:template match="tei:add" mode="base lecture">
     <span class="ajout"><xsl:apply-templates mode="#current"/></span>
@@ -685,14 +716,30 @@
   </xsl:template>
 
   <xsl:template match="tei:app" mode="lecture">
+    <xsl:param name="dans-apparat" tunnel="yes" as="xs:boolean" select="false()"/>
     <xsl:variable name="retenue" select="f:choix(.)"/>
     <xsl:choose>
       <xsl:when test="exists($retenue)"><xsl:apply-templates select="$retenue/node()" mode="lecture"/></xsl:when>
       <xsl:otherwise><i class="editeur"><xsl:value-of select="$f:non-disponible"/></i></xsl:otherwise>
     </xsl:choose>
+    <!-- Dans une note, l'apparat n'a pas d'appel : son entrée suit entre
+         crochets, comme dans le DOCX (Varians 0.9.3.4). -->
+    <xsl:if test="not($dans-apparat) and ancestor::tei:note">
+      <xsl:variable name="apparat" select="f:apparat(.)"/>
+      <xsl:if test="array:size($apparat?variantes) gt 0">
+        <xsl:text> [</xsl:text>
+        <xsl:call-template name="contenu-apparat"><xsl:with-param name="apparat" select="$apparat"/></xsl:call-template>
+        <xsl:text>]</xsl:text>
+      </xsl:if>
+    </xsl:if>
   </xsl:template>
+  <!-- Une note dans une leçon : entre parenthèses ; pas dans le lemme d'une
+       entrée, où elle a son propre appel. -->
   <xsl:template match="tei:note" mode="lecture">
-    <span class="commentaire"> (<xsl:apply-templates mode="lecture"/>)</span>
+    <xsl:param name="lemme" tunnel="yes" as="xs:boolean" select="false()"/>
+    <xsl:if test="not($lemme)">
+      <span class="commentaire"> (<xsl:apply-templates mode="lecture"/>)</span>
+    </xsl:if>
   </xsl:template>
 
 </xsl:stylesheet>

@@ -65,7 +65,8 @@ sys.path.insert(0, str(SOURCE.parent))
 import text_search  # noqa: E402
 
 ns = {'QTextCursor': MockCursor, 'SearchOptions': text_search.SearchOptions,
-      'Utf16Positions': text_search.Utf16Positions, 'find_spans': text_search.find_spans}
+      'Utf16Positions': text_search.Utf16Positions, 'find_spans': text_search.find_spans,
+      'text_positions': lambda _document, text: text_search.Utf16Positions(text)}
 exec(compile(ast.Module(body=funcs, type_ignores=[]), str(SOURCE), 'exec'), ns)
 search = ns['find_in_plain_editor']
 editor = MockEditor('alpha BETA beta beta end')

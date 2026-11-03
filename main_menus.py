@@ -525,6 +525,7 @@ class MainMenusMixin:
         self.action_ctrl_e_config.setText(_t("menu.ctrl_e_config"))
         self.action_ctrl_e_config.setToolTip(_t("toolbar.ctrl_e_config.tip", path=self.project.custom_elements))
         self.action_generate_web_menu.setText(_t("menu.generate_web"))
+        self.action_generate_web_menu.setToolTip(_t("toolbar.generate_web.tip"))
         self.action_transform_scenarios.setText(_t("menu.transform_scenarios"))
         self.action_tei_stylesheets.setText(_t("tei_stylesheets.menu"))
         self.action_quit.setText(_t("menu.quit"))
@@ -608,6 +609,6 @@ class MainMenusMixin:
         self._set_title()
         self._rebuild_lb_cache()
         self._cursor_changed()
-        self.validate_text(False)
+        self._retranslate_xml_health()          # le résultat déjà connu, dans la nouvelle langue
         self.validate_relaxng_document(show_panel=self.validation_panel.isVisible(), show_success_message=False)
         self._set_document_health(self._document_health)

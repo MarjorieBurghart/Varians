@@ -101,7 +101,8 @@ def test_a_line_outside_the_included_element_or_in_a_comment_has_no_number():
     s01 = _read(S01).replace("  <head>", '  <!-- <lb edRef="#A"/> -->\n  <head>', 1)
     lines = _lines(s01=s01, s03=s03)
     assert lines.count == 27
-    assert lines.file(S01).ordinals == (None,) + tuple(range(0, 10))
+    # Un <lb/> en commentaire n'est pas même repéré (red team 2, B3).
+    assert lines.file(S01).ordinals == tuple(range(0, 10))
     assert lines.file(S03).ordinals == tuple(range(10, 19)) + (None,)
 
 

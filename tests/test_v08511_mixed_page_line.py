@@ -7,6 +7,7 @@ import textwrap
 from types import SimpleNamespace
 
 from tei_facsimile import facsimile_ref_at_position
+from text_search import Utf16Positions
 from image_sources import page_label as image_page_label, surface_labels
 from project_management import ProjectDraft, WitnessDraft, LocalImageDraft, write_project_xml
 from project_config import load_project
@@ -97,6 +98,8 @@ class StubEditor:
         return SimpleNamespace(position=lambda: self.pos)
     def toPlainText(self):
         return self.text
+    def positions(self, text=None):
+        return Utf16Positions(self.text if text is None else text)
 
 
 class StubWindow:

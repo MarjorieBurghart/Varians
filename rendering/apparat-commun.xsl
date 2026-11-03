@@ -16,10 +16,14 @@
     <lacunaEnd/>) donne « lacuna incipit » ou « lacuna desinit ».
   - Folios : seuls les <pb> du témoin choisi, ou sans @edRef ; avec
     « aucun », tous.
-  - Sauts de ligne : des <lb> contigus (de plusieurs témoins) sont une
-    seule coupure, qui soude un mot si l'un d'eux porte break="no".
+  - Sauts de ligne : des <lb> contigus (de plusieurs témoins), même
+    séparés par des blancs, sont une seule coupure, qui soude un mot si
+    l'un d'eux porte break="no".
   - Sigles (Varians 0.9.2.8.2) : celui du <idno type="siglum"> du témoin
-    dans <listWit>, sinon son identifiant.
+    dans <listWit>, sinon son identifiant ; une leçon sans témoin est
+    « éd. », dans la langue demandée (Varians 0.9.3.4).
+  - Folios d'une leçon non retenue (Varians 0.9.3.4) : ceux du témoin
+    choisi sont gardés (f:folios-ecartes).
 
   Les deux feuilles mettent en forme ce que donne f:apparat (une map) :
   retenue (la leçon retenue, ou rien), lemme (montrer « leçon ] »),
@@ -66,6 +70,9 @@
     <string key="publication.critique.call_apparatus">Apparat {n}</string>
     <string key="publication.critique.call_note">Note {n}</string>
     <string key="publication.critique.back">Retour au texte</string>
+    <string key="publication.critique.front_matter">Préliminaires</string>
+    <string key="publication.critique.back_matter">Annexes</string>
+    <string key="publication.editor_siglum">éd.</string>
     <string key="publication.reference">[référence]</string>
     <string key="publication.caesura">Césure</string>
     <string key="publication.unclear">Lecture incertaine</string>
@@ -74,7 +81,7 @@
     <string key="publication.gap">[lacune]</string>
     <string key="publication.gap.extent">[lacune : {extent}]</string>
     <string key="publication.not_available">[lecture du témoin non disponible]</string>
-    <string key="publication.error.no_lemma">temoin-de-base=aucun : {count} apparat(s) sans lemme (lem). Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
+    <string key="publication.error.no_lemma">temoin-de-base=aucun : apparats sans lemme (lem) : {count}. Ajoutez un lemme à chacun, ou choisissez un témoin.</string>
     <string key="publication.error.unknown_witness">Témoin inconnu : {witness} (témoins déclarés : {witnesses}).</string>
   </xsl:variable>
 
@@ -170,7 +177,8 @@
   <xsl:function name="f:sigles" as="xs:string">
     <xsl:param name="lecon" as="element()?"/>
     <xsl:variable name="sigles" select="f:wit($lecon)"/>
-    <xsl:sequence select="if (empty($sigles)) then 'éd.' else string-join($sigles ! f:sigle(.), ' ')"/>
+    <xsl:sequence select="if (empty($sigles)) then f:libelle('publication.editor_siglum')
+                          else string-join($sigles ! f:sigle(.), ' ')"/>
   </xsl:function>
 
   <!-- Le texte d'une leçon, hors des notes qu'elle contient (elle peut
@@ -227,6 +235,39 @@
       or $f:temoin = (tokenize(normalize-space($pb/@edRef), '\s+') ! replace(., '^.*#', ''))"/>
   </xsl:function>
 
+  <!-- Une citation biblique : son @type contient « bible ». -->
+  <xsl:function name="f:biblique" as="xs:boolean">
+    <xsl:param name="cit" as="element()?"/>
+    <xsl:sequence select="tokenize(normalize-space(string($cit/@type)), ' ') = 'bible'"/>
+  </xsl:function>
+
+  <!-- Le texte d'un <gap> : « [lacune] », ou « [lacune : étendue] ». -->
+  <xsl:function name="f:texte-gap" as="xs:string">
+    <xsl:param name="gap" as="element()"/>
+    <xsl:sequence select="if ($gap/@extent) then f:libelle('publication.gap.extent', map {'extent': string($gap/@extent)})
+                          else f:libelle('publication.gap')"/>
+  </xsl:function>
+
+  <!-- Les <pb> à montrer des leçons non retenues d'un apparat (red team 2) :
+       ceux du témoin choisi (par @edRef, sinon par les témoins de leur
+       leçon) ; tous avec « aucun ». Ils ne sont pas perdus avec leur leçon. -->
+  <xsl:function name="f:folios-ecartes" as="element()*">
+    <xsl:param name="a" as="element(tei:app)"/>
+    <xsl:param name="retenue" as="element()?"/>
+    <xsl:sequence select="f:lecons($a)[not(. is $retenue)]//tei:pb[$f:sans-temoin
+      or (if (normalize-space(@edRef) != '')
+          then $f:temoin = (tokenize(normalize-space(@edRef), '\s+') ! replace(., '^.*#', ''))
+          else f:porte-temoin(ancestor::*[self::tei:lem or self::tei:rdg][1], $f:temoin))]"/>
+  </xsl:function>
+  <!-- Un tel <pb> précède-t-il tout texte de sa leçon ? Son folio est alors
+       placé avant le texte de l'apparat, sinon après. -->
+  <xsl:function name="f:folio-en-tete" as="xs:boolean">
+    <xsl:param name="pb" as="element()"/>
+    <xsl:param name="a" as="element(tei:app)"/>
+    <xsl:variable name="lecon" select="$pb/ancestor::*[(self::tei:lem or self::tei:rdg) and ancestor::tei:app[1] is $a]"/>
+    <xsl:sequence select="empty($lecon//text()[. &lt;&lt; $pb][normalize-space()][not(ancestor::tei:note)])"/>
+  </xsl:function>
+
   <xsl:function name="f:folio" as="xs:string">
     <xsl:param name="pb" as="element()"/>
     <xsl:sequence select="concat('⟨', if ($f:sans-temoin and normalize-space($pb/@edRef) != '')
@@ -235,15 +276,17 @@
 
   <!-- Sauts de ligne. Les <lb> contigus de plusieurs témoins (« fu <lb
        edRef="#A" break="no"/><lb edRef="#B"/>it ») sont une seule coupure :
-       un mot coupé si l'un d'eux porte break="no", sinon une espace. -->
+       un mot coupé si l'un d'eux porte break="no", sinon une espace. Des
+       blancs entre eux (un <lb> par ligne du fichier) n'y changent rien
+       (Varians 0.9.3.4). -->
   <xsl:function name="f:lb-avant" as="element()*">
     <xsl:param name="n" as="node()"/>
-    <xsl:variable name="debut" select="$n/preceding-sibling::node()[not(self::tei:lb)][1]"/>
+    <xsl:variable name="debut" select="$n/preceding-sibling::node()[not(self::tei:lb or self::text()[not(normalize-space())])][1]"/>
     <xsl:sequence select="$n/preceding-sibling::tei:lb[empty($debut) or . &gt;&gt; $debut]"/>
   </xsl:function>
   <xsl:function name="f:lb-apres" as="element()*">
     <xsl:param name="n" as="node()"/>
-    <xsl:variable name="fin" select="$n/following-sibling::node()[not(self::tei:lb)][1]"/>
+    <xsl:variable name="fin" select="$n/following-sibling::node()[not(self::tei:lb or self::text()[not(normalize-space())])][1]"/>
     <xsl:sequence select="$n/following-sibling::tei:lb[empty($fin) or . &lt;&lt; $fin]"/>
   </xsl:function>
   <xsl:function name="f:lb-groupe" as="element()*">

@@ -21,24 +21,48 @@ from image_sources import (apply_witness_image_policy, page_image_source,
 from iiif_local import apply_working_copy
 
 
+class AlignmentError(ValueError):
+    """Un fichier d'alignement illisible (red team 2, B5) : ``key``, la clé
+    du message dans les catalogues ; ``values``, l'endroit fautif (ligne et
+    colonne du JSON, page, ligne, champ), que l'interface traduit."""
+
+    def __init__(self, key, **values):
+        super().__init__(f"{key} {values}")
+        self.key = key
+        self.values = values
+
+
 def read_alignment_json(path):
-    """Raise explicitly on unreadable/invalid JSON; never return a fake empty file."""
-    with Path(path).open('r', encoding='utf-8') as fh:
-        value = json.load(fh)
+    """Le contenu d'un fichier d'alignement ; ``AlignmentError`` s'il est
+    illisible ou mal construit : jamais un faux fichier vide."""
+    try:
+        with Path(path).open('r', encoding='utf-8') as fh:
+            value = json.load(fh)
+    except json.JSONDecodeError as exc:
+        raise AlignmentError('alignment.error.json', line=exc.lineno, column=exc.colno, message=exc.msg) from exc
+    except (OSError, UnicodeError) as exc:
+        raise AlignmentError('alignment.error.read', message=str(exc)) from exc
     if not isinstance(value, dict) or not isinstance(value.get('pages', []), list):
-        raise ValueError('Alignment root must be an object with a pages array')
-    for page in value.get('pages', []):
+        raise AlignmentError('alignment.error.root')
+    for page_number, page in enumerate(value.get('pages', []), 1):
         if not isinstance(page, dict) or not isinstance(page.get('lines', []), list):
-            raise ValueError('Alignment page must be an object with a lines array')
-        for line in page.get('lines', []):
+            raise AlignmentError('alignment.error.page', page=page_number)
+        for line_number, line in enumerate(page.get('lines', []), 1):
             if not isinstance(line, dict):
-                raise ValueError('Alignment lines must be objects')
+                raise AlignmentError('alignment.error.line', page=page_number, line=line_number)
             for field in ('base_keys', 'keys816'):
                 keys = line.get(field)
                 if keys is not None and (not isinstance(keys, list) or
                                          not all(isinstance(k, str) for k in keys)):
-                    raise ValueError(f'{field} must be an array of string identifiers')
+                    raise AlignmentError('alignment.error.keys', page=page_number, line=line_number, field=field)
     return value
+
+
+def alignment_error_text(exc, translate):
+    """Le texte d'une erreur de lecture d'alignement : traduit
+    (``translate``, la fonction ``tr`` de l'interface) pour une
+    ``AlignmentError``."""
+    return translate(exc.key, **exc.values) if isinstance(exc, AlignmentError) else str(exc)
 
 
 def flatten_primary(cache):
