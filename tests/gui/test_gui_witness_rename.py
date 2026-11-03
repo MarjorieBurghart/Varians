@@ -247,8 +247,11 @@ def test_an_interrupted_change_is_undone_when_the_project_opens(open_window, exa
         pass
     monkeypatch.setattr(save_io, "atomic_write_text_with_backup", write)
     assert 'edRef="#P2"' in edition.read_text(encoding="utf-8")
+    from PySide6.QtWidgets import QMessageBox
+    dialogs.expect("question", QMessageBox.StandardButton.Yes)
     dialogs.expect("information")
     window = open_window(example_project)
+    assert dialogs.seen[-2][2] == _tr("witness_rename.recover_question", old="P", new="P2")
     assert dialogs.seen[-1][2] == _tr("witness_rename.recovered", old="P", new="P2")
     assert edition.read_text(encoding="utf-8") == before
     assert [w.id for w in window.project.witnesses] == ["T1", "T2", "P"]
@@ -283,3 +286,133 @@ def test_a_failed_reload_never_leaves_the_old_documents_open(open_window, exampl
         assert "brouillon" not in (root / "xml" / "edition.xml").read_text(encoding="utf-8")
     finally:
         replacement.close()
+
+
+
+def _interrupt(example_project, monkeypatch):
+    """Changement P → P2 interrompu après deux fichiers écrits."""
+    import save_io
+    import witness_rename
+    from project_config import load_project
+    plan = witness_rename.plan_witness_rename(load_project(example_project), "P", "P2")
+    write = save_io.atomic_write_text_with_backup
+    calls = []
+
+    def crash_on_the_third(path, text, **kwargs):
+        calls.append(path)
+        if len(calls) == 3:
+            raise _Crash()
+        return write(path, text, **kwargs)
+
+    monkeypatch.setattr(save_io, "atomic_write_text_with_backup", crash_on_the_third)
+    try:
+        witness_rename.apply_witness_rename(plan)
+    except _Crash:
+        pass
+    monkeypatch.setattr(save_io, "atomic_write_text_with_backup", write)
+
+
+def test_the_recovery_can_be_put_off(open_window, example_project, dialogs, monkeypatch):
+    import witness_rename
+    from PySide6.QtWidgets import QMessageBox
+    _interrupt(example_project, monkeypatch)
+    dialogs.expect("question", QMessageBox.StandardButton.No)
+    open_window(example_project)
+    assert witness_rename.journal_path(example_project.parent).is_file()
+
+
+def test_a_journal_from_elsewhere_is_set_aside_at_opening(open_window, example_project, dialogs, tmp_path):
+    import witness_rename
+    outside = tmp_path / "ailleurs.txt"
+    outside.write_text("à moi", encoding="utf-8")
+    path = witness_rename.journal_path(example_project.parent)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"format": 1, "old": "P", "new": "P2", "files": [], "moves": [
+        {"source": str(outside), "target": "xml/edition.xml"}]}), encoding="utf-8")
+    dialogs.expect("warning")
+    window = open_window(example_project)
+    assert dialogs.seen[-1][2] == _tr("witness_rename.journal_rejected")
+    assert outside.read_text(encoding="utf-8") == "à moi"
+    assert (example_project.parent / "xml" / "edition.xml").is_file() and window.project is not None
+    assert not path.exists()
+
+
+def test_enter_in_the_siglum_field_shows_the_preview_only(qtbot, open_window, example_project):
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QDialog
+    from witness_rename_ui import WitnessRenameDialog
+    window = open_window(example_project)
+    dialog = WitnessRenameDialog(_tr, window.project, "P", window)
+    qtbot.addWidget(dialog)
+    dialog.show()
+    QTest.qWaitForWindowExposed(dialog)
+    dialog.siglum_edit.setFocus()
+    dialog.siglum_edit.selectAll()
+    QTest.keyClicks(dialog.siglum_edit, "P2")
+    QTest.keyClick(dialog.siglum_edit, Qt.Key.Key_Return)
+    assert dialog.result() != QDialog.DialogCode.Accepted and dialog.isVisible()
+    assert dialog.apply_button.isEnabled() and "xml/edition.xml" in dialog.preview.toPlainText()
+    assert dialog.preview_button.isDefault() and not dialog.apply_button.isDefault()
+
+
+def test_a_failed_preview_says_so(qtbot, open_window, example_project, monkeypatch):
+    import witness_rename_ui
+    from witness_rename_ui import WitnessRenameDialog
+    window = open_window(example_project)
+    dialog = WitnessRenameDialog(_tr, window.project, "P", window)
+    qtbot.addWidget(dialog)
+
+    def broken(*_args):
+        raise RuntimeError("aperçu impossible")
+
+    monkeypatch.setattr(witness_rename_ui, "plan_witness_rename", broken)
+    dialog.siglum_edit.setText("P2")
+    dialog.preview_button.click()
+    assert not dialog.apply_button.isEnabled()
+    assert dialog.preview.toPlainText() == _tr("witness_rename.preview_error", error="aperçu impossible")
+
+
+def test_the_preview_reads_the_project_as_it_is_on_disk(qtbot, open_window, example_project):
+    from witness_rename_ui import WitnessRenameDialog
+    window = open_window(example_project)
+    example_project.write_text(example_project.read_text(encoding="utf-8").replace(
+        "</witnesses>", '<witness id="P2" label="P2 · Poitiers" /></witnesses>'), encoding="utf-8")
+    dialog = WitnessRenameDialog(_tr, window.project, "P", window)
+    qtbot.addWidget(dialog)
+    dialog.siglum_edit.setText("P2")
+    dialog.preview_button.click()
+    assert not dialog.apply_button.isEnabled()
+    assert _tr("witness_rename.taken", siglum="P2", witness="P2") in dialog.preview.toPlainText()
+
+
+def test_downloads_in_progress_stop_the_change(open_window, example_project, dialogs):
+    from types import SimpleNamespace
+    root = example_project.parent
+    before = (root / "xml" / "edition.xml").read_text(encoding="utf-8")
+    window = open_window(example_project)
+    window._iiif_download_dialog = SimpleNamespace(
+        shutdown=lambda: None, thread=SimpleNamespace(isRunning=lambda: True))
+    dialogs.expect("dialog", _ask_rename("P"))
+    dialogs.expect("dialog", _rename_to("P2"))
+    dialogs.expect("critical")
+    window.project_settings_dialog()
+    assert dialogs.seen[-1][2] == _tr("witness_rename.downloads_running")
+    assert (root / "xml" / "edition.xml").read_text(encoding="utf-8") == before
+    window._iiif_download_dialog = None
+
+
+def test_an_unexpected_error_is_reported(open_window, example_project, dialogs, monkeypatch):
+    import witness_rename_ui
+    window = open_window(example_project)
+
+    def broken(_plan):
+        raise RuntimeError("disque débranché")
+
+    monkeypatch.setattr(witness_rename_ui, "apply_witness_rename", broken)
+    dialogs.expect("dialog", _ask_rename("P"))
+    dialogs.expect("dialog", _rename_to("P2"))
+    dialogs.expect("critical")
+    window.project_settings_dialog()
+    assert dialogs.seen[-1][2] == _tr("witness_rename.error", error="disque débranché")
+    assert window._replacement_window is None

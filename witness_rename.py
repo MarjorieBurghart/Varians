@@ -57,6 +57,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from i18n import Message
+from save_io import declared_encoding, is_utf8
 from tei_facsimile import safe_id_component
 from witness_ids import witness_id_for_siglum
 from xml_tag_pairs import scan_xml_tags
@@ -146,7 +147,43 @@ def _display(root, path) -> str:
 
 
 def _key(path) -> str:
+    """Identité d'un fichier : son inode s'il existe (un même fichier atteint
+    par deux chemins, liens ou casse sous macOS, n'est changé qu'une fois)."""
+    try:
+        status = os.stat(path)
+        if status.st_ino:
+            return f"{status.st_dev}:{status.st_ino}"
+    except (OSError, ValueError):
+        pass
     return os.path.normcase(os.path.abspath(os.fspath(path)))
+
+
+def _entry(path):
+    """Identité de l'entrée de répertoire elle-même (un lien n'est pas suivi)."""
+    try:
+        status = os.lstat(path)
+    except (OSError, ValueError):
+        return None
+    if not status.st_ino:
+        return ("path", os.path.normcase(os.path.join(os.path.realpath(os.path.dirname(path)),
+                                                      os.path.basename(path))))
+    return (status.st_dev, status.st_ino)
+
+
+def _within(root, path) -> bool:
+    """``path`` (suivi de ses liens) est-il dans le dossier ``root`` ?"""
+    root = os.path.realpath(root)
+    try:
+        return os.path.commonpath([root, os.path.realpath(path)]) == root
+    except ValueError:
+        return False
+
+
+def _entry_path(path) -> Path:
+    """Chemin d'une entrée : dossier parent résolu, nom gardé tel quel (un
+    lien est renommé lui-même, jamais sa cible)."""
+    path = Path(path)
+    return Path(os.path.realpath(path.parent)) / path.name
 
 
 def _local(name: str) -> str:
@@ -241,6 +278,14 @@ def _attributes(text, token):
     """``(nom, guillemet, valeur brute, début, fin)`` des attributs d'une balise."""
     for match in _ATTRIBUTE_RE.finditer(text, token.name_end, token.end):
         yield match.group(1), match.group(2), match.group(3), match.start(3), match.end(3)
+
+
+def _same_place(a, b) -> bool:
+    """Même entrée de répertoire (si elles existent), sinon même chemin."""
+    first, second = _entry(a), _entry(b)
+    if first is not None and second is not None:
+        return first == second
+    return os.path.normcase(os.fspath(a)) == os.path.normcase(os.fspath(b))
 
 
 def _parse_error(text):
@@ -438,18 +483,41 @@ class _Planner:
 
     # -- fichiers renommés ----------------------------------------------------------------
 
-    def _move(self, source, target, *, required=False):
-        source, target = Path(source), Path(target)
-        if _key(source) == _key(target) and source.name == target.name:
+    def _shared_with(self, source, target, mapping):
+        """Autre témoin dont le fichier ou dossier porte le même nom (noms
+        ASCII des caches IIIF : α et β ; « P » et « P* »), ou None."""
+        if mapping is None:
+            return None
+        for other in self.project.witnesses:
+            if other.id == self.old_id:
+                continue
+            path = _entry_path(mapping(other.id))
+            if _same_place(path, source) or _same_place(path, target):
+                return other
+        return None
+
+    def _move(self, source, target, *, required=False, mapping=None):
+        source, target = _entry_path(source), _entry_path(target)
+        if source == target:
             return
-        exists = source.exists()
-        if target.exists():
-            same = exists and os.path.samefile(source, target)
+        exists = os.path.lexists(source)
+        other = self._shared_with(source, target, mapping)
+        if other is not None:
+            if exists:
+                self.notes.append(Message("witness_rename.shared_kept", file=_display(self.root, source),
+                                          witness=other.display_siglum))
+            return
+        if exists and not _within(self.root, source.parent):
+            self.problems.append(Message("witness_rename.external_file", file=str(source)))
+            return
+        if os.path.lexists(target):
+            same = (exists and source.parent == target.parent
+                    and source.name.casefold() == target.name.casefold() and _entry(source) == _entry(target))
             if not same and (exists or required):
                 self.problems.append(Message("witness_rename.target_exists", file=_display(self.root, target)))
                 return
         if exists:
-            self.moves.append(Move(source.resolve(), target.parent.resolve() / target.name))
+            self.moves.append(Move(source, target))
 
     def plan_moves(self, alignment_attribute):
         from iiif_local import store_dir
@@ -457,48 +525,68 @@ class _Planner:
         old, new = self.old_id, self.new_id
         if old == new:
             return
-        alignments = self.root / "alignments"
+        root = self.root
+        alignments = root / "alignments"
         if self.witness.alignment is not None:
-            path = Path(self.witness.alignment).resolve()
-            if path.parent == alignments.resolve() and path.suffix == ".json" and path.stem in (
+            path = _entry_path(self.witness.alignment)
+            if path.parent == _entry_path(alignments) and path.suffix == ".json" and path.stem in (
                     old, _safe_filename(old)):
                 # Avec @alignment, le nom que Varians donne en copiant le
                 # fichier ; sans lui, le nom conventionnel que lit project.xml.
                 name = _safe_filename(new) if alignment_attribute else new
-                self._move(path, alignments / f"{name}.json", required=True)
+                others = {w.id: w.alignment for w in self.project.witnesses if w.alignment is not None}
+                self._move(path, alignments / f"{name}.json", required=True,
+                           mapping=lambda wid: others.get(wid) or alignments / f"{wid}\0.json")
         if alignments.is_dir():
             for folder in sorted(p for p in alignments.iterdir() if p.is_dir()):
                 self._move(folder / f"{old}.json", folder / f"{new}.json", required=True)
-        self._move(cache_path(self.root, old), cache_path(self.root, new))
-        self._move(store_dir(self.root, old), store_dir(self.root, new))
+        self._move(cache_path(root, old), cache_path(root, new), mapping=lambda wid: cache_path(root, wid))
+        self._move(store_dir(root, old), store_dir(root, new), mapping=lambda wid: store_dir(root, wid))
         for folder in ("images", "alto"):
-            self._move(self.root / folder / _safe_filename(old), self.root / folder / _safe_filename(new))
+            self._move(root / folder / _safe_filename(old), root / folder / _safe_filename(new),
+                       mapping=lambda wid, folder=folder: root / folder / _safe_filename(wid))
 
     def rebase(self, raw, base_dir):
-        """Chemin ``raw`` (relatif à ``base_dir`` ou absolu) qui mène dans un
-        fichier ou dossier renommé, écrit vers le nouveau nom ; sinon None."""
+        """Chemin ``raw`` (relatif à ``base_dir`` ou absolu) qui passe par un
+        fichier ou dossier renommé : le même texte, ce seul nom changé ;
+        sinon None. Chaque étape du chemin est comparée à l'entrée renommée
+        sur le disque (casse, liens, lecteurs réseau compris)."""
+        if not self.moves:
+            return None
         value = raw.strip()
         if not value or (_SCHEME_RE.match(value) and not _DRIVE_RE.match(value)):
             return None
-        absolute = os.path.isabs(value) or bool(_DRIVE_RE.match(value))
-        path = os.path.normpath(value if absolute else os.path.join(base_dir, value))
+        offset = raw.index(value)
+        absolute = value.startswith(("/", "\\")) or bool(_DRIVE_RE.match(value))
+        targets = {}
         for move in self.moves:
-            source = os.path.normpath(str(move.source))
-            if os.path.normcase(path) == os.path.normcase(source):
-                target = str(move.target)
-            elif os.path.normcase(path).startswith(os.path.normcase(source) + os.sep):
-                target = os.path.join(str(move.target), path[len(source) + 1:])
-            else:
+            key = _entry(move.source)
+            if key is not None:
+                targets[key] = move.target.name
+        names = {move.source.name.casefold() for move in self.moves}
+        for match in re.finditer(r"[^\\/]+", value):
+            part = match.group(0)
+            if part in (".", ".."):
                 continue
-            if absolute:
-                return target
-            new = os.path.relpath(target, base_dir)
-            return new if "\\" in value else new.replace(os.sep, "/")
+            prefix = value[:match.end()]
+            candidate = prefix if absolute else os.path.join(base_dir, prefix)
+            if absolute and _DRIVE_RE.match(value) is None and len(prefix) == 2 and prefix.endswith(":"):
+                continue
+            if not os.path.lexists(candidate):
+                return None
+            if part.casefold() in names:
+                name = targets.get(_entry(candidate))
+                if name is not None:
+                    start = offset + match.start()
+                    return raw[:start] + name + raw[offset + match.end():]
         return None
 
     # -- pointeurs ------------------------------------------------------------------------
 
-    def _pointer(self, token, attribute, path, line):
+    def _declares_witness(self, key) -> bool:
+        return any(target.element == "witness" for target in (self.ids.get(key) or {}).get(self.old_id, ()))
+
+    def _pointer(self, token, attribute, path, line, element=""):
         """``(nouveau jeton, rubrique)`` ou None."""
         if "#" in token:
             if _SCHEME_RE.match(token) and not _DRIVE_RE.match(token):
@@ -515,6 +603,19 @@ class _Planner:
                 return None
             if target in self.other_target:
                 return None
+            if attribute not in ("wit", "edRef"):
+                # persName/@ref vise une personne, @who aussi : jamais le témoin.
+                from xml_references import target_elements
+                expected = target_elements(element, attribute)
+                if expected is not None and "witness" not in expected:
+                    return None
+                # « #P » d'un document qui ne déclare pas P, quand P est ailleurs
+                # autre chose qu'un témoin : on ne sait pas lequel il vise.
+                if (self.other_target and not self._declares_witness(target)
+                        and not (target in self.group and any(self._declares_witness(k) for k in self.group))):
+                    self.notes.append(Message("witness_rename.ambiguous", file=_display(self.root, path),
+                                              line=line, token=token))
+                    return None
             return f"{file}#{self.new_id}", "pointers"
         if attribute in ("wit", "edRef") and token == self.old_id and self.old_id != self.new_id:
             return self.new_id, "pointers"
@@ -523,7 +624,8 @@ class _Planner:
         return None
 
     def _expression_re(self):
-        return re.compile("#" + re.escape(self.old_id) + "(?!" + _NAME_TAIL + ")")
+        # « &#xa; » est un caractère, pas le pointeur « #xa ».
+        return re.compile("(?<!&)#" + re.escape(self.old_id) + "(?!" + _NAME_TAIL + ")")
 
     # -- documents XML --------------------------------------------------------------------
 
@@ -549,14 +651,19 @@ class _Planner:
                     elif ident in self.surfaces and local in ("surface", "zone"):
                         edits.add(start, end, _escape(self.surfaces[ident], quote), "surfaces")
                     continue
-                if local == "graphic" and attribute == "url":
+                if attribute in ("url", "href"):
                     new = self.rebase(value, path.parent)
                     if new is not None:
                         edits.add(start, end, _escape(new, quote), "paths")
-                    continue
+                        continue
                 for piece in re.finditer(r"\S+", raw):
                     token_text = html.unescape(piece.group(0))
-                    found = self._pointer(token_text, attribute, path, _line(starts, start + piece.start()))
+                    if "#" not in token_text and ("/" in token_text or "\\" in token_text):
+                        new = self.rebase(token_text, path.parent)
+                        if new is not None:
+                            edits.add(start + piece.start(), start + piece.end(), _escape(new, quote), "paths")
+                        continue
+                    found = self._pointer(token_text, attribute, path, _line(starts, start + piece.start()), local)
                     if found is not None:
                         edits.add(start + piece.start(), start + piece.end(), _escape(found[0], quote), found[1])
                     elif (self.old_id != self.new_id and expression.search(token_text)
@@ -566,6 +673,11 @@ class _Planner:
             self._declaration(text, tokens, index, edits)
         self._text_mentions(path, text, starts, tokens, edits)
         if edits:
+            if not _within(self.root, path):
+                self.problems.append(Message("witness_rename.external_file", file=str(path)))
+                return
+            if not self._utf8(path, text):
+                return
             error = _parse_error(text)
             if error is not None:
                 self.problems.append(Message("witness_rename.malformed", file=_display(self.root, path),
@@ -574,7 +686,9 @@ class _Planner:
             self.changes.append(FileChange(path, text, edits.apply(), edits.counts()))
 
     def _declaration(self, text, tokens, index, edits):
-        """``<idno type="siglum">`` et nom du ``<witness>`` déclaré."""
+        """``<idno type="siglum">`` et nom du ``<witness>`` déclaré. Sa fin est
+        trouvée par profondeur (un groupe de témoins contient d'autres
+        ``<witness>``) ; l'``<idno>`` est un de ses enfants directs."""
         opening = tokens[index]
         prefix = _prefix(opening.name)
         idno_needed = self.new_siglum != self.new_id
@@ -584,23 +698,39 @@ class _Planner:
                 edits.add(slash, opening.end, f'><{prefix}idno type="siglum">{_escape(self.new_siglum)}'
                           f"</{prefix}idno></{opening.name}>", "declaration")
             return
-        close = next((t for t in tokens[index + 1:] if t.kind == "close" and t.name == opening.name), None)
+        level, close, idno, idno_close, first_child = 0, None, None, None, None
+        for token in tokens[index + 1:]:
+            if token.kind == "close":
+                if level == 0:
+                    close = token if token.name == opening.name else None
+                    break
+                level -= 1
+                if level == 0 and idno is not None and idno_close is None and token.name == idno.name:
+                    idno_close = token
+                continue
+            if level == 0:
+                first_child = first_child or token
+                if idno is None and _local(token.name) == "idno" and any(
+                        _local(n) == "type" and html.unescape(v).strip() == "siglum"
+                        for n, _q, v, _s, _e in _attributes(text, token)):
+                    idno = token
+            if token.kind == "open":
+                level += 1
         if close is None:
             return
-        inner = [t for t in tokens[index + 1:] if t.start < close.start]
-        idno = next((t for t in inner if t.kind == "open" and _local(t.name) == "idno"
-                     and any(_local(n) == "type" and html.unescape(v).strip() == "siglum"
-                             for n, _q, v, _s, _e in _attributes(text, t))), None)
         label_start = opening.end
-        if idno is not None:
-            idno_close = next((t for t in inner if t.kind == "close" and t.name == idno.name
-                               and t.start >= idno.end), None)
-            if idno_close is not None:
-                if html.unescape(text[idno.end:idno_close.start]).strip() != self.new_siglum:
-                    edits.add(idno.end, idno_close.start, _escape(self.new_siglum), "declaration")
-                if not text[opening.end:idno.start].strip():
-                    label_start = idno_close.end
-        elif idno_needed:
+        if idno is not None and idno.kind == "self":
+            tag = text[idno.start:idno.end]
+            edits.add(idno.start, idno.end, tag[:tag.rindex("/")].rstrip() + ">" + _escape(self.new_siglum)
+                      + f"</{idno.name}>", "declaration")
+            if first_child is idno and not text[opening.end:idno.start].strip():
+                label_start = idno.end
+        elif idno is not None and idno_close is not None:
+            if html.unescape(text[idno.end:idno_close.start]).strip() != self.new_siglum:
+                edits.add(idno.end, idno_close.start, _escape(self.new_siglum), "declaration")
+            if first_child is idno and not text[opening.end:idno.start].strip():
+                label_start = idno_close.end
+        elif idno is None and idno_needed:
             edits.add(opening.end, opening.end, f'<{prefix}idno type="siglum">{_escape(self.new_siglum)}'
                       f"</{prefix}idno>", "declaration")
         label_end = text.find("<", label_start, close.end)
@@ -614,6 +744,16 @@ class _Planner:
                 lead = len(label) - len(label.lstrip())
                 edits.add(label_start + lead, label_start + lead + len(old), _escape(new), "declaration")
                 break
+
+    def _utf8(self, path, text) -> bool:
+        """Un fichier qui déclare un autre encodage qu'UTF-8 est refusé :
+        Varians écrit en UTF-8, et la déclaration mentirait."""
+        declared = declared_encoding(text)
+        if declared is not None and not is_utf8(declared.name):
+            self.problems.append(Message("witness_rename.encoding", file=_display(self.root, path),
+                                         encoding=declared.name))
+            return False
+        return True
 
     def _mention_words(self):
         words = []
@@ -656,15 +796,12 @@ class _Planner:
         edits = _Edits(text)
         tokens = scan_xml_tags(text)
         root = self.root
-        inside = False
         query_start = None
         expression = self._expression_re()
         for token in tokens:
             local = _local(token.name)
             if token.kind == "close":
-                if local == "witness":
-                    inside = False
-                elif local == "query" and query_start is not None and self.old_id != self.new_id:
+                if local == "query" and query_start is not None and self.old_id != self.new_id:
                     content = text[query_start:token.start]
                     for match in expression.finditer(content):
                         edits.add(query_start + match.start(), query_start + match.end(),
@@ -678,7 +815,6 @@ class _Planner:
             values = {name: html.unescape(raw).strip() for name, _q, raw, _s, _e in attributes}
             ours = local == "witness" and values.get("id") == self.old_id
             if ours:
-                inside = token.kind == "open"
                 self._project_witness(text, token, attributes, edits)
                 continue
             for name, quote, raw, start, end in attributes:
@@ -694,11 +830,11 @@ class _Planner:
                         for match in expression.finditer(raw):
                             edits.add(start + match.start(), start + match.end(),
                                       "#" + _escape(self.new_id, quote), "settings")
-                elif name in ("file", "path", "alignment") and local not in ("edition", "document"):
+                elif name in ("file", "path", "alignment"):
                     new = self.rebase(value, root)
                     if new is not None:
                         edits.add(start, end, _escape(new, quote), "paths")
-                elif inside and (local, name) == ("image", "surface") and stripped in self.surfaces:
+                elif (local, name) == ("image", "surface") and stripped in self.surfaces:
                     edits.add(start, end, _escape(self.surfaces[stripped], quote), "surfaces")
         return edits
 
@@ -786,12 +922,7 @@ class _Planner:
             json.loads(edits.apply().lstrip("\ufeff"))
         except ValueError:                                  # pragma: no cover - garde-fou
             raise AssertionError(f"{path} : le changement de sigle le rendrait illisible")
-        inside = True
-        try:
-            path.relative_to(self.root)
-        except ValueError:
-            inside = False
-        if not inside:
+        if not _within(self.root, path):
             categories = {category for category, _n in edits.counts()}
             if categories - {"declaration"}:
                 self.problems.append(Message("witness_rename.external_file", file=str(path)))
@@ -835,6 +966,14 @@ def plan_witness_rename(project, witness_id: str, new_siglum: str) -> RenamePlan
     project_text = planner.project_text = planner._read(project_path)
     if project_text is None:
         return _replace(plan, problems=tuple(planner.problems))
+    for ident, siglum in _declared_witnesses(project_text):
+        if ident == witness.id:
+            continue
+        if ident.casefold() == new_id.casefold() or (siglum or ident).casefold() == new_siglum.casefold():
+            return _replace(plan, problems=(Message("witness_rename.taken", siglum=new_siglum,
+                                                    witness=siglum or ident),))
+    if not planner._utf8(project_path, project_text):
+        return _replace(plan, problems=tuple(planner.problems))
     planner.load_documents()
     planner.plan_surfaces()
     planner.plan_moves(_has_alignment_attribute(project_text, witness.id))
@@ -866,6 +1005,15 @@ def plan_witness_rename(project, witness_id: str, new_siglum: str) -> RenamePlan
 def _replace(plan, **values):
     from dataclasses import replace
     return replace(plan, **values)
+
+
+def _declared_witnesses(project_text):
+    """``(id, sigle)`` des ``<witness>`` de project.xml, lus dans son texte."""
+    for token in scan_xml_tags(project_text):
+        if token.kind != "close" and _local(token.name) == "witness":
+            values = {name: html.unescape(raw).strip() for name, _q, raw, _s, _e in _attributes(project_text, token)}
+            if values.get("id"):
+                yield values["id"], values.get("siglum", "")
 
 
 def _has_alignment_attribute(project_text, witness_id) -> bool:
@@ -938,6 +1086,10 @@ def _rollback(written, moved, aside):
         except OSError:
             failed.append(path)
     for backup, previous in reversed(aside):
+        # Tant que la copie d'avant le changement est là (son fichier n'a pas
+        # pu être rendu), l'ancienne copie reste de côté.
+        if os.path.lexists(backup):
+            continue
         try:
             os.replace(previous, backup)
         except OSError:
@@ -965,22 +1117,20 @@ def _file_digest(path):
 
 
 def _stored(root, path) -> str:
-    try:
-        return Path(path).relative_to(root).as_posix()
-    except ValueError:
-        return str(path)
+    return Path(path).relative_to(root).as_posix()
 
 
 def _write_journal(plan):
     """Écrit, avant toute modification, de quoi remettre le projet dans son
-    état d'avant si Varians ou l'ordinateur s'arrête en plein changement."""
-    root = plan.root
+    état d'avant si Varians ou l'ordinateur s'arrête en plein changement.
+    Chemins relatifs au dossier du projet (tous y sont)."""
+    root = _entry_path(plan.root / "project.xml").parent
     data = {"format": 1, "old": plan.old_siglum, "new": plan.new_siglum, "old_id": plan.old_id,
             "new_id": plan.new_id,
-            "files": [{"path": _stored(root, c.path), "original": _digest(c.original), "new": _digest(c.text)}
-                      for c in plan.changes],
+            "files": [{"path": _stored(root, _entry_path(c.path)), "original": _digest(c.original),
+                       "new": _digest(c.text)} for c in plan.changes],
             "moves": [{"source": _stored(root, m.source), "target": _stored(root, m.target)} for m in plan.moves]}
-    path = journal_path(root)
+    path = journal_path(plan.root)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
     with open(temporary, "w", encoding="utf-8") as stream:
@@ -1002,68 +1152,185 @@ def read_journal(root):
     return data if isinstance(data, dict) else {"old": "?", "new": "?", "damaged": True}
 
 
+_DIGEST_RE = re.compile(r"[0-9a-f]{64}")
+
+
+def _journal_entries(root, data):
+    """``(fichiers, renommages)`` d'un journal vérifié, ou None. Un journal
+    vient du dossier du projet, qui peut avoir été reçu d'ailleurs : chaque
+    chemin doit être relatif, sans « .. », dans le projet (liens suivis
+    pour les dossiers), et un renommage ne change qu'un nom, dans son
+    dossier."""
+    if not isinstance(data, dict) or data.get("format") != 1 or data.get("damaged"):
+        return None
+    files, moves = data.get("files"), data.get("moves")
+    if not isinstance(files, list) or not isinstance(moves, list):
+        return None
+    real_root = os.path.realpath(root)
+
+    def inside(value):
+        if not isinstance(value, str) or not value or value.startswith(("/", "\\")) or _DRIVE_RE.match(value):
+            return None
+        parts = re.split(r"[\\/]", value)
+        if any(part in ("", ".", "..") or ":" in part for part in parts):
+            return None
+        parent = os.path.realpath(os.path.join(real_root, *parts[:-1]))
+        try:
+            if os.path.commonpath([real_root, parent]) != real_root:
+                return None
+        except ValueError:
+            return None
+        return Path(parent) / parts[-1]
+
+    checked_files, checked_moves = [], []
+    for entry in files:
+        if not isinstance(entry, dict):
+            return None
+        path = inside(entry.get("path"))
+        original, new = entry.get("original"), entry.get("new")
+        if path is None or not all(isinstance(x, str) and _DIGEST_RE.fullmatch(x) for x in (original, new)):
+            return None
+        checked_files.append((path, original, new))
+    for entry in moves:
+        if not isinstance(entry, dict):
+            return None
+        source, target = inside(entry.get("source")), inside(entry.get("target"))
+        if source is None or target is None or source.parent != target.parent:
+            return None
+        checked_moves.append(Move(source, target))
+    return checked_files, checked_moves
+
+
 def _present(path) -> bool:
-    """Le fichier existe-t-il sous ce nom exact (casse comprise) ?"""
+    """L'entrée existe-t-elle sous ce nom exact (casse comprise) ?"""
     try:
         return path.name in os.listdir(path.parent)
     except OSError:
         return False
 
 
-def recover_interrupted_rename(root):
-    """Remet dans son état d'avant un projet dont le changement de sigle a
-    été interrompu (journal présent) : renommages défaits, fichiers rendus
-    depuis leur copie .bak (vérifiée), anciennes copies .bak remises.
-    ``(journal ou None, fichiers non remis)`` ; le journal n'est effacé que
-    si tout a été remis."""
-    root = Path(root)
+def _after_moves(path, moves):
+    """Où se trouve, une fois les renommages faits, le fichier ``path``."""
+    for move in moves:
+        if path == move.source:
+            return move.target
+        try:
+            return move.target / path.relative_to(move.source)
+        except ValueError:
+            continue
+    return path
+
+
+def _aside(path):
+    backup = path.with_suffix(path.suffix + ".bak")
+    return backup, backup.with_name(f".{backup.name}.varians-rename")
+
+
+@dataclass(frozen=True)
+class Recovery:
+    """Issue de la reprise d'un changement interrompu : ``none`` (pas de
+    journal), ``rejected`` (journal non valable, écarté sans rien toucher),
+    ``completed`` (le changement était achevé : gardé), ``restored``
+    (projet remis dans son état d'avant) ou ``failed`` (``failed`` : les
+    fichiers non remis ; le journal reste)."""
+    status: str
+    data: dict = field(default_factory=dict)
+    failed: list = field(default_factory=list)
+
+
+def journal_state(root):
+    """``(état, journal)`` : none, invalid, completed ou interrupted."""
     data = read_journal(root)
     if data is None:
-        return None, []
-    if data.get("damaged"):
-        return data, [journal_path(root)]
+        return "none", {}
+    entries = _journal_entries(root, data)
+    if entries is None:
+        return "invalid", data if isinstance(data, dict) else {}
+    files, moves = entries
+    done = all(_present(m.target) and not _present(m.source) for m in moves) and all(
+        _file_digest(_after_moves(path, moves)) == new for path, _original, new in files)
+    return ("completed" if done else "interrupted"), data
 
-    def resolved(value):
-        path = Path(value)
-        return path if path.is_absolute() else root / path
 
+def _reject_journal(root):
+    path = journal_path(root)
+    try:
+        os.replace(path, path.with_name("witness-rename.rejected.json"))
+    except OSError:
+        pass
+
+
+def recover_interrupted_rename(root) -> Recovery:
+    """Reprise d'un changement de sigle interrompu (journal présent).
+    Journal non valable : écarté (renommé), rien d'autre n'est touché.
+    Changement achevé (tous les fichiers dans leur état d'après) : gardé,
+    journal effacé. Sinon, renommages défaits, fichiers rendus depuis leur
+    copie .bak (vérifiée par son empreinte), anciennes copies .bak remises ;
+    un fichier qui n'est ni l'avant ni l'après n'est pas touché, et le
+    journal reste."""
+    root = Path(root)
+    state, data = journal_state(root)
+    if state == "none":
+        return Recovery("none")
+    if state == "invalid":
+        _reject_journal(root)
+        return Recovery("rejected", data)
+    files, moves = _journal_entries(root, data)
+    if state == "completed":
+        for path, _original, _new in files:
+            _backup, aside = _aside(_after_moves(path, moves))
+            if os.path.lexists(aside):
+                try:
+                    os.unlink(aside)
+                except OSError:
+                    pass
+        try:
+            journal_path(root).unlink()
+        except OSError:
+            pass
+        return Recovery("completed", data)
     failed = []
-    for entry in reversed(data.get("moves", [])):
-        source, target = resolved(entry["source"]), resolved(entry["target"])
+    for move in reversed(moves):
+        source, target = move.source, move.target
         temporary = source.with_name(f".{source.name}.varians-rename")
         try:
-            if temporary.exists():
+            if os.path.lexists(temporary) and not _present(source):
                 os.rename(temporary, source)
             elif _present(target) and not _present(source):
                 _rename(Move(target, source))
         except OSError:
             failed.append(target)
-    for entry in reversed(data.get("files", [])):
-        path = resolved(entry["path"])
-        backup = path.with_suffix(path.suffix + ".bak")
-        aside = backup.with_name(f".{backup.name}.varians-rename")
+    for path, original, new in reversed(files):
+        backup, aside = _aside(path)
         try:
-            current = _file_digest(path) if path.exists() else None
-            if current != entry["original"]:
-                if current not in (entry["new"], None) or _file_digest(backup) != entry["original"]:
+            current = _file_digest(path) if os.path.lexists(path) else None
+            if current != original:
+                if current not in (new, None) or _file_digest(backup) != original:
                     failed.append(path)
                     continue
                 os.replace(backup, path)
-            if aside.exists() and not backup.exists():
+            if os.path.lexists(aside) and not os.path.lexists(backup):
                 os.replace(aside, backup)
             for temporary in path.parent.glob(f".{path.name}.*.tmp"):
                 temporary.unlink()
         except OSError:
             failed.append(path)
-    if not failed:
-        journal_path(root).unlink(missing_ok=True)
-    return data, failed
+    if failed:
+        return Recovery("failed", data, failed)
+    try:
+        journal_path(root).unlink()
+    except OSError:
+        pass
+    return Recovery("restored", data)
 
 
 def _verify(plan):
     """Le projet changé se lit, avec le témoin sous son nouvel identifiant."""
     from project_config import load_project
     project = load_project(plan.project_path)
+    ids = [witness.id for witness in project.witnesses]
+    if len(ids) != len(set(ids)):
+        raise ValueError(f"{plan.new_id} : deux témoins ont le même identifiant")
     if plan.new_id not in project.witness_by_id or (
             plan.old_id != plan.new_id and plan.old_id in project.witness_by_id):
         raise ValueError(f"{plan.old_id} → {plan.new_id} : témoin introuvable après le changement")
@@ -1118,7 +1385,10 @@ def apply_witness_rename(plan: RenamePlan) -> RenameResult:
     except Exception as error:
         failed = _rollback(written, moved, aside)
         if not failed:
-            journal_path(plan.root).unlink(missing_ok=True)
+            try:
+                journal_path(plan.root).unlink(missing_ok=True)
+            except OSError:
+                pass
         detail = getattr(error, "strerror", None) or str(error)
         if failed:
             raise RenameError(Message("witness_rename.rollback_failed", file=plan.display_path(current),
@@ -1131,7 +1401,12 @@ def apply_witness_rename(plan: RenamePlan) -> RenameResult:
             previous.unlink()
         except OSError:
             pass
-    journal_path(plan.root).unlink(missing_ok=True)
+    # Un journal qui ne s'efface pas (fichier verrouillé) ne défait rien : à
+    # la prochaine ouverture, le changement est reconnu achevé.
+    try:
+        journal_path(plan.root).unlink(missing_ok=True)
+    except OSError:
+        pass
     return RenameResult(tuple(path for path, _backup in written), tuple(backup for _path, backup in written),
                         tuple(moved))
 

@@ -1328,4 +1328,12 @@ Un foglio scrive solo il suo risultato e, con Saxon, altri file nella cartella d
   <string key="witness_rename.interrupted">Un cambio di sigla interrotto ({old} → {new}) non è ancora stato riparato: riaprite il progetto e Varians lo riporterà allo stato precedente.</string>
   <string key="witness_rename.recovered">Un cambio di sigla ({old} → {new}) era stato interrotto (arresto di Varians o del computer). Il progetto è stato riportato allo stato precedente; potete rifare il cambio.</string>
   <string key="witness_rename.recovery_failed">Un cambio di sigla ({old} → {new}) era stato interrotto, e questi file non sono stati riportati allo stato precedente: {files}. Le loro copie .bak conservano quello stato. Varians riproverà alla prossima apertura del progetto.</string>
+  <string key="witness_rename.encoding">{file} dichiara la codifica {encoding}: Varians scrive in UTF-8. Apritelo e salvatelo in Varians, che propone di correggere la dichiarazione, poi ricominciate.</string>
+  <string key="witness_rename.ambiguous">{file}, riga {line}: {token} può puntare a un altro elemento del progetto e non al testimone; non cambia.</string>
+  <string key="witness_rename.shared_kept">{file} porta anche il nome del testimone {witness}: resta al suo posto.</string>
+  <string key="witness_rename.journal_rejected">Il file .varians/witness-rename.json di questo progetto non è un giornale valido di Varians (indica file fuori dal progetto, oppure è danneggiato). È stato messo da parte (witness-rename.rejected.json) senza modificare nulla.</string>
+  <string key="witness_rename.recover_question">Un cambio di sigla ({old} → {new}) è stato interrotto (arresto di Varians o del computer): il progetto è cambiato solo in parte. Riportarlo allo stato precedente?</string>
+  <string key="witness_rename.downloads_running">Le immagini IIIF sono ancora in download: attendete la fine o fermatelo, poi ricominciate. Nulla è stato modificato.</string>
+  <string key="witness_rename.error">Il cambio di sigla si è fermato per un errore inatteso: {error}. Alla prossima apertura del progetto, Varians lo riporterà se necessario allo stato precedente.</string>
+  <string key="witness_rename.preview_error">Non è stato possibile creare l’anteprima: {error}. Nulla è stato modificato.</string>
 </translations>

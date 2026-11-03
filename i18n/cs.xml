@@ -1328,4 +1328,12 @@ Styl zapisuje jen svůj výsledek a se Saxonem i další soubory ve složce výs
   <string key="witness_rename.interrupted">Přerušená změna sigly ({old} → {new}) ještě nebyla opravena: otevřete projekt znovu a Varians ho vrátí do původního stavu.</string>
   <string key="witness_rename.recovered">Změna sigly ({old} → {new}) byla přerušena (Varians nebo počítač se zastavil). Projekt byl vrácen do původního stavu; změnu můžete provést znovu.</string>
   <string key="witness_rename.recovery_failed">Změna sigly ({old} → {new}) byla přerušena a tyto soubory se nepodařilo vrátit do původního stavu: {files}. Jejich kopie .bak tento stav uchovávají. Varians to zkusí znovu při příštím otevření projektu.</string>
+  <string key="witness_rename.encoding">{file} deklaruje kódování {encoding}: Varians zapisuje v UTF-8. Otevřete a uložte ho ve Varians, který nabídne opravu deklarace, a pak začněte znovu.</string>
+  <string key="witness_rename.ambiguous">{file}, řádek {line}: {token} může odkazovat na jiný prvek projektu než na svědka; nemění se.</string>
+  <string key="witness_rename.shared_kept">{file} nese také jméno svědka {witness}: zůstává na svém místě.</string>
+  <string key="witness_rename.journal_rejected">Soubor .varians/witness-rename.json tohoto projektu není platný deník Varians (uvádí soubory mimo projekt, nebo je poškozený). Byl odložen (witness-rename.rejected.json), aniž by se cokoli změnilo.</string>
+  <string key="witness_rename.recover_question">Změna sigly ({old} → {new}) byla přerušena (Varians nebo počítač se zastavil): projekt je změněn jen zčásti. Vrátit ho do původního stavu?</string>
+  <string key="witness_rename.downloads_running">Obrázky IIIF se stále stahují: počkejte na dokončení nebo stahování zastavte a pak začněte znovu. Nic nebylo změněno.</string>
+  <string key="witness_rename.error">Změna sigly se zastavila na neočekávané chybě: {error}. Při příštím otevření projektu ho Varians v případě potřeby vrátí do původního stavu.</string>
+  <string key="witness_rename.preview_error">Náhled se nepodařilo sestavit: {error}. Nic nebylo změněno.</string>
 </translations>

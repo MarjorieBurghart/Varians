@@ -1328,4 +1328,12 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="witness_rename.interrupted">Прерванная смена сиглы ({old} → {new}) ещё не исправлена: откройте проект заново, и Varians вернёт его в прежнее состояние.</string>
   <string key="witness_rename.recovered">Смена сиглы ({old} → {new}) была прервана (остановка Varians или компьютера). Проект возвращён в прежнее состояние; смену можно выполнить заново.</string>
   <string key="witness_rename.recovery_failed">Смена сиглы ({old} → {new}) была прервана, и эти файлы не удалось вернуть в прежнее состояние: {files}. Их копии .bak хранят это состояние. Varians повторит попытку при следующем открытии проекта.</string>
+  <string key="witness_rename.encoding">{file} объявляет кодировку {encoding}: Varians записывает в UTF-8. Откройте и сохраните его в Varians (будет предложено исправить объявление), затем начните заново.</string>
+  <string key="witness_rename.ambiguous">{file}, строка {line}: {token} может указывать не на свидетеля, а на другой элемент проекта; он не меняется.</string>
+  <string key="witness_rename.shared_kept">{file} носит также имя свидетеля {witness}: он остаётся на месте.</string>
+  <string key="witness_rename.journal_rejected">Файл .varians/witness-rename.json этого проекта не является корректным журналом Varians (он указывает на файлы вне проекта или повреждён). Он отложен (witness-rename.rejected.json), ничего не изменено.</string>
+  <string key="witness_rename.recover_question">Смена сиглы ({old} → {new}) была прервана (остановка Varians или компьютера): проект изменён лишь частично. Вернуть его в прежнее состояние?</string>
+  <string key="witness_rename.downloads_running">Изображения IIIF ещё загружаются: дождитесь окончания или остановите загрузку, затем начните заново. Ничего не изменено.</string>
+  <string key="witness_rename.error">Смена сиглы остановилась из-за непредвиденной ошибки: {error}. При следующем открытии проекта Varians при необходимости вернёт его в прежнее состояние.</string>
+  <string key="witness_rename.preview_error">Не удалось построить предпросмотр: {error}. Ничего не изменено.</string>
 </translations>

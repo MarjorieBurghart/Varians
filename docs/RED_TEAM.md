@@ -279,3 +279,54 @@ Les deux axes laissés de côté par la première red team :
   `apparat-en-notes.xsl`, `tei-to-html.xsl`.
 - Textes : `i18n` (`plural_category`, `expand_plurals`, `Message`,
   `message_text`), `web_viewer/plurals.js`.
+
+---
+
+# Changer le sigle d'un témoin (0.9.4.0) : relecture indépendante
+
+Avant la PR, l'utilisatrice a demandé que le changement de sigle soit sûr
+« contre tout risque de corruption des données ». Un agent indépendant a
+relu `witness_rename.py` et `witness_rename_ui.py` pour cela seul, chaque
+constat avec un script qui le reproduit ; les corrections ont chacune un
+test, vu en échec d'abord (`tests/test_witness_rename.py`,
+`tests/gui/test_gui_witness_rename.py`).
+
+Renforcements faits avant la relecture : journal
+(`.varians/witness-rename.json`) et reprise après un arrêt brutal ;
+vérification que le projet changé se relit ; fenêtre fermée sans rien
+enregistrer si le rechargement échoue ; JSON abîmé refusé, BOM gardé ;
+nom affiché écrit avec une entité laissé entier ; surface gardée pour un
+autre témoin comptée comme identifiant employé ; anciennes copies `.bak`
+mises de côté pendant le changement.
+
+| # | Gravité | Constat | Correction |
+|---|---|---|---|
+| 1 | Critique | Un projet reçu (archive, dépôt) pouvait, par un faux journal, faire déplacer à son ouverture des fichiers hors de son dossier (`~/Documents`, démarrage automatique). | Journal vérifié : chemins relatifs, sans « .. », dans le projet (dossiers suivis jusqu'au bout de leurs liens), renommages dans un même dossier, empreintes valables ; sinon écarté sans rien toucher. La remise en état est proposée, non imposée. |
+| 2 | Haute | Un dossier `images/P` qui est un lien vers une archive : l'archive elle-même était déplacée dans le projet, et tous les chemins cassés. | Le lien est renommé lui-même ; chemins comparés par entrée de répertoire. |
+| 3 | Haute | Retour en arrière d'un fichier verrouillé : l'ancienne copie `.bak` remplaçait celle d'avant le changement, seule copie du texte d'avant. | L'ancienne copie reste de côté tant que celle d'avant le changement est là. |
+| 4 | Haute | Un groupe de témoins (`<witness>` contenant une `<listWit>`) : le sigle d'un témoin intérieur était réécrit. | Fin du `<witness>` trouvée par profondeur ; `<idno>` cherché parmi ses enfants directs. |
+| 5 | Moyenne | Noms ASCII des caches IIIF : changer α emportait les images de β (et P* celles de P). | Un fichier ou dossier dont le nom est aussi celui d'un autre témoin reste à sa place (note). |
+| 6 | Moyenne | Journal impossible à effacer après une réussite : à l'ouverture suivante, le changement achevé aurait été défait. | Effacement non bloquant ; un changement achevé (tout dans l'état d'après) est reconnu et gardé. |
+| 7 | Moyenne | Fichier qui déclare ISO-8859-1 ou US-ASCII : réécrit en UTF-8, caractères faussés, ou erreur interne. | Refusé, avec le moyen de corriger la déclaration. |
+| 8 | Moyenne | Entrée dans le champ du sigle appliquait le changement sans montrer l'aperçu. | Entrée lance l'aperçu ; « Appliquer » se clique. |
+| 9 | Moyenne | Chemins vers un dossier renommé non réécrits : `<document file>`, `@facs`, `@url`, `@target`. | Tout chemin qui passe par le dossier renommé est réécrit (seul ce nom change). |
+| 10 | Moyenne | Un document XML hors du dossier du projet était réécrit. | Refusé. |
+| 11 | Moyenne-faible | Une surface gardée par un autre témoin (correcteur) n'était pas suivie. | Suivie. |
+| 12 | Moyenne-faible | `persName/@ref="#P"` (une personne) devenait `#P2`. | Pointeur typé vers autre chose qu'un témoin : laissé ; `#P` qui pourrait viser autre chose : signalé, laissé. |
+| 13 | Faible | Projet modifié sur le disque depuis l'ouverture de la fenêtre : deux témoins P2 possibles. | Sigle pris jugé sur project.xml tel qu'il est sur le disque ; l'aperçu relit le projet ; identifiants en double refusés à la vérification finale. |
+| 14 | Faible | `&#xa;` dans un paramètre pris pour le pointeur `#xa`. | Une référence de caractère n'est pas un pointeur. |
+
+Soupçonnés, non reproduits ici (pas de système insensible à la casse ni
+de Windows) et traités quand même : même fichier atteint par deux
+chemins (identité par inode), chemins écrits avec une autre casse ou par
+un lecteur réseau (comparaison par entrée de répertoire), téléchargements
+IIIF encore en cours (changement refusé), journal valable mais incomplet
+(écarté).
+
+Limites connues :
+
+- **Fichier modifié à la main entre un arrêt brutal et la réouverture** :
+  il n'est ni l'avant ni l'après ; Varians ne le touche pas, le dit, et
+  garde le journal ; sa copie `.bak` garde l'état d'avant.
+- **Liens et jonctions sous Windows** : traités comme des entrées de
+  répertoire ; non essayés sur une vraie machine Windows.

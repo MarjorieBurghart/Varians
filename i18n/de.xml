@@ -1328,4 +1328,12 @@ Ein Stylesheet schreibt nur sein Ergebnis und, mit Saxon, weitere Dateien im Erg
   <string key="witness_rename.interrupted">Eine unterbrochene Änderung der Sigle ({old} → {new}) ist noch nicht behoben: Öffnen Sie das Projekt erneut, Varians versetzt es dann in den vorherigen Zustand zurück.</string>
   <string key="witness_rename.recovered">Eine Änderung der Sigle ({old} → {new}) war unterbrochen worden (Varians oder der Computer wurde beendet). Das Projekt wurde in den vorherigen Zustand zurückversetzt; Sie können die Änderung erneut vornehmen.</string>
   <string key="witness_rename.recovery_failed">Eine Änderung der Sigle ({old} → {new}) war unterbrochen worden, und diese Dateien konnten nicht in den vorherigen Zustand zurückversetzt werden: {files}. Ihre .bak-Kopien enthalten diesen Zustand. Varians versucht es beim nächsten Öffnen des Projekts erneut.</string>
+  <string key="witness_rename.encoding">{file} deklariert die Kodierung {encoding}: Varians schreibt UTF-8. Öffnen und speichern Sie die Datei in Varians, das die Deklaration zu korrigieren anbietet, und beginnen Sie dann erneut.</string>
+  <string key="witness_rename.ambiguous">{file}, Zeile {line}: {token} kann auf ein anderes Element des Projekts als den Textzeugen verweisen; der Verweis bleibt unverändert.</string>
+  <string key="witness_rename.shared_kept">{file} trägt auch den Namen des Textzeugen {witness}: es bleibt an seinem Platz.</string>
+  <string key="witness_rename.journal_rejected">Die Datei .varians/witness-rename.json dieses Projekts ist kein gültiges Varians-Journal (sie nennt Dateien außerhalb des Projekts oder ist beschädigt). Sie wurde beiseitegelegt (witness-rename.rejected.json), ohne etwas zu ändern.</string>
+  <string key="witness_rename.recover_question">Eine Änderung der Sigle ({old} → {new}) wurde unterbrochen (Varians oder der Computer wurde beendet): Das Projekt ist halb geändert. In den vorherigen Zustand zurückversetzen?</string>
+  <string key="witness_rename.downloads_running">IIIF-Bilder werden noch heruntergeladen: Warten Sie das Ende ab oder brechen Sie den Download ab und beginnen Sie dann erneut. Nichts wurde geändert.</string>
+  <string key="witness_rename.error">Die Änderung der Sigle wurde durch einen unerwarteten Fehler abgebrochen: {error}. Beim nächsten Öffnen des Projekts versetzt Varians es bei Bedarf in den vorherigen Zustand zurück.</string>
+  <string key="witness_rename.preview_error">Die Vorschau konnte nicht erstellt werden: {error}. Nichts wurde geändert.</string>
 </translations>

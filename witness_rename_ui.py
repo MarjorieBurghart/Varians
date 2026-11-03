@@ -85,12 +85,17 @@ class WitnessRenameDialog(QDialog):
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
         self.apply_button = buttons.addButton(tr("witness_rename.apply"), QDialogButtonBox.ButtonRole.AcceptRole)
         self.apply_button.setEnabled(False)
+        # Entrée lance l'aperçu, jamais l'application : « Appliquer » se
+        # clique, après avoir lu l'aperçu.
+        self.apply_button.setAutoDefault(False)
+        self.apply_button.setDefault(False)
+        self.preview_button.setAutoDefault(True)
+        self.preview_button.setDefault(True)
         buttons.accepted.connect(self._apply)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
         self.siglum_edit.textChanged.connect(self._siglum_changed)
         self.preview_button.clicked.connect(self.run_preview)
-        self.siglum_edit.returnPressed.connect(self.run_preview)
         self.siglum_edit.selectAll()
 
     def _siglum_changed(self, *_):
@@ -104,13 +109,22 @@ class WitnessRenameDialog(QDialog):
         self.xml_id_hint.setVisible(differs)
 
     def run_preview(self):
+        """Plan établi sur le projet tel qu'il est sur le disque (relu)."""
+        from project_config import load_project
+        self.plan = None
+        self.apply_button.setEnabled(False)
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            self.plan = plan_witness_rename(self.project, self.witness_id, self.siglum_edit.text())
+            project = load_project(self.project.path)
+            plan = plan_witness_rename(project, self.witness_id, self.siglum_edit.text())
+        except Exception as error:                      # garde-fou : rien n'est écrit
+            self.preview.setPlainText(self.tr("witness_rename.preview_error", error=str(error)))
+            return
         finally:
             QApplication.restoreOverrideCursor()
-        self.preview.setPlainText(preview_text(self.plan, self.tr))
-        self.apply_button.setEnabled(self.plan.ok)
+        self.plan = plan
+        self.preview.setPlainText(preview_text(plan, self.tr))
+        self.apply_button.setEnabled(plan.ok)
 
     def _apply(self):
         if self.plan is not None and self.plan.ok:
@@ -118,18 +132,34 @@ class WitnessRenameDialog(QDialog):
 
 
 def recover_interrupted_rename(project_path, parent, tr) -> bool:
-    """À l'ouverture d'un projet : un changement de sigle interrompu
-    (arrêt de Varians ou de l'ordinateur) est défait, et l'utilisateur en
-    est informé. Vrai si un journal a été trouvé."""
+    """À l'ouverture d'un projet, avant toute lecture : un changement de
+    sigle interrompu (arrêt de Varians ou de l'ordinateur) est défait si
+    l'utilisateur l'accepte ; un journal qui n'est pas valable (projet reçu
+    d'ailleurs, fichier abîmé) est écarté sans rien toucher ; un changement
+    achevé dont le journal est resté est gardé. Vrai si un journal a été
+    trouvé."""
     from pathlib import Path
-    from witness_rename import journal_path, recover_interrupted_rename as recover
+    from witness_rename import journal_state, recover_interrupted_rename as recover
     root = Path(project_path).resolve().parent
-    if not journal_path(root).is_file():
+    state, data = journal_state(root)
+    if state == "none":
         return False
-    data, failed = recover(root)
-    values = {"old": data.get("old", "?"), "new": data.get("new", "?")}
-    if failed:
-        files = ", ".join(_shown_path(root, path) for path in failed)
+    values = {"old": str(data.get("old", "?")), "new": str(data.get("new", "?"))}
+    if state == "invalid":
+        recover(root)
+        QMessageBox.warning(parent, tr("witness_rename.title"), tr("witness_rename.journal_rejected"))
+        return True
+    if state == "completed":
+        recover(root)
+        return True
+    answer = QMessageBox.question(parent, tr("witness_rename.title"), tr("witness_rename.recover_question", **values),
+                                  QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                  QMessageBox.StandardButton.Yes)
+    if answer != QMessageBox.StandardButton.Yes:
+        return True
+    recovery = recover(root)
+    if recovery.failed:
+        files = ", ".join(_shown_path(root, path) for path in recovery.failed)
         QMessageBox.warning(parent, tr("witness_rename.title"),
                             tr("witness_rename.recovery_failed", files=files, **values))
     else:
@@ -172,10 +202,17 @@ def run_witness_rename(window, witness_id, tr) -> bool:
     manager = getattr(window, "_iiif_download_dialog", None)
     if manager is not None:
         manager.shutdown()
+        thread = getattr(manager, "thread", None)
+        if thread is not None and thread.isRunning():
+            QMessageBox.critical(window, tr("witness_rename.title"), tr("witness_rename.downloads_running"))
+            return False
     try:
         result = apply_witness_rename(plan)
     except RenameError as error:
         QMessageBox.critical(window, tr("witness_rename.title"), message_text(error.message, tr))
+        return False
+    except Exception as error:                          # garde-fou : journal en place
+        QMessageBox.critical(window, tr("witness_rename.title"), tr("witness_rename.error", error=str(error)))
         return False
     _carry_view_settings(window, plan.old_id, plan.new_id)
     text = tr("witness_rename.done", old=plan.old_siglum, new=plan.new_siglum,

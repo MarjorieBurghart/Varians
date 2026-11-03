@@ -582,13 +582,37 @@ copies `.bak` plus anciennes comprises (mises de côté pendant le
 changement). Avant toute écriture, un journal (`.varians/witness-rename.json` :
 fichiers avec l'empreinte SHA-256 de leur texte d'avant et d'après,
 renommages) permet de défaire un changement interrompu par un arrêt de
-Varians ou de l'ordinateur : à la prochaine ouverture du projet,
-`recover_interrupted_rename` défait les renommages et rend chaque fichier
-depuis sa copie `.bak`, après en avoir vérifié l'empreinte ; un fichier
-qui n'est ni l'un ni l'autre n'est pas touché, et le journal reste. Tant
-qu'il reste, aucun autre changement de sigle n'est permis. Le changement
+Varians ou de l'ordinateur : à la prochaine ouverture du projet, Varians
+le propose ; `recover_interrupted_rename` défait alors les renommages et
+rend chaque fichier depuis sa copie `.bak`, après en avoir vérifié
+l'empreinte ; un fichier qui n'est ni l'un ni l'autre n'est pas touché,
+et le journal reste. Tant qu'il reste, aucun autre changement de sigle
+n'est permis. Un changement achevé dont le journal n'a pas pu être effacé
+(fichier verrouillé) est reconnu (tout est dans l'état d'après) et gardé.
+Le journal vient du dossier du projet, qui peut avoir été reçu
+d'ailleurs : chaque chemin doit être relatif, sans « .. », dans le projet
+(dossiers suivis jusqu'au bout de leurs liens), et un renommage ne change
+qu'un nom dans son dossier ; sinon le journal est écarté
+(`witness-rename.rejected.json`) sans rien toucher. Le changement
 n'est gardé que si le projet modifié se relit avec le témoin sous son
 nouvel identifiant (`_verify`). Un JSON d'alignement abîmé qui devrait
 changer est refusé ; un fichier avec BOM le garde.
 `migrate_view_settings` reporte les réglages d'affichage du témoin
 (`projectView/<empreinte>/…`).
+
+Sûreté (relecture indépendante de la 0.9.4.0, voir `docs/RED_TEAM.md`) :
+un lien (dossier d'images vers une archive extérieure) est renommé
+lui-même, jamais sa cible ; un fichier ou dossier dont le nom ASCII est
+aussi celui d'un autre témoin (caches IIIF de α et β, « P » et « P* »)
+reste à sa place ; un même fichier atteint par deux chemins n'est changé
+qu'une fois (identité par inode) ; un fichier XML hors du dossier du
+projet, ou qui déclare un autre encodage qu'UTF-8, est refusé ; tout
+chemin qui passe par un dossier renommé est réécrit (seul le nom de ce
+dossier change), y compris `<document file>`, `@facs`, `@url`, `@target` ;
+une surface gardée par un autre témoin (`<image surface>`) suit ; un
+pointeur typé vers autre chose qu'un témoin (`persName/@ref`) n'est pas
+touché, et un `#P` qui pourrait viser autre chose est signalé ; `&#xa;`
+n'est pas un pointeur `#xa` ; la fin d'un `<witness>` se trouve par
+profondeur (groupes de témoins) ; le sigle pris se juge sur project.xml
+tel qu'il est sur le disque ; une copie `.bak` d'avant le changement
+n'est jamais remplacée par une plus ancienne pendant un retour en arrière.

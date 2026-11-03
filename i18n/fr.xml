@@ -1314,4 +1314,12 @@ Une feuille n’écrit que son résultat, et, avec Saxon, d’autres fichiers da
   <string key="witness_rename.interrupted">Un changement de sigle interrompu ({old} → {new}) n’est pas encore réparé : rouvrez le projet, Varians le remettra dans son état d’avant.</string>
   <string key="witness_rename.recovered">Un changement de sigle ({old} → {new}) avait été interrompu (arrêt de Varians ou de l’ordinateur). Le projet a été remis dans son état d’avant ; vous pouvez recommencer le changement.</string>
   <string key="witness_rename.recovery_failed">Un changement de sigle ({old} → {new}) avait été interrompu, et ces fichiers n’ont pas pu être remis dans leur état d’avant : {files}. Leurs copies .bak gardent cet état. Varians réessaiera à la prochaine ouverture du projet.</string>
+  <string key="witness_rename.encoding">{file} déclare l’encodage {encoding} : Varians écrit en UTF-8. Ouvrez-le et enregistrez-le dans Varians, qui propose de corriger la déclaration, puis recommencez.</string>
+  <string key="witness_rename.ambiguous">{file}, ligne {line} : {token} peut viser un autre élément du projet que le témoin ; il ne change pas.</string>
+  <string key="witness_rename.shared_kept">{file} porte aussi le nom du témoin {witness} : il reste à sa place.</string>
+  <string key="witness_rename.journal_rejected">Le fichier .varians/witness-rename.json de ce projet n’est pas un journal valable de Varians (il désigne des fichiers hors du projet, ou il est abîmé). Il a été écarté (witness-rename.rejected.json), sans rien modifier.</string>
+  <string key="witness_rename.recover_question">Un changement de sigle ({old} → {new}) a été interrompu (arrêt de Varians ou de l’ordinateur) : le projet est à moitié changé. Le remettre dans son état d’avant ?</string>
+  <string key="witness_rename.downloads_running">Des images IIIF sont encore en cours de téléchargement : attendez la fin ou arrêtez-les, puis recommencez. Rien n’a été modifié.</string>
+  <string key="witness_rename.error">Le changement de sigle s’est arrêté sur une erreur inattendue : {error}. À la prochaine ouverture du projet, Varians le remettra dans son état d’avant s’il le faut.</string>
+  <string key="witness_rename.preview_error">L’aperçu n’a pas pu être établi : {error}. Rien n’a été modifié.</string>
 </translations>

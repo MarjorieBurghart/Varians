@@ -1314,4 +1314,12 @@ A stylesheet writes only its result and, with Saxon, other files in the folder o
   <string key="witness_rename.interrupted">An interrupted siglum change ({old} → {new}) has not been repaired yet: reopen the project and Varians will put it back as it was.</string>
   <string key="witness_rename.recovered">A siglum change ({old} → {new}) had been interrupted (Varians or the computer stopped). The project has been put back as it was; you can make the change again.</string>
   <string key="witness_rename.recovery_failed">A siglum change ({old} → {new}) had been interrupted, and these files could not be put back as they were: {files}. Their .bak copies keep that state. Varians will try again the next time the project is opened.</string>
+  <string key="witness_rename.encoding">{file} declares the encoding {encoding}: Varians writes UTF-8. Open and save it in Varians, which offers to correct the declaration, then start again.</string>
+  <string key="witness_rename.ambiguous">{file}, line {line}: {token} may point to another element of the project than the witness; it does not change.</string>
+  <string key="witness_rename.shared_kept">{file} also bears the name of the witness {witness}: it stays where it is.</string>
+  <string key="witness_rename.journal_rejected">The file .varians/witness-rename.json of this project is not a valid Varians journal (it names files outside the project, or it is damaged). It has been set aside (witness-rename.rejected.json) without modifying anything.</string>
+  <string key="witness_rename.recover_question">A siglum change ({old} → {new}) was interrupted (Varians or the computer stopped): the project is half changed. Put it back as it was?</string>
+  <string key="witness_rename.downloads_running">IIIF images are still being downloaded: wait until they finish or stop them, then start again. Nothing was modified.</string>
+  <string key="witness_rename.error">The siglum change stopped on an unexpected error: {error}. The next time the project is opened, Varians will put it back as it was if needed.</string>
+  <string key="witness_rename.preview_error">The preview could not be made: {error}. Nothing was modified.</string>
 </translations>

@@ -19,6 +19,7 @@ Un sigle pris, ou un identifiant déjà employé, est refusé."""
 from __future__ import annotations
 
 import json
+import os
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -579,10 +580,11 @@ def test_an_interrupted_change_is_undone_at_the_next_opening(tmp_path, monkeypat
     assert witness_rename.journal_path(root).is_file()
     # Pas de nouveau changement tant que l'interruption n'est pas réparée.
     assert _keys(_plan(project_xml, "T1", "T0").problems) == ["witness_rename.interrupted"]
-    interrupted, failed = witness_rename.recover_interrupted_rename(root)
-    assert (interrupted["old"], interrupted["new"], failed) == ("P", "P2", [])
+    recovery = witness_rename.recover_interrupted_rename(root)
+    assert (recovery.status, recovery.data["old"], recovery.data["new"], recovery.failed) == (
+        "restored", "P", "P2", [])
     assert _snapshot(root) == before
-    assert witness_rename.recover_interrupted_rename(root) == (None, [])
+    assert witness_rename.recover_interrupted_rename(root).status == "none"
 
 
 def test_an_interruption_while_renaming_is_undone_too(tmp_path, monkeypatch):
@@ -604,8 +606,8 @@ def test_an_interruption_while_renaming_is_undone_too(tmp_path, monkeypatch):
     with pytest.raises(_Crash):
         witness_rename.apply_witness_rename(plan)
     monkeypatch.setattr(witness_rename, "_rename", rename)
-    interrupted, failed = witness_rename.recover_interrupted_rename(root)
-    assert interrupted is not None and failed == []
+    recovery = witness_rename.recover_interrupted_rename(root)
+    assert (recovery.status, recovery.failed) == ("restored", [])
     assert _snapshot(root) == before
     assert not list(root.rglob("*P2*"))
 
@@ -671,3 +673,317 @@ def test_a_surface_stored_for_another_witness_is_an_identifier_in_use(tmp_path):
     plan = _plan(project_xml, "P", "P2")
     assert _keys(plan.problems) == ["witness_rename.id_used"]
     assert (plan.problems[0].values["id"], plan.problems[0].values["file"]) == ("P2-p0002", "project.xml")
+
+
+# --- Relecture indépendante (avant la PR) ----------------------------------------------------
+
+def _journal(root, data):
+    import witness_rename
+    path = witness_rename.journal_path(root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
+
+
+def test_a_journal_pointing_outside_the_project_is_set_aside(tmp_path):
+    """Un projet reçu (archive, dépôt) ne peut pas, par un faux journal,
+    déplacer des fichiers hors de son dossier ni y attirer les vôtres."""
+    import witness_rename
+    home = tmp_path / "home"
+    (home / "Documents" / "these").mkdir(parents=True)
+    (home / "Documents" / "these" / "chapitre1.odt").write_bytes(b"des annees de travail")
+    project = tmp_path / "projet-recu"
+    project.mkdir()
+    (project / "payload.desktop").write_text("[Desktop Entry]", encoding="utf-8")
+    _journal(project, {"format": 1, "old": "P", "new": "P2", "files": [], "moves": [
+        {"source": str(home / "autostart.desktop"), "target": "payload.desktop"},
+        {"source": "documents-recuperes", "target": "../home/Documents"}]})
+    recovery = witness_rename.recover_interrupted_rename(project)
+    assert recovery.status == "rejected"
+    assert (home / "Documents" / "these" / "chapitre1.odt").is_file()
+    assert not (home / "autostart.desktop").exists() and (project / "payload.desktop").is_file()
+    assert not witness_rename.journal_path(project).exists()
+    assert (project / ".varians" / "witness-rename.rejected.json").is_file()
+
+
+@pytest.mark.parametrize("data", [
+    {"format": 1, "old": "P", "new": "P2"},
+    {"format": 1, "old": "P", "new": "P2", "files": [{"path": "xml/edition.xml"}], "moves": []},
+    {"format": 1, "old": "P", "new": "P2", "files": [], "moves": [{"source": "a/P", "target": "b/P2"}]},
+    ["pas", "un", "journal"],
+])
+def test_a_damaged_journal_is_set_aside(tmp_path, data):
+    import witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    before = _snapshot(root)
+    _journal(root, data)
+    assert witness_rename.recover_interrupted_rename(root).status == "rejected"
+    rejected = root / ".varians" / "witness-rename.rejected.json"
+    assert rejected.is_file()
+    rejected.unlink()
+    assert _snapshot(root) == before
+
+
+@pytest.mark.skipif(os.name == "nt", reason="liens symboliques")
+def test_a_linked_images_folder_is_renamed_as_a_link(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    archive = tmp_path / "archive-des-images"
+    (root / "images" / "P").rename(archive)
+    (root / "images" / "P").symlink_to(archive, target_is_directory=True)
+    apply_witness_rename(_plan(project_xml, "P", "P2"))
+    assert (root / "images" / "P2").is_symlink() and not os.path.lexists(root / "images" / "P")
+    assert sorted(x.name for x in archive.iterdir()) == ["0001_1r.png", "0002_1v.png", "0003_2r.png"]
+    witness = load_project(project_xml).witness_by_id["P2"]
+    assert all(image.path.is_file() for image in witness.image_files)
+
+
+@pytest.mark.skipif(os.name == "nt", reason="liens symboliques")
+def test_the_same_file_under_two_names_is_changed_once(tmp_path):
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    (root / "xml" / "alias.xml").symlink_to(root / "xml" / "notes.xml")
+    project_xml.write_text(project_xml.read_text(encoding="utf-8").replace(
+        '<document file="xml/notes.xml" label="Notes" />',
+        '<document file="xml/notes.xml" label="Notes" /><document file="xml/alias.xml" label="Alias" />'),
+        encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    assert plan.ok, plan.problems
+    assert [c.path.name for c in plan.changes].count("notes.xml") + [
+        c.path.name for c in plan.changes].count("alias.xml") == 1
+
+
+def test_a_failed_restore_keeps_the_copy_from_before_the_change(tmp_path, monkeypatch):
+    import witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    notes = root / "xml" / "notes.xml"
+    (root / "xml" / "notes.xml.bak").write_text("copie plus ancienne", encoding="utf-8")
+    original = notes.read_text(encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    before = _snapshot(root)
+    rename, replace = witness_rename._rename, os.replace
+    calls = []
+
+    def failing_rename(move):
+        calls.append(move)
+        if len(calls) == 3:
+            raise PermissionError(13, "dossier ouvert ailleurs", str(move.source))
+        rename(move)
+
+    def locked(source, target):
+        if str(source).endswith("notes.xml.bak") and str(target).endswith("notes.xml"):
+            raise PermissionError(32, "fichier ouvert ailleurs", str(target))
+        return replace(source, target)
+
+    monkeypatch.setattr(witness_rename, "_rename", failing_rename)
+    monkeypatch.setattr(os, "replace", locked)
+    with pytest.raises(witness_rename.RenameError) as error:
+        witness_rename.apply_witness_rename(plan)
+    monkeypatch.setattr(os, "replace", replace)
+    monkeypatch.setattr(witness_rename, "_rename", rename)
+    assert error.value.message.key == "witness_rename.rollback_failed"
+    # La copie d'avant le changement est toujours là…
+    assert (root / "xml" / "notes.xml.bak").read_text(encoding="utf-8") == original
+    # … et la reprise suivante remet tout, la copie plus ancienne comprise.
+    assert witness_rename.recover_interrupted_rename(root).status == "restored"
+    assert _snapshot(root) == before
+
+
+NESTED_PROJECT = """<?xml version='1.0' encoding='utf-8'?>
+<teiManuscriptProject version="1">
+  <title>Familles</title>
+  <edition file="xml/edition.xml" />
+  <witnesses base="T1">
+    <witness id="T1" label="T1 · Troyes" />
+    <witness id="P" siglum="P*" label="P* · Paris" />
+    <witness id="A" label="A · famille" />
+  </witnesses>
+</teiManuscriptProject>
+"""
+
+NESTED_EDITION = f"""<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="{TEI}"><teiHeader><fileDesc><titleStmt><title>t</title></titleStmt>
+<sourceDesc>
+  <listWit>
+    <witness xml:id="T1">T1 · Troyes</witness>
+    <witness xml:id="A">A · famille
+      <listWit>
+        <witness xml:id="P"><idno type="siglum">P*</idno>Paris</witness>
+      </listWit>
+    </witness>
+  </listWit>
+</sourceDesc></fileDesc></teiHeader>
+<text><body><p><app><lem wit="#T1">a</lem><rdg wit="#A">b</rdg><rdg wit="#P">c</rdg></app></p></body></text></TEI>
+"""
+
+
+def test_a_witness_inside_another_keeps_its_siglum(tmp_path):
+    root = tmp_path / "projet"
+    (root / "xml").mkdir(parents=True)
+    (root / "project.xml").write_text(NESTED_PROJECT, encoding="utf-8")
+    (root / "xml" / "edition.xml").write_text(NESTED_EDITION, encoding="utf-8")
+    plan = _plan(root / "project.xml", "A", "B")
+    assert plan.ok, plan.problems
+    edition = _text(plan, root / "xml" / "edition.xml")
+    assert '<witness xml:id="P"><idno type="siglum">P*</idno>Paris</witness>' in edition
+    assert '<witness xml:id="B"><idno type="siglum">B</idno>B · famille' not in edition
+    assert '<witness xml:id="B">B · famille' in edition and 'wit="#B"' in edition
+
+
+GREEK_PROJECT = """<?xml version='1.0' encoding='utf-8'?>
+<teiManuscriptProject version="1">
+  <title>Grec</title>
+  <edition file="xml/edition.xml" />
+  <witnesses base="α">
+    <witness id="α" label="α · Vat. gr. 1" />
+    <witness id="β" label="β · Par. gr. 2">
+      <images type="iiif" manifest="https://example.org/beta/manifest.json" localCopy="true" />
+    </witness>
+  </witnesses>
+</teiManuscriptProject>
+"""
+
+
+def test_a_cache_named_like_another_witness_is_left_to_it(tmp_path):
+    """Les noms des caches IIIF sont en ASCII : α et β ont le même. Changer
+    le sigle de α ne prend pas les images de β."""
+    from iiif_local import store_dir
+    from iiif_manifest import cache_path
+    from witness_rename import apply_witness_rename
+    root = tmp_path / "projet"
+    (root / "xml").mkdir(parents=True)
+    (root / "project.xml").write_text(GREEK_PROJECT, encoding="utf-8")
+    (root / "xml" / "edition.xml").write_text(
+        f'<TEI xmlns="{TEI}"><teiHeader><fileDesc><titleStmt><title>t</title></titleStmt><sourceDesc><listWit>'
+        '<witness xml:id="α">α · Vat.</witness><witness xml:id="β">β · Par.</witness></listWit></sourceDesc>'
+        '</fileDesc></teiHeader><text><body><p><app><lem wit="#α">a</lem><rdg wit="#β">b</rdg></app></p>'
+        '</body></text></TEI>', encoding="utf-8")
+    store = store_dir(root, "β")
+    store.mkdir(parents=True)
+    (store / "index.json").write_text("{}", encoding="utf-8")
+    cache_path(root, "β").write_text("{}", encoding="utf-8")
+    plan = _plan(root / "project.xml", "α", "α1")
+    assert plan.ok and plan.moves == ()
+    assert {note.key for note in plan.notes} == {"witness_rename.shared_kept"}
+    apply_witness_rename(plan)
+    assert (store / "index.json").is_file() and cache_path(root, "β").is_file()
+
+
+def test_a_journal_that_cannot_be_deleted_does_not_undo_the_change(tmp_path, monkeypatch):
+    import witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    plan = _plan(project_xml, "P", "P2")
+    unlink = Path.unlink
+
+    def locked(self, missing_ok=False):
+        if self.name == "witness-rename.json":
+            raise PermissionError(32, "fichier ouvert ailleurs", str(self))
+        return unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", locked)
+    witness_rename.apply_witness_rename(plan)
+    monkeypatch.setattr(Path, "unlink", unlink)
+    assert witness_rename.journal_path(root).is_file()
+    # À l'ouverture suivante, le changement achevé est reconnu et gardé.
+    assert witness_rename.recover_interrupted_rename(root).status == "completed"
+    assert [w.id for w in load_project(project_xml).witnesses] == ["T1", "P2"]
+    assert not witness_rename.journal_path(root).exists()
+
+
+@pytest.mark.parametrize("declared", ["ISO-8859-1", "US-ASCII"])
+def test_a_file_declaring_another_encoding_is_refused(tmp_path, declared):
+    project_xml = _project(tmp_path)
+    edition = project_xml.parent / "xml" / "edition.xml"
+    text = EDITION.replace('encoding="UTF-8"', f'encoding="{declared}"')
+    text = "".join(ch if ord(ch) < 128 else f"&#{ord(ch)};" for ch in text)
+    edition.write_bytes(text.encode("ascii"))
+    for siglum in ("P2", "P′", "Π"):
+        plan = _plan(project_xml, "P", siglum)
+        assert _keys(plan.problems) == ["witness_rename.encoding"], siglum
+        assert plan.problems[0].values == {"file": "xml/edition.xml", "encoding": declared}
+
+
+def test_every_path_into_a_renamed_folder_follows_it(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    project_xml.write_text(project_xml.read_text(encoding="utf-8").replace(
+        '<document file="xml/notes.xml" label="Notes" />',
+        '<document file="xml/notes.xml" label="Notes" /><document file="alto/P/0001_1r.xml" label="ALTO" />'),
+        encoding="utf-8")
+    part = root / "xml" / "s02.xml"
+    part.write_text(PART.replace('<pb edRef="P" facs="P-p0003"/>',
+                                 '<pb edRef="P" facs="P-p0003"/><pb n="x" facs="../images/P/0002_1v.png"/>'
+                                 '<figure><media mimeType="image/png" url="../images/P/0001_1r.png"/></figure>'
+                                 '<ref target="../images/P/0003_2r.png">planche</ref>'), encoding="utf-8")
+    apply_witness_rename(_plan(project_xml, "P", "P2"))
+    assert all(document.path.is_file() for document in load_project(project_xml).documents)
+    text = part.read_text(encoding="utf-8")
+    for value in ("../images/P2/0002_1v.png", "../images/P2/0001_1r.png", "../images/P2/0003_2r.png"):
+        assert f'"{value}"' in text and (part.parent / value).is_file(), value
+
+
+def test_an_xml_document_outside_the_project_is_refused(tmp_path):
+    project_xml = _project(tmp_path)
+    shared = tmp_path / "commun"
+    shared.mkdir()
+    (shared / "commentaire.xml").write_text(
+        f'<TEI xmlns="{TEI}"><text><body><p><rdg wit="#P">x</rdg></p></body></text></TEI>', encoding="utf-8")
+    project_xml.write_text(project_xml.read_text(encoding="utf-8").replace(
+        '<document file="xml/notes.xml" label="Notes" />',
+        '<document file="xml/notes.xml" label="Notes" /><document file="../commun/commentaire.xml" label="C" />'),
+        encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    assert _keys(plan.problems) == ["witness_rename.external_file"]
+
+
+def test_a_surface_shared_by_another_witness_follows(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    project_xml.write_text(project_xml.read_text(encoding="utf-8").replace(
+        "  </witnesses>",
+        '    <witness id="Pc" label="Pc · correcteur"><images type="files">'
+        '<image file="images/P/0001_1r.png" label="1r" surface="P-p0001" /></images></witness>\n  </witnesses>'),
+        encoding="utf-8")
+    apply_witness_rename(_plan(project_xml, "P", "P2"))
+    image = load_project(project_xml).witness_by_id["Pc"].image_files[0]
+    assert image.surface_id == "P2-p0001" and image.path.is_file()
+
+
+def test_a_pointer_meant_for_a_person_is_left_alone(tmp_path):
+    project_xml = _project(tmp_path)
+    notes = project_xml.parent / "xml" / "notes.xml"
+    notes.write_text(NOTES.replace("</ref>.", '</ref>. Copié par <persName ref="#P">Pierre</persName>.'),
+                     encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    text = _text(plan, notes)
+    assert 'target="edition.xml#P2"' in text and '<persName ref="#P">Pierre</persName>' in text
+
+
+def test_two_witnesses_never_get_the_same_identifier(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    stale = load_project(project_xml)               # la fenêtre ouverte avant l'ajout
+    project_xml.write_text(project_xml.read_text(encoding="utf-8").replace(
+        "  </witnesses>", '    <witness id="P2" label="P2 · Poitiers" />\n  </witnesses>'), encoding="utf-8")
+    plan = plan_witness_rename(stale, "P", "P2")
+    assert _keys(plan.problems) == ["witness_rename.taken"]
+
+
+def test_a_character_reference_is_not_a_pointer(tmp_path):
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    text = project_xml.read_text(encoding="utf-8").replace(
+        '<witness id="P" label="P · Paris"', '<witness id="xa" label="xa · Paris"').replace(
+        '<param name="titre" value="Paris" />', '<param name="separateur" value="fin&#xa;debut" />')
+    project_xml.write_text(text, encoding="utf-8")
+    for path in (root / "xml" / "edition.xml", root / "xml" / "s02.xml", root / "xml" / "notes.xml"):
+        path.write_text(path.read_text(encoding="utf-8").replace('"P"', '"xa"').replace("#P\"", '#xa"')
+                        .replace("#P ", "#xa ").replace('edRef="P"', 'edRef="xa"'), encoding="utf-8")
+    plan = _plan(project_xml, "xa", "xd")
+    assert plan.ok, plan.problems
+    assert 'value="fin&#xa;debut"' in _text(plan, project_xml)
