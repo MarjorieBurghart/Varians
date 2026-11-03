@@ -1325,4 +1325,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="witness_rename.preview.mention">{file}, строка {line}: {excerpt}</string>
   <string key="witness_rename.done">Сигла {old} теперь {new}: {files, plural, one {# файл изменён} few {# файла изменены} many {# файлов изменено} other {# файла изменено}} (прежние версии в .bak), {moves, plural, one {# файл или папка переименованы} few {# файла или папки переименованы} many {# файлов или папок переименовано} other {# файла или папки переименованы}}. Проект перезагружается.</string>
   <string key="witness_rename.done.mentions">Упоминания старой сиглы {old} в тексте, не изменены, проверьте: {count}</string>
+  <string key="witness_rename.interrupted">Прерванная смена сиглы ({old} → {new}) ещё не исправлена: откройте проект заново, и Varians вернёт его в прежнее состояние.</string>
+  <string key="witness_rename.recovered">Смена сиглы ({old} → {new}) была прервана (остановка Varians или компьютера). Проект возвращён в прежнее состояние; смену можно выполнить заново.</string>
+  <string key="witness_rename.recovery_failed">Смена сиглы ({old} → {new}) была прервана, и эти файлы не удалось вернуть в прежнее состояние: {files}. Их копии .bak хранят это состояние. Varians повторит попытку при следующем открытии проекта.</string>
 </translations>

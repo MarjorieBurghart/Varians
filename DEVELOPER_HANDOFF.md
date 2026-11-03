@@ -713,7 +713,7 @@ Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), mot
 
 ### Changer le sigle d'un témoin (0.9.4.0)
 
-Bouton « Changer le sigle… » de Fichier ▸ Paramètres du projet… (`WitnessTable.rename_btn`, affiché seulement quand la table reçoit `saved_ids`, donc pas dans « Nouveau projet »). `ProjectSettingsDialog` se ferme avec le code `RENAME` (`rename_witness_id`) si aucun autre réglage n'a changé (`_initial_draft`), et `project_actions.project_settings_dialog` appelle `witness_rename_ui.run_witness_rename` : `maybe_save`, boîte `WitnessRenameDialog` (« Aperçu » → `plan_witness_rename` ; « Appliquer » seulement après un aperçu sans refus du sigle affiché), arrêt des téléchargements IIIF, `apply_witness_rename`, `_carry_view_settings` (position des fenêtres détachées écrite d'abord ; une fenêtre détachée du témoin prend le nouvel identifiant, pour que sa fermeture n'écrive pas l'ancien ; `migrate_view_settings`), compte rendu, rechargement. Le champ « Sigle » d'un témoin enregistré est en lecture seule dans `WitnessEditDialog` (`siglum_locked`). Le module `witness_rename` est sans Qt : plan lexical (remplacements à leur place, `_Edits`), refus et notes en `i18n.Message`, application tout ou rien (`RenameError`). Règles détaillées : `PROJECT_MANAGEMENT.md`, « Changer le sigle d'un témoin ».
+Bouton « Changer le sigle… » de Fichier ▸ Paramètres du projet… (`WitnessTable.rename_btn`, affiché seulement quand la table reçoit `saved_ids`, donc pas dans « Nouveau projet »). `ProjectSettingsDialog` se ferme avec le code `RENAME` (`rename_witness_id`) si aucun autre réglage n'a changé (`_initial_draft`), et `project_actions.project_settings_dialog` appelle `witness_rename_ui.run_witness_rename` : `maybe_save`, boîte `WitnessRenameDialog` (« Aperçu » → `plan_witness_rename` ; « Appliquer » seulement après un aperçu sans refus du sigle affiché), arrêt des téléchargements IIIF, `apply_witness_rename`, `_carry_view_settings` (position des fenêtres détachées écrite d'abord ; une fenêtre détachée du témoin prend le nouvel identifiant, pour que sa fermeture n'écrive pas l'ancien ; `migrate_view_settings`), compte rendu, rechargement. Le champ « Sigle » d'un témoin enregistré est en lecture seule dans `WitnessEditDialog` (`siglum_locked`). Le module `witness_rename` est sans Qt : plan lexical (remplacements à leur place, `_Edits`), refus et notes en `i18n.Message`, application tout ou rien (`RenameError`). Journal `.varians/witness-rename.json` écrit avant toute modification ; `MainWindow.__init__` appelle `witness_rename_ui.recover_interrupted_rename` avant `load_project` : un changement interrompu (arrêt brutal) est défait, avec un message. Règles détaillées : `PROJECT_MANAGEMENT.md`, « Changer le sigle d'un témoin ».
 
 ### Outil tiers d'alignement
 
@@ -1062,7 +1062,8 @@ VARIANS V0.9.4.0 — CHANGER LE SIGLE D'UN TÉMOIN
   dossiers renommés (alignments/P.json, alignments/<texte>/P.json,
   images/P/, alto/P/, iiif/…). Aperçu d'abord (fichiers, nombre de
   changements, renommages, citations de l'ancien sigle à vérifier), copie
-  .bak de chaque fichier, tout remis en état au moindre échec. Un sigle
+  .bak de chaque fichier, tout remis en état au moindre échec, et à la
+  prochaine ouverture après un arrêt brutal (journal). Un sigle
   pris est refusé ; un échange passe par un sigle provisoire.
 • Le sigle d'un témoin enregistré ne se change plus dans sa boîte
   « Modifier… », qui en faisait un nouveau témoin sans rien mettre à jour.

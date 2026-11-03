@@ -546,3 +546,128 @@ def test_a_refused_plan_is_not_applied(tmp_path):
     plan = _plan(_project(tmp_path), "P", "T1")
     with pytest.raises(ValueError):
         apply_witness_rename(plan)
+
+
+# --- Sécurité des données (relecture avant la PR) ------------------------------------------
+
+class _Crash(BaseException):
+    """Arrêt brutal (Varians tué, coupure) : rien ne le rattrape."""
+
+
+def test_an_interrupted_change_is_undone_at_the_next_opening(tmp_path, monkeypatch):
+    import save_io
+    import witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    (root / "xml" / "edition.xml.bak").write_text("copie précédente", encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    before = _snapshot(root)
+    write = save_io.atomic_write_text_with_backup
+    calls = []
+
+    def crash_on_the_fourth(path, text, **kwargs):
+        calls.append(path)
+        if len(calls) == 4:
+            raise _Crash()
+        return write(path, text, **kwargs)
+
+    monkeypatch.setattr(save_io, "atomic_write_text_with_backup", crash_on_the_fourth)
+    with pytest.raises(_Crash):
+        witness_rename.apply_witness_rename(plan)
+    monkeypatch.setattr(save_io, "atomic_write_text_with_backup", write)
+    assert _snapshot(root) != before
+    assert witness_rename.journal_path(root).is_file()
+    # Pas de nouveau changement tant que l'interruption n'est pas réparée.
+    assert _keys(_plan(project_xml, "T1", "T0").problems) == ["witness_rename.interrupted"]
+    interrupted, failed = witness_rename.recover_interrupted_rename(root)
+    assert (interrupted["old"], interrupted["new"], failed) == ("P", "P2", [])
+    assert _snapshot(root) == before
+    assert witness_rename.recover_interrupted_rename(root) == (None, [])
+
+
+def test_an_interruption_while_renaming_is_undone_too(tmp_path, monkeypatch):
+    import witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    plan = _plan(project_xml, "P", "P2")
+    before = _snapshot(root)
+    rename = witness_rename._rename
+    calls = []
+
+    def crash_on_the_third(move):
+        calls.append(move)
+        if len(calls) == 3:
+            raise _Crash()
+        rename(move)
+
+    monkeypatch.setattr(witness_rename, "_rename", crash_on_the_third)
+    with pytest.raises(_Crash):
+        witness_rename.apply_witness_rename(plan)
+    monkeypatch.setattr(witness_rename, "_rename", rename)
+    interrupted, failed = witness_rename.recover_interrupted_rename(root)
+    assert interrupted is not None and failed == []
+    assert _snapshot(root) == before
+    assert not list(root.rglob("*P2*"))
+
+
+def test_the_project_is_checked_before_the_change_is_kept(tmp_path, monkeypatch):
+    import witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    plan = _plan(project_xml, "P", "P2")
+    before = _snapshot(root)
+
+    def unreadable(_plan):
+        raise ValueError("project.xml illisible")
+
+    monkeypatch.setattr(witness_rename, "_verify", unreadable)
+    with pytest.raises(witness_rename.RenameError) as error:
+        witness_rename.apply_witness_rename(plan)
+    assert error.value.message.key == "witness_rename.failed"
+    assert _snapshot(root) == before
+    assert not witness_rename.journal_path(root).exists()
+
+
+def test_a_damaged_alignment_file_is_refused_not_crashed(tmp_path):
+    project_xml = _project(tmp_path)
+    damaged = project_xml.parent / "alignments" / "s02" / "T1.json"
+    damaged.write_text(damaged.read_text(encoding="utf-8").replace('"meta": {', '"meta": {,', 1), encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    assert _keys(plan.problems) == ["witness_rename.malformed"]
+    assert plan.problems[0].values["file"] == "alignments/s02/T1.json"
+
+
+def test_a_json_file_with_a_bom_keeps_it(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    path = project_xml.parent / "alignments" / "P.json"
+    path.write_text("﻿" + path.read_text(encoding="utf-8"), encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    assert plan.ok, plan.problems
+    apply_witness_rename(plan)
+    raw = (project_xml.parent / "alignments" / "P2.json").read_bytes()
+    assert raw.startswith(b"\xef\xbb\xbf")
+    assert json.loads(raw.decode("utf-8-sig"))["meta"]["witness"] == "P2"
+
+
+def test_a_label_written_with_a_character_reference_is_left_whole(tmp_path):
+    project_xml = _project(tmp_path)
+    edition = project_xml.parent / "xml" / "edition.xml"
+    edition.write_text(EDITION.replace('<witness xml:id="P">P · Paris</witness>',
+                                       '<witness xml:id="P">&#80; · Paris</witness>'), encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    assert plan.ok, plan.problems
+    assert '<witness xml:id="P2">&#80; · Paris</witness>' in _text(plan, edition)
+
+
+def test_a_surface_stored_for_another_witness_is_an_identifier_in_use(tmp_path):
+    project_xml = _project(tmp_path)
+    text = project_xml.read_text(encoding="utf-8").replace(
+        '<witness id="T1" role="base" label="T1 · Troyes" alignment="alignments/T1.json" />',
+        '<witness id="T1" role="base" label="T1 · Troyes" alignment="alignments/T1.json">'
+        '<images type="files"><image file="images/T1/0001_1r.png" label="1r" surface="P2-p0002" /></images>'
+        '</witness>')
+    project_xml.write_text(text, encoding="utf-8")
+    plan = _plan(project_xml, "P", "P2")
+    assert _keys(plan.problems) == ["witness_rename.id_used"]
+    assert (plan.problems[0].values["id"], plan.problems[0].values["file"]) == ("P2-p0002", "project.xml")

@@ -1311,4 +1311,7 @@ Une feuille n’écrit que son résultat, et, avec Saxon, d’autres fichiers da
   <string key="witness_rename.preview.mention">{file}, ligne {line} : {excerpt}</string>
   <string key="witness_rename.done">Le sigle {old} est devenu {new} : {files, plural, one {# fichier modifié} other {# fichiers modifiés}} (anciennes versions en .bak), {moves, plural, one {# fichier ou dossier renommé} other {# fichiers ou dossiers renommés}}. Le projet est rechargé.</string>
   <string key="witness_rename.done.mentions">Citations de l’ancien sigle {old} dans le texte, non modifiées, à vérifier : {count}</string>
+  <string key="witness_rename.interrupted">Un changement de sigle interrompu ({old} → {new}) n’est pas encore réparé : rouvrez le projet, Varians le remettra dans son état d’avant.</string>
+  <string key="witness_rename.recovered">Un changement de sigle ({old} → {new}) avait été interrompu (arrêt de Varians ou de l’ordinateur). Le projet a été remis dans son état d’avant ; vous pouvez recommencer le changement.</string>
+  <string key="witness_rename.recovery_failed">Un changement de sigle ({old} → {new}) avait été interrompu, et ces fichiers n’ont pas pu être remis dans leur état d’avant : {files}. Leurs copies .bak gardent cet état. Varians réessaiera à la prochaine ouverture du projet.</string>
 </translations>

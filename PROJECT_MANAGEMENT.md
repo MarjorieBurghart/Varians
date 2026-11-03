@@ -577,6 +577,18 @@ signalé.
 `witness_rename.apply_witness_rename` écrit chaque fichier atomiquement
 (copie `.bak`), puis renomme fichiers et dossiers (un changement de casse
 seule par un nom provisoire) ; rien n'est fait si un fichier a changé
-depuis l'aperçu ; au moindre échec, tout reprend son état d'avant.
+depuis l'aperçu ; au moindre échec, tout reprend son état d'avant, les
+copies `.bak` plus anciennes comprises (mises de côté pendant le
+changement). Avant toute écriture, un journal (`.varians/witness-rename.json` :
+fichiers avec l'empreinte SHA-256 de leur texte d'avant et d'après,
+renommages) permet de défaire un changement interrompu par un arrêt de
+Varians ou de l'ordinateur : à la prochaine ouverture du projet,
+`recover_interrupted_rename` défait les renommages et rend chaque fichier
+depuis sa copie `.bak`, après en avoir vérifié l'empreinte ; un fichier
+qui n'est ni l'un ni l'autre n'est pas touché, et le journal reste. Tant
+qu'il reste, aucun autre changement de sigle n'est permis. Le changement
+n'est gardé que si le projet modifié se relit avec le témoin sous son
+nouvel identifiant (`_verify`). Un JSON d'alignement abîmé qui devrait
+changer est refusé ; un fichier avec BOM le garde.
 `migrate_view_settings` reporte les réglages d'affichage du témoin
 (`projectView/<empreinte>/…`).

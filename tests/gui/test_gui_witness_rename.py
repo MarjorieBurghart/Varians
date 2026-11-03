@@ -216,3 +216,70 @@ def test_a_detached_witness_stays_detached_under_its_new_siglum(qtbot, open_wind
         assert not _settings().contains(key("floatingGeometry/M"))
     finally:
         _close(window)
+
+
+class _Crash(BaseException):
+    """Arrêt brutal de Varians ou de l'ordinateur."""
+
+
+def test_an_interrupted_change_is_undone_when_the_project_opens(open_window, example_project, dialogs,
+                                                                 monkeypatch):
+    import save_io
+    import witness_rename
+    from project_config import load_project
+    root = example_project.parent
+    edition = root / "xml" / "edition.xml"
+    before = edition.read_text(encoding="utf-8")
+    plan = witness_rename.plan_witness_rename(load_project(example_project), "P", "P2")
+    write = save_io.atomic_write_text_with_backup
+    calls = []
+
+    def crash_on_the_third(path, text, **kwargs):
+        calls.append(path)
+        if len(calls) == 3:
+            raise _Crash()
+        return write(path, text, **kwargs)
+
+    monkeypatch.setattr(save_io, "atomic_write_text_with_backup", crash_on_the_third)
+    try:
+        witness_rename.apply_witness_rename(plan)
+    except _Crash:
+        pass
+    monkeypatch.setattr(save_io, "atomic_write_text_with_backup", write)
+    assert 'edRef="#P2"' in edition.read_text(encoding="utf-8")
+    dialogs.expect("information")
+    window = open_window(example_project)
+    assert dialogs.seen[-1][2] == _tr("witness_rename.recovered", old="P", new="P2")
+    assert edition.read_text(encoding="utf-8") == before
+    assert [w.id for w in window.project.witnesses] == ["T1", "T2", "P"]
+    assert not witness_rename.journal_path(root).exists()
+
+
+def test_a_failed_reload_never_leaves_the_old_documents_open(open_window, example_project, dialogs,
+                                                             monkeypatch, editor_module):
+    root = example_project.parent
+    window = open_window(example_project)
+    # Texte non enregistré, écarté à la question « Enregistrer ? » : il ne
+    # doit jamais être réécrit par-dessus le projet changé.
+    window.editor.insertPlainText("<!-- brouillon -->")
+
+    def refuse(*_args, **_kwargs):
+        raise OSError("projet illisible")
+
+    from PySide6.QtWidgets import QMessageBox
+    dialogs.expect("question", QMessageBox.StandardButton.Discard)
+    dialogs.expect("dialog", _ask_rename("P"))
+    dialogs.expect("question", QMessageBox.StandardButton.Discard)
+    dialogs.expect("dialog", _rename_to("P2"))
+    dialogs.expect("information")
+    dialogs.expect("critical")
+    monkeypatch.setattr(editor_module, "load_project", refuse)
+    window.project_settings_dialog()
+    replacement = window._replacement_window
+    try:
+        assert type(replacement).__name__ == "WelcomeWindow"
+        assert window._force_close and not window.isVisible()
+        assert 'edRef="#P2"' in (root / "xml" / "edition.xml").read_text(encoding="utf-8")
+        assert "brouillon" not in (root / "xml" / "edition.xml").read_text(encoding="utf-8")
+    finally:
+        replacement.close()

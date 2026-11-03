@@ -385,7 +385,7 @@ Fonctionnement : aide, paragraphe « Texte de lecture » (`viewer-text`, à la f
 ## V0.9.4.0 — changer le sigle d'un témoin
 
 - Plan (`witness_rename.plan_witness_rename`, sans Qt) : `_Planner` — `load_documents` (édition, parties, `<documents>` ; `other_target` : document où l'ancien identifiant est un autre élément), `plan_surfaces` (surfaces `<identifiant>-p\d+`, celles de `<image surface>` et des JSON du témoin, leurs zones), `plan_moves` (alignements, textes à part, cache et copie IIIF, `images/`, `alto/`), `rebase` (chemins vers un fichier ou dossier renommé), `plan_project`, `plan_document` (`_pointer`, `_declaration` : `xml:id`, `<idno type="siglum">`, nom ; `_text_mentions`, `_inside_word`), `plan_json` (`_json_strings` : lecture lexicale avec positions), `check_ids` (édition, parties, fichiers modifiés). `relabel` : nom affiché qui commence par le sigle. `RenamePlan` (`changes` : `FileChange` avec `counts` par rubrique, `moves`, `surfaces`, `mentions`, `notes`, `problems`).
-- Application : `apply_witness_rename` (fraîcheur des fichiers, `atomic_write_text_with_backup`, `_rename`, `_rollback`, `RenameError`) ; `migrate_view_settings`.
+- Application : `apply_witness_rename` (fraîcheur des fichiers, journal `_write_journal`, `_set_aside` des anciennes copies .bak, `atomic_write_text_with_backup`, `_rename`, `_verify`, `_rollback`, `RenameError`) ; reprise : `read_journal`, `recover_interrupted_rename` (appelée à l'ouverture par `witness_rename_ui.recover_interrupted_rename`) ; `migrate_view_settings`.
 - Interface : `witness_rename_ui.WitnessRenameDialog`, `preview_text`, `run_witness_rename`, `_carry_view_settings` ; `WitnessEditDialog(siglum_locked)`.
 
 ## V0.9.3.4 — red team 2 : robustesse et cohérence

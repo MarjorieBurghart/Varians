@@ -1325,4 +1325,7 @@ Styl zapisuje jen svůj výsledek a se Saxonem i další soubory ve složce výs
   <string key="witness_rename.preview.mention">{file}, řádek {line}: {excerpt}</string>
   <string key="witness_rename.done">Sigla {old} je nyní {new}: {files, plural, one {# soubor změněn} few {# soubory změněny} other {# souborů změněno}} (předchozí verze jako .bak), {moves, plural, one {# soubor nebo složka přejmenována} few {# soubory nebo složky přejmenovány} other {# souborů nebo složek přejmenováno}}. Projekt se znovu načte.</string>
   <string key="witness_rename.done.mentions">Citace staré sigly {old} v textu, nezměněné, ke kontrole: {count}</string>
+  <string key="witness_rename.interrupted">Přerušená změna sigly ({old} → {new}) ještě nebyla opravena: otevřete projekt znovu a Varians ho vrátí do původního stavu.</string>
+  <string key="witness_rename.recovered">Změna sigly ({old} → {new}) byla přerušena (Varians nebo počítač se zastavil). Projekt byl vrácen do původního stavu; změnu můžete provést znovu.</string>
+  <string key="witness_rename.recovery_failed">Změna sigly ({old} → {new}) byla přerušena a tyto soubory se nepodařilo vrátit do původního stavu: {files}. Jejich kopie .bak tento stav uchovávají. Varians to zkusí znovu při příštím otevření projektu.</string>
 </translations>

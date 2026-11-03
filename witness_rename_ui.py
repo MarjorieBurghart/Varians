@@ -117,6 +117,33 @@ class WitnessRenameDialog(QDialog):
             self.accept()
 
 
+def recover_interrupted_rename(project_path, parent, tr) -> bool:
+    """À l'ouverture d'un projet : un changement de sigle interrompu
+    (arrêt de Varians ou de l'ordinateur) est défait, et l'utilisateur en
+    est informé. Vrai si un journal a été trouvé."""
+    from pathlib import Path
+    from witness_rename import journal_path, recover_interrupted_rename as recover
+    root = Path(project_path).resolve().parent
+    if not journal_path(root).is_file():
+        return False
+    data, failed = recover(root)
+    values = {"old": data.get("old", "?"), "new": data.get("new", "?")}
+    if failed:
+        files = ", ".join(_shown_path(root, path) for path in failed)
+        QMessageBox.warning(parent, tr("witness_rename.title"),
+                            tr("witness_rename.recovery_failed", files=files, **values))
+    else:
+        QMessageBox.information(parent, tr("witness_rename.title"), tr("witness_rename.recovered", **values))
+    return True
+
+
+def _shown_path(root, path):
+    try:
+        return path.resolve().relative_to(root).as_posix()
+    except ValueError:
+        return str(path)
+
+
 def _carry_view_settings(window, old, new):
     """Réglages d'affichage du témoin reportés sur son nouvel identifiant.
     Une fenêtre détachée enregistre sa position en se fermant : elle la
@@ -161,7 +188,11 @@ def run_witness_rename(window, witness_id, tr) -> bool:
         new_window = type(window)(window.project.path)
     except Exception as exc:
         QMessageBox.critical(window, tr("project.open_error"), error_message(exc))
-        return False
+        # Les documents de cette fenêtre sont ceux d'avant le changement :
+        # elle se ferme sans rien enregistrer, pour qu'aucun ne soit réécrit
+        # par-dessus le projet changé.
+        import sys
+        new_window = sys.modules[type(window).__module__].WelcomeWindow()
     window._replacement_window = new_window
     new_window.showMaximized()
     window._force_close = True

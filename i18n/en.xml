@@ -1311,4 +1311,7 @@ A stylesheet writes only its result and, with Saxon, other files in the folder o
   <string key="witness_rename.preview.mention">{file}, line {line}: {excerpt}</string>
   <string key="witness_rename.done">The siglum {old} is now {new}: {files, plural, one {# file modified} other {# files modified}} (previous versions as .bak), {moves, plural, one {# file or folder renamed} other {# files or folders renamed}}. The project is reloaded.</string>
   <string key="witness_rename.done.mentions">Citations of the old siglum {old} in the text, not modified, to check: {count}</string>
+  <string key="witness_rename.interrupted">An interrupted siglum change ({old} → {new}) has not been repaired yet: reopen the project and Varians will put it back as it was.</string>
+  <string key="witness_rename.recovered">A siglum change ({old} → {new}) had been interrupted (Varians or the computer stopped). The project has been put back as it was; you can make the change again.</string>
+  <string key="witness_rename.recovery_failed">A siglum change ({old} → {new}) had been interrupted, and these files could not be put back as they were: {files}. Their .bak copies keep that state. Varians will try again the next time the project is opened.</string>
 </translations>

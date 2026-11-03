@@ -48,6 +48,7 @@ identifiant les réglages d'affichage du projet (ordre, hauteurs, fenêtres
 détachées…)."""
 from __future__ import annotations
 
+import hashlib
 import html
 import json
 import os
@@ -313,6 +314,7 @@ class _Planner:
         self.ids = {}                # clé de chemin -> collect_ids
         self.other_target = set()    # documents où P désigne autre chose qu'un témoin
         self.group = set()           # l'édition et ses parties
+        self.project_text = ""
         self.changes = []
 
     # -- documents ------------------------------------------------------------------------
@@ -413,6 +415,16 @@ class _Planner:
         wanted = set(self.surfaces.values())
         if self.new_id != self.old_id:
             wanted.add(self.new_id)
+        for other in self.project.witnesses:
+            if other.id == self.old_id:
+                continue
+            for image in other.image_files:
+                if image.surface_id in wanted:
+                    position = self.project_text.find(f'"{image.surface_id}"')
+                    self.problems.append(Message(
+                        "witness_rename.id_used", id=image.surface_id, element="image", file="project.xml",
+                        line=self.project_text.count("\n", 0, max(position, 0)) + 1))
+                    return
         relevant = set(self.group) | {_key(change.path) for change in self.changes}
         for path, _text in self.documents:
             if _key(path) not in relevant:
@@ -595,7 +607,9 @@ class _Planner:
         label_end = close.start if label_end < 0 else label_end
         label = text[label_start:label_end]
         for old, new in ((self.old_siglum, self.new_siglum), (self.old_id, self.new_siglum)):
-            new_label = relabel(html.unescape(label), old, new)
+            # Texte brut : un sigle écrit avec une entité (« &#80; ») n'est pas
+            # retouché, les positions ne seraient pas les siennes.
+            new_label = relabel(label, old, new)
             if new_label is not None:
                 lead = len(label) - len(label.lstrip())
                 edits.add(label_start + lead, label_start + lead + len(old), _escape(new), "declaration")
@@ -740,6 +754,11 @@ class _Planner:
             self.problems.append(Message("witness_rename.unreadable", file=_display(self.root, path),
                                          error=str(error)))
             return
+        try:
+            json.loads(text.lstrip("\ufeff"))
+            damaged = None
+        except ValueError as error:
+            damaged = getattr(error, "lineno", 0)
         edits = _Edits(text)
         names = {self.old_id: self.new_id, self.old_siglum: self.new_siglum}
         for key, start, end, value in _json_strings(text):
@@ -754,10 +773,17 @@ class _Planner:
                 new, category = self.rebase(value, self.root), "paths"
             if new is not None and new != value:
                 edits.add(start, end, json.dumps(new, ensure_ascii="\\u" in text[start:end]), category)
+        if damaged is not None:
+            # JSON abîmé : sa lecture n'est pas sûre. Celui du témoin, ou un
+            # autre qui devrait changer, est à réparer d'abord.
+            if edits or own:
+                self.problems.append(Message("witness_rename.malformed", file=_display(self.root, path),
+                                             line=damaged))
+            return
         if not edits:
             return
         try:
-            json.loads(edits.apply())
+            json.loads(edits.apply().lstrip("\ufeff"))
         except ValueError:                                  # pragma: no cover - garde-fou
             raise AssertionError(f"{path} : le changement de sigle le rendrait illisible")
         inside = True
@@ -801,8 +827,12 @@ def plan_witness_rename(project, witness_id: str, new_siglum: str) -> RenamePlan
     if problem is not None:
         return _replace(plan, problems=(problem,))
 
+    interrupted = read_journal(project_path.parent)
+    if interrupted is not None:
+        return _replace(plan, problems=(Message("witness_rename.interrupted", old=interrupted.get("old", "?"),
+                                                new=interrupted.get("new", "?")),))
     planner = _Planner(project, witness, new_id, new_siglum)
-    project_text = planner._read(project_path)
+    project_text = planner.project_text = planner._read(project_path)
     if project_text is None:
         return _replace(plan, problems=tuple(planner.problems))
     planner.load_documents()
@@ -915,6 +945,130 @@ def _rollback(written, moved, aside):
     return failed
 
 
+JOURNAL = Path(".varians") / "witness-rename.json"
+
+
+def journal_path(root) -> Path:
+    """Journal d'un changement de sigle en cours, dans le dossier du projet."""
+    return Path(root) / JOURNAL
+
+
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _file_digest(path):
+    try:
+        return _digest(Path(path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeError):
+        return None
+
+
+def _stored(root, path) -> str:
+    try:
+        return Path(path).relative_to(root).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _write_journal(plan):
+    """Écrit, avant toute modification, de quoi remettre le projet dans son
+    état d'avant si Varians ou l'ordinateur s'arrête en plein changement."""
+    root = plan.root
+    data = {"format": 1, "old": plan.old_siglum, "new": plan.new_siglum, "old_id": plan.old_id,
+            "new_id": plan.new_id,
+            "files": [{"path": _stored(root, c.path), "original": _digest(c.original), "new": _digest(c.text)}
+                      for c in plan.changes],
+            "moves": [{"source": _stored(root, m.source), "target": _stored(root, m.target)} for m in plan.moves]}
+    path = journal_path(root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    with open(temporary, "w", encoding="utf-8") as stream:
+        json.dump(data, stream, ensure_ascii=False, indent=1)
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temporary, path)
+
+
+def read_journal(root):
+    """Le journal d'un changement interrompu (dict), ou None."""
+    path = journal_path(root)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"old": "?", "new": "?", "damaged": True}
+    return data if isinstance(data, dict) else {"old": "?", "new": "?", "damaged": True}
+
+
+def _present(path) -> bool:
+    """Le fichier existe-t-il sous ce nom exact (casse comprise) ?"""
+    try:
+        return path.name in os.listdir(path.parent)
+    except OSError:
+        return False
+
+
+def recover_interrupted_rename(root):
+    """Remet dans son état d'avant un projet dont le changement de sigle a
+    été interrompu (journal présent) : renommages défaits, fichiers rendus
+    depuis leur copie .bak (vérifiée), anciennes copies .bak remises.
+    ``(journal ou None, fichiers non remis)`` ; le journal n'est effacé que
+    si tout a été remis."""
+    root = Path(root)
+    data = read_journal(root)
+    if data is None:
+        return None, []
+    if data.get("damaged"):
+        return data, [journal_path(root)]
+
+    def resolved(value):
+        path = Path(value)
+        return path if path.is_absolute() else root / path
+
+    failed = []
+    for entry in reversed(data.get("moves", [])):
+        source, target = resolved(entry["source"]), resolved(entry["target"])
+        temporary = source.with_name(f".{source.name}.varians-rename")
+        try:
+            if temporary.exists():
+                os.rename(temporary, source)
+            elif _present(target) and not _present(source):
+                _rename(Move(target, source))
+        except OSError:
+            failed.append(target)
+    for entry in reversed(data.get("files", [])):
+        path = resolved(entry["path"])
+        backup = path.with_suffix(path.suffix + ".bak")
+        aside = backup.with_name(f".{backup.name}.varians-rename")
+        try:
+            current = _file_digest(path) if path.exists() else None
+            if current != entry["original"]:
+                if current not in (entry["new"], None) or _file_digest(backup) != entry["original"]:
+                    failed.append(path)
+                    continue
+                os.replace(backup, path)
+            if aside.exists() and not backup.exists():
+                os.replace(aside, backup)
+            for temporary in path.parent.glob(f".{path.name}.*.tmp"):
+                temporary.unlink()
+        except OSError:
+            failed.append(path)
+    if not failed:
+        journal_path(root).unlink(missing_ok=True)
+    return data, failed
+
+
+def _verify(plan):
+    """Le projet changé se lit, avec le témoin sous son nouvel identifiant."""
+    from project_config import load_project
+    project = load_project(plan.project_path)
+    if plan.new_id not in project.witness_by_id or (
+            plan.old_id != plan.new_id and plan.old_id in project.witness_by_id):
+        raise ValueError(f"{plan.old_id} → {plan.new_id} : témoin introuvable après le changement")
+
+
 def apply_witness_rename(plan: RenamePlan) -> RenameResult:
     """Applique le plan d'un bloc : chaque fichier réécrit (écriture
     atomique, copie ``.bak`` de l'ancien), puis les fichiers et dossiers
@@ -935,8 +1089,18 @@ def apply_witness_rename(plan: RenamePlan) -> RenameResult:
             raise RenameError(Message("witness_rename.changed", file=plan.display_path(move.source)))
         if move.target.exists() and not (move.case_only and os.path.samefile(move.source, move.target)):
             raise RenameError(Message("witness_rename.target_exists", file=plan.display_path(move.target)))
+    interrupted = read_journal(plan.root)
+    if interrupted is not None:
+        raise RenameError(Message("witness_rename.interrupted", old=interrupted.get("old", "?"),
+                                  new=interrupted.get("new", "?")))
     written, moved, aside = [], [], []
-    current = None
+    current = plan.project_path
+    try:
+        _write_journal(plan)
+    except OSError as error:
+        journal_path(plan.root).unlink(missing_ok=True)
+        raise RenameError(Message("witness_rename.failed", file=plan.display_path(journal_path(plan.root)),
+                                  error=getattr(error, "strerror", None) or str(error))) from error
     try:
         for change in plan.changes:
             current = change.path
@@ -949,8 +1113,12 @@ def apply_witness_rename(plan: RenamePlan) -> RenameResult:
             current = move.source
             _rename(move)
             moved.append(move)
+        current = plan.project_path
+        _verify(plan)
     except Exception as error:
         failed = _rollback(written, moved, aside)
+        if not failed:
+            journal_path(plan.root).unlink(missing_ok=True)
         detail = getattr(error, "strerror", None) or str(error)
         if failed:
             raise RenameError(Message("witness_rename.rollback_failed", file=plan.display_path(current),
@@ -963,6 +1131,7 @@ def apply_witness_rename(plan: RenamePlan) -> RenameResult:
             previous.unlink()
         except OSError:
             pass
+    journal_path(plan.root).unlink(missing_ok=True)
     return RenameResult(tuple(path for path, _backup in written), tuple(backup for _path, backup in written),
                         tuple(moved))
 

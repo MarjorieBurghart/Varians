@@ -1325,4 +1325,7 @@ Un foglio scrive solo il suo risultato e, con Saxon, altri file nella cartella d
   <string key="witness_rename.preview.mention">{file}, riga {line}: {excerpt}</string>
   <string key="witness_rename.done">La sigla {old} è ora {new}: {files, plural, one {# file modificato} other {# file modificati}} (versioni precedenti in .bak), {moves, plural, one {# file o cartella rinominati} other {# file o cartelle rinominati}}. Il progetto viene ricaricato.</string>
   <string key="witness_rename.done.mentions">Citazioni della vecchia sigla {old} nel testo, non modificate, da verificare: {count}</string>
+  <string key="witness_rename.interrupted">Un cambio di sigla interrotto ({old} → {new}) non è ancora stato riparato: riaprite il progetto e Varians lo riporterà allo stato precedente.</string>
+  <string key="witness_rename.recovered">Un cambio di sigla ({old} → {new}) era stato interrotto (arresto di Varians o del computer). Il progetto è stato riportato allo stato precedente; potete rifare il cambio.</string>
+  <string key="witness_rename.recovery_failed">Un cambio di sigla ({old} → {new}) era stato interrotto, e questi file non sono stati riportati allo stato precedente: {files}. Le loro copie .bak conservano quello stato. Varians riproverà alla prossima apertura del progetto.</string>
 </translations>

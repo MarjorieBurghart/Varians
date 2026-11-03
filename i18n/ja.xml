@@ -1325,4 +1325,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="witness_rename.preview.mention">{file}、{line} 行目：{excerpt}</string>
   <string key="witness_rename.done">シグラム {old} は {new} になりました。変更したファイル：{files}（以前の版は .bak）、名前を変更したファイルとフォルダー：{moves}。プロジェクトを再読み込みします。</string>
   <string key="witness_rename.done.mentions">本文中の旧シグラム {old} の引用（変更されません。確認してください）：{count}</string>
+  <string key="witness_rename.interrupted">中断されたシグラムの変更（{old} → {new}）がまだ修復されていません。プロジェクトを開き直すと、Varians が元の状態に戻します。</string>
+  <string key="witness_rename.recovered">シグラムの変更（{old} → {new}）が中断されていました（Varians またはコンピューターの停止）。プロジェクトは元の状態に戻されました。変更をやり直すことができます。</string>
+  <string key="witness_rename.recovery_failed">シグラムの変更（{old} → {new}）が中断され、次のファイルを元の状態に戻せませんでした：{files}。.bak コピーにその状態が残っています。次にプロジェクトを開くときに Varians が再試行します。</string>
 </translations>

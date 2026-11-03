@@ -314,6 +314,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         # Document ouvert : doit exister avant toute affectation des attributs
         # de compatibilité ci-dessus.
         self.document = DocumentSession()
+        # Changement de sigle interrompu (V0.9.4.0) : défait avant toute lecture.
+        from witness_rename_ui import recover_interrupted_rename
+        recover_interrupted_rename(project_path, None, _t)
         self.project = load_project(project_path)
         self.document.schema_mode = self.project.schema_mode
         self.document.schema_file = self.project.schema
