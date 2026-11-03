@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Changer le sigle d'un témoin depuis Projet ▸ Paramètres du projet
+"""Changer le sigle d'un témoin depuis Fichier ▸ Paramètres du projet…
 (V0.9.4.0).
 
 - Le bouton « Changer le sigle… » des paramètres ouvre une boîte : nouveau
@@ -190,3 +190,29 @@ def test_the_rename_button_is_only_in_the_project_settings(qtbot):
     table.table.selectRow(0)
     assert table.rename_btn.isEnabled()
     assert table.table.item(0, 0).data(Qt.ItemDataRole.UserRole + 1) == "T1"
+
+
+def test_a_detached_witness_stays_detached_under_its_new_siglum(qtbot, open_window, example_project, dialogs):
+    from app_context import _settings
+    from corpus_data import add_page_witness
+    add_page_witness(example_project, "M", ["45r", "45v"])
+    window = open_window(example_project)
+    assert window._detach_witness("M")
+    dialogs.expect("dialog", _ask_rename("M"))
+    dialogs.expect("dialog", _rename_to("M2"))
+    dialogs.expect("information")
+    window.project_settings_dialog()
+    new_window = window._replacement_window
+    try:
+        assert (example_project.parent / "images" / "M2" / "0001.png").is_file()
+        # Fenêtres détachées rétablies après la construction (call_later).
+        qtbot.waitUntil(lambda: "M2" in new_window._detached_windows, timeout=5000)
+        assert "M" not in new_window._detached_windows
+        key = new_window._view_settings_key
+        assert json.loads(_settings().value(key("detachedWitnesses"))) == ["M2"]
+        # La fenêtre détachée de l'ancienne fenêtre, fermée après coup, n'a
+        # pas réécrit l'ancien identifiant.
+        assert _settings().value(key("floatingGeometry/M2")) is not None
+        assert not _settings().contains(key("floatingGeometry/M"))
+    finally:
+        _close(window)

@@ -711,6 +711,10 @@ Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus 
 
 Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), moteur sans Qt `text_search` (casse, expressions régulières de Python, remplacements, positions UTF-16), remplacement dans l'éditeur sous la garde des paires de balises (`code_editor`), barre de remplacement du XML (`replace_bar`) et ligne « Remplacer par » du fragment (`formatted_view`), recherche dans l'aide (`help_search`, `help_dialogs.SoftwareHelpDialog`), panneau « Tout lister » des occurrences en contexte (`text_search.kwic`, `search_results`), flèche ▾ de la rangée d'onglets (`document_tabs`). Depuis la V0.9.2.8.1 : bouton au livre des viewers (`manuscript_panel.lead_btn` ; enfoncé, les flèches mènent l'édition ; par défaut, le pivot seul ; réglage local par projet), recherche des `<app>` sans `<lem>` (`apparatus_xpath`), choix explicite dans la liste de Ctrl+E (`completion_ui`). Depuis la V0.9.2.8.2 : sigle d'un témoin distinct de son identifiant XML (`witness_ids`, attribut `siglum` de `project.xml`, `<idno type="siglum">`, affichage par `witness_siglum`), crayon ✎ qui garde la sélection et F2 dans la vue XSLT / CSS (`formatted_view`), témoin ajouté déclaré dans la `<listWit>` existante (`tei_listwit`), identifiants XML de toute écriture pour « Marquer la page » (`tei_facsimile.valid_xml_id`), projet de test dans `tests/data/exemple`, exclu des publications avec tout `tests/`. Depuis la V0.9.2.9 : le crayon ✎ de la vue XSLT / CSS ouvre tout élément modifiable (`fragment_units` : `model.divPart`, `model.inter`, `<head>`, `<figure>`, `<note>`, classes lues dans le schéma du projet), placé par une feuille enveloppe quelle que soit la XSLT de la vue ; la feuille livrée affiche vers, titres, listes et figures. Depuis la V0.9.3.0 : texte de lecture du viewer web structuré (`legacy_v11_core.extract_reading_document` : tous les textes, blocs `div` titrés par `<head>` ou `@n`, `RENDERED_BLOCKS` comptés de la même façon par `renderDocument`, `sync_model.js`, `fulltext_search.js` et `segment_views`), phénomènes éditoriaux comme « Édition critique », `<rdgGrp>`, tableaux dans les feuilles livrées ; code du corpus de Troyes retiré. Restent hors champ : expressions régulières dans la recherche de la vue XSLT / CSS et dans le viewer web, remplacement dans plusieurs documents à la fois.
 
+### Changer le sigle d'un témoin (0.9.4.0)
+
+Bouton « Changer le sigle… » de Fichier ▸ Paramètres du projet… (`WitnessTable.rename_btn`, affiché seulement quand la table reçoit `saved_ids`, donc pas dans « Nouveau projet »). `ProjectSettingsDialog` se ferme avec le code `RENAME` (`rename_witness_id`) si aucun autre réglage n'a changé (`_initial_draft`), et `project_actions.project_settings_dialog` appelle `witness_rename_ui.run_witness_rename` : `maybe_save`, boîte `WitnessRenameDialog` (« Aperçu » → `plan_witness_rename` ; « Appliquer » seulement après un aperçu sans refus du sigle affiché), arrêt des téléchargements IIIF, `apply_witness_rename`, `_carry_view_settings` (position des fenêtres détachées écrite d'abord ; une fenêtre détachée du témoin prend le nouvel identifiant, pour que sa fermeture n'écrive pas l'ancien ; `migrate_view_settings`), compte rendu, rechargement. Le champ « Sigle » d'un témoin enregistré est en lecture seule dans `WitnessEditDialog` (`siglum_locked`). Le module `witness_rename` est sans Qt : plan lexical (remplacements à leur place, `_Edits`), refus et notes en `i18n.Message`, application tout ou rien (`RenameError`). Règles détaillées : `PROJECT_MANAGEMENT.md`, « Changer le sigle d'un témoin ».
+
 ### Outil tiers d'alignement
 
 Varians exploite les synchronisations mais ne doit pas devenir l'atelier complet qui les construit. Un outil compagnon est prévu pour :
@@ -1047,6 +1051,24 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.0 — CHANGER LE SIGLE D'UN TÉMOIN
+
+• Fichier → Paramètres du projet… → « Changer le sigle… » : le sigle
+  d'un témoin (P devient P2) change d'un bloc partout où il est écrit —
+  project.xml (témoin, pivot, pivots des textes, texte du viewer web,
+  paramètres des scénarios, requêtes XPath), déclaration du <witness>,
+  pointeurs #P de l'édition, de ses parties et des documents du projet,
+  surfaces P-p0001 et leurs zones, JSON d'alignement ; fichiers et
+  dossiers renommés (alignments/P.json, alignments/<texte>/P.json,
+  images/P/, alto/P/, iiif/…). Aperçu d'abord (fichiers, nombre de
+  changements, renommages, citations de l'ancien sigle à vérifier), copie
+  .bak de chaque fichier, tout remis en état au moindre échec. Un sigle
+  pris est refusé ; un échange passe par un sigle provisoire.
+• Le sigle d'un témoin enregistré ne se change plus dans sa boîte
+  « Modifier… », qui en faisait un nouveau témoin sans rien mettre à jour.
+• Réglages d'affichage du témoin (ordre, hauteur, fenêtre détachée)
+  reportés sur le nouveau sigle.
+
 VARIANS V0.9.3.4 — RED TEAM 2 : ROBUSTESSE ET COHÉRENCE
 
 Compte rendu complet : docs/RED_TEAM.md, seconde partie.

@@ -532,3 +532,51 @@ mal formée n'est pas touchée :
 ```xml
 <witness xml:id="_1760"><idno type="siglum">1760</idno>Troyes 1760</witness>
 ```
+
+### Changer le sigle d'un témoin (V0.9.4.0)
+
+Le sigle d'un témoin déjà enregistré ne se change pas dans sa boîte
+(« Modifier… ») : le champ y est en lecture seule. Avant, un sigle modifié
+là en faisait un nouveau témoin, sans rien mettre à jour. Le bouton
+« Changer le sigle… » de Fichier ▸ Paramètres du projet… ouvre une boîte
+d'aperçu (`witness_rename_ui`), puis applique d'un bloc le plan de
+`witness_rename.plan_witness_rename` (sans Qt). P devient P2 :
+
+- `project.xml` : `<witness id siglum label alignment>` (le nom affiché qui
+  commence par le sigle, « P · Paris », change avec lui ; `siglum` n'est
+  écrit que s'il diffère de l'identifiant), `<witnesses base>`,
+  `<part base>`, `<webViewer textWitness>`, un `<param value>` qui vaut
+  l'identifiant, les `#P` des `<xpathQueries>`, `<image surface>`, et tout
+  chemin (`file`, `path`, `alignment`) qui mène dans un fichier ou dossier
+  renommé ;
+- l'édition, ses parties et les documents de `<documents>` : le
+  `<witness xml:id>` (son `<idno type="siglum">`, ajouté si le nouveau sigle
+  n'est pas un identifiant XML, et son nom s'il commence par le sigle),
+  chaque jeton `#P` ou `fichier.xml#P` d'un attribut (`P` seul dans `@wit`
+  et `@edRef`), les surfaces `P-p0001` et leurs zones (`P-p0001-left`), avec
+  leurs pointeurs, les `<graphic url>` ;
+- les JSON d'alignement : `meta.witness` (de ses propres fichiers),
+  `meta.base_witness`, `pages[].tei_surface_id`, `pages[].image.path` ;
+- renommés : `alignments/P.json` (nom de copie de Varians si `@alignment`
+  est présent, sinon nom conventionnel), `alignments/<texte>/P.json`,
+  `images/P/`, `alto/P/`, `iiif/P.manifest.json`, `iiif/local/P/`.
+
+Les surfaces sont renommées parce que Varians tire de l'identifiant celles
+qu'il ne garde pas (IIIF, dossier d'images) : après le changement, une
+nouvelle synchronisation du `<facsimile>` n'ajoute aucune surface en
+double. Chaque remplacement se fait à sa place dans le texte (commentaires
+et mise en forme gardés). Refus : sigle vide, inchangé, ou pris par un
+autre témoin à la casse près ; identifiant ou surface déjà employés dans
+l'édition, ses parties ou un fichier modifié ; fichier cible déjà présent ;
+fichier à modifier mal formé ou illisible ; fichier hors du projet qui
+devrait changer. Un document où `#P` désigne autre chose qu'un témoin
+(`<person xml:id="P">`) n'est pas modifié (note). Le sigle cité dans le
+texte, ou dans une expression (`@wit='#P'` d'une XSLT), est seulement
+signalé.
+
+`witness_rename.apply_witness_rename` écrit chaque fichier atomiquement
+(copie `.bak`), puis renomme fichiers et dossiers (un changement de casse
+seule par un nom provisoire) ; rien n'est fait si un fichier a changé
+depuis l'aperçu ; au moindre échec, tout reprend son état d'avant.
+`migrate_view_settings` reporte les réglages d'affichage du témoin
+(`projectView/<empreinte>/…`).
