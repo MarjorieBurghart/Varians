@@ -883,9 +883,19 @@ def _rename(move: Move) -> None:
         raise
 
 
-def _rollback(written, moved):
-    """Remet les fichiers dans leur état d'avant ; renvoie ceux qui n'ont pas
-    pu l'être."""
+def _set_aside(backup):
+    """Copie ``.bak`` d'un enregistrement précédent mise de côté (renommée)
+    avant l'écriture qui la remplacerait ; None s'il n'y en a pas."""
+    if not backup.exists():
+        return None
+    aside = backup.with_name(f".{backup.name}.varians-rename")
+    os.replace(backup, aside)
+    return aside
+
+
+def _rollback(written, moved, aside):
+    """Remet les fichiers dans leur état d'avant, anciennes copies ``.bak``
+    comprises ; renvoie ceux qui n'ont pas pu l'être."""
     failed = []
     for move in reversed(moved):
         try:
@@ -897,6 +907,11 @@ def _rollback(written, moved):
             os.replace(backup, path)
         except OSError:
             failed.append(path)
+    for backup, previous in reversed(aside):
+        try:
+            os.replace(previous, backup)
+        except OSError:
+            failed.append(backup)
     return failed
 
 
@@ -920,23 +935,34 @@ def apply_witness_rename(plan: RenamePlan) -> RenameResult:
             raise RenameError(Message("witness_rename.changed", file=plan.display_path(move.source)))
         if move.target.exists() and not (move.case_only and os.path.samefile(move.source, move.target)):
             raise RenameError(Message("witness_rename.target_exists", file=plan.display_path(move.target)))
-    written, moved = [], []
+    written, moved, aside = [], [], []
     current = None
     try:
         for change in plan.changes:
             current = change.path
+            backup = change.path.with_suffix(change.path.suffix + ".bak")
+            previous = _set_aside(backup)
+            if previous is not None:
+                aside.append((backup, previous))
             written.append((change.path, atomic_write_text_with_backup(change.path, change.text)))
         for move in plan.moves:
             current = move.source
             _rename(move)
             moved.append(move)
     except Exception as error:
-        failed = _rollback(written, moved)
+        failed = _rollback(written, moved, aside)
         detail = getattr(error, "strerror", None) or str(error)
         if failed:
             raise RenameError(Message("witness_rename.rollback_failed", file=plan.display_path(current),
                                       error=detail, files=", ".join(plan.display_path(p) for p in failed))) from error
         raise RenameError(Message("witness_rename.failed", file=plan.display_path(current), error=detail)) from error
+    # Réussite : chaque .bak garde l'état d'avant le changement ; les copies
+    # plus anciennes sont abandonnées.
+    for _backup, previous in aside:
+        try:
+            previous.unlink()
+        except OSError:
+            pass
     return RenameResult(tuple(path for path, _backup in written), tuple(backup for _path, backup in written),
                         tuple(moved))
 

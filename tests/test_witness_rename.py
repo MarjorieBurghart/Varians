@@ -479,6 +479,9 @@ def test_a_failure_while_writing_restores_every_file(tmp_path):
     from witness_rename import RenameError, apply_witness_rename
     project_xml = _project(tmp_path)
     root = project_xml.parent
+    # Copies .bak d'enregistrements précédents : elles aussi sont retrouvées.
+    (root / "project.xml.bak").write_text("copie précédente", encoding="utf-8")
+    (root / "xml" / "edition.xml.bak").write_text("copie précédente", encoding="utf-8")
     plan = _plan(project_xml, "P", "P2")
     last = plan.changes[-1].path
     before = _snapshot(root)
@@ -515,6 +518,16 @@ def test_a_failure_while_renaming_restores_every_file(tmp_path, monkeypatch):
     assert "autre programme" in error.value.message.values["error"]
     assert _snapshot(root) == before
     assert not list(root.rglob("*P2*"))
+
+
+def test_an_older_backup_gives_way_to_the_state_before_the_change(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    (root / "project.xml.bak").write_text("copie précédente", encoding="utf-8")
+    apply_witness_rename(_plan(project_xml, "P", "P2"))
+    assert (root / "project.xml.bak").read_text(encoding="utf-8") == PROJECT
+    assert not [path for path in root.rglob("*") if "varians-rename" in path.name]
 
 
 def test_a_case_only_change_is_applied(tmp_path):
