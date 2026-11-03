@@ -419,7 +419,14 @@ def apply_witness_image_policy(
             return cache
         try:
             from iiif_manifest import cache_path as iiif_cache_path, read_cache, overlay_manifest
-            manifest = read_cache(iiif_cache_path(project_root, witness_id or "witness"), source_value)
+            try:
+                manifest = read_cache(iiif_cache_path(project_root, witness_id or "witness"), source_value)
+            except ValueError:
+                # Cache du Manifest abîmé (JSON illisible, manifeste inexploitable) :
+                # comme un cache absent, il ne bloque pas l'ouverture du projet. Seule
+                # sa lecture est ainsi protégée : les erreurs de liens explicites
+                # (plus bas) ne sont pas masquées.
+                return cache
             if not manifest:
                 return cache
             # V0.8.5.5: never map synchronized pages to manifest ordinal indices.
