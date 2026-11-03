@@ -22,7 +22,7 @@ def test_new_project_pivot_options_visible_next_to_starting_point():
     assert 'self.pivot_prepare.toggled.connect(self._pivot_enabled)' in code
     assert 'scroll = QScrollArea(self)' in code and 'scroll.setWidgetResizable(True)' in code
     assert 'outer.addWidget(buttons)' in code
-    assert 'Varians 0.8.5.10' in code
+    assert '— Varians {APP_VERSION}' in code   # version courante, plus « 0.8.5.10 »
 
 
 def test_project_settings_pivot_before_large_witness_table():
@@ -31,7 +31,7 @@ def test_project_settings_pivot_before_large_witness_table():
     assert 'self.pivot_prepare = QCheckBox' in code and 'self.pivot_lines = QCheckBox' in code
     assert 'scroll = QScrollArea(self)' in code and 'scroll.setWidgetResizable(True)' in code
     assert 'outer.addWidget(buttons)' in code
-    assert 'Varians 0.8.5.10' in code
+    assert '— Varians {APP_VERSION}' in code   # version courante, plus « 0.8.5.10 »
 
 
 def test_scaffold_confirmation_and_opt_in_are_preserved():
