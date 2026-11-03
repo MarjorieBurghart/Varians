@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Dialogues de création et modification des projets Varians V0.8.5.10."""
+"""Dialogues de création et modification des projets Varians."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -17,6 +17,7 @@ from project_management import ProjectDraft, WitnessDraft, LocalImageDraft, Alto
 from iiif_manifest import fetch_manifest, parse_manifest
 from tei_facsimile import default_surface_id, valid_xml_id
 from witness_ids import witness_id_for_siglum
+from app_context import APP_VERSION
 from i18n import message_text
 from iiif_page_selection import canvas_key, natural_key, propose_exact_ocr_links
 
@@ -1220,8 +1221,8 @@ class NewProjectDialog(QDialog):
     def __init__(self, tr, languages, parent=None):
         super().__init__(parent)
         self.tr = tr
-        # The version in the title helps identify a stale Spyder/module session.
-        self.setWindowTitle(f'{tr("project.new.title")} — Varians 0.8.5.10')
+        # La version dans le titre aide à repérer une ancienne session (Spyder, module déjà chargé).
+        self.setWindowTitle(f'{tr("project.new.title")} — Varians {APP_VERSION}')
         self.resize(950, 690)
         outer = QVBoxLayout(self)
         scroll = QScrollArea(self)
@@ -1357,7 +1358,7 @@ class ProjectSettingsDialog(QDialog):
         super().__init__(parent)
         self.tr = tr; self.project = project
         self.rename_witness_id = None
-        self.setWindowTitle(f'{tr("project.settings.title")} — Varians 0.8.5.10')
+        self.setWindowTitle(f'{tr("project.settings.title")} — Varians {APP_VERSION}')
         self.resize(980, 740)
         outer = QVBoxLayout(self)
         scroll = QScrollArea(self)
