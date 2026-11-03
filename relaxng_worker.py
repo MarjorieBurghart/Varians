@@ -29,7 +29,9 @@ descripteur 1 :
   {"chemin": "texte"}`` (V0.9.2.6), le texte non enregistré des fichiers
   qu'il inclut remplace celui du disque ;
 - ``{"id": 2, "op": "ping"}`` → ``{"id": 2, "ok": true, "pid": …,
-  "qt_loaded": false}`` ;
+  "qt_loaded": false, "gui_loaded": false}`` (dans une version construite
+  par PyInstaller, QtCore est chargé par son crochet d'exécution :
+  ``qt_loaded`` y est vrai, ``gui_loaded`` jamais) ;
 - une requête incorrecte → ``{"id": …, "error": "…"}``.
 
 Les descripteurs sont lus directement : ``sys.stdin`` et ``sys.stdout``
@@ -95,7 +97,8 @@ def handle_request(request):
     request_id = request.get("id")
     op = request.get("op")
     if op == "ping":
-        return {"id": request_id, "ok": True, "pid": os.getpid(), "qt_loaded": "PySide6" in sys.modules}
+        return {"id": request_id, "ok": True, "pid": os.getpid(), "qt_loaded": "PySide6" in sys.modules,
+                "gui_loaded": "PySide6.QtGui" in sys.modules or "PySide6.QtWidgets" in sys.modules}
     if op == "validate":
         xml_text, schema = request.get("xml"), request.get("schema")
         sources = request.get("schematron")

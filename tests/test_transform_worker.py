@@ -32,7 +32,7 @@ def test_the_worker_runs_a_request_without_loading_qt(tmp_path):
     request = scenario_request(TransformScenario("Édition", "${varians}/tei-to-html.xsl", "publications/edition.html",
                                                  css="${varians}/tei.css"), project)
     answer = _worker(json.dumps(request).encode("utf-8"))
-    assert answer["qt_loaded"] is False
+    assert answer["qt_loaded"] is False and answer["gui_loaded"] is False
     result = TransformResult.from_dict(answer)
     assert result.ok, result.error
     assert result.outputs == [str(root / "publications" / "edition.html"), str(root / "publications" / "tei.css")]

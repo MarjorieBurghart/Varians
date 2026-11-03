@@ -123,7 +123,7 @@ def test_varians_itself_starts_the_worker_without_loading_qt(schema):
         capture_output=True, timeout=60, cwd=str(schema.parent))
     assert process.returncode == 0, process.stderr.decode("utf-8", "replace")
     ping, validation = (json.loads(line) for line in process.stdout.splitlines())
-    assert ping["ok"] is True and ping["qt_loaded"] is False
+    assert ping["ok"] is True and ping["qt_loaded"] is False and ping["gui_loaded"] is False
     assert result_from_dict(validation["result"]).valid
 
 

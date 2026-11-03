@@ -8,3 +8,6 @@ venv/
 # Systèmes
 .DS_Store
 Thumbs.db
+
+# Version prête à l'emploi (packaging/build.py)
+/build/
