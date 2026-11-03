@@ -1,4 +1,4 @@
-# Varians — carte rapide du code (V0.8.5.0)
+# Varians — carte rapide du code (V0.9.4.0)
 
 Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant une intervention.
 
