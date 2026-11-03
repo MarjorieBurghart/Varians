@@ -1,0 +1,88 @@
+VARIANS {version} — GEBRAUCHSFERTIGE VERSION
+
+Dieses Archiv enthält Varians und alles, was es braucht (Python, Qt, lxml,
+Saxon): Es muss nichts weiter installiert werden.
+
+
+INSTALLIEREN UND STARTEN
+------------------------
+Windows (10 oder 11, 64 Bit)
+  1. Entpacken Sie das ganze Archiv (Rechtsklick → „Alle extrahieren…“),
+     zum Beispiel nach Dokumente. Starten Sie Varians nicht aus der
+     ZIP-Datei heraus.
+  2. Doppelklicken Sie auf Varians.exe im Ordner Varians-{version}.
+  3. Erster Start: Da Varians nicht signiert ist, kann Windows „Der Computer
+     wurde durch Windows geschützt“ anzeigen. Klicken Sie auf „Weitere
+     Informationen“ und dann auf „Trotzdem ausführen“. Ein Virenschutz kann
+     das Programm außerdem prüfen, bevor es startet.
+  Verknüpfung auf dem Desktop: Rechtsklick auf Varians.exe → „Senden an“ →
+  „Desktop (Verknüpfung erstellen)“ (unter Windows 11 zuerst „Weitere
+  Optionen anzeigen“).
+
+macOS (Archiv „macos-arm64“ für Macs mit Apple Silicon: M1, M2…,
+„macos-x64“ für Macs mit Intel-Prozessor)
+  1. Doppelklicken Sie auf das Archiv und ziehen Sie Varians.app in den
+     Ordner Programme.
+  2. Erster Start: Da Varians nicht von Apple signiert ist, verweigert macOS
+     das Öffnen („Apple konnte nicht überprüfen …“). Schließen Sie die
+     Meldung und öffnen Sie Systemeinstellungen → Datenschutz & Sicherheit:
+     Klicken Sie unten neben der Meldung zu Varians auf „Dennoch öffnen“ und
+     bestätigen Sie. Unter macOS 14 oder älter genügt ein Rechtsklick (oder
+     Ctrl-Klick) auf Varians.app → Öffnen → Öffnen. macOS fragt nur einmal.
+  Meldet macOS, Varians sei „beschädigt“, geben Sie im Terminal ein:
+     xattr -dr com.apple.quarantine /Applications/Varians.app
+
+Linux (64 Bit x86; Ubuntu 22.04, Debian 12, Fedora 36 oder neuer)
+  1. Archiv entpacken:  unzip Varians-{version}-linux-x64.zip
+  2. Starten:           ./Varians-{version}/Varians
+  Varians nutzt die Grafikbibliotheken, die auf jedem Linux-Desktop
+  vorhanden sind (OpenGL, libxcb, fontconfig). Fehlt eine davon, zum
+  Beispiel unter Debian oder Ubuntu:
+     sudo apt install libegl1 libgl1 libxcb1 libxkbcommon0 libfontconfig1
+
+
+AKTUALISIEREN
+-------------
+Laden Sie das neue Archiv von der Seite der Versionen herunter,
+  https://github.com/MarjorieBurghart/Varians/releases
+und ersetzen Sie den alten Ordner (oder Varians.app) durch den neuen. Ihre
+Projekte und Einstellungen liegen nicht in diesem Ordner: Sie bleiben
+erhalten.
+
+Zum Deinstallieren löschen Sie einfach diesen Ordner (oder Varians.app).
+
+
+PRÜFEN
+------
+Das Archiv: Jedes Archiv hat seine SHA-256-Prüfsumme (Datei .sha256 auf der
+Seite der Versionen). Berechnen:
+  Windows (PowerShell):  Get-FileHash Varians-{version}-windows-x64.zip
+  macOS:                 shasum -a 256 Varians-{version}-macos-arm64.zip
+  Linux:                 sha256sum Varians-{version}-linux-x64.zip
+
+Die Installation: Bei Problemen kann Varians seine Übersetzungen,
+Ressourcen, die Validierung, die Transformationen (lxml und Saxon) und sein
+Fenster selbst prüfen und einen Bericht schreiben (etwa eine Minute):
+  Windows (Eingabeaufforderung, im Ordner von Varians):
+     start /wait Varians.exe --self-test bericht.json
+  macOS:
+     /Applications/Varians.app/Contents/MacOS/Varians --self-test ~/bericht.json
+  Linux:
+     ./Varians --self-test bericht.json
+Fügen Sie diesen Bericht Ihrer Fehlermeldung bei:
+  https://github.com/MarjorieBurghart/Varians/issues
+
+
+HILFE
+-----
+Die Anleitung ist in Varians: Hilfe → Varians-Hilfe (F1), in der Sprache
+der Oberfläche (Ansicht → Sprache).
+
+
+KOMPONENTEN
+-----------
+Varians wird geliefert mit: Python (PSF-Lizenz); Qt und PySide6 (LGPL v3:
+eigene, austauschbare Bibliotheken; Quellen unter https://code.qt.io); lxml,
+libxml2 und libxslt (BSD, MIT); Saxon HE (saxonche, MPL 2.0); certifi
+(MPL 2.0); den TEI Stylesheets (CC BY-SA 3.0 oder BSD); SchXslt2 (MIT). Die
+Texte dieser Lizenzen stehen im Ordner licences.

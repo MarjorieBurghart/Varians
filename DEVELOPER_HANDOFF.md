@@ -73,12 +73,7 @@ Exemple : une liste `valuesMode="replace"` peut remplacer les valeurs proposées
 
 ## 2. Dépendances, lancement et environnement
 
-Dépendances Python minimales :
-
-```text
-PySide6
-lxml
-```
+Dépendances Python : `requirements.txt` (PySide6, lxml, saxonche) ; pour construire la version prête à l'emploi, en plus, `packaging/requirements.txt` (PyInstaller, Pillow, certifi).
 
 Sous Windows, les scripts fournis sont :
 
@@ -714,6 +709,10 @@ Depuis la V0.9.2.8 : menus « Éditer » et « Rechercher » (`main_menus`), mot
 ### Changer le sigle d'un témoin (0.9.4.0)
 
 Bouton « Changer le sigle… » de Fichier ▸ Paramètres du projet… (`WitnessTable.rename_btn`, affiché seulement quand la table reçoit `saved_ids`, donc pas dans « Nouveau projet »). `ProjectSettingsDialog` se ferme avec le code `RENAME` (`rename_witness_id`) si aucun autre réglage n'a changé (`_initial_draft`), et `project_actions.project_settings_dialog` appelle `witness_rename_ui.run_witness_rename` : `maybe_save`, boîte `WitnessRenameDialog` (« Aperçu » → `plan_witness_rename` ; « Appliquer » seulement après un aperçu sans refus du sigle affiché), arrêt des téléchargements IIIF, `apply_witness_rename`, `_carry_view_settings` (position des fenêtres détachées écrite d'abord ; une fenêtre détachée du témoin prend le nouvel identifiant, pour que sa fermeture n'écrive pas l'ancien ; `migrate_view_settings`), compte rendu, rechargement. Le champ « Sigle » d'un témoin enregistré est en lecture seule dans `WitnessEditDialog` (`siglum_locked`). Le module `witness_rename` est sans Qt : plan lexical (remplacements à leur place, `_Edits`), refus et notes en `i18n.Message`, application tout ou rien (`RenameError`). Journal `.varians/witness-rename.json` écrit avant toute modification ; `MainWindow.__init__` appelle `witness_rename_ui.recover_interrupted_rename` avant `load_project` : journal non valable écarté (`witness_rename.journal_state`, `_journal_entries` : chemins relatifs, dans le projet, renommages dans un même dossier), changement achevé gardé, changement interrompu défait si l'utilisateur l'accepte. Entrée lance l'aperçu, jamais l'application ; l'aperçu relit project.xml. Règles détaillées : `PROJECT_MANAGEMENT.md`, « Changer le sigle d'un témoin ».
+
+### Version prête à l'emploi (0.9.4.0)
+
+Archives sans Python pour Windows, macOS (Apple Silicon, Intel) et Linux, construites par PyInstaller (`packaging/`, mode d'emploi dans `packaging/LISEZMOI.md`) et jointes à chaque release publiée par le workflow `.github/workflows/binaries.yml`. `packaging/build.py` construit d'après `packaging/varians.spec`, place le dossier sous `Varians-<version>/`, ajoute le LISEZMOI ×7 (`packaging/readme/`) et les textes des licences (`packaging/licences/`, plus ceux de lxml, des TEI Stylesheets et de SchXslt2 lus à la construction), vérifie l'exécutable construit puis zippe. La vérification est `Varians --self-test RAPPORT.json` (`self_test.py`) : catalogues, aide, ressources, projet créé, processus de validation et de transformation (lxml, Saxon) lancés comme d'ordinaire, projet ouvert dans `MainWindow` ; dans le workflow, avec le module d'affichage du système (windows, cocoa, xcb sous Xvfb). Les données sont lues à côté des modules (`Path(__file__).parent`) : la recette les met dans `_internal/` sous le même nom ; tout nouveau dossier de données doit être ajouté à `DATA_FOLDERS` (`test_packaging.py` le vérifie). Les processus relancent l'exécutable (`--relaxng-worker`, `--transform-worker`) ; le crochet d'exécution de PySide6 y charge QtCore (`qt_loaded` vrai dans une version construite), jamais QtGui ni QtWidgets (`gui_loaded`). Certificats HTTPS : `packaging/rthook_certificates.py` (certifi si ceux du système manquent). Greffons Qt inutiles retirés par la recette (`UNUSED_QT`, `UNUSED_LINUX`) ; `build.py` refuse une archive avec un lien symbolique cassé ou un fichier laissé par la vérification.
 
 ### Outil tiers d'alignement
 

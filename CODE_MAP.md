@@ -24,6 +24,7 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Choix de l'élément de Ctrl+E (V0.9.2.8.1) | `completion_ui.CompletionDialog` | `gui/test_gui_ctrl_e_choice.py` |
 | Sigle et identifiant d'un témoin (V0.9.2.8.2) | `witness_ids.py`, `project_config.py`, `project_management.py`, `project_dialogs.py` | `test_witness_siglum.py`, `test_witness_siglum_outputs.py`, `gui/test_gui_witness_siglum.py`, `gui/test_gui_witness_siglum_display.py` |
 | Changer le sigle d'un témoin (V0.9.4.0) | `witness_rename.py` (sans Qt), `witness_rename_ui.py`, `project_dialogs.py` (`WitnessTable.rename_btn`, `ProjectSettingsDialog.RENAME`), `project_actions.project_settings_dialog` | `test_witness_rename.py`, `gui/test_gui_witness_rename.py`, `test_help_witness_rename.py` |
+| Version prête à l'emploi, vérification d'une installation (V0.9.4.0) | `packaging/varians.spec`, `packaging/build.py`, `packaging/rthook_certificates.py`, `packaging/readme/`, `packaging/licences/`, `self_test.py`, `.github/workflows/binaries.yml` | `test_packaging.py`, `test_self_test.py`, `test_help_binaries.py` |
 | Témoin ajouté déclaré dans la `<listWit>` (V0.9.2.8.2) | `tei_listwit.py`, `project_actions.project_settings_dialog` | `test_listwit_witnesses.py`, `gui/test_gui_listwit_on_add.py` |
 | Marquer la page : tout identifiant XML (V0.9.2.8.2) | `tei_facsimile.valid_xml_id`, `safe_id_component`, `apparatus_xpath` | `test_mark_page_xml_ids.py` |
 | Crayon ✎ et F2 de la vue XSLT / CSS (V0.9.2.8.2) | `formatted_view.py` | `gui/test_gui_pencil_selection.py` |
@@ -387,6 +388,13 @@ Fonctionnement : aide, paragraphe « Texte de lecture » (`viewer-text`, à la f
 - Plan (`witness_rename.plan_witness_rename`, sans Qt) : `_Planner` — `load_documents` (édition, parties, `<documents>` ; `other_target` : document où l'ancien identifiant est un autre élément), `plan_surfaces` (surfaces `<identifiant>-p\d+`, celles de `<image surface>` et des JSON du témoin, leurs zones), `plan_moves` (alignements, textes à part, cache et copie IIIF, `images/`, `alto/`), `rebase` (chemins vers un fichier ou dossier renommé), `plan_project`, `plan_document` (`_pointer`, `_declaration` : `xml:id`, `<idno type="siglum">`, nom ; `_text_mentions`, `_inside_word`), `plan_json` (`_json_strings` : lecture lexicale avec positions), `check_ids` (édition, parties, fichiers modifiés). `relabel` : nom affiché qui commence par le sigle. `RenamePlan` (`changes` : `FileChange` avec `counts` par rubrique, `moves`, `surfaces`, `mentions`, `notes`, `problems`).
 - Application : `apply_witness_rename` (fraîcheur des fichiers, journal `_write_journal`, `_set_aside` des anciennes copies .bak, `atomic_write_text_with_backup`, `_rename`, `_verify`, `_rollback`, `RenameError`) ; reprise : `read_journal`, `recover_interrupted_rename` (appelée à l'ouverture par `witness_rename_ui.recover_interrupted_rename`) ; `migrate_view_settings`.
 - Interface : `witness_rename_ui.WitnessRenameDialog`, `preview_text`, `run_witness_rename`, `_carry_view_settings` ; `WitnessEditDialog(siglum_locked)`.
+
+## V0.9.4.0 — version prête à l'emploi
+
+- Vérification : `self_test.run` (`--self-test` dans `editeur_tei.py`, avant le lancement ordinaire) ; `CHECKS`, `RESOURCES`, `worker_problem` (Qt dans les processus : jamais `gui_loaded`, `qt_loaded` toléré dans une version construite).
+- Recette : `packaging/varians.spec` (`DATA_FOLDERS`, `WEB_VIEWER_FILES`, `collect_all("saxonche")`, `UNUSED_QT`, `UNUSED_LINUX`, `_icon`, `BUNDLE` sous macOS) ; crochet `rthook_certificates.py`.
+- Construction : `packaging/build.py` (`build`, `add_documents`, `self_test`, `report_problems`, `broken_links`, `zip_folder`, `write_checksum`, `platform_tag`, `archive_name`).
+- Workflow `.github/workflows/binaries.yml` : matrice windows-latest, macos-latest, macos-15-intel, ubuntu-22.04 ; job `release` (seul `contents: write`), version construite = version du tag.
 
 ## V0.9.3.4 — red team 2 : robustesse et cohérence
 

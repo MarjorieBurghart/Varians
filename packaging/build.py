@@ -9,7 +9,9 @@ le système où il est lancé (Windows, macOS ou Linux) :
    transformation lxml et Saxon, projet ouvert dans la fenêtre) ; la
    construction échoue si elle n'est pas entièrement réussie, ou si elle a
    laissé des fichiers dans le dossier ;
-4. archive ``Varians-<version>-<plateforme>.zip`` (liens symboliques et
+4. à côté de Varians, le LISEZMOI dans les sept langues
+   (``packaging/readme/``) et les textes des licences (``licences/``) ;
+5. archive ``Varians-<version>-<plateforme>.zip`` (liens symboliques et
    droits gardés) et son empreinte SHA-256.
 
     python packaging/build.py [--output DOSSIER]
@@ -128,6 +130,49 @@ def broken_links(folder) -> list:
     return sorted(p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_symlink() and not p.exists())
 
 
+README_DIR = ROOT / "packaging" / "readme"
+LICENCES_DIR = ROOT / "packaging" / "licences"
+
+
+def _component_licences():
+    """Textes de licence lus là où ils sont livrés : lxml (avec libxml2,
+    libxslt, zlib, iconv) dans le paquet installé, TEI Stylesheets dans
+    leur archive, SchXslt2 en tête de sa feuille."""
+    from importlib import metadata
+    lxml = metadata.distribution("lxml")
+    texts = [Path(lxml.locate_file(path)).read_text(encoding="utf-8") for path in sorted(lxml.files or [], key=str)
+             if path.name in ("LICENSE.txt", "LICENSES.txt")]
+    if not texts:
+        raise SystemExit("licence de lxml introuvable dans le paquet installé")
+    archive = sorted((ROOT / "resources" / "tei-stylesheets").glob("tei-xsl-*.zip"))[-1]
+    with zipfile.ZipFile(archive) as zf:
+        tei = zf.read("doc/tei-xsl/LICENCE").decode("utf-8")
+    schxslt = (ROOT / "resources" / "schxslt2" / "transpile.xsl").read_text(encoding="utf-8")
+    schxslt = schxslt[schxslt.index("<!--") + 4:schxslt.index("-->")].strip() + "\n"
+    return {"lxml.txt": "\n\n".join(text for text in texts if text), "TEI-Stylesheets.txt": tei,
+            "SchXslt2.txt": schxslt}
+
+
+def add_documents(folder, version, system=sys.platform):
+    """LISEZMOI dans les sept langues (à la version construite) et dossier
+    ``licences`` à côté de Varians. Sous Windows : CRLF et marque UTF-8,
+    pour que tout éditeur de texte les lise."""
+    folder = Path(folder)
+    encoding, newline = ("utf-8-sig", "\r\n") if system == "win32" else ("utf-8", "\n")
+
+    def write(path, text):
+        path.write_text(text.replace("\r\n", "\n"), encoding=encoding, newline=newline)
+
+    for readme in sorted(README_DIR.glob("*.txt")):
+        write(folder / readme.name, readme.read_text(encoding="utf-8").replace("{version}", version))
+    licences = folder / "licences"
+    licences.mkdir(exist_ok=True)
+    for text in sorted(LICENCES_DIR.glob("*.txt")):
+        write(licences / text.name, text.read_text(encoding="utf-8"))
+    for name, text in _component_licences().items():
+        write(licences / name, text)
+
+
 def _files(folder):
     return sorted(p.relative_to(folder).as_posix() for p in Path(folder).rglob("*"))
 
@@ -164,6 +209,7 @@ def build(output) -> Path:
     else:
         for entry in (dist / NAME).iterdir():
             entry.rename(folder / entry.name)
+    add_documents(folder, version)
     problems = [f"lien cassé : {link}" for link in broken_links(folder)]
     before = _files(folder)
     report = output / f"self-test-{tag}.json"

@@ -193,3 +193,55 @@ def test_the_binaries_workflow_builds_for_every_system_and_each_release():
     assert "python packaging/build.py" in text
     assert 'gh release upload "$TAG"' in text
     assert "permissions:\n  contents: read\n" in text and text.count("contents: write") == 1
+
+
+README_FILES = {"fr": "LISEZMOI.txt", "en": "README.txt", "de": "LIESMICH.txt", "ja": "README-ja.txt",
+                "cs": "README-cs.txt", "it": "LEGGIMI.txt", "ru": "README-ru.txt"}
+
+
+def test_the_archive_explains_itself_in_seven_languages(tmp_path):
+    """À côté de Varians : le LISEZMOI dans les sept langues de
+    l'interface (installation et premier lancement non signé sur chaque
+    système, mise à jour, vérification, licences), à la version construite."""
+    build = _build()
+    build.add_documents(tmp_path, "0.9.4.0", system="linux")
+    for language, name in README_FILES.items():
+        text = (tmp_path / name).read_text(encoding="utf-8")
+        assert "{version}" not in text and "Varians-0.9.4.0-linux-x64.zip" in text, language
+        for command in ("Varians.exe", "xattr -dr com.apple.quarantine /Applications/Varians.app",
+                        "start /wait Varians.exe --self-test", "./Varians --self-test", "Get-FileHash",
+                        "https://github.com/MarjorieBurghart/Varians/releases",
+                        "https://github.com/MarjorieBurghart/Varians/issues", "https://code.qt.io", "licences"):
+            assert command in text, (language, command)
+    assert sorted(p.name for p in tmp_path.glob("*.txt")) == sorted(README_FILES.values())
+
+
+def test_the_readmes_name_the_menus_as_varians_shows_them():
+    """« Aide → Aide du logiciel », « Affichage → Langue »… : les libellés
+    des menus, pris dans les catalogues de l'interface."""
+    import xml.etree.ElementTree as ET
+    for language, name in README_FILES.items():
+        strings = {node.get("key"): node.text for node in ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()}
+        text = (ROOT / "packaging" / "readme" / name).read_text(encoding="utf-8")
+        assert f"{strings['menu.help']} → {strings['help.software']} (F1)" in text, language
+        assert f"{strings['menu.display']} → {strings['common.language'].rstrip(' :：:')}" in text, language
+
+
+def test_the_archive_carries_the_licence_texts(tmp_path):
+    build = _build()
+    build.add_documents(tmp_path, "0.9.4.0", system="linux")
+    licences = tmp_path / "licences"
+    expected = {"LGPL-3.0.txt": "LESSER GENERAL PUBLIC LICENSE", "GPL-3.0.txt": "GNU GENERAL PUBLIC LICENSE",
+                "LGPL-2.1.txt": "Version 2.1", "MPL-2.0.txt": "Mozilla Public License Version 2.0",
+                "Python.txt": "PYTHON SOFTWARE FOUNDATION LICENSE", "lxml.txt": "libxml2",
+                "TEI-Stylesheets.txt": "TEI Consortium", "SchXslt2.txt": "David Maus"}
+    for name, words in expected.items():
+        assert words in (licences / name).read_text(encoding="utf-8"), name
+
+
+def test_windows_readmes_open_in_any_editor(tmp_path):
+    """Sous Windows : fins de ligne CRLF et marque UTF-8 (Bloc-notes)."""
+    build = _build()
+    build.add_documents(tmp_path, "0.9.4.0", system="win32")
+    data = (tmp_path / "LISEZMOI.txt").read_bytes()
+    assert data.startswith(b"\xef\xbb\xbf") and b"\r\n" in data and b"\n" not in data.replace(b"\r\n", b"")

@@ -20,8 +20,16 @@ russe. Responsable du projet : Marjorie Burghart.
 
 INSTALLATION
 ------------
-Varians demande Python 3 (version testée : 3.12) et trois bibliothèques :
-PySide6, lxml et Saxon (paquet saxonche).
+Version prête à l'emploi, sans Python à installer : une archive pour
+Windows, macOS (Apple Silicon ou Intel) et Linux, jointe à chaque version
+publiée,
+  https://github.com/MarjorieBurghart/Varians/releases
+Décompressez-la et lancez Varians ; son LISEZMOI (sept langues) explique le
+premier lancement (Varians n'est pas signé). Ces archives sont construites
+et vérifiées par le workflow « Binaries » (packaging/LISEZMOI.md).
+
+Avec Python 3 (version testée : 3.12) et trois bibliothèques : PySide6,
+lxml et Saxon (paquet saxonche).
 
   Sous Windows : exécutez une fois installer_dependances.bat
   Ailleurs :     pip install -r requirements.txt
