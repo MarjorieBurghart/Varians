@@ -151,7 +151,15 @@ def test_a_part_position_scrolls_the_preview_to_its_line(open_window, example_wi
     window.editor.setTextCursor(cursor)
     _show_preview(window, qtbot)
     qtbot.wait(100)
-    assert abs(view.current_preview_line() - index) <= 1
+    # Le début de la ligne est sur la ligne visuelle du milieu de l'aperçu
+    # (scroll_to_line). Le caractère au centre de la fenêtre n'est pas une
+    # mesure sûre : plusieurs lignes du pivot partagent une ligne visuelle,
+    # et selon la police il tombe dans la voisine.
+    preview = view.preview
+    start = QTextCursor(preview.document())
+    start.setPosition(preview._line_to_position[index])
+    rect = preview.cursorRect(start)
+    assert abs(rect.center().y() - preview.viewport().height() // 2) <= rect.height()
 
 
 # --- Aperçu <-> éditeur de fragment ---------------------------------------------

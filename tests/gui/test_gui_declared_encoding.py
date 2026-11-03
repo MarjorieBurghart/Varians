@@ -44,7 +44,9 @@ def test_a_non_utf8_declaration_is_corrected_before_saving(open_window, example_
     assert window.save()
     saved = edition.read_bytes().decode("utf-8")
     assert saved.startswith("<?xml version='1.0' encoding='UTF-8'?>") and "<!-- relu : é -->" in saved
-    assert window.editor.toPlainText() == saved and not window.modified
+    # Sous Windows, write_text (_declare_latin1) écrit des CRLF, que
+    # l'enregistrement garde (red team, A8) ; l'éditeur montre des LF.
+    assert window.editor.toPlainText() == saved.replace("\r\n", "\n") and not window.modified
 
     # Corrigé : plus de question.
     _edit(window)
