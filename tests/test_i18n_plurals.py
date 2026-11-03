@@ -36,7 +36,7 @@ NUMBERS = (0, 1, 2, 3, 4, 5, 11, 12, 14, 21, 22, 25, 101, 111, 1000)
 # Variables qui comptent des choses (et non un sigle, un nom ou une durée).
 COUNTS = {"count", "lines", "witnesses", "variants", "documents", "sections", "problems", "downloaded",
           "paragraphs", "selected", "total", "pages", "marked", "eligible", "cached", "missing", "excluded",
-          "skipped", "failed", "index", "expected", "layout_lines", "sync_lines"}
+          "skipped", "failed", "index", "expected", "layout_lines", "sync_lines", "files", "moves"}
 
 
 def _catalog(language):
