@@ -11,7 +11,8 @@ natif) ou une boucle sans fin n'emporte pas Varians.
 Le processus lit sur le descripteur 0, jusqu'à la fin de l'entrée, une
 requête JSON (``xslt_scenarios.scenario_request``), l'exécute
 (``xslt_engines.run``) et écrit sur le descripteur 1 le compte rendu en JSON
-(``TransformResult.to_dict``, plus ``qt_loaded``), puis s'arrête. Une
+(``TransformResult.to_dict``, plus ``qt_loaded`` et ``gui_loaded``, comme
+le ``ping`` de relaxng_worker), puis s'arrête. Une
 requête ``op: "check"`` (V0.9.2.1) compile seulement la feuille
 (``xslt_engines.check``). Une requête incorrecte reçoit aussi un compte
 rendu (``error_code`` internal).
@@ -113,7 +114,8 @@ def serve(input_fd=0, output_fd=1):
                 xslt_engines.CHECKS_LOCAL_ONLY = previous
         else:
             result = TransformResult(False, error_code="internal", error="request must be a JSON object")
-    answer = dict(result.to_dict(), qt_loaded="PySide6" in sys.modules)
+    answer = dict(result.to_dict(), qt_loaded="PySide6" in sys.modules,
+                  gui_loaded="PySide6.QtGui" in sys.modules or "PySide6.QtWidgets" in sys.modules)
     with os.fdopen(output_fd, "wb", closefd=False) as writer:
         writer.write(json.dumps(answer, ensure_ascii=False).encode("utf-8"))
         writer.flush()

@@ -10,9 +10,10 @@
   modèles, icônes, scripts du viewer web ;
 - ``project`` : création d'un petit projet, comme « Nouveau projet » ;
 - ``relaxng_worker`` : le processus de validation, lancé comme Varians le
-  lance (l'exécutable lui-même dans une version autonome), sans Qt ;
+  lance (l'exécutable lui-même dans une version autonome), sans
+  l'interface Qt (``worker_problem``) ;
 - ``transform_lxml``, ``transform_saxon`` : une transformation XSLT dans
-  son processus, avec chacun des deux moteurs ;
+  son processus, avec chacun des deux moteurs, de même sans l'interface ;
 - ``window`` : le projet ouvert dans la fenêtre de Varians, puis fermé.
 
 Elle sert à vérifier, sur chaque système, la version prête à l'emploi
@@ -105,6 +106,23 @@ def _project(root, folder):
     return path
 
 
+def worker_problem(answer, frozen):
+    """Ce qui ne va pas dans la réponse d'un processus de validation ou de
+    transformation quant à Qt (None si rien) : jamais l'interface (QtGui,
+    QtWidgets) ; en mode source, pas du tout PySide6. Dans une version
+    construite par PyInstaller, QtCore est chargé dans tout processus par
+    le crochet d'exécution de PySide6 (environ 0,1 s au lancement)."""
+    if answer.get("gui_loaded") is not False:
+        return f"interface Qt chargée dans le processus : {answer}"
+    if not frozen and answer.get("qt_loaded") is not False:
+        return f"PySide6 chargé dans le processus : {answer}"
+    return None
+
+
+def _frozen():
+    return bool(getattr(sys, "frozen", False))
+
+
 def _relaxng_worker(folder):
     import subprocess
     from validation_worker import default_worker_command
@@ -119,23 +137,40 @@ def _relaxng_worker(folder):
     if completed.returncode != 0 or len(lines) != 3:
         raise AssertionError(f"code {completed.returncode} : {completed.stderr.decode('utf-8', 'replace')[-800:]}")
     ping, valid, invalid = lines
-    if not ping.get("ok") or ping.get("qt_loaded"):
+    if not ping.get("ok"):
         raise AssertionError(f"réponse inattendue : {ping}")
+    problem = worker_problem(ping, _frozen())
+    if problem:
+        raise AssertionError(problem)
     if not valid["result"]["valid"] or invalid["result"]["valid"]:
         raise AssertionError("validation RELAX NG inexacte")
     return f"processus {ping['pid']}"
 
 
 def _transform(project_path, engine):
+    """Comme transform_worker.run_in_process, en gardant la réponse brute
+    du processus (``qt_loaded``, ``gui_loaded``)."""
+    import subprocess
     from project_config import TransformScenario, load_project
-    from transform_worker import run_in_process
+    from transform_worker import new_stderr_log, read_answer, worker_command
     from xslt_scenarios import scenario_request
     project = load_project(project_path)
     output = f"publications/edition-{engine}.html"
     request = scenario_request(TransformScenario(engine, "${varians}/tei-to-html.xsl", output, engine=engine), project)
-    result = run_in_process(request, timeout=180)
+    stderr_log = new_stderr_log()
+    try:
+        with open(stderr_log, "wb") as errors:
+            data = json.dumps(dict(request, stderr_log=stderr_log)).encode("utf-8")
+            completed = subprocess.run(worker_command(), input=data, stdout=subprocess.PIPE, stderr=errors, timeout=180,
+                                       creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+        result = read_answer(completed.stdout, stderr_log)
+    finally:
+        os.unlink(stderr_log)
     if not result.ok:
         raise AssertionError(f"{result.error_code} : {result.error}")
+    problem = worker_problem(json.loads(completed.stdout.decode("utf-8")), _frozen())
+    if problem:
+        raise AssertionError(problem)
     text = (project.root_dir / output).read_text(encoding="utf-8")
     if "principio" not in text:
         raise AssertionError("résultat sans le texte de l'édition")
@@ -201,7 +236,7 @@ def run(report_path=None, *, root=None, window_class=None, only=CHECKS) -> int:
         if window_class is not None:
             check("window", needs_project(lambda path: _window(path, window_class)))
     ok = bool(checks) and all(item["ok"] for item in checks)
-    report = {"ok": ok, "version": app_context.APP_VERSION, "frozen": bool(getattr(sys, "frozen", False)),
+    report = {"ok": ok, "version": app_context.APP_VERSION, "frozen": _frozen(),
               "executable": sys.executable, "platform": sys.platform, "checks": checks}
     text = json.dumps(report, ensure_ascii=False, indent=1)
     if report_path:

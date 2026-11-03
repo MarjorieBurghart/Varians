@@ -1,0 +1,5 @@
+# Construction de la version prête à l'emploi (packaging/build.py), en plus de
+# ../requirements.txt.
+pyinstaller==6.22.3
+pillow
+certifi

@@ -59,3 +59,20 @@ def test_a_missing_part_of_the_installation_is_reported(tmp_path):
     failed = [check for check in data["checks"] if not check["ok"]]
     assert [check["name"] for check in failed] == ["help"]
     assert "fr.html" in failed[0]["detail"]
+
+
+def test_the_worker_processes_never_load_the_interface():
+    """Les processus de validation et de transformation n'ouvrent pas
+    l'interface. En mode source, ils ne chargent pas du tout PySide6 ; dans
+    la version construite, PyInstaller charge QtCore dans tout processus
+    (crochet d'exécution de PySide6) : toléré, mais jamais QtGui ni
+    QtWidgets."""
+    import self_test
+    light = {"qt_loaded": False, "gui_loaded": False}
+    assert self_test.worker_problem(light, frozen=False) is None
+    assert self_test.worker_problem(light, frozen=True) is None
+    core = {"qt_loaded": True, "gui_loaded": False}
+    assert self_test.worker_problem(core, frozen=False)
+    assert self_test.worker_problem(core, frozen=True) is None
+    assert self_test.worker_problem({"qt_loaded": True, "gui_loaded": True}, frozen=True)
+    assert self_test.worker_problem({"qt_loaded": False}, frozen=True)
