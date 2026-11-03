@@ -90,10 +90,15 @@ class Installed:
 
     @property
     def catalog(self) -> Path:
+        """``catalog.xml`` de la version : il renvoie l'adresse officielle des
+        feuilles (``OFFICIAL_URI``) vers ce dossier ; il est donné à Saxon
+        pour les transformations."""
         return self.folder / "catalog.xml"
 
     @property
     def licence(self) -> Path:
+        """Fichier ``LICENCE`` de la version, qu'ouvre le bouton « Voir la
+        licence »."""
         return self.folder / "LICENCE"
 
 

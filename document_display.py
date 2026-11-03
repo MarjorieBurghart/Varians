@@ -124,10 +124,13 @@ class DocumentVisibilityDialog(QDialog):
         return [self.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list.count())]
 
     def visible_keys(self):
+        """Clés des documents cochés, dans l'ordre choisi ; tant qu'il n'y en
+        a aucune, le bouton OK est grisé."""
         return [self.list.item(i).data(Qt.ItemDataRole.UserRole) for i in range(self.list.count())
                 if self.list.item(i).checkState() == Qt.CheckState.Checked]
 
     def hidden_keys(self):
+        """Clés des documents décochés, dans l'ordre choisi."""
         visible = set(self.visible_keys())
         return [key for key in self.ordered_keys() if key not in visible]
 

@@ -42,6 +42,8 @@ class TransformRunner(QObject):
         self._done = True
 
     def running(self):
+        """Vrai de ``start`` jusqu'à l'émission de ``finished`` ; ``start``
+        refuse alors une seconde exécution."""
         return not self._done
 
     def start(self, request):

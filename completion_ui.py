@@ -95,6 +95,9 @@ class CompletionDialog(QDialog):
 
     @property
     def selected_value(self):
+        """Valeur choisie, une fois la boîte acceptée : celle de l'entrée
+        (sans provenance ni description) ou, avec ``allow_custom``, le texte
+        saisi, sans espaces autour ; None si la boîte a été annulée."""
         return self._selected
 
     def _refilter(self, text):

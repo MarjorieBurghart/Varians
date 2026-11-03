@@ -51,6 +51,10 @@ def preview_text(plan, tr) -> str:
 
 
 class WitnessRenameDialog(QDialog):
+    """Boîte « Changer le sigle d’un témoin » pour ``witness_id`` (voir le
+    module). Elle n'écrit rien : acceptée, elle laisse dans ``plan`` le
+    dernier aperçu, sans refus, que ``run_witness_rename`` applique."""
+
     def __init__(self, tr, project, witness_id, parent=None):
         super().__init__(parent)
         self.tr = tr

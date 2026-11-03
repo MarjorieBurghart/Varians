@@ -19,11 +19,22 @@ DISK_CACHE.mkdir(parents=True, exist_ok=True)
 
 
 class FetchSignals(QObject):
+    """Signal de ``FetchWorker`` (un ``QRunnable`` n'émet pas de signal).
+    ``finished`` part une seule fois : avec les octets de l'image, ou sans
+    données, avec un message d'erreur et un mode vide."""
     # token, key, data, error, source_mode ("crop" ou "fallback")
     finished = Signal(int, str, bytes, str, str)
 
 
 class FetchWorker(QRunnable):
+    """Obtient une image en tâche de fond (``QThreadPool``) : fichier local
+    (``file://``, lu sans cache), sinon cache disque (``DISK_CACHE``), sinon
+    téléchargement, mis en cache. Si ``url`` échoue, ``fallback_url`` est
+    essayée (mode ``fallback``). Une adresse ordinaire est tentée une fois ;
+    une adresse de Gallica jusqu'à quatre fois, à intervalles croissants, une
+    requête à la fois pour toute l'application. ``token`` et ``key``
+    reviennent avec le résultat (``signals.finished``) : l'appelant écarte
+    ainsi une réponse périmée."""
     _gallica_lock = threading.Lock()
 
     def __init__(self, token, key, url, fallback_url=None):

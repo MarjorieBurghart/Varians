@@ -156,6 +156,12 @@ class SearchResultsMixin:
             self.refresh_search_results()
 
     def refresh_search_results(self):
+        """Refait la liste : la recherche de la barre d'outils, avec ses
+        options, dans le document affiché ou, case « Tout le projet » cochée,
+        dans tous les documents (texte en mémoire, sinon fichier ; un fichier
+        illisible est sauté). Seules les ``MAX_RESULTS`` premières occurrences
+        sont affichées ; le résumé donne le nombre total, ou l'erreur de
+        l'expression (la liste est alors vide)."""
         self._search_results_timer.stop()
         options = self.search_options()
         query = _search_query(self.find_box.text(), options)
@@ -233,6 +239,10 @@ class SearchResultsMixin:
                 table.setItem(index, column, item)
 
     def goto_search_result(self, row, _column=0):
+        """Clic sur la ligne ``row`` : affiche son document (et son onglet,
+        même masqué) dans l'onglet « XML source », place le curseur à la fin
+        de l'occurrence, surlignée, au milieu de l'éditeur. Si le texte a
+        changé depuis, rien n'est atteint : la liste est refaite."""
         if not 0 <= row < len(self._search_results):
             return
         session, result = self._search_results[row]

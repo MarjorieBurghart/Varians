@@ -15,6 +15,10 @@ from xml_tag_pairs import scan_xml_tags, XmlTagToken
 
 @dataclass(frozen=True)
 class FoldRegion:
+    """Élément repliable : son nom, la position de sa balise ouvrante et sa
+    ligne (celle du triangle de la marge), la première ligne masquée (après
+    la fin de la balise ouvrante), la ligne de la balise fermante, masquée
+    elle aussi, et la position de celle-ci. Lignes comptées depuis 0."""
     name: str
     opening_offset: int
     opening_line: int  # zero-based number for gutter triangle

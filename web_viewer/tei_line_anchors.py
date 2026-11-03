@@ -20,6 +20,9 @@ def _local_name(tag: str) -> str:
 
 @dataclass(frozen=True)
 class AnchorReport:
+    """Bilan du rattachement, par rang, des ``<lb>`` du pivot du TEI aux
+    lignes physiques de son JSON : nombre de ``<lb>``, de lignes, de ``<lb>``
+    rattachés, de ``<lb>`` sans ligne et de lignes sans ``<lb>``."""
     tei_lb_count: int
     physical_line_count: int
     mapped_lb_count: int
@@ -27,6 +30,9 @@ class AnchorReport:
     physical_without_lb: int
 
     def as_dict(self):
+        """Le bilan en dictionnaire (``pivot_lb_index`` des métadonnées du
+        viewer web), avec ``count_match`` : vrai si les ``<lb>`` du pivot et
+        les lignes physiques sont en même nombre."""
         return {
             'tei_lb_count': self.tei_lb_count,
             'physical_line_count': self.physical_line_count,

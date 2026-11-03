@@ -352,6 +352,8 @@ class ReferencesMixin:
         ])
 
     def hide_references_panel(self):
+        """Masque le panneau « Références » (bouton × de son en-tête) et rend
+        sa place à l'éditeur."""
         self._hide_bottom_panel(self.references_panel)
 
     def check_references(self):

@@ -17,6 +17,11 @@ from iiif_page_selection import canvas_key
 
 @dataclass(frozen=True)
 class Resolution:
+    """Canvas trouvé pour une page de synchronisation : ``key``, sa clé
+    (``canvas_key``), None s'il n'y en a pas ; ``status`` (``resolved``,
+    ``ambiguous`` ou ``unresolved``) ; ``method``, l'indice qui a décidé
+    (``manual``, ``canvas``, ``label``…) ou la raison de l'échec ;
+    ``candidates``, les canvas en cause d'une page ambiguë."""
     key: str | None
     status: str
     method: str = ''
@@ -373,6 +378,21 @@ def _layout_only_manifest_pages(cache, manifest, witness_id, selection,
 
 def overlay_resolved_manifest(cache, manifest, witness_id, selected_keys=None,
                               page_links=(), ocr_links=(), project_root=None):
+    """Nouveau cache du témoin où chaque page de synchronisation reçoit
+    l'image du canvas IIIF qui est le sien (``resolve_pages`` : lien manuel,
+    URI du canvas, service, URL d'image, lien OCR, label), jamais celle de son
+    rang dans le manifeste. Les OCR importés à part sont d'abord rattachés à
+    leur page (``_merge_detached_ocr_pages``). Une page sans canvas certain
+    garde ses lignes, sans image ; ``iiif_resolution`` dit pourquoi.
+
+    Avec ``selected_keys`` (pages choisies), seuls ces canvas comptent. Les
+    canvas retenus qui n'ont reçu aucune page deviennent des pages sans
+    lignes (sans ``selected_keys``, seulement si le cache n'a aucune page),
+    sauf si une page est restée sans canvas. Hors synchronisation JSON
+    (``tei-manuscript-alignment``), les pages sont remises dans l'ordre du
+    manifeste quand toutes ont leur canvas. Un cache ALTO/PAGE seul
+    (``varians-layout-cache``) passe par ``_layout_only_manifest_pages``.
+    Lève ``ValueError`` si la sélection ne correspond plus au manifeste."""
     from tei_facsimile import default_surface_id
     from iiif_page_selection import selected_manifest_pages
     source = list((cache or {}).get('pages') or ())

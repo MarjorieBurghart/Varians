@@ -148,6 +148,10 @@ class ProjectActionsMixin:
             self._replace_with_project(Path(fn))
 
     def open_recent_project(self, path):
+        """Ouvre, à la place du projet courant, un projet de « Réouvrir un
+        projet récent… » (``_replace_with_project`` : enregistrement proposé
+        d'abord). Un fichier projet disparu est retiré de la liste, avec un
+        avertissement."""
         path = Path(path).expanduser().resolve()
         if not path.is_file():
             remove_recent_project(path)

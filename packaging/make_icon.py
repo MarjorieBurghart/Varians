@@ -17,6 +17,9 @@ RADIUS = 0.2        # rayon des coins arrondis
 
 
 def make_icon(target=ROOT / "resources" / "icons" / "varians.png"):
+    """Dessine l'icône (``SIZE`` pixels de côté) : le logo, centré sur un
+    carré, réduit avec sa marge sur le carré blanc aux coins arrondis.
+    L'écrit dans ``target``, qu'elle remplace, et rend ce chemin."""
     logo = Image.open(ROOT / "resources" / "varians_logo.png").convert("RGBA")
     side = max(logo.size)
     square = Image.new("RGBA", (side, side), (0, 0, 0, 0))

@@ -69,6 +69,9 @@ class DocumentTabBar(QTabBar):
         self.layoutChanged.emit()
 
     def tabLayoutChange(self):
+        """Appelée par Qt quand la place des onglets change (onglet ajouté,
+        retiré, renommé…) : émet ``layoutChanged``, pour que la flèche ▾
+        apparaisse ou disparaisse."""
         super().tabLayoutChange()
         self.layoutChanged.emit()
 
@@ -90,6 +93,8 @@ class DocumentTabBar(QTabBar):
         return _CURRENT_TAB_TEXT if index == self.currentIndex() else _OTHER_TAB_TEXT
 
     def tabSizeHint(self, index):
+        """Taille de l'onglet ``index`` : celle de Qt, élargie de ce que prend
+        en plus son nom écrit en gras."""
         # Place du nom en gras pour chaque onglet : changer d'onglet ne
         # déplace pas les autres.
         size = super().tabSizeHint(index)
