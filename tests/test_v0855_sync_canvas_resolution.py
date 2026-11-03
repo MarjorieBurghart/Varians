@@ -196,7 +196,7 @@ def test_web_dataset_preserves_secondary_json_links_with_469_canvas_subset(tmp_p
                 iiif_page_links=())
     project = replace(template, path=tmp_path/'project.xml',
                       witnesses=(template.base, f), base_witness=template.base.id)
-    dataset, _missing = build_dataset(project)
+    dataset, _unaligned = build_dataset(project)
     secondary = next(w for w in dataset['witnesses'] if w['id']=='F')
     assert secondary['line_sync']
     assert len(secondary['pages'])==5

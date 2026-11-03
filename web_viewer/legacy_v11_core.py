@@ -51,16 +51,22 @@ _XML_BLANK_CHARS = " \t\r\n"
 
 
 def clean_text(s: str) -> str:
+    """Blancs XML réduits à une espace et ôtés aux bords ; une espace
+    insécable est gardée. ``None`` donne ``""``."""
     return _XML_BLANKS.sub(" ", s or "").strip(_XML_BLANK_CHARS)
 
 
 def wit_tokens(value: str | None):
+    """Identifiants cités par un ``@wit`` ou un ``@edRef``, sans le ``#``
+    (``"#A #B"`` donne ``["A", "B"]``)."""
     if not value:
         return []
     return [x.lstrip("#") for x in value.split() if x.strip()]
 
 
 def witness_matches(value: str | None, target: str) -> bool:
+    """``value`` (un ``@wit`` ou un ``@edRef``) cite-t-elle le témoin
+    ``target`` (avec ou sans ``#``) ?"""
     return target.lstrip("#") in wit_tokens(value)
 
 
@@ -70,6 +76,9 @@ def witness_matches(value: str | None, target: str) -> bool:
 
 
 def extract_witness_labels(root: ET.Element):
+    """``{identifiant: libellé}`` des ``<witness>`` : leur texte, sans le
+    ``<idno type="siglum">`` ni les enfants qui ne répètent que le sigle ou
+    l'identifiant ; à défaut, le sigle, puis l'identifiant."""
     labels = {}
     for wit in root.iter():
         if lname(wit.tag) != "witness":
@@ -463,6 +472,9 @@ def _resolve_reading(tokens):
 
 
 def choose_choice_form(choice: ET.Element):
+    """Forme montrée d'un ``<choice>`` : son premier enfant dans l'ordre de
+    ``CHOICE_ORDER`` (``corr``, ``reg``, ``expan``, ``sic``, ``orig``,
+    ``abbr``), sinon son premier enfant ; ``None`` s'il n'en a pas."""
     forms = [child for child in choice if isinstance(child.tag, str)]
     for name in CHOICE_ORDER:
         form = next((child for child in forms if lname(child.tag) == name), None)
@@ -819,6 +831,9 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
 
 
 def variant_tooltip(ann, witness_labels):
+    """Infobulle d'une variante : « témoins: leçon » pour chaque leçon,
+    séparées par « | ». Les témoins sont nommés par leur libellé ; une leçon
+    sans témoin montre son rôle (« lecture » à défaut), une leçon vide « ∅ »."""
     bits = []
     for r in ann.get("readings", []):
         names = []
@@ -1766,5 +1781,6 @@ def attach_variant_metadata_to_runs(line, global_variant_registry):
 
 
 def load_json(path: Path):
+    """Contenu d'un fichier JSON, lu en UTF-8."""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)

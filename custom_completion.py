@@ -53,6 +53,10 @@ def _name_matches(left: str, right: str) -> bool:
 
 @dataclass(frozen=True)
 class DynamicValues:
+    """Valeurs suggérées tirées du projet (``<values source prefix suffix
+    elements/>``) : ``source`` vaut ``witnesses`` (identifiants des
+    témoins) ou ``ids`` (``xml:id`` des documents) ; chaque valeur est
+    entourée de ``prefix`` et ``suffix``."""
     source: str
     prefix: str = ""
     suffix: str = ""
@@ -62,6 +66,11 @@ class DynamicValues:
 
 @dataclass(frozen=True)
 class CustomAttributeSpec:
+    """Attribut proposé pour un élément : ``default_value`` est la valeur que
+    Ctrl+E écrit en insérant l'élément (``has_default`` distingue une
+    valeur vide d'une absence de ``defaultValue``) ; ``values`` (les
+    ``<value>``), ``dynamic_values`` (les ``<values>``) et ``values_mode``
+    (``append`` ou ``replace``) règlent la liste suggérée."""
     name: str
     default_value: str = ""
     has_default: bool = False
@@ -94,6 +103,8 @@ class CustomAttributeSpec:
 
 @dataclass(frozen=True)
 class CustomElementSpec:
+    """Élément déclaré dans custom-elements.xml : son nom, ses attributs
+    proposés et sa règle de mise en forme."""
     name: str
     attributes: tuple[CustomAttributeSpec, ...] = ()
     # Aide au formateur TEI uniquement : "inline", "block" ou "preserve".
@@ -103,17 +114,24 @@ class CustomElementSpec:
 
 @dataclass(frozen=True)
 class CustomCompletionConfig:
+    """Contenu de custom-elements.xml (:func:`load_custom_completion`), vide
+    si le fichier n'existe pas. Les noms se comparent aussi sans leur
+    préfixe : ``tei:rdg`` vise ``rdg``."""
     elements: tuple[CustomElementSpec, ...] = ()
 
     def element_names(self) -> tuple[str, ...]:
+        """Noms des éléments déclarés, sans doublon, dans l'ordre du fichier."""
         return tuple(dict.fromkeys(e.name for e in self.elements if e.name))
 
     def matching_elements(self, element: str | None) -> tuple[CustomElementSpec, ...]:
+        """Déclarations qui visent ``element`` (préfixe ignoré) ; aucune sans nom."""
         if not element:
             return ()
         return tuple(e for e in self.elements if _name_matches(e.name, element))
 
     def attributes_for(self, element: str | None) -> tuple[CustomAttributeSpec, ...]:
+        """Attributs proposés pour ``element``, toutes ses déclarations réunies ;
+        à nom local égal, le premier déclaré l'emporte."""
         attrs: list[CustomAttributeSpec] = []
         seen: set[str] = set()
         for elem in self.matching_elements(element):
@@ -125,9 +143,12 @@ class CustomCompletionConfig:
         return tuple(attrs)
 
     def attribute_names(self, element: str | None) -> tuple[str, ...]:
+        """Noms des attributs proposés pour ``element`` (:meth:`attributes_for`)."""
         return tuple(attr.name for attr in self.attributes_for(element))
 
     def attribute_spec(self, element: str | None, attribute: str | None) -> CustomAttributeSpec | None:
+        """Déclaration de l'attribut ``attribute`` de ``element`` (préfixe
+        ignoré), ou None."""
         if not attribute:
             return None
         for attr in self.attributes_for(element):
@@ -137,6 +158,10 @@ class CustomCompletionConfig:
 
     def attribute_values(self, element: str | None, attribute: str | None, witness_ids=(),
                          ids_for=None) -> tuple[tuple[str, ...], str]:
+        """``(valeurs suggérées, mode)`` pour l'attribut ``attribute`` de
+        ``element`` : ses valeurs explicites et dynamiques
+        (:meth:`CustomAttributeSpec.resolved_values`) et son ``values_mode`` ;
+        ``((), "append")`` si l'attribut n'est pas déclaré."""
         spec = self.attribute_spec(element, attribute)
         if spec is None:
             return (), "append"

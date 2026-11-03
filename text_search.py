@@ -29,6 +29,8 @@ _ASTRAL = re.compile("[\U00010000-\U0010FFFF]")
 
 @dataclass(frozen=True)
 class SearchOptions:
+    """Options d'une recherche : « Respecter la casse » et « Expressions
+    régulières »."""
     case_sensitive: bool = False
     regex: bool = False
 
@@ -44,6 +46,10 @@ class SearchError(ValueError):
 
 
 def compile_search(query: str, options: SearchOptions) -> re.Pattern:
+    """Motif de *query* : le texte échappé en recherche littérale, sinon
+    l'expression avec ``re.MULTILINE`` ; ``re.IGNORECASE`` si la casse n'est
+    pas respectée. Une expression incorrecte lève ``SearchError``
+    (``pattern_invalid``)."""
     flags = 0 if options.case_sensitive else re.IGNORECASE
     if not options.regex:
         return re.compile(re.escape(query), flags)
@@ -79,6 +85,10 @@ def match_at(text: str, start: int, end: int, query: str, options: SearchOptions
 
 
 def replacement_for(match: re.Match, template: str, options: SearchOptions) -> str:
+    """Texte qui remplace *match* : *template* tel quel en recherche
+    littérale, sinon développé avec les groupes de l'expression (``\\1``,
+    ``\\g<nom>``) ; un groupe absent ou mal écrit lève ``SearchError``
+    (``template_invalid``)."""
     if not options.regex:
         return template
     try:
@@ -137,7 +147,9 @@ class Utf16Positions:
         self._after = [index + rank + 2 for rank, index in enumerate(self._astral)]
 
     def qt(self, index: int) -> int:
+        """Position Qt (UTF-16) de l'indice Python *index*."""
         return index + bisect_left(self._astral, index)
 
     def python(self, position: int) -> int:
+        """Indice Python de la position Qt (UTF-16) *position*."""
         return position - bisect_right(self._after, position)

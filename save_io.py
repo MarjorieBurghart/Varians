@@ -178,6 +178,10 @@ class XmlFile:
         self.tree = tree
 
     def write(self) -> Path:
+        """Réécrit le fichier atomiquement, l'ancienne version en ``.bak`` :
+        déclaration XML, commentaires et instructions d'avant la racine,
+        arbre réindenté (sur place), puis ceux d'après. Rend le chemin ; un
+        fichier en lecture seule lève ``ReadOnlyFileError``."""
         ET.indent(self.tree, space="  ")
         parts = ["<?xml version='1.0' encoding='utf-8'?>", self.prolog,
                  ET.tostring(self.tree.getroot(), encoding="unicode"), self.epilogue]

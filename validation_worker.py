@@ -108,10 +108,16 @@ class RelaxNGWorkerClient(QObject):
 
     @property
     def uses_process(self):
+        """Vrai tant que les requêtes vont (ou iront, au premier besoin) au
+        processus séparé ; faux pour le reste de la session dès qu'il a été
+        déclaré indisponible (``fallback_reason``) : Varians valide alors
+        lui-même."""
         return not self.fallback_reason
 
     @property
     def busy(self):
+        """Vrai tant qu'une requête attend la réponse du processus
+        (``busyChanged`` en signale le début et la fin)."""
         return bool(self._pending)
 
     # --- Requêtes ---------------------------------------------------------------

@@ -1,11 +1,8 @@
-
-## Varians V0.8.5.20 — Navigation en image double, ergonomie et sécurité TEI
-
-Consulter `DOUBLE_PAGE_PARTS.md`. `editeur_tei.py` intègre `SplitImagePreview` (QWidget), `SplitPreviewLoader` (QObject slot GUI), les données pixellaires de séparation et l’utilisation de la géométrie des lignes dans « Marquer la page ». `folio_navigation.py` expose `markable_part_for_line`, `inspect_surface_part_split` et `configure_surface_parts`. On refuse tout écrasement des zones TEI non créées par Varians et tout changement de libellé d’une zone déjà référencée par <pb/>. Le séparateur en pixels exacts est un paramètre optionnel, et l’ancienne API split_percent reste disponible. Vérifier l’affichage réel sous Windows/PySide6 (non installé en CI).
-
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.8.5.12** (documentation historique complétée par les fichiers techniques successifs)
+**Version de référence : 0.9.4.0**
+
+Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
 Ce document est destiné à un développeur qui reprend Varians sans avoir suivi son historique. Il décrit la philosophie du logiciel, les contrats de données, l'architecture du code, les invariants de sûreté éditoriale, les principaux workflows et la manière recommandée d'étendre ou de corriger le projet.
 
@@ -1018,6 +1015,10 @@ Varians V0.8.5.18 — Navigation par folios et images doubles
 Voir FOLIO_NAVIGATION.md. Une surface peut contenir deux zones de folio ; aucun changement des JSON/ALTO ou des images source.
 
 
+## Varians V0.8.5.20 — Navigation en image double, ergonomie et sécurité TEI
+
+Consulter `DOUBLE_PAGE_PARTS.md`. `editeur_tei.py` intègre `SplitImagePreview` (QWidget), `SplitPreviewLoader` (QObject slot GUI), les données pixellaires de séparation et l’utilisation de la géométrie des lignes dans « Marquer la page ». `folio_navigation.py` expose `markable_part_for_line`, `inspect_surface_part_split` et `configure_surface_parts`. On refuse tout écrasement des zones TEI non créées par Varians et tout changement de libellé d’une zone déjà référencée par <pb/>. Le séparateur en pixels exacts est un paramètre optionnel, et l’ancienne API split_percent reste disponible. Vérifier l’affichage réel sous Windows/PySide6 (non installé en CI).
+
 ## Varians V0.8.5.20 — Correction du dialogue « Double page… »
 
 Correctif du dialogue double-page : ne jamais conditionner la capacité à décrire le fac-similé au mode de synchronisation du témoin. Ne pas réinitialiser `center_index`/`base_keys` après création des zones sur un témoin synchronisé. Tests de vraie méthode Qt extraits par AST : `tests/test_v08519_split_dialog.py`.
@@ -1068,6 +1069,23 @@ VARIANS V0.9.4.0 — CHANGER LE SIGLE D'UN TÉMOIN
   « Modifier… », qui en faisait un nouveau témoin sans rien mettre à jour.
 • Réglages d'affichage du témoin (ordre, hauteur, fenêtre détachée)
   reportés sur le nouveau sigle.
+
+VERSION PRÊTE À L'EMPLOI (0.9.4.0, PUBLIÉE APRÈS LA VERSION)
+
+• Archives sans Python à installer, pour Windows, macOS (Apple Silicon et
+  Intel) et Linux, jointes aux releases par le workflow « Binaries »
+  (packaging/, packaging/LISEZMOI.md) : PyInstaller, LISEZMOI en sept
+  langues et textes des licences dans l'archive, empreinte SHA-256.
+• Varians --self-test RAPPORT.json : vérification d'une installation
+  (traductions, aide, ressources, projet, processus de validation et de
+  transformation lxml et Saxon, fenêtre et son icône) ; la construction
+  échoue si elle n'est pas entièrement réussie.
+• Icône de Varians (le logo sur un carré blanc arrondi) pour l'exécutable,
+  les fenêtres et la barre des tâches ; sous Windows, en mode source, la
+  barre des tâches ne montre plus l'icône de Python.
+• Aide ×7 et README : la version prête à l'emploi d'abord, puis Python.
+• GitHub : formulaire « Signaler un problème / Report a problem » pour les
+  testeurs (.github/ISSUE_TEMPLATE/signalement.yml).
 
 VARIANS V0.9.3.4 — RED TEAM 2 : ROBUSTESSE ET COHÉRENCE
 

@@ -174,9 +174,7 @@
 {output}
 
 伝本 {witnesses}件、ピボット伝本行 {lines}行。</string>
-  <string key="webgen.missing">
-
-ピボット伝本キャッシュにないページ：{pages}</string>
+  <string key="webgen.unaligned_lines">\n\nピボット伝本の {count} 行が画像と同期していません。アラインメント（JSON）の行数がテキストより少ないためです（テキスト：{text}、アラインメント：{alignment}）。アラインメントが未完成であれば問題ありません。そうでない場合は、ピボット伝本のアラインメントJSONを確認してください（ページが欠けていませんか）。</string>
   <string key="webgen.assembly_problems">\n\n結合の問題（該当するテキストはビューアにありません）：\n{problems}</string>
   <string key="project.open_error">プロジェクトを開けません</string>
   <string key="viewer.search.placeholder">検索…</string>
@@ -250,7 +248,7 @@
   <string key="console.usage">使い方：{command} &lt;project.xml のパス&gt;</string>
   <string key="console.viewer_generated">ビューアを生成しました：{path}</string>
   <string key="console.viewer_stats">伝本：{witnesses} · ピボット伝本行：{lines}</string>
-  <string key="console.missing_pages">ピボット伝本キャッシュにないページ：{pages}</string>
+  <string key="console.unaligned_lines">ピボット伝本の {count} 行が画像と同期していません。アラインメント（JSON）の行数がテキストより少ないためです（テキスト：{text}、アラインメント：{alignment}）。</string>
   <string key="preview.choose_xslt">XSLTスタイルシートを選択</string>
   <string key="preview.choose_css">CSSスタイルシートを選択</string>
   <string key="preview.updated.timed.lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な要素 {marked}/{paragraphs}件 · クリック可能なピボット伝本行 {lines}行。</string>

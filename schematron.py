@@ -123,6 +123,10 @@ _ASSEMBLY_SITES = (
 
 @dataclass(frozen=True)
 class SchematronReport:
+    """Résultat de ``validate`` : ``issues`` (messages des règles sur le
+    document), ``rules`` (sources appliquées), ``errors`` (règles
+    incorrectes) et ``error`` (``saxon_missing``) ; voir la docstring du
+    module."""
     issues: tuple[ValidationIssue, ...] = ()
     rules: tuple[str, ...] = ()
     errors: tuple[ValidationIssue, ...] = ()
@@ -183,6 +187,9 @@ def clear_cache() -> None:
 
 
 def cache_info() -> dict[str, int]:
+    """Pour les tests : ``entries``, le nombre de sources compilées en cache,
+    et ``compilations``, le nombre de compilations lancées avec Saxon depuis
+    le démarrage ou le dernier ``clear_cache``."""
     with _LOCK:
         return {"entries": len(_CACHE), "compilations": _COMPILATIONS}
 

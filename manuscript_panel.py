@@ -36,6 +36,11 @@ _LEAD_BUTTON_QSS = "QPushButton:checked { background-color: #dfe8f2; border: 1px
 
 
 def scaled_bbox(item, project_root=None):
+    """Rectangle de la ligne ``item`` (``{"p": page, "l": ligne}``) dans les
+    coordonnées de l'image de la page, mises à l'échelle depuis celles de
+    l'ALTO : ``{"x", "y", "w", "h"}``, plus les dimensions de l'image
+    (``"iw"``, ``"ih"``). Il englobe aussi tous les sommets du polygone de la
+    ligne (PAGE XML). None si la ligne n'a aucune géométrie."""
     p, l = item["p"], item["l"]
     # PAGE XML may provide only a polygon. Derive its bounding extents without
     # replacing the polygon used for drawing; never fabricate (0,0) geometry.
@@ -84,6 +89,10 @@ def scaled_polygon(item, project_root=None):
 
 
 def crop_for_items(items, pad=24, project_root=None):
+    """Recadrage ``{"x", "y", "w", "h"}`` qui englobe les lignes ``items`` d'une
+    même page, avec une marge de ``pad`` pixels, borné à l'image. None (la
+    page entière est alors montrée) si ``items`` est vide ou qu'une ligne n'a
+    pas de géométrie."""
     if not items:
         return None
     boxes = [scaled_bbox(x, project_root) for x in items]
@@ -106,6 +115,9 @@ def iiif_image_request(page, crop, project_root=None):
 
 
 class ImageSceneView(QGraphicsView):
+    """Vue de l'image d'un témoin. À 100 %, l'image (ou le folio choisi,
+    ``folio_focus_rect``) est ajustée à la largeur ; la molette zoome, glisser
+    avec la souris déplace l'image, un double-clic revient à 100 %."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setScene(QGraphicsScene(self))
@@ -143,6 +155,9 @@ class ImageSceneView(QGraphicsView):
         call_later(0, self, run)
 
     def reset_zoom(self):
+        """Revient à 100 % : l'image (ou le folio choisi) ajustée à la largeur, sans
+        barre de défilement horizontale. L'étiquette du zoom du panneau n'est pas
+        mise à jour ici."""
         self.user_zoom = 1.0
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._apply_fit()
@@ -170,6 +185,9 @@ class ImageSceneView(QGraphicsView):
             self._fit_in_progress = False
 
     def zoom_by(self, factor):
+        """Multiplie le zoom par ``factor``, borné entre 50 % et 600 % ; sans effet
+        sur une scène vide. Met aussi à jour l'étiquette du zoom du panneau
+        parent (``update_zoom_label``)."""
         if not self.scene().items(): return
         new = max(0.5, min(6.0, self.user_zoom * factor))
         factor2 = new / self.user_zoom; self.user_zoom = new
@@ -235,7 +253,14 @@ class WitnessHeader(QWidget):
 
 
 class ManuscriptPanel(QFrame):
-    primaryNavigate = Signal(int)   # nouveau centre du témoin de base
+    """Panneau d'un témoin : en-tête (nom, état, détacher), boutons (flèches,
+    retour ⤺, bouton au livre, zoom, « Cadres », « Page ↗ », « Marquer la
+    page », « Double page… »), bandeau de lacune, puis l'image des lignes
+    autour de l'élément courant. ``items`` : les lignes ou pages du témoin
+    (``{"p": page, "l": ligne, "key": clé}``) ; ``map_base`` : pour un témoin
+    autre que le pivot, clé d'une ligne du pivot → rangs de ses lignes
+    reliées. Les demandes à la fenêtre passent par les signaux."""
+    primaryNavigate = Signal(int)   # nouveau centre du témoin pivot
     witnessNavigate = Signal(str, int)  # témoin, pas des flèches (V0.9.1.4)
     leadsEditionChanged = Signal(str, bool)  # témoin, ses flèches mènent l'édition (V0.9.2.8.1)
     markPageRequested = Signal(str, str, str)  # témoin, surface/zone xml:id, @n
@@ -403,6 +428,9 @@ class ManuscriptPanel(QFrame):
         self.message.show()
 
     def retranslate_ui(self):
+        """Remet les textes du panneau dans la langue de l'interface (boutons,
+        bulles d'aide, bandeau, message, état de l'élément courant), sans
+        recharger les images."""
         if getattr(self, "_message_key", None) and not self.message.isHidden():
             key, values = self._message_key
             self.message.setText(_t(key, **values))
@@ -441,6 +469,7 @@ class ManuscriptPanel(QFrame):
                 self.status.setText(_t("manuscript.status", page=page_label, line=line_no, extra=extra))
 
     def update_zoom_label(self):
+        """Affiche le zoom de la vue en pourcentage (« 100 % »)."""
         self.zoom_label.setText(f"{round(self.view.user_zoom*100):d} %")
 
     def _zoom(self, factor):
@@ -453,6 +482,12 @@ class ManuscriptPanel(QFrame):
         self.show_frames = bool(checked); self._redraw_scene()
 
     def set_primary(self, primary_index, primary_key):
+        """Suit la ligne du pivot de rang ``primary_index`` et de clé
+        ``primary_key``. Le panneau du pivot se place sur cette ligne ; celui
+        d'un autre témoin, sur ses lignes reliées à cette clé (``map_base``), ou,
+        s'il n'en a aucune, vide l'image avec « Aucune correspondance proposée… ».
+        La position atteinte devient celle du bouton ⤺. Sans effet sur un
+        panneau non synchronisé par lignes."""
         if not self.sync_enabled:
             return
         self.primary_key = primary_key
@@ -523,6 +558,9 @@ class ManuscriptPanel(QFrame):
         self.reload()
 
     def go_home(self):
+        """Bouton ⤺ (« Revenir à la correspondance du passage XML ») : revient à la
+        position fixée par la dernière synchronisation ou le dernier folio choisi
+        (``origin_center_index``) ; sans effet pour le pivot."""
         if self.is_base: return
         self.center_index = self.origin_center_index; self.reload()
 
@@ -559,6 +597,8 @@ class ManuscriptPanel(QFrame):
         self.lacuna_label.setVisible(bool(key))
 
     def current_item(self):
+        """Élément au centre de l'affichage (``{"p": page, "l": ligne, "key":
+        clé}``), ou None si le témoin n'en a aucun."""
         if not self.items: return None
         return self.items[max(0, min(len(self.items)-1, self.center_index))]
 
@@ -606,6 +646,10 @@ class ManuscriptPanel(QFrame):
         self.splitFolioRequested.emit(self.siglum, sid)
 
     def set_folio(self, ref):
+        """Affiche le folio ``ref`` (un des ``folios``) : la page de sa surface
+        devient la position courante et celle du bouton ⤺, et le menu des folios
+        le montre. False si le folio est inconnu ou que sa surface n'a pas de
+        page dans le panneau. L'image n'est rechargée que si elle change."""
         target = next((f for f in self.folios if f.ref == str(ref)), None)
         if target is None:
             return False
@@ -671,6 +715,10 @@ class ManuscriptPanel(QFrame):
         self.markPageRequested.emit(self.siglum, sid, label)
 
     def set_surface(self, surface_id):
+        """Affiche la page de la surface ``surface_id`` (``xml:id`` d'une
+        ``<surface>``) ; un panneau non synchronisé par lignes essaie d'abord le
+        folio de cette référence (``set_folio``). False si aucune page ne
+        correspond."""
         if not self.sync_enabled and self.set_folio(surface_id):
             return True
         index = self._surface_indices.get(str(surface_id or ""))
@@ -683,6 +731,8 @@ class ManuscriptPanel(QFrame):
         return True
 
     def open_page(self):
+        """Bouton « Page ↗ » : ouvre la page entière de l'élément courant hors de
+        Varians (fichier local ou adresse web, selon ``full_page_target``)."""
         item = self.current_item()
         if not item: return
         kind, target = full_page_target(item["p"], self.project_root)
@@ -703,6 +753,13 @@ class ManuscriptPanel(QFrame):
             self.status.setText(_t("manuscript.no_line"))
 
     def reload(self):
+        """Reconstruit l'affichage autour de l'élément courant : ses lignes
+        voisines dans la même colonne (``display_window_indices``), regroupées par
+        page, chaque groupe recadré sur ses lignes (la page entière en mode
+        page) ; met à jour l'état de l'en-tête et lance le chargement des images
+        (cache en mémoire, sinon téléchargement en arrière-plan). La scène est
+        dessinée quand toutes sont arrivées ; un chargement plus ancien est
+        ignoré (``load_token``)."""
         self.load_token += 1; token = self.load_token
         self.loaded_groups = {}; self.group_specs = []
         self.view.scene().clear(); self.message.hide(); self.message.setText(""); self._message_key = None

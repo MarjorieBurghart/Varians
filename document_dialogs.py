@@ -54,10 +54,14 @@ _STYLESHEET_BODY = ('\n'
 
 
 def is_stylesheet_file(path):
+    """Vrai si ``path`` est une feuille XSLT d'après son extension (``.xsl``,
+    ``.xslt``, casse ignorée) ; le fichier n'est pas lu."""
     return Path(path).suffix.lower() in STYLESHEET_SUFFIXES
 
 
 def is_schematron_file(path):
+    """Vrai si ``path`` est un fichier Schematron d'après son extension
+    (``.sch``, casse ignorée) ; le fichier n'est pas lu."""
     return Path(path).suffix.lower() in SCHEMATRON_SUFFIXES
 
 

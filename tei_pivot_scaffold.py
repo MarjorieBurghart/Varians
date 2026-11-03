@@ -38,6 +38,10 @@ class ScaffoldError(ValueError):
 
 @dataclass(frozen=True)
 class PivotPage:
+    """Page du témoin pivot dans le plan du squelette : son libellé (``@n`` du
+    ``<pb>``), la ``<surface>`` que désigne son ``@facs``, le nombre de
+    ``<lb/>`` à créer et la source de ce nombre (``evidence`` : « ALTO/PAGE »,
+    « JSON » ou un message)."""
     label: str
     surface_id: str
     line_count: int
@@ -46,6 +50,11 @@ class PivotPage:
 
 @dataclass
 class PivotScaffoldPlan:
+    """Plan du squelette TEI tiré du témoin pivot ``witness_id``
+    (``build_pivot_plan``), appliqué par ``render_pivot_scaffold`` : ses pages
+    dans l'ordre, les avertissements (messages) et les ``<surface>`` à créer
+    d'abord dans le ``<facsimile>`` (pages d'un JSON de synchronisation qui
+    portent leur image)."""
     witness_id: str
     pages: list[PivotPage] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -53,6 +62,8 @@ class PivotScaffoldPlan:
 
     @property
     def line_count(self):
+        """Nombre de lignes de toutes les pages : les ``<lb/>`` que le
+        squelette créerait."""
         return sum(p.line_count for p in self.pages)
 
 

@@ -51,16 +51,22 @@ _BLOCKING = {"no_xslt", "no_output", "no_file", "output_is_folder", "output_is_s
 
 
 def problem_text(problem):
+    """Message d'un problème de scénario (``scenario_problems``), dans la langue
+    de l'interface (``transform.problem.<code>``)."""
     return _t(f"transform.problem.{problem.code}", detail=problem.detail)
 
 
 def engine_label(engine):
+    """Nom affiché du moteur : « XSLT 1.0 (lxml) », « XSLT 3.0 (Saxon) » ; un
+    moteur inconnu, tel quel."""
     if engine in ("lxml", "saxon"):
         return _t(f"transform.engine.{engine}")
     return engine
 
 
 def source_label(scenario):
+    """Source du scénario, telle que la liste la montre : « Édition », « Document
+    affiché », « Fichier : … » ; une source inconnue, telle quelle."""
     if scenario.source == "file":
         return _t("transform.source.file", file=scenario.file)
     if scenario.source in ("edition", "current"):
@@ -117,9 +123,14 @@ class _PathField(QWidget):
         layout.addWidget(self.button)
 
     def text(self):
+        """Chemin écrit dans le champ, sans les espaces autour."""
         return self.edit.text().strip()
 
     def browse(self):
+        """Bouton « … » : choisit un fichier (à ouvrir, ou à enregistrer pour un
+        résultat), en partant du chemin du champ ou du dossier du projet, et
+        l'écrit comme dans un scénario (``scenario_path``) ; ``textEdited`` est
+        émis comme pour une saisie."""
         current = resolve_path(self._project, self.text())
         start = str(current if current is not None else self._project.root_dir)
         if self._save:
@@ -258,9 +269,14 @@ class ScenarioDialog(QDialog):
             self.open_after = False
 
     def engine(self):
+        """Moteur choisi : ``"lxml"``, ``"saxon"``, ou le moteur inconnu du
+        scénario, gardé tel quel."""
         return self.engine_combo.currentData()
 
     def source(self):
+        """Source choisie : ``"edition"``, ``"current"`` ou ``"file"`` ; tant
+        qu'aucun bouton n'est coché, la source inconnue du scénario, gardée telle
+        quelle (sinon ``"edition"``)."""
         for value, button in (("edition", self.edition_radio), ("current", self.current_radio),
                               ("file", self.file_radio)):
             if button.isChecked():
@@ -268,6 +284,10 @@ class ScenarioDialog(QDialog):
         return self._unknown_source or "edition"
 
     def add_param_row(self, name="", value=""):
+        """Ajoute une ligne de paramètre en fin de tableau, et la choisit (vide pour
+        « Ajouter un paramètre »). La valeur d'un paramètre connu (témoin,
+        langue, oui/non) se choisit dans un menu ou une case
+        (``_update_value_widget``)."""
         row = self.params_table.rowCount()
         self.params_table.insertRow(row)
         self.params_table.setItem(row, 0, QTableWidgetItem(name))
@@ -345,6 +365,8 @@ class ScenarioDialog(QDialog):
         return _select_value(combo, value or LANGUAGE)       # sans valeur : la langue de l'interface
 
     def remove_param_row(self, row):
+        """« Retirer le paramètre » : retire la ligne ``row`` (la ligne courante) ;
+        un rang hors du tableau est ignoré."""
         if 0 <= row < self.params_table.rowCount():
             self.params_table.removeRow(row)
 
@@ -362,6 +384,9 @@ class ScenarioDialog(QDialog):
         return tuple(params.items())
 
     def scenario(self):
+        """Le scénario que décrit la boîte (``TransformScenario``), sans
+        vérification ; le fichier source n'est gardé que pour la source
+        « Fichier »."""
         source = self.source()
         return TransformScenario(self.name_edit.text().strip(), self.xslt_field.text(), self.output_field.text(),
                                  source=source, file=self.file_field.text() if source == "file" else "",
@@ -533,6 +558,7 @@ class ScenarioListDialog(QDialog):
         return (group, rank, scenarios[rank]) if 0 <= rank < len(scenarios) else None
 
     def selected_scenario(self):
+        """Scénario choisi dans la liste (du projet ou prédéfini), ou None."""
         chosen = self.selected()
         return chosen[2] if chosen is not None else None
 
@@ -607,6 +633,10 @@ class ScenarioListDialog(QDialog):
         return self._store(self._scenarios + [scenario], len(self._scenarios)) and self._then_open(scenario)
 
     def edit_scenario(self):
+        """« Modifier… » (ou double-clic) : la boîte du scénario du projet choisi,
+        puis l'enregistrement ; « Ouvrir la feuille » dans la boîte ferme ensuite
+        la liste. Un scénario prédéfini ne se modifie pas (il se duplique). False
+        si rien n'est changé ou que l'enregistrement échoue."""
         chosen = self.selected()
         if chosen is None or chosen[0] != "project":
             return False
@@ -634,6 +664,9 @@ class ScenarioListDialog(QDialog):
         return self._store(self._scenarios + [scenario], len(self._scenarios)) and self._then_open(scenario)
 
     def remove_scenario(self):
+        """« Supprimer » : retire du projet le scénario choisi, après confirmation,
+        et enregistre ; un scénario prédéfini ne se supprime pas. False si rien
+        n'est retiré."""
         chosen = self.selected()
         if chosen is None or chosen[0] != "project":
             return False
@@ -884,6 +917,8 @@ class TransformScenariosMixin:
     # --- Exécution -------------------------------------------------------------------
 
     def transform_runner(self):
+        """Le ``TransformRunner`` de la fenêtre, créé au premier appel et relié à
+        ``_transform_finished`` ; il ne lance qu'une transformation à la fois."""
         if self._transform_runner is None:
             self._transform_runner = TransformRunner(_worker_command(), self)
             self._transform_runner.finished.connect(self._transform_finished)

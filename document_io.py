@@ -22,6 +22,13 @@ class DocumentIOMixin:
                                 _t("file.paragraph_separator", file=Path(path).name))
 
     def open_path(self,path):
+        """Charge le fichier ``path`` (UTF-8) dans l'éditeur, pour le document
+        affiché, marqué non modifié. Les diagnostics précédents sont effacés
+        d'abord ; le fragment et l'aperçu sont remis à zéro ; des U+2029 sont
+        protégés, puis signalés. Ensuite, en différé : panneaux synchronisés au
+        curseur (édition affichée) et schéma résolu en arrière-plan. Une erreur
+        de lecture est montrée dans une boîte, et le texte de l'éditeur reste
+        inchangé."""
         # Un changement de document invalide immédiatement tous les diagnostics
         # précédents, avant même le parse/validation du nouveau texte.
         if hasattr(self, "validation_table"):
@@ -237,10 +244,18 @@ class DocumentIOMixin:
         return self.save()
 
     def save(self):
+        """Enregistre le document affiché dans son fichier (contrôles et
+        questions de ``_write_to``) ; sans fichier, passe par ``save_as``. Vrai
+        si le fichier a été écrit."""
         if self.current_path is None: return self.save_as()
         return self._write_to(self.current_path)
 
     def save_as(self):
+        """« Enregistrer l’édition sous… » : demande un fichier XML (proposé :
+        le fichier affiché, sinon ``xml/edition.xml`` du dossier de Varians),
+        prévient si les parties de l'édition, laissées dans l'ancien dossier,
+        ne seraient plus trouvées, puis écrit le document affiché, qui prend ce
+        chemin. Faux si l'on renonce ou si l'écriture échoue."""
         start=str(self.current_path if self.current_path else HERE/"xml"/"edition.xml"); fn,_=QFileDialog.getSaveFileName(self,_t("file.save_as.title"),start,"XML (*.xml)")
         if not fn: return False
         if not self._confirm_parts_kept(Path(fn)): return False
@@ -261,6 +276,13 @@ class DocumentIOMixin:
             _t("parts.save_as.text", hrefs="\n".join("• " + href for href in hrefs)))
 
     def maybe_save(self):
+        """Garde-fou avant de fermer ou de recharger le projet (autre projet,
+        paramètres du projet, changement de sigle) : propose d'enregistrer les
+        modifications en attente. Pour l'édition seule, une question :
+        enregistrer, ne pas enregistrer ou annuler (un fragment non appliqué
+        l'est avant d'enregistrer) ; pour plusieurs documents, ou un document
+        auxiliaire, la liste complète (``_confirm_unsaved_documents``). Vrai si
+        l'on peut continuer."""
         unsaved = self._unsaved_sessions()
         if not unsaved: return True
         # Plusieurs documents, ou un document auxiliaire : liste complète.

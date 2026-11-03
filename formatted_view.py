@@ -298,7 +298,7 @@ LINE_MARKER_RE = re.compile(
 
 
 def make_line_segments_clickable(html_text):
-    """Numérote puis préserve les repères du témoin de base invisibles en temps linéaire.
+    """Numérote puis préserve les repères du témoin pivot invisibles en temps linéaire.
 
     La XSLT écrit volontairement ``tei-line://base/INDEX`` au lieu de calculer
     ``count(preceding::tei:lb...)`` pour chaque ligne. Ce dernier calcul rendait
@@ -358,6 +358,9 @@ class ClickablePreview(QTextBrowser):
         self._selection_before_pencil = None
 
     def setSearchMatch(self, start, end, query):
+        """Surligne en jaune l'occurrence ``start``–``end`` d'une recherche de ``query``
+        (``ExtraSelection``) sans la sélectionner ; ``find_in_rich_editor`` repart de là. Tout
+        autre surlignage de l'aperçu est remplacé."""
         self._search_match = (int(start), int(end))
         self._search_last = (int(start), int(end), (query or "").casefold())
         sel = QTextEdit.ExtraSelection()
@@ -369,6 +372,7 @@ class ClickablePreview(QTextBrowser):
         self.setExtraSelections([sel])
 
     def clearSearchMatch(self):
+        """Efface le surlignage de recherche et oublie la dernière occurrence."""
         self._search_match = None
         self._search_last = None
         self.setExtraSelections([])
@@ -384,6 +388,10 @@ class ClickablePreview(QTextBrowser):
         return int(m.group(1)) if m else None
 
     def rebuild_line_markers(self):
+        """Relève les liens du document affiché : repères de ligne ``tei-line://base/N`` (place de
+        chacun) et crayons ``tei-edit://p/N`` (début du texte de chaque élément modifiable, après
+        le crayon et son espace). À appeler après chaque ``setHtml`` : les méthodes de position
+        de l'aperçu s'y fient."""
         marks = []
         paragraphs = []
         block = self.document().begin()
@@ -422,6 +430,8 @@ class ClickablePreview(QTextBrowser):
         self._paragraph_content_by_index = {pidx: content for _, content, pidx in normalized}
 
     def paragraph_for_position(self, char_pos):
+        """Rang de l'élément modifiable où se trouve la position ``char_pos`` de l'aperçu : celui du
+        dernier crayon ✎ placé avant elle ; None avant le premier crayon ou s'il n'y en a pas."""
         if not self._paragraph_markers:
             return None
         positions = [x[0] for x in self._paragraph_markers]
@@ -429,6 +439,9 @@ class ClickablePreview(QTextBrowser):
         return self._paragraph_markers[i][2] if i >= 0 else None
 
     def paragraph_bounds(self, paragraph_index):
+        """``(début, fin)`` dans l'aperçu de l'élément modifiable de rang ``paragraph_index`` : du
+        texte qui suit son crayon jusqu'au crayon suivant, ou jusqu'à la fin du document ; None
+        si ce rang n'a pas de crayon."""
         for i, (marker_pos, content_pos, pidx) in enumerate(self._paragraph_markers):
             if pidx == int(paragraph_index):
                 end = self._paragraph_markers[i + 1][0] if i + 1 < len(self._paragraph_markers) else max(0, self.document().characterCount() - 1)
@@ -459,6 +472,11 @@ class ClickablePreview(QTextBrowser):
         return occurrences
 
     def selection_descriptor(self, text, selection_start):
+        """Décrit une sélection de l'aperçu qui montre ``text`` et commence à ``selection_start`` :
+        ``paragraph`` (rang de l'élément modifiable), ``occurrence`` (rang de ``text`` parmi ses
+        occurrences dans cet élément) et ``relative`` (décalage depuis le début de l'élément) ;
+        None hors de tout élément. Sert à retrouver la même occurrence dans la source ou le
+        fragment."""
         pidx = self.paragraph_for_position(selection_start)
         if pidx is None:
             return None
@@ -565,12 +583,16 @@ class ClickablePreview(QTextBrowser):
         return True
 
     def line_for_position(self, char_pos):
+        """Rang du dernier repère de ligne du témoin pivot placé avant la position ``char_pos`` de
+        l'aperçu (ou à cette position) ; None avant le premier repère ou s'il n'y en a pas."""
         if not self._marker_positions:
             return None
         i = bisect.bisect_right(self._marker_positions, int(char_pos)) - 1
         return self._marker_lines[i] if i >= 0 else None
 
     def line_at_viewport_center(self):
+        """Rang du repère de ligne du témoin pivot au centre de la zone visible, qui devient la
+        ligne active (``active_line_ordinal``) ; None s'il n'y en a pas."""
         pos = self.cursorForPosition(self.viewport().rect().center()).position()
         line = self.line_for_position(pos)
         if line is not None:
@@ -578,6 +600,9 @@ class ClickablePreview(QTextBrowser):
         return line
 
     def scroll_to_line(self, ordinal, center=True):
+        """Place le curseur sur le repère de ligne ``ordinal`` et fait défiler l'aperçu jusqu'à lui,
+        centré dans la fenêtre avec ``center`` ; la ligne devient active. False si l'aperçu n'a
+        pas ce repère."""
         pos = self._line_to_position.get(int(ordinal))
         if pos is None:
             return False
@@ -596,7 +621,7 @@ class ClickablePreview(QTextBrowser):
         return True
 
     def select_visible_text_near_line(self, text, ordinal=None):
-        """Sélectionne réellement ``text`` près d'une ligne du témoin de base.
+        """Sélectionne réellement ``text`` près d'une ligne du témoin pivot.
 
         Contrairement au surlignage de recherche, il s'agit ici d'une sélection
         volontaire de l'utilisateur transférée depuis l'autre onglet. Elle doit
@@ -650,7 +675,7 @@ class ClickablePreview(QTextBrowser):
     def mouseReleaseEvent(self, event):
         # Les vrais liens de l'aperçu (notamment le crayon ✎) gardent leur
         # comportement normal. Un clic sur le texte ordinaire est associé au
-        # dernier marqueur du témoin de base placé avant la position du curseur.
+        # dernier marqueur du témoin pivot placé avant la position du curseur.
         pos = event.position().toPoint()
         href = self.anchorAt(pos)
         super().mouseReleaseEvent(event)
@@ -669,6 +694,8 @@ class ClickablePreview(QTextBrowser):
 _LXML_TRANSFORM_CACHE = {}
 
 def lxml_available():
+    """True si lxml s'importe. Sans lui, l'aperçu passe par PowerShell/.NET
+    (``_transform_without_lxml``) et l'actualisation automatique attend plus longtemps."""
     try:
         import lxml.etree  # noqa: F401
         return True
@@ -1091,6 +1118,9 @@ class FormattedEditionWidget(QWidget):
         )
 
     def retranslate_ui(self):
+        """Remet les textes de la vue dans la langue de l'interface, puis retransforme l'aperçu
+        (``force=True``) : la feuille XSLT y écrit aussi des textes traduits (titre de la table
+        des matières…)."""
         self._update_xsl_label()
         self.edit_paragraph_action.setText(_t("preview.edit_paragraph"))
         self.refresh_btn.setText(_t("preview.refresh"))
@@ -1127,6 +1157,7 @@ class FormattedEditionWidget(QWidget):
         self.refresh_preview(force=True)
 
     def focus_is_in_preview(self):
+        """True si le focus clavier est dans l'aperçu ou dans sa barre de recherche."""
         focus = QApplication.focusWidget()
         return bool(
             focus is self.preview
@@ -1136,6 +1167,9 @@ class FormattedEditionWidget(QWidget):
         )
 
     def show_preview_find(self):
+        """Montre la barre « Rechercher dans l’aperçu : » et y met le focus (Ctrl+F dans l'onglet
+        de l'aperçu). Une sélection courte de l'aperçu (une ligne, 120 caractères au plus)
+        devient le texte cherché."""
         self.preview_find_bar.setVisible(True)
         selected = self.preview.textCursor().selectedText().strip()
         if selected and "\u2029" not in selected and len(selected) <= 120:
@@ -1144,6 +1178,8 @@ class FormattedEditionWidget(QWidget):
         self.preview_find_box.selectAll()
 
     def hide_preview_find(self):
+        """Bouton « ✕ » : cache la barre de recherche de l'aperçu, efface le surlignage de
+        l'occurrence et rend le focus à l'aperçu."""
         self.preview_find_bar.setVisible(False)
         self.preview_find_status.setText("")
         self.preview.clearSearchMatch()
@@ -1176,18 +1212,27 @@ class FormattedEditionWidget(QWidget):
         self.preview_find_box.setFocus()
 
     def find_preview_next(self):
+        """Occurrence suivante dans l'aperçu (Entrée, « ▶ », F3) : la source et les témoins vont à
+        sa ligne, l'onglet de l'aperçu restant affiché. Sans texte cherché, montre la barre."""
         self._find_preview(False)
 
     def find_preview_previous(self):
+        """Comme ``find_preview_next``, vers l'arrière (« ◀ », Maj+F3)."""
         self._find_preview(True)
 
     def current_preview_line(self):
+        """Ligne du témoin pivot où en est la lecture de l'aperçu : le repère au centre de la zone
+        visible, sinon la dernière ligne active ; None si l'aperçu n'en a pas. Sert au retour
+        vers la source et à garder la place quand la taille du texte change."""
         # Pour une transition d'onglet, la ligne au centre de la fenêtre reflète
         # mieux la position de lecture qu'une ancienne sélection.
         line = self.preview.line_at_viewport_center()
         return line if line is not None else self.preview.active_line_ordinal
 
     def scroll_to_t1_line(self, ordinal):
+        """Fait défiler l'aperçu jusqu'au repère de ligne ``ordinal`` du témoin pivot, centré.
+        L'aperçu est d'abord actualisé s'il est en retard sur la source ; le défilement attend
+        le tour suivant de la boucle d'événements. Rien si ``ordinal`` est None."""
         if ordinal is None:
             return
         if self.dirty_preview:
@@ -1195,6 +1240,9 @@ class FormattedEditionWidget(QWidget):
         call_later(0, self, lambda n=int(ordinal): self.preview.scroll_to_line(n, center=True))
 
     def focus_is_in_fragment(self):
+        """True si le focus clavier est dans l'éditeur de fragment ou dans ses lignes de recherche
+        et de remplacement : Ctrl+F, Ctrl+H et F3 visent alors le fragment, et Ctrl+S l'applique
+        avant d'enregistrer."""
         focus = QApplication.focusWidget()
         return bool(
             focus is self.fragment_editor
@@ -1387,6 +1435,10 @@ class FormattedEditionWidget(QWidget):
         self.main.statusBar().showMessage(msg, 2600)
 
     def show_fragment_find(self, replace=False):
+        """Montre la ligne « Rechercher dans le fragment : » (Ctrl+F) et, avec ``replace``
+        (Ctrl+H), la ligne « Remplacer par : », cachée sinon. Une sélection courte du fragment
+        (une ligne, 120 caractères au plus) devient le texte cherché ; le focus va à la
+        recherche."""
         # Ctrl+F : la recherche seule ; Ctrl+H (replace) : avec « Remplacer par ».
         self.fragment_find_bar.setVisible(True)
         self.fragment_replace_row.setVisible(bool(replace))
@@ -1409,6 +1461,8 @@ class FormattedEditionWidget(QWidget):
             layout.insertWidget(index + offset, button)
 
     def hide_fragment_find(self):
+        """Bouton « × » : cache la recherche et le remplacement du fragment et rend le focus à
+        l'éditeur de fragment. Le surlignage de l'occurrence trouvée, lui, reste affiché."""
         self.fragment_find_bar.setVisible(False)
         self.fragment_replace_row.setVisible(False)
         self.fragment_find_status.setText("")
@@ -1438,9 +1492,15 @@ class FormattedEditionWidget(QWidget):
         self.fragment_find_box.setFocus()
 
     def find_fragment_next(self):
+        """Occurrence suivante dans le fragment (Entrée, « ▶ », F3), avec les options de recherche
+        de la fenêtre (« Aa », « .* ») ; sans texte cherché, montre la barre. Quand la ligne
+        « Remplacer par : » est visible, le texte cherché garde ses blancs du début et de la fin."""
         self._find_fragment(False)
 
     def replace_fragment_next(self):
+        """« Remplacer » : remplace dans le fragment l'occurrence surlignée par le texte de
+        « Remplacer par : », si elle correspond toujours à la recherche, puis cherche la
+        suivante. Seul l'éditeur de fragment change : le XML attend « Appliquer au XML »."""
         query = self.fragment_find_box.text()
         if not query:
             self.fragment_find_box.setFocus()
@@ -1454,6 +1514,8 @@ class FormattedEditionWidget(QWidget):
         self.fragment_find_status.setText(f"{n}/{total}" if found else "0/0")
 
     def replace_fragment_all(self):
+        """« Tout remplacer » dans le fragment, en une seule étape d'annulation ; le nombre de
+        remplacements s'affiche dans la barre d'état. Le XML attend « Appliquer au XML »."""
         query = self.fragment_find_box.text()
         if not query:
             self.fragment_find_box.setFocus()
@@ -1473,6 +1535,7 @@ class FormattedEditionWidget(QWidget):
         self.main.statusBar().showMessage(search_error_text(error), 5000)
 
     def find_fragment_previous(self):
+        """Comme ``find_fragment_next``, vers l'arrière (« ◀ », Maj+F3)."""
         self._find_fragment(True)
 
     def _preview_zoom_label(self):
@@ -1522,6 +1585,9 @@ class FormattedEditionWidget(QWidget):
             self.preview_timer.start()
 
     def source_changed(self):
+        """À chaque modification de la source : l'aperçu est marqué en retard et une actualisation
+        en cours dans un autre fil est rendue caduque. Avec « Aperçu auto » et la vue affichée,
+        l'actualisation est reportée à la fin d'une pause de la frappe (``preview_timer``)."""
         self.dirty_preview = True
         # Un aperçu en cours dans un autre fil ne montre plus le texte.
         self._preview_generation += 1
@@ -1531,10 +1597,13 @@ class FormattedEditionWidget(QWidget):
             self.preview_timer.start()
 
     def became_visible(self):
+        """À l'affichage de l'onglet de l'aperçu : l'actualise s'il est en retard sur la source."""
         if self.dirty_preview:
             self.refresh_preview()
 
     def choose_xslt(self):
+        """Bouton « XSLT… » : choisit une autre feuille XSLT et retransforme l'aperçu. Le choix
+        n'est pas enregistré dans le projet."""
         fn, _ = QFileDialog.getOpenFileName(self, _t("preview.choose_xslt"), str(self.xsl_path.parent), f"XSLT (*.xsl *.xslt);;{_t('common.all_files')} (*)")
         if fn:
             self.xsl_path = Path(fn)
@@ -1543,6 +1612,8 @@ class FormattedEditionWidget(QWidget):
             self.refresh_preview(force=True)
 
     def choose_css(self):
+        """Bouton « CSS… » : choisit une autre feuille CSS et retransforme l'aperçu. Le choix n'est
+        pas enregistré dans le projet."""
         fn, _ = QFileDialog.getOpenFileName(self, _t("preview.choose_css"), str(self.css_path.parent), f"CSS (*.css);;{_t('common.all_files')} (*)")
         if fn:
             self.css_path = Path(fn)
@@ -1605,6 +1676,11 @@ class FormattedEditionWidget(QWidget):
         return {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc"), **publication_params()}
 
     def refresh_preview(self, force=False):
+        """Transforme la source par la feuille XSLT, dans le fil de la fenêtre, et affiche le
+        résultat avec la CSS ; pour une édition en parties, c'est l'édition assemblée qui est
+        transformée. Sans ``force`` (bouton « Actualiser »), rien n'est refait si le texte, les
+        feuilles et les éléments modifiables n'ont pas changé. Un XML mal formé ou une erreur de
+        transformation est signalé sous l'aperçu, qui garde son contenu."""
         sources, xml_text, spans, names = self._preview_inputs()
         self.sources = sources
         if self._preview_files_missing():
@@ -1758,7 +1834,7 @@ class FormattedEditionWidget(QWidget):
             self.preview.scrollToAnchor(anchor)
 
             # Après le saut, synchroniser aussi les trois manuscrits sur la
-            # ligne du témoin de base située au centre du passage atteint, sans quitter l’aperçu.
+            # ligne du témoin pivot située au centre du passage atteint, sans quitter l’aperçu.
             def sync_after_toc():
                 line = self.preview.line_at_viewport_center()
                 if line is not None:
@@ -1890,6 +1966,11 @@ class FormattedEditionWidget(QWidget):
                                        total=self._fragment_total))
 
     def load_fragment(self, idx):
+        """Ouvre dans l'éditeur de fragment l'élément modifiable de rang ``idx`` de l'aperçu, pris
+        dans son fichier (le document affiché ou, pour une édition en parties, le fichier qui le
+        contient). Si un autre élément ouvert a des modifications non appliquées, l'utilisateur
+        choisit d'abord « Appliquer et continuer », « Ignorer et continuer » ou « Annuler ».
+        False si l'élément n'existe pas ou si l'utilisateur annule."""
         # Ne jamais remplacer silencieusement un fragment modifié par un
         # autre paragraphe. Le choix est explicite : appliquer, ignorer ou
         # annuler.
@@ -1919,10 +2000,16 @@ class FormattedEditionWidget(QWidget):
         return True
 
     def reload_fragment(self):
+        """« Recharger le fragment » : relit l'élément ouvert dans son fichier. Les modifications
+        non appliquées du fragment sont perdues, sans question."""
         if self.current_paragraph is not None:
             self.load_fragment(self.current_paragraph)
 
     def fragment_has_unapplied_changes(self):
+        """True si un élément a été ouvert et que le texte du fragment diffère de celui de son
+        ouverture ou de sa dernière application. L'affichage de l'éditeur n'est pas vérifié :
+        après « Fermer » sans appliquer, elle reste vraie (plusieurs appelants regardent aussi
+        ``frag_box``)."""
         return (
             self.current_paragraph is not None
             and self.fragment_editor.toPlainText() != self.fragment_original

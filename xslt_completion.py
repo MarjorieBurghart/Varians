@@ -158,10 +158,15 @@ class StylesheetCompletionModel:
         self.model = model or completion_model()
 
     def child_elements_at(self, parent, before=(), after=()):
+        """Éléments XSLT permis dans ``parent``, entre ``before`` et ``after``
+        (voir ``element_names``)."""
         return element_names(self.info, parent, before, after, self.model)
 
     def allowed_attributes(self, element):
+        """Attributs permis sur ``element`` (voir ``attribute_names``)."""
         return attribute_names(self.info, element, self.model)
 
     def allowed_attribute_values(self, element, attribute):
+        """Valeurs permises de ``attribute`` sur ``element`` (voir
+        ``attribute_values``)."""
         return attribute_values(self.info, element, attribute, self.model)

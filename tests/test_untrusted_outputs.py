@@ -33,7 +33,7 @@ def test_the_web_export_copies_only_images(tmp_path):
     data["pages"][0]["image"] = {"type": "file", "path": str(secret), "label": "p1"}
     data["pages"][1]["image"] = {"type": "file", "path": str(picture), "label": "p2"}
     alignment.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-    _output, _missing, dataset = generate(project)
+    _output, _unaligned, dataset = generate(project)
     copied = [path for path in (project.parent / "web_output").rglob("*") if path.is_file()]
     assert not [path for path in copied if path.read_bytes().startswith(b"SECRET")]
     assert [path for path in copied if path.read_bytes() == PNG]

@@ -43,7 +43,15 @@ dites « om. » ; le texte de lecture ne change pas (seul le ``tooltip``
 des repères de variante, que le viewer n'affiche pas, suit ces leçons).
 Une note suit les mêmes règles (``parts``) : l'apparat de la note
 « stellarum ????nalia… » donne sa leçon, puis son entrée entre crochets,
-au lieu de toutes ses leçons collées (« ????naliamagnalia »)."""
+au lieu de toutes ses leçons collées (« ????naliamagnalia »).
+
+V0.9.4.0 (décision explicite) : ``meta.unmatched_tei_pages``, toujours
+vide depuis le contrat des <lb> du pivot (V0.8.5.25.3), est remplacé par
+le nombre de lignes du pivot sans ligne dans son alignement
+(``unaligned_pivot_lines`` : 0 ici) et ses totaux
+(``unaligned_pivot_line_totals`` : 3790 lignes dans le texte comme dans
+l'alignement). Ces clés remises comme avant, l'empreinte est celle d'avant :
+le texte ne change pas."""
 from __future__ import annotations
 
 import hashlib
@@ -53,7 +61,7 @@ from corpus_data import copy_example
 from project_config import load_project
 from web_viewer.generator import build_dataset
 
-DIGEST = "5bbc3814e50fc91a370c099adedf794d08c06d42d260b1dd678fe4d0d08ddb0d"
+DIGEST = "b4260c9a2f866a9403bf71008dbf95ebb4ba00622349df463bb45df3fe385ff0"
 
 
 def _digest(data):
@@ -65,7 +73,7 @@ def _digest(data):
 
 def test_a_single_file_edition_is_exported_as_before(tmp_path):
     project = copy_example(tmp_path / "exemple")
-    data, _missing = build_dataset(load_project(project))
+    data, _unaligned = build_dataset(load_project(project))
     assert str(project.parent) not in json.dumps(data, ensure_ascii=False)
     assert _digest(data) == DIGEST
 
@@ -75,5 +83,5 @@ def test_the_digest_sees_a_change_of_the_edition(tmp_path):
     edition = project.parent / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")
     edition.write_text(text.replace("Uos estis", "Vos estis", 1), encoding="utf-8")
-    data, _missing = build_dataset(load_project(project))
+    data, _unaligned = build_dataset(load_project(project))
     assert _digest(data) != DIGEST

@@ -183,6 +183,10 @@ class ValidationPanelMixin:
             self._set_schematron_label()
 
     def show_validation_panel(self):
+        """Montre le panneau de validation, seul panneau du bas. Dès lors,
+        chaque modification est revalidée après le délai de frappe, même
+        panneau masqué. Si un schéma est actif et que la révision courante n'a
+        pas été validée, une validation est lancée en arrière-plan."""
         # Une hauteur modeste garde la vue d'édition utilisable sur petit écran.
         self._rng_watch_enabled = True
         self._show_bottom_panel(self.validation_panel, 180)
@@ -196,6 +200,8 @@ class ValidationPanelMixin:
             self._auto_refresh_rng()
 
     def hide_validation_panel(self):
+        """Masque le panneau de validation ; la revalidation pendant la frappe
+        continue (voir ``show_validation_panel``)."""
         self._hide_bottom_panel(self.validation_panel)
 
     def _clear_validation_table(self):
@@ -464,6 +470,10 @@ class ValidationPanelMixin:
                                        document_revision=revision, background=True)
 
     def validate_relaxng_manual(self):
+        """F8, « Valider RNG » : valide le document affiché en attendant le
+        résultat, montre le panneau et annonce un succès. L'accord est
+        redemandé pour les règles Schematron hors du projet refusées
+        auparavant."""
         self.validate_relaxng_document(show_panel=True, show_success_message=True, ask_rules=True)
 
     def refresh_schema_cache(self):

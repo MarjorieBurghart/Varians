@@ -129,23 +129,35 @@ class SchematronRulesDialog(QDialog):
         self.open_button.setEnabled(selected)
 
     def row_count(self):
+        """Nombre de déclarations Schematron montrées."""
         return self.table.rowCount()
 
     def href(self, row):
+        """Adresse du fichier de règles de la ligne ``row``, telle qu'écrite dans la
+        déclaration."""
         return self.table.item(row, 0).text()
 
     def _combo(self, row):
         return self.table.cellWidget(row, 1)
 
     def phase_choices(self, row):
+        """Phases proposées pour la ligne ``row``, dans l'ordre du menu : ``""``
+        (phase par défaut), ``#ALL``, les phases du fichier, puis la phase
+        déclarée si elle n'y est pas."""
         combo = self._combo(row)
         return [combo.itemData(index) for index in range(combo.count())]
 
     def phase_label(self, row, phase):
+        """Libellé de ``phase`` dans le menu de la ligne ``row`` : « (phase par
+        défaut) », « Toutes les règles (#ALL) », ou le nom de la phase, suivi de
+        « (inconnue) » si le fichier ne la déclare pas. ValueError si la phase
+        n'est pas proposée."""
         combo = self._combo(row)
         return combo.itemText(self.phase_choices(row).index(phase))
 
     def current_phase(self, row):
+        """Phase choisie dans le menu de la ligne ``row`` (``""`` : phase par
+        défaut)."""
         return self._combo(row).currentData()
 
     # --- Changements ----------------------------------------------------------------
@@ -170,11 +182,17 @@ class SchematronRulesDialog(QDialog):
             self.add_href(relative_href(fn, self._base))
 
     def add_href(self, href, phase=""):
+        """Déclare le fichier de règles ``href`` (phase ``phase``) dans le texte de
+        la boîte, après les déclarations ``xml-model`` existantes, et choisit sa
+        ligne. Le document n'est changé qu'à OK."""
         self.text = add_declaration(self.text, href, phase)
         self._fill()
         self.table.selectRow(self.table.rowCount() - 1)
 
     def remove(self, row):
+        """« Retirer » : enlève la déclaration de la ligne ``row`` du texte de la
+        boîte (le document n'est changé qu'à OK) ; un rang hors du tableau est
+        ignoré."""
         if 0 <= row < self.table.rowCount():
             self.text = remove_declaration(self.text, row)
             self._fill()
@@ -197,6 +215,7 @@ def relative_href(path, base) -> str:
 
 
 def is_remote(href) -> bool:
+    """L'adresse ``href`` est-elle distante (``http`` ou ``https``) ?"""
     return urlparse(href).scheme in ("http", "https")
 
 

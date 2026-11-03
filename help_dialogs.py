@@ -144,6 +144,11 @@ class SoftwareHelpDialog(QDialog):
         return True
 
     def run_search(self):
+        """Cherche le texte du champ dans l'aide (à la fin du délai de frappe,
+        ou aussitôt par ◀ ▶) : liste des sections qui contiennent tous les
+        mots, avec leur nombre d'occurrences et un extrait, résumé à côté des
+        flèches, puis première occurrence montrée. Un champ vide efface les
+        résultats."""
         self._timer.stop()
         query = self.search_box.text()
         text = self.browser.toPlainText()
@@ -171,6 +176,9 @@ class SoftwareHelpDialog(QDialog):
         self._show_current()
 
     def next_occurrence(self):
+        """▶, F3 ou Entrée dans le champ : occurrence suivante, la première
+        après la dernière. Une recherche qui attend encore la fin de la frappe
+        est d'abord lancée, et l'on reste sur sa première occurrence."""
         if self._timer.isActive():
             self.run_search()
             return
@@ -179,6 +187,9 @@ class SoftwareHelpDialog(QDialog):
             self._show_current()
 
     def previous_occurrence(self):
+        """◀ ou Maj+F3 : occurrence précédente, la dernière avant la première.
+        Une recherche qui attend encore la fin de la frappe est d'abord
+        lancée ; on arrive alors sur sa dernière occurrence."""
         if self._timer.isActive():
             self.run_search()
         if self.occurrences:
@@ -354,6 +365,10 @@ def _build_varians_card(parent, include_dismiss_hint=False) -> QFrame:
 
 
 class AboutDialog(QDialog):
+    """Boîte « À propos… » (menu Aide) : la carte de Varians de l'écran
+    d'accueil (logo, nom, version, institutions), sans l'indication pour la
+    masquer, et un bouton de fermeture."""
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(_t("help.about"))

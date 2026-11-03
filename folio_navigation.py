@@ -20,6 +20,10 @@ from image_sources import effective_line_bbox, page_image_dimensions
 
 @dataclass(frozen=True)
 class Folio:
+    """Folio d'un témoin (``folios_for_witness``) : une surface entière
+    (``ref`` égal à ``surface``, ``region`` None) ou une zone de folio de cette
+    surface (``region`` : ``(x, y, largeur, hauteur)`` en pixels de l'image
+    entière). ``label`` : la foliotation éditoriale, pas forcément unique."""
     ref: str               # xml:id de surface ou de zone
     surface: str           # xml:id de l'image physique
     label: str             # foliotation éditoriale, non unique globalement
@@ -251,12 +255,16 @@ class _TextMemo:
         self.size, self.entries = size, []
 
     def get(self, text):
+        """Valeur gardée pour ``text`` (le même objet ou un texte égal), sinon
+        None."""
         for cached, value in self.entries:
             if cached is text or cached == text:
                 return value
         return None
 
     def put(self, text, value):
+        """Garde ``value`` pour ``text``, en tête ; au-delà de ``size`` textes,
+        le plus ancien est oublié. Renvoie ``value``."""
         self.entries = [(text, value)] + [e for e in self.entries if e[0] is not text][:self.size - 1]
         return value
 

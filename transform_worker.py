@@ -56,6 +56,9 @@ def new_stderr_log():
 
 
 def failed_worker(detail):
+    """Compte rendu ``worker_failed`` : le processus n'a pas démarré, n'a pas
+    répondu ou a mal répondu ; *detail* (message du système, ou fin de sa
+    sortie d'erreur) en est le texte."""
     return TransformResult(False, error_code="worker_failed", error=detail)
 
 

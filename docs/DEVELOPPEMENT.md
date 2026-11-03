@@ -57,6 +57,39 @@ d'écran.
 Windows à chaque envoi et pull request. Les résultats sont visibles dans
 l'onglet *Actions* du dépôt.
 
+`.github/workflows/binaries.yml` (« Binaries ») construit et vérifie la
+version prête à l'emploi sur Windows, macOS (Apple Silicon et Intel) et
+Linux quand `packaging/` ou le workflow change, et la joint à chaque release
+publiée (voir ci-dessous).
+
+## Version prête à l'emploi
+
+Archives sans Python à installer, construites par PyInstaller
+(`packaging/varians.spec`) ; mode d'emploi complet dans
+`packaging/LISEZMOI.md`. Pour construire sur sa machine :
+
+```bash
+python -m pip install -r requirements.txt -r packaging/requirements.txt
+python packaging/build.py            # archive dans build/binaries/
+```
+
+`packaging/build.py` construit, ajoute le LISEZMOI en sept langues
+(`packaging/readme/`) et les textes des licences, puis vérifie l'exécutable
+construit avec `Varians --self-test RAPPORT.json` (`self_test.py` :
+traductions, aide, ressources, projet, processus de validation et de
+transformation, fenêtre et icône) avant de zipper ; la construction échoue
+au moindre problème. La même option vérifie une installation en mode
+source : `python editeur_tei.py --self-test rapport.json`.
+
+Varians lit ses fichiers de données à côté de ses modules : un nouveau
+dossier de données doit être ajouté à `DATA_FOLDERS` dans la recette
+(`tests/test_packaging.py` le vérifie).
+
+Publier : une release publiée sur GitHub reçoit automatiquement ses
+archives. Pour une release déjà publiée : *Actions* ▸ *Binaries* ▸ *Run
+workflow*, branche `main`, champ `tag` (par exemple `v0.9.4.0`) ; le
+workflow refuse des archives dont la version n'est pas celle du tag.
+
 ## Organisation du code de l'interface
 
 `editeur_tei.py` lance l'application (`main()`), définit la fenêtre
@@ -324,8 +357,8 @@ n'est pas installé.
 
 Les scénarios de transformation (V0.9.2.0) ont leurs propres règles :
 lecture locale et réseau, écriture du seul résultat, processus à part,
-moteurs lxml et Saxon ; voir `XSLT_SCENARIOS.md`. Une version autonome
-(PyInstaller, Nuitka) devra embarquer `saxonche`.
+moteurs lxml et Saxon ; voir `XSLT_SCENARIOS.md`. La version prête à
+l'emploi (PyInstaller) embarque `saxonche`, collecté expressément par la recette.
 
 ## Feuilles XSLT éditées dans Varians
 
@@ -339,8 +372,8 @@ tests anciens qui exécutent ce corps la fournissent (elle rend None).
 Le schéma livré, `resources/schemas/xslt30/schema-for-xslt30.rng`, est tiré
 du RNC du W3C par `rnc2rng` (outil de développement, `pip install rnc2rng`,
 non installé avec Varians) : la marche à suivre pour le refaire est dans
-`resources/schemas/xslt30/LISEZMOI.md`. Une version autonome devra embarquer
-le dossier `resources/schemas`.
+`resources/schemas/xslt30/LISEZMOI.md`. La version prête à l'emploi
+embarque le dossier `resources/schemas`.
 
 ## TEI Stylesheets
 
@@ -361,7 +394,7 @@ et `tests/gui/conftest.py`) : rien n'est écrit dans le dossier de
 l'utilisateur. Le réseau est bloqué dans les tests de l'interface
 (`_no_network` couvre `tei_stylesheets.urlopen`) ; les tests de
 `tei_stylesheets` emploient un petit serveur http local, et ceux de la
-fenêtre un faux TEI-C (`FakeTeiC`). Une version autonome devra embarquer le
+fenêtre un faux TEI-C (`FakeTeiC`). La version prête à l'emploi embarque le
 dossier `resources/tei-stylesheets`.
 
 ## Règles Schematron
@@ -375,7 +408,7 @@ mettre à jour le LISEZMOI (version, empreintes), puis lancer les tests :
 `tests/test_schematron.py` contrôle le fichier livré (licence, empreinte) et
 l'application des règles, `tests/test_schematron_validation.py` la
 validation, `tests/gui/test_gui_schematron.py` la fenêtre. Ces tests sont
-ignorés sans Saxon. Une version autonome devra embarquer le dossier
+ignorés sans Saxon. La version prête à l'emploi embarque le dossier
 `resources/schxslt2`.
 
 Depuis V0.9.2.4, un fichier `.sch` affiché est vérifié d'après le schéma ISO
@@ -383,8 +416,8 @@ Schematron livré dans `resources/schemas/schematron/iso-schematron.rng`,
 copie de celle de lxml complétée de `@severity` : son LISEZMOI dit comment
 la refaire (fichier de départ, empreinte, ajouts marqués « edited
 (Varians) »), et `tests/test_schematron_check.py` vérifie que lxml compile le
-schéma et que la mention de modification exigée par l'ISO y figure. Une
-version autonome devra aussi embarquer `resources/schemas/schematron`.
+schéma et que la mention de modification exigée par l'ISO y figure. La
+version prête à l'emploi embarque `resources/` en entier, ce schéma compris.
 
 ## Historique et versions
 
@@ -398,9 +431,13 @@ restent la référence.
 La version affichée par l'application est `APP_VERSION` dans
 `app_context.py`. Pour une nouvelle version : modifier `APP_VERSION`,
 `CURRENT_VERSION` dans `tests/varians_source.py`, l'en-tête de
-`editeur_tei.py`, ajouter une section en tête de `README.txt` et une section
-`<section id="vXYZ">` dans chacune des sept aides (`help/*.html`) ;
-`tests/test_version.py` vérifie l'ensemble.
+`editeur_tei.py`, le titre de `README.txt`, la version de référence de
+`DEVELOPER_HANDOFF.md` et le titre de `CODE_MAP.md` ; ajouter une entrée en
+tête de « Historique des versions » (dans `DEVELOPER_HANDOFF.md`) et une
+section `<section id="vXYZ">` dans chacune des sept aides (`help/*.html`).
+`tests/test_version.py` et `tests/test_docs_current.py` vérifient
+l'ensemble. Publier la release sur GitHub y joint la version prête à
+l'emploi.
 
 Les décisions arrêtées pour les versions suivantes (éditions assemblées par
 XInclude, choix des onglets affichés) sont consignées dans

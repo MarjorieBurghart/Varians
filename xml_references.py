@@ -114,12 +114,19 @@ class Reference:
 
 @dataclass(frozen=True)
 class Resolution:
+    """Ce que désigne une référence. ``status`` : ``ok`` (une cible),
+    ``missing`` (aucune), ``ambiguous`` (plusieurs), ``no_file`` (fichier
+    cité absent ou illisible) ou ``other_document`` (« #id » défini seulement
+    dans un autre document du projet) ; ``targets`` : les couples
+    ``(chemin, IdTarget)`` trouvés."""
     status: str                 # ok | missing | ambiguous | no_file | other_document
     targets: tuple = ()         # ((chemin, IdTarget), …)
 
 
 @dataclass(frozen=True)
 class ReferenceProblem:
+    """Référence qui ne se résout pas en ``ok`` : le document qui la contient,
+    la référence et sa résolution."""
     path: Path
     reference: Reference
     resolution: Resolution
@@ -255,9 +262,13 @@ class ReferenceResolver:
         return found
 
     def documents(self):
+        """Chemins absolus des documents donnés au constructeur, dans leur
+        ordre, sans doublon."""
         return [self._paths[key] for key in self._order]
 
     def text(self, path):
+        """Texte d'un document : celui donné au constructeur, sinon le fichier
+        lu sur le disque (UTF-8) et gardé ; ``None`` s'il est illisible."""
         key, resolved = self._location(path)
         if key not in self._texts:
             try:
@@ -276,6 +287,11 @@ class ReferenceResolver:
         return self._ids[key]
 
     def resolve(self, reference, source_path):
+        """``Resolution`` de *reference*, écrite dans *source_path* :
+        ``fichier.xml#id`` est cherché dans ce fichier, relatif au document ;
+        ``#id`` dans le document lui-même, puis parmi les identifiants que les
+        autres fichiers de son édition assemblée lui apportent. Trouvé
+        seulement dans un autre document du projet, il est ``other_document``."""
         source_key, source = self._location(source_path)
         if reference.file:
             target = os.path.join(source.parent, reference.file)

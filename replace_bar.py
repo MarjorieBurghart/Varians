@@ -117,11 +117,18 @@ class ReplaceBarMixin:
         self.replace_find_box.selectAll()
 
     def hide_replace(self):
+        """Masque la barre de remplacement (bouton « × » ou Échap) et rend le
+        focus à l'éditeur XML."""
         self.replace_bar.setVisible(False)
         self.replace_status.setText("")
         self.editor.setFocus()
 
     def replace_source_next(self):
+        """« Remplacer » (ou Entrée dans le champ de remplacement) : remplace
+        l'occurrence surlignée si elle correspond toujours à la recherche, puis
+        passe à la suivante ; la barre affiche son rang (« n/total »). Sans
+        texte à chercher, le champ de recherche prend le focus ; une expression
+        ou un texte de remplacement incorrect est signalé dans la barre d'état."""
         query = self.replace_find_box.text()
         if not query:
             self.replace_find_box.setFocus()
@@ -135,6 +142,10 @@ class ReplaceBarMixin:
         self.replace_status.setText(f"{n}/{total}" if found else "0/0")
 
     def replace_source_all(self):
+        """« Tout remplacer » : remplace toutes les occurrences dans le XML, en
+        une seule étape d'annulation, et donne leur nombre dans la barre
+        d'état. Champ de recherche vide et erreurs : comme
+        ``replace_source_next``."""
         query = self.replace_find_box.text()
         if not query:
             self.replace_find_box.setFocus()

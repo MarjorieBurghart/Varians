@@ -51,15 +51,20 @@ class _Node:
 
     @property
     def self_closing(self) -> bool:
+        """Élément écrit en une seule balise autofermante (``<lb/>``)."""
         return self.opening.kind == "self"
 
     @property
     def end(self) -> int:
+        """Fin de l'élément dans le texte : après sa balise fermante, ou après
+        sa balise ouvrante s'il est autofermant ou sans balise fermante."""
         return self.opening.end if self.self_closing else (self.closing.end if self.closing else self.opening.end)
 
 
 @dataclass(frozen=True)
 class FormatReplacement:
+    """Blancs ``[start:end]`` de l'ancien texte, remplacés par ``text`` (un
+    saut de ligne et l'indentation voulue)."""
     start: int
     end: int
     text: str
@@ -67,6 +72,11 @@ class FormatReplacement:
 
 @dataclass(frozen=True)
 class FormatResult:
+    """Résultat de ``format_tei_xml`` : le texte formaté (l'original si
+    ``error`` n'est pas vide), les remplacements dans l'ordre du texte, que
+    l'interface applique en une seule annulation, le nombre d'éléments
+    réindentés et celui des éléments laissés intacts par protection
+    (``xml:space``, règle ``preserve``, contenu mixte)."""
     text: str
     replacements: tuple[FormatReplacement, ...] = ()
     formatted_elements: int = 0
@@ -75,6 +85,7 @@ class FormatResult:
 
     @property
     def changed(self) -> bool:
+        """Le formatage modifie-t-il le texte ? Jamais en cas d'erreur."""
         return bool(self.replacements) and not self.error
 
     def map_position(self, position: int) -> int:

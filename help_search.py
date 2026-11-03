@@ -22,6 +22,8 @@ _SIGNS = {"’": "'", "‘": "'", "ʼ": "'", "«": '"', "»": '"', "“": '"', "
 
 @dataclass(frozen=True)
 class Section:
+    """Section de l'aide : son titre, et le début et la fin (exclue) de sa
+    partie du texte de l'aide."""
     title: str
     start: int
     end: int
@@ -29,6 +31,9 @@ class Section:
 
 @dataclass(frozen=True)
 class Hit:
+    """Section trouvée par ``search`` : les occurrences des termes qu'elle
+    contient (``(début, fin)``, triées, sans doublon) et un extrait d'une
+    ligne autour de la première."""
     section: Section
     spans: tuple[tuple[int, int], ...]
     excerpt: str

@@ -35,6 +35,9 @@ STDERR_LOG = "VARIANS_STDERR_LOG"
 
 @dataclass(frozen=True)
 class ValidationIssue:
+    """Un message de validation : ligne et colonne (0 si inconnues), niveau
+    (``ERROR``, ``WARNING``, ``INFO``…), texte, domaine et type (ceux du
+    journal de lxml, ou ``PARSER``, ``XINCLUDE``…)."""
     line: int
     column: int
     level: str
@@ -48,6 +51,11 @@ class ValidationIssue:
 
 @dataclass(frozen=True)
 class ValidationResult:
+    """Résultat d'une validation. ``available`` : lxml est installé ;
+    ``schema_loaded`` : faux si le schéma est introuvable ou ne se compile
+    pas ; ``well_formed``, ``valid`` ; ``issues`` : les messages ; ``error`` :
+    pourquoi la validation s'est arrêtée (lxml absent, schéma introuvable, XML
+    mal formé…), s'il y a lieu."""
     available: bool
     schema_loaded: bool
     well_formed: bool
@@ -77,6 +85,8 @@ _SCHEMA_GRAPH_CACHE: dict[str, tuple[tuple[Path, ...], tuple]] = {}
 
 
 def lxml_available() -> bool:
+    """lxml est-il installé ? Sans lui, aucune validation
+    (``ValidationResult.available`` faux)."""
     return etree is not None
 
 

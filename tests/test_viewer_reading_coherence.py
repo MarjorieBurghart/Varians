@@ -127,7 +127,7 @@ def test_the_header_counts_the_variants_of_the_apparatus_without_line_alignment(
         '</listWit></sourceDesc></fileDesc></teiHeader><text><body><p>Lorem <app><lem wit="#A">ipsum</lem>'
         '<rdg wit="#B">ipsam</rdg></app> dolor <app><lem wit="#A">sit</lem><rdg wit="#B">sat</rdg></app>.</p>'
         '</body></text></TEI>', encoding="utf-8")
-    data, _missing = build_dataset(load_project(root / "project.xml"))
+    data, _unaligned = build_dataset(load_project(root / "project.xml"))
     assert data["meta"]["variants"] == 2
 
 

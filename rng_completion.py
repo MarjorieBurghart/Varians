@@ -279,6 +279,11 @@ def _consume(pattern: _Pattern, element_names: tuple[str, ...] | list[str]) -> _
 
 @dataclass(frozen=True)
 class CompletionModel:
+    """Modèle de complétion d'un RNG (``load_completion_model``) : éléments
+    de départ, enfants, attributs et valeurs finies d'attributs de chaque
+    élément, et son contenu RELAX NG compilé, qui donne les éléments
+    admissibles à une position précise. Un nom préfixé absent du modèle est
+    cherché par son nom local."""
     schema_path: Path
     start_elements: tuple[str, ...]
     children: dict[str, tuple[str, ...]]
@@ -385,6 +390,7 @@ class CompletionModel:
         return any(matches) if matches else None
 
     def allowed_attributes(self, element: str | None) -> tuple[str, ...]:
+        """Attributs que le RNG déclare pour ``element`` (vide s'il est inconnu)."""
         return self._lookup(self.attributes, element)
 
     def allowed_attribute_values(self, element: str | None, attribute: str | None) -> tuple[str, ...]:
@@ -716,6 +722,8 @@ class _GrammarIndex:
         return self._compile_children(node, visiting)
 
     def start_elements(self) -> set[str]:
+        """Éléments possibles à la racine : ceux qu'atteignent les ``<start>``
+        de tous les fichiers chargés (schéma, ``include`` et ``externalRef``)."""
         result: set[str] = set()
         for root in self.roots:
             for node in root.iter():
@@ -728,6 +736,10 @@ class _GrammarIndex:
         return _choice(*(self._compile_children(elem, frozenset()) for elem in nodes))
 
     def build(self) -> CompletionModel:
+        """Construit le ``CompletionModel`` : pour chaque élément déclaré (noms
+        sans préfixe, puis noms préfixés), enfants possibles, attributs,
+        contenu compilé et possibilité de texte. Les valeurs d'un attribut ne
+        sont retenues que si toutes ses déclarations en donnent une liste finie."""
         children: dict[str, tuple[str, ...]] = {}
         attributes: dict[str, tuple[str, ...]] = {}
         attribute_values: dict[str, dict[str, tuple[str, ...]]] = {}
@@ -797,6 +809,13 @@ def load_completion_model(schema_path: str | Path) -> CompletionModel:
 
 @dataclass(frozen=True)
 class XmlCompletionContext:
+    """Ce qu'attend le curseur (``kind``) : un élément, un attribut, une
+    valeur d'attribut, ou rien (``"none"`` : pas de complétion). ``prefix``
+    est le texte déjà saisi, remplacé entre ``replace_start`` et
+    ``replace_end`` (indices Python) ; ``typed_lt`` : le « < » est déjà écrit.
+    ``preceding_siblings`` et ``following_siblings`` : enfants directs du
+    parent avant et après le curseur ; ``current_attribute`` et
+    ``quote_char`` : l'attribut dont la valeur est en cours et son guillemet."""
     kind: str  # "element", "attribute", "attribute_value" ou "none"
     parent_element: str | None = None
     current_element: str | None = None
@@ -1098,10 +1117,14 @@ class XmlContextCache:
         self.last_scan_start = 0
 
     def clear(self) -> None:
+        """Oublie tous les points de reprise (autre document) : la prochaine
+        analyse repart du début."""
         self._checkpoints[:] = [_XmlScanCheckpoint(0, (), ())]
         self.last_scan_start = 0
 
     def invalidate_from(self, position: int) -> None:
+        """Le texte a changé à partir de ``position`` : seuls les points de
+        reprise strictement antérieurs sont gardés."""
         pos = max(0, int(position))
         if pos <= 0:
             self.clear()
@@ -1132,6 +1155,10 @@ class XmlContextCache:
         ))
 
     def analyze(self, xml_text: str, position: int) -> XmlCompletionContext:
+        """Comme ``analyze_xml_context`` (``position`` : indice Python), mais
+        en repartant du dernier point de reprise qui précède le curseur, et en
+        mémorisant au passage de nouveaux points. ``last_scan_start`` garde
+        l'endroit d'où l'analyse est repartie."""
         text = xml_text or ""
         pos = max(0, min(int(position), len(text)))
         cp = self._checkpoint_before(pos)

@@ -43,6 +43,9 @@ from xml_assembly import path_key
 
 
 def flatten_primary(cache):
+    """Lignes du pivot, page après page : ``(éléments, rangs)``. Chaque élément
+    est ``{"p": page, "l": ligne, "key": "page::ligne"}`` ; ``rangs`` associe
+    chaque clé au rang de son élément."""
     items = []
     by_key = {}
     for page in cache.get("pages", []):
@@ -55,6 +58,11 @@ def flatten_primary(cache):
 
 
 def flatten_secondary(cache):
+    """Lignes d'un témoin autre que le pivot, triées par ``order`` :
+    ``(éléments, liens)``. La clé d'un élément est ``page::alto_id`` (ou
+    ``page::ligne``) ; ``liens`` associe la clé d'une ligne du pivot
+    (``base_keys``, ou l'ancien ``keys816``) aux rangs des lignes qui lui
+    sont reliées."""
     items = []
     for page in cache.get("pages", []):
         for line in page.get("lines", []):
@@ -89,10 +97,14 @@ class SplitImagePreview(QWidget):
         self.setToolTip(_t('folio.split.drag_tip'))
 
     def set_split_px(self, px):
+        """Place la séparation à ``px`` (pixels de l'image entière), bornée à
+        l'image, et redessine ; ``splitChanged`` n'est émis que par la souris."""
         self.split_px = max(1, min(self.image_width - 1, int(px)))
         self.update()
 
     def set_thumbnail(self, pixmap):
+        """Montre la vignette ``pixmap`` ; sans image (None ou image vide), le
+        message « Vignette indisponible… » à sa place."""
         if pixmap is not None and not pixmap.isNull():
             self.thumbnail = pixmap
             self.status = ''
@@ -169,6 +181,9 @@ class SplitPreviewLoader(QObject):
 
     @Slot(int, str, bytes, str, str)
     def finished(self, _token, _key, data, error, _mode):
+        """Image reçue de ``FetchWorker`` : décodée dans le fil principal, réduite à
+        850 × 480 au plus, puis passée à l'aperçu ; en cas d'erreur, l'aperçu dit
+        la vignette indisponible."""
         pix = QPixmap()
         if not error and data and pix.loadFromData(data):
             self.preview.set_thumbnail(pix.scaled(
@@ -290,6 +305,8 @@ class WitnessDiagnosticDialog(QDialog):
         return '; '.join(_t('diagnostics.issue.' + code) for code in row.issue_codes)
 
     def copy_report(self):
+        """« Copier le rapport » : copie le diagnostic dans le presse-papiers :
+        le titre, la portée et les notes, puis un témoin par ligne."""
         lines = [_t('diagnostics.title')] + [text for text in (self._scope, self._notes) if text]
         for row in self._rows:
             lines.append(f'{row.siglum or row.id} — {row.label}: '
@@ -301,6 +318,9 @@ class WitnessDiagnosticDialog(QDialog):
         QApplication.clipboard().setText('\n'.join(lines))
 
     def refresh_and_reopen(self):
+        """« Actualiser les synchronisations… » : ferme la boîte, relit les
+        ressources des témoins (``refresh_witness_synchronizations``), puis
+        rouvre le diagnostic, sauf erreur ou changements refusés."""
         main = self.parent()
         self.accept()
         if main is not None and main.refresh_witness_synchronizations():
@@ -658,6 +678,13 @@ class WitnessSyncMixin:
         )
 
     def sync_panels_to_cursor(self, force=False):
+        """Les panneaux suivent le curseur de l'éditeur (appelé après un court
+        délai par ``sync_timer``, ou directement avec ``force``) : un témoin non
+        synchronisé par lignes va à la page de son dernier ``<pb>`` ; si le pivot
+        a la synchronisation par lignes, les témoins synchronisés suivent sa
+        ligne au curseur, avec les bandeaux de lacune, et la barre d'état la
+        donne. Sans ``force``, ceux-ci ne bougent pas si la ligne et les lacunes
+        sont celles du dernier appel."""
         # Témoins en lacune au curseur (V0.9.1.3).
         lacunae = self._lacunae_at_cursor()
         # En mode mixte, mettre à jour les folios indépendants sur la foi des
@@ -813,6 +840,9 @@ class WitnessSyncMixin:
         )
 
     def show_witness_diagnostics(self):
+        """« État des témoins… » : la boîte du diagnostic des ressources des
+        témoins (pages, images, géométrie, liens, problèmes), pour le segment
+        affiché : l'édition, ou un texte synchronisé à part."""
         # Témoins du segment affiché : l'édition, ou le texte synchronisé à part.
         rows = diagnostic_rows(self._segment_project(), self._witness_resource_snapshot())
         WitnessDiagnosticDialog(rows, self, self._diagnostic_scope(), self._diagnostic_notes()).exec()
@@ -888,6 +918,10 @@ class WitnessSyncMixin:
         return True
 
     def reload_images(self):
+        """F5 (« Recharger images ») : prend en compte les copies locales IIIF
+        téléchargées depuis l'ouverture (``refresh_local_iiif_cache``), puis
+        replace les panneaux sur le curseur. Une image déjà chargée vient du
+        cache en mémoire des panneaux, qui n'est pas vidé."""
         self.refresh_local_iiif_cache()
         self.sync_panels_to_cursor(True)
 
@@ -903,7 +937,7 @@ class WitnessSyncMixin:
             self._last_synced_ordinal = ordinal
             lacunae = self._lacunae_at_cursor()
             self._last_synced_lacunae = frozenset(lacunae)
-            # Le témoin de base vient déjà de naviguer ; on actualise tous les panneaux.
+            # Le témoin pivot vient déjà de naviguer ; on actualise tous les panneaux.
             self.base_panel.match_indices={ordinal}; self.base_panel.center_index=self.base_panel.origin_center_index=ordinal; self.base_panel.reload()
             self.base_panel.set_lacuna(LACUNA if self.base_id in lacunae else None)
             self._follow_base_line(ordinal, lacunae, skip=self.base_id)
@@ -1110,5 +1144,8 @@ class WitnessSyncMixin:
             call_later(90, self, self._release_panel_sync)
 
     def goto_xml_from_base(self):
+        """Place le curseur de l'éditeur à la fin du ``<lb/>`` du pivot que montre le
+        centre du panneau du pivot (son document affiché au besoin), et donne le
+        focus à l'éditeur ; seulement dans l'édition."""
         if not self.document.in_edition: return
         if self._show_base_ordinal(self.base_panel.center_index) is not None: self.editor.setFocus()

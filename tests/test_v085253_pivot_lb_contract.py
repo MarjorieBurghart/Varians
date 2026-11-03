@@ -47,8 +47,8 @@ def test_same_as_desktop_despite_unrelated_folios_and_nonconsecutive_numbers(tmp
             {'line':1,'order':1,'base_keys':['physical-A::4'],'bbox':box},
             {'line':2,'order':2,'base_keys':['physical-A::9'],'bbox':box},
             {'line':3,'order':3,'base_keys':['physical-B::3'],'bbox':box}]}])
-    data, missing = build_dataset(project)
-    assert not missing
+    data, unaligned = build_dataset(project)
+    assert not unaligned
     assert data['meta']['line_sync']
     assert data['witnesses'][1]['line_sync']
     assert data['meta']['tei_page_resolution']['unresolved'] >= 1
@@ -66,8 +66,8 @@ def test_same_as_desktop_despite_unrelated_folios_and_nonconsecutive_numbers(tmp
 def test_no_pb_needed_for_lb_link_as_in_desktop(tmp_path):
     project = create_project(tmp_path,
        '<lb edRef="#Mu"/>alpha<lb edRef="#Mu"/>beta', include_image=False)
-    data, missing = build_dataset(project)
-    assert not missing
+    data, unaligned = build_dataset(project)
+    assert not unaligned
     assert data['witnesses'][1]['line_sync']
     assert _text_keys(data) == [('alpha','physical-A::1'),('beta','physical-A::2')]
 
@@ -76,8 +76,9 @@ def test_missing_physical_lines_do_not_create_fictitious_link(tmp_path):
     project = create_project(tmp_path,
        '<lb edRef="#Mu"/>alpha<lb edRef="#Mu"/>beta'
        '<lb edRef="#Mu"/>orphan', include_image=False)
-    data, missing = build_dataset(project)
-    assert not missing
+    data, unaligned = build_dataset(project)
+    # La ligne « orphan » n'a pas de ligne dans le JSON : elle est signalée.
+    assert unaligned == 1
     assert data['meta']['pivot_lb_index']['mapped_lb_count'] == 2
     assert data['meta']['pivot_lb_index']['unmapped_lb_count'] == 1
     assert data['meta']['pivot_lb_index']['count_match'] is False

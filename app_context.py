@@ -55,6 +55,7 @@ def set_i18n(manager) -> None:
 
 
 def current_i18n():
+    """Le gestionnaire de traductions actif (I18nManager), None avant ``set_i18n``."""
     return _i18n
 
 
@@ -131,6 +132,10 @@ def _settings():
 
 
 def recent_project_paths():
+    """Chemins (project.xml) des projets récents, du plus récent au plus
+    ancien : résolus, sans doublon, au plus ``MAX_RECENT_PROJECTS``. Un
+    projet disparu y reste jusqu'à ce qu'on le choisisse dans « Réouvrir un
+    projet récent… », qui le retire alors."""
     value = _settings().value("recentProjects", [])
     if isinstance(value, str):
         value = [value]
@@ -147,6 +152,8 @@ def recent_project_paths():
 
 
 def remember_recent_project(path):
+    """Met le projet ``path`` en tête des projets récents (sans doublon,
+    ``MAX_RECENT_PROJECTS`` au plus)."""
     path = str(Path(path).expanduser().resolve())
     values = [p for p in recent_project_paths() if p != path]
     values.insert(0, path)
@@ -154,11 +161,13 @@ def remember_recent_project(path):
 
 
 def remove_recent_project(path):
+    """Retire le projet ``path`` des projets récents."""
     target = str(Path(path).expanduser().resolve())
     _settings().setValue("recentProjects", [p for p in recent_project_paths() if p != target])
 
 
 def clear_recent_projects():
+    """Vide la liste des projets récents (« Effacer la liste des projets récents »)."""
     _settings().remove("recentProjects")
 
 
@@ -200,6 +209,8 @@ def rules_choice(path):
 
 
 def remember_rules_choice(path, allowed):
+    """Mémorise la réponse pour les règles Schematron du fichier ``path`` :
+    acceptées si ``allowed``, refusées sinon (voir :func:`rules_choice`)."""
     _remember_choice(_ALLOWED_RULES, _REFUSED_RULES, _rules_key(path), allowed)
 
 
@@ -210,6 +221,9 @@ def site_choice(site):
 
 
 def remember_site_choice(site, allowed):
+    """Mémorise la réponse pour les schémas du site ``site`` (nom d'hôte, casse
+    ignorée) : téléchargement permis si ``allowed``, refusé sinon (voir
+    :func:`site_choice`)."""
     _remember_choice(_ALLOWED_SITES, _REFUSED_SITES, str(site).lower(), allowed)
 
 
@@ -235,8 +249,12 @@ def last_open_project_path():
 
 
 def remember_open_project(path):
+    """Note le projet ``path`` comme ouvert : il sera rouvert au prochain
+    démarrage (:func:`last_open_project_path`)."""
     _settings().setValue("lastOpenProject", str(Path(path).expanduser().resolve()))
 
 
 def forget_open_project():
+    """Oublie le projet ouvert : rien ne sera rouvert au démarrage. Appelée par
+    « Fermer le projet », et quand le projet à rouvrir ne s'ouvre pas."""
     _settings().remove("lastOpenProject")

@@ -90,10 +90,16 @@ class TransformResult:
     issues: list = field(default_factory=list)
 
     def to_dict(self):
+        """Le compte rendu en dictionnaire, prêt pour JSON : c'est ainsi que
+        le processus de transformation le renvoie (``transform_worker``)."""
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data):
+        """Compte rendu relu d'un dictionnaire (``to_dict``, réponse du
+        processus) : chaque champ est converti à son type ; ``ok`` est
+        obligatoire (``KeyError`` sinon), les autres champs ont une valeur
+        par défaut."""
         return cls(bool(data["ok"]), [str(path) for path in data.get("outputs", ())],
                    [[str(code), str(detail)] for code, detail in data.get("journal", ())],
                    str(data.get("error_code", "")), str(data.get("error", "")), str(data.get("engine", "")),

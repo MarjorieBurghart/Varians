@@ -431,6 +431,10 @@ class MainMenusMixin:
         self.addAction(self.action_software_help)
 
     def update_recent_projects_menu(self):
+        """Reconstruit le sous-menu « Réouvrir un projet récent… » : un article
+        par projet récent (titre lu dans son project.xml, sinon nom du dossier,
+        et chemin), « Aucun projet récent » si la liste est vide, puis
+        « Effacer la liste des projets récents »."""
         self.recent_menu.clear()
         paths = recent_project_paths()
         if not paths:
@@ -455,6 +459,8 @@ class MainMenusMixin:
         self.recent_menu.addAction(clear_action)
 
     def clear_recent_projects_action(self):
+        """« Effacer la liste des projets récents » : vide la liste, y remet le
+        projet ouvert, puis reconstruit le sous-menu."""
         clear_recent_projects()
         remember_recent_project(self.project.path)
         self.update_recent_projects_menu()
@@ -482,6 +488,12 @@ class MainMenusMixin:
             self._set_language_code(self.language_combo.itemData(index))
 
     def retranslate_ui(self):
+        """Remet dans la langue courante les textes de la fenêtre : menus,
+        barre d'outils, barres de recherche et de remplacement, panneaux XPath
+        et de validation, onglets, aperçu, panneaux de témoins et fenêtres
+        détachées. Reconstruit aussi le sous-menu des projets récents et
+        relance la validation du document affiché. Appelée après un changement
+        de langue (``_set_language_code``)."""
         I18N = current_i18n()
         app = QApplication.instance()
         if app is not None:

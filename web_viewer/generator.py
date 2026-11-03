@@ -221,9 +221,9 @@ EXPORT_RECURSION_LIMIT = 20000
 
 
 def build_dataset(project, display_witness_ids=None, text_mode=None, text_witness=None, highlight_nonlem=None):
-    """Les données du viewer (``data``) et les pages manquantes ; voir
-    ``_build_dataset``. La limite de récursion est relevée le temps de
-    l'export, puis rétablie."""
+    """Les données du viewer (``data``) et le nombre de lignes du témoin
+    pivot sans ligne dans son alignement ; voir ``_build_dataset``. La
+    limite de récursion est relevée le temps de l'export, puis rétablie."""
     old_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(max(old_limit, EXPORT_RECURSION_LIMIT))
     try:
@@ -254,6 +254,14 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
     compte les leçons affichées qui ne viennent pas d'un <lem> (``nonlem``)
     et dit si elles sont surlignées au départ (``highlight``) :
     ``highlight_nonlem``, sinon le réglage de project.xml.
+
+    Rend ``(data, unaligned)`` : ``unaligned`` est le nombre de ``<lb/>`` du
+    pivot sans ligne dans son JSON d'alignement, dans les textes synchronisés
+    ligne à ligne (``meta.unaligned_pivot_lines`` ; totaux du texte et de
+    l'alignement dans ``meta.unaligned_pivot_line_totals``). Le n-ième
+    ``<lb/>`` suivant la n-ième ligne du JSON, un alignement plus court que
+    le texte (en cours, ou une page manquante) laisse les dernières lignes
+    sans image.
     """
     base_id = project.base_witness
     known_ids = [w.id for w in project.witnesses]
@@ -299,6 +307,7 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
     if assembled is None:
         edition_root = ET.parse(project.edition).getroot()
         _, anchor_report = build_pivot_lb_index(edition_root, base_id, physical_base_keys)
+        segment_reports = {0: anchor_report}
         anchor_keys = physical_base_keys if base_has_alignment else None
         reading_options = {}
     else:
@@ -314,7 +323,7 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
                                               if texts[segment.index]["line_sync"] else [])
         lookup, reports, lb_order = build_segment_lb_index(
             edition_root, assembled.segment, {s.index: s.pivot for s in assembled.segments}, keys_by_segment)
-        anchor_report = reports[0]
+        anchor_report, segment_reports = reports[0], reports
         anchor_keys = None
         # Sans JSON du pivot, les clés de page des <pb> (mode page), comme avant.
         reading_options = dict(root=edition_root,
@@ -344,7 +353,7 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
             key = c.get('line_key')
             if key:
                 corrected_by_key[key] = c
-    missing, variant_registry = [], {}
+    variant_registry = {}
     pages_out, total_lines = (_pivot_pages(base_cache.get('pages', []), corrected_by_key, variant_registry)
                               if base_has_alignment else ([], 0))
     # Page-only mode does not establish a TEI-to-line correspondence merely
@@ -390,7 +399,7 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
         cache = caches[w.id]
         is_base = w.id == base_id
         # Sans synchronisation ligne-à-ligne, conserver toutes les pages du
-        # témoin de base. L'ALTO éventuel reste une géométrie de page, pas une
+        # témoin pivot. L'ALTO éventuel reste une géométrie de page, pas une
         # correspondance avec les lignes de l'édition.
         pages = (pages_out if base_has_alignment else cache.get("pages", [])) if is_base else cache.get("pages", [])
         normalized_pages = _normalized_pages(pages, project, is_base)
@@ -476,6 +485,11 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
     variant_count = reading_kinds.count("variant") or len(unique_var)
     note_count = reading_kinds.count("note") or len(unique_notes)
     line_sync = bool(base_has_alignment) or any(text.get("line_sync") for text in texts.values())
+    # Lignes du pivot sans ligne dans son alignement, dans les textes qui en
+    # ont un (sans alignement, toutes les lignes le seraient : rien à dire).
+    synced = [(0, bool(base_has_alignment))] + [(k, bool(text.get("line_sync"))) for k, text in texts.items()]
+    counted = [segment_reports[k] for k, on in synced if on and k in segment_reports]
+    unaligned = sum(report.unmapped_lb_count for report in counted)
     return {
         "meta": {"title": project.title, "base_witness": base_id,
                  "display_witnesses": displayed_ids,
@@ -488,14 +502,17 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
                  "pivot_lb_index": anchor_report.as_dict(),
                  "unresolvable_text_line_keys": len(orphan_text_keys),
                  "unanchored_text_segments": unanchored_text_segments,
-                 "unmatched_tei_pages": sorted(set(missing)),
+                 "unaligned_pivot_lines": unaligned,
+                 "unaligned_pivot_line_totals": {
+                     "text": sum(report.tei_lb_count for report in counted),
+                     "alignment": sum(report.physical_line_count for report in counted)},
                  "text": text_meta,
                  "external_iiif_images": sum(1 for ww in witnesses for pp in ww['pages']
                                              if (pp.get('image') or {}).get('type') == 'iiif'),
                  **meta_assembly},
         "witness_labels": witness_labels, "document": reading_document, "witnesses": witnesses,
         "i18n": i18n.export_catalogs(),
-    }, missing
+    }, unaligned
 
 
 def _add_text_views(project, assembled, texts, text_pivot_pages, witnesses, folio_objects,
@@ -1016,6 +1033,9 @@ def _all_pages(witness):
 
 
 def make_html(data):
+    """Page HTML autonome du viewer : ``HTML_TEMPLATE`` où sont insérés les
+    données (JSON sans aucun « < »), les scripts du dossier ``web_viewer``, le
+    titre et la langue."""
     # Aucun « < » dans le bloc des données (V0.9.3.3) : ni « </script », ni
     # « <!-- » venus du texte ne peuvent en sortir ; JSON.parse rend le texte.
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
@@ -1036,10 +1056,15 @@ def make_html(data):
 
 def generate(project_path: str | Path, output: str | Path | None = None,
              *, display_witness_ids=None, text_mode=None, text_witness=None, highlight_nonlem=None):
+    """Génère le viewer web du projet ``project_path`` : données
+    (``build_dataset``), images locales copiées à côté de la page, page HTML
+    écrite dans ``output`` (relatif au dossier du projet) ou, par défaut, dans
+    le dossier de sortie web du projet. Renvoie ``(chemin de la page, nombre
+    de lignes du témoin pivot sans ligne dans son alignement, données)``."""
     project = load_project(project_path)
-    data, missing = build_dataset(project, display_witness_ids=display_witness_ids,
-                                  text_mode=text_mode, text_witness=text_witness,
-                                  highlight_nonlem=highlight_nonlem)
+    data, unaligned = build_dataset(project, display_witness_ids=display_witness_ids,
+                                    text_mode=text_mode, text_witness=text_witness,
+                                    highlight_nonlem=highlight_nonlem)
     project.web_output_dir.mkdir(parents=True, exist_ok=True)
     output = Path(output) if output else project.web_output_dir / project.web_filename
     if not output.is_absolute(): output = (project.root_dir / output).resolve()
@@ -1055,10 +1080,15 @@ def generate(project_path: str | Path, output: str | Path | None = None,
         1 for witness in data.get('witnesses', []) for page in _all_pages(witness)
         if (page.get('image') or {}).get('type') == 'iiif')
     output.write_text(make_html(data), encoding="utf-8")
-    return output, missing, data
+    return output, unaligned, data
 
 
 def main(argv=None):
+    """Ligne de commande : ``python -m web_viewer.generator`` suivi du chemin
+    d'un project.xml. Génère le viewer du projet, puis affiche le chemin de la
+    page, le nombre de témoins et de lignes du témoin pivot et, s'il y en a,
+    le nombre de lignes du pivot sans ligne dans son alignement. Sans
+    argument : l'usage, et le code 2 ; sinon 0."""
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv:
         # Aucun projet n'est livré avec Varians : il faut en désigner un.
@@ -1066,13 +1096,15 @@ def main(argv=None):
         print(i18n.tr("console.usage", command="python -m web_viewer.generator"), file=sys.stderr)
         return 2
     project_path = Path(argv[0]).resolve()
-    out, missing, data = generate(project_path)
+    out, unaligned, data = generate(project_path)
     project = load_project(project_path)
     i18n = I18nManager(project.translations_dir, project.language, project.fallback_language)
     print(i18n.tr("console.viewer_generated", path=out))
     print(i18n.tr("console.viewer_stats", witnesses=len(data["witnesses"]), lines=data["meta"]["lines"]))
-    if missing:
-        print(i18n.tr("console.missing_pages", pages=", ".join(missing)))
+    if unaligned:
+        totals = data["meta"]["unaligned_pivot_line_totals"]
+        print(i18n.tr("console.unaligned_lines", count=unaligned, text=totals["text"],
+                      alignment=totals["alignment"]))
     return 0
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@ def _structured(root):
 
 @pytest.fixture(scope="module")
 def viewer(browser, tmp_path_factory):
-    output, _missing, data = generate(_structured(tmp_path_factory.mktemp("mise-en-forme") / "exemple"))
+    output, _unaligned, data = generate(_structured(tmp_path_factory.mktemp("mise-en-forme") / "exemple"))
     page = browser.new_page()
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))
@@ -186,7 +186,7 @@ def test_a_scene_shows_its_speeches_their_speakers_and_the_stage_directions(brow
     text = edition.read_text(encoding="utf-8")
     assert text.count('<div xml:id="RLS_184">') == 1
     edition.write_text(text.replace('<div xml:id="RLS_184">', SCENE + '<div xml:id="RLS_184">'), encoding="utf-8")
-    output, _missing, _data = generate(project)
+    output, _unaligned, _data = generate(project)
     page = browser.new_page()
     errors = []
     page.on("pageerror", lambda error: errors.append(str(error)))

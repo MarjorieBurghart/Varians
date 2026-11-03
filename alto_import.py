@@ -201,6 +201,9 @@ def parse_layout_file(path: str | Path) -> AltoParsedFile:
 
 @dataclass(frozen=True)
 class AltoParsedFile:
+    """Fichier ALTO ou PAGE lu : ses pages, au format du cache (``id``,
+    dimensions, ``label``, ``lines`` avec leur ``bbox``…), et le nom de
+    l'image source qu'il déclare (vide s'il n'en déclare pas)."""
     path: Path
     pages: tuple[dict, ...]
     source_image: str = ''
@@ -271,6 +274,9 @@ def parse_alto_file(path: str | Path) -> AltoParsedFile:
 
 
 def build_alto_cache(paths, witness_id: str, role: str = 'secondary') -> dict:
+    """Cache ``varians-layout-cache`` (version 2) d'un témoin : les pages de
+    tous les fichiers ALTO ou PAGE de ``paths``, dans l'ordre donné, sans
+    aucune synchronisation. Un fichier illisible lève une exception."""
     pages = []
     for raw in paths or []:
         parsed = parse_layout_file(raw)
@@ -470,6 +476,9 @@ def overlay_alto(existing: dict, imported: dict, *, strict_no_ordinal=False) -> 
 
 
 def source_signature(paths) -> list[dict]:
+    """Chemin, taille et date de modification de chaque fichier : le cache
+    enregistré n'est repris que si cette signature n'a pas changé. Un fichier
+    absent lève ``OSError``."""
     sig = []
     for raw in paths or []:
         p = Path(raw).expanduser().resolve()
@@ -479,11 +488,17 @@ def source_signature(paths) -> list[dict]:
 
 
 def cache_path(project_root: str | Path, witness_id: str) -> Path:
+    """Fichier du cache ALTO/PAGE d'un témoin : ``.varians/alto/<témoin>.json``
+    dans le projet (caractères hors de ``[A-Za-z0-9_.-]`` changés en ``_``)."""
     safe = re.sub(r'[^A-Za-z0-9_.-]+', '_', witness_id or 'witness')
     return Path(project_root).resolve() / '.varians' / 'alto' / f'{safe}.json'
 
 
 def load_or_build_cache(project_root: str | Path, witness_id: str, role: str, paths) -> dict:
+    """Cache ALTO/PAGE d'un témoin : relu dans ``cache_path`` si les fichiers
+    (``source_signature``) et la version du format n'ont pas changé, sinon
+    reconstruit (``build_alto_cache``) puis enregistré ; dans un projet en
+    lecture seule, il n'est pas enregistré. Sans fichier : un cache sans page."""
     paths = [Path(x).expanduser().resolve() for x in paths or []]
     if not paths:
         return {'meta': {'witness': witness_id, 'role': role}, 'pages': []}
@@ -513,6 +528,11 @@ def apply_witness_alto_policy(cache: dict, source_type: str = 'auto', source_fil
                               project_root: str | Path | None = None,
                               witness_id: str = 'witness', role: str = 'secondary',
                               strict_no_ordinal: bool = False) -> dict:
+    """Le cache d'un témoin, avec ses fichiers ALTO/PAGE superposés
+    (``overlay_alto``) quand sa source ALTO est ``files`` ; sinon (``auto``,
+    ou sans dossier de projet), le cache tel quel. ``strict_no_ordinal``
+    (témoin aux images IIIF) : les pages ne sont jamais associées par leur
+    ordre, seulement par leurs noms."""
     kind = (source_type or 'auto').strip().lower()
     if kind == 'auto':
         return cache

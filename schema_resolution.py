@@ -37,6 +37,9 @@ _ATTR_RE = re.compile(r"([A-Za-z_:][\w:.-]*)\s*=\s*(['\"])(.*?)\2", re.S)
 
 @dataclass(frozen=True)
 class XmlModelDeclaration:
+    """Une instruction ``<?xml-model?>`` du prologue : ``href`` et les autres
+    pseudo-attributs (``schematypens``, ``type``, ``title``, ``group``,
+    ``phase``), entités décodées."""
     href: str
     schematypens: str = ""
     type: str = ""
@@ -46,10 +49,12 @@ class XmlModelDeclaration:
 
     @property
     def is_relaxng(self) -> bool:
+        """Déclare-t-elle un schéma RELAX NG (d'après ``schematypens``) ?"""
         return self.schematypens.rstrip("/") == RELAXNG_NS.rstrip("/")
 
     @property
     def is_schematron(self) -> bool:
+        """Déclare-t-elle des règles Schematron (d'après ``schematypens``) ?"""
         return self.schematypens.rstrip("/") == SCHEMATRON_NS.rstrip("/")
 
 
@@ -70,6 +75,12 @@ class SchematronSource:
 
 @dataclass(frozen=True)
 class SchemaResolution:
+    """Résultat de ``resolve_schema`` : le mode, le RNG retenu
+    (``schema_path``, ``None`` s'il n'y en a pas), sa provenance (``source`` :
+    ``xml-model``, ``project``, ``none`` ou ``unknown``) et son adresse
+    (``href``), distant ou non, lu ou non dans le cache, les déclarations
+    Schematron, et ``error`` si le RNG attendu n'a pas pu être obtenu. Les
+    champs suivants donnent les sources Schematron et les sites refusés."""
     mode: str
     schema_path: Path | None
     source: str
@@ -112,6 +123,10 @@ def detect_xml_models(xml_text: str) -> tuple[XmlModelDeclaration, ...]:
 
 
 def default_schema_cache_dir() -> Path:
+    """Dossier du cache des schémas distants : celui de la variable
+    ``TEI_EDITOR_SCHEMA_CACHE`` si elle est définie, sinon
+    ``TEIManuscriptEditor/schema_cache`` dans ``LOCALAPPDATA`` sous Windows,
+    ``~/.cache/tei-manuscript-editor/schema_cache`` ailleurs."""
     override = os.environ.get("TEI_EDITOR_SCHEMA_CACHE", "").strip()
     if override:
         return Path(override).expanduser().resolve()
@@ -155,6 +170,9 @@ class _CheckedRedirects(HTTPRedirectHandler):
     avant toute requête vers lui."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
+        """Vers un autre site, la redirection n'est suivie que si ce site est
+        permis (``RemoteSchemaRefused`` sinon) ; la nouvelle requête garde
+        ``may_fetch``."""
         may_fetch = getattr(req, "may_fetch", None)
         if schema_site(newurl) != schema_site(req.full_url):
             _check_site(newurl, may_fetch)

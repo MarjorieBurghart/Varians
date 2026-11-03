@@ -174,9 +174,7 @@
 {output}
 
 Свидетелей: {witnesses}, строк опорного свидетеля: {lines}.</string>
-  <string key="webgen.missing">
-
-Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>
+  <string key="webgen.unaligned_lines">\n\n{count, plural, one {# строка опорного свидетеля не синхронизирована} few {# строки опорного свидетеля не синхронизированы} many {# строк опорного свидетеля не синхронизированы} other {# строки опорного свидетеля не синхронизированы}} с изображениями: в его выравнивании (JSON) меньше строк, чем в тексте (текст: {text}, выравнивание: {alignment}). Это нормально, если выравнивание ещё не закончено; иначе проверьте JSON-файл выравнивания опорного свидетеля (не пропущена ли в нём страница?).</string>
   <string key="webgen.assembly_problems">\n\nПроблемы сборки (соответствующий текст отсутствует во вьюере):\n{problems}</string>
   <string key="project.open_error">Не удалось открыть проект</string>
   <string key="viewer.search.placeholder">Поиск…</string>
@@ -250,7 +248,7 @@
   <string key="console.usage">Использование: {command} путь/к/project.xml</string>
   <string key="console.viewer_generated">Просмотрщик создан: {path}</string>
   <string key="console.viewer_stats">Свидетелей: {witnesses} · строк опорного свидетеля: {lines}</string>
-  <string key="console.missing_pages">Страницы, отсутствующие в кэше опорного свидетеля: {pages}</string>
+  <string key="console.unaligned_lines">{count, plural, one {# строка опорного свидетеля не синхронизирована} few {# строки опорного свидетеля не синхронизированы} many {# строк опорного свидетеля не синхронизированы} other {# строки опорного свидетеля не синхронизированы}} с изображениями: в его выравнивании (JSON) меньше строк, чем в тексте (текст: {text}, выравнивание: {alignment}).</string>
   <string key="preview.choose_xslt">Выбрать таблицу стилей XSLT</string>
   <string key="preview.choose_css">Выбрать таблицу стилей CSS</string>
   <string key="preview.updated.timed.lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs} · кликабельных строк опорного свидетеля {lines}.</string>

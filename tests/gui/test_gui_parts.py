@@ -206,7 +206,7 @@ def _fake_generate(monkeypatch, tmp_path, problems=()):
     def generate(project_path, **kwargs):
         root = Path(project_path).parent / "xml"
         calls.append({path.name: path.read_text(encoding="utf-8") for path in root.rglob("*.xml")})
-        return tmp_path / "viewer.html", [], {"witnesses": [], "meta": {"lines": 0, "assembly_problems": list(problems)}}
+        return tmp_path / "viewer.html", 0, {"witnesses": [], "meta": {"lines": 0, "assembly_problems": list(problems)}}
 
     monkeypatch.setattr(web_viewer.generator, "generate", generate)
     return calls
@@ -249,6 +249,22 @@ def test_a_part_that_is_not_saved_cancels_the_web_export(open_window, sermons_pr
     assert _doc(window, "s02.xml").modified
 
 
+def test_the_web_export_reports_the_pivot_lines_without_alignment(open_window, project_with_documents, dialogs,
+                                                                  monkeypatch, tmp_path):
+    """Le compte rendu de l'export dit combien de lignes du témoin pivot
+    n'ont pas de ligne dans son alignement (JSON plus court que le texte)."""
+    import web_viewer.generator
+    meta = {"lines": 3616, "unaligned_pivot_lines": 174,
+            "unaligned_pivot_line_totals": {"text": 3790, "alignment": 3616}}
+    monkeypatch.setattr(web_viewer.generator, "generate",
+                        lambda project_path, **kwargs: (tmp_path / "viewer.html", 174, {"meta": meta}))
+    window = open_window(project_with_documents)
+    dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)
+    window.generate_web_viewer()
+    assert tr("webgen.unaligned_lines", count=174, text=3790, alignment=3616) in dialogs.seen[-1][2]
+
+
 def test_the_web_export_lists_the_assembly_problems(open_window, sermons_project, dialogs, monkeypatch, tmp_path):
     problem = {"file": "xml/edition.xml", "line": 12, "code": "missing", "detail": "xml/sermons/s03.xml"}
     _fake_generate(monkeypatch, tmp_path, [problem])
@@ -264,7 +280,7 @@ def test_the_web_export_of_a_simple_project_does_not_warn(open_window, project_w
                                                            monkeypatch, tmp_path):
     import web_viewer.generator
     monkeypatch.setattr(web_viewer.generator, "generate",
-                        lambda project_path, **kwargs: (tmp_path / "viewer.html", [], {}))
+                        lambda project_path, **kwargs: (tmp_path / "viewer.html", 0, {}))
     window = open_window(project_with_documents)
     dialogs.expect("dialog", lambda dialog: QDialog.DialogCode.Accepted)   # texte du viewer : par défaut
     dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)            # compte rendu seulement

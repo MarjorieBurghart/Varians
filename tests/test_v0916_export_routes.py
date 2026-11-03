@@ -26,7 +26,7 @@ from web_viewer.segment_views import doc_positions
 
 
 def _build(project, **options):
-    data, _missing = build_dataset(load_project(project), **options)
+    data, _unaligned = build_dataset(load_project(project), **options)
     return data
 
 

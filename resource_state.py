@@ -49,7 +49,7 @@ def secondary_sync_link_count(cache: dict | None) -> int:
 
 
 def effective_base_line_sync(alignment_available: bool, raw_cache: dict | None) -> bool:
-    """Le témoin de base possède une synchronisation ligne réellement usable."""
+    """Le témoin pivot possède une synchronisation ligne réellement usable."""
     return bool(alignment_available and primary_sync_line_count(raw_cache) > 0)
 
 
@@ -80,6 +80,12 @@ def synchronization_state(
     is_base: bool,
     base_line_sync: bool = False,
 ) -> SynchronizationState:
+    """Résumé des ressources de synchronisation d'un témoin, d'après son
+    cache JSON brut : pour le témoin pivot (``is_base``), ses lignes
+    utilisables (``primary_lines``) ; pour un autre témoin, ses lignes
+    reliées au pivot (``secondary_links``). ``effective`` : la
+    synchronisation par lignes est réellement active ; pour un autre témoin,
+    il faut aussi qu'elle le soit pour le pivot (``base_line_sync``)."""
     primary = primary_sync_line_count(raw_cache) if is_base else 0
     links = 0 if is_base else secondary_sync_link_count(raw_cache)
     effective = (

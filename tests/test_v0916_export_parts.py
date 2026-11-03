@@ -19,7 +19,7 @@ from web_viewer.generator import build_dataset
 
 
 def _export(project):
-    data, _missing = build_dataset(load_project(project))
+    data, _unaligned = build_dataset(load_project(project))
     data.pop("i18n", None)
     return data
 

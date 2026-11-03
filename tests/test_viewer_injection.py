@@ -62,7 +62,7 @@ def test_a_hostile_text_is_shown_as_text_in_the_viewer(browser, tmp_path):
     escaped = " ".join(p.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") for p in PAYLOADS)
     assert source.count("Commune sanctorum") >= 1
     edition.write_text(source.replace("Commune sanctorum", f"Commune {escaped} sanctorum", 1), encoding="utf-8")
-    output, _missing, data = generate(project)
+    output, _unaligned, data = generate(project)
     assert data["meta"]["has_images"]                                # le cas où __BODY_CLASS__ est vide
     page = browser.new_page()
     errors = []

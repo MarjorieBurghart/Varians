@@ -18,6 +18,11 @@ from app_context import tr as _t
 
 
 class WebTextDialog(QDialog):
+    """Boîte « Générer le viewer web » (voir le module). Elle s'ouvre sur
+    ``mode``, ``witness`` et ``highlight`` (le choix de project.xml) et rend
+    le choix par ``choice`` et ``highlight`` ; la case du surlignage n'est
+    active qu'avec le texte établi."""
+
     def __init__(self, witnesses, mode="established", witness="", parent=None, highlight=False):
         super().__init__(parent)
         self.setWindowTitle(_t("webgen.text.title"))

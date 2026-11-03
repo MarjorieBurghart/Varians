@@ -69,6 +69,10 @@ class _PivotLbPattern:
         self.target = f"#{base_id}"
 
     def finditer(self, text):
+        """Les balises ``<lb>`` de ``text`` dont ``@edRef`` vaut ``#`` suivi de
+        l'identifiant du pivot, dans l'ordre (générateur de ``re.Match``). Une
+        balise fermante ``</lb>`` ne compte pas ; si ``@edRef`` est répété,
+        seule sa première valeur est lue."""
         for match in element_tags(_LB_TAGS, str(text or "")):
             attributes = match.group("attrs")
             # Le plus souvent, l'identifiant n'y figure même pas.
@@ -209,6 +213,8 @@ class PivotLines:
         return len(self._locations.get(segment, ()))
 
     def file(self, path):
+        """``FileLines`` du fichier ``path`` (comparé par ``path_key``) ; None
+        s'il n'est pas dans l'édition assemblée."""
         return self._files.get(path_key(path))
 
     def matches(self, path, lb_count, include_count):

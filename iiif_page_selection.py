@@ -13,6 +13,8 @@ from i18n import Message
 
 
 def canvas_key(page: dict) -> str:
+    """Identifiant d'une page du manifeste : l'URI de son canvas IIIF, à
+    défaut son ``id`` ; chaîne vide si elle n'a ni l'un ni l'autre."""
     image = page.get('image') or {}
     return str(image.get('canvas') or page.get('id') or '').strip()
 
@@ -119,6 +121,12 @@ def propose_exact_ocr_links(manifest, layout_files, existing_links=()):
 
 
 def selected_manifest_pages(manifest, selected_keys, selection_mode='all'):
+    """Pages retenues du manifeste, en couples ``(rang dans le manifeste,
+    page)``, dans l'ordre du manifeste : toutes en mode ``'all'`` ; en mode
+    ``'selected'``, celles dont la clé (``canvas_key``) est dans
+    ``selected_keys``. Lève ``ValueError`` pour un mode inconnu et, en mode
+    ``'selected'``, si une page du manifeste n'a pas de clé ou partage la
+    sienne, ou si une clé choisie n'est plus dans le manifeste."""
     if selection_mode not in ('all', 'selected'):
         raise ValueError('Unknown IIIF selection mode')
     if selection_mode == 'all':

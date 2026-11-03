@@ -48,6 +48,16 @@ déposez son project.xml sur generer_viewer_web.bat, ou
   python -m web_viewer.generator chemin/vers/project.xml
 
 
+SIGNALER UN PROBLÈME
+--------------------
+Sur GitHub, « New issue » ▸ « Signaler un problème / Report a problem » :
+  https://github.com/MarjorieBurghart/Varians/issues
+Le formulaire demande la version (Aide → À propos…), le système et les
+étapes pour reproduire. Si Varians ne démarre pas ou si une fonction
+manque, joignez le rapport de vérification : Varians --self-test
+rapport.json (commande exacte pour chaque système dans le LISEZMOI de
+l'archive ; avec Python : python editeur_tei.py --self-test rapport.json).
+
 DOCUMENTATION
 -------------
 • Le mode d'emploi est dans Varians : Aide → Aide du logiciel (F1), dans la

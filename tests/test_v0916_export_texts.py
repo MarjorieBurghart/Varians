@@ -33,7 +33,7 @@ def text_apart(tmp_path):
 
 
 def _export(project, **options):
-    data, _missing = build_dataset(load_project(project), **options)
+    data, _unaligned = build_dataset(load_project(project), **options)
     return data
 
 
@@ -99,7 +99,7 @@ def test_a_hidden_pivot_of_a_text_is_exported_without_images(tmp_path):
 
 
 def test_the_images_of_a_text_are_copied_once(text_apart):
-    output, _missing, data = generate(text_apart)
+    output, _unaligned, data = generate(text_apart)
     images = sorted(p.relative_to(output.parent).as_posix() for p in (output.parent / "images").rglob("*.png"))
     assert images == sorted(set(images))
     assert [path for path in images if "/X/" in f"/{path}"] and len([path for path in images if "X" in path]) == 4
