@@ -49,7 +49,7 @@ def secondary_sync_link_count(cache: dict | None) -> int:
 
 
 def effective_base_line_sync(alignment_available: bool, raw_cache: dict | None) -> bool:
-    """Le témoin de base possède une synchronisation ligne réellement usable."""
+    """Le témoin pivot possède une synchronisation ligne réellement usable."""
     return bool(alignment_available and primary_sync_line_count(raw_cache) > 0)
 
 

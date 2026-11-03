@@ -390,7 +390,7 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
         cache = caches[w.id]
         is_base = w.id == base_id
         # Sans synchronisation ligne-à-ligne, conserver toutes les pages du
-        # témoin de base. L'ALTO éventuel reste une géométrie de page, pas une
+        # témoin pivot. L'ALTO éventuel reste une géométrie de page, pas une
         # correspondance avec les lignes de l'édition.
         pages = (pages_out if base_has_alignment else cache.get("pages", [])) if is_base else cache.get("pages", [])
         normalized_pages = _normalized_pages(pages, project, is_base)

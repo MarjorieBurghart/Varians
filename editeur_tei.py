@@ -393,7 +393,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.base_maps = {}
         self.base_by_key = {}
         # Le nombre de lignes attendu par la TEI vient exclusivement du JSON
-        # de synchronisation du témoin de base. Un ALTO indépendant n'est pas
+        # de synchronisation du témoin pivot. Un ALTO indépendant n'est pas
         # une synchronisation et ne doit jamais imposer ce nombre.
         self._base_sync_line_count = None
         self._secondary_sync_link_counts = {}

@@ -298,7 +298,7 @@ LINE_MARKER_RE = re.compile(
 
 
 def make_line_segments_clickable(html_text):
-    """Numérote puis préserve les repères du témoin de base invisibles en temps linéaire.
+    """Numérote puis préserve les repères du témoin pivot invisibles en temps linéaire.
 
     La XSLT écrit volontairement ``tei-line://base/INDEX`` au lieu de calculer
     ``count(preceding::tei:lb...)`` pour chaque ligne. Ce dernier calcul rendait
@@ -621,7 +621,7 @@ class ClickablePreview(QTextBrowser):
         return True
 
     def select_visible_text_near_line(self, text, ordinal=None):
-        """Sélectionne réellement ``text`` près d'une ligne du témoin de base.
+        """Sélectionne réellement ``text`` près d'une ligne du témoin pivot.
 
         Contrairement au surlignage de recherche, il s'agit ici d'une sélection
         volontaire de l'utilisateur transférée depuis l'autre onglet. Elle doit
@@ -675,7 +675,7 @@ class ClickablePreview(QTextBrowser):
     def mouseReleaseEvent(self, event):
         # Les vrais liens de l'aperçu (notamment le crayon ✎) gardent leur
         # comportement normal. Un clic sur le texte ordinaire est associé au
-        # dernier marqueur du témoin de base placé avant la position du curseur.
+        # dernier marqueur du témoin pivot placé avant la position du curseur.
         pos = event.position().toPoint()
         href = self.anchorAt(pos)
         super().mouseReleaseEvent(event)
@@ -1834,7 +1834,7 @@ class FormattedEditionWidget(QWidget):
             self.preview.scrollToAnchor(anchor)
 
             # Après le saut, synchroniser aussi les trois manuscrits sur la
-            # ligne du témoin de base située au centre du passage atteint, sans quitter l’aperçu.
+            # ligne du témoin pivot située au centre du passage atteint, sans quitter l’aperçu.
             def sync_after_toc():
                 line = self.preview.line_at_viewport_center()
                 if line is not None:

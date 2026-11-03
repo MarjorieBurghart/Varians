@@ -937,7 +937,7 @@ class WitnessSyncMixin:
             self._last_synced_ordinal = ordinal
             lacunae = self._lacunae_at_cursor()
             self._last_synced_lacunae = frozenset(lacunae)
-            # Le témoin de base vient déjà de naviguer ; on actualise tous les panneaux.
+            # Le témoin pivot vient déjà de naviguer ; on actualise tous les panneaux.
             self.base_panel.match_indices={ordinal}; self.base_panel.center_index=self.base_panel.origin_center_index=ordinal; self.base_panel.reload()
             self.base_panel.set_lacuna(LACUNA if self.base_id in lacunae else None)
             self._follow_base_line(ordinal, lacunae, skip=self.base_id)

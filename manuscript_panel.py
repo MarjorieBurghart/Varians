@@ -260,7 +260,7 @@ class ManuscriptPanel(QFrame):
     (``{"p": page, "l": ligne, "key": clé}``) ; ``map_base`` : pour un témoin
     autre que le pivot, clé d'une ligne du pivot → rangs de ses lignes
     reliées. Les demandes à la fenêtre passent par les signaux."""
-    primaryNavigate = Signal(int)   # nouveau centre du témoin de base
+    primaryNavigate = Signal(int)   # nouveau centre du témoin pivot
     witnessNavigate = Signal(str, int)  # témoin, pas des flèches (V0.9.1.4)
     leadsEditionChanged = Signal(str, bool)  # témoin, ses flèches mènent l'édition (V0.9.2.8.1)
     markPageRequested = Signal(str, str, str)  # témoin, surface/zone xml:id, @n
