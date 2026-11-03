@@ -1298,4 +1298,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="witness_rename.other_target">{file}：そこでは #{id} は伝本ではなく &lt;{element}&gt; を指します。これらのポインターは変更されません。</string>
   <string key="witness_rename.outside_pointer">{file}、{line} 行目：{token} はプロジェクト外のファイルを指しています。変更されません。</string>
   <string key="witness_rename.external_meta">{file} はプロジェクトフォルダーの外にあるため変更されません。その meta.witness は古いシグラムのままです。</string>
+  <string key="witness_rename.changed">{file} はプレビューの後に変更されました。何も変更されていません。シグラムの変更をやり直してください。</string>
+  <string key="witness_rename.failed">シグラムを変更できませんでした（{file}：{error}）。すべてのファイルは元の状態に戻されました。</string>
+  <string key="witness_rename.rollback_failed">シグラムを変更できず（{file}：{error}）、次のファイルを元に戻せませんでした：{files}。.bak コピーに以前の状態が残っています。</string>
 </translations>

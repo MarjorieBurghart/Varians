@@ -1284,4 +1284,7 @@ A stylesheet writes only its result and, with Saxon, other files in the folder o
   <string key="witness_rename.other_target">{file}: #{id} there designates a &lt;{element}&gt;, not the witness; these pointers do not change.</string>
   <string key="witness_rename.outside_pointer">{file}, line {line}: {token} points to a file outside the project; it does not change.</string>
   <string key="witness_rename.external_meta">{file}, outside the project folder, is not modified: its meta.witness keeps the old siglum.</string>
+  <string key="witness_rename.changed">{file} has changed since the preview: nothing was modified. Start the siglum change again.</string>
+  <string key="witness_rename.failed">The siglum change could not be made ({file}: {error}). Every file has been put back as it was.</string>
+  <string key="witness_rename.rollback_failed">The siglum change could not be made ({file}: {error}), and these files could not be put back: {files}. Their .bak copies keep their previous state.</string>
 </translations>

@@ -1284,4 +1284,7 @@ Une feuille n’écrit que son résultat, et, avec Saxon, d’autres fichiers da
   <string key="witness_rename.other_target">{file} : #{id} y désigne un &lt;{element}&gt;, pas le témoin ; ces pointeurs ne changent pas.</string>
   <string key="witness_rename.outside_pointer">{file}, ligne {line} : {token} vise un fichier hors du projet ; il ne change pas.</string>
   <string key="witness_rename.external_meta">{file}, hors du dossier du projet, n’est pas modifié : son meta.witness garde l’ancien sigle.</string>
+  <string key="witness_rename.changed">{file} a changé depuis l’aperçu : rien n’a été modifié. Relancez le changement de sigle.</string>
+  <string key="witness_rename.failed">Le changement de sigle n’a pas pu se faire ({file} : {error}). Tous les fichiers ont été remis dans leur état d’avant.</string>
+  <string key="witness_rename.rollback_failed">Le changement de sigle n’a pas pu se faire ({file} : {error}), et ces fichiers n’ont pas pu être remis en place : {files}. Leurs copies .bak gardent leur état d’avant.</string>
 </translations>

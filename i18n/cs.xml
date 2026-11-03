@@ -1298,4 +1298,7 @@ Styl zapisuje jen svůj výsledek a se Saxonem i další soubory ve složce výs
   <string key="witness_rename.other_target">{file}: #{id} tam označuje &lt;{element}&gt;, ne svědka; tyto odkazy se nemění.</string>
   <string key="witness_rename.outside_pointer">{file}, řádek {line}: {token} odkazuje na soubor mimo projekt; nemění se.</string>
   <string key="witness_rename.external_meta">{file} je mimo složku projektu a nemění se: jeho meta.witness si ponechá starou siglu.</string>
+  <string key="witness_rename.changed">{file} se od náhledu změnil: nic nebylo upraveno. Spusťte změnu sigly znovu.</string>
+  <string key="witness_rename.failed">Siglu se nepodařilo změnit ({file}: {error}). Všechny soubory byly vráceny do původního stavu.</string>
+  <string key="witness_rename.rollback_failed">Siglu se nepodařilo změnit ({file}: {error}) a tyto soubory se nepodařilo vrátit: {files}. Jejich kopie .bak uchovávají původní stav.</string>
 </translations>

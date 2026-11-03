@@ -36,7 +36,14 @@ Refus (``problems``) : sigle vide ou inchangé, sigle ou identifiant d'un
 autre témoin (sans tenir compte de la casse, qui ne distingue pas les
 fichiers sous Windows et macOS), identifiant ou surface déjà employé dans un
 document, fichier déjà présent sous le nouveau nom, document à changer mal
-formé ou illisible. :func:`migrate_view_settings` reporte sur le nouvel
+formé ou illisible. Un identifiant déjà employé ne gêne que dans l'édition
+et ses parties (un seul document assemblé) ou dans un document que le
+changement modifie.
+
+:func:`apply_witness_rename` applique le plan d'un bloc : écritures
+atomiques avec copie ``.bak``, puis renommages ; rien n'est fait si un
+fichier a changé depuis le plan, et au moindre échec tout est remis dans
+l'état d'avant. :func:`migrate_view_settings` reporte sur le nouvel
 identifiant les réglages d'affichage du projet (ordre, hauteurs, fenêtres
 détachées…)."""
 from __future__ import annotations
@@ -305,6 +312,7 @@ class _Planner:
         self.documents = []          # (chemin, texte)
         self.ids = {}                # clé de chemin -> collect_ids
         self.other_target = set()    # documents où P désigne autre chose qu'un témoin
+        self.group = set()           # l'édition et ses parties
         self.changes = []
 
     # -- documents ------------------------------------------------------------------------
@@ -313,6 +321,7 @@ class _Planner:
         from xslt_scenarios import edition_parts
         paths = [Path(self.project.edition)]
         paths += edition_parts(self.project.edition)
+        self.group = {_key(Path(path).resolve()) for path in paths}
         paths += [document.path for document in getattr(self.project, "documents", ())]
         seen, result = set(), []
         for path in paths:
@@ -397,10 +406,17 @@ class _Planner:
     # -- identifiants déjà employés -------------------------------------------------------
 
     def check_ids(self):
+        """Un identifiant visé ne doit pas déjà exister dans l'édition et ses
+        parties (un seul document assemblé), ni dans un document que le
+        changement modifie (ses pointeurs viseraient l'autre élément). Ailleurs,
+        un même identifiant ne gêne pas : il ne vaut que dans son document."""
         wanted = set(self.surfaces.values())
         if self.new_id != self.old_id:
             wanted.add(self.new_id)
+        relevant = set(self.group) | {_key(change.path) for change in self.changes}
         for path, _text in self.documents:
+            if _key(path) not in relevant:
+                continue
             for ident in sorted(wanted):
                 for target in self.ids[_key(path)].get(ident, ()):
                     self.problems.append(Message(
@@ -543,10 +559,7 @@ class _Planner:
                 self.problems.append(Message("witness_rename.malformed", file=_display(self.root, path),
                                              line=error[0]))
                 return
-            new_text = edits.apply()
-            if _parse_error(new_text) is not None:          # pragma: no cover - garde-fou
-                raise AssertionError(f"{path} : le changement de sigle le rendrait mal formé")
-            self.changes.append(FileChange(path, text, new_text, edits.counts()))
+            self.changes.append(FileChange(path, text, edits.apply(), edits.counts()))
 
     def _declaration(self, text, tokens, index, edits):
         """``<idno type="siglum">`` et nom du ``<witness>`` déclaré."""
@@ -794,7 +807,6 @@ def plan_witness_rename(project, witness_id: str, new_siglum: str) -> RenamePlan
         return _replace(plan, problems=tuple(planner.problems))
     planner.load_documents()
     planner.plan_surfaces()
-    planner.check_ids()
     planner.plan_moves(_has_alignment_attribute(project_text, witness.id))
     if planner.problems:
         return _replace(plan, problems=tuple(planner.problems), notes=tuple(planner.notes))
@@ -808,6 +820,11 @@ def plan_witness_rename(project, witness_id: str, new_siglum: str) -> RenamePlan
                                               project_edits.counts()))
     for path, text in planner.documents:
         planner.plan_document(path, text)
+    planner.check_ids()
+    if not planner.problems:
+        for change in planner.changes:
+            if change.path.suffix != ".json" and _parse_error(change.text) is not None:
+                raise AssertionError(f"{change.path} : le changement de sigle le rendrait mal formé")
     own = {_key(path) for path in planner._witness_jsons()}
     for path in planner._json_paths():
         planner.plan_json(path, _key(path) in own)
@@ -828,6 +845,100 @@ def _has_alignment_attribute(project_text, witness_id) -> bool:
             if values.get("id") == witness_id:
                 return bool(values.get("alignment"))
     return False
+
+
+# --- Application : tout ou rien -------------------------------------------------------------
+
+class RenameError(Exception):
+    """Le changement n'a pas pu se faire ; ``message`` (i18n.Message) dit
+    pourquoi, et si les fichiers ont été remis dans leur état d'avant."""
+
+    def __init__(self, message):
+        super().__init__(str(message))
+        self.message = message
+
+
+@dataclass(frozen=True)
+class RenameResult:
+    written: tuple = ()          # fichiers réécrits (à leur place d'avant les renommages)
+    backups: tuple = ()          # leurs copies .bak
+    moved: tuple = ()            # Move faits
+
+
+def _rename(move: Move) -> None:
+    """Renomme un fichier ou un dossier ; jamais par-dessus un autre. Un
+    changement de casse seule passe par un nom provisoire (Windows, macOS)."""
+    source, target = move.source, move.target
+    if target.exists() and not (move.case_only and os.path.samefile(source, target)):
+        raise FileExistsError(17, "Le fichier existe déjà", str(target))
+    if not move.case_only:
+        os.rename(source, target)
+        return
+    temporary = source.with_name(f".{source.name}.varians-rename")
+    os.rename(source, temporary)
+    try:
+        os.rename(temporary, target)
+    except OSError:
+        os.rename(temporary, source)
+        raise
+
+
+def _rollback(written, moved):
+    """Remet les fichiers dans leur état d'avant ; renvoie ceux qui n'ont pas
+    pu l'être."""
+    failed = []
+    for move in reversed(moved):
+        try:
+            _rename(Move(move.target, move.source))
+        except OSError:
+            failed.append(move.target)
+    for path, backup in reversed(written):
+        try:
+            os.replace(backup, path)
+        except OSError:
+            failed.append(path)
+    return failed
+
+
+def apply_witness_rename(plan: RenamePlan) -> RenameResult:
+    """Applique le plan d'un bloc : chaque fichier réécrit (écriture
+    atomique, copie ``.bak`` de l'ancien), puis les fichiers et dossiers
+    renommés. Rien n'est fait si un fichier a changé depuis le plan ; au
+    moindre échec, tout est remis dans l'état d'avant (``RenameError``)."""
+    from save_io import atomic_write_text_with_backup
+    if not plan.ok:
+        raise ValueError("Plan refusé : " + "; ".join(plan.problems))
+    for change in plan.changes:
+        try:
+            current = change.path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError):
+            current = None
+        if current != change.original:
+            raise RenameError(Message("witness_rename.changed", file=plan.display_path(change.path)))
+    for move in plan.moves:
+        if not move.source.exists():
+            raise RenameError(Message("witness_rename.changed", file=plan.display_path(move.source)))
+        if move.target.exists() and not (move.case_only and os.path.samefile(move.source, move.target)):
+            raise RenameError(Message("witness_rename.target_exists", file=plan.display_path(move.target)))
+    written, moved = [], []
+    current = None
+    try:
+        for change in plan.changes:
+            current = change.path
+            written.append((change.path, atomic_write_text_with_backup(change.path, change.text)))
+        for move in plan.moves:
+            current = move.source
+            _rename(move)
+            moved.append(move)
+    except Exception as error:
+        failed = _rollback(written, moved)
+        detail = getattr(error, "strerror", None) or str(error)
+        if failed:
+            raise RenameError(Message("witness_rename.rollback_failed", file=plan.display_path(current),
+                                      error=detail, files=", ".join(plan.display_path(p) for p in failed))) from error
+        raise RenameError(Message("witness_rename.failed", file=plan.display_path(current), error=detail)) from error
+    return RenameResult(tuple(path for path, _backup in written), tuple(backup for _path, backup in written),
+                        tuple(moved))
 
 
 # --- Réglages d'affichage -----------------------------------------------------------------

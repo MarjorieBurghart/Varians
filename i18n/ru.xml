@@ -1298,4 +1298,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="witness_rename.other_target">{file}: там #{id} обозначает &lt;{element}&gt;, а не свидетеля; эти указатели не меняются.</string>
   <string key="witness_rename.outside_pointer">{file}, строка {line}: {token} указывает на файл вне проекта; он не меняется.</string>
   <string key="witness_rename.external_meta">{file} находится вне папки проекта и не изменяется: его meta.witness сохраняет старую сиглу.</string>
+  <string key="witness_rename.changed">{file} изменился после предпросмотра: ничего не изменено. Запустите смену сиглы заново.</string>
+  <string key="witness_rename.failed">Не удалось сменить сиглу ({file}: {error}). Все файлы возвращены в прежнее состояние.</string>
+  <string key="witness_rename.rollback_failed">Не удалось сменить сиглу ({file}: {error}), и эти файлы не удалось вернуть: {files}. Их копии .bak хранят прежнее состояние.</string>
 </translations>

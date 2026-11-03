@@ -423,3 +423,113 @@ def test_the_messages_of_the_plan_exist_in_every_language():
     for language in ("fr", "en", "de", "ja", "cs", "it", "ru"):
         root = ET.parse(Path(__file__).resolve().parents[1] / "i18n" / f"{language}.xml").getroot()
         assert keys <= {node.get("key") for node in root.findall("string")}, language
+
+
+# --- Application (W.2) : tout ou rien -------------------------------------------------------
+
+def _snapshot(root):
+    """Contenu de tous les fichiers du dossier, par chemin relatif."""
+    return {path.relative_to(root).as_posix(): path.read_bytes()
+            for path in sorted(root.rglob("*")) if path.is_file()}
+
+
+def test_the_plan_is_applied_in_one_block(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    plan = _plan(project_xml, "P", "P2")
+    result = apply_witness_rename(plan)
+    renamed = {move.source: move.target for move in plan.moves}
+    for change in plan.changes:
+        assert renamed.get(change.path, change.path).read_text(encoding="utf-8") == change.text
+        assert change.path.with_suffix(change.path.suffix + ".bak").read_text(encoding="utf-8") == change.original
+    assert {m.source for m in result.moved} == {m.source for m in plan.moves}
+    assert not (root / "images" / "P").exists() and (root / "images" / "P2" / "0001_1r.png").is_file()
+    assert (root / "alignments" / "s02" / "P2.json").is_file() and not (root / "alignments" / "s02" / "P.json").exists()
+    project = load_project(project_xml)
+    witness = project.witness_by_id["P2"]
+    assert witness.display_siglum == "P2" and witness.alignment == (root / "alignments" / "P2.json").resolve()
+    assert [image.path for image in witness.image_files] == [
+        (root / "images" / "P2" / name).resolve() for name in ("0001_1r.png", "0002_1v.png", "0003_2r.png")]
+    assert all(image.path.is_file() for image in witness.image_files)
+    assert project.parts[0].base == "P2" and project.web_text_witness == "P2"
+    # Un second changement repart du projet modifié : P2 redevient P.
+    plan = _plan(project_xml, "P2", "P")
+    assert plan.ok, plan.problems
+    apply_witness_rename(plan)
+    assert (root / "xml" / "edition.xml").read_text(encoding="utf-8") == EDITION
+
+
+def test_a_file_changed_since_the_preview_stops_everything(tmp_path):
+    from witness_rename import RenameError, apply_witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    plan = _plan(project_xml, "P", "P2")
+    edition = root / "xml" / "edition.xml"
+    edition.write_text(EDITION.replace("Primum", "Primo"), encoding="utf-8")
+    before = _snapshot(root)
+    with pytest.raises(RenameError) as error:
+        apply_witness_rename(plan)
+    assert error.value.message.key == "witness_rename.changed"
+    assert error.value.message.values["file"] == "xml/edition.xml"
+    assert _snapshot(root) == before
+
+
+def test_a_failure_while_writing_restores_every_file(tmp_path):
+    from witness_rename import RenameError, apply_witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    plan = _plan(project_xml, "P", "P2")
+    last = plan.changes[-1].path
+    before = _snapshot(root)
+    last.chmod(0o444)
+    try:
+        with pytest.raises(RenameError) as error:
+            apply_witness_rename(plan)
+    finally:
+        last.chmod(0o644)
+    assert error.value.message.key == "witness_rename.failed"
+    assert error.value.message.values["file"] == plan.display_path(last)
+    assert _snapshot(root) == before
+
+
+def test_a_failure_while_renaming_restores_every_file(tmp_path, monkeypatch):
+    import witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    plan = _plan(project_xml, "P", "P2")
+    before = _snapshot(root)
+    rename = witness_rename._rename
+    calls = []
+
+    def failing(move):
+        calls.append(move)
+        if len(calls) == 3:
+            raise PermissionError(13, "Fichier ouvert dans un autre programme", str(move.source))
+        rename(move)
+
+    monkeypatch.setattr(witness_rename, "_rename", failing)
+    with pytest.raises(witness_rename.RenameError) as error:
+        witness_rename.apply_witness_rename(plan)
+    assert error.value.message.key == "witness_rename.failed"
+    assert "autre programme" in error.value.message.values["error"]
+    assert _snapshot(root) == before
+    assert not list(root.rglob("*P2*"))
+
+
+def test_a_case_only_change_is_applied(tmp_path):
+    from witness_rename import apply_witness_rename
+    project_xml = _project(tmp_path)
+    root = project_xml.parent
+    apply_witness_rename(_plan(project_xml, "P", "p"))
+    names = {path.name for path in (root / "alignments").iterdir()}
+    assert "p.json" in names and "P.json" not in names
+    assert {path.name for path in (root / "images").iterdir()} == {"p", "T1"}
+    assert load_project(project_xml).witness_by_id["p"].image_files[0].path.is_file()
+
+
+def test_a_refused_plan_is_not_applied(tmp_path):
+    from witness_rename import apply_witness_rename
+    plan = _plan(_project(tmp_path), "P", "T1")
+    with pytest.raises(ValueError):
+        apply_witness_rename(plan)

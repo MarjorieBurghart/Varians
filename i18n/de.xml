@@ -1298,4 +1298,7 @@ Ein Stylesheet schreibt nur sein Ergebnis und, mit Saxon, weitere Dateien im Erg
   <string key="witness_rename.other_target">{file}: #{id} bezeichnet dort ein &lt;{element}&gt;, nicht den Textzeugen; diese Verweise bleiben unverändert.</string>
   <string key="witness_rename.outside_pointer">{file}, Zeile {line}: {token} verweist auf eine Datei außerhalb des Projekts; der Verweis bleibt unverändert.</string>
   <string key="witness_rename.external_meta">{file} liegt außerhalb des Projektordners und wird nicht geändert: sein meta.witness behält die alte Sigle.</string>
+  <string key="witness_rename.changed">{file} hat sich seit der Vorschau geändert: nichts wurde verändert. Starten Sie die Änderung der Sigle erneut.</string>
+  <string key="witness_rename.failed">Die Sigle konnte nicht geändert werden ({file}: {error}). Alle Dateien wurden in ihren vorherigen Zustand zurückversetzt.</string>
+  <string key="witness_rename.rollback_failed">Die Sigle konnte nicht geändert werden ({file}: {error}), und diese Dateien konnten nicht zurückversetzt werden: {files}. Ihre .bak-Kopien enthalten den vorherigen Zustand.</string>
 </translations>
