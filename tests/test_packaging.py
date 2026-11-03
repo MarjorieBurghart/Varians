@@ -178,3 +178,18 @@ def test_a_broken_link_in_the_built_folder_is_found(tmp_path):
     assert build.broken_links(tmp_path) == []
     os.symlink("lib/libQt6Pdf.so.6", tmp_path / "libQt6Pdf.so.6")
     assert build.broken_links(tmp_path) == ["libQt6Pdf.so.6"]
+
+
+def test_the_binaries_workflow_builds_for_every_system_and_each_release():
+    """Workflow « Binaries » : Windows, macOS (Apple Silicon et Intel),
+    Linux ; à chaque release publiée et à la main ; mêmes dépendances que
+    la recette ; seul l'envoi à la release peut écrire dans le dépôt."""
+    text = (ROOT / ".github" / "workflows" / "binaries.yml").read_text(encoding="utf-8")
+    for runner in ("windows-latest", "macos-latest", "macos-15-intel", "ubuntu-22.04"):
+        assert f"os: {runner}" in text
+    assert "  release:\n    types: [published]\n" in text
+    assert "  workflow_dispatch:\n" in text
+    assert "python -m pip install -r requirements.txt -r packaging/requirements.txt" in text
+    assert "python packaging/build.py" in text
+    assert 'gh release upload "$TAG"' in text
+    assert "permissions:\n  contents: read\n" in text and text.count("contents: write") == 1
