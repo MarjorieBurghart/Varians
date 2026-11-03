@@ -73,12 +73,19 @@ class XPathPanelMixin:
         return panel
 
     def show_xpath_panel(self):
+        """Affiche le panneau « Recherche XPath » sous l'éditeur, seul panneau
+        inférieur visible."""
         self._show_bottom_panel(self.xpath_panel, 250)
 
     def hide_xpath_panel(self):
+        """Bouton « × » (« Masquer le panneau XPath ») : masque le panneau."""
         self._hide_bottom_panel(self.xpath_panel)
 
     def focus_xpath_search(self):
+        """Menu « Recherche XPath » (Ctrl+Shift+F) : revient à l'onglet « XML
+        source », ouvre le panneau et met le curseur dans le champ de la
+        requête. Une sélection d'une seule ligne qui commence par ``//`` y est
+        recopiée."""
         self.left_tabs.setCurrentIndex(0)
         self.show_xpath_panel()
         selected = self.editor.textCursor().selectedText().strip()
@@ -88,6 +95,12 @@ class XPathPanelMixin:
         self.xpath_query.selectAll()
 
     def run_xpath_search(self):
+        """« Rechercher » (ou Entrée dans le champ) : évalue la requête sur le
+        texte de l'éditeur (``search_xpath``) et remplit le tableau des
+        éléments trouvés. Le message au-dessus donne leur nombre, la valeur
+        d'une expression qui ne rend pas d'éléments, ou l'erreur (lxml absent,
+        expression invalide, XML non analysable). Appelée aussi par « Débugger
+        l’apparat… », avec la requête choisie."""
         expression = self.xpath_query.text().strip()
         if not expression:
             self.xpath_query.setFocus()
@@ -142,6 +155,9 @@ class XPathPanelMixin:
         self.show_xpath_panel()
 
     def goto_xpath_result(self, row, _column=0):
+        """Clic sur un résultat : revient à l'onglet « XML source » et y
+        sélectionne l'élément trouvé (indices Python convertis en positions
+        Qt), centré dans la vue."""
         item = self.xpath_table.item(row, 0)
         data = item.data(Qt.ItemDataRole.UserRole) if item is not None else None
         if not data:

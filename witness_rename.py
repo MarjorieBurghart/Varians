@@ -87,6 +87,7 @@ class FileChange:
 
     @property
     def count(self) -> int:
+        """Nombre total de remplacements du fichier, toutes rubriques confondues."""
         return sum(n for _category, n in self.counts)
 
 
@@ -113,6 +114,12 @@ class Mention:
 
 @dataclass(frozen=True)
 class RenamePlan:
+    """Plan d'un changement de sigle, fait par :func:`plan_witness_rename` sans
+    rien écrire : ``changes`` (``FileChange``), ``moves`` (``Move``), ``surfaces``
+    (ancien identifiant de surface ou de zone → nouveau), ``mentions``
+    (citations du sigle à vérifier), ``notes`` (ce qui ne change pas, et
+    pourquoi) et ``problems`` (refus : le plan ne s'applique pas). Les notes
+    et les refus sont des ``i18n.Message``."""
     project_path: Path
     old_id: str
     old_siglum: str
@@ -127,13 +134,17 @@ class RenamePlan:
 
     @property
     def ok(self) -> bool:
+        """Vrai si le plan n'a aucun refus : « Appliquer » est alors possible."""
         return not self.problems
 
     @property
     def root(self) -> Path:
+        """Dossier du projet (celui de project.xml)."""
         return self.project_path.parent
 
     def display_path(self, path) -> str:
+        """Chemin ``path`` tel que l'aperçu le montre : relatif au dossier du
+        projet, barres obliques ; un chemin hors du projet reste entier."""
         return _display(Path(self.project_path).parent, path)
 
 
@@ -248,6 +259,9 @@ class _Edits:
         self.items = []
 
     def add(self, start, end, value, category):
+        """Retient le remplacement de ``text[start:end]`` par ``value``, compté
+        dans la rubrique ``category`` (``CATEGORIES``) ; un remplacement qui ne
+        change rien est ignoré."""
         if self.text[start:end] != value:
             self.items.append((start, end, value, category))
 
@@ -255,15 +269,20 @@ class _Edits:
         return bool(self.items)
 
     def touches(self, start, end) -> bool:
+        """Un remplacement retenu recouvre-t-il ``text[start:end]`` ?"""
         return any(s < end and start < e for s, e, _v, _c in self.items)
 
     def counts(self) -> tuple:
+        """``((rubrique, nombre), …)`` des remplacements retenus, dans l'ordre
+        de ``CATEGORIES``."""
         found = {}
         for *_span, category in self.items:
             found[category] = found.get(category, 0) + 1
         return tuple((c, found[c]) for c in CATEGORIES if c in found)
 
     def apply(self) -> str:
+        """Le texte, tous les remplacements faits ; deux remplacements qui se
+        recouvrent lèvent ``AssertionError``."""
         pieces, position = [], 0
         for start, end, value, _category in sorted(self.items, key=lambda item: (item[0], item[1])):
             if start < position:
@@ -390,6 +409,11 @@ class _Planner:
             return None
 
     def load_documents(self):
+        """Lit l'édition, ses parties et les documents XML de ``<documents>``,
+        avec leurs identifiants (``xml_references.collect_ids``). Un document
+        où l'ancien identifiant désigne autre chose qu'un ``<witness>`` est
+        noté : les pointeurs vers lui ne changeront pas. Un document illisible
+        est un refus."""
         for path in self._document_paths():
             text = self._read(path)
             if text is None:
@@ -419,6 +443,12 @@ class _Planner:
         return [path for path in found if path.is_file()]
 
     def plan_surfaces(self):
+        """Remplit ``surfaces`` : les surfaces du témoin (``<image surface>`` de
+        project.xml, ``<surface xml:id="P-p0001">`` des documents,
+        ``tei_surface_id`` de ses JSON) et leurs zones prennent le nouveau
+        préfixe, quand elles commencent par l'ancien (préfixe tiré de
+        l'identifiant par ``safe_id_component``). Rien à faire si le préfixe ne
+        change pas ; refus si un autre témoin a l'ancien ou le nouveau préfixe."""
         old, new = safe_id_component(self.old_id), safe_id_component(self.new_id)
         if old == new:
             return
@@ -522,6 +552,15 @@ class _Planner:
             self.moves.append(Move(source, target))
 
     def plan_moves(self, alignment_attribute):
+        """Prévoit les renommages (``moves``) : le JSON d'alignement du témoin
+        quand il est dans ``alignments/`` sous son identifiant (nouveau nom :
+        celui que Varians donne en copiant le fichier si project.xml l'écrit
+        dans ``@alignment``, ``alignment_attribute`` ; sinon le nom
+        conventionnel), ``alignments/<texte>/P.json``, le cache et la copie
+        locale IIIF, ``images/P/`` et ``alto/P/``. Une entrée absente est
+        ignorée ; une entrée qui sert aussi à un autre témoin reste en place
+        (note). Refus : entrée hors du dossier du projet, ou nouveau nom déjà
+        pris (pour les JSON d'alignement, même sans ancien fichier)."""
         from iiif_local import store_dir
         from iiif_manifest import cache_path
         old, new = self.old_id, self.new_id
@@ -632,6 +671,14 @@ class _Planner:
     # -- documents XML --------------------------------------------------------------------
 
     def plan_document(self, path, text):
+        """Prévoit les changements d'un document XML : déclaration du
+        ``<witness>`` (``xml:id``, ``<idno type="siglum">``, nom), pointeurs
+        vers le témoin (``#P``, ``fichier.xml#P``, ``P`` seul dans ``@wit`` et
+        ``@edRef``), surfaces et zones, chemins qui passent par un fichier
+        renommé ; relève les citations du sigle (``mentions``). Un document à
+        changer doit être dans le projet, ne pas déclarer d'autre encodage
+        qu'UTF-8 et être bien formé, sinon c'est un refus ; ses changements
+        s'ajoutent à ``changes``."""
         edits = _Edits(text)
         starts = _line_starts(text)
         tokens = scan_xml_tags(text)
@@ -795,6 +842,13 @@ class _Planner:
     # -- project.xml ----------------------------------------------------------------------
 
     def plan_project(self, text):
+        """Remplacements à faire dans le texte de project.xml, rendus sans être
+        appliqués (``_Edits``) : le ``<witness>`` du témoin (``id``,
+        ``siglum``, ``label``, ``alignment``), ``<witnesses base>``, ``<part
+        base>``, ``<webViewer textWitness>``, les ``<param value>`` des
+        scénarios et les ``#P`` des ``<query>``, les chemins (``file``,
+        ``path``, ``alignment``) qui passent par un fichier renommé, les
+        ``<image surface>``."""
         edits = _Edits(text)
         tokens = scan_xml_tags(text)
         root = self.root
@@ -886,6 +940,13 @@ class _Planner:
         return list(paths.values())
 
     def plan_json(self, path, own):
+        """Prévoit les changements d'un JSON d'alignement : ``meta.witness``
+        (dans un JSON du témoin seulement, ``own``), ``meta.base_witness``,
+        ``pages[].tei_surface_id`` et les chemins ``pages[].image.path`` ou
+        ``.file``. L'ancien identifiant y devient le nouveau, l'ancien sigle le
+        nouveau sigle. Refus : JSON illisible ; JSON abîmé, s'il est au témoin
+        ou devrait changer ; JSON hors du projet, sauf si seul son ``meta``
+        changerait (simple note : il n'est pas modifié)."""
         try:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeError) as error:
@@ -1040,6 +1101,8 @@ class RenameError(Exception):
 
 @dataclass(frozen=True)
 class RenameResult:
+    """Ce qu'a fait :func:`apply_witness_rename` : fichiers réécrits, leurs
+    copies ``.bak`` (état d'avant le changement) et renommages faits."""
     written: tuple = ()          # fichiers réécrits (à leur place d'avant les renommages)
     backups: tuple = ()          # leurs copies .bak
     moved: tuple = ()            # Move faits

@@ -26,6 +26,9 @@ _NOT_COMPUTED = object()
 
 @dataclass(frozen=True)
 class XmlTagToken:
+    """Balise d'élément repérée dans le texte, en indices Python : de ``start`` (le « < ») à
+    ``end`` (après le « > »), nom qualifié ``name`` de ``name_start`` à ``name_end``, et
+    ``kind`` : ``open``, ``close`` ou ``self`` (autofermante)."""
     start: int
     end: int                 # exclusif, inclut le > dans la tranche
     name: str
@@ -35,19 +38,24 @@ class XmlTagToken:
 
     @property
     def is_opening(self) -> bool:
+        """Balise ouvrante (``<p>``), hors balise autofermante."""
         return self.kind == "open"
 
     @property
     def is_closing(self) -> bool:
+        """Balise fermante (``</p>``)."""
         return self.kind == "close"
 
     @property
     def is_self_closing(self) -> bool:
+        """Balise autofermante (``<lb/>``)."""
         return self.kind == "self"
 
 
 @dataclass(frozen=True)
 class XmlTagPair:
+    """Balise ouvrante ``opening`` et la balise fermante ``closing`` qui lui répond selon
+    l'imbrication."""
     opening: XmlTagToken
     closing: XmlTagToken
 
@@ -559,6 +567,8 @@ def closing_rename_mirror(old_text: str, new_text: str) -> RenameMirror | None:
 
 
 def apply_rename_mirror(text: str, mirror: RenameMirror | None) -> str:
+    """``text`` où le nom de la balise fermante est remplacé selon ``mirror``
+    (``closing_rename_mirror``) ; ``text`` inchangé si ``mirror`` est None."""
     if mirror is None:
         return str(text or "")
     src = str(text or "")
@@ -580,6 +590,7 @@ class ClosingTagSuggestion:
 
     @property
     def label(self) -> str:
+        """Texte de la proposition dans la liste de complétion : le nom suivi de « > » (``div>``)."""
         return f"{self.name}>"
 
 

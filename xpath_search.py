@@ -21,15 +21,22 @@ _NAME_RE = re.compile(r"[A-Za-z_][\w:.-]*")
 
 
 class XPathUnavailable(RuntimeError):
+    """lxml n'est pas installé : pas de recherche XPath."""
     pass
 
 
 class XPathQueryError(ValueError):
+    """Expression vide (message ``EMPTY_XPATH``), expression XPath invalide ou
+    XML qui ne s'analyse pas ; le message est alors celui de lxml."""
     pass
 
 
 @dataclass(frozen=True)
 class XPathMatch:
+    """Élément trouvé : ligne source (0 si inconnue), ``position`` et
+    ``end_position`` (indices Python du début de sa balise ouvrante et de la
+    fin de l'élément), nom local, chemin lisible (``/TEI/text/body/div[2]``,
+    rang donné seulement entre frères de même nom) et aperçu de son texte."""
     line: int
     position: int
     end_position: int
@@ -40,6 +47,11 @@ class XPathMatch:
 
 @dataclass(frozen=True)
 class XPathSearchResult:
+    """Résultat de ``search_xpath`` : l'expression saisie, celle qui a été
+    évaluée (préfixée ``tei:`` si ``namespace_fallback_used``), les éléments
+    trouvés, la valeur d'une expression qui ne rend pas de nœuds
+    (``scalar_value`` : nombre, chaîne, booléen) et le nombre de résultats
+    ignorés parce que ce ne sont pas des éléments (attributs, textes…)."""
     expression: str
     effective_expression: str
     matches: tuple[XPathMatch, ...]
@@ -220,6 +232,12 @@ def _preview(el, limit: int = 180) -> str:
 
 
 def search_xpath(xml_text: str, expression: str) -> XPathSearchResult:
+    """Évalue *expression* (XPath 1.0, lxml) sur *xml_text*, sans entités
+    résolues ni réseau ; les préfixes ``tei`` et ``xml`` sont déclarés. Dans
+    une TEI à espace de noms, une requête sans ``tei:`` qui ne trouve rien est
+    réessayée avec ses noms préfixés. Lève ``XPathUnavailable`` sans lxml,
+    ``XPathQueryError`` si l'expression est vide ou invalide, ou si le XML
+    est mal formé."""
     expression = (expression or "").strip()
     if not expression:
         raise XPathQueryError("EMPTY_XPATH")

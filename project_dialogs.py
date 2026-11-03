@@ -22,6 +22,8 @@ from iiif_page_selection import canvas_key, natural_key, propose_exact_ocr_links
 
 
 class PathRow(QWidget):
+    """Champ de chemin suivi d'un bouton « … » qui ouvre un sélecteur de fichier
+    (``mode="file"``, filtre ``file_filter``) ou de dossier (``mode="dir"``)."""
     def __init__(self, value="", parent=None, mode="file", caption="", file_filter="Tous les fichiers (*)"):
         super().__init__(parent)
         self.mode = mode
@@ -35,6 +37,8 @@ class PathRow(QWidget):
         lay.addWidget(self.edit, 1); lay.addWidget(self.button)
 
     def browse(self):
+        """Bouton « … » : ouvre le sélecteur au chemin du champ (ou au dossier personnel) et met
+        dans le champ le chemin choisi ; rien si l'utilisateur annule."""
         start = self.edit.text().strip() or str(Path.home())
         if self.mode == "dir":
             value = QFileDialog.getExistingDirectory(self, self.caption, start)
@@ -44,6 +48,7 @@ class PathRow(QWidget):
             self.edit.setText(value)
 
     def text(self):
+        """Chemin saisi, sans blancs autour ; chaîne vide si le champ est vide."""
         return self.edit.text().strip()
 
 
@@ -251,6 +256,9 @@ class IIIFCanvasPicker(QDialog):
             QDesktopServices.openUrl(QUrl(str(url)))
 
     def selection(self):
+        """``(canevas, liens)`` d'après le tableau : clés des canevas cochés dans « Inclure », dans
+        l'ordre du manifeste, et ``(fichier, clé du canevas)`` pour ceux qui ont un fichier
+        « ALTO / PAGE associé »."""
         selected, links = [], []
         for i in range(self.table.rowCount()):
             if self.table.item(i, 0).checkState() != Qt.CheckState.Checked:
@@ -308,6 +316,11 @@ class IIIFCanvasPicker(QDialog):
 
 
 class WitnessEditDialog(QDialog):
+    """Boîte « Témoin du projet » : sigle, nom, source des images (fichiers locaux, ou Manifest
+    IIIF et sa sélection de canevas), fichier de synchronisation JSON et fichiers ALTO/PAGE
+    d'un témoin. Ouverte par « Ajouter… » et « Modifier… » du tableau des témoins ; avec
+    ``siglum_locked``, le sigle n'y est pas modifiable (« Changer le sigle… »). Elle vérifie
+    les fichiers à « OK » mais n'écrit rien : ``witness()`` rend le témoin décrit."""
     IMAGE_FILTER = "Images (*.jpg *.jpeg *.png *.tif *.tiff *.bmp *.webp)"
 
     def __init__(self, tr, witness=None, parent=None, project_root=None, siglum_locked=False):
@@ -845,6 +858,11 @@ class WitnessEditDialog(QDialog):
         return out
 
     def witness(self):
+        """Le témoin décrit par la boîte, en ``WitnessDraft`` : identifiant (``witness_id``), sigle
+        s'il en diffère, nom (le sigle par défaut), mode d'import de la synchronisation, des
+        images et des fichiers ALTO/PAGE (``copy``, ``reference`` ou ``keep``). Seules les
+        données du type d'images choisi sont reprises. Le rôle est toujours ``secondary`` : le
+        pivot se désigne dans le tableau des témoins."""
         raw = self.alignment.text().strip()
         image_type = self.image_source.currentData() or "none"
         alignment_path = Path(raw).expanduser().resolve() if raw else None
@@ -882,6 +900,11 @@ class WitnessEditDialog(QDialog):
 
 
 class WitnessTable(QWidget):
+    """Tableau des témoins des boîtes « Nouveau projet… » et « Paramètres du projet… », avec
+    les boutons « Ajouter… », « Modifier… », « Supprimer », « Définir comme témoin pivot »
+    et, pour un projet existant (``saved_ids``), « Changer le sigle… » (signal
+    ``rename_requested``). Chaque ligne garde les données de son témoin dans les rôles Qt de
+    ses cellules ; ``witnesses()`` les rend en ``WitnessDraft``."""
     # « Changer le sigle… » (V0.9.4.0) : identifiant du témoin choisi.
     rename_requested = Signal(str)
 
@@ -1024,6 +1047,9 @@ class WitnessTable(QWidget):
         return None
 
     def add_witness(self):
+        """« Ajouter… » : ouvre la boîte d'un nouveau témoin et l'ajoute en fin de tableau ; le
+        premier témoin du tableau devient le pivot. Un sigle, ou un identifiant XML, déjà pris
+        par un autre témoin est refusé avec un message."""
         dlg = WitnessEditDialog(self.tr, parent=self, project_root=self.project_root)
         if dlg.exec() == QDialog.DialogCode.Accepted:
             w = dlg.witness()
@@ -1034,6 +1060,9 @@ class WitnessTable(QWidget):
             self._append(w, self.table.rowCount() == 0)
 
     def edit_witness(self):
+        """« Modifier… » (ou double-clic) : ouvre la boîte du témoin de la ligne courante et reporte
+        ses changements dans la ligne ; son rôle (pivot ou non) ne change pas. Le sigle d'un
+        témoin déjà enregistré y est verrouillé : il change par « Changer le sigle… »."""
         r = self.table.currentRow()
         if r < 0: return
         old = self.witness_at(r)
@@ -1073,6 +1102,8 @@ class WitnessTable(QWidget):
         self.table.item(r, 3).setData(Qt.ItemDataRole.UserRole + 14, list(getattr(new, 'iiif_page_links', ()) or ()))
 
     def remove_witness(self):
+        """« Supprimer » : retire du tableau le témoin de la ligne courante ; si c'était le pivot,
+        le premier témoin restant le devient."""
         r = self.table.currentRow()
         if r < 0: return
         was_base = bool(self.table.item(r, 0).data(Qt.ItemDataRole.UserRole))
@@ -1081,6 +1112,8 @@ class WitnessTable(QWidget):
             self._mark_base(0)
 
     def set_base(self):
+        """« Définir comme témoin pivot » : le témoin de la ligne courante devient le pivot, les
+        autres « Secondaire »."""
         r = self.table.currentRow()
         if r >= 0: self._mark_base(r)
 
@@ -1091,6 +1124,8 @@ class WitnessTable(QWidget):
             self.table.item(r, 2).setText(self.tr("project.witness.base") if is_base else self.tr("project.witness.secondary"))
 
     def witness_at(self, r):
+        """Le témoin de la ligne ``r`` en ``WitnessDraft``, reconstitué depuis les données gardées
+        dans ses cellules ; son rôle est ``base`` s'il est le pivot, ``secondary`` sinon."""
         raw_alignment = self.table.item(r, 5).text().strip()
         alignment = None if raw_alignment in {"", self.tr("common.none")} else Path(raw_alignment)
         image_type = self.table.item(r, 3).data(Qt.ItemDataRole.UserRole) or "auto"
@@ -1122,9 +1157,11 @@ class WitnessTable(QWidget):
         )
 
     def witnesses(self):
+        """Les témoins du tableau, dans son ordre (``witness_at``)."""
         return [self.witness_at(r) for r in range(self.table.rowCount())]
 
     def base_witness(self):
+        """Identifiant XML du témoin pivot, ou chaîne vide si aucun ne l'est."""
         for r in range(self.table.rowCount()):
             if self.table.item(r, 0).data(Qt.ItemDataRole.UserRole):
                 return self.table.item(r, 0).data(Qt.ItemDataRole.UserRole + 1) or self.table.item(r, 0).text()
@@ -1176,6 +1213,10 @@ def run_pivot_scaffold_dialog(tr, parent, witnesses, base_witness, project_root,
 
 
 class NewProjectDialog(QDialog):
+    """Boîte « Nouveau projet… » (menu « Fichier ») : dossier, titre, point de départ (TEI
+    existante ou transcription vierge, avec la préparation de la transcription du témoin
+    pivot), schéma, langue, XSLT et témoins. Elle vérifie les choix à « OK » mais ne crée
+    rien : la fenêtre crée le projet d'après ``values()``."""
     def __init__(self, tr, languages, parent=None):
         super().__init__(parent)
         self.tr = tr
@@ -1280,6 +1321,11 @@ class NewProjectDialog(QDialog):
         self.schema_hint.setText(self.tr(f"project.schema.hint.{mode}"))
 
     def values(self):
+        """Choix de la boîte, en dictionnaire : ``target_dir``, ``title`` (le nom du dossier par
+        défaut), ``creation_mode`` (``existing`` ou ``blank``), ``edition`` (None pour une
+        transcription vierge), ``schema_mode``, ``schema``, ``language``, ``xslt_mode``,
+        ``witnesses``, ``base_witness`` (le pivot), ``prepare_pivot`` (vrai seulement pour une
+        transcription vierge) et ``pivot_lines``. Les chemins sont absolus."""
         return {
             "target_dir": Path(self.folder.text()).expanduser().resolve(),
             "title": self.title_edit.text().strip() or Path(self.folder.text()).name,
@@ -1298,6 +1344,12 @@ class NewProjectDialog(QDialog):
 
 
 class ProjectSettingsDialog(QDialog):
+    """Boîte « Paramètres du projet… » : titre, fichiers de l'édition, du schéma, de la XSLT, de
+    la CSS et des éléments personnalisés, traductions, sortie web, préparation de la
+    transcription du témoin pivot et témoins. ``exec()`` rend ``Accepted``, ou ``RENAME``
+    quand « Changer le sigle… » est demandé (``rename_witness_id``). Elle n'écrit rien :
+    ``project_actions`` enregistre ``draft()`` et lit les cases ``pivot_prepare`` et
+    ``pivot_lines``."""
     # Code de retour de exec() : changer le sigle de ``rename_witness_id``.
     RENAME = 2
 
@@ -1440,6 +1492,11 @@ class ProjectSettingsDialog(QDialog):
         self.accept()
 
     def draft(self):
+        """Les réglages de la boîte en ``ProjectDraft`` : chemins absolus, témoins du tableau et
+        pivot. Ce que la boîte ne montre pas (documents, requêtes XPath, parties,
+        transformations, réglages du texte web) est repris du projet tel quel, pour que la
+        réécriture de project.xml ne l'efface pas. Aussi appelée à l'ouverture : « Changer le
+        sigle… » n'est permis que si rien n'a changé depuis."""
         return ProjectDraft(
             title=self.title_edit.text().strip() or self.project.path.parent.name,
             edition=Path(self.edition.text()).expanduser().resolve(),

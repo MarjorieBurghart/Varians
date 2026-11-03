@@ -72,14 +72,20 @@ class LbIndex:
         self.dirty = True
 
     def set(self, spans: Iterable[Span] | None) -> None:
+        """Remplace l'index par ``spans`` (``(début, fin)`` de chaque ``<lb/>``
+        du pivot) et le déclare à jour."""
         self.spans = list(spans or [])
         self.dirty = False
 
     def invalidate(self) -> None:
+        """Déclare l'index périmé (``dirty``) : l'appelant le reconstruit au
+        prochain accès (``MainWindow.lb_spans``)."""
         self.dirty = True
 
     @staticmethod
     def scan(text: str, pattern) -> list[Span]:
+        """``(début, fin)`` de chaque correspondance de ``pattern`` dans ``text``,
+        dans l'ordre (en pratique ``pivot_lines.pivot_lb_pattern``)."""
         return [(m.start(), m.end()) for m in pattern.finditer(text)]
 
     def ordinal_at(self, position: int) -> Optional[int]:
@@ -246,14 +252,17 @@ class DocumentSession:
 
     @property
     def is_edition(self) -> bool:
+        """Vrai pour l'édition TEI du projet."""
         return self.role == "edition"
 
     @property
     def is_part(self) -> bool:
+        """Vrai pour une partie de l'édition, incluse par ``xi:include``."""
         return self.role == "part"
 
     @property
     def is_auxiliary(self) -> bool:
+        """Vrai pour un document auxiliaire, déclaré dans ``<documents>``."""
         return self.role == "auxiliary"
 
     @property

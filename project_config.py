@@ -51,6 +51,8 @@ DEFAULT_APPLICATION_XSLT = APPLICATION_ROOT / "rendering" / "tei-to-html.xsl"
 
 @dataclass(frozen=True)
 class LocalImageConfig:
+    """Image locale d'un témoin (``<images type="files"><image file label
+    width height surface/>``), chemin résolu."""
     path: Path
     label: str = ""  # folio/page affiché et utilisé dans @n
     width: int | None = None
@@ -59,11 +61,18 @@ class LocalImageConfig:
 
 @dataclass(frozen=True)
 class AltoFileConfig:
+    """Fichier ALTO d'un témoin (``<alto type="files"><file file label/>``),
+    chemin résolu ; ``label`` vaut par défaut le nom du fichier sans
+    extension."""
     path: Path
     label: str = ""
 
 @dataclass(frozen=True)
 class WitnessConfig:
+    """Témoin déclaré dans project.xml (``<witness>``) : identifiant, nom
+    affiché, JSON d'alignement (None sans synchronisation), rôle (``base``
+    pour le témoin pivot, ``secondary`` sinon), sources d'images et d'ALTO,
+    réglages IIIF et sigle saisi."""
     id: str
     label: str
     alignment: Path | None
@@ -91,6 +100,7 @@ class WitnessConfig:
 
     @property
     def is_base(self) -> bool:
+        """Vrai pour le témoin pivot (rôle ``base``)."""
         return self.role == "base"
 
     @property
@@ -117,6 +127,7 @@ class DocumentConfig:
 
     @property
     def display_label(self) -> str:
+        """Nom de l'onglet : ``label``, sinon le nom du fichier."""
         return self.label or self.path.name
 
 
@@ -187,6 +198,9 @@ WEB_TEXT_MODES = ("established", "witness")
 
 @dataclass(frozen=True)
 class ProjectConfig:
+    """project.xml lu par :func:`load_project` : chemins résolus (relatifs au
+    dossier du projet), témoins dans l'ordre du fichier, ``base_witness``
+    (identifiant du témoin pivot) et réglages du projet."""
     path: Path
     title: str
     edition: Path
@@ -226,14 +240,17 @@ class ProjectConfig:
 
     @property
     def root_dir(self) -> Path:
+        """Dossier du projet (celui de project.xml)."""
         return self.path.parent
 
     @property
     def witness_by_id(self) -> dict[str, WitnessConfig]:
+        """Témoins par identifiant (dictionnaire refait à chaque appel)."""
         return {w.id: w for w in self.witnesses}
 
     @property
     def base(self) -> WitnessConfig:
+        """Le témoin pivot (``base_witness``)."""
         return self.witness_by_id[self.base_witness]
 
 
@@ -380,6 +397,17 @@ def _parse_transformations(root: ET.Element) -> tuple[TransformScenario, ...]:
 
 
 def load_project(path: str | Path) -> ProjectConfig:
+    """Lit project.xml (``path``) et rend un :class:`ProjectConfig`, sans rien
+    écrire.
+
+    Les chemins relatifs le sont au dossier du projet ; la plupart des
+    éléments et attributs sont facultatifs (valeurs par défaut, anciens
+    projets compris). Le pivot est ``<witnesses base>``, à défaut le seul
+    ``<witness role="base">`` ; les rôles sont ensuite recalculés d'après
+    lui. Lève ``ProjectConfigError`` (racine inattendue, ``<edition>`` ou
+    ``<witnesses>`` absent, attribut exigé manquant, valeur inconnue, aucun
+    témoin, pivot absent ou inconnu) et ``ProjectFileError`` si la feuille
+    XSLT intégrée de Varians manque."""
     path = Path(path).expanduser().resolve()
     root_dir = path.parent
     root = ET.parse(path).getroot()

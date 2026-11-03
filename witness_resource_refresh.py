@@ -66,6 +66,9 @@ def alignment_error_text(exc, translate):
 
 
 def flatten_primary(cache):
+    """``(items, by_key)`` du témoin pivot : ses lignes, page après page
+    (``{'p': page, 'l': ligne, 'key': 'page::numéro'}``), et le rang de chaque
+    clé. Ces clés sont celles que citent les ``base_keys`` des autres témoins."""
     items, by_key = [], {}
     for page in cache.get('pages', []):
         for line in page.get('lines', []):
@@ -76,6 +79,10 @@ def flatten_primary(cache):
 
 
 def flatten_secondary(cache):
+    """``(items, by_base)`` d'un témoin autre que le pivot : ses lignes triées
+    par ``order`` (tri stable, 0 à défaut ; clé ``page::alto_id``, ou numéro
+    de ligne), et pour chaque clé du pivot citée dans ``base_keys`` (ou
+    l'ancien ``keys816``) les rangs des lignes qui la citent."""
     items = [{'p': page, 'l': line,
               'key': f"{page['id']}::{line.get('alto_id') or line.get('line')}"}
              for page in cache.get('pages', []) for line in page.get('lines', [])]
@@ -98,12 +105,20 @@ def line_keys(cache):
 
 
 def sync_fingerprint(cache):
+    """Empreinte SHA-256 des associations de lignes (``line_keys``) : elle
+    change si une ligne est associée autrement, pas si seul le texte change."""
     data = json.dumps(line_keys(cache), ensure_ascii=False, separators=(',', ':'))
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
 
 
 @dataclass
 class RuntimeState:
+    """Ressources assemblées des témoins (``assemble_resources``), que
+    l'interface applique d'un coup : caches lus (``raw``) et complétés des
+    ALTO et des images (``caches``), lignes de chaque témoin et éléments à
+    afficher, index des lignes du pivot et des ``base_keys``, nombre de lignes
+    synchronisées du pivot, synchronisation active ou non, nombre de liens
+    de chaque témoin, présence d'images."""
     raw: dict
     caches: dict
     witness_items: dict
@@ -184,6 +199,10 @@ def assemble_resources(project):
 
 @dataclass(frozen=True)
 class WitnessDiagnostic:
+    """Ligne du diagnostic d'un témoin (``diagnostic_rows``) : pages, lignes
+    avec géométrie, images (dont fichiers manquants), lignes liées au pivot,
+    clés utilisables ou inconnues, codes des problèmes, synchronisation
+    active, empreinte des associations (``sync_fingerprint``)."""
     id: str
     label: str
     is_base: bool

@@ -11,6 +11,9 @@ CACHE_FORMAT = "varians-iiif-manifest-cache"
 
 @dataclass(frozen=True)
 class IIIFManifest:
+    """Manifeste IIIF lu par :func:`parse_manifest` : adresse d'origine
+    (``source``), titre, version de l'API Presentation (2 ou 3), une page
+    par canvas qui a une image, et le JSON du manifeste (``raw``)."""
     source: str
     label: str
     presentation_version: int
@@ -89,6 +92,13 @@ def _web(url):
 
 
 def parse_manifest(data: dict, source: str = "") -> IIIFManifest:
+    """Lit un manifeste IIIF Presentation 2 (``sequences``) ou 3 (``items``),
+    ou le cache écrit par :func:`write_cache`. Chaque canvas qui a une
+    image devient une page ``{"id": "iiif-0001", "label", "image", "lines":
+    []}`` ; ``image`` donne le service d'images, l'image, ses dimensions,
+    le canvas et les limites annoncées (``maxWidth``…) ; service et image ne
+    sont gardés qu'en http(s). ``ValueError`` si le JSON n'est pas un
+    manifeste ou si aucune image n'est exploitable."""
     if isinstance(data, dict) and data.get("_format") == CACHE_FORMAT and isinstance(data.get("manifest"), dict):
         source = source or str(data.get("source") or "")
         data = data["manifest"]
@@ -140,6 +150,10 @@ def parse_manifest(data: dict, source: str = "") -> IIIFManifest:
 
 
 def fetch_manifest(source: str, timeout: int = 20) -> dict:
+    """JSON du manifeste ``source`` : téléchargé si c'est une adresse http(s)
+    (``timeout`` en secondes), lu sur le disque sinon (chemin ou
+    ``file://``). ``ValueError`` si ``source`` est vide ; les erreurs de
+    réseau, de fichier ou de JSON remontent telles quelles."""
     s=str(source or "").strip()
     if not s: raise ValueError("URL du Manifest IIIF manquante.")
     parsed=urlparse(s)
@@ -152,17 +166,28 @@ def fetch_manifest(source: str, timeout: int = 20) -> dict:
 
 
 def cache_path(project_root: str|Path, witness_id: str) -> Path:
+    """Fichier du cache du manifeste d'un témoin : ``iiif/<id>.manifest.json``
+    dans le projet. L'identifiant n'y garde que les lettres et chiffres
+    ASCII, ``_``, ``.`` et ``-`` (``witness`` s'il ne reste rien) : deux
+    témoins peuvent ainsi tomber sur le même fichier (α et β)."""
     safe=re.sub(r"[^A-Za-z0-9_.-]+","_",witness_id).strip("._") or "witness"
     return Path(project_root).resolve()/"iiif"/f"{safe}.manifest.json"
 
 
 def write_cache(path: str|Path, source: str, raw: dict) -> Path:
+    """Écrit le cache d'un manifeste, ``{"_format", "source", "manifest"}``
+    avec le JSON du manifeste tel quel, en créant son dossier au besoin ;
+    rend son chemin. L'ancien fichier est écrasé (ni écriture atomique, ni
+    ``.bak``)."""
     p=Path(path); p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps({"_format":CACHE_FORMAT,"source":source,"manifest":raw},ensure_ascii=False,indent=2),encoding="utf-8")
     return p
 
 
 def read_cache(path: str|Path, source: str|None=None) -> IIIFManifest|None:
+    """Manifeste du cache ``path`` ; None si le fichier n'existe pas, ou s'il a
+    été écrit pour une autre adresse que ``source``. Un JSON abîmé ou un
+    manifeste inexploitable lève ``ValueError``."""
     p=Path(path)
     if not p.is_file(): return None
     data=json.loads(p.read_text(encoding="utf-8-sig"))
@@ -172,6 +197,10 @@ def read_cache(path: str|Path, source: str|None=None) -> IIIFManifest|None:
 
 
 def import_manifest(source: str, cache_file: str|Path|None=None, *, force=False, raw: dict|None=None) -> IIIFManifest:
+    """Manifeste de ``source`` : pris dans le cache ``cache_file`` s'il vaut
+    pour cette adresse, sauf avec ``force`` ou ``raw`` ; sinon lu dans
+    ``raw`` (JSON déjà chargé) ou téléchargé (:func:`fetch_manifest`), et
+    le cache est réécrit si le manifeste est exploitable."""
     if cache_file and not force and raw is None:
         cached=read_cache(cache_file, source)
         if cached: return cached
@@ -182,6 +211,12 @@ def import_manifest(source: str, cache_file: str|Path|None=None, *, force=False,
 
 
 def overlay_manifest(cache: dict, manifest: IIIFManifest) -> dict:
+    """Copie du JSON d'alignement ``cache`` où chaque page prend l'image de la
+    page de même rang du manifeste ; une page du JSON sans pendant reçoit
+    une image ``none``, une page du manifeste sans pendant devient une page
+    sans lignes. ``meta`` note l'adresse et la version du manifeste.
+    Correspondance par rang seulement : Varians rattache les images par
+    ``iiif_resolution.overlay_resolved_manifest``, jamais par rang."""
     out=dict(cache or {}); old=list((cache or {}).get("pages") or []); new=[]
     count=max(len(old),len(manifest.pages))
     for i in range(count):

@@ -159,6 +159,8 @@ def _t(key, /, default=None, **values):
 
 
 class XmlHealthSignals(QObject):
+    """Signal de ``XmlHealthWorker`` : le résultat du contrôle de bonne
+    formation revient au fil principal (``_async_xml_health_finished``)."""
     # revision QTextDocument, bien formé, ligne, colonne 0-based, message, spans lb
     finished = Signal(int, bool, int, int, str, object)
 
@@ -227,6 +229,10 @@ class CtrlEConfigDialog(QDialog):
         layout.addWidget(buttons)
 
     def save_config(self):
+        """Bouton « Enregistrer » : vérifie que le texte est du XML bien formé, de
+        racine ``<customElements>``, puis l'écrit (écriture atomique, copie
+        ``.bak``). True si le fichier est enregistré ; False après un message
+        d'erreur. ``closeEvent`` l'appelle aussi avant de fermer la boîte."""
         text = self.editor.toPlainText()
         try:
             root = ET.fromstring(text)
@@ -282,6 +288,12 @@ def _document_attribute(path):
 
 
 class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, TransformScenariosMixin, StylesheetCheckMixin, SchematronCheckMixin, SchematronRulesMixin, ReplaceBarMixin, SearchResultsMixin, QMainWindow):
+    """Fenêtre d'un projet : éditeur XML source, aperçu mis en forme, panneaux
+    des témoins, menus et barres d'outils. Le constructeur lit ``project.xml``
+    et les ressources des témoins (alignements, ALTO, images) ; les commandes
+    sont réparties entre les classes mixtes (``*Mixin``) dont elle hérite. Les
+    attributs déclarés en tête renvoient à l'état du document ouvert
+    (``self.document``, voir ``document_session``)."""
     # --- État du document ouvert (voir document_session.DocumentSession) ---
     current_path = _document_attribute("path")
     modified = _document_attribute("modified")
@@ -1007,15 +1019,24 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self._set_lb_spans(LbIndex.scan(text, self.lb_base_re))
 
     def lb_spans(self):
+        """Positions ``(début, fin)`` des ``<lb/>`` du témoin pivot dans le texte de
+        l'éditeur. L'index est d'abord rebalayé s'il est périmé (``dirty``) ; dans
+        l'édition, l'état de structure de la barre d'état est alors mis à jour."""
         if self.document.lb.dirty:
             self._rebuild_lb_cache()
         return self.document.lb.spans
 
     def ordinal_at_position(self, position):
+        """Rang (à partir de 0) du dernier ``<lb/>`` du pivot qui commence avant ou
+        à ``position`` (indice Python dans le texte de l'éditeur) ; 0 avant le
+        premier, None si le texte n'en a aucun. Compté dans le seul document
+        affiché ; pour une édition en parties, voir ``_base_ordinal_at``."""
         self.lb_spans()
         return self.document.lb.ordinal_at(position)
 
     def ordinal_at_cursor(self):
+        """``ordinal_at_position`` au curseur de l'éditeur (position Qt convertie en
+        indice Python)."""
         return self.ordinal_at_position(self.editor.positions().python(self.editor.textCursor().position()))
 
     def _source_selection_descriptor(self, text, selection_start):
@@ -1358,6 +1379,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return bool(focus is widget or (focus is not None and widget.isAncestorOf(focus)))
 
     def focus_find(self):
+        """Ctrl+F (« Recherche simple ») selon l'endroit : la barre de recherche de
+        l'éditeur de fragment s'il a le focus, celle de l'aperçu si son onglet est affiché ;
+        sinon le champ de recherche de la barre d'outils reçoit le focus, et
+        reprend la sélection de l'éditeur XML si elle tient sur une ligne (120
+        caractères au plus)."""
         # Ctrl+F est contextuel aux trois espaces d'édition/lecture.
         if self.formatted_view.focus_is_in_fragment():
             self.formatted_view.show_fragment_find()
@@ -1402,12 +1428,20 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             field.setFocus()
 
     def find_source_next(self):
+        """Occurrence suivante, dans le XML source, du texte du champ de recherche
+        de la barre d'outils (touche Entrée de ce champ)."""
         self._find_source(False)
 
     def find_source_previous(self):
+        """Occurrence précédente, dans le XML source, du texte du champ de
+        recherche de la barre d'outils."""
         self._find_source(True)
 
     def find_next(self):
+        """F3 (« Occurrence suivante ») selon l'endroit : dans l'éditeur de fragment
+        s'il a le focus et que sa barre de recherche est ouverte ; dans l'aperçu si son
+        onglet est affiché (sa barre de recherche fermée, elle s'ouvre seulement) ;
+        sinon dans le XML source."""
         if self.formatted_view.fragment_find_bar.isVisible() and self.formatted_view.focus_is_in_fragment():
             self.formatted_view.find_fragment_next()
         elif self.left_tabs.currentWidget() is self.formatted_view:
@@ -1419,6 +1453,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             self._find_source(False)
 
     def find_previous(self):
+        """Shift+F3 (« Occurrence précédente ») : comme ``find_next``, en remontant."""
         if self.formatted_view.fragment_find_bar.isVisible() and self.formatted_view.focus_is_in_fragment():
             self.formatted_view.find_fragment_previous()
         elif self.left_tabs.currentWidget() is self.formatted_view:
@@ -1587,6 +1622,9 @@ class WelcomeWindow(QMainWindow):
         event.accept()
 
     def update_recent_projects_menu(self):
+        """Remplit le sous-menu « Réouvrir un projet récent… » : une entrée par
+        projet (titre lu dans le fichier projet, sinon nom de son dossier), ou
+        « Aucun projet récent », puis « Effacer la liste des projets récents »."""
         self.recent_menu.clear()
         paths = recent_project_paths()
         if not paths:
@@ -1610,6 +1648,8 @@ class WelcomeWindow(QMainWindow):
         self.recent_menu.addAction(clear_action)
 
     def clear_recent_projects_action(self):
+        """« Effacer la liste des projets récents » : vide la liste enregistrée,
+        puis le sous-menu."""
         clear_recent_projects()
         self.update_recent_projects_menu()
 
@@ -1625,6 +1665,9 @@ class WelcomeWindow(QMainWindow):
         return True
 
     def open_project_dialog(self):
+        """Fichier ▸ « Ouvrir un projet… » (Ctrl+O) : choisit un fichier projet, en
+        partant du dossier du projet le plus récent (sinon du dossier personnel),
+        et l'ouvre ; la fenêtre d'accueil se ferme si l'ouverture réussit."""
         recent = recent_project_paths()
         start = str(Path(recent[0]).parent if recent else Path.home())
         fn, _ = QFileDialog.getOpenFileName(
@@ -1635,6 +1678,8 @@ class WelcomeWindow(QMainWindow):
             self._open_project_path(Path(fn))
 
     def open_recent_project(self, path):
+        """Ouvre le projet ``path`` choisi dans les projets récents. Un fichier qui
+        n'existe plus est retiré de la liste, avec un avertissement."""
         path = Path(path).expanduser().resolve()
         if not path.is_file():
             remove_recent_project(path)
@@ -1644,6 +1689,12 @@ class WelcomeWindow(QMainWindow):
         self._open_project_path(path)
 
     def new_project_dialog(self):
+        """Fichier ▸ « Nouveau projet… » (Ctrl+N) : la boîte ``NewProjectDialog``,
+        puis la création du projet (nouvelle transcription, ou copie d'une
+        édition TEI existante), la « Préparation de la transcription du témoin
+        pivot » si elle est demandée (nouvelle transcription seulement), et
+        l'ouverture du projet. Si un témoin IIIF demande une copie locale, le
+        gestionnaire des téléchargements IIIF démarre aussitôt."""
         languages = [(info.code, info.label) for info in I18N.available_languages()]
         dlg = NewProjectDialog(_t, languages, self)
         if dlg.exec() != QDialog.DialogCode.Accepted:
@@ -1690,6 +1741,12 @@ class WelcomeWindow(QMainWindow):
 
 
 def main():
+    """Point d'entrée de l'interface : ouvre le projet passé en argument, sinon
+    celui qui était encore ouvert à la dernière fermeture (oublié, avec un
+    avertissement, s'il ne se rouvre pas), sinon la fenêtre d'accueil. La
+    fenêtre est maximisée ; les TEI Stylesheets sont vérifiées peu après
+    (``tei_stylesheets_ui.at_launch``). Renvoie le code de sortie de
+    l'application, 2 si le projet passé en argument ne s'ouvre pas."""
     app = QApplication.instance() or QApplication(sys.argv)
     apply_application_icon(app)
     _install_light_selection_palette(app)

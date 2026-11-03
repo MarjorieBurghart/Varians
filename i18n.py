@@ -230,12 +230,19 @@ def format_message(text: str, language: str, /, **values) -> str:
 
 @dataclass(frozen=True)
 class LanguageInfo:
+    """Langue disponible : code, nom affiché (``label`` du catalogue) et
+    chemin ``<code>.xml`` dans le dossier ``directory`` du gestionnaire ; ce
+    fichier peut ne pas exister, le catalogue venant alors de Varians."""
     code: str
     label: str
     path: Path
 
 
 class I18nManager:
+    """Catalogues de traduction et langue active. Ceux de Varians (son dossier
+    ``i18n``) sont lus d'abord, puis ceux de ``directory`` (le projet),
+    prioritaires clé par clé. :meth:`tr` cherche dans ``language``, puis
+    dans ``fallback``."""
     def __init__(self, directory: str | Path, language: str = "fr", fallback: str = "en"):
         self.directory = Path(directory).resolve()
         self.language = language or "fr"
@@ -245,6 +252,11 @@ class I18nManager:
         self.reload()
 
     def reload(self) -> None:
+        """Relit tous les catalogues : ceux de Varians, puis ceux de
+        ``directory``, dont chaque clé remplace celle de Varians. Un fichier
+        illisible ou dont la racine n'est pas ``<translations>`` est ignoré ;
+        « \\n » et « \\t » écrits dans un texte deviennent un saut de ligne et
+        une tabulation."""
         self._catalogs.clear()
         self._labels.clear()
         # Le catalogue installé fournit les nouvelles clés ajoutées après la
@@ -273,18 +285,24 @@ class I18nManager:
                 self._labels[code] = label
 
     def available_languages(self) -> list[LanguageInfo]:
+        """Langues dont un catalogue a été lu, triées par code."""
         return [
             LanguageInfo(code, self._labels.get(code, code), self.directory / f"{code}.xml")
             for code in sorted(self._catalogs)
         ]
 
     def set_language(self, code: str) -> bool:
+        """Change la langue active ; False, sans rien changer, si aucun catalogue
+        n'a été lu pour ``code``."""
         if code not in self._catalogs:
             return False
         self.language = code
         return True
 
     def tr(self, key: str, /, default: str | None = None, **values) -> str:
+        """Texte de ``key`` dans la langue active, à défaut dans la langue de
+        secours, à défaut ``default`` ou la clé elle-même ; formes plurielles
+        choisies et variables remplacées (:func:`format_message`)."""
         # Le pluriel suit la langue du texte trouvé, celle de secours comprise.
         language = self.language
         text = self._catalogs.get(self.language, {}).get(key)
@@ -297,6 +315,8 @@ class I18nManager:
         return format_message(text, language, **values)
 
     def export_catalogs(self) -> dict:
+        """Langue active, langue de secours, langues disponibles et catalogues,
+        pour le viewer web (``web_viewer.generator``)."""
         return {
             "default": self.language,
             "fallback": self.fallback,
@@ -309,4 +329,5 @@ class I18nManager:
 
 
 def load_i18n(directory: str | Path, language: str = "fr", fallback: str = "en") -> I18nManager:
+    """Raccourci pour ``I18nManager(directory, language, fallback)``."""
     return I18nManager(directory, language, fallback)

@@ -19,6 +19,8 @@ from project_config import DEFAULT_APPLICATION_XSLT, WEB_TEXT_MODES, DocumentCon
 
 @dataclass
 class LocalImageDraft:
+    """Image locale d'un témoin en cours d'édition : brouillon modifiable de
+    ``project_config.LocalImageConfig``."""
     path: Path
     label: str = ""  # folio/page affiché et repris dans tei:pb/@n
     width: int | None = None
@@ -27,11 +29,17 @@ class LocalImageDraft:
 
 @dataclass
 class AltoFileDraft:
+    """Fichier ALTO d'un témoin en cours d'édition : brouillon modifiable de
+    ``project_config.AltoFileConfig``."""
     path: Path
     label: str = ""
 
 @dataclass
 class WitnessDraft:
+    """Témoin en cours d'édition, avant l'écriture de project.xml : les champs
+    de ``project_config.WitnessConfig``, plus le manifeste IIIF déjà chargé
+    et les modes d'import (``keep``, ``copy``, ``reference``) qu'appliquent
+    les fonctions ``prepare_…_for_project``."""
     id: str
     label: str
     alignment: Path | None = None
@@ -70,16 +78,24 @@ class WitnessDraft:
 
     @property
     def display_siglum(self) -> str:
+        """Sigle montré : le sigle saisi (sans blancs autour), sinon l'identifiant."""
         return (self.siglum or "").strip() or self.id
 
     @property
     def display_title(self) -> str:
+        """« sigle · nom affiché » (witness_ids.witness_title)."""
         from witness_ids import witness_title
         return witness_title(self.id, self.display_siglum, self.label)
 
 
 @dataclass
 class ProjectDraft:
+    """Contenu de project.xml avant son écriture (:func:`write_project_xml`),
+    pour un projet créé (:func:`create_portable_project`) ou modifié par
+    « Paramètres du projet… ». Cette boîte recopie telles quelles les
+    données qu'elle ne modifie pas (documents, requêtes XPath, parties,
+    scénarios, texte du viewer web) : sans elles, la réécriture les
+    effacerait."""
     title: str
     edition: Path
     language: str

@@ -42,11 +42,15 @@ EXPECTED_CHECKS = ("translations", "help", "resources", "project", "relaxng_work
 
 
 def app_version(root=ROOT) -> str:
+    """Version de Varians, lue dans ``APP_VERSION`` de ``app_context.py``
+    (sans importer le module)."""
     text = (Path(root) / "app_context.py").read_text(encoding="utf-8")
     return re.search(r'^APP_VERSION\s*=\s*"([^"]+)"', text, re.MULTILINE).group(1)
 
 
 def platform_tag(system=sys.platform, machine=None) -> str:
+    """Plateforme dans le nom de l'archive : ``windows-x64``, ``macos-arm64``,
+    ``linux-x64``… (une architecture inconnue garde son nom, en minuscules)."""
     machine = (machine or platform.machine()).lower()
     arch = {"amd64": "x64", "x86_64": "x64", "arm64": "arm64", "aarch64": "arm64"}.get(machine, machine)
     if system == "win32":
@@ -57,10 +61,13 @@ def platform_tag(system=sys.platform, machine=None) -> str:
 
 
 def archive_name(version, tag) -> str:
+    """Nom de l'archive : ``Varians-<version>-<plateforme>.zip``."""
     return f"{NAME}-{version}-{tag}.zip"
 
 
 def executable_path(folder, system=sys.platform) -> Path:
+    """Exécutable du dossier construit : ``Varians.exe`` sous Windows,
+    ``Varians.app/Contents/MacOS/Varians`` sous macOS, ``Varians`` ailleurs."""
     folder = Path(folder)
     if system == "win32":
         return folder / f"{NAME}.exe"
@@ -114,6 +121,8 @@ def zip_folder(folder, archive):
 
 
 def write_checksum(archive) -> Path:
+    """Écrit l'empreinte SHA-256 de l'archive à côté d'elle
+    (``<archive>.sha256``, au format de ``sha256sum``) et rend ce fichier."""
     archive = Path(archive)
     digest = hashlib.sha256()
     with archive.open("rb") as stream:
@@ -178,6 +187,10 @@ def _files(folder):
 
 
 def self_test(executable, report_path) -> list:
+    """Lance ``Varians --self-test`` sur l'exécutable construit (sans écran
+    si ``QT_QPA_PLATFORM`` n'est pas défini) et rend les problèmes : pas de
+    rapport, vérifications manquantes ou en échec (``report_problems``), code
+    de sortie non nul. Liste vide si tout va bien."""
     environment = dict(os.environ)
     environment.setdefault("QT_QPA_PLATFORM", "offscreen")
     completed = subprocess.run([str(executable), "--self-test", str(report_path)], env=environment,
@@ -193,6 +206,11 @@ def self_test(executable, report_path) -> list:
 
 
 def build(output) -> Path:
+    """Toutes les étapes de la construction (voir la docstring du module),
+    dans le dossier ``output`` (``work``, ``dist``, ``stage``, rapport et
+    archive) ; rend le chemin de l'archive. S'arrête (``SystemExit``) si la
+    version construite ne passe pas la vérification : aucune archive n'est
+    alors faite. Sur GitHub Actions, les chemins vont dans ``GITHUB_OUTPUT``."""
     output = Path(output).resolve()
     version, tag = app_version(), platform_tag()
     work, dist, stage = output / "work", output / "dist", output / "stage"
@@ -235,6 +253,7 @@ def build(output) -> Path:
 
 
 def main(argv=None) -> int:
+    """Ligne de commande : construit, puis affiche l'archive et sa taille en Mo."""
     parser = argparse.ArgumentParser(description="Construit la version prête à l'emploi de Varians.")
     parser.add_argument("--output", default=str(ROOT / "build" / "binaries"),
                         help="dossier de travail et de l'archive (build/binaries par défaut)")

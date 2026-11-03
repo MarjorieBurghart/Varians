@@ -34,6 +34,7 @@ class TextDocument(QTextDocument):
     """Document d'un fichier ouvert : ``toPlainText`` en donne le texte exact."""
 
     def toPlainText(self):
+        """Le texte exact (``raw_text``), espaces insécables et séparateurs de ligne compris."""
         return raw_text(self)
 
 
@@ -75,6 +76,9 @@ FOLD_REFRESH_MS = 300
 
 
 class XMLHighlighter(QSyntaxHighlighter):
+    """Coloration syntaxique du XML, bloc par bloc, par expressions régulières : balises, noms
+    d'attributs, valeurs entre guillemets, commentaires, entités. Rien n'est analysé au-delà
+    de la ligne : un commentaire ou une balise sur plusieurs lignes n'est pas coloré."""
     def __init__(self, document):
         super().__init__(document)
         self.tag_fmt = QTextCharFormat(); self.tag_fmt.setForeground(QColor("#315a8a"))
@@ -84,6 +88,8 @@ class XMLHighlighter(QSyntaxHighlighter):
         self.entity_fmt = QTextCharFormat(); self.entity_fmt.setForeground(QColor("#327f79"))
 
     def highlightBlock(self, text):
+        """Colore la ligne ``text`` : commentaires, puis balises (noms d'attributs et valeurs
+        compris), puis entités. Seuls ses ``HIGHLIGHT_LIMIT`` premiers caractères sont colorés."""
         text = text[:HIGHLIGHT_LIMIT]
         for m in re.finditer(r"<!--.*?-->", text):
             self.setFormat(m.start(), m.end()-m.start(), self.comment_fmt)
@@ -99,6 +105,9 @@ class XMLHighlighter(QSyntaxHighlighter):
 
 
 class LineNumberArea(QWidget):
+    """Gouttière de ``CodeEditor`` : numéros de ligne et repères de repliage (▾ déplié,
+    ▸ replié), dessinés par ``lineNumberAreaPaintEvent``. Un clic gauche sur un repère
+    replie ou déplie l'élément (``toggle_fold_at_gutter``)."""
     def __init__(self, editor):
         super().__init__(editor); self.editor = editor
     def sizeHint(self):
@@ -113,6 +122,16 @@ class LineNumberArea(QWidget):
 
 
 class CodeEditor(QPlainTextEdit):
+    """Éditeur de texte XML (la source de la fenêtre, et l'éditeur de fragment de la vue
+    XSLT / CSS) : numéros de ligne et repliage, ligne courante et paire de balises du curseur
+    surlignées, occurrence de recherche en jaune, balise fermante supprimée ou renommée avec
+    l'ouvrante, complétion des fermetures, des attributs et des pointeurs ``#id``.
+
+    ``toPlainText`` rend le texte exact. Les positions de Qt (UTF-16) diffèrent des indices
+    Python dès qu'un caractère dépasse U+FFFF : ``positions`` les convertit. La fenêtre
+    branche les rappels facultatifs (``attribute_completion_provider``,
+    ``value_completion_provider``, ``reference_click_provider``, ``context_menu_provider``,
+    ``text_change_listener``)."""
     def __init__(self, parent=None):
         super().__init__(parent)
         # Le texte du document, lu une fois par modification : ``(document,
@@ -267,6 +286,10 @@ class CodeEditor(QPlainTextEdit):
                 popup.hide()
 
     def show_value_completion(self):
+        """Ouvre la liste des pointeurs ``#id`` que propose ``value_completion_provider`` pour la
+        valeur d'attribut en cours (« valeur — description ») et ferme les deux autres listes.
+        Appelée à la frappe de « # », puis tant que la liste reste ouverte. False, liste fermée,
+        s'il n'y a rien à proposer (sélection active, ou valeur qui ne commence pas par « # »)."""
         items, context = self._value_proposals()
         popup = self._value_completer.popup()
         if not items:
@@ -331,6 +354,9 @@ class CodeEditor(QPlainTextEdit):
             return (), None
 
     def show_attribute_completion(self):
+        """Ouvre la liste des noms d'attributs que propose ``attribute_completion_provider`` pour le
+        nom commencé dans une balise, et ferme celle des fermetures. Appelée à la frappe d'une
+        lettre. False, liste fermée, s'il n'y a rien à proposer."""
         items, context = self._attribute_proposals()
         popup = self._attribute_completer.popup()
         if not items:
@@ -655,6 +681,11 @@ class CodeEditor(QPlainTextEdit):
             self._fold_relayouting = False
 
     def toggle_xml_fold(self, line_number=None):
+        """Replie ou déplie un élément : celui dont la balise ouvrante est à la ligne
+        ``line_number`` (à partir de 0) ou, sans numéro, le plus petit élément repliable qui
+        contient la ligne du curseur (« Replier / déplier l’élément »). Un curseur qui serait
+        masqué remonte sur la balise ouvrante. Seuls des blocs sont cachés : le texte et
+        l'historique d'annulation ne changent pas. False s'il n'y a pas d'élément à replier."""
         regions = self._fold_regions()
         if line_number is None:
             region = region_for_cursor(regions, self.textCursor().blockNumber())
@@ -680,12 +711,17 @@ class CodeEditor(QPlainTextEdit):
         return True
 
     def unfold_all_xml(self):
+        """Déplie tout (« Tout déplier »). Appelée aussi à chaque modification du texte, qui peut
+        déplacer les lignes repliées, et quand le curseur arrive sur une ligne masquée."""
         if not self._folded_opening_lines:
             return
         self._folded_opening_lines.clear()
         self._apply_xml_fold_visibility()
 
     def fold_all_xml(self):
+        """« Replier les éléments structurels » : replie les éléments repliables les plus extérieurs,
+        hors conteneurs du document (``TEI``, ``teiCorpus``, ``text``, ``body``, ``front``,
+        ``back``), et place le curseur sur le premier. Les replis précédents sont oubliés."""
         # Les conteneurs de document (<TEI>, <text>, <body>) restent
         # consultables. Replier les premiers éléments *éditoriaux* qui les
         # composent, plutôt que masquer d'un coup tout le manuscrit.
@@ -707,6 +743,9 @@ class CodeEditor(QPlainTextEdit):
         self._apply_xml_fold_visibility()
 
     def toggle_fold_at_gutter(self, point):
+        """Clic en ``point`` dans la gouttière : dans la bande des repères (17 premiers pixels),
+        replie ou déplie l'élément dont la balise ouvrante est sur la ligne cliquée. True si un
+        élément a été replié ou déplié."""
         if point.x() >= 17:
             return False
         block = self.firstVisibleBlock()
@@ -722,13 +761,20 @@ class CodeEditor(QPlainTextEdit):
         return False
 
     def lineNumberAreaWidth(self):
+        """Largeur de la gouttière en pixels : bande des repères de repliage et au moins trois
+        chiffres."""
         digits = max(3, len(str(max(1, self.blockCount()))))
         return 24 + self.fontMetrics().horizontalAdvance("9") * digits
 
     def updateLineNumberAreaWidth(self, _):
+        """Laisse à gauche du texte la place de la gouttière. L'argument (nombre de blocs, du
+        signal ``blockCountChanged``) n'est pas utilisé."""
         self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
 
     def updateLineNumberArea(self, rect, dy):
+        """Suit ``updateRequest`` : fait défiler la gouttière avec le texte (``dy``), sinon en
+        redessine la bande ``rect`` ; recalcule sa largeur quand toute la zone visible est
+        redessinée."""
         if dy: self.lineNumberArea.scroll(0, dy)
         else: self.lineNumberArea.update(0, rect.y(), self.lineNumberArea.width(), rect.height())
         if rect.contains(self.viewport().rect()): self.updateLineNumberAreaWidth(0)
@@ -765,6 +811,10 @@ class CodeEditor(QPlainTextEdit):
             block = block.next()
 
     def highlightCurrentLine(self):
+        """Recompose les surlignages de l'éditeur (``ExtraSelection``) : ligne du curseur, les deux
+        balises de la paire où est le curseur ou la sélection, occurrence de la dernière
+        recherche. Le curseur d'édition n'est pas touché. Appelée à chaque déplacement du
+        curseur et à chaque modification du texte."""
         line = QTextEdit.ExtraSelection()
         line.format.setBackground(QColor("#fff8df"))
         line.format.setProperty(QTextFormat.Property.FullWidthSelection, True)
@@ -807,11 +857,16 @@ class CodeEditor(QPlainTextEdit):
         self.setExtraSelections(selections)
 
     def setSearchMatch(self, start, end, query):
+        """Surligne l'occurrence ``start``–``end`` (positions Qt) d'une recherche de ``query`` sans
+        la sélectionner : une frappe ne peut pas la remplacer. ``find_in_plain_editor`` repart
+        de là pour l'occurrence suivante ou précédente."""
         self._search_match = (start, end)
         self._search_last = (start, end, query.casefold())
         self.highlightCurrentLine()
 
     def clearSearchMatch(self):
+        """Efface le surlignage de recherche et oublie l'occurrence. Appelée aussi à chaque
+        modification du texte."""
         if self._search_match is None and self._search_last is None:
             return
         self._search_match = None

@@ -83,6 +83,8 @@ def at_launch(window, today=None):
 
 
 def error_text(error) -> str:
+    """Message d'une ``LibraryError`` dans la langue de l'interface ; un code
+    sans message (hors ``ERROR_CODES``) prend celui d'une erreur de réseau."""
     code = error.code if error.code in ERROR_CODES else "network"
     return _t(f"tei_stylesheets.error.{code}", detail=error.detail or error.code)
 
@@ -120,6 +122,8 @@ class _Task(QObject):
         self._completed.connect(self._on_completed)
 
     def start(self):
+        """Lance ``work`` dans un fil à part ; la tâche reste dans ``_RUNNING``
+        jusqu'à sa fin (``busy()`` est alors vrai). Renvoie la tâche."""
         _RUNNING.add(self)
         threading.Thread(target=self._run, daemon=True).start()
         return self
@@ -298,9 +302,16 @@ class TeiStylesheetsDialog(QDialog):
         self.refresh()
 
     def library(self):
+        """La version active (``tei_stylesheets.ensure_installed``), ou None ;
+        l'archive livrée avec Varians est d'abord installée si elle est plus
+        récente."""
         return tei_stylesheets.ensure_installed()
 
     def refresh(self, *_args):
+        """Met à jour ce que montre la fenêtre (version, origine, dossier, licence,
+        dernière vérification) ; « Rechercher une mise à jour » est grisé pendant
+        une vérification ou une installation. Sert aussi de rappel ``done`` à
+        ``check_for_update`` ; sans effet si la fenêtre est détruite."""
         if not _alive(self):
             return
         library = self.library()
@@ -334,9 +345,13 @@ class TeiStylesheetsDialog(QDialog):
         self.refresh()
 
     def open_folder(self):
+        """« Ouvrir le dossier » : le dossier montré, dans le gestionnaire de
+        fichiers du système."""
         QDesktopServices.openUrl(QUrl.fromLocalFile(self.folder_label.text()))
 
     def show_licence(self):
+        """« Voir la licence » : ouvre le fichier de licence de la version active
+        avec l'application du système."""
         library = self.library()
         if library is not None:
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(library.licence)))

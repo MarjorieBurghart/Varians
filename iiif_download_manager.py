@@ -16,6 +16,11 @@ from iiif_local import plan_witness_copy, download_witness_copy
 
 
 class DownloadThread(QThread):
+    """Téléchargement des images IIIF d'un témoin hors du fil de l'interface
+    (``download_witness_copy``). ``progress_update`` suit chaque page ;
+    ``completed`` rend le bilan, ou ``{'error': …}``. ``pause_event`` et
+    ``cancel_event`` suspendent ou arrêtent le travail entre deux images ;
+    avec ``force``, les images déjà en local sont téléchargées à nouveau."""
     progress_update = Signal(int, int, str)
     completed = Signal(object)
 
@@ -127,9 +132,14 @@ class IIIFDownloadManager(QDialog):
         return raw
 
     def selected_witness(self):
+        """Témoin choisi dans la liste « Témoin : », ou ``None``."""
         return self.project.witness_by_id.get(self.witness.currentData())
 
     def update_plan(self, *_):
+        """Montre ce que ferait le téléchargement du témoin choisi
+        (``plan_witness_copy``, sans réseau) : résumé des pages, progression,
+        boutons actifs, associations non résolues ajoutées au journal. Sans
+        effet pendant un téléchargement."""
         if self.thread is not None and self.thread.isRunning():
             return
         w = self.selected_witness()
@@ -165,6 +175,11 @@ class IIIFDownloadManager(QDialog):
             self.log.append(self.tr('iiif.manager.warning', message=self._localized_warning(msg)))
 
     def start_download(self, force=False):
+        """Lance le téléchargement du témoin choisi dans un ``DownloadThread`` :
+        « Télécharger les manquantes », ou « Actualiser la sélection » avec
+        ``force`` (les images déjà en local sont téléchargées à nouveau). Un
+        seul téléchargement à la fois ; le choix du témoin est bloqué jusqu'à
+        la fin."""
         if self.thread is not None and self.thread.isRunning():
             return
         w = self.selected_witness()
@@ -209,6 +224,8 @@ class IIIFDownloadManager(QDialog):
         self.current.setText(self.tr('iiif.manager.page', index=done, count=total, label=label))
 
     def toggle_pause(self):
+        """Bouton « Pause » / « Reprendre » : suspend le téléchargement à la fin
+        de l'image en cours, ou le reprend."""
         if not self.thread or not self.thread.isRunning():
             return
         if self.thread.pause_event.is_set():
@@ -221,6 +238,9 @@ class IIIFDownloadManager(QDialog):
             self.current.setText(self.tr('iiif.manager.paused'))
 
     def stop_download(self):
+        """Bouton « Arrêter » : vide la file des témoins de « Télécharger tous
+        les témoins » et demande l'arrêt, effectif à la fin de l'image en
+        cours (une pause est levée) ; les images reçues sont gardées."""
         self.queue.clear()
         if self.thread and self.thread.isRunning():
             self.thread.cancel_event.set()

@@ -55,6 +55,9 @@ def safe_id_component(value: str) -> str:
 
 
 def default_surface_id(witness_id: str, index: int) -> str:
+    """Identifiant par défaut de la surface de rang ``index`` (compté à partir
+    de 1) d'un témoin : ``<témoin>-p0001``, l'identifiant du témoin passé par
+    ``safe_id_component``."""
     return f"{safe_id_component(witness_id)}-p{int(index):04d}"
 
 
@@ -237,6 +240,9 @@ def upsert_pb_at_position(
 
 @dataclass(frozen=True)
 class FacsimilePage:
+    """Surface voulue dans ``<facsimile>`` : témoin, ``xml:id`` de la surface,
+    libellé (``@n``) et adresse de l'image (``graphic/@url`` ; relative à
+    l'édition pour une image locale)."""
     witness_id: str
     surface_id: str
     label: str
@@ -245,6 +251,10 @@ class FacsimilePage:
 
 @dataclass
 class FacsimileSyncReport:
+    """Bilan de ``sync_facsimile_text`` : surfaces ajoutées, surfaces dont le
+    ``@n`` a été mis à jour ou laissé tel quel, conflits (``Message`` à
+    traduire : document mal formé, identifiant déjà pris, pas de ``<text>``)
+    et ``changed`` si le texte a été modifié."""
     added: list[str] = field(default_factory=list)
     labels_updated: list[str] = field(default_factory=list)
     preserved: list[str] = field(default_factory=list)
@@ -501,6 +511,10 @@ def sync_facsimile_text(xml_text: str, pages: list[FacsimilePage], previous_labe
 
 
 def sync_facsimile_file(edition_path: str | Path, pages: list[FacsimilePage], previous_labels: dict[str, str] | None = None) -> FacsimileSyncReport:
+    """``sync_facsimile_text`` appliqué au fichier de l'édition. S'il change,
+    l'ancien contenu est copié dans ``<fichier>.bak`` et le nouveau remplace
+    le fichier d'un coup (fichier ``.tmp`` puis renommage), en UTF-8 avec des
+    fins de ligne LF (un fichier en CRLF y passe). Rend le bilan."""
     path = Path(edition_path).expanduser().resolve()
     source = path.read_text(encoding="utf-8")
     updated, report = sync_facsimile_text(source, pages, previous_labels)
@@ -514,6 +528,9 @@ def sync_facsimile_file(edition_path: str | Path, pages: list[FacsimilePage], pr
 
 
 def previous_surface_labels(witnesses) -> dict[str, str]:
+    """``{xml:id de surface: libellé}`` des images locales de ``witnesses``,
+    tels que le projet les connaît : ``sync_facsimile_text`` ne met à jour
+    que les ``@n`` encore égaux à ces libellés-là."""
     out = {}
     for witness in witnesses or []:
         for item in getattr(witness, "image_files", ()) or ():
