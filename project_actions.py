@@ -67,15 +67,17 @@ class ProjectActionsMixin:
             # The generator keeps the pivot as a technical source when hidden.
             visible = set(self._visible_witness_ids)
             display_ids = [wid for wid in self._witness_display_order if wid in visible]
-            output, missing, data = generate(
+            output, unaligned, data = generate(
                 self.project.path, display_witness_ids=display_ids,
                 text_mode=choice[0], text_witness=choice[1], highlight_nonlem=choice[2])
         except Exception as exc:
             QMessageBox.critical(self, _t("webgen.error.title"), str(exc))
             return
         msg = _t("webgen.done.text", output=output, witnesses=len(data.get("witnesses", [])), lines=data.get("meta", {}).get("lines", 0))
-        if missing:
-            msg += _t("webgen.missing", pages=", ".join(missing))
+        if unaligned:
+            totals = data.get("meta", {}).get("unaligned_pivot_line_totals") or {}
+            msg += _t("webgen.unaligned_lines", count=unaligned, text=totals.get("text", 0),
+                      alignment=totals.get("alignment", 0))
         text = data.get("meta", {}).get("text") or {}
         chosen = self.project.witness_by_id.get(text.get("witness") or "")
         if text.get("missing"):

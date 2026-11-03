@@ -45,7 +45,7 @@ def test_the_web_export_of_a_very_deep_document(qapp, tmp_path):
         encoding="utf-8")
     (root / "xml" / "edition.xml").write_text(_deep(1500), encoding="utf-8")
     limit = sys.getrecursionlimit()
-    output, _missing, data = generate(root / "project.xml")
+    output, _unaligned, data = generate(root / "project.xml")
     assert output.exists() and "x" in output.read_text(encoding="utf-8")
     assert sys.getrecursionlimit() == limit
 

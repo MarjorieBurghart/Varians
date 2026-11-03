@@ -37,7 +37,7 @@ def browser():
 
 class Viewer:
     def __init__(self, browser, project):
-        self.output, _missing, self.data = generate(project)
+        self.output, _unaligned, self.data = generate(project)
         self.page = browser.new_page()
         self.errors = []
         self.page.on("pageerror", lambda error: self.errors.append(str(error)))

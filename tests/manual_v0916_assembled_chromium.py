@@ -43,7 +43,7 @@ def example_with_text(root):
 
 class Session:
     def __init__(self, browser, project, shots, name):
-        self.output, _missing, self.data = generate(project)
+        self.output, _unaligned, self.data = generate(project)
         self.page = browser.new_page(viewport={"width": 1500, "height": 950})
         self.errors = []
         self.page.on("pageerror", lambda error: self.errors.append(str(error)))

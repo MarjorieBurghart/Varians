@@ -42,8 +42,8 @@ def test_web_viewer_marks_image_less_project_and_hides_side_column():
             "A", ROOT, "fr", "en", xslt_mode="builtin", schema_mode="none",
         )
         cfg = load_project(project)
-        data, missing = build_dataset(cfg)
-        assert missing == []
+        data, unaligned = build_dataset(cfg)
+        assert unaligned == 0
         assert data["meta"]["has_images"] is False
         html = make_html(data)
         assert '<body class="no-images">' in html

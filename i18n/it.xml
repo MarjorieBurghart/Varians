@@ -174,9 +174,7 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
 {output}
 
 {witnesses, plural, one {# testimone} other {# testimoni}}, {lines, plural, one {# riga} other {# righe}} del testimone pivot.</string>
-  <string key="webgen.missing">
-
-Pagine mancanti nella cache del testimone pivot: {pages}</string>
+  <string key="webgen.unaligned_lines">\n\n{count, plural, one {# riga del testimone pivot non è sincronizzata} other {# righe del testimone pivot non sono sincronizzate}} con le immagini: il suo allineamento (JSON) ha meno righe del testo (testo: {text}, allineamento: {alignment}). È normale se l'allineamento non è terminato; altrimenti controlla il JSON di allineamento del testimone pivot (vi manca una pagina?).</string>
   <string key="webgen.assembly_problems">\n\nProblemi di assemblaggio (il testo interessato manca nel viewer):\n{problems}</string>
   <string key="project.open_error">Impossibile aprire il progetto</string>
   <string key="viewer.search.placeholder">Cerca…</string>
@@ -250,7 +248,7 @@ Pagine mancanti nella cache del testimone pivot: {pages}</string>
   <string key="console.usage">Uso: {command} percorso/di/project.xml</string>
   <string key="console.viewer_generated">Viewer generato: {path}</string>
   <string key="console.viewer_stats">Testimoni: {witnesses} · righe del testimone pivot: {lines}</string>
-  <string key="console.missing_pages">Pagine mancanti nella cache del testimone pivot: {pages}</string>
+  <string key="console.unaligned_lines">{count, plural, one {# riga del testimone pivot non è sincronizzata} other {# righe del testimone pivot non sono sincronizzate}} con le immagini: il suo allineamento (JSON) ha meno righe del testo (testo: {text}, allineamento: {alignment}).</string>
   <string key="preview.choose_xslt">Scegli foglio di stile XSLT</string>
   <string key="preview.choose_css">Scegli foglio di stile CSS</string>
   <string key="preview.updated.timed.lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# elemento modificabile} other {# elementi modificabili}} · {lines, plural, one {# riga cliccabile} other {# righe cliccabili}} del testimone pivot.</string>

@@ -140,7 +140,7 @@ def test_web_dataset_includes_one_image_two_folio_regions(tmp_path):
     w2=WitnessConfig('L','L',None,'secondary',image_source_type='files',image_files=(LocalImageConfig(image,'008 - f002v-003r',3924,2704,'L-p0008'),))
     p=SimpleNamespace(base_witness='Mu',witnesses=(w1,w2),witness_by_id={'Mu':w1,'L':w2},root_dir=tmp_path,
                       edition=edition,translations_dir=ROOT/'i18n',language='fr',fallback_language='en',title='Folio test')
-    dataset,missing=build_dataset(p)
+    dataset,unaligned=build_dataset(p)
     L=next(w for w in dataset['witnesses'] if w['id']=='L')
     assert len(L['pages'])==1
     assert [f['ref'] for f in L['folios']]==['L-p0008',lref,rref]

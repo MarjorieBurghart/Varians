@@ -71,8 +71,8 @@ def test_folio_n_and_zone_facs_restore_actual_line_sync(tmp_path):
     cfg = create_project(tmp_path,
         '<pb n="f002v" edRef="#Mu" facs="#Mu-p0008-left"/>'
         '<lb edRef="#Mu"/>alpha<lb edRef="#Mu"/>beta', facsimile=facs)
-    data, missing = build_dataset(cfg)
-    assert missing == []
+    data, unaligned = build_dataset(cfg)
+    assert unaligned == 0
     assert data['meta']['line_sync'] is True
     mu, f = data['witnesses']
     assert mu['line_sync'] is True
@@ -110,7 +110,7 @@ def test_unassociated_facs_never_assigned_by_order_or_folio_label(tmp_path):
     cfg = create_project(tmp_path,
         '<pb n="f002v" edRef="#Mu" facs="#a-different-surface"/>'
         '<lb edRef="#Mu"/>alpha<lb edRef="#Mu"/>beta')
-    data, missing = build_dataset(cfg)
+    data, unaligned = build_dataset(cfg)
     # A non-resolved folio pointer must not masquerade as a page association.
     # Unlike V0.8.5.25.2, the pivot's lb ordinal is independent of that
     # pointer, exactly as in the desktop editor.

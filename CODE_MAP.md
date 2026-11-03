@@ -396,6 +396,7 @@ Fonctionnement : aide, paragraphe « Texte de lecture » (`viewer-text`, à la f
 - Recette : `packaging/varians.spec` (`DATA_FOLDERS`, `WEB_VIEWER_FILES`, `collect_all("saxonche")`, `UNUSED_QT`, `UNUSED_LINUX`, `_icon`, `BUNDLE` sous macOS) ; crochet `rthook_certificates.py`.
 - Construction : `packaging/build.py` (`build`, `add_documents`, `self_test`, `report_problems`, `broken_links`, `zip_folder`, `write_checksum`, `platform_tag`, `archive_name`).
 - Workflow `.github/workflows/binaries.yml` : matrice windows-latest, macos-latest, macos-15-intel, ubuntu-22.04 ; job `release` (seul `contents: write`), version construite = version du tag.
+- Viewer web, lignes du pivot sans alignement : `generator.build_dataset` rend `(data, unaligned)` — somme des `AnchorReport.unmapped_lb_count` des textes synchronisés ligne à ligne (`segment_reports`) ; `meta.unaligned_pivot_lines`, `meta.unaligned_pivot_line_totals` (`text`, `alignment`). Messages `webgen.unaligned_lines` (compte rendu, `project_actions`), `console.unaligned_lines` (`generator.main`). Remplacent `meta.unmatched_tei_pages` et les clés `webgen.missing`, `console.missing_pages`, qui ne signalaient plus rien depuis le contrat des `<lb>` (V0.8.5.25.3).
 
 ## V0.9.3.4 — red team 2 : robustesse et cohérence
 

@@ -115,9 +115,9 @@ def test_empty_base_alignment_plus_local_image_and_alto_stays_page_mode():
                          [LocalImageDraft(image, "p1", surface_id="A1-p0001")], "reference", None,
                          "files", [AltoFileDraft(alto, "p1")], "reference", "reference")
         ])
-        data, missing = build_dataset(cfg)
+        data, unaligned = build_dataset(cfg)
         base = data["witnesses"][0]
-        assert missing == []
+        assert unaligned == 0
         assert data["meta"]["line_sync"] is False
         assert base["line_sync"] is False
         assert len(base["pages"]) == 1
@@ -159,9 +159,9 @@ def test_full_base_and_secondary_alignment_remain_line_mode():
             WitnessDraft("B1", "B1", sec_align, "secondary", "none", None, [], "keep", None,
                          "auto", [], "keep", "reference"),
         ])
-        data, missing = build_dataset(cfg)
+        data, unaligned = build_dataset(cfg)
         by_id = {w["id"]: w for w in data["witnesses"]}
-        assert missing == []
+        assert unaligned == 0
         assert data["meta"]["line_sync"] is True
         assert by_id["A1"]["line_sync"] is True
         assert by_id["B1"]["line_sync"] is True

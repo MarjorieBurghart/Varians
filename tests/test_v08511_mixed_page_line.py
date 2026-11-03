@@ -197,14 +197,16 @@ def test_three_witness_project_exposes_witness_local_line_sync_mode():
                            ROOT/'rendering'/'tei.css', ROOT/'rendering'/'custom-elements.xml',
                            root/'web_output','viewer.html',witnesses,'Mu','builtin','none')
         cfg=load_project(write_project_xml(root/'project.xml',draft))
-        data,missing=build_dataset(cfg)
+        data,unaligned=build_dataset(cfg)
         by={w['id']:w for w in data['witnesses']}
         assert by['Mu']['line_sync'] is True
         assert by['F']['line_sync'] is True
         assert by['C']['line_sync'] is False
         assert len(by['C']['pages'])==2
         assert {p['tei_surface_id'] for p in by['C']['pages']} == {'C-p0001','C-p0002'}
-        assert missing == []
+        # Trois <lb edRef="#Mu"/> pour une seule ligne dans Mu.json : les deux
+        # dernières lignes du pivot n'ont pas d'image, et c'est signalé.
+        assert unaligned == 2
 
 
 def test_navigation_entrypoints_and_browser_lines_update_independent_pages():

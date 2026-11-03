@@ -42,7 +42,7 @@ def _node(tmp_path, script, payload):
 
 
 def _build(project, **options):
-    data, _missing = build_dataset(load_project(project), **options)
+    data, _unaligned = build_dataset(load_project(project), **options)
     data.pop("i18n", None)
     return data
 

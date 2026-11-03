@@ -162,7 +162,7 @@
   <string key="webgen.text.unknown">\n\nUnknown witness in project.xml: {witness}; the pivot is used instead.</string>
   <string key="webgen.done.title">Web viewer generated</string>
   <string key="webgen.done.text">Viewer generated:\n{output}\n\n{witnesses, plural, one {# witness} other {# witnesses}}, {lines, plural, one {# pivot-witness line} other {# pivot-witness lines}}.</string>
-  <string key="webgen.missing">\n\nPages missing from the pivot-witness cache: {pages}</string>
+  <string key="webgen.unaligned_lines">\n\n{count, plural, one {# line of the pivot witness is not synchronized} other {# lines of the pivot witness are not synchronized}} with the images: its alignment (JSON) has fewer lines than the text (text: {text}, alignment: {alignment}). This is normal if the alignment is not finished; otherwise, check the pivot witness's alignment JSON (is a page missing?).</string>
   <string key="webgen.assembly_problems">\n\nAssembly problems (the text concerned is missing from the viewer):\n{problems}</string>
   <string key="project.open_error">Could not open project</string>
   <string key="viewer.search.placeholder">Search…</string>
@@ -236,7 +236,7 @@
   <string key="console.usage">Usage: {command} path/to/project.xml</string>
   <string key="console.viewer_generated">Viewer generated: {path}</string>
   <string key="console.viewer_stats">Witnesses: {witnesses} · pivot-witness lines: {lines}</string>
-  <string key="console.missing_pages">Pages missing from pivot-witness cache: {pages}</string>
+  <string key="console.unaligned_lines">{count, plural, one {# line of the pivot witness is not synchronized} other {# lines of the pivot witness are not synchronized}} with the images: its alignment (JSON) has fewer lines than the text (text: {text}, alignment: {alignment}).</string>
   <string key="preview.choose_xslt">Choose XSLT stylesheet</string>
   <string key="preview.choose_css">Choose CSS stylesheet</string>
   <string key="preview.updated.timed.lines">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}} · {lines, plural, one {# clickable pivot-witness line} other {# clickable pivot-witness lines}}.</string>
