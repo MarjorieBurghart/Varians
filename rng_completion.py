@@ -846,7 +846,9 @@ def adapt_pointer_list_value_context(
     * les pointeurs déjà présents ne sont plus proposés ;
     * un token partiellement saisi est seul remplacé ;
     * si le curseur suit exactement un pointeur complet, la complétion prépare
-      l'ajout d'un nouveau token au lieu de remplacer le pointeur existant.
+      l'ajout d'un nouveau token au lieu de remplacer le pointeur existant ;
+    * si le curseur précède un pointeur (``wit="|#T1 #T3"``), la valeur
+      choisie s'insère devant lui, sans le remplacer.
 
     La fonction est volontairement indépendante de Qt. Elle ne prétend pas
     déduire le datatype RNG : le comportement « liste » n'est activé que pour
@@ -871,8 +873,9 @@ def adapt_pointer_list_value_context(
 
     active_index = None
     for index, match in enumerate(tokens):
-        # Curseur réellement à l'intérieur du token.
-        if match.start() <= offset < match.end():
+        # Curseur réellement à l'intérieur du token (devant son premier
+        # caractère, il est entre deux tokens : la valeur s'insère).
+        if match.start() < offset < match.end():
             active_index = index
             break
         # À la fin d'un token incomplet, continuer à filtrer/remplacer ce token.
