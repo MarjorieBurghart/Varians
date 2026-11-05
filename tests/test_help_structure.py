@@ -112,3 +112,18 @@ def test_down_arrow_is_explained_for_ctrl_e_and_ctrl_space(language):
     keys = [{kbd.text_content() for kbd in p.iter("kbd")} for p in paragraphs]
     assert any("Ctrl+E" in found for found in keys), language
     assert any(any(key.startswith("Ctrl+") and key != "Ctrl+E" for key in found) for found in keys), language
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_large_files_and_the_startup_guard_are_explained(language):
+    """Un fichier de plus de 20 Mo n'est ouvert qu'avec l'accord de
+    l'utilisatrice ; un dernier projet qui n'a pas fini de se rouvrir ne
+    l'est pas au lancement suivant. Les libellés cités sont ceux de
+    l'interface."""
+    page = _page(language)
+    catalog = _catalog(language)
+    paragraph = page[page.index('<p id="large-files">'):]
+    paragraph = paragraph[:paragraph.index("</p>")]
+    assert "20" in paragraph
+    assert catalog["common.cancel"] in paragraph
+    assert catalog["menu.recent_projects"] in paragraph

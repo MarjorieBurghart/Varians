@@ -93,7 +93,14 @@ workflow refuse des archives dont la version n'est pas celle du tag.
 ## Organisation du code de l'interface
 
 `editeur_tei.py` lance l'application (`main()`), définit la fenêtre
-d'accueil et la fenêtre principale `MainWindow`. Celle-ci est composée de
+d'accueil et la fenêtre principale `MainWindow`. Au démarrage,
+`startup_window()` choisit la fenêtre (projet en argument, sinon le dernier
+projet ouvert, sinon l'accueil) et `show_startup_window()` l'affiche. Deux
+garde-fous : un fichier de l'édition au-delà de 20 Mo n'est ouvert qu'après
+une question (`large_files.py`) ; la réouverture automatique est notée
+(réglage `startupPending`) avant de commencer et effacée une fois la fenêtre
+affichée, si bien qu'un démarrage interrompu (fenêtre jamais affichée,
+Varians fermé de force) ne rouvre pas le même projet la fois suivante. Celle-ci est composée de
 *mixins*, un par responsabilité, dont elle hérite :
 
 | Module | Rôle |
@@ -134,6 +141,7 @@ Composants autonomes utilisés par la fenêtre :
 | `image_fetch.py` | téléchargement des images, cache disque |
 | `help_dialogs.py` | aide, dictionnaire latin, « À propos » |
 | `app_context.py` | traductions actives, réglages, projets récents, version |
+| `large_files.py` | fichiers trop volumineux pour l'éditeur : seuil de 20 Mo, fichiers d'une édition (parties incluses), question avant d'ouvrir |
 
 Les modules de l'interface n'importent jamais `editeur_tei` (il peut être
 exécuté comme script) : les services communs passent par `app_context`.
