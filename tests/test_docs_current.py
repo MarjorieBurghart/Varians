@@ -23,11 +23,23 @@ def test_the_developer_documents_name_the_current_version():
     assert _read("CODE_MAP.md").splitlines()[0] == f"# Varians — carte rapide du code (V{CURRENT_VERSION})"
 
 
-def test_the_version_history_tells_what_the_current_version_brings():
+def _history_entry(version):
     handoff = _read("DEVELOPER_HANDOFF.md")
     history = handoff[handoff.index("## Historique des versions"):]
-    entry = history[history.index(f"VARIANS V{CURRENT_VERSION}"):]
-    entry = entry[:entry.index("\nVARIANS V", 1)]
+    entry = history[history.index(f"VARIANS V{version}"):]
+    return entry[:entry.index("\nVARIANS V", 1)]
+
+
+def test_the_version_history_tells_what_the_current_version_brings():
+    """0.9.4.1 : les corrections publiées depuis la 0.9.4.0, en tête."""
+    entry = _history_entry(CURRENT_VERSION)
+    for words in ("Ctrl+Espace", "didascalie", "XTDE0540", "Cache IIIF", "« Page n »", "lignes du pivot",
+                  "Nouveau projet"):
+        assert words in entry, words
+
+
+def test_the_version_history_keeps_the_previous_version():
+    entry = _history_entry("0.9.4.0")
     for words in ("Changer le sigle", "prête à l'emploi", "--self-test", "icône", "Signaler un problème"):
         assert words in entry, words
 
