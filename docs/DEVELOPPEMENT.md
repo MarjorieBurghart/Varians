@@ -433,8 +433,9 @@ La version affichée par l'application est `APP_VERSION` dans
 `CURRENT_VERSION` dans `tests/varians_source.py`, l'en-tête de
 `editeur_tei.py`, le titre de `README.txt`, la version de référence de
 `DEVELOPER_HANDOFF.md` et le titre de `CODE_MAP.md` ; ajouter une entrée en
-tête de « Historique des versions » (dans `DEVELOPER_HANDOFF.md`) et une
-section `<section id="vXYZ">` dans chacune des sept aides (`help/*.html`).
+tête de « Historique des versions » (dans `DEVELOPER_HANDOFF.md`). Les sept
+aides (`help/*.html`) n'ont plus de section par version : une nouveauté y
+est décrite à sa place, dans les sept langues.
 `tests/test_version.py` et `tests/test_docs_current.py` vérifient
 l'ensemble. Publier la release sur GitHub y joint la version prête à
 l'emploi.

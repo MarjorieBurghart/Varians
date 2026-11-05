@@ -1,6 +1,6 @@
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.9.4.0**
+**Version de référence : 0.9.4.1**
 
 Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
@@ -1051,6 +1051,29 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.1 — CORRECTIONS
+
+• Ctrl+Espace dans une liste de pointeurs (wit="#T1 #T3") : le curseur
+  juste devant un pointeur, la valeur choisie s'insère devant lui
+  (wit="#T2 #T1 #T3") au lieu de le remplacer ; les pointeurs déjà
+  présents ne sont plus reproposés. Même règle pour la liste qui s'ouvre
+  à la frappe.
+• Pré-passage DOCX/ODT : une didascalie entre deux blocs ne répond plus
+  qu'à une règle de la feuille ; Saxon signalait une règle ambiguë
+  (XTDE0540) dans le journal de la transformation.
+• Cache IIIF abîmé (iiif/<témoin>.manifest.json illisible) : le projet
+  s'ouvre quand même ; le témoin garde les images de son cache
+  d'alignement.
+• Surface IIIF sans libellé : « Page n » compté à partir de 1.
+• Générer le viewer web : le compte rendu donne le nombre de
+  lignes du pivot sans ligne dans leur JSON d'alignement (l'ancien
+  avertissement sur les pages absentes du cache ne pouvait plus rien
+  signaler).
+• Boîtes « Nouveau projet » et « Paramètres du projet » : leur titre
+  donne la version courante.
+• Code : docstrings des fonctions et classes publiques ; « témoin
+  pivot » dans les commentaires.
+
 VARIANS V0.9.4.0 — CHANGER LE SIGLE D'UN TÉMOIN
 
 • Fichier → Paramètres du projet… → « Changer le sigle… » : le sigle
