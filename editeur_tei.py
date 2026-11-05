@@ -904,7 +904,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return True
 
     def _replace_with_project(self, project_path):
-        """Recharge l'application sur un autre project.xml après garde-fou de sauvegarde."""
+        """Recharge l'application sur un autre project.xml après garde-fou de
+        sauvegarde. Si un fichier de son édition dépasse le seuil de taille,
+        Varians demande d'abord (``large_files``) ; sans accord, rien ne change."""
+        if not confirm_large_files(self, large_project_files(project_path)):
+            return False
         if not self.maybe_save():
             return False
         try:
@@ -1655,6 +1659,12 @@ class WelcomeWindow(QMainWindow):
         self.update_recent_projects_menu()
 
     def _open_project_path(self, project_path):
+        """Ouvre le projet ``project_path`` dans une nouvelle fenêtre et ferme
+        l'accueil ; un message s'il ne s'ouvre pas. Si un fichier de son
+        édition dépasse le seuil de taille, Varians demande d'abord
+        (``large_files``). Renvoie True si le projet est ouvert."""
+        if not confirm_large_files(self, large_project_files(project_path)):
+            return False
         try:
             new_window = MainWindow(Path(project_path))
         except Exception as exc:
