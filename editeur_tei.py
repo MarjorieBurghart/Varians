@@ -68,8 +68,9 @@ from i18n import I18nManager
 from app_context import (
     apply_application_icon, apply_qt_language, call_later, error_message, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
     remove_recent_project, clear_recent_projects, last_open_project_path, remember_open_project,
-    forget_open_project,
+    forget_open_project, startup_pending_project, mark_startup_pending, forget_startup_pending,
 )
+from large_files import confirm_large_files, large_project_files
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 from save_io import atomic_write_text_with_backup
 from pivot_lines import pivot_lb_pattern
@@ -1740,13 +1741,71 @@ class WelcomeWindow(QMainWindow):
                 QTimer.singleShot(0, lambda: new_window.open_iiif_download_manager(auto_start=True))
 
 
+def startup_window(argv):
+    """Fenêtre du démarrage, encore cachée.
+
+    Le projet passé en argument (``argv[1]``), sinon celui qui était encore
+    ouvert à la dernière fermeture (oublié, avec un avertissement, s'il ne se
+    rouvre pas), sinon la fenêtre d'accueil. Avant d'ouvrir un projet dont un
+    fichier dépasse le seuil de taille (``large_files``), Varians demande ;
+    sans accord, la fenêtre d'accueil.
+
+    Garde-fou : la réouverture automatique est notée avant de commencer
+    (``mark_startup_pending``) et effacée une fois la fenêtre affichée
+    (:func:`show_startup_window`). Si elle est encore notée au démarrage
+    suivant, Varians a été fermé avant d'afficher sa fenêtre : ce projet
+    n'est pas rouvert de nouveau, et l'accueil le dit. Une erreur
+    d'ouverture du projet passé en argument est propagée."""
+    if len(argv) > 1:
+        project_path = Path(argv[1]).resolve()
+        if not confirm_large_files(None, large_project_files(project_path)):
+            return WelcomeWindow()
+        return MainWindow(project_path)
+    interrupted = startup_pending_project()
+    if interrupted is not None:
+        forget_startup_pending()
+    # Rouvrir uniquement le projet qui était encore ouvert lors de la
+    # précédente fermeture. « Fermer le projet » efface cette préférence.
+    startup_project = last_open_project_path()
+    if startup_project is None:
+        # Le projet de démonstration reste livré, mais n'est jamais ouvert
+        # automatiquement à la première utilisation.
+        return WelcomeWindow()
+    if interrupted is not None and path_key(interrupted) == path_key(startup_project):
+        forget_open_project()
+        win = WelcomeWindow()
+        call_later(0, win, lambda: QMessageBox.warning(
+            win, _t("startup.interrupted.title"), _t("startup.interrupted", path=startup_project)))
+        return win
+    if not confirm_large_files(None, large_project_files(startup_project)):
+        forget_open_project()
+        return WelcomeWindow()
+    mark_startup_pending(startup_project)
+    try:
+        return MainWindow(startup_project)
+    except Exception as exc:
+        forget_startup_pending()
+        forget_open_project()
+        QMessageBox.warning(None, _t("project.reopen_error.title"),
+                            _t("project.reopen_error", path=startup_project, error=error_message(exc)))
+        return WelcomeWindow()
+
+
+def show_startup_window(win):
+    """Affiche la fenêtre du démarrage, maximisée (« plein écran » au sens
+    bureau : sans masquer la barre des tâches ni les contrôles natifs de la
+    fenêtre). Une fois la fenêtre affichée, le démarrage est terminé : le
+    garde-fou de :func:`startup_window` est effacé."""
+    win.showMaximized()
+    call_later(0, win, forget_startup_pending)
+
+
 def main():
-    """Point d'entrée de l'interface : ouvre le projet passé en argument, sinon
-    celui qui était encore ouvert à la dernière fermeture (oublié, avec un
-    avertissement, s'il ne se rouvre pas), sinon la fenêtre d'accueil. La
-    fenêtre est maximisée ; les TEI Stylesheets sont vérifiées peu après
-    (``tei_stylesheets_ui.at_launch``). Renvoie le code de sortie de
-    l'application, 2 si le projet passé en argument ne s'ouvre pas."""
+    """Point d'entrée de l'interface : la fenêtre de :func:`startup_window`,
+    affichée par :func:`show_startup_window` ; les TEI Stylesheets sont
+    vérifiées peu après (``tei_stylesheets_ui.at_launch``). Renvoie le code
+    de sortie de l'application, 2 si le projet passé en argument ne s'ouvre
+    pas."""
     app = QApplication.instance() or QApplication(sys.argv)
     apply_application_icon(app)
     _install_light_selection_palette(app)
@@ -1755,35 +1814,15 @@ def main():
     apply_qt_language(I18N.language)
     app.setApplicationName(_t("app.name"))
     try:
-        if len(sys.argv) > 1:
-            win = MainWindow(Path(sys.argv[1]).resolve())
-        else:
-            # Rouvrir uniquement le projet qui était encore ouvert lors de la
-            # précédente fermeture. « Fermer le projet » efface cette préférence.
-            startup_project = last_open_project_path()
-            if startup_project is not None:
-                try:
-                    win = MainWindow(startup_project)
-                except Exception as exc:
-                    forget_open_project()
-                    QMessageBox.warning(None, _t("project.reopen_error.title"),
-                                        _t("project.reopen_error", path=startup_project, error=error_message(exc)))
-                    win = WelcomeWindow()
-            else:
-                # Le projet de démonstration reste livré, mais n'est jamais ouvert
-                # automatiquement à la première utilisation.
-                win = WelcomeWindow()
+        win = startup_window(sys.argv)
     except Exception as exc:
         QMessageBox.critical(None, _t("project.open_error"), error_message(exc))
         return 2
-    # « Plein écran » au sens bureau : fenêtre maximisée, sans masquer la barre
-    # des tâches ni les contrôles natifs de la fenêtre.
-    win.showMaximized()
+    show_startup_window(win)
     # TEI Stylesheets : anciennes versions supprimées, puis, au plus une fois
     # par mois, recherche d'une nouvelle version (sans bloquer la fenêtre).
     call_later(1500, win, lambda: tei_stylesheets_at_launch(win))
     return app.exec()
-
 
 if __name__ == "__main__" and sys.argv[1:2] == ["--self-test"]:
     # Vérification d'une installation, version autonome comprise (self_test).

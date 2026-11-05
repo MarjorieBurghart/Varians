@@ -573,6 +573,19 @@ Use File &gt; New project… or File &gt; Open project…</string>
   <string key="menu.close_project">Close project</string>
   <string key="help.about">About…</string>
   <string key="welcome.subtitle">TEI XML Editor for textual criticism</string>
+  <string key="large_file.title">Very large file</string>
+  <string key="large_file.item">{file}: {size} MB</string>
+  <string key="large_file.text">{files}
+
+Varians loads a whole file to display and analyse it. Above {limit} MB, opening it may take several minutes and several GB of memory, and Varians then seems frozen.
+
+Open it anyway?</string>
+  <string key="large_file.open">Open anyway</string>
+  <string key="startup.interrupted.title">Last project not reopened</string>
+  <string key="startup.interrupted">At the last start, Varians was closed before it had finished opening this project:
+{path}
+
+So as not to get stuck again, it is not reopened automatically. You can open it with “Reopen recent project…” or “Open project…” in the File menu.</string>
   <string key="project.reopen_error.title">Reopen last project</string>
   <string key="project.reopen_error">The last project could not be reopened:
 {path}

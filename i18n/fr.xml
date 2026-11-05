@@ -573,6 +573,19 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="menu.close_project">Fermer le projet</string>
   <string key="help.about">À propos…</string>
   <string key="welcome.subtitle">Editeur XML TEI pour l'ecdotique</string>
+  <string key="large_file.title">Fichier très volumineux</string>
+  <string key="large_file.item">{file} : {size} Mo</string>
+  <string key="large_file.text">{files}
+
+Varians charge un fichier en entier pour l’afficher et l’analyser. Au-delà de {limit} Mo, l’ouverture peut prendre plusieurs minutes et demander plusieurs Go de mémoire : Varians semble alors bloqué.
+
+L’ouvrir quand même ?</string>
+  <string key="large_file.open">Ouvrir quand même</string>
+  <string key="startup.interrupted.title">Dernier projet non rouvert</string>
+  <string key="startup.interrupted">Au dernier démarrage, Varians a été fermé avant d’avoir fini d’ouvrir ce projet :
+{path}
+
+Pour ne pas bloquer de nouveau, il n’est pas rouvert automatiquement. Vous pouvez l’ouvrir avec « Réouvrir un projet récent… » ou « Ouvrir un projet… » du menu Fichier.</string>
   <string key="project.reopen_error.title">Réouverture du dernier projet</string>
   <string key="project.reopen_error">Le dernier projet n’a pas pu être rouvert :
 {path}

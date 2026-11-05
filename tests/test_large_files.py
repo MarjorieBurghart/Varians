@@ -97,6 +97,16 @@ def test_missing_remote_and_cyclic_includes_are_ignored(tmp_path):
     assert large_files.large_edition_files(edition, limit=10_000) == []
 
 
+def test_the_files_of_a_project_are_those_of_its_edition(tmp_path):
+    from corpus_data import copy_example
+    project = copy_example(tmp_path / "exemple")
+    edition = project.parent / "xml" / "edition.xml"
+    assert large_files.large_project_files(project, limit=10 ** 9) == []
+    assert large_files.large_project_files(project, limit=1000) == [(edition, edition.stat().st_size)]
+    # project.xml illisible : rien à signaler ici, l'ouverture le dira.
+    assert large_files.large_project_files(tmp_path / "absent.xml", limit=1000) == []
+
+
 def test_a_missing_or_malformed_edition_has_no_large_file(tmp_path):
     assert large_files.large_edition_files(tmp_path / "absente.xml", limit=10) == []
     broken = _write(tmp_path / "edition.xml", "<TEI><text>")

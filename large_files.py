@@ -8,7 +8,7 @@ dernier projet ouvert, il bloquait le démarrage (fenêtre jamais affichée).
 
 Au-delà de :data:`LARGE_FILE_BYTES`, Varians demande donc avant d'ouvrir
 (:func:`confirm_large_files`) : un projet dont l'édition ou une partie
-incluse dépasse le seuil (:func:`large_edition_files`), un document qu'on
+incluse dépasse le seuil (:func:`large_project_files`), un document qu'on
 affiche.
 """
 from __future__ import annotations
@@ -78,6 +78,17 @@ def large_edition_files(edition, limit=None) -> list[tuple[Path, int]]:
 
     visit(Path(edition))
     return found
+
+
+def large_project_files(project_path, limit=None) -> list[tuple[Path, int]]:
+    """:func:`large_edition_files` de l'édition du projet ``project_path`` ;
+    aucun si project.xml ne se lit pas (l'ouverture le signalera)."""
+    try:
+        from project_config import load_project
+        edition = load_project(project_path).edition
+    except Exception:
+        return []
+    return large_edition_files(edition, limit)
 
 
 def confirm_large_files(parent, files) -> bool:
