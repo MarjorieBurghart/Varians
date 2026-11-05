@@ -177,6 +177,12 @@ def _href_path(href, including):
     return Path(os.path.normpath(os.path.join(os.path.dirname(os.fspath(including)), raw)))
 
 
+def include_path(href, including):
+    """Fichier local désigné par le ``href`` d'un ``xi:include`` du fichier
+    ``including`` ; None pour un ``href`` vide, distant ou avec requête."""
+    return _href_path(href, including)
+
+
 def _by_id(root, ident):
     found = root.xpath("//*[@xml:id=$ident]", ident=ident)
     return found[0] if found else None
