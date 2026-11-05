@@ -144,11 +144,14 @@
     <xsl:apply-templates select="(tei:corr, tei:reg, tei:expan, tei:sic, tei:orig, tei:abbr, *[1])[1]/node()"/>
   </xsl:template>
   <!-- Une didascalie, entre parenthèses, en italique ; dans un paragraphe
-       ou un vers, sans y couper une ligne ; entre deux blocs, un bloc. -->
+       ou un vers, sans y couper une ligne ; entre deux blocs, un bloc. Les
+       deux règles ont la même priorité par défaut (0,5) : celle du bloc a
+       une priorité explicite, sans quoi Saxon signale une règle ambiguë
+       (XTDE0540) sur sa sortie d'erreur. -->
   <xsl:template match="tei:text//tei:stage">
     <xsl:text>(</xsl:text><hi rend="italic"><xsl:apply-templates/></hi><xsl:text>)</xsl:text>
   </xsl:template>
-  <xsl:template match="tei:text//tei:stage[parent::tei:sp or parent::tei:spGrp or parent::tei:lg or parent::tei:body
+  <xsl:template priority="1" match="tei:text//tei:stage[parent::tei:sp or parent::tei:spGrp or parent::tei:lg or parent::tei:body
                        or parent::tei:front or parent::tei:back or parent::tei:*[matches(local-name(), '^div[1-7]?$')]]">
     <xsl:copy>
       <xsl:apply-templates select="@*"/>

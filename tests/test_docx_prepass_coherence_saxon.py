@@ -48,6 +48,20 @@ def test_choice_gives_its_chosen_form_only(project):
     assert tree.find(".//t:body//t:choice", NS) is None
 
 
+def test_a_stage_direction_matches_a_single_rule(project, capfd):
+    """Une didascalie entre deux blocs (dans un <div>) répondait à deux règles
+    de même priorité : Saxon le signalait (XTDE0540, « Ambiguous rule
+    match ») sur sa sortie d'erreur. Dans les tests sous Windows, ce message
+    s'est retrouvé au début de notes.xml, illisible (échec intermittent de
+    test_stage_directions_are_in_parentheses_and_italics) : la règle du bloc
+    a désormais la priorité, et la transformation n'écrit plus rien."""
+    capfd.readouterr()
+    result, _tree = _notes(project, "A", _source(project, '<p>Quid agis?</p><stage>Exit.</stage>'))
+    assert result.ok, result.error
+    errors = capfd.readouterr().err
+    assert "XTDE0540" not in errors and "Ambiguous rule match" not in errors, errors
+
+
 def test_stage_directions_are_in_parentheses_and_italics(project):
     result, tree = _notes(project, "A", _source(project, '<sp><speaker>Davus</speaker><p>Quid <stage>ridens</stage> agis?'
                                                          '</p></sp><stage>Exit.</stage>'))
