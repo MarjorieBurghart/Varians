@@ -113,6 +113,18 @@ def test_rdg_wit_keeps_the_project_witnesses(open_window, project_with_authoriti
     assert "T1 · Troyes 816" in seen["#T1"]
 
 
+def test_a_witness_chosen_before_another_one_is_inserted(open_window, project_with_authorities, dialogs):
+    """Curseur devant un pointeur (« wit="|#T1 #P" ») : Ctrl+Espace propose
+    les témoins absents et la valeur choisie s'insère devant #T1, sans le
+    remplacer."""
+    window = open_window(project_with_authorities)
+    _type_in_body(window, '<app><rdg wit="#T1 #P"></rdg></app>', 'wit="')
+    seen = _proposals(dialogs, choose="#T2")
+    window.show_rng_completion(window.editor)
+    assert set(seen) == {"#T2"}
+    assert '<rdg wit="#T2 #T1 #P">' in window.editor.toPlainText()
+
+
 def test_without_auxiliary_documents_the_document_identifiers_are_proposed(open_window, example_project, dialogs):
     window = open_window(example_project)
     _type_in_body(window, '<lem wit=""></lem>', 'wit="')

@@ -240,8 +240,15 @@ propose `#T1` et `#P`, puis insère automatiquement l'espace nécessaire. Avec :
 <rdg wit="#T2 #T|">toto</rdg>
 ```
 
-seul le token partiel `#T` est remplacé. Cette logique concerne la commodité de
-saisie et ne modifie jamais la validité RELAX NG.
+seul le token partiel `#T` est remplacé. Curseur devant un pointeur :
+
+```xml
+<rdg wit="|#T1 #T3">toto</rdg>
+```
+
+la valeur choisie (`#T2`) s'insère devant lui, avec l'espace nécessaire
+(`wit="#T2 #T1 #T3"`), au lieu de remplacer `#T1`. Cette logique concerne la
+commodité de saisie et ne modifie jamais la validité RELAX NG.
 
 ## V0.8.5.26 — Noms d’attributs pendant la frappe
 Le texte partiel d’un attribut dans une balise ouvrante déclenche une proposition filtrée issue du modèle RNG actif ; les aides personnalisées restent accessibles par Ctrl+Espace. Un attribut déjà présent est exclu ; ni valeur d’attribut ni balise fermante ne déclenchent ce menu. Entrée/Tab insère un nom suivi de guillemets ; Ctrl+Espace conserve ses dialogues antérieurs.
