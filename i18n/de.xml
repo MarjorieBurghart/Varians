@@ -585,6 +585,19 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="menu.close_project">Projekt schließen</string>
   <string key="help.about">Über…</string>
   <string key="welcome.subtitle">TEI-XML-Editor für Textkritik</string>
+  <string key="large_file.title">Sehr große Datei</string>
+  <string key="large_file.item">{file}: {size} MB</string>
+  <string key="large_file.text">{files}
+
+Varians lädt eine Datei vollständig, um sie anzuzeigen und zu analysieren. Über {limit} MB kann das Öffnen mehrere Minuten dauern und mehrere GB Arbeitsspeicher benötigen; Varians scheint dann blockiert.
+
+Trotzdem öffnen?</string>
+  <string key="large_file.open">Trotzdem öffnen</string>
+  <string key="startup.interrupted.title">Letztes Projekt nicht erneut geöffnet</string>
+  <string key="startup.interrupted">Beim letzten Start wurde Varians geschlossen, bevor dieses Projekt fertig geöffnet war:
+{path}
+
+Damit Varians nicht erneut hängen bleibt, wird es nicht automatisch geöffnet. Sie können es über „Zuletzt verwendetes Projekt öffnen…“ oder „Projekt öffnen…“ im Menü Datei öffnen.</string>
   <string key="project.reopen_error.title">Letztes Projekt erneut öffnen</string>
   <string key="project.reopen_error">Das letzte Projekt konnte nicht erneut geöffnet werden:
 {path}

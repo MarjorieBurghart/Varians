@@ -585,6 +585,19 @@
   <string key="menu.close_project">Закрыть проект</string>
   <string key="help.about">О программе…</string>
   <string key="welcome.subtitle">Редактор TEI XML для текстологии</string>
+  <string key="large_file.title">Очень большой файл</string>
+  <string key="large_file.item">{file}: {size} МБ</string>
+  <string key="large_file.text">{files}
+
+Varians загружает файл целиком, чтобы показать и проанализировать его. Если файл больше {limit} МБ, открытие может занять несколько минут и потребовать нескольких ГБ памяти; в это время Varians кажется зависшим.
+
+Всё равно открыть?</string>
+  <string key="large_file.open">Всё равно открыть</string>
+  <string key="startup.interrupted.title">Последний проект не открыт повторно</string>
+  <string key="startup.interrupted">При последнем запуске Varians был закрыт, не успев открыть этот проект:
+{path}
+
+Чтобы снова не зависнуть, он не открывается автоматически. Его можно открыть через «Открыть недавний проект…» или «Открыть проект…» в меню «Файл».</string>
   <string key="project.reopen_error.title">Снова открыть последний проект</string>
   <string key="project.reopen_error">Не удалось снова открыть последний проект:
 {path}

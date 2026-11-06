@@ -27,6 +27,7 @@ from app_context import call_later, current_i18n, tr as _t
 from code_editor import TextDocument, XMLHighlighter
 from document_session import DocumentSession, protect_paragraph_separators
 from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
+from large_files import confirm_large_files, file_size, is_large
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines, structure_signature
 from preview_sources import preview_sources
 from project_management import update_project_documents
@@ -590,14 +591,18 @@ class DocumentTabsMixin:
     def show_document(self, session):
         """Affiche ``session`` dans l'éditeur.
 
-        Un document auxiliaire est lu à son premier affichage. Renvoie False
-        si son fichier ne peut pas être lu ; le document affiché ne change
-        alors pas.
+        Un document auxiliaire est lu à son premier affichage ; s'il dépasse
+        le seuil de taille, Varians demande d'abord (``large_files``).
+        Renvoie False si son fichier ne peut pas être lu, ou si l'ouverture
+        est annulée ; le document affiché ne change alors pas.
         """
         if session is self.document:
             return True
         text = None
         if session.text_document is None:
+            if is_large(session.path) and not confirm_large_files(
+                    self, [(Path(session.path), file_size(session.path))]):
+                return False
             try:
                 text = Path(session.path).read_text(encoding="utf-8")
             except Exception as exc:

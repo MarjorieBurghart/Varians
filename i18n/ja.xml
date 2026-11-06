@@ -585,6 +585,19 @@
   <string key="menu.close_project">プロジェクトを閉じる</string>
   <string key="help.about">Variansについて…</string>
   <string key="welcome.subtitle">本文校訂のためのTEI XMLエディタ</string>
+  <string key="large_file.title">非常に大きなファイル</string>
+  <string key="large_file.item">{file}：{size} MB</string>
+  <string key="large_file.text">{files}
+
+Varians は表示と解析のためにファイル全体を読み込みます。{limit} MB を超えると、開くのに数分かかり、数 GB のメモリが必要になることがあります。その間、Varians は止まっているように見えます。
+
+それでも開きますか？</string>
+  <string key="large_file.open">それでも開く</string>
+  <string key="startup.interrupted.title">前回のプロジェクトを開きませんでした</string>
+  <string key="startup.interrupted">前回の起動時、Varians はこのプロジェクトを開き終える前に終了しました：
+{path}
+
+再び止まらないよう、このプロジェクトは自動では開きません。「ファイル」メニューの「最近のプロジェクトを開く…」または「プロジェクトを開く…」から開けます。</string>
   <string key="project.reopen_error.title">前回のプロジェクトを再度開く</string>
   <string key="project.reopen_error">前回のプロジェクトを開き直せませんでした：
 {path}

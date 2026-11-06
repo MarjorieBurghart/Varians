@@ -254,6 +254,37 @@ def remember_open_project(path):
     _settings().setValue("lastOpenProject", str(Path(path).expanduser().resolve()))
 
 
+def startup_pending_project():
+    """Projet dont la réouverture au démarrage n'a pas abouti : noté avant de
+    le rouvrir, effacé une fois la fenêtre affichée. Encore présent au
+    démarrage suivant, il signale que Varians a été fermé avant d'afficher sa
+    fenêtre (fichier trop lourd, blocage) : ce projet n'est alors pas rouvert
+    de nouveau. None si rien n'est en cours."""
+    raw = _settings().value("startupPending", "")
+    if not raw:
+        return None
+    try:
+        return Path(str(raw)).expanduser().resolve()
+    except Exception:
+        return None
+
+
+def mark_startup_pending(path):
+    """Note que la réouverture du projet ``path`` commence (voir
+    :func:`startup_pending_project`) ; écrit aussitôt, pour survivre à un
+    arrêt forcé."""
+    settings = _settings()
+    settings.setValue("startupPending", str(Path(path).expanduser().resolve()))
+    settings.sync()
+
+
+def forget_startup_pending():
+    """Le démarrage est terminé (fenêtre affichée), ou ne rouvre rien."""
+    settings = _settings()
+    settings.remove("startupPending")
+    settings.sync()
+
+
 def forget_open_project():
     """Oublie le projet ouvert : rien ne sera rouvert au démarrage. Appelée par
     « Fermer le projet », et quand le projet à rouvrir ne s'ouvre pas."""

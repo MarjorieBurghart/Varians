@@ -585,6 +585,19 @@ Usa File &gt; Nuovo progetto… oppure File &gt; Apri progetto…</string>
   <string key="menu.close_project">Chiudi progetto</string>
   <string key="help.about">Informazioni…</string>
   <string key="welcome.subtitle">Editor XML TEI per l’ecdotica</string>
+  <string key="large_file.title">File molto grande</string>
+  <string key="large_file.item">{file}: {size} MB</string>
+  <string key="large_file.text">{files}
+
+Varians carica un file per intero per visualizzarlo e analizzarlo. Oltre {limit} MB, l’apertura può richiedere diversi minuti e diversi GB di memoria: Varians sembra allora bloccato.
+
+Aprirlo comunque?</string>
+  <string key="large_file.open">Apri comunque</string>
+  <string key="startup.interrupted.title">Ultimo progetto non riaperto</string>
+  <string key="startup.interrupted">All’ultimo avvio, Varians è stato chiuso prima di aver finito di aprire questo progetto:
+{path}
+
+Per non bloccarsi di nuovo, non viene riaperto automaticamente. Puoi aprirlo con «Riapri progetto recente…» o «Apri progetto…» nel menu File.</string>
   <string key="project.reopen_error.title">Riapri ultimo progetto</string>
   <string key="project.reopen_error">Impossibile riaprire l’ultimo progetto:
 {path}

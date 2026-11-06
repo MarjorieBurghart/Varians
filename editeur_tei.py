@@ -36,7 +36,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_ui", "self_test"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_ui", "self_test", "large_files"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -68,8 +68,9 @@ from i18n import I18nManager
 from app_context import (
     apply_application_icon, apply_qt_language, call_later, error_message, set_i18n, tr, _settings, recent_project_paths, remember_recent_project,
     remove_recent_project, clear_recent_projects, last_open_project_path, remember_open_project,
-    forget_open_project,
+    forget_open_project, startup_pending_project, mark_startup_pending, forget_startup_pending,
 )
+from large_files import confirm_large_files, large_project_files
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 from save_io import atomic_write_text_with_backup
 from pivot_lines import pivot_lb_pattern
@@ -903,7 +904,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return True
 
     def _replace_with_project(self, project_path):
-        """Recharge l'application sur un autre project.xml après garde-fou de sauvegarde."""
+        """Recharge l'application sur un autre project.xml après garde-fou de
+        sauvegarde. Si un fichier de son édition dépasse le seuil de taille,
+        Varians demande d'abord (``large_files``) ; sans accord, rien ne change."""
+        if not confirm_large_files(self, large_project_files(project_path)):
+            return False
         if not self.maybe_save():
             return False
         try:
@@ -1654,6 +1659,12 @@ class WelcomeWindow(QMainWindow):
         self.update_recent_projects_menu()
 
     def _open_project_path(self, project_path):
+        """Ouvre le projet ``project_path`` dans une nouvelle fenêtre et ferme
+        l'accueil ; un message s'il ne s'ouvre pas. Si un fichier de son
+        édition dépasse le seuil de taille, Varians demande d'abord
+        (``large_files``). Renvoie True si le projet est ouvert."""
+        if not confirm_large_files(self, large_project_files(project_path)):
+            return False
         try:
             new_window = MainWindow(Path(project_path))
         except Exception as exc:
@@ -1740,13 +1751,71 @@ class WelcomeWindow(QMainWindow):
                 QTimer.singleShot(0, lambda: new_window.open_iiif_download_manager(auto_start=True))
 
 
+def startup_window(argv):
+    """Fenêtre du démarrage, encore cachée.
+
+    Le projet passé en argument (``argv[1]``), sinon celui qui était encore
+    ouvert à la dernière fermeture (oublié, avec un avertissement, s'il ne se
+    rouvre pas), sinon la fenêtre d'accueil. Avant d'ouvrir un projet dont un
+    fichier dépasse le seuil de taille (``large_files``), Varians demande ;
+    sans accord, la fenêtre d'accueil.
+
+    Garde-fou : la réouverture automatique est notée avant de commencer
+    (``mark_startup_pending``) et effacée une fois la fenêtre affichée
+    (:func:`show_startup_window`). Si elle est encore notée au démarrage
+    suivant, Varians a été fermé avant d'afficher sa fenêtre : ce projet
+    n'est pas rouvert de nouveau, et l'accueil le dit. Une erreur
+    d'ouverture du projet passé en argument est propagée."""
+    if len(argv) > 1:
+        project_path = Path(argv[1]).resolve()
+        if not confirm_large_files(None, large_project_files(project_path)):
+            return WelcomeWindow()
+        return MainWindow(project_path)
+    interrupted = startup_pending_project()
+    if interrupted is not None:
+        forget_startup_pending()
+    # Rouvrir uniquement le projet qui était encore ouvert lors de la
+    # précédente fermeture. « Fermer le projet » efface cette préférence.
+    startup_project = last_open_project_path()
+    if startup_project is None:
+        # Le projet de démonstration reste livré, mais n'est jamais ouvert
+        # automatiquement à la première utilisation.
+        return WelcomeWindow()
+    if interrupted is not None and path_key(interrupted) == path_key(startup_project):
+        forget_open_project()
+        win = WelcomeWindow()
+        call_later(0, win, lambda: QMessageBox.warning(
+            win, _t("startup.interrupted.title"), _t("startup.interrupted", path=startup_project)))
+        return win
+    if not confirm_large_files(None, large_project_files(startup_project)):
+        forget_open_project()
+        return WelcomeWindow()
+    mark_startup_pending(startup_project)
+    try:
+        return MainWindow(startup_project)
+    except Exception as exc:
+        forget_startup_pending()
+        forget_open_project()
+        QMessageBox.warning(None, _t("project.reopen_error.title"),
+                            _t("project.reopen_error", path=startup_project, error=error_message(exc)))
+        return WelcomeWindow()
+
+
+def show_startup_window(win):
+    """Affiche la fenêtre du démarrage, maximisée (« plein écran » au sens
+    bureau : sans masquer la barre des tâches ni les contrôles natifs de la
+    fenêtre). Une fois la fenêtre affichée, le démarrage est terminé : le
+    garde-fou de :func:`startup_window` est effacé."""
+    win.showMaximized()
+    call_later(0, win, forget_startup_pending)
+
+
 def main():
-    """Point d'entrée de l'interface : ouvre le projet passé en argument, sinon
-    celui qui était encore ouvert à la dernière fermeture (oublié, avec un
-    avertissement, s'il ne se rouvre pas), sinon la fenêtre d'accueil. La
-    fenêtre est maximisée ; les TEI Stylesheets sont vérifiées peu après
-    (``tei_stylesheets_ui.at_launch``). Renvoie le code de sortie de
-    l'application, 2 si le projet passé en argument ne s'ouvre pas."""
+    """Point d'entrée de l'interface : la fenêtre de :func:`startup_window`,
+    affichée par :func:`show_startup_window` ; les TEI Stylesheets sont
+    vérifiées peu après (``tei_stylesheets_ui.at_launch``). Renvoie le code
+    de sortie de l'application, 2 si le projet passé en argument ne s'ouvre
+    pas."""
     app = QApplication.instance() or QApplication(sys.argv)
     apply_application_icon(app)
     _install_light_selection_palette(app)
@@ -1755,35 +1824,15 @@ def main():
     apply_qt_language(I18N.language)
     app.setApplicationName(_t("app.name"))
     try:
-        if len(sys.argv) > 1:
-            win = MainWindow(Path(sys.argv[1]).resolve())
-        else:
-            # Rouvrir uniquement le projet qui était encore ouvert lors de la
-            # précédente fermeture. « Fermer le projet » efface cette préférence.
-            startup_project = last_open_project_path()
-            if startup_project is not None:
-                try:
-                    win = MainWindow(startup_project)
-                except Exception as exc:
-                    forget_open_project()
-                    QMessageBox.warning(None, _t("project.reopen_error.title"),
-                                        _t("project.reopen_error", path=startup_project, error=error_message(exc)))
-                    win = WelcomeWindow()
-            else:
-                # Le projet de démonstration reste livré, mais n'est jamais ouvert
-                # automatiquement à la première utilisation.
-                win = WelcomeWindow()
+        win = startup_window(sys.argv)
     except Exception as exc:
         QMessageBox.critical(None, _t("project.open_error"), error_message(exc))
         return 2
-    # « Plein écran » au sens bureau : fenêtre maximisée, sans masquer la barre
-    # des tâches ni les contrôles natifs de la fenêtre.
-    win.showMaximized()
+    show_startup_window(win)
     # TEI Stylesheets : anciennes versions supprimées, puis, au plus une fois
     # par mois, recherche d'une nouvelle version (sans bloquer la fenêtre).
     call_later(1500, win, lambda: tei_stylesheets_at_launch(win))
     return app.exec()
-
 
 if __name__ == "__main__" and sys.argv[1:2] == ["--self-test"]:
     # Vérification d'une installation, version autonome comprise (self_test).

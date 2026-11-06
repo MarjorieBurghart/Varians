@@ -585,6 +585,19 @@ Použijte Soubor &gt; Nový projekt… nebo Soubor &gt; Otevřít projekt…</st
   <string key="menu.close_project">Zavřít projekt</string>
   <string key="help.about">O aplikaci…</string>
   <string key="welcome.subtitle">Editor XML TEI pro textovou kritiku</string>
+  <string key="large_file.title">Velmi velký soubor</string>
+  <string key="large_file.item">{file}: {size} MB</string>
+  <string key="large_file.text">{files}
+
+Varians načítá celý soubor, aby jej zobrazil a analyzoval. Nad {limit} MB může otevření trvat několik minut a vyžadovat několik GB paměti; Varians se pak zdá zablokovaný.
+
+Přesto otevřít?</string>
+  <string key="large_file.open">Přesto otevřít</string>
+  <string key="startup.interrupted.title">Poslední projekt nebyl znovu otevřen</string>
+  <string key="startup.interrupted">Při posledním spuštění byl Varians zavřen dříve, než dokončil otevírání tohoto projektu:
+{path}
+
+Aby se znovu nezablokoval, není automaticky znovu otevřen. Můžete jej otevřít pomocí „Otevřít nedávný projekt…“ nebo „Otevřít projekt…“ v nabídce Soubor.</string>
   <string key="project.reopen_error.title">Znovu otevřít poslední projekt</string>
   <string key="project.reopen_error">Poslední projekt se nepodařilo znovu otevřít:
 {path}
