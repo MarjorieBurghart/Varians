@@ -1,6 +1,6 @@
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.9.4.1**
+**Version de référence : 0.9.4.2**
 
 Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
@@ -1051,6 +1051,20 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.2 — GROS FICHIERS ET DÉMARRAGE
+
+• Au-delà de 20 Mo, Varians demande avant d'ouvrir un fichier dans
+  l'éditeur (« Annuler » par défaut) : au démarrage, pour « Ouvrir un
+  projet… », les projets récents et l'accueil (l'édition et ses parties
+  incluses), et au premier affichage d'un document ou d'une partie.
+  Varians charge un fichier en entier : 30 Mo prennent ~40 s et 1 Go ; un
+  fichier de 700 Mo ne s'ouvrait jamais.
+• Démarrage interrompu : si Varians a été fermé avant d'avoir fini de
+  rouvrir le dernier projet (fenêtre jamais affichée), ce projet n'est pas
+  rouvert au lancement suivant ; l'accueil le dit, et le projet reste dans
+  « Réouvrir un projet récent… ». Avant, le même projet bloquait chaque
+  lancement.
+
 VARIANS V0.9.4.1 — CORRECTIONS
 
 • Ctrl+Espace dans une liste de pointeurs (wit="#T1 #T3") : le curseur

@@ -43,7 +43,7 @@ body:
     attributes:
       label: "Version de Varians / Varians version"
       description: "Aide → À propos… (Help → About…), ou l'écran d'accueil. / Help → About…, or the welcome screen."
-      placeholder: "0.9.4.1"
+      placeholder: "0.9.4.2"
     validations:
       required: true
 
