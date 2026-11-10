@@ -600,6 +600,7 @@ So as not to get stuck again, it is not reopened automatically. You can open it 
   <string key="completion.custom.notice">“Project” suggestions come from custom-elements.xml and do not affect RELAX NG validity.</string>
   <string key="completion.custom.replace_notice">Project-defined editing list: it replaces the suggestions shown here, but does not restrict RELAX NG validity.</string>
   <string key="status.structure.no_alignment">{base}: no line synchronization</string>
+  <string key="status.structure.no_witness">No witness</string>
   <string key="status.structure.free">{base}: {count, plural, one {# TEI line} other {# TEI lines}} (without synchronization)</string>
   <string key="manuscript.no_image_source">No image source is associated with this page.</string>
   <string key="project.witness.alignment.optional">Synchronization file (optional)</string>

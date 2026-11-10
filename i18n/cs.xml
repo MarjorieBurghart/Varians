@@ -612,6 +612,7 @@ Aby se znovu nezablokoval, není automaticky znovu otevřen. Můžete jej otevř
   <string key="completion.custom.notice">Návrhy „Projekt“ pocházejí z custom-elements.xml a neovlivňují platnost podle RELAX NG.</string>
   <string key="completion.custom.replace_notice">Projektový seznam pro zápis: nahrazuje zde zobrazené návrhy, ale neomezuje platnost podle RELAX NG.</string>
   <string key="status.structure.no_alignment">{base}: bez synchronizace řádků</string>
+  <string key="status.structure.no_witness">Žádný svědek</string>
   <string key="status.structure.free">{base}: {count, plural, one {# řádek TEI} few {# řádky TEI} other {# řádků TEI}} (bez synchronizace)</string>
   <string key="manuscript.no_image_source">K této stránce není přiřazen žádný zdroj obrázku.</string>
   <string key="project.witness.alignment.optional">Soubor synchronizace (volitelný)</string>

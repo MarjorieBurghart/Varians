@@ -372,7 +372,7 @@ class TextSegmentsMixin:
             self.lb_base_re = pivot_lb_pattern(base)
             # L'index des <lb/> du document affiché suit le pivot.
             self.document.lb.invalidate()
-        self.base_panel = self.panels[base]
+        self.base_panel = self.panels.get(base)                 # None sans témoin
         self._raw_alignment_caches = state.raw
         self.alignment_caches = state.caches
         self.witness_items = state.witness_items
@@ -394,7 +394,7 @@ class TextSegmentsMixin:
         self.action_reload_images.setEnabled(self.has_any_images)
         self.action_choose_witnesses.setEnabled(self.has_any_images)
         valid_pivot_keys = set(state.base_by_key)
-        base_label = self.witness_titles[base]
+        base_label = self.witness_titles.get(base, base)
         witnesses = project.witness_by_id
         with_texts = bool(self._text_witness_ids())
         for w in self.witness_configs:

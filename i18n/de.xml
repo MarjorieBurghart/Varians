@@ -612,6 +612,7 @@ Damit Varians nicht erneut hängen bleibt, wird es nicht automatisch geöffnet. 
   <string key="completion.custom.notice">Vorschläge „Projekt“ stammen aus custom-elements.xml und beeinflussen die RELAX-NG-Gültigkeit nicht.</string>
   <string key="completion.custom.replace_notice">Vom Projekt definierte Eingabeliste: Sie ersetzt die hier angezeigten Vorschläge, schränkt die RELAX-NG-Gültigkeit jedoch nicht ein.</string>
   <string key="status.structure.no_alignment">{base}: keine Zeilensynchronisierung</string>
+  <string key="status.structure.no_witness">Kein Textzeuge</string>
   <string key="status.structure.free">{base}: {count, plural, one {# TEI-Zeile} other {# TEI-Zeilen}} (ohne Synchronisierung)</string>
   <string key="manuscript.no_image_source">Dieser Seite ist keine Bildquelle zugeordnet.</string>
   <string key="project.witness.alignment.optional">Synchronisierungsdatei (optional)</string>

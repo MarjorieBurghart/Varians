@@ -74,3 +74,72 @@ def test_the_settings_accept_removing_every_witness(qapp, qtbot, example_project
     assert dlg.result() == QDialog.DialogCode.Accepted
     draft = dlg.draft()
     assert draft.witnesses == [] and draft.base_witness == ""
+
+
+# -- La fenêtre d'un projet sans témoin ---------------------------------------
+
+import pytest
+
+
+@pytest.fixture
+def project_without_witness(tmp_path):
+    from project_management import create_new_transcription_project
+    return create_new_transcription_project(
+        tmp_path / "sans_temoin", "Essai", [], "", ROOT, "fr", "en", xslt_mode="builtin", schema_mode="none")
+
+
+def test_a_project_without_witness_opens_and_saves(open_window, project_without_witness, dialogs, qtbot):
+    from app_context import tr
+    window = open_window(project_without_witness)
+    assert window.base_id == "" and window.panels == {} and window.base_panel is None
+    assert window.structure_status.text() == tr("status.structure.no_witness")
+    # L'édition se modifie et s'enregistre comme d'habitude.
+    cursor = window.editor.textCursor()
+    cursor.setPosition(window.editor.toPlainText().index("<p></p>") + 3)
+    window.editor.setTextCursor(cursor)
+    window.editor.insertPlainText("Incipit")
+    assert window.save()
+    assert "<p>Incipit</p>" in window.project.edition.read_text(encoding="utf-8")
+    assert window.structure_status.text() == tr("status.structure.no_witness")
+
+
+def test_refreshing_synchronizations_without_witness(open_window, project_without_witness, dialogs):
+    window = open_window(project_without_witness)
+    assert window.refresh_witness_synchronizations() is True    # sans boîte d'erreur
+    assert window.base_panel is None
+
+
+def test_the_preview_works_without_witness(open_window, project_without_witness, dialogs):
+    window = open_window(project_without_witness)
+    view = window.formatted_view
+    window.left_tabs.setCurrentIndex(window.left_tabs.indexOf(view))
+    view.refresh_preview(force=True)
+    assert "tei-edit://p/" in view.preview.toHtml()
+
+
+def test_the_first_witness_gets_a_listwit_and_becomes_the_pivot(open_window, project_without_witness, dialogs):
+    from app_context import tr
+    edition = project_without_witness.parent / "xml" / "edition.xml"
+    window = open_window(project_without_witness)
+
+    def settings(dialog):
+        dialog.witnesses_table.add_witness()
+        dialog._accept()
+        return dialog.result()
+
+    dialogs.expect("dialog", settings)
+    dialogs.expect("dialog", _fill_witness("T1", "Paris, BnF, latin 1234"))
+    dialogs.expect("information")
+    window.project_settings_dialog()
+    new_window = window._replacement_window
+    try:
+        assert dialogs.seen[-1][2] == (tr("project.settings.saved") + "\n\n"
+                                       + tr("project.listwit.created", witnesses="T1"))
+        text = edition.read_text(encoding="utf-8")
+        assert "<bibl><!--" not in text and "scholarly digital edition" in text
+        assert '<witness xml:id="T1">Paris, BnF, latin 1234</witness>' in text
+        assert new_window.base_id == "T1" and new_window.base_panel is not None
+        assert load_project(project_without_witness).base_witness == "T1"
+    finally:
+        new_window._force_close = True
+        new_window.close()

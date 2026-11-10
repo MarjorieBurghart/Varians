@@ -612,6 +612,7 @@ Per non bloccarsi di nuovo, non viene riaperto automaticamente. Puoi aprirlo con
   <string key="completion.custom.notice">Le proposte «Progetto» provengono da custom-elements.xml e non influenzano la validità RELAX NG.</string>
   <string key="completion.custom.replace_notice">Elenco di inserimento definito dal progetto: sostituisce le proposte mostrate qui, ma non limita la validità RELAX NG.</string>
   <string key="status.structure.no_alignment">{base}: nessuna sincronizzazione di righe</string>
+  <string key="status.structure.no_witness">Nessun testimone</string>
   <string key="status.structure.free">{base}: {count, plural, one {# riga TEI} other {# righe TEI}} (senza sincronizzazione)</string>
   <string key="manuscript.no_image_source">Nessuna sorgente immagine associata a questa pagina.</string>
   <string key="project.witness.alignment.optional">File di sincronizzazione (facoltativo)</string>

@@ -612,6 +612,7 @@ Varians は表示と解析のためにファイル全体を読み込みます。
   <string key="completion.custom.notice">「プロジェクト」の候補はcustom-elements.xmlから取得され、RELAX NGの妥当性には影響しません。</string>
   <string key="completion.custom.replace_notice">プロジェクト定義の入力候補です。ここに表示する候補を置き換えますが、RELAX NGの妥当性を制限しません。</string>
   <string key="status.structure.no_alignment">{base}：行同期なし</string>
+  <string key="status.structure.no_witness">伝本なし</string>
   <string key="status.structure.free">{base}：TEI {count}行（同期なし）</string>
   <string key="manuscript.no_image_source">このページに画像ソースが関連付けられていません。</string>
   <string key="project.witness.alignment.optional">同期ファイル（任意）</string>

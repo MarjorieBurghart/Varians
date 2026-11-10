@@ -612,6 +612,7 @@ Varians загружает файл целиком, чтобы показать 
   <string key="completion.custom.notice">Предложения «Проект» берутся из custom-elements.xml и не влияют на действительность по RELAX NG.</string>
   <string key="completion.custom.replace_notice">Список ввода, заданный проектом: он заменяет отображаемые здесь предложения, но не ограничивает действительность по RELAX NG.</string>
   <string key="status.structure.no_alignment">{base}: нет синхронизации строк</string>
+  <string key="status.structure.no_witness">Нет свидетелей</string>
   <string key="status.structure.free">{base}: строк TEI — {count} (без синхронизации)</string>
   <string key="manuscript.no_image_source">С этой страницей не связан источник изображения.</string>
   <string key="project.witness.alignment.optional">Файл синхронизации (необязательно)</string>

@@ -600,6 +600,7 @@ Pour ne pas bloquer de nouveau, il n’est pas rouvert automatiquement. Vous pou
   <string key="completion.custom.notice">Les suggestions « Projet » proviennent de custom-elements.xml et n’affectent pas la validité RELAX NG.</string>
   <string key="completion.custom.replace_notice">Liste de saisie définie par le projet : elle remplace ici les propositions de l’interface, mais ne restreint pas la validité RELAX NG.</string>
   <string key="status.structure.no_alignment">{base} : aucune synchronisation de lignes</string>
+  <string key="status.structure.no_witness">Aucun témoin</string>
   <string key="status.structure.free">{base} : {count, plural, one {# ligne TEI} other {# lignes TEI}} (sans synchronisation)</string>
   <string key="manuscript.no_image_source">Aucune source d’image n’est associée à cette page.</string>
   <string key="project.witness.alignment.optional">Fichier de synchronisation (facultatif)</string>
