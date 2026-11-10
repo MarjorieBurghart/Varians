@@ -750,6 +750,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         # Édition assemblée : un changement invalide le résultat partagé.
         self.editor.document().contentsChanged.connect(self._assembly_changed)
         self.open_path(self.project.edition)
+        # Projet rouvert : le curseur et le document affiché d'avant.
+        self._restore_cursor_places()
         remember_open_project(self.project.path)
 
     def _report_alignment_problems(self):
@@ -905,6 +907,14 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.close()
         return True
 
+    def _remember_cursor_places_safely(self):
+        """``remember_cursor_places``, sans jamais empêcher de fermer ou de
+        recharger la fenêtre."""
+        try:
+            self.remember_cursor_places()
+        except Exception:
+            pass
+
     def _replace_with_project(self, project_path):
         """Recharge l'application sur un autre project.xml après garde-fou de
         sauvegarde. Si un fichier de son édition dépasse le seuil de taille,
@@ -913,6 +923,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             return False
         if not self.maybe_save():
             return False
+        # Même projet rouvert : sa nouvelle fenêtre reprend la place du moment.
+        self._remember_cursor_places_safely()
         try:
             new_window = MainWindow(Path(project_path))
         except Exception as exc:
@@ -1477,6 +1489,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
 
     def closeEvent(self,event):
         if self._force_close or self.confirm_close_application():
+            self._remember_cursor_places_safely()
             self._closing_workspace = True
             for win in list(self._detached_windows.values()):
                 win.close()

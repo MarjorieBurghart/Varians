@@ -1071,6 +1071,12 @@ VARIANS V0.9.4.3 — PROJET SANS TÉMOIN
   barre d'état. Viewer web : le texte seul (texte établi), sans
   fac-similé.
 • Coloration : un commentaire sur plusieurs lignes est coloré en entier.
+• Projet rouvert (projets récents, démarrage, Ouvrir un projet) : le
+  document qui était affiché l'est de nouveau, et le curseur de chaque
+  document reprend sa ligne et sa colonne (fin de ligne si elle a
+  raccourci, dernière ligne si le fichier a raccourci). Places mémorisées
+  par projet dans les réglages (projectView/…/cursorPlaces), à la fermeture
+  de la fenêtre et avant un rechargement.
 
 VARIANS V0.9.4.2 — GROS FICHIERS ET DÉMARRAGE
 

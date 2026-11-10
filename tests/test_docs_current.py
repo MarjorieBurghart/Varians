@@ -34,7 +34,7 @@ def test_the_version_history_tells_what_the_current_version_brings():
     """0.9.4.3 : le projet sans témoin, en tête."""
     entry = _history_entry(CURRENT_VERSION)
     for words in ("sans témoin", "<listWit>", "<bibl>", "<sourceDesc>", "Paramètres du projet",
-                  "texte seul", "commentaire"):
+                  "texte seul", "commentaire", "curseur"):
         assert words in entry, words
 
 
