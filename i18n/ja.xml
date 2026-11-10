@@ -380,6 +380,15 @@
   <string key="project.listwit.no_listwit">エディションのヘッダーに &lt;listWit&gt; がありません。{witnesses} をご自分で宣言してください。</string>
   <string key="project.listwit.created">エディションの &lt;sourceDesc&gt; に伝本リスト &lt;listWit&gt; を作成しました：{witnesses}。</string>
   <string key="project.listwit.paragraphs">&lt;listWit&gt; に追加していません。エディションの &lt;sourceDesc&gt; に段落（&lt;p&gt;）があり、TEI ではその横に &lt;listWit&gt; を置けません。これらの段落を資料を説明する &lt;bibl&gt; に置き換え、その下の &lt;listWit&gt; で {witnesses} を宣言してください。</string>
+  <string key="project.listwit.blocked.title">伝本を追加できません</string>
+  <string key="project.listwit.blocked.intro">プロジェクトに追加した伝本は、エディションの伝本リスト &lt;listWit&gt; で宣言する必要があります。次の伝本は今は宣言できません：{witnesses}。</string>
+  <string key="project.listwit.blocked.paragraphs">エディションの &lt;sourceDesc&gt; に段落（&lt;p&gt;）があり、TEI ではその横に &lt;listWit&gt; を置けません。これらの段落を、資料を説明する &lt;bibl&gt; に置き換えてください。</string>
+  <string key="project.listwit.blocked.no_source_desc">エディションのヘッダーに &lt;listWit&gt; も &lt;sourceDesc&gt; もありません。&lt;fileDesc&gt; に &lt;sourceDesc&gt; を追加してください。</string>
+  <string key="project.listwit.blocked.malformed">エディションが整形式ではありません。修正してください。</string>
+  <string key="project.listwit.blocked.id_used">{witnesses} の識別子は、エディションの別の要素がすでに使っています。別のシグラムを選ぶか、エディションでこの識別子を変更してください。</string>
+  <string key="project.listwit.blocked.outro">エディションを修正して保存し、「プロジェクト設定」に戻って伝本を追加してください。</string>
+  <string key="project.listwit.missing.title">宣言されていない伝本</string>
+  <string key="project.listwit.missing">プロジェクトの次の伝本が、エディションの伝本リスト &lt;listWit&gt; で宣言されていません：{witnesses}。宣言しますか？</string>
   <string key="project.listwit.id_used">&lt;listWit&gt; に追加しませんでした：{witnesses} の識別子は、エディションの別の要素がすでに使っています。</string>
   <string key="project.listwit.malformed">&lt;listWit&gt; に追加しませんでした：エディションが整形式ではありません（{witnesses}）。</string>
   <string key="project.xslt">XSLTスタイルシート</string>

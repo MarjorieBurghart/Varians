@@ -368,6 +368,15 @@ It has been removed from the recent-project list.</string>
   <string key="project.listwit.no_listwit">The header of the edition has no &lt;listWit&gt;: declare {witnesses} there yourself.</string>
   <string key="project.listwit.created">List of witnesses &lt;listWit&gt; created in the &lt;sourceDesc&gt; of the edition, with: {witnesses}.</string>
   <string key="project.listwit.paragraphs">Not added to a &lt;listWit&gt;: the &lt;sourceDesc&gt; of the edition contains paragraphs (&lt;p&gt;), and TEI allows no &lt;listWit&gt; next to them. Replace these paragraphs with a &lt;bibl&gt; describing the source, then declare {witnesses} in a &lt;listWit&gt; placed below it.</string>
+  <string key="project.listwit.blocked.title">Witness not added</string>
+  <string key="project.listwit.blocked.intro">A witness added to the project must be declared in the edition’s list of witnesses &lt;listWit&gt;; this is not possible for now for: {witnesses}.</string>
+  <string key="project.listwit.blocked.paragraphs">The edition’s &lt;sourceDesc&gt; contains paragraphs (&lt;p&gt;), and TEI allows no &lt;listWit&gt; next to them. Replace these paragraphs with a &lt;bibl&gt; describing the source.</string>
+  <string key="project.listwit.blocked.no_source_desc">The edition’s header has neither &lt;listWit&gt; nor &lt;sourceDesc&gt;. Add a &lt;sourceDesc&gt; to the &lt;fileDesc&gt;.</string>
+  <string key="project.listwit.blocked.malformed">The edition is not well-formed. Correct it.</string>
+  <string key="project.listwit.blocked.id_used">The identifier of {witnesses} is already that of another element of the edition. Choose another siglum, or change this identifier in the edition.</string>
+  <string key="project.listwit.blocked.outro">Correct the edition and save it, then come back to Project settings to add the witness.</string>
+  <string key="project.listwit.missing.title">Undeclared witnesses</string>
+  <string key="project.listwit.missing">These witnesses of the project are not declared in the edition’s list of witnesses &lt;listWit&gt;: {witnesses}. Declare them there?</string>
   <string key="project.listwit.id_used">Not added to the &lt;listWit&gt;: the identifier of {witnesses} already belongs to another element of the edition.</string>
   <string key="project.listwit.malformed">Not added to the &lt;listWit&gt;: the edition is not well-formed ({witnesses}).</string>
   <string key="project.xslt">XSLT stylesheet</string>

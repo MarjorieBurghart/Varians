@@ -23,7 +23,7 @@ from project_management import (
     prepare_iiif_manifests_for_project, prepare_local_images_for_project,
     update_project_web_text, write_project_xml,
 )
-from tei_listwit import add_witnesses_to_listwit_file, report_notes
+from tei_listwit import add_witnesses_to_listwit_file, report_notes, undeclared_witnesses
 from tei_facsimile import (
     previous_surface_labels, project_facsimile_pages, removable_generated_iiif_surfaces,
     sync_facsimile_file,
@@ -243,6 +243,21 @@ class ProjectActionsMixin:
             return
         if result != QDialog.DialogCode.Accepted:
             return
+        # Témoins déjà dans le projet mais absents de la <listWit> de
+        # l'édition : proposés à chaque enregistrement.
+        known = {w.id for w in self.project.witnesses}
+        draft = dlg.draft()
+        try:
+            edition_text = Path(draft.edition).read_bytes().decode("utf-8")
+        except (OSError, UnicodeError):
+            edition_text = ""
+        undeclared = undeclared_witnesses(edition_text, [w for w in draft.witnesses if w.id in known])
+        if undeclared and QMessageBox.question(
+                self, _t("project.listwit.missing.title"),
+                _t("project.listwit.missing", witnesses=", ".join(w.display_siglum for w in undeclared)),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
+            undeclared = []
         try:
             draft = dlg.draft()
             draft.witnesses = prepare_alignment_files_for_project(self.project.root_dir, draft.witnesses)
@@ -258,11 +273,11 @@ class ProjectActionsMixin:
             facsimile_report = sync_facsimile_file(
                 draft.edition, facsimile_pages, previous_surface_labels(self.project.witnesses)
             ) if facsimile_pages else None
-            # Témoins ajoutés au projet : déclarés dans la <listWit> existante
-            # de l'édition (V0.9.2.8.2) ; Varians n'en crée jamais.
-            known = {w.id for w in self.project.witnesses}
+            # Témoins ajoutés au projet (et témoins non déclarés acceptés) :
+            # déclarés dans la <listWit> de l'édition, créée si besoin.
+            undeclared_ids = {w.id for w in undeclared}
             listwit_report = add_witnesses_to_listwit_file(
-                draft.edition, [w for w in draft.witnesses if w.id not in known])
+                draft.edition, [w for w in draft.witnesses if w.id not in known or w.id in undeclared_ids])
             # En passant du mode « XSLT application » au mode « personnalisée »,
             # initialiser une copie locale si elle n'existe pas, sans jamais
             # remplacer un fichier personnalisé déjà présent.

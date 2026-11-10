@@ -218,7 +218,12 @@ puis un `<bibl>` de remplissage :
 témoin, `tei_listwit` crée la `<listWit>` : à la place de ce `<bibl>` s’il est
 intact, sinon en dessous ; jamais à côté d’un `<p>` ou d’un `<ab>` (en TEI,
 `<sourceDesc>` contient des paragraphes ou des éléments structurés, pas les deux).
-Le commentaire reste. Sans témoin, la fenêtre n’a pas de colonne de témoins et le
+Le commentaire reste. Quand un témoin ajouté ne peut pas être déclaré (paragraphes,
+pas de `<sourceDesc>`, édition mal formée, identifiant déjà pris), « Paramètres du
+projet » refuse l’enregistrement et dit quoi corriger avant de revenir l’ajouter
+(`tei_listwit.blocking_message`). À chaque enregistrement, Varians propose aussi
+de déclarer les témoins du projet absents de la `<listWit>`
+(`tei_listwit.undeclared_witnesses`). Sans témoin, la fenêtre n’a pas de colonne de témoins et le
 viewer web publie le texte établi seul.
 
 Le fichier de synchronisation d’un témoin est facultatif. Il est donc possible de commencer à transcrire

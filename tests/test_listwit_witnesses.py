@@ -167,3 +167,36 @@ def test_the_report_names_a_created_list_and_paragraphs():
     blocked = ListWitReport(paragraphs=["T1"], id_used=["P"])
     assert report_notes(blocked, tr) == [tr("project.listwit.id_used", witnesses="P"),
                                         tr("project.listwit.paragraphs", witnesses="T1")]
+
+
+# -- Ajout bloqué, témoins non déclarés (Paramètres du projet) ---------------
+
+def _tr_fr():
+    from pathlib import Path
+    from i18n import I18nManager
+    return I18nManager(Path(__file__).resolve().parents[1] / "i18n", "fr").tr
+
+
+def test_a_witness_that_cannot_be_declared_blocks_the_addition():
+    from tei_listwit import ListWitReport, blocking_message
+    tr = _tr_fr()
+    assert blocking_message(ListWitReport(added=["T1"], created=True), tr, ["T1"]) is None
+    assert blocking_message(ListWitReport(declared=["T1"]), tr, ["T1"]) is None
+    for report, reason in ((ListWitReport(paragraphs=["T1"]), tr("project.listwit.blocked.paragraphs")),
+                           (ListWitReport(no_listwit=["T1"]), tr("project.listwit.blocked.no_source_desc")),
+                           (ListWitReport(malformed=["T1"]), tr("project.listwit.blocked.malformed")),
+                           (ListWitReport(id_used=["T1"]), tr("project.listwit.blocked.id_used", witnesses="T1"))):
+        message = blocking_message(report, tr, ["T1"])
+        assert message.startswith(tr("project.listwit.blocked.intro", witnesses="T1"))
+        assert reason in message and message.endswith(tr("project.listwit.blocked.outro"))
+
+
+def test_undeclared_witnesses_of_the_project_are_found():
+    from tei_listwit import undeclared_witnesses
+    source = _tei(LISTWIT)
+    t1, t2, p = WitnessDraft("T1", "x"), WitnessDraft("T2", "x"), WitnessDraft("P", "Paris")
+    assert undeclared_witnesses(source, [t1, t2, p]) == [p]
+    # Le <witness> d'un commentaire ne compte pas.
+    commented = source.replace("</sourceDesc>", '<!-- <listWit><witness xml:id="P">P</witness></listWit> --></sourceDesc>')
+    assert undeclared_witnesses(commented, [p]) == [p]
+    assert undeclared_witnesses("<TEI><teiHeader>", [p]) == []      # mal formé : rien à proposer

@@ -18,7 +18,10 @@ paragraphes (``<p>``, ``<ab>``), soit des éléments structurés (``<bibl>``,
 ``<listWit>``…), jamais les deux. Le ``<bibl>`` de remplissage d'une
 transcription sans témoin (:data:`SOURCE_BIBL_PLACEHOLDER`), intact, est
 remplacé par la liste ; sinon la liste va à la suite du contenu. Avec des
-paragraphes, rien n'est créé (``ListWitReport.paragraphs``).
+paragraphes, rien n'est créé (``ListWitReport.paragraphs``) : « Paramètres du
+projet » refuse alors l'ajout du témoin (:func:`blocking_message`), et propose
+à chaque enregistrement de déclarer les témoins qui ne le sont pas
+(:func:`undeclared_witnesses`).
 
 Module sans Qt."""
 from __future__ import annotations
@@ -283,6 +286,38 @@ def report_notes(report: ListWitReport, tr) -> list[str]:
         ("project.listwit.id_used", report.id_used),
         ("project.listwit.paragraphs", report.paragraphs),
         ("project.listwit.malformed", report.malformed)) if sigla]
+
+
+def blocking_message(report: ListWitReport, tr, sigla) -> str | None:
+    """Message qui refuse l'ajout des témoins ``sigla`` quand ``report``
+    (essai à blanc de :func:`add_witnesses_to_listwit`) dit qu'ils ne
+    peuvent pas être déclarés : ce qu'il faut corriger dans l'édition, puis
+    revenir les ajouter. None s'ils peuvent l'être."""
+    reasons = []
+    if report.malformed:
+        reasons.append(tr("project.listwit.blocked.malformed"))
+    if report.paragraphs:
+        reasons.append(tr("project.listwit.blocked.paragraphs"))
+    if report.no_listwit:
+        reasons.append(tr("project.listwit.blocked.no_source_desc"))
+    if report.id_used:
+        reasons.append(tr("project.listwit.blocked.id_used", witnesses=", ".join(report.id_used)))
+    if not reasons:
+        return None
+    return "\n\n".join([tr("project.listwit.blocked.intro", witnesses=", ".join(sigla)),
+                         *(f"• {reason}" for reason in reasons), tr("project.listwit.blocked.outro")])
+
+
+def undeclared_witnesses(text: str, witnesses) -> list:
+    """Les témoins de ``witnesses`` dont l'identifiant n'est celui d'aucun
+    ``<witness>`` de ``text`` (commentaires exclus) ; aucun si ``text`` est
+    mal formé."""
+    try:
+        root = ET.fromstring(re.sub(r"^\s*<\?xml[^>]*\?>", "", text.lstrip("\ufeff")))
+    except ET.ParseError:
+        return []
+    declared = {el.get(XML_ID) for el in root.iter() if _local(el.tag) == "witness"}
+    return [w for w in witnesses if (w.id or "").strip() and w.id.strip() not in declared]
 
 
 def add_witnesses_to_listwit_file(edition_path, witnesses) -> ListWitReport:

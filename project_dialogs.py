@@ -18,6 +18,7 @@ from iiif_manifest import fetch_manifest, parse_manifest
 from tei_facsimile import default_surface_id, valid_xml_id
 from witness_ids import witness_id_for_siglum
 from app_context import APP_VERSION
+from tei_listwit import add_witnesses_to_listwit, blocking_message
 from i18n import message_text
 from iiif_page_selection import canvas_key, natural_key, propose_exact_ocr_links
 
@@ -1437,6 +1438,7 @@ class ProjectSettingsDialog(QDialog):
         group = QGroupBox(tr("project.witnesses")); gl = QVBoxLayout(group)
         self.witnesses_table = WitnessTable(tr, project.witnesses, project.base_witness, self, project_root=project.root_dir,
                                             saved_ids={w.id for w in project.witnesses}); gl.addWidget(self.witnesses_table)
+        self._saved_witness_ids = {w.id for w in project.witnesses}
         self.witnesses_table.rename_requested.connect(self._rename_requested)
         self.witnesses_table.witnesses_changed.connect(self._pivot_possible)
         self._pivot_possible()
@@ -1452,6 +1454,16 @@ class ProjectSettingsDialog(QDialog):
             return self.draft()
         except Exception:
             return None
+
+    def _listwit_blocking(self, edition, witnesses):
+        """Message qui refuse l'ajout de ``witnesses`` si l'édition ne permet
+        pas de les déclarer dans sa <listWit> (essai à blanc) ; sinon None."""
+        try:
+            text = Path(edition).read_bytes().decode("utf-8")
+        except (OSError, UnicodeError):
+            return None
+        report = add_witnesses_to_listwit(text, witnesses)[1]
+        return blocking_message(report, self.tr, [getattr(w, "display_siglum", w.id) for w in witnesses])
 
     def _pivot_possible(self, *_):
         """La transcription du témoin pivot ne se prépare qu'avec un témoin."""
@@ -1492,6 +1504,12 @@ class ProjectSettingsDialog(QDialog):
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.schema_missing", path=self.schema.text())); return
         if witnesses and not self.witnesses_table.base_witness():
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.no_base")); return
+        # Un témoin ajouté doit pouvoir être déclaré dans la <listWit> de
+        # l'édition : sinon l'ajout attend que l'édition soit corrigée.
+        added = [w for w in witnesses if w.id not in self._saved_witness_ids]
+        blocked = self._listwit_blocking(edition, added) if added else None
+        if blocked:
+            QMessageBox.warning(self, self.tr("project.listwit.blocked.title"), blocked); return
         for w in witnesses:
             if w.alignment is not None and not Path(w.alignment).is_file():
                 QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.alignment_missing", path=w.alignment)); return

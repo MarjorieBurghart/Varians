@@ -140,6 +140,9 @@ def test_a_project_without_witness_is_explained(language):
     for words in ("&lt;sourceDesc&gt;", "&lt;bibl&gt;", "&lt;listWit&gt;", "&lt;p&gt;",
                   catalog["menu.project_settings"], catalog["menu.generate_web"]):
         assert words in paragraph, words
+    # L'ajout refusé tant que le <sourceDesc> a des paragraphes ; les témoins
+    # non déclarés proposés à chaque enregistrement.
+    assert paragraph.count("&lt;listWit&gt;") >= 3
     # Varians crée désormais la <listWit> ; l'aide ne dit plus le contraire.
     assert 'href="#no-witness"' in page
     for never in ("Varians n’en crée pas", "Varians does not create it", "Varians legt keine an",
