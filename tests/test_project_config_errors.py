@@ -96,7 +96,9 @@ CASES = {
                        _unknown('<witness id="A"> <images selectionMode="…">', "autre", "all, selected")),
     "alto_source": (_with('<witness id="A"/>', '<witness id="A"><alto type="autre"/></witness>'),
                     _unknown('<witness id="A"> <alto type="…">', "autre", "auto, files")),
-    "no_witness": (_with(WITNESSES, '<witnesses base="A"/>'), ("project.error.no_witness", {})),
+    # Sans témoin, un pivot désigné ne peut être qu'inconnu.
+    "pivot_without_witness": (_with(WITNESSES, '<witnesses base="A"/>'),
+                              ("project.error.unknown_pivot", {"witness": "A", "witnesses": ""})),
     "no_pivot": (_with(WITNESSES, '<witnesses><witness id="A"/><witness id="B"/></witnesses>'),
                  ("project.error.no_pivot", {})),
 }

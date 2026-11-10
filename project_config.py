@@ -573,12 +573,10 @@ def load_project(path: str | Path) -> ProjectConfig:
             siglum if siglum != wid else "",
         ))
 
-    if not witnesses:
-        raise ProjectConfigError(
-            "project.error.no_witness",
-            'project.xml ne déclare aucun témoin : ajoutez au moins un <witness id="…"> dans <witnesses>.')
+    # Un projet peut n'avoir encore aucun témoin : ils s'ajoutent
+    # plus tard par « Paramètres du projet ». Il n'a alors pas de pivot.
     explicit_bases = [w.id for w in witnesses if w.is_base]
-    if not base_witness:
+    if not base_witness and witnesses:
         if len(explicit_bases) == 1:
             base_witness = explicit_bases[0]
         else:
@@ -586,7 +584,7 @@ def load_project(path: str | Path) -> ProjectConfig:
                 "project.error.no_pivot",
                 'project.xml ne désigne pas de témoin pivot : indiquez-le par <witnesses base="…">, '
                 'ou par role="base" sur un seul <witness>.')
-    if base_witness not in {w.id for w in witnesses}:
+    if base_witness and base_witness not in {w.id for w in witnesses}:
         raise ProjectConfigError(
             "project.error.unknown_pivot",
             "Témoin pivot inconnu : « {witness} » ne figure pas parmi les témoins de project.xml ({witnesses}).",
