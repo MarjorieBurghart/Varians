@@ -16,6 +16,7 @@ déclaré dans <documents> est une partie : une seule session par fichier.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import replace
 from pathlib import Path
 
@@ -23,7 +24,7 @@ from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QActionGroup, QColor, QFont, QFontMetrics, QTextCursor
 from PySide6.QtWidgets import (QHBoxLayout, QMenu, QMessageBox, QPlainTextDocumentLayout, QStyle, QStyleOptionTab,
                                QStylePainter, QTabBar, QToolButton, QVBoxLayout, QWidget)
-from app_context import call_later, current_i18n, tr as _t
+from app_context import _settings, call_later, current_i18n, tr as _t
 from code_editor import TextDocument, XMLHighlighter
 from document_session import DocumentSession, protect_paragraph_separators
 from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
@@ -614,6 +615,11 @@ class DocumentTabsMixin:
             return False
         if text is not None:
             self._load_session_text(session, text)
+            # Premier affichage : le curseur reprend sa place de la dernière
+            # fermeture du projet.
+            position = self._saved_place_position(session)
+            if position is not None and session.view_state is None:
+                session.view_state = {"cursor": (position, position), "center": True}
         self._attach_document(session)
         return True
 
@@ -679,6 +685,79 @@ class DocumentTabsMixin:
         self._restore_document_view(session)
         self.search_results_document_changed()
 
+    # -- Curseur retrouvé à la réouverture du projet ---------------------------
+
+    def _place_key(self, path):
+        """Nom d'un document dans les places mémorisées : son chemin relatif
+        au dossier du projet, sinon absolu."""
+        try:
+            return Path(path).resolve().relative_to(Path(self.project.root_dir).resolve()).as_posix()
+        except (ValueError, OSError):
+            return str(Path(path).resolve())
+
+    def _saved_places(self):
+        """Places mémorisées du projet : ``{"documents": {nom: [ligne,
+        colonne]}, "shown": nom du document affiché}``."""
+        raw = _settings().value(self._view_settings_key("cursorPlaces"), "")
+        try:
+            data = json.loads(raw) if raw else {}
+        except (TypeError, ValueError):
+            data = {}
+        return data if isinstance(data, dict) else {}
+
+    def remember_cursor_places(self):
+        """Mémorise, dans les réglages du projet, la ligne et la colonne du
+        curseur de chaque document affiché pendant la session, et le document
+        affiché. Appelée à la fermeture de la fenêtre et avant de recharger le
+        projet ; les places des documents non affichés sont gardées."""
+        if self.document is not None and self.document.text_document is not None:
+            self._remember_document_view(self.document)
+        saved = self._saved_places()
+        places = dict(saved.get("documents") or {})
+        for session in self.documents:
+            document, state = session.text_document, session.view_state
+            if document is None or session.path is None or not state:
+                continue
+            last = max(0, document.characterCount() - 1)
+            position = min(state.get("cursor", (0, 0))[1], last)
+            block = document.findBlock(position)
+            places[self._place_key(session.path)] = [block.blockNumber(), position - block.position()]
+        shown = self._place_key(self.document.path) if self.document.path else ""
+        _settings().setValue(self._view_settings_key("cursorPlaces"),
+                             json.dumps({"documents": places, "shown": shown}))
+
+    def _saved_place_position(self, session):
+        """Position (unités de Qt) où replacer le curseur de ``session`` :
+        sa ligne et sa colonne mémorisées, la fin de la ligne si elle est
+        devenue plus courte, la dernière ligne si le fichier a raccourci ;
+        None sans place mémorisée."""
+        if session.path is None or session.text_document is None:
+            return None
+        place = (self._saved_places().get("documents") or {}).get(self._place_key(session.path))
+        try:
+            line, column = int(place[0]), int(place[1])
+        except (TypeError, ValueError, IndexError):
+            return None
+        document = session.text_document
+        block = document.findBlockByNumber(min(max(line, 0), document.blockCount() - 1))
+        return block.position() + min(max(column, 0), block.length() - 1)
+
+    def _restore_cursor_places(self):
+        """À l'ouverture du projet : le curseur de l'édition reprend sa place,
+        puis le document affiché à la dernière fermeture est réaffiché."""
+        position = self._saved_place_position(self.edition_session)
+        if position is not None:
+            cursor = QTextCursor(self.editor.document())
+            cursor.setPosition(position)
+            self.editor.setTextCursor(cursor)
+            edition = self.edition_session
+            call_later(0, self, lambda: self.document is edition and self.editor.centerCursor())
+        shown = self._saved_places().get("shown")
+        if shown and self.edition_session.path and shown != self._place_key(self.edition_session.path):
+            session = next((s for s in self.documents if s.path and self._place_key(s.path) == shown), None)
+            if session is not None:
+                call_later(0, self, lambda: self.show_document(session))
+
     def _remember_document_view(self, session):
         cursor = self.editor.textCursor()
         session.view_state = {
@@ -707,6 +786,11 @@ class DocumentTabsMixin:
 
         def restore_scroll(shown=session):
             if self.document is shown:
+                if state.get("center"):
+                    # Place retrouvée d'une session précédente : la ligne au
+                    # milieu de la zone affichée.
+                    self.editor.centerCursor()
+                    return
                 self.editor.verticalScrollBar().setValue(vertical)
                 self.editor.horizontalScrollBar().setValue(horizontal)
 

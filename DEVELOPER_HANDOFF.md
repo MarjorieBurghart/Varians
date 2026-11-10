@@ -1,6 +1,6 @@
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.9.4.2**
+**Version de référence : 0.9.4.3**
 
 Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
@@ -1051,6 +1051,33 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.3 — PROJET SANS TÉMOIN
+
+• Un projet peut se créer sans aucun témoin (édition, validation, aperçu,
+  transformations) ; les témoins s'ajoutent plus tard par Fichier ▸
+  Paramètres du projet. project.xml : <witnesses/> vide, sans pivot. La
+  préparation de la transcription du témoin pivot demande un témoin.
+• Transcription vierge sans témoin : son <sourceDesc> reçoit en commentaire
+  le mode d'emploi de la <listWit> (exemple compris), puis un <bibl> à
+  remplir : <bibl><!-- Décrivez ici la source de votre document. --></bibl>.
+• Premier témoin : Varians crée la <listWit> dans le <sourceDesc>, à la
+  place de ce <bibl> s'il est intact, sinon en dessous ; le commentaire
+  reste. Quand la TEI ne permet pas de déclarer un témoin ajouté
+  (paragraphes dans le <sourceDesc>, pas de <sourceDesc>, édition mal
+  formée, identifiant déjà pris), l'ajout est refusé et la boîte dit quoi
+  corriger. À chaque enregistrement des paramètres, Varians propose de
+  déclarer les témoins du projet absents de la <listWit>.
+• Fenêtre sans témoin : pas de colonne de témoins, « Aucun témoin » dans la
+  barre d'état. Viewer web : le texte seul (texte établi), sans
+  fac-similé.
+• Coloration : un commentaire sur plusieurs lignes est coloré en entier.
+• Projet rouvert (projets récents, démarrage, Ouvrir un projet) : le
+  document qui était affiché l'est de nouveau, et le curseur de chaque
+  document reprend sa ligne et sa colonne (fin de ligne si elle a
+  raccourci, dernière ligne si le fichier a raccourci). Places mémorisées
+  par projet dans les réglages (projectView/…/cursorPlaces), à la fermeture
+  de la fenêtre et avant un rechargement.
+
 VARIANS V0.9.4.2 — GROS FICHIERS ET DÉMARRAGE
 
 • Au-delà de 20 Mo, Varians demande avant d'ouvrir un fichier dans

@@ -360,6 +360,7 @@ class ProjectActionsMixin:
                                 "\n\n".join([_t("project.settings.saved"), *notes]))
         # maybe_save() a déjà été exécuté ; on recharge immédiatement les chemins,
         # témoins et ressources qui viennent d'être modifiés.
+        self._remember_cursor_places_safely()
         try:
             new_window = type(self)(self.project.path)
         except Exception as exc:

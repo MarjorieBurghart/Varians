@@ -31,14 +31,17 @@ def _history_entry(version):
 
 
 def test_the_version_history_tells_what_the_current_version_brings():
-    """0.9.4.2 : le garde-fou au démarrage et la question au-delà de 20 Mo,
-    en tête."""
+    """0.9.4.3 : le projet sans témoin, en tête."""
     entry = _history_entry(CURRENT_VERSION)
-    for words in ("20 Mo", "Annuler", "démarrage", "Réouvrir un projet récent"):
+    for words in ("sans témoin", "<listWit>", "<bibl>", "<sourceDesc>", "Paramètres du projet",
+                  "texte seul", "commentaire", "curseur"):
         assert words in entry, words
 
 
 def test_the_version_history_keeps_the_previous_versions():
+    entry = _history_entry("0.9.4.2")
+    for words in ("20 Mo", "Annuler", "démarrage", "Réouvrir un projet récent"):
+        assert words in entry, words
     entry = _history_entry("0.9.4.1")
     for words in ("Ctrl+Espace", "didascalie", "XTDE0540", "Cache IIIF", "« Page n »", "lignes du pivot",
                   "Nouveau projet"):

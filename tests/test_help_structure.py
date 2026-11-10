@@ -148,3 +148,16 @@ def test_a_project_without_witness_is_explained(language):
     for never in ("Varians n’en crée pas", "Varians does not create it", "Varians legt keine an",
                   "Varians ji nevytváří", "Varians non la crea", "Varians её не создаёт", "新たに作ることはありません"):
         assert never not in page, never
+
+
+CURSOR_PLACE = {"fr": "curseur", "en": "cursor", "de": "Cursor", "cs": "kurzor", "it": "cursore",
+                "ru": "курсор", "ja": "カーソル"}
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_reopening_a_project_brings_back_the_cursor(language):
+    """Un projet rouvert retrouve le document affiché et le curseur."""
+    page = _page(language)
+    start = page.index('<p id="large-files">')
+    reopening = page[page.rindex("<p>", 0, start):start]
+    assert CURSOR_PLACE[language] in reopening
