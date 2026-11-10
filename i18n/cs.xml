@@ -939,6 +939,21 @@ Promítnout je do panelů rukopisů? Text TEI zůstane beze změny.</string>
   <string key="documents.new.title">Nový dokument XML</string>
   <string key="documents.new.root">Název kořenového prvku:</string>
   <string key="documents.new.root_invalid">„{name}“ není platný název prvku XML.</string>
+  <string key="documents.new.template">Šablona:</string>
+  <string key="documents.new.edition">Stejné schéma jako edice</string>
+  <string key="documents.new.edition.tip">Kostra TEI „All“ se schématem edice.</string>
+  <string key="documents.new.edition.none">Edice nedeklaruje žádné schéma (&lt;?xml-model?&gt;) a projekt žádné nepředepisuje.</string>
+  <string key="documents.new.group.project">Šablony projektu ({folder}/)</string>
+  <string key="documents.new.project.tip">Dokumenty XML ze složky {folder}/ projektu, zkopírované beze změny.</string>
+  <string key="documents.new.project.empty">Žádná šablona: vložte dokumenty XML do složky {folder}/ projektu.</string>
+  <string key="documents.new.group.tei">TEI P5 ({version})</string>
+  <string key="documents.new.tei.source">Šablony TEI, tytéž, které Oxygen nabízí pod „TEI P5“ (© TEI Consortium, licence CC BY 3.0 nebo BSD 2).</string>
+  <string key="documents.new.empty">Prázdný dokument XML (kořenový prvek podle volby)</string>
+  <string key="documents.new.schema">Schéma: {schema}</string>
+  <string key="documents.new.schema.project">Schéma: {schema} (schéma projektu)</string>
+  <string key="documents.new.schema.none">Schéma: žádné</string>
+  <string key="documents.new.preview">Obsah dokumentu:</string>
+  <string key="documents.new.file">Soubor:</string>
   <string key="documents.new.exists">Tento soubor již existuje; nebude nahrazen:
 {path}</string>
   <string key="documents.remove.menu">Odebrat dokument z projektu</string>
