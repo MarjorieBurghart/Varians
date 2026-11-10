@@ -55,6 +55,7 @@ from project_config import DocumentConfig
 from relaxng_validation import ValidationIssue, lxml_available, relaxng_schema_token
 from schema_resolution import detect_xml_models, resolve_schema, rules_outside, schema_site
 from text_search import Utf16Positions
+import validation_worker
 from validation_worker import worker_client
 from xml_assembly import path_key
 
@@ -477,9 +478,11 @@ class ValidationPanelMixin:
         self.validate_relaxng_document(show_panel=True, show_success_message=True, ask_rules=True)
 
     def refresh_schema_cache(self):
-        """Force le rechargement d'un RNG distant déclaré par xml-model."""
+        """Force le rechargement d'un RNG distant déclaré par xml-model ; un
+        schéma dont la compilation a été abandonnée est essayé de nouveau."""
         self._completion_model = None
         self._completion_model_key = None
+        worker_client().forget_abandoned()
         self.validate_relaxng_document(show_panel=True, show_success_message=True, refresh_schema=True,
                                        ask_rules=True)
 
@@ -937,6 +940,16 @@ class ValidationPanelMixin:
             rng_valid = (_t("rng.status.no_xml_model"), "color:#777")
         else:
             rng_valid = (_t("rng.status.valid"), "color:#376b3c")
+
+        if result.abandoned:                                # compilation trop longue (validation_worker)
+            self._clear_validation_table()
+            self.validation_summary.setText(_t("rng.panel.abandoned", path=schema_name,
+                                               seconds=validation_worker.COMPILE_LIMIT_SEC))
+            self.rng_status.setText(_t("rng.status.abandoned"))
+            self.rng_status.setStyleSheet("color:#a14b2f;font-weight:600")
+            if show_panel:
+                self.show_validation_panel()
+            return result
 
         if not result.schema_loaded:
             self._populate_validation_issues(result.issues, jump_to_xml=False)

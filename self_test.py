@@ -136,6 +136,8 @@ def _relaxng_worker(folder):
     completed = subprocess.run(default_worker_command(), input=requests.encode("utf-8"), capture_output=True,
                                timeout=120, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     lines = [json.loads(line) for line in completed.stdout.decode("utf-8").splitlines() if line.strip()]
+    # Les annonces de compilation du schéma ne sont pas des réponses.
+    lines = [line for line in lines if "compiling" not in line and "compiled" not in line]
     if completed.returncode != 0 or len(lines) != 3:
         raise AssertionError(f"code {completed.returncode} : {completed.stderr.decode('utf-8', 'replace')[-800:]}")
     ping, valid, invalid = lines

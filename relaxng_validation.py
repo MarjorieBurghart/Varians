@@ -55,7 +55,8 @@ class ValidationResult:
     ``schema_loaded`` : faux si le schéma est introuvable ou ne se compile
     pas ; ``well_formed``, ``valid`` ; ``issues`` : les messages ; ``error`` :
     pourquoi la validation s'est arrêtée (lxml absent, schéma introuvable, XML
-    mal formé…), s'il y a lieu."""
+    mal formé…), s'il y a lieu. ``abandoned`` : la compilation du schéma n'a
+    pas abouti dans le délai (validation_worker.COMPILE_LIMIT_SEC)."""
     available: bool
     schema_loaded: bool
     well_formed: bool
@@ -69,6 +70,7 @@ class ValidationResult:
     schematron_rules: tuple[str, ...] = ()
     schematron_errors: tuple[ValidationIssue, ...] = ()
     schematron_error: str = ""
+    abandoned: bool = False
 
 
 @dataclass
@@ -77,6 +79,11 @@ class _CompiledSchema:
     relaxng: object
     validate_lock: threading.Lock
 
+
+# Appelée avant (« start ») et après (« end ») la compilation d'un schéma
+# RELAX NG : ``COMPILE_NOTICE(phase, chemin)``. Le processus de validation
+# l'annonce ainsi au client (relaxng_worker, validation_worker).
+COMPILE_NOTICE = None
 
 _RELAXNG_CACHE: dict[str, _CompiledSchema] = {}
 _RELAXNG_CACHE_LOCK = threading.RLock()
@@ -270,9 +277,16 @@ def _compiled_relaxng(schema_path: Path) -> _CompiledSchema:
         if cached is not None and cached.signature == signature:
             return cached
 
-        schema_parser = etree.XMLParser(resolve_entities=False, no_network=True, recover=False)
-        schema_doc = etree.parse(str(schema_path), schema_parser)
-        relaxng = etree.RelaxNG(schema_doc)
+        notice = COMPILE_NOTICE
+        if notice is not None:
+            notice("start", key)
+        try:
+            schema_parser = etree.XMLParser(resolve_entities=False, no_network=True, recover=False)
+            schema_doc = etree.parse(str(schema_path), schema_parser)
+            relaxng = etree.RelaxNG(schema_doc)
+        finally:
+            if notice is not None:
+                notice("end", key)
         compiled = _CompiledSchema(signature, relaxng, threading.Lock())
         _RELAXNG_CACHE[key] = compiled
         _RELAXNG_CACHE_COMPILATIONS += 1
