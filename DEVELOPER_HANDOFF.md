@@ -126,7 +126,11 @@ i18n/
 web_output/
   viewer.html
   images/...
+[modeles/]
+  [<modèle>.xml]
 ```
+
+`modeles/` (facultatif, jamais créé par Varians) : les modèles de document du projet, proposés par « Nouveau document XML… » sous « Modèles du projet » et copiés tels quels (`document_templates.project_templates`).
 
 `project.xml` contient la configuration du projet, pas les préférences personnelles d'interface. Les témoins affichés et les hauteurs de panneaux sont stockés dans `QSettings`, indexés par le chemin du projet.
 

@@ -38,7 +38,8 @@ CHECKS = ("translations", "help", "resources", "project", "relaxng_worker", "tra
 RESOURCES = (
     "rendering/tei-to-html.xsl", "rendering/tei.css", "rendering/edition-critique.xsl",
     "rendering/apparat-en-notes.xsl", "rendering/custom-elements.xml",
-    "resources/templates/project-template.xml", "resources/schxslt2", "resources/schemas",
+    "resources/templates/project-template.xml", "resources/templates/tei/All.xml",
+    "resources/schxslt2", "resources/schemas",
     "resources/tei-stylesheets/tei-xsl-7.61.0.zip", "resources/icons/feuilleter.svg",
     "resources/varians_logo.png", "resources/icons/varians.png",
     "web_viewer/geometry.js", "web_viewer/iiif.js", "web_viewer/fulltext_search.js",

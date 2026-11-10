@@ -30,6 +30,22 @@ celui de son fichier, sans `.xml`.
   ne propose pas non plus comme modèles.
 - `LICENCE.txt` est le fichier `P5/COPYING.txt` du dépôt à la même étiquette.
 
+## Vérification
+
+Chaque modèle a été validé par lxml (le validateur RELAX NG de Varians)
+contre le schéma de sa déclinaison, pris dans la même archive
+(`xml/tei/custom/schema/relaxng/`) :
+
+- 16 modèles sont valides ;
+- « TEI for writing TEI Customizations » ne l'est pas, volontairement :
+  `<schemaSpec ident="">` attend son identifiant (« @ident is required »,
+  dit le modèle) ;
+- Corpus, ENRICH Manuscript description, Manuscript description et Speech
+  n'ont pas pu être vérifiés : lxml n'a pas compilé leur schéma
+  (`tei_corpus.rng`, `tei_enrich.rng`, `tei_ms.rng`, `tei_speech.rng`) en
+  deux minutes et demie, alors que `tei_all.rng` l'est en une dizaine de
+  secondes.
+
 ## Ce que Varians change
 
 Rien dans les fichiers. À la création d'un document, ses deux déclarations
