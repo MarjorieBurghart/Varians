@@ -23,3 +23,68 @@ def test_a_project_without_witness_is_read(tmp_path):
         assert list(project.witnesses) == []
         assert project.base_witness == ""
         assert project.witness_by_id == {}
+
+
+# -- Création d'une transcription vierge sans témoin -------------------------
+
+from pathlib import Path
+
+from lxml import etree
+
+from project_management import WitnessDraft, create_new_transcription_project, minimal_tei_text
+
+ROOT = Path(__file__).resolve().parents[1]
+TEI = "{http://www.tei-c.org/ns/1.0}"
+BIBL_FR = "<bibl><!-- Décrivez ici la source de votre document. --></bibl>"
+BIBL_EN = "<bibl><!-- Describe the source of your document here. --></bibl>"
+
+
+def _source_desc(text):
+    root = etree.fromstring(text.encode("utf-8"))
+    return root.find(f"{TEI}teiHeader/{TEI}fileDesc/{TEI}sourceDesc")
+
+
+def test_a_blank_transcription_without_witness_explains_the_list_of_witnesses():
+    text = minimal_tei_text("Essai", [], "", language="fr", schema_mode="none")
+    source_desc = _source_desc(text)
+    children = list(source_desc)
+    assert [etree.QName(c).localname if isinstance(c.tag, str) else "comment" for c in children] == [
+        "comment", "bibl"]
+    guide = children[0].text
+    for words in ("scholarly digital edition", "<listWit>", "<witness>", "@xml:id", '<rdg wit="#A">',
+                  '<pb edRef="#A"/>', '<idno type="siglum">', "Fichier > Paramètres du projet…",
+                  "reste inconnu du projet", '<witness xml:id="_1520"><idno type="siglum">1520</idno>'):
+        assert words in guide, words
+    # Le paragraphe « vous pouvez aussi l'écrire vous-même » n'y est plus.
+    assert "vous-même" not in guide
+    # Le <bibl> de remplissage : son seul contenu est un commentaire.
+    assert BIBL_FR in text
+    bibl = children[1]
+    assert (bibl.text or "").strip() == "" and len(bibl) == 1 and not isinstance(bibl[0].tag, str)
+    assert source_desc.find(f"{TEI}listWit") is None
+    assert source_desc.find(f"{TEI}p") is None
+
+
+def test_the_guide_is_in_english_in_an_english_project():
+    text = minimal_tei_text("Essay", [], "", language="en", schema_mode="none")
+    guide = list(_source_desc(text))[0].text
+    assert "scholarly digital edition" in guide and "File > Project settings…" in guide
+    assert BIBL_EN in text
+
+
+def test_a_blank_transcription_with_witnesses_is_unchanged():
+    text = minimal_tei_text("Essai", [WitnessDraft("A", "Manuscrit A", None, "base")], "A",
+                            language="fr", schema_mode="none")
+    source_desc = _source_desc(text)
+    assert [c.get("{http://www.w3.org/XML/1998/namespace}id") for c in source_desc.find(f"{TEI}listWit")] == ["A"]
+    assert "<bibl>" not in text and "scholarly" not in text
+
+
+def test_a_new_transcription_project_can_have_no_witness(tmp_path):
+    project_xml = create_new_transcription_project(
+        target_dir=tmp_path / "projet", title="Essai", witnesses=[], base_witness="",
+        template_root=ROOT, language="fr", fallback_language="en", xslt_mode="builtin", schema_mode="none")
+    project = load_project(project_xml)
+    assert list(project.witnesses) == [] and project.base_witness == ""
+    assert BIBL_FR in project.edition.read_text(encoding="utf-8")
+    assert 'base=' not in project_xml.read_text(encoding="utf-8")
