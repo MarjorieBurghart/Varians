@@ -127,3 +127,21 @@ def test_large_files_and_the_startup_guard_are_explained(language):
     assert "20" in paragraph
     assert catalog["common.cancel"] in paragraph
     assert catalog["menu.recent_projects"] in paragraph
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_a_project_without_witness_is_explained(language):
+    """Un projet peut se créer sans témoin : le <bibl> à compléter, la
+    <listWit> créée au premier témoin, le viewer web du texte seul."""
+    page = _page(language)
+    catalog = _catalog(language)
+    paragraph = page[page.index('<p id="no-witness">'):]
+    paragraph = paragraph[:paragraph.index("</p>")]
+    for words in ("&lt;sourceDesc&gt;", "&lt;bibl&gt;", "&lt;listWit&gt;", "&lt;p&gt;",
+                  catalog["menu.project_settings"], catalog["menu.generate_web"]):
+        assert words in paragraph, words
+    # Varians crée désormais la <listWit> ; l'aide ne dit plus le contraire.
+    assert 'href="#no-witness"' in page
+    for never in ("Varians n’en crée pas", "Varians does not create it", "Varians legt keine an",
+                  "Varians ji nevytváří", "Varians non la crea", "Varians её не создаёт", "新たに作ることはありません"):
+        assert never not in page, never

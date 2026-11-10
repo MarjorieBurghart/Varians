@@ -209,8 +209,19 @@ contient un `teiHeader` volontairement minimal (`titleStmt`, `publicationStmt`,
 transcription. Le titre du projet et le témoin de base sont repris dans ce
 squelette.
 
-Un témoin reste obligatoire pour définir le contexte du projet, mais son fichier
-de synchronisation est facultatif. Il est donc possible de commencer à transcrire
+Les témoins sont facultatifs à la création : un projet peut n’en avoir aucun
+(`<witnesses/>` dans project.xml, sans témoin pivot) et les recevoir plus tard par
+**Fichier > Paramètres du projet…**. La transcription vierge d’un projet sans
+témoin porte dans son `<sourceDesc>` un commentaire qui explique la `<listWit>`,
+puis un `<bibl>` de remplissage :
+`<bibl><!-- Décrivez ici la source de votre document. --></bibl>`. Au premier
+témoin, `tei_listwit` crée la `<listWit>` : à la place de ce `<bibl>` s’il est
+intact, sinon en dessous ; jamais à côté d’un `<p>` ou d’un `<ab>` (en TEI,
+`<sourceDesc>` contient des paragraphes ou des éléments structurés, pas les deux).
+Le commentaire reste. Sans témoin, la fenêtre n’a pas de colonne de témoins et le
+viewer web publie le texte établi seul.
+
+Le fichier de synchronisation d’un témoin est facultatif. Il est donc possible de commencer à transcrire
 directement devant un manuscrit sans disposer d’image, d’ALTO ni d’alignement.
 Ces ressources pourront être ajoutées ultérieurement au même projet.
 
