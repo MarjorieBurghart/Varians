@@ -90,3 +90,123 @@ def test_every_tei_template_is_well_formed_and_declares_its_rng():
 def test_an_unknown_template_name_is_refused():
     with pytest.raises(KeyError):
         document_templates.tei_template("TEI Inconnue")
+
+
+# --- Même schéma que l'édition ------------------------------------------------------------------
+
+EDITION = """<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="../schema/edition.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="https://example.org/regles.sch" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<!-- <pas un élément> -->
+<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><body><p>texte</p></body></text></TEI>
+"""
+
+
+def _all_skeleton_after_models(text):
+    """Le texte qui suit les déclarations <?xml-model?>."""
+    return text[text.rindex("?>") + 2:].lstrip("\n")
+
+
+def test_the_edition_schema_entry_uses_the_all_skeleton_and_the_edition_declarations(tmp_path):
+    edition = tmp_path / "xml" / "edition.xml"
+    template = document_templates.edition_template(EDITION)
+    assert template.kind == "edition" and template.schema == "edition.rng"
+    text = document_templates.document_text(template, tmp_path / "xml" / "personnes.xml",
+                                             edition_text=EDITION, edition_path=edition)
+    assert text.startswith('<?xml version="1.0" encoding="UTF-8"?>\n'
+                           '<?xml-model href="../schema/edition.rng" type="application/xml" '
+                           'schematypens="http://relaxng.org/ns/structure/1.0"?>\n'
+                           '<?xml-model href="https://example.org/regles.sch" '
+                           'schematypens="http://purl.oclc.org/dsdl/schematron"?>\n<TEI ')
+    all_text = document_templates.tei_template_text(document_templates.tei_template("All"))
+    assert _all_skeleton_after_models(text) == _all_skeleton_after_models(all_text)
+    ET.fromstring(text.encode("utf-8"))
+
+
+@pytest.mark.parametrize("target, href", [
+    ("xml/personnes.xml", "../schema/edition.rng"),
+    ("personnes.xml", "schema/edition.rng"),
+    ("xml/autorites/personnes.xml", "../../schema/edition.rng"),
+    ("schema/personnes.xml", "edition.rng"),
+])
+def test_relative_schema_addresses_follow_the_new_document(tmp_path, target, href):
+    text = document_templates.document_text(
+        document_templates.edition_template(EDITION), tmp_path / target,
+        edition_text=EDITION, edition_path=tmp_path / "xml" / "edition.xml")
+    assert [model.href for model in detect_xml_models(text)] == [href, "https://example.org/regles.sch"]
+
+
+def test_the_edition_schema_entry_needs_a_schema():
+    bare = '<?xml version="1.0"?>\n<TEI xmlns="http://www.tei-c.org/ns/1.0"/>'
+    assert document_templates.edition_template(bare) is None
+    assert document_templates.edition_template(EDITION, schema_mode="none") is None
+    # Une déclaration hors du prologue ne compte pas.
+    inside = '<TEI xmlns="http://www.tei-c.org/ns/1.0"><?xml-model href="x.rng"?></TEI>'
+    assert document_templates.edition_template(inside) is None
+
+
+def test_with_the_project_schema_the_new_document_is_declared_with_it(tmp_path):
+    schema = tmp_path / "schema" / "projet.rng"
+    bare = '<?xml version="1.0"?>\n<TEI xmlns="http://www.tei-c.org/ns/1.0"/>'
+    template = document_templates.edition_template(bare, schema_mode="file", project_schema=schema)
+    assert template.schema == "projet.rng"
+    target = tmp_path / "xml" / "personnes.xml"
+    text = document_templates.document_text(template, target, edition_text=bare,
+                                             edition_path=tmp_path / "xml" / "edition.xml")
+    assert detect_xml_models(text) == ()
+    assert text.startswith('<?xml version="1.0" encoding="UTF-8"?>\n<TEI ')
+    config = document_templates.document_config(template, target)
+    assert (config.path, config.schema_mode, config.schema) == (target, "file", schema)
+
+
+def test_other_templates_are_declared_with_their_own_xml_model(tmp_path):
+    target = tmp_path / "xml" / "lite.xml"
+    config = document_templates.document_config(document_templates.tei_template("Lite"), target)
+    assert (config.path, config.schema_mode, config.schema) == (target, "auto", None)
+    config = document_templates.document_config(document_templates.edition_template(EDITION), target)
+    assert (config.schema_mode, config.schema) == ("auto", None)
+
+
+# --- Modèles du projet (dossier modeles/) -------------------------------------------------------
+
+def _template(folder, name, text):
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / name).write_text(text, encoding="utf-8")
+
+
+def test_the_project_templates_are_the_xml_files_of_its_modeles_folder(tmp_path):
+    assert document_templates.PROJECT_TEMPLATES_FOLDER == "modeles"
+    assert document_templates.project_templates(tmp_path) == []
+    folder = tmp_path / "modeles"
+    _template(folder, "lieux.xml", '<?xml-model href="../schema/lieux.rng"?>\n<listPlace/>')
+    _template(folder, "Personnes.xml", "<listPerson/>")
+    _template(folder, "notes.txt", "pas un modèle")
+    _template(folder / "archives", "ancien.xml", "<ancien/>")
+    templates = document_templates.project_templates(tmp_path)
+    assert [(t.kind, t.name, t.schema) for t in templates] == [
+        ("project", "lieux", "lieux.rng"), ("project", "Personnes", "")]
+    assert templates[0].path == folder / "lieux.xml"
+
+
+def test_a_project_template_is_copied_as_is_with_its_schema_address_recomputed(tmp_path):
+    text = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            "<?xml-model href='../schema/lieux.rng' type=\"application/xml\"?>\n"
+            '<listPlace xmlns="http://www.tei-c.org/ns/1.0"><place xml:id="paris"/></listPlace>\n')
+    _template(tmp_path / "modeles", "lieux.xml", text)
+    template = document_templates.project_templates(tmp_path)[0]
+    assert document_templates.document_text(template, tmp_path / "xml" / "lieux.xml") == text
+    moved = document_templates.document_text(template, tmp_path / "xml" / "autorites" / "lieux.xml")
+    assert moved == text.replace("'../schema/lieux.rng'", "'../../schema/lieux.rng'")
+
+
+def test_absolute_schema_addresses_are_kept(tmp_path):
+    for href in ("https://example.org/s.rng", "file:///srv/s.rng", str(tmp_path / "s.rng")):
+        assert document_templates.rebase_href(href, tmp_path / "a", tmp_path / "b" / "c") == href
+
+
+def test_an_empty_document_keeps_the_root_given(tmp_path):
+    template = document_templates.empty_template()
+    text = document_templates.document_text(template, tmp_path / "x.xml", root_name="listPlace")
+    assert text == '<?xml version="1.0" encoding="UTF-8"?>\n<listPlace>\n</listPlace>\n'
+    with pytest.raises(ValueError):
+        document_templates.document_text(template, tmp_path / "x.xml", root_name="1 lieu")

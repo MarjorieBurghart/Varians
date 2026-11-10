@@ -11,16 +11,16 @@ document du projet ne supprime jamais son fichier.
 from __future__ import annotations
 
 import shutil
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from xml.sax.saxutils import escape
 
 from PySide6.QtWidgets import QFileDialog, QInputDialog, QLineEdit, QMessageBox
 from app_context import tr as _t
+# Document vide d'élément racine choisi (nom historique).
+from document_templates import empty_document_text as new_document_text
 from project_config import DocumentConfig
 from xml_roots import SCHEMATRON_NS
 
-TEI_NS = "http://www.tei-c.org/ns/1.0"
 STYLESHEET_SUFFIXES = (".xsl", ".xslt")
 SCHEMATRON_SUFFIXES = (".sch",)
 # Versions d'une nouvelle feuille, et le moteur qui les exécute.
@@ -96,18 +96,6 @@ def copy_document_into_project(source, project_root):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(Path(source).expanduser().resolve(), target)
     return target
-
-
-def new_document_text(root_name):
-    """Document XML vide d'élément racine ``root_name`` (dans l'espace de
-    noms TEI pour ``TEI``). ValueError si ce n'est pas un nom d'élément."""
-    namespace = f' xmlns="{TEI_NS}"' if root_name == "TEI" else ""
-    text = f'<?xml version="1.0" encoding="UTF-8"?>\n<{root_name}{namespace}>\n</{root_name}>\n'
-    try:
-        ET.fromstring(text)
-    except ET.ParseError:
-        raise ValueError(root_name) from None
-    return text
 
 
 def new_stylesheet_text(version):
