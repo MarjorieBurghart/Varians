@@ -334,7 +334,7 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="project.edition.choose">Scegli l’edizione TEI</string>
   <string key="project.witnesses">Testimoni e risorse</string>
   <string key="project.new.info">Il nuovo progetto include copie della TEI, degli allineamenti, del CSS, della configurazione Ctrl+E e delle traduzioni. L’XSLT predefinito resta nell’applicazione; un XSLT personalizzato viene copiato nel progetto. Scegli una cartella vuota.</string>
-  <string key="project.new.info.blank">Varians creerà automaticamente un file TEI minimo in xml/edition.xml. Aggiungi almeno un testimone e scegli esplicitamente «Nessuna immagine per ora» se inizi la trascrizione senza facsimile. ALTO e sincronizzazione possono essere aggiunti in seguito. In modalità schema automatica, il nuovo TEI fa riferimento a TEI All tramite xml-model. Scegli una cartella vuota.</string>
+  <string key="project.new.info.blank">Varians creerà automaticamente un file TEI minimo in xml/edition.xml. I testimoni possono essere aggiunti ora o in seguito (Impostazioni progetto…); per un testimone senza facsimile, scegli «Nessuna immagine per ora». ALTO e sincronizzazione possono essere aggiunti in seguito. In modalità schema automatica, il nuovo TEI fa riferimento a TEI All tramite xml-model. Scegli una cartella vuota.</string>
   <string key="project.witness.edit.title">Testimone del progetto</string>
   <string key="project.witness.id">Sigla</string>
   <string key="project.witness.xml_id">Identificatore XML: {id}</string>
@@ -361,7 +361,6 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="project.validation.folder_not_empty">La cartella selezionata non è vuota. Scegli una cartella vuota o nuova.</string>
   <string key="project.validation.edition_missing">File TEI non trovato:
 {path}</string>
-  <string key="project.validation.no_witness">Aggiungi almeno un testimone.</string>
   <string key="project.validation.no_base">Selezionare un testimone pivot per la sincronizzazione.</string>
   <string key="project.validation.rendering_missing">Uno o più file di resa (XSLT, CSS, configurazione Ctrl+E) non sono stati trovati.</string>
   <string key="project.validation.i18n_missing">La cartella delle traduzioni non è stata trovata.</string>

@@ -334,7 +334,7 @@
   <string key="project.edition.choose">Выбрать издание TEI</string>
   <string key="project.witnesses">Свидетели и ресурсы</string>
   <string key="project.new.info">Новый проект включает копии TEI, файлов выравнивания, CSS, конфигурации Ctrl+E и переводов. XSLT по умолчанию остаётся в приложении; пользовательский XSLT копируется в проект. Выберите пустую папку.</string>
-  <string key="project.new.info.blank">Varians автоматически создаст минимальный файл TEI в xml/edition.xml. Добавьте хотя бы одного свидетеля и явно выберите «Пока без изображений», если начинаете транскрипцию без факсимиле. ALTO и синхронизацию можно добавить позже. В автоматическом режиме схемы новый TEI ссылается на TEI All через xml-model. Выберите пустую папку.</string>
+  <string key="project.new.info.blank">Varians автоматически создаст минимальный файл TEI в xml/edition.xml. Свидетелей можно добавить сейчас или позже («Параметры проекта…»); для свидетеля без факсимиле выберите «Пока без изображений». ALTO и синхронизацию можно добавить позже. В автоматическом режиме схемы новый TEI ссылается на TEI All через xml-model. Выберите пустую папку.</string>
   <string key="project.witness.edit.title">Свидетель проекта</string>
   <string key="project.witness.id">Сигла</string>
   <string key="project.witness.xml_id">XML-идентификатор: {id}</string>
@@ -361,7 +361,6 @@
   <string key="project.validation.folder_not_empty">Выбранная папка не пуста. Выберите пустую или новую папку.</string>
   <string key="project.validation.edition_missing">Файл TEI не найден:
 {path}</string>
-  <string key="project.validation.no_witness">Добавьте хотя бы одного свидетеля.</string>
   <string key="project.validation.no_base">Выберите опорного свидетеля для синхронизации.</string>
   <string key="project.validation.rendering_missing">Один или несколько файлов представления (XSLT, CSS, конфигурация Ctrl+E) не найдены.</string>
   <string key="project.validation.i18n_missing">Папка переводов не найдена.</string>

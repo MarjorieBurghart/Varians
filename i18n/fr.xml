@@ -322,7 +322,7 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="project.edition.choose">Choisir l’édition TEI</string>
   <string key="project.witnesses">Témoins et ressources</string>
   <string key="project.new.info">Le nouveau projet contient une copie de la TEI, des alignements, de la CSS, de la configuration Ctrl+E et des traductions. La XSLT par défaut reste celle de l’application ; une XSLT personnalisée sera copiée dans le projet. Choisissez un dossier vide.</string>
-  <string key="project.new.info.blank">Varians créera automatiquement un fichier TEI minimal dans xml/edition.xml. Ajoutez au moins un témoin et choisissez explicitement « Aucune image pour le moment » si vous commencez la transcription sans fac-similé. L’ALTO et la synchronisation peuvent être ajoutés plus tard. En mode de schéma automatique, le nouveau TEI référence TEI All par xml-model. Choisissez un dossier vide.</string>
+  <string key="project.new.info.blank">Varians créera automatiquement un fichier TEI minimal dans xml/edition.xml. Les témoins peuvent être ajoutés maintenant ou plus tard (Paramètres du projet…) ; pour un témoin sans fac-similé, choisissez « Aucune image pour le moment ». L’ALTO et la synchronisation peuvent être ajoutés plus tard. En mode de schéma automatique, le nouveau TEI référence TEI All par xml-model. Choisissez un dossier vide.</string>
   <string key="project.witness.edit.title">Témoin du projet</string>
   <string key="project.witness.id">Sigle</string>
   <string key="project.witness.xml_id">Identifiant XML : {id}</string>
@@ -349,7 +349,6 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="project.validation.folder_not_empty">Le dossier choisi n’est pas vide. Choisissez un dossier vide ou un nouveau dossier.</string>
   <string key="project.validation.edition_missing">Fichier TEI introuvable :
 {path}</string>
-  <string key="project.validation.no_witness">Ajoutez au moins un témoin.</string>
   <string key="project.validation.no_base">Définissez un témoin pivot pour la synchronisation.</string>
   <string key="project.validation.rendering_missing">Un ou plusieurs fichiers de rendu (XSLT, CSS, configuration Ctrl+E) sont introuvables.</string>
   <string key="project.validation.i18n_missing">Le dossier de traductions est introuvable.</string>

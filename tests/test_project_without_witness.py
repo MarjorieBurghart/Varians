@@ -144,3 +144,12 @@ def test_paragraphs_written_in_place_of_the_bibl_are_not_mixed_with_a_listwit():
     source = _blank().replace(BIBL_FR, "<p>Manuscrit de Paris.</p>")
     updated, report = add_witnesses_to_listwit(source, [T1])
     assert updated == source and report.paragraphs == ["T1"] and not report.changed
+
+
+def test_the_new_project_box_says_witnesses_can_come_later():
+    import xml.etree.ElementTree as ET
+    for language in ("fr", "en", "de", "cs", "it", "ru", "ja"):
+        catalog = {s.get("key"): s.text for s in ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()}
+        info = catalog["project.new.info.blank"]
+        assert catalog["menu.project_settings"] in info, language
+        assert "project.validation.no_witness" not in catalog

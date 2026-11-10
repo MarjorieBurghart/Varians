@@ -334,7 +334,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.edition.choose">Vybrat edici TEI</string>
   <string key="project.witnesses">Textoví svědci a zdroje</string>
   <string key="project.new.info">Nový projekt obsahuje kopie TEI, zarovnání, CSS, konfigurace Ctrl+E a překladů. Výchozí XSLT zůstává v aplikaci; vlastní XSLT se zkopíruje do projektu. Vyberte prázdnou složku.</string>
-  <string key="project.new.info.blank">Varians automaticky vytvoří minimální soubor TEI v xml/edition.xml. Přidejte alespoň jednoho svědka a výslovně zvolte „Zatím bez obrázků“, pokud začínáte transkripci bez faksimile. ALTO a synchronizaci lze přidat později. V automatickém režimu schématu nová TEI odkazuje na TEI All prostřednictvím xml-model. Vyberte prázdnou složku.</string>
+  <string key="project.new.info.blank">Varians automaticky vytvoří minimální soubor TEI v xml/edition.xml. Svědky lze přidat nyní nebo později (Nastavení projektu…); pro svědka bez faksimile zvolte „Zatím bez obrázků“. ALTO a synchronizaci lze přidat později. V automatickém režimu schématu nová TEI odkazuje na TEI All prostřednictvím xml-model. Vyberte prázdnou složku.</string>
   <string key="project.witness.edit.title">Textový svědek projektu</string>
   <string key="project.witness.id">Sigla</string>
   <string key="project.witness.xml_id">Identifikátor XML: {id}</string>
@@ -361,7 +361,6 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.validation.folder_not_empty">Vybraná složka není prázdná. Vyberte prázdnou nebo novou složku.</string>
   <string key="project.validation.edition_missing">Soubor TEI nebyl nalezen:
 {path}</string>
-  <string key="project.validation.no_witness">Přidejte alespoň jednoho textového svědka.</string>
   <string key="project.validation.no_base">Vyberte pivotního svědka pro synchronizaci.</string>
   <string key="project.validation.rendering_missing">Jeden nebo více souborů zobrazení (XSLT, CSS, konfigurace Ctrl+E) nebylo nalezeno.</string>
   <string key="project.validation.i18n_missing">Složka překladů nebyla nalezena.</string>

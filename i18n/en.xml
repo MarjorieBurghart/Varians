@@ -322,7 +322,7 @@ It has been removed from the recent-project list.</string>
   <string key="project.edition.choose">Choose the TEI edition</string>
   <string key="project.witnesses">Witnesses and resources</string>
   <string key="project.new.info">The new project includes copies of the TEI, alignments, CSS, Ctrl+E configuration and translations. The default XSLT stays in the application; a custom XSLT is copied into the project. Choose an empty folder.</string>
-  <string key="project.new.info.blank">Varians will automatically create a minimal TEI file in xml/edition.xml. Add at least one witness and explicitly choose “No images for now” if you are beginning the transcription without a facsimile. ALTO and synchronization can be added later. In automatic schema mode, the new TEI references TEI All through xml-model. Choose an empty folder.</string>
+  <string key="project.new.info.blank">Varians will automatically create a minimal TEI file in xml/edition.xml. Witnesses can be added now or later (Project settings…); for a witness without a facsimile, choose “No images for now”. ALTO and synchronization can be added later. In automatic schema mode, the new TEI references TEI All through xml-model. Choose an empty folder.</string>
   <string key="project.witness.edit.title">Project witness</string>
   <string key="project.witness.id">Siglum</string>
   <string key="project.witness.xml_id">XML identifier: {id}</string>
@@ -349,7 +349,6 @@ It has been removed from the recent-project list.</string>
   <string key="project.validation.folder_not_empty">The selected folder is not empty. Choose an empty or new folder.</string>
   <string key="project.validation.edition_missing">TEI file not found:
 {path}</string>
-  <string key="project.validation.no_witness">Add at least one witness.</string>
   <string key="project.validation.no_base">Select a pivot witness for synchronization.</string>
   <string key="project.validation.rendering_missing">One or more rendering files (XSLT, CSS, Ctrl+E configuration) could not be found.</string>
   <string key="project.validation.i18n_missing">The translations folder could not be found.</string>

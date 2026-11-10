@@ -334,7 +334,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.edition.choose">TEI-Edition auswählen</string>
   <string key="project.witnesses">Textzeugen und Ressourcen</string>
   <string key="project.new.info">Das neue Projekt enthält Kopien der TEI, der Alignments, der CSS-Datei, der Ctrl+E-Konfiguration und der Übersetzungen. Die Standard-XSLT bleibt in der Anwendung; eine benutzerdefinierte XSLT wird in das Projekt kopiert. Wählen Sie einen leeren Ordner.</string>
-  <string key="project.new.info.blank">Varians erstellt automatisch eine minimale TEI-Datei in xml/edition.xml. Fügen Sie mindestens einen Textzeugen hinzu und wählen Sie ausdrücklich „Vorerst keine Bilder“, wenn Sie die Transkription ohne Faksimile beginnen. ALTO und Synchronisierung können später ergänzt werden. Im automatischen Schemamodus verweist die neue TEI per xml-model auf TEI All. Wählen Sie einen leeren Ordner.</string>
+  <string key="project.new.info.blank">Varians erstellt automatisch eine minimale TEI-Datei in xml/edition.xml. Textzeugen können jetzt oder später hinzugefügt werden (Projekteinstellungen…); für einen Textzeugen ohne Faksimile wählen Sie „Vorerst keine Bilder“. ALTO und Synchronisierung können später ergänzt werden. Im automatischen Schemamodus verweist die neue TEI per xml-model auf TEI All. Wählen Sie einen leeren Ordner.</string>
   <string key="project.witness.edit.title">Textzeuge des Projekts</string>
   <string key="project.witness.id">Sigle</string>
   <string key="project.witness.xml_id">XML-Kennung: {id}</string>
@@ -361,7 +361,6 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.validation.folder_not_empty">Der gewählte Ordner ist nicht leer. Wählen Sie einen leeren oder neuen Ordner.</string>
   <string key="project.validation.edition_missing">TEI-Datei nicht gefunden:
 {path}</string>
-  <string key="project.validation.no_witness">Fügen Sie mindestens einen Textzeugen hinzu.</string>
   <string key="project.validation.no_base">Legen Sie einen Pivot-Textzeugen für die Synchronisierung fest.</string>
   <string key="project.validation.rendering_missing">Mindestens eine Darstellungsdatei (XSLT, CSS, Ctrl+E-Konfiguration) wurde nicht gefunden.</string>
   <string key="project.validation.i18n_missing">Der Übersetzungsordner wurde nicht gefunden.</string>

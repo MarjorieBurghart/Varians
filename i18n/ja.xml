@@ -334,7 +334,7 @@
   <string key="project.edition.choose">TEI校訂本文を選択</string>
   <string key="project.witnesses">伝本とリソース</string>
   <string key="project.new.info">新規プロジェクトにはTEI、アラインメント、CSS、Ctrl+E設定、翻訳のコピーが含まれます。既定のXSLTはアプリ側を使用し、カスタムXSLTはプロジェクトへコピーされます。空のフォルダを選択してください。</string>
-  <string key="project.new.info.blank">Variansはxml/edition.xmlに最小限のTEIファイルを自動作成します。少なくとも1つの伝本を追加し、画像なしで翻刻を始める場合は「当面画像なし」を明示的に選んでください。ALTOと同期は後から追加できます。スキーマ自動モードでは、新しいTEIはxml-modelでTEI Allを参照します。空のフォルダを選択してください。</string>
+  <string key="project.new.info.blank">Variansはxml/edition.xmlに最小限のTEIファイルを自動作成します。伝本は今でも後からでも（「プロジェクト設定…」で）追加できます。ファクシミリのない伝本には「当面画像なし」を選んでください。ALTOと同期は後から追加できます。スキーマ自動モードでは、新しいTEIはxml-modelでTEI Allを参照します。空のフォルダを選択してください。</string>
   <string key="project.witness.edit.title">プロジェクトの伝本</string>
   <string key="project.witness.id">シグラム</string>
   <string key="project.witness.xml_id">XML 識別子：{id}</string>
@@ -361,7 +361,6 @@
   <string key="project.validation.folder_not_empty">選択したフォルダは空ではありません。空のフォルダまたは新規フォルダを選択してください。</string>
   <string key="project.validation.edition_missing">TEIファイルが見つかりません：
 {path}</string>
-  <string key="project.validation.no_witness">少なくとも1つの伝本を追加してください。</string>
   <string key="project.validation.no_base">同期の基準となるピボット伝本を指定してください。</string>
   <string key="project.validation.rendering_missing">表示用ファイル（XSLT、CSS、Ctrl+E設定）の一部が見つかりません。</string>
   <string key="project.validation.i18n_missing">翻訳フォルダが見つかりません。</string>
