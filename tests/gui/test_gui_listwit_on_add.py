@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Paramètres du projet (V0.9.2.8.2) : un témoin ajouté est déclaré dans la
 <listWit> existante de l'édition, et la boîte « paramètres enregistrés » le
-dit. Sans <listWit>, l'édition ne change pas et la boîte le signale. Les
-témoins qui étaient déjà dans le projet ne sont pas touchés."""
+dit. Sans <listWit>, Varians en crée une dans le <sourceDesc>, sauf à côté de
+paragraphes (TEI) : l'édition ne change pas alors, et la boîte le signale.
+Les témoins qui étaient déjà dans le projet ne sont pas touchés."""
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
@@ -58,13 +59,30 @@ def test_an_added_witness_is_declared_in_the_listwit(open_window, example_projec
     assert (edition.parent / "edition.xml.bak").read_text(encoding="utf-8") == before
 
 
-def test_without_listwit_the_edition_is_left_alone(open_window, example_project, dialogs):
+def test_without_listwit_one_is_created_in_the_source_description(open_window, example_project, dialogs):
     edition = example_project.parent / "xml" / "edition.xml"
     text = edition.read_text(encoding="utf-8")
     start, end = text.index("<listWit>"), text.index("</listWit>") + len("</listWit>")
     edition.write_text(text[:start] + text[end:], encoding="utf-8")
+    window = open_window(example_project)
+    message = _save_settings(window, dialogs, "Q", "Témoin Q")
+    after = edition.read_text(encoding="utf-8")
+    root = ET.fromstring(after.split("?>", 1)[1] if after.startswith("<?xml") else after)
+    (source_desc,) = root.iter(f"{TEI}sourceDesc")
+    # Après le <msDesc> : <sourceDesc> n'a que des éléments structurés.
+    assert [child.tag.split("}")[1] for child in source_desc][-2:] == ["msDesc", "listWit"]
+    assert [w.get(XML_ID) for w in source_desc.find(f"{TEI}listWit")] == ["Q"]
+    assert message == _tr("project.settings.saved") + "\n\n" + _tr("project.listwit.created", witnesses="Q")
+
+
+def test_next_to_paragraphs_the_edition_is_left_alone(open_window, example_project, dialogs):
+    edition = example_project.parent / "xml" / "edition.xml"
+    text = edition.read_text(encoding="utf-8")
+    start = text.index(">", text.index("<sourceDesc")) + 1
+    end = text.index("</sourceDesc>")
+    edition.write_text(text[:start] + "<p>Transcription en cours</p>" + text[end:], encoding="utf-8")
     before = edition.read_text(encoding="utf-8")
     window = open_window(example_project)
     message = _save_settings(window, dialogs, "Q", "Témoin Q")
     assert edition.read_text(encoding="utf-8") == before
-    assert message == _tr("project.settings.saved") + "\n\n" + _tr("project.listwit.no_listwit", witnesses="Q")
+    assert message == _tr("project.settings.saved") + "\n\n" + _tr("project.listwit.paragraphs", witnesses="Q")

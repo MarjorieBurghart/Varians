@@ -376,6 +376,8 @@
   <string key="project.settings.saved">Параметры проекта сохранены. Сейчас проект будет перезагружен.</string>
   <string key="project.listwit.added">Добавлено в &lt;listWit&gt; издания: {witnesses}.</string>
   <string key="project.listwit.no_listwit">В заголовке издания нет &lt;listWit&gt;: объявите {witnesses} сами.</string>
+  <string key="project.listwit.created">Список свидетелей &lt;listWit&gt; создан в &lt;sourceDesc&gt; издания, с: {witnesses}.</string>
+  <string key="project.listwit.paragraphs">Не добавлено в &lt;listWit&gt;: &lt;sourceDesc&gt; издания содержит абзацы (&lt;p&gt;), а TEI не допускает &lt;listWit&gt; рядом с ними. Замените эти абзацы элементом &lt;bibl&gt; с описанием источника, затем объявите {witnesses} в &lt;listWit&gt; под ним.</string>
   <string key="project.listwit.id_used">Не добавлено в &lt;listWit&gt;: идентификатор {witnesses} уже принадлежит другому элементу издания.</string>
   <string key="project.listwit.malformed">Не добавлено в &lt;listWit&gt;: издание не является правильно построенным XML ({witnesses}).</string>
   <string key="project.xslt">Таблица стилей XSLT</string>

@@ -13,6 +13,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 from save_io import XmlFile
+from tei_listwit import SOURCE_BIBL_PLACEHOLDER
 from project_config import DEFAULT_APPLICATION_XSLT, WEB_TEXT_MODES, DocumentConfig
 
 
@@ -193,11 +194,6 @@ Example of a list, as Varians writes it:
   <witness xml:id="B">Troyes, Médiathèque, ms. 567 (13th century)</witness>
   <witness xml:id="_1520"><idno type="siglum">1520</idno>Printed edition, Paris, Josse Bade, 1520</witness>
 </listWit>""",
-}
-# Commentaire du <bibl> de remplissage, par langue du gabarit.
-SOURCE_BIBL_PLACEHOLDER = {
-    "fr": " Décrivez ici la source de votre document. ",
-    "en": " Describe the source of your document here. ",
 }
 
 

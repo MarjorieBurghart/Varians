@@ -23,7 +23,7 @@ from project_management import (
     prepare_iiif_manifests_for_project, prepare_local_images_for_project,
     update_project_web_text, write_project_xml,
 )
-from tei_listwit import add_witnesses_to_listwit_file
+from tei_listwit import add_witnesses_to_listwit_file, report_notes
 from tei_facsimile import (
     previous_surface_labels, project_facsimile_pages, removable_generated_iiif_surfaces,
     sync_facsimile_file,
@@ -334,11 +334,7 @@ class ProjectActionsMixin:
                 _t("facsimile.warning.preserved") + "\n\n"
                 + "\n".join(message_text(c, _t) for c in facsimile_report.conflicts),
             )
-        notes = [_t(key, witnesses=", ".join(sigla)) for key, sigla in (
-            ("project.listwit.added", listwit_report.added),
-            ("project.listwit.no_listwit", listwit_report.no_listwit),
-            ("project.listwit.id_used", listwit_report.id_used),
-            ("project.listwit.malformed", listwit_report.malformed)) if sigla]
+        notes = report_notes(listwit_report, _t)
         QMessageBox.information(self, _t("project.settings.saved.title"),
                                 "\n\n".join([_t("project.settings.saved"), *notes]))
         # maybe_save() a déjà été exécuté ; on recharge immédiatement les chemins,

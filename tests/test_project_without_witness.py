@@ -88,3 +88,59 @@ def test_a_new_transcription_project_can_have_no_witness(tmp_path):
     assert list(project.witnesses) == [] and project.base_witness == ""
     assert BIBL_FR in project.edition.read_text(encoding="utf-8")
     assert 'base=' not in project_xml.read_text(encoding="utf-8")
+
+
+# -- Premier témoin : la <listWit> créée ----------------------------------------
+
+from tei_listwit import add_witnesses_to_listwit
+
+T1 = WitnessDraft("T1", "Paris, Bibliothèque nationale de France, latin 1234")
+T2 = WitnessDraft("T2", "Troyes, Médiathèque, ms. 567")
+LISTWIT_T1 = ("<listWit>\n"
+              '          <witness xml:id="T1">Paris, Bibliothèque nationale de France, latin 1234</witness>\n'
+              "        </listWit>")
+
+
+def _blank(language="fr"):
+    return minimal_tei_text("Essai", [], "", language=language, schema_mode="none")
+
+
+def test_the_first_witness_replaces_the_untouched_bibl():
+    for language, bibl in (("fr", BIBL_FR), ("en", BIBL_EN)):
+        source = _blank(language)
+        updated, report = add_witnesses_to_listwit(source, [T1])
+        assert report.created and report.added == ["T1"]
+        assert updated == source.replace(bibl, LISTWIT_T1)
+        # Le mode d'emploi reste, à titre pédagogique.
+        assert "scholarly digital edition" in updated
+        source_desc = _source_desc(updated)
+        assert [etree.QName(c).localname for c in source_desc if isinstance(c.tag, str)] == ["listWit"]
+
+
+def test_a_modified_bibl_stays_and_the_listwit_goes_under_it():
+    for modified in ("<bibl>Paris, BnF, latin 1234</bibl>",
+                     "<bibl><!-- Ma propre note. --></bibl>",
+                     "<bibl><!-- Décrivez ici la source de votre document. -->Paris</bibl>"):
+        source = _blank().replace(BIBL_FR, modified)
+        updated, report = add_witnesses_to_listwit(source, [T1])
+        assert report.created and report.added == ["T1"]
+        assert updated == source.replace(modified, modified + "\n        " + LISTWIT_T1)
+
+
+def test_the_example_in_the_guide_is_never_taken_for_the_list():
+    source = _blank()
+    updated, _ = add_witnesses_to_listwit(source, [T1])
+    updated, report = add_witnesses_to_listwit(updated, [T2])
+    assert report.added == ["T2"] and not report.created
+    source_desc = _source_desc(updated)
+    (list_wit,) = source_desc.findall(f"{TEI}listWit")
+    assert [w.get("{http://www.w3.org/XML/1998/namespace}id") for w in list_wit] == ["T1", "T2"]
+    # Le commentaire n'a pas bougé : son exemple garde ses trois témoins.
+    guide = list(source_desc)[0].text
+    assert guide == list(_source_desc(source))[0].text
+
+
+def test_paragraphs_written_in_place_of_the_bibl_are_not_mixed_with_a_listwit():
+    source = _blank().replace(BIBL_FR, "<p>Manuscrit de Paris.</p>")
+    updated, report = add_witnesses_to_listwit(source, [T1])
+    assert updated == source and report.paragraphs == ["T1"] and not report.changed

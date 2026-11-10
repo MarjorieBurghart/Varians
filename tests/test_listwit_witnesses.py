@@ -5,8 +5,10 @@ l'édition (V0.9.2.8.2).
 Son ``<witness>`` va à la fin de la première ``<listWit>`` de l'en-tête,
 dans le style de celle-ci (une ligne par témoin, ou à la suite) :
 ``<witness xml:id="_1760"><idno type="siglum">1760</idno>Troyes 1760</witness>``.
-Varians ne crée jamais de ``<listWit>`` : sans elle, l'édition reste telle
-quelle et le témoin est signalé. Un témoin déjà déclaré n'est pas répété ;
+Sans ``<listWit>``, Varians en crée une dans le ``<sourceDesc>`` quand la TEI
+le permet (pas de ``<p>`` ni d'``<ab>`` à côté) : à la place du ``<bibl>`` de
+remplissage d'une transcription sans témoin, s'il est intact, sinon à la
+suite du contenu. Un témoin déjà déclaré n'est pas répété ;
 un identifiant déjà porté par un autre élément n'est pas employé. Le reste
 du fichier ne change pas."""
 from __future__ import annotations
@@ -65,18 +67,41 @@ def test_a_declared_witness_or_a_used_identifier_is_not_added():
     assert report.declared == ["T2"] and report.id_used == ["P"] and report.added == []
 
 
-def test_no_listwit_is_ever_created():
-    for source_desc in ("<p>Transcription en cours</p>", "<bibl>Un manuscrit</bibl>"):
+def test_paragraphs_in_the_source_description_block_the_creation():
+    """<sourceDesc> : des paragraphes, ou des éléments structurés, jamais les
+    deux ; une <listWit> ne peut pas s'ajouter à côté d'un <p> ou d'un <ab>."""
+    for source_desc in ("<p>Transcription en cours</p>", "<ab>Transcription</ab>"):
         source = _tei(source_desc)
         updated, report = add_witnesses_to_listwit(source, [NEW])
         assert updated == source and not report.changed
-        assert report.no_listwit == ["1760"] and report.added == []
+        assert report.paragraphs == ["1760"] and report.added == [] and report.no_listwit == []
+
+
+def test_a_listwit_is_created_under_a_bibl():
+    source = _tei("\n        <bibl>Un manuscrit</bibl>\n      ")
+    updated, report = add_witnesses_to_listwit(source, [NEW, WitnessDraft("P", "Paris, BnF")])
+    assert report.created and report.changed and report.added == ["1760", "P"]
+    assert updated == source.replace(
+        "<bibl>Un manuscrit</bibl>\n",
+        "<bibl>Un manuscrit</bibl>\n"
+        "        <listWit>\n"
+        '          <witness xml:id="_1760"><idno type="siglum">1760</idno>Troyes 1760</witness>\n'
+        '          <witness xml:id="P">Paris, BnF</witness>\n'
+        "        </listWit>\n")
+    assert list(_witnesses(updated)) == ["_1760", "P"]
+
+
+def test_without_source_description_nothing_is_created():
+    source = _tei("<p>x</p>").replace("<sourceDesc><p>x</p></sourceDesc>", "")
+    updated, report = add_witnesses_to_listwit(source, [NEW])
+    assert updated == source and report.no_listwit == ["1760"] and not report.created
 
 
 def test_a_listwit_outside_the_header_is_left_alone():
     source = _tei("<p>x</p>").replace("<body><p>Lorem</p>", '<body><listWit><witness xml:id="A">A</witness></listWit><p>Lorem</p>')
     updated, report = add_witnesses_to_listwit(source, [NEW])
-    assert updated == source and report.no_listwit == ["1760"]
+    # Le <sourceDesc> en paragraphes ne reçoit pas de <listWit> non plus.
+    assert updated == source and report.added == [] and report.paragraphs == ["1760"]
 
 
 def test_the_outer_listwit_receives_the_witness():
@@ -127,3 +152,18 @@ def test_the_line_endings_of_the_file_are_kept(tmp_path):
     data = path.read_bytes().decode("utf-8")
     assert data.count("\n") == data.count("\r\n") and "_1760" in data
     assert '</witness>\r\n          <witness xml:id="_1760">' in data
+
+
+def test_the_report_names_a_created_list_and_paragraphs():
+    from pathlib import Path
+    from i18n import I18nManager
+    from tei_listwit import ListWitReport, report_notes
+    tr = I18nManager(Path(__file__).resolve().parents[1] / "i18n", "fr").tr
+    created = ListWitReport(added=["T1", "1760"], created=True, changed=True)
+    assert report_notes(created, tr) == [tr("project.listwit.created", witnesses="T1, 1760")]
+    assert "créée" in report_notes(created, tr)[0]
+    added = ListWitReport(added=["T2"], changed=True)
+    assert report_notes(added, tr) == [tr("project.listwit.added", witnesses="T2")]
+    blocked = ListWitReport(paragraphs=["T1"], id_used=["P"])
+    assert report_notes(blocked, tr) == [tr("project.listwit.id_used", witnesses="P"),
+                                        tr("project.listwit.paragraphs", witnesses="T1")]

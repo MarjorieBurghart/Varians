@@ -376,6 +376,8 @@
   <string key="project.settings.saved">プロジェクト設定を保存しました。プロジェクトを再読み込みします。</string>
   <string key="project.listwit.added">エディションの &lt;listWit&gt; に追加しました：{witnesses}。</string>
   <string key="project.listwit.no_listwit">エディションのヘッダーに &lt;listWit&gt; がありません。{witnesses} をご自分で宣言してください。</string>
+  <string key="project.listwit.created">エディションの &lt;sourceDesc&gt; に伝本リスト &lt;listWit&gt; を作成しました：{witnesses}。</string>
+  <string key="project.listwit.paragraphs">&lt;listWit&gt; に追加していません。エディションの &lt;sourceDesc&gt; に段落（&lt;p&gt;）があり、TEI ではその横に &lt;listWit&gt; を置けません。これらの段落を資料を説明する &lt;bibl&gt; に置き換え、その下の &lt;listWit&gt; で {witnesses} を宣言してください。</string>
   <string key="project.listwit.id_used">&lt;listWit&gt; に追加しませんでした：{witnesses} の識別子は、エディションの別の要素がすでに使っています。</string>
   <string key="project.listwit.malformed">&lt;listWit&gt; に追加しませんでした：エディションが整形式ではありません（{witnesses}）。</string>
   <string key="project.xslt">XSLTスタイルシート</string>
