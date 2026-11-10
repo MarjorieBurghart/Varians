@@ -200,3 +200,20 @@ def test_undeclared_witnesses_of_the_project_are_found():
     commented = source.replace("</sourceDesc>", '<!-- <listWit><witness xml:id="P">P</witness></listWit> --></sourceDesc>')
     assert undeclared_witnesses(commented, [p]) == [p]
     assert undeclared_witnesses("<TEI><teiHeader>", [p]) == []      # mal formé : rien à proposer
+
+
+def test_an_empty_source_description_is_enough_to_add_a_witness():
+    """« Ajoutez un <sourceDesc> » : vide (donc invalide un temps), il suffit ;
+    la <listWit> y est créée, et l'ajout n'est pas refusé."""
+    from tei_listwit import blocking_message
+    tr = _tr_fr()
+    for empty in ("<sourceDesc/>", "<sourceDesc></sourceDesc>", "<sourceDesc>\n      </sourceDesc>",
+                  "<sourceDesc><!-- à remplir --></sourceDesc>"):
+        source = _tei("x").replace("<sourceDesc>x</sourceDesc>", empty)
+        updated, report = add_witnesses_to_listwit(source, [NEW])
+        assert report.created and report.added == ["1760"], empty
+        assert blocking_message(report, tr, ["1760"]) is None
+        root = ET.fromstring(updated.split("?>", 1)[1])
+        (source_desc,) = root.iter(f"{{{TEI}}}sourceDesc")
+        assert [child.tag for child in source_desc] == [f"{{{TEI}}}listWit"]
+    assert "vide" in tr("project.listwit.blocked.no_source_desc")

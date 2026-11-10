@@ -383,7 +383,7 @@
   <string key="project.listwit.blocked.title">Свидетель не добавлен</string>
   <string key="project.listwit.blocked.intro">Свидетель, добавленный в проект, должен быть объявлен в списке свидетелей &lt;listWit&gt; издания; пока это невозможно для: {witnesses}.</string>
   <string key="project.listwit.blocked.paragraphs">&lt;sourceDesc&gt; издания содержит абзацы (&lt;p&gt;), а TEI не допускает &lt;listWit&gt; рядом с ними. Замените эти абзацы элементом &lt;bibl&gt; с описанием источника.</string>
-  <string key="project.listwit.blocked.no_source_desc">В заголовке издания нет ни &lt;listWit&gt;, ни &lt;sourceDesc&gt;. Добавьте &lt;sourceDesc&gt; в &lt;fileDesc&gt;.</string>
+  <string key="project.listwit.blocked.no_source_desc">В заголовке издания нет ни &lt;listWit&gt;, ни &lt;sourceDesc&gt;. Добавьте &lt;sourceDesc&gt; в конец &lt;fileDesc&gt;: достаточно даже пустого, Varians создаст в нём &lt;listWit&gt;.</string>
   <string key="project.listwit.blocked.malformed">Издание не является правильно построенным XML. Исправьте его.</string>
   <string key="project.listwit.blocked.id_used">Идентификатор {witnesses} уже принадлежит другому элементу издания. Выберите другую сиглу или измените этот идентификатор в издании.</string>
   <string key="project.listwit.blocked.outro">Исправьте издание и сохраните его, затем вернитесь в «Параметры проекта», чтобы добавить свидетеля.</string>

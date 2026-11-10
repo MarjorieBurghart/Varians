@@ -371,7 +371,7 @@ Il a été retiré de la liste des projets récents.</string>
   <string key="project.listwit.blocked.title">Témoin non ajouté</string>
   <string key="project.listwit.blocked.intro">Un témoin ajouté au projet doit être déclaré dans la liste des témoins &lt;listWit&gt; de l’édition ; c’est impossible pour l’instant pour : {witnesses}.</string>
   <string key="project.listwit.blocked.paragraphs">Le &lt;sourceDesc&gt; de l’édition contient des paragraphes (&lt;p&gt;), et la TEI n’admet pas de &lt;listWit&gt; à côté. Remplacez ces paragraphes par un &lt;bibl&gt; décrivant la source.</string>
-  <string key="project.listwit.blocked.no_source_desc">L’en-tête de l’édition n’a ni &lt;listWit&gt; ni &lt;sourceDesc&gt;. Ajoutez un &lt;sourceDesc&gt; au &lt;fileDesc&gt;.</string>
+  <string key="project.listwit.blocked.no_source_desc">L’en-tête de l’édition n’a ni &lt;listWit&gt; ni &lt;sourceDesc&gt;. Ajoutez un &lt;sourceDesc&gt; à la fin du &lt;fileDesc&gt; : même vide, il suffit, Varians y créera la &lt;listWit&gt;.</string>
   <string key="project.listwit.blocked.malformed">L’édition n’est pas bien formée. Corrigez-la.</string>
   <string key="project.listwit.blocked.id_used">L’identifiant de {witnesses} est déjà celui d’un autre élément de l’édition. Choisissez un autre sigle, ou changez cet identifiant dans l’édition.</string>
   <string key="project.listwit.blocked.outro">Corrigez l’édition et enregistrez-la, puis revenez dans Paramètres du projet pour ajouter le témoin.</string>

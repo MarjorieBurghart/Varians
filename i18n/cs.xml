@@ -383,7 +383,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.listwit.blocked.title">Svědek nepřidán</string>
   <string key="project.listwit.blocked.intro">Svědek přidaný do projektu musí být deklarován v seznamu svědků &lt;listWit&gt; edice; zatím to není možné pro: {witnesses}.</string>
   <string key="project.listwit.blocked.paragraphs">&lt;sourceDesc&gt; edice obsahuje odstavce (&lt;p&gt;) a TEI vedle nich &lt;listWit&gt; nepřipouští. Nahraďte tyto odstavce prvkem &lt;bibl&gt; popisujícím pramen.</string>
-  <string key="project.listwit.blocked.no_source_desc">Záhlaví edice nemá ani &lt;listWit&gt;, ani &lt;sourceDesc&gt;. Přidejte do &lt;fileDesc&gt; prvek &lt;sourceDesc&gt;.</string>
+  <string key="project.listwit.blocked.no_source_desc">Záhlaví edice nemá ani &lt;listWit&gt;, ani &lt;sourceDesc&gt;. Přidejte na konec &lt;fileDesc&gt; prvek &lt;sourceDesc&gt;: stačí i prázdný, Varians v něm vytvoří &lt;listWit&gt;.</string>
   <string key="project.listwit.blocked.malformed">Edice není správně utvořená. Opravte ji.</string>
   <string key="project.listwit.blocked.id_used">Identifikátor {witnesses} už patří jinému prvku edice. Zvolte jinou siglu, nebo tento identifikátor v edici změňte.</string>
   <string key="project.listwit.blocked.outro">Opravte edici a uložte ji, pak se vraťte do Nastavení projektu a svědka přidejte.</string>

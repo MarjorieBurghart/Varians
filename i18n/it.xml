@@ -383,7 +383,7 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="project.listwit.blocked.title">Testimone non aggiunto</string>
   <string key="project.listwit.blocked.intro">Un testimone aggiunto al progetto deve essere dichiarato nella lista dei testimoni &lt;listWit&gt; dell’edizione; per ora non è possibile per: {witnesses}.</string>
   <string key="project.listwit.blocked.paragraphs">Il &lt;sourceDesc&gt; dell’edizione contiene paragrafi (&lt;p&gt;), e la TEI non vi ammette una &lt;listWit&gt; accanto. Sostituisci questi paragrafi con un &lt;bibl&gt; che descriva la fonte.</string>
-  <string key="project.listwit.blocked.no_source_desc">L’intestazione dell’edizione non ha né &lt;listWit&gt; né &lt;sourceDesc&gt;. Aggiungi un &lt;sourceDesc&gt; al &lt;fileDesc&gt;.</string>
+  <string key="project.listwit.blocked.no_source_desc">L’intestazione dell’edizione non ha né &lt;listWit&gt; né &lt;sourceDesc&gt;. Aggiungi un &lt;sourceDesc&gt; alla fine del &lt;fileDesc&gt;: anche vuoto basta, Varians vi creerà la &lt;listWit&gt;.</string>
   <string key="project.listwit.blocked.malformed">L’edizione non è ben formata. Correggila.</string>
   <string key="project.listwit.blocked.id_used">L’identificatore di {witnesses} è già quello di un altro elemento dell’edizione. Scegli un’altra sigla, o cambia questo identificatore nell’edizione.</string>
   <string key="project.listwit.blocked.outro">Correggi l’edizione e salvala, poi torna in Impostazioni progetto per aggiungere il testimone.</string>
