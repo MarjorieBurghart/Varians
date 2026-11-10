@@ -55,7 +55,9 @@ class ProjectActionsMixin:
                 self, _t("webgen.wrong_file.title"), _t("webgen.wrong_file.text")
             )
             return
-        choice = self._ask_web_text()
+        # Sans témoin, le texte seul (établi) : rien à choisir.
+        choice = (self._ask_web_text() if self.project.witnesses
+                  else ("established", "", self.project.web_highlight_nonlem))
         if choice is None:
             return
         if not self._save_edition_for_export():
@@ -73,7 +75,11 @@ class ProjectActionsMixin:
         except Exception as exc:
             QMessageBox.critical(self, _t("webgen.error.title"), str(exc))
             return
-        msg = _t("webgen.done.text", output=output, witnesses=len(data.get("witnesses", [])), lines=data.get("meta", {}).get("lines", 0))
+        if self.project.witnesses:
+            msg = _t("webgen.done.text", output=output, witnesses=len(data.get("witnesses", [])),
+                     lines=data.get("meta", {}).get("lines", 0))
+        else:
+            msg = _t("webgen.done.text_only", output=output)
         if unaligned:
             totals = data.get("meta", {}).get("unaligned_pivot_line_totals") or {}
             msg += _t("webgen.unaligned_lines", count=unaligned, text=totals.get("text", 0),

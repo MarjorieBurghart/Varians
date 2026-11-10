@@ -143,3 +143,18 @@ def test_the_first_witness_gets_a_listwit_and_becomes_the_pivot(open_window, pro
     finally:
         new_window._force_close = True
         new_window.close()
+
+
+def test_the_web_viewer_is_generated_without_text_choice(open_window, project_without_witness, dialogs):
+    from PySide6.QtWidgets import QMessageBox
+    from app_context import tr
+    window = open_window(project_without_witness)
+    # Pas de boîte « texte du viewer » : sans témoin, le texte établi.
+    dialogs.expect("box", QMessageBox.ButtonRole.RejectRole)
+    window.generate_web_viewer()
+    kind, title, text = dialogs.seen[-1]
+    assert title == tr("webgen.done.title")
+    before, after = tr("webgen.done.text_only", output="§").split("§")
+    assert text.startswith(before) and text.endswith(after)
+    output = Path(text[len(before):len(text) - len(after)])
+    assert output.is_file() and output.parent == load_project(project_without_witness).web_output_dir

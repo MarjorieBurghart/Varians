@@ -174,6 +174,7 @@
 {output}
 
 Свидетелей: {witnesses}, строк опорного свидетеля: {lines}.</string>
+  <string key="webgen.done.text_only">Просмотрщик создан:\n{output}\n\nТолько текст, без свидетелей.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# строка опорного свидетеля не синхронизирована} few {# строки опорного свидетеля не синхронизированы} many {# строк опорного свидетеля не синхронизированы} other {# строки опорного свидетеля не синхронизированы}} с изображениями: в его выравнивании (JSON) меньше строк, чем в тексте (текст: {text}, выравнивание: {alignment}). Это нормально, если выравнивание ещё не закончено; иначе проверьте JSON-файл выравнивания опорного свидетеля (не пропущена ли в нём страница?).</string>
   <string key="webgen.assembly_problems">\n\nПроблемы сборки (соответствующий текст отсутствует во вьюере):\n{problems}</string>
   <string key="project.open_error">Не удалось открыть проект</string>
@@ -194,8 +195,10 @@
   <string key="viewer.info.line">{page} · строка {line}</string>
   <string key="viewer.info.no_line">Строки нет.</string>
   <string key="viewer.stats">свидетелей: {witnesses} · строк опорного свидетеля: {lines} · разночтений: {variants}</string>
+  <string key="viewer.stats.text_only">Только текст, без свидетелей · разночтений: {variants}</string>
   <string key="viewer.toc">Содержание</string>
   <string key="viewer.text.established">Установленный текст (&lt;lem&gt;), иначе {witness}</string>
+  <string key="viewer.text.established_only">Установленный текст (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Текст свидетеля {witness}</string>
   <string key="viewer.text.pivot">опорный свидетель</string>
   <string key="viewer.text.missing">мест без чтения свидетеля {witness}: {count} (отмечены)</string>

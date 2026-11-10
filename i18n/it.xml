@@ -174,6 +174,7 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
 {output}
 
 {witnesses, plural, one {# testimone} other {# testimoni}}, {lines, plural, one {# riga} other {# righe}} del testimone pivot.</string>
+  <string key="webgen.done.text_only">Viewer generato:\n{output}\n\nSolo testo, senza testimoni.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# riga del testimone pivot non è sincronizzata} other {# righe del testimone pivot non sono sincronizzate}} con le immagini: il suo allineamento (JSON) ha meno righe del testo (testo: {text}, allineamento: {alignment}). È normale se l'allineamento non è terminato; altrimenti controlla il JSON di allineamento del testimone pivot (vi manca una pagina?).</string>
   <string key="webgen.assembly_problems">\n\nProblemi di assemblaggio (il testo interessato manca nel viewer):\n{problems}</string>
   <string key="project.open_error">Impossibile aprire il progetto</string>
@@ -194,8 +195,10 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="viewer.info.line">{page} · riga {line}</string>
   <string key="viewer.info.no_line">Nessuna riga.</string>
   <string key="viewer.stats">{witnesses, plural, one {# testimone} other {# testimoni}} · {lines, plural, one {# riga} other {# righe}} del testimone pivot · {variants, plural, one {# variante} other {# varianti}}</string>
+  <string key="viewer.stats.text_only">Solo testo, senza testimoni · {variants, plural, one {# variante} other {# varianti}}</string>
   <string key="viewer.toc">Indice</string>
   <string key="viewer.text.established">Testo stabilito (&lt;lem&gt;), altrimenti {witness}</string>
+  <string key="viewer.text.established_only">Testo stabilito (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Testo di {witness}</string>
   <string key="viewer.text.pivot">il testimone pivot</string>
   <string key="viewer.text.missing">{count, plural, one {# passo senza lezione di {witness}, segnalato} other {# passi senza lezione di {witness}, segnalati}}</string>

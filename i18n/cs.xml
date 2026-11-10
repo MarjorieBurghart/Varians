@@ -174,6 +174,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
 {output}
 
 {witnesses, plural, one {# svědek} few {# svědci} other {# svědků}}, {lines, plural, one {# základní řádek} few {# základní řádky} other {# základních řádků}}.</string>
+  <string key="webgen.done.text_only">Prohlížeč vygenerován:\n{output}\n\nPouze text, bez svědků.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# řádek pivotního svědka není synchronizován} few {# řádky pivotního svědka nejsou synchronizovány} other {# řádků pivotního svědka není synchronizováno}} s obrázky: jeho zarovnání (JSON) má méně řádků než text (text: {text}, zarovnání: {alignment}). To je v pořádku, pokud zarovnání ještě není dokončeno; jinak zkontrolujte JSON zarovnání pivotního svědka (nechybí v něm stránka?).</string>
   <string key="webgen.assembly_problems">\n\nProblémy se sestavením (dotčený text ve vieweru chybí):\n{problems}</string>
   <string key="project.open_error">Projekt se nepodařilo otevřít</string>
@@ -194,8 +195,10 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="viewer.info.line">{page} · řádek {line}</string>
   <string key="viewer.info.no_line">Žádný řádek.</string>
   <string key="viewer.stats">{witnesses, plural, one {# svědek} few {# svědci} other {# svědků}} · {lines, plural, one {# základní řádek} few {# základní řádky} other {# základních řádků}} · {variants, plural, one {# varianta} few {# varianty} other {# variant}}</string>
+  <string key="viewer.stats.text_only">Pouze text, bez svědků · {variants, plural, one {# varianta} few {# varianty} other {# variant}}</string>
   <string key="viewer.toc">Obsah</string>
   <string key="viewer.text.established">Ustavený text (&lt;lem&gt;), jinak {witness}</string>
+  <string key="viewer.text.established_only">Ustavený text (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Text svědka {witness}</string>
   <string key="viewer.text.pivot">pivotní svědek</string>
   <string key="viewer.text.missing">{count, plural, one {# místo bez čtení svědka {witness}, označené} few {# místa bez čtení svědka {witness}, označená} other {# míst bez čtení svědka {witness}, označených}}</string>

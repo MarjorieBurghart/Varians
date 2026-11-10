@@ -174,6 +174,7 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
 {output}
 
 {witnesses, plural, one {# Textzeuge} other {# Textzeugen}}, {lines, plural, one {# Zeile} other {# Zeilen}} des Pivot-Textzeugen.</string>
+  <string key="webgen.done.text_only">Viewer erstellt:\n{output}\n\nNur Text, ohne Textzeugen.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# Zeile des Pivot-Textzeugen ist nicht mit den Bildern synchronisiert} other {# Zeilen des Pivot-Textzeugen sind nicht mit den Bildern synchronisiert}}: sein Alignment (JSON) hat weniger Zeilen als der Text (Text: {text}, Alignment: {alignment}). Das ist normal, solange das Alignment nicht abgeschlossen ist; andernfalls prüfen Sie das Alignment-JSON des Pivot-Textzeugen (fehlt dort eine Seite?).</string>
   <string key="webgen.assembly_problems">\n\nProbleme beim Zusammensetzen (der betroffene Text fehlt im Viewer):\n{problems}</string>
   <string key="project.open_error">Projekt konnte nicht geöffnet werden</string>
@@ -194,8 +195,10 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="viewer.info.line">{page} · Zeile {line}</string>
   <string key="viewer.info.no_line">Keine Zeile.</string>
   <string key="viewer.stats">{witnesses, plural, one {# Textzeuge} other {# Textzeugen}} · {lines, plural, one {# Zeile} other {# Zeilen}} des Pivot-Textzeugen · {variants, plural, one {# Variante} other {# Varianten}}</string>
+  <string key="viewer.stats.text_only">Nur Text, ohne Textzeugen · {variants, plural, one {# Variante} other {# Varianten}}</string>
   <string key="viewer.toc">Inhalt</string>
   <string key="viewer.text.established">Konstituierter Text (&lt;lem&gt;), sonst {witness}</string>
+  <string key="viewer.text.established_only">Konstituierter Text (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Text von {witness}</string>
   <string key="viewer.text.pivot">der Pivot-Textzeuge</string>
   <string key="viewer.text.missing">{count, plural, one {# Stelle} other {# Stellen}} ohne Lesart von {witness}, markiert</string>

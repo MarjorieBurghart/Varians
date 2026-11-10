@@ -174,7 +174,8 @@ def choose_reading_status(app: ET.Element, target: str, mode: str = "witness", w
     if shown is None:
         return None, None, None
     missing = None
-    if lacking:
+    # Sans témoin (projet sans témoin : ni choisi ni pivot), rien ne manque.
+    if lacking and chosen:
         fallback = "lem" if lname(shown[0].tag) == "lem" else next(iter(wit_tokens(shown[1])), "")
         missing = {"wit": chosen, "fallback": fallback}
     return shown[0], shown[1], missing
