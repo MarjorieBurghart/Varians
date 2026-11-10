@@ -431,7 +431,10 @@ class ManuscriptPanel(QFrame):
         """Remet les textes du panneau dans la langue de l'interface (boutons,
         bulles d'aide, bandeau, message, état de l'élément courant), sans
         recharger les images."""
-        if getattr(self, "_message_key", None) and not self.message.isHidden():
+        # Même caché (« Chargement des images… » une fois les images
+        # arrivées), le message est retraduit : il peut être réaffiché, et ne
+        # doit pas rester dans l'ancienne langue.
+        if getattr(self, "_message_key", None):
             key, values = self._message_key
             self.message.setText(_t(key, **values))
         self.detach_btn.setToolTip(_t('workspace.attach.tip' if getattr(self, '_detached', False) else 'workspace.detach.tip'))

@@ -88,3 +88,23 @@ def test_the_wrap_box_has_the_same_tip_before_and_after_a_switch(open_window, ex
     window = open_window(example_project)
     box = window.formatted_view.fragment_visual_wrap
     assert box.toolTip() == box.text()
+
+
+def test_a_message_hidden_once_the_images_are_loaded_is_not_left_in_the_former_language(open_window, example_project,
+                                                                                    qtbot):
+    """« Chargement des images… » est caché quand les images arrivent ; il ne
+    doit pas rester, caché, dans l'ancienne langue (échec intermittent sous
+    Windows : selon que les images arrivaient avant ou après le changement de
+    langue)."""
+    window = open_window(example_project)
+    panels = list(window.panels.values())
+    assert panels
+    for panel in panels:
+        panel._show_message("manuscript.loading")
+        panel.message.hide()                         # comme à l'arrivée des images
+    window._set_language_code("en")
+    try:
+        texts = [panel.message.text() for panel in panels]
+        assert "Chargement des images…" not in texts and tr("manuscript.loading") in texts
+    finally:
+        window._set_language_code("fr")
