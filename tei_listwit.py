@@ -6,9 +6,22 @@ Le ``<witness>`` d'un témoin va à la fin de la première ``<listWit>`` de
 l'en-tête (la plus extérieure), dans le style de celle-ci : une ligne par
 témoin, ou à la suite. Il porte l'identifiant du témoin, son sigle dans un
 ``<idno type="siglum">`` quand il diffère de l'identifiant, et son libellé.
-Varians ne crée jamais de ``<listWit>`` ; un témoin déjà déclaré n'est pas
-répété, et un identifiant déjà porté par un autre élément n'est pas employé.
-L'édition est modifiée comme du texte : le reste du fichier ne change pas.
+Un témoin déjà déclaré n'est pas répété, et un identifiant déjà porté par
+un autre élément n'est pas employé. L'édition est modifiée comme du texte :
+le reste du fichier ne change pas. Les commentaires et sections CDATA ne
+comptent pas : la ``<listWit>`` d'exemple du mode d'emploi n'est jamais
+prise pour la vraie.
+
+Sans ``<listWit>``, Varians en crée une dans le ``<sourceDesc>`` de
+l'en-tête, si la TEI le permet : ``<sourceDesc>`` contient soit des
+paragraphes (``<p>``, ``<ab>``), soit des éléments structurés (``<bibl>``,
+``<listWit>``…), jamais les deux. Le ``<bibl>`` de remplissage d'une
+transcription sans témoin (:data:`SOURCE_BIBL_PLACEHOLDER`), intact, est
+remplacé par la liste ; sinon la liste va à la suite du contenu. Avec des
+paragraphes, rien n'est créé (``ListWitReport.paragraphs``) : « Paramètres du
+projet » refuse alors l'ajout du témoin (:func:`blocking_message`), et propose
+à chaque enregistrement de déclarer les témoins qui ne le sont pas
+(:func:`undeclared_witnesses`).
 
 Module sans Qt."""
 from __future__ import annotations
@@ -24,7 +37,18 @@ from pathlib import Path
 XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
 _PREFIX = r"(?:([A-Za-z_][\w.-]*):)?"
 _HEADER_RE = re.compile(rf"<{_PREFIX}teiHeader\b[^>]*>(.*?)</(?:[A-Za-z_][\w.-]*:)?teiHeader\s*>", re.S)
-_LISTWIT_TAG_RE = re.compile(rf"<(/?){_PREFIX}listWit\b[^>]*?(/?)>", re.S)
+_COMMENT_RE = re.compile(r"<!--.*?-->|<!\[CDATA\[.*?\]\]>", re.S)
+
+# Seul contenu du <bibl> de remplissage d'une transcription sans témoin, par
+# langue du gabarit (project_management.minimal_tei_text).
+SOURCE_BIBL_PLACEHOLDER = {
+    "fr": " Décrivez ici la source de votre document. ",
+    "en": " Describe the source of your document here. ",
+}
+
+
+def _tag_re(name):
+    return re.compile(rf"<(/?){_PREFIX}{name}\b[^>]*?(/?)>", re.S)
 
 
 @dataclass
@@ -33,8 +57,10 @@ class ListWitReport:
     added: list[str] = field(default_factory=list)
     declared: list[str] = field(default_factory=list)     # déjà un <witness> de ce nom
     id_used: list[str] = field(default_factory=list)      # identifiant d'un autre élément
-    no_listwit: list[str] = field(default_factory=list)   # pas de <listWit> dans l'en-tête
+    no_listwit: list[str] = field(default_factory=list)   # ni <listWit> ni <sourceDesc> dans l'en-tête
+    paragraphs: list[str] = field(default_factory=list)   # <sourceDesc> en paragraphes : pas de <listWit>
     malformed: list[str] = field(default_factory=list)    # édition mal formée
+    created: bool = False                                  # <listWit> créée
     changed: bool = False
 
 
@@ -52,15 +78,18 @@ def witness_element(witness, prefix: str = "") -> str:
     return f'<{p}witness xml:id="{html.escape(wid)}">{idno}{html.escape(label, quote=False)}</{p}witness>'
 
 
-def _listwit_span(text):
+def _masked(text):
+    """``text`` où commentaires et sections CDATA sont remplacés par des
+    espaces (fins de ligne gardées) : mêmes positions, sans balise à y lire."""
+    return _COMMENT_RE.sub(lambda m: re.sub(r"[^\n]", " ", m.group()), text)
+
+
+def _element_span(masked, name, start, end):
     """``(début, fin de la balise ouvrante, début de la fermante, préfixe,
-    vide)`` de la première <listWit> de l'en-tête, ou None."""
-    header = _HEADER_RE.search(text)
-    if header is None:
-        return None
-    start, end = header.start(2), header.end(2)
+    vide)`` du premier élément ``name`` entre ``start`` et ``end`` de
+    ``masked`` (le plus extérieur), ou None."""
     depth, outer = 0, None
-    for match in _LISTWIT_TAG_RE.finditer(text, start, end):
+    for match in _tag_re(name).finditer(masked, start, end):
         closing, prefix, empty = match.group(1), match.group(2) or "", match.group(3)
         if outer is None:
             if closing:
@@ -78,6 +107,93 @@ def _listwit_span(text):
     return None
 
 
+def _listwit_span(text, masked=None):
+    """``(début, fin de la balise ouvrante, début de la fermante, préfixe,
+    vide)`` de la première <listWit> de l'en-tête, ou None."""
+    masked = _masked(text) if masked is None else masked
+    header = _HEADER_RE.search(masked)
+    if header is None:
+        return None
+    return _element_span(masked, "listWit", header.start(2), header.end(2))
+
+
+def _source_desc(root):
+    """Le <sourceDesc> du premier en-tête de ``root``, ou None."""
+    header = next((el for el in root.iter() if _local(el.tag) == "teiHeader"), None)
+    if header is None:
+        return None
+    return next((el for el in header.iter() if _local(el.tag) == "sourceDesc"), None)
+
+
+def _is_placeholder(element):
+    """``element`` est-il le <bibl> de remplissage intact ?"""
+    if _local(element.tag) != "bibl" or (element.text or "").strip():
+        return False
+    children = list(element)
+    return (len(children) == 1 and not isinstance(children[0].tag, str)
+            and (children[0].tail or "").strip() == ""
+            and (children[0].text or "").strip() in {v.strip() for v in SOURCE_BIBL_PLACEHOLDER.values()})
+
+
+def _indent_before(text, position):
+    """Retrait de la ligne où commence ``position``, s'il n'y a que des
+    blancs avant elle sur cette ligne ; sinon None."""
+    line_start = text.rfind("\n", 0, position) + 1
+    before = text[line_start:position]
+    return before if before.strip(" \t") == "" else None
+
+
+def _created_listwit(text, masked, root, elements):
+    """Texte de ``text`` avec une <listWit> nouvelle, contenant
+    ``elements``, dans le <sourceDesc> de l'en-tête ; None si la TEI ne le
+    permet pas ou s'il n'y a pas de <sourceDesc>."""
+    source_desc = _source_desc(root)
+    header = _HEADER_RE.search(masked)
+    if source_desc is None or header is None:
+        return None
+    span = _element_span(masked, "sourceDesc", header.start(2), header.end(2))
+    if span is None:
+        return None
+    start, open_end, close_start, prefix, empty = span
+    p = f"{prefix}:" if prefix else ""
+    newline = "\r\n" if "\r\n" in text else "\n"
+    children = [el for el in source_desc if isinstance(el.tag, str)]
+    own_indent = _indent_before(text, start)
+
+    def block(indent, unit):
+        if indent is None:
+            return f"<{p}listWit>" + "".join(elements) + f"</{p}listWit>"
+        lines = [f"<{p}listWit>"] + [indent + unit + e for e in elements] + [indent + f"</{p}listWit>"]
+        return newline.join(lines)
+
+    if empty:
+        if own_indent is None:
+            return text[:start] + re.sub(r"\s*/>$", ">", text[start:open_end]) + block(None, "") \
+                + f"</{p}sourceDesc>" + text[open_end:]
+        inner = own_indent + "  "
+        return (text[:start] + re.sub(r"\s*/>$", ">", text[start:open_end]) + newline + inner
+                + block(inner, "  ") + newline + own_indent + f"</{p}sourceDesc>" + text[open_end:])
+    inner = masked[open_end:close_start]
+    indents = re.findall(r"\n([ \t]*)<", inner)
+    child_indent = indents[-1] if indents else None
+    unit = "  "
+    if child_indent is not None and own_indent is not None and child_indent.startswith(own_indent) \
+            and len(child_indent) > len(own_indent):
+        unit = child_indent[len(own_indent):]
+    if len(children) == 1 and _is_placeholder(children[0]):
+        bibl = re.compile(rf"<{re.escape(p)}bibl\b[^>]*>\s*</{re.escape(p)}bibl\s*>").search(
+            masked, open_end, close_start)
+        if bibl is not None:
+            indent = _indent_before(text, bibl.start())
+            return text[:bibl.start()] + block(indent, unit) + text[bibl.end():]
+    trailing = re.search(r"\s*$", inner).group()
+    insert_at = close_start - len(trailing)
+    if "\n" in trailing:
+        indent = child_indent if child_indent is not None else (own_indent or "") + unit
+        return text[:insert_at] + newline + indent + block(indent, unit) + text[insert_at:]
+    return text[:insert_at] + block(None, "") + text[insert_at:]
+
+
 def add_witnesses_to_listwit(text: str, witnesses) -> tuple[str, ListWitReport]:
     """Ajoute à la <listWit> de l'en-tête de ``text`` le ``<witness>`` de
     chaque témoin de ``witnesses`` qui n'y est pas ; renvoie le texte et
@@ -87,7 +203,8 @@ def add_witnesses_to_listwit(text: str, witnesses) -> tuple[str, ListWitReport]:
     if not witnesses:
         return text, report
     try:
-        root = ET.fromstring(re.sub(r"^\s*<\?xml[^>]*\?>", "", text.lstrip("\ufeff")))
+        parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True))
+        root = ET.fromstring(re.sub(r"^\s*<\?xml[^>]*\?>", "", text.lstrip("\ufeff")), parser=parser)
     except ET.ParseError:
         report.malformed = [getattr(w, "display_siglum", w.id.strip()) for w in witnesses]
         return text, report
@@ -96,7 +213,16 @@ def add_witnesses_to_listwit(text: str, witnesses) -> tuple[str, ListWitReport]:
         ident = element.get(XML_ID)
         if ident is not None:
             ids.setdefault(ident, _local(element.tag))
-    span = _listwit_span(text)
+    masked = _masked(text)
+    span = _listwit_span(text, masked)
+    # Sans <listWit> : peut-on en créer une ? (pas de paragraphes à côté)
+    missing = None
+    if span is None:
+        source_desc = _source_desc(root)
+        if source_desc is None:
+            missing = report.no_listwit
+        elif any(_local(el.tag) in ("p", "ab") for el in source_desc):
+            missing = report.paragraphs
     new = []
     for witness in witnesses:
         wid, siglum = witness.id.strip(), getattr(witness, "display_siglum", witness.id.strip())
@@ -104,14 +230,25 @@ def add_witnesses_to_listwit(text: str, witnesses) -> tuple[str, ListWitReport]:
             report.declared.append(siglum)
         elif wid in ids:
             report.id_used.append(siglum)
-        elif span is None:
-            report.no_listwit.append(siglum)
+        elif missing is not None:
+            missing.append(siglum)
         else:
             new.append(witness)
             ids[wid] = "witness"
             report.added.append(siglum)
     if not new:
         return text, report
+    if span is None:
+        header = _HEADER_RE.search(masked)
+        source_span = _element_span(masked, "sourceDesc", header.start(2), header.end(2)) if header else None
+        prefix = source_span[3] if source_span else ""
+        updated = _created_listwit(text, masked, root, [witness_element(w, prefix) for w in new])
+        if updated is None:
+            report.no_listwit.extend(report.added)
+            report.added = []
+            return text, report
+        report.created = report.changed = True
+        return updated, report
     start, open_end, close_start, prefix, empty = span
     elements = [witness_element(w, prefix) for w in new]
     if empty:
@@ -121,7 +258,7 @@ def add_witnesses_to_listwit(text: str, witnesses) -> tuple[str, ListWitReport]:
         opening = re.sub(r"\s*/>$", ">", tag)
         updated = text[:start] + opening + "".join(elements) + f"</{p}listWit>" + text[open_end:]
     else:
-        inner = text[open_end:close_start]
+        inner = masked[open_end:close_start]
         trailing = re.search(r"\s*$", inner).group()
         if "\n" in trailing:
             # Une ligne par témoin, au retrait du dernier, avec les fins de
@@ -137,6 +274,50 @@ def add_witnesses_to_listwit(text: str, witnesses) -> tuple[str, ListWitReport]:
         updated = text[:insert_at] + addition + text[insert_at:]
     report.changed = True
     return updated, report
+
+
+def report_notes(report: ListWitReport, tr) -> list[str]:
+    """Phrases du compte rendu (``tr`` : traduction d'une clé) : témoins
+    ajoutés, ou liste créée avec eux, puis ceux qui n'ont pas pu l'être."""
+    added = "project.listwit.created" if report.created else "project.listwit.added"
+    return [tr(key, witnesses=", ".join(sigla)) for key, sigla in (
+        (added, report.added),
+        ("project.listwit.no_listwit", report.no_listwit),
+        ("project.listwit.id_used", report.id_used),
+        ("project.listwit.paragraphs", report.paragraphs),
+        ("project.listwit.malformed", report.malformed)) if sigla]
+
+
+def blocking_message(report: ListWitReport, tr, sigla) -> str | None:
+    """Message qui refuse l'ajout des témoins ``sigla`` quand ``report``
+    (essai à blanc de :func:`add_witnesses_to_listwit`) dit qu'ils ne
+    peuvent pas être déclarés : ce qu'il faut corriger dans l'édition, puis
+    revenir les ajouter. None s'ils peuvent l'être."""
+    reasons = []
+    if report.malformed:
+        reasons.append(tr("project.listwit.blocked.malformed"))
+    if report.paragraphs:
+        reasons.append(tr("project.listwit.blocked.paragraphs"))
+    if report.no_listwit:
+        reasons.append(tr("project.listwit.blocked.no_source_desc"))
+    if report.id_used:
+        reasons.append(tr("project.listwit.blocked.id_used", witnesses=", ".join(report.id_used)))
+    if not reasons:
+        return None
+    return "\n\n".join([tr("project.listwit.blocked.intro", witnesses=", ".join(sigla)),
+                         *(f"• {reason}" for reason in reasons), tr("project.listwit.blocked.outro")])
+
+
+def undeclared_witnesses(text: str, witnesses) -> list:
+    """Les témoins de ``witnesses`` dont l'identifiant n'est celui d'aucun
+    ``<witness>`` de ``text`` (commentaires exclus) ; aucun si ``text`` est
+    mal formé."""
+    try:
+        root = ET.fromstring(re.sub(r"^\s*<\?xml[^>]*\?>", "", text.lstrip("\ufeff")))
+    except ET.ParseError:
+        return []
+    declared = {el.get(XML_ID) for el in root.iter() if _local(el.tag) == "witness"}
+    return [w for w in witnesses if (w.id or "").strip() and w.id.strip() not in declared]
 
 
 def add_witnesses_to_listwit_file(edition_path, witnesses) -> ListWitReport:

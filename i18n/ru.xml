@@ -174,6 +174,7 @@
 {output}
 
 Свидетелей: {witnesses}, строк опорного свидетеля: {lines}.</string>
+  <string key="webgen.done.text_only">Просмотрщик создан:\n{output}\n\nТолько текст, без свидетелей.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# строка опорного свидетеля не синхронизирована} few {# строки опорного свидетеля не синхронизированы} many {# строк опорного свидетеля не синхронизированы} other {# строки опорного свидетеля не синхронизированы}} с изображениями: в его выравнивании (JSON) меньше строк, чем в тексте (текст: {text}, выравнивание: {alignment}). Это нормально, если выравнивание ещё не закончено; иначе проверьте JSON-файл выравнивания опорного свидетеля (не пропущена ли в нём страница?).</string>
   <string key="webgen.assembly_problems">\n\nПроблемы сборки (соответствующий текст отсутствует во вьюере):\n{problems}</string>
   <string key="project.open_error">Не удалось открыть проект</string>
@@ -194,8 +195,10 @@
   <string key="viewer.info.line">{page} · строка {line}</string>
   <string key="viewer.info.no_line">Строки нет.</string>
   <string key="viewer.stats">свидетелей: {witnesses} · строк опорного свидетеля: {lines} · разночтений: {variants}</string>
+  <string key="viewer.stats.text_only">Только текст, без свидетелей · разночтений: {variants}</string>
   <string key="viewer.toc">Содержание</string>
   <string key="viewer.text.established">Установленный текст (&lt;lem&gt;), иначе {witness}</string>
+  <string key="viewer.text.established_only">Установленный текст (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Текст свидетеля {witness}</string>
   <string key="viewer.text.pivot">опорный свидетель</string>
   <string key="viewer.text.missing">мест без чтения свидетеля {witness}: {count} (отмечены)</string>
@@ -334,7 +337,7 @@
   <string key="project.edition.choose">Выбрать издание TEI</string>
   <string key="project.witnesses">Свидетели и ресурсы</string>
   <string key="project.new.info">Новый проект включает копии TEI, файлов выравнивания, CSS, конфигурации Ctrl+E и переводов. XSLT по умолчанию остаётся в приложении; пользовательский XSLT копируется в проект. Выберите пустую папку.</string>
-  <string key="project.new.info.blank">Varians автоматически создаст минимальный файл TEI в xml/edition.xml. Добавьте хотя бы одного свидетеля и явно выберите «Пока без изображений», если начинаете транскрипцию без факсимиле. ALTO и синхронизацию можно добавить позже. В автоматическом режиме схемы новый TEI ссылается на TEI All через xml-model. Выберите пустую папку.</string>
+  <string key="project.new.info.blank">Varians автоматически создаст минимальный файл TEI в xml/edition.xml. Свидетелей можно добавить сейчас или позже («Параметры проекта…»); для свидетеля без факсимиле выберите «Пока без изображений». ALTO и синхронизацию можно добавить позже. В автоматическом режиме схемы новый TEI ссылается на TEI All через xml-model. Выберите пустую папку.</string>
   <string key="project.witness.edit.title">Свидетель проекта</string>
   <string key="project.witness.id">Сигла</string>
   <string key="project.witness.xml_id">XML-идентификатор: {id}</string>
@@ -361,7 +364,6 @@
   <string key="project.validation.folder_not_empty">Выбранная папка не пуста. Выберите пустую или новую папку.</string>
   <string key="project.validation.edition_missing">Файл TEI не найден:
 {path}</string>
-  <string key="project.validation.no_witness">Добавьте хотя бы одного свидетеля.</string>
   <string key="project.validation.no_base">Выберите опорного свидетеля для синхронизации.</string>
   <string key="project.validation.rendering_missing">Один или несколько файлов представления (XSLT, CSS, конфигурация Ctrl+E) не найдены.</string>
   <string key="project.validation.i18n_missing">Папка переводов не найдена.</string>
@@ -376,6 +378,17 @@
   <string key="project.settings.saved">Параметры проекта сохранены. Сейчас проект будет перезагружен.</string>
   <string key="project.listwit.added">Добавлено в &lt;listWit&gt; издания: {witnesses}.</string>
   <string key="project.listwit.no_listwit">В заголовке издания нет &lt;listWit&gt;: объявите {witnesses} сами.</string>
+  <string key="project.listwit.created">Список свидетелей &lt;listWit&gt; создан в &lt;sourceDesc&gt; издания, с: {witnesses}.</string>
+  <string key="project.listwit.paragraphs">Не добавлено в &lt;listWit&gt;: &lt;sourceDesc&gt; издания содержит абзацы (&lt;p&gt;), а TEI не допускает &lt;listWit&gt; рядом с ними. Замените эти абзацы элементом &lt;bibl&gt; с описанием источника, затем объявите {witnesses} в &lt;listWit&gt; под ним.</string>
+  <string key="project.listwit.blocked.title">Свидетель не добавлен</string>
+  <string key="project.listwit.blocked.intro">Свидетель, добавленный в проект, должен быть объявлен в списке свидетелей &lt;listWit&gt; издания; пока это невозможно для: {witnesses}.</string>
+  <string key="project.listwit.blocked.paragraphs">&lt;sourceDesc&gt; издания содержит абзацы (&lt;p&gt;), а TEI не допускает &lt;listWit&gt; рядом с ними. Замените эти абзацы элементом &lt;bibl&gt; с описанием источника.</string>
+  <string key="project.listwit.blocked.no_source_desc">В заголовке издания нет ни &lt;listWit&gt;, ни &lt;sourceDesc&gt;. Добавьте &lt;sourceDesc&gt; в конец &lt;fileDesc&gt;: достаточно даже пустого, Varians создаст в нём &lt;listWit&gt;.</string>
+  <string key="project.listwit.blocked.malformed">Издание не является правильно построенным XML. Исправьте его.</string>
+  <string key="project.listwit.blocked.id_used">Идентификатор {witnesses} уже принадлежит другому элементу издания. Выберите другую сиглу или измените этот идентификатор в издании.</string>
+  <string key="project.listwit.blocked.outro">Исправьте издание и сохраните его, затем вернитесь в «Параметры проекта», чтобы добавить свидетеля.</string>
+  <string key="project.listwit.missing.title">Необъявленные свидетели</string>
+  <string key="project.listwit.missing">Эти свидетели проекта не объявлены в списке свидетелей &lt;listWit&gt; издания: {witnesses}. Объявить их там?</string>
   <string key="project.listwit.id_used">Не добавлено в &lt;listWit&gt;: идентификатор {witnesses} уже принадлежит другому элементу издания.</string>
   <string key="project.listwit.malformed">Не добавлено в &lt;listWit&gt;: издание не является правильно построенным XML ({witnesses}).</string>
   <string key="project.xslt">Таблица стилей XSLT</string>
@@ -611,6 +624,7 @@ Varians загружает файл целиком, чтобы показать 
   <string key="completion.custom.notice">Предложения «Проект» берутся из custom-elements.xml и не влияют на действительность по RELAX NG.</string>
   <string key="completion.custom.replace_notice">Список ввода, заданный проектом: он заменяет отображаемые здесь предложения, но не ограничивает действительность по RELAX NG.</string>
   <string key="status.structure.no_alignment">{base}: нет синхронизации строк</string>
+  <string key="status.structure.no_witness">Нет свидетелей</string>
   <string key="status.structure.free">{base}: строк TEI — {count} (без синхронизации)</string>
   <string key="manuscript.no_image_source">С этой страницей не связан источник изображения.</string>
   <string key="project.witness.alignment.optional">Файл синхронизации (необязательно)</string>
@@ -972,7 +986,6 @@ Varians загружает файл целиком, чтобы показать 
   <string key="project.error.root">Корневым элементом project.xml должен быть &lt;teiManuscriptProject&gt; (или &lt;project&gt;).</string>
   <string key="project.error.missing_elements">project.xml должен содержать &lt;edition&gt; и &lt;witnesses&gt;.</string>
   <string key="project.error.default_xslt_missing">Стандартная таблица стилей XSLT Varians не найдена: {path}. Установка Varians неполная.</string>
-  <string key="project.error.no_witness">В project.xml не объявлено ни одного свидетеля: добавьте в &lt;witnesses&gt; хотя бы один &lt;witness id="…"&gt;.</string>
   <string key="project.error.no_pivot">В project.xml не указан опорный свидетель: укажите его через &lt;witnesses base="…"&gt; или через role="base" ровно у одного &lt;witness&gt;.</string>
   <string key="references.other_document">Краткая форма: {token} обозначает только этот документ. Чтобы указать на эту цель, напишите {suggestion}.</string>
   <string key="references.problem.other_document">Краткая форма, цель в другом документе: напишите {suggestions}</string>

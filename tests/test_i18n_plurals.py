@@ -166,8 +166,10 @@ MARKERS = {
 }
 # Ne comptent rien : « attribut(s) configuré(s) : {attrs} », « {witnesses} »
 # (liste de sigles) ; « (n) » est la marque affichée.
+# {witnesses} y est une liste de sigles, non un nombre.
 NOT_COUNTED = {"ctrl_e.inserted_attrs", "viewer.show_notes.tip", "project.listwit.id_used",
-               "project.listwit.no_listwit"}
+               "project.listwit.no_listwit", "project.listwit.paragraphs", "project.listwit.blocked.intro",
+               "project.listwit.blocked.id_used", "project.listwit.missing"}
 # Mots qui ne varient pas avec le nombre : prépositions, participes anglais et
 # allemands, noms allemands invariables (« 1 Fehler », « 3 Fehler »).
 INVARIANT = {

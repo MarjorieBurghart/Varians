@@ -267,6 +267,10 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
     known_ids = [w.id for w in project.witnesses]
     # Un objet projet minimal (sans ces réglages) : le texte établi, du pivot.
     text_mode = text_mode or getattr(project, "web_text_mode", "established")
+    if not known_ids:
+        # Projet sans témoin : le texte seul, établi (<lem>, sinon la
+        # première leçon).
+        text_mode, text_witness = "established", ""
     chosen = (getattr(project, "web_text_witness", "") if text_witness is None else text_witness).strip()
     text_meta = {"mode": text_mode, "witness": chosen if chosen in known_ids else ""}
     if chosen and chosen not in known_ids:
@@ -287,10 +291,12 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
     raw_sync_caches = {}
     for w in project.witnesses:
         raw_sync_caches[w.id], caches[w.id] = _witness_cache(project, w)
-    base_cache = caches[base_id]
-    base_cfg = project.witness_by_id[base_id]
+    # Projet sans témoin : le texte seul, sans pivot ni fac-similé.
+    base_cache = caches.get(base_id) or {"pages": []}
+    base_cfg = project.witness_by_id.get(base_id)
     base_sync_line_count = primary_sync_line_count(raw_sync_caches.get(base_id))
-    base_has_alignment = bool(has_line_synchronization(base_cfg) and base_sync_line_count > 0)
+    base_has_alignment = bool(base_cfg is not None and has_line_synchronization(base_cfg)
+                              and base_sync_line_count > 0)
 
     # Identical indexing contract to MainWindow/flatten_primary: the nth
     # eligible pivot <lb/> follows the nth physical pivot JSON line, regardless
@@ -438,7 +444,7 @@ def _build_dataset(project, display_witness_ids=None, text_mode=None, text_witne
     # Les pivots des textes à part sont gardés de même (V0.9.1.6).
     by_id = {w['id']: w for w in witnesses}
     technical = [base_id] + [s.pivot for s in assembled.segments[1:]] if texts else [base_id]
-    export_order = displayed_ids + [wid for wid in dict.fromkeys(technical) if wid not in displayed_ids]
+    export_order = displayed_ids + [wid for wid in dict.fromkeys(technical) if wid and wid not in displayed_ids]
     witnesses = [by_id[wid] for wid in export_order]
     for wid in export_order:
         if wid not in displayed_ids:
@@ -830,7 +836,7 @@ const STYLE_CLASSES={stage:'tei-stage-inline',italic:'tei-italic',quote:'tei-quo
 function styles(s){return[...new Set((s.styles||[]).map(x=>STYLE_CLASSES[x]).filter(Boolean)),...(s.alt?['has-alt']:[]),...(s.missing?['no-reading']:[]),...(s.nonlem?['non-lem']:[])].join(' ')}
 function missingTitle(m){return t('viewer.missing',{witness:siglumOf(m.wit),fallback:m.fallback==='lem'?t('viewer.missing.lem'):t('viewer.missing.reading',{witness:siglumOf(m.fallback)})})}
 function segTitle(s){const parts=[s.alt?altTitle(s.alt):'',s.missing?missingTitle(s.missing):''].filter(Boolean);return parts.length?` title="${esc(parts.join('\n'))}"`:''}
-function textChoice(){const m=DATA.meta.text;if(!m)return'';const w=m.witness?siglumOf(m.witness):t('viewer.text.pivot');let s=m.mode==='witness'&&!m.witness?t('viewer.text.witness_pivot'):t(m.mode==='witness'?'viewer.text.witness':'viewer.text.established',{witness:w});if(m.missing)s+=' · '+(m.witness?t('viewer.text.missing',{count:m.missing,witness:w}):t('viewer.text.missing_pivot',{count:m.missing}));return s}
+function textChoice(){const m=DATA.meta.text;if(!m)return'';if(!DATA.meta.base_witness)return t('viewer.text.established_only');const w=m.witness?siglumOf(m.witness):t('viewer.text.pivot');let s=m.mode==='witness'&&!m.witness?t('viewer.text.witness_pivot'):t(m.mode==='witness'?'viewer.text.witness':'viewer.text.established',{witness:w});if(m.missing)s+=' · '+(m.witness?t('viewer.text.missing',{count:m.missing,witness:w}):t('viewer.text.missing_pivot',{count:m.missing}));return s}
 // Autres formes d'un <choice>, détail d'un <gap> (V0.9.3.0).
 const FORM_KEYS={sic:'viewer.form.sic',corr:'viewer.form.corr',orig:'viewer.form.orig',reg:'viewer.form.reg',abbr:'viewer.form.abbr',expan:'viewer.form.expan',gap:'viewer.form.gap'};
 function altTitle(alt){return(alt||[]).map(([name,value])=>{const label=FORM_KEYS[name]?t(FORM_KEYS[name]):name;return value?t('viewer.form.detail',{label,value}):label}).join(' · ')}
@@ -940,7 +946,7 @@ function populateLanguages(){const sel=$('languageSelect');sel.innerHTML='';for(
 function applyMarkerVisibility(){document.body.classList.toggle('hide-variant-markers',!$('showVariants').checked);document.body.classList.toggle('hide-note-markers',!$('showNotes').checked);document.body.classList.toggle('show-nonlem',$('showNonLem').checked);$('popover').classList.remove('show')}
 function initMarkerToggles(){for(const [id,storageKey] of [['showVariants','tei-show-variants'],['showNotes','tei-show-notes']]){const box=$(id);box.checked=safeStorage.getItem(storageKey)!=='0';box.onchange=()=>{safeStorage.setItem(storageKey,box.checked?'1':'0');applyMarkerVisibility()}}$('showNonLem').checked=!!DATA.meta.text?.highlight;$('showNonLem').onchange=applyMarkerVisibility;applyMarkerVisibility()}
 function updateMarkerToggleAvailability(){$('showVariantsOption').hidden=!document.querySelector('.ann-marker.v');$('showNonLemOption').hidden=!(DATA.meta.text?.mode==='established'&&DATA.meta.text?.nonlem>0);$('showNotesOption').hidden=!document.querySelector('.ann-marker.n')}
-function applyLanguage(){document.documentElement.lang=uiLang;$('search').placeholder=t('viewer.search.placeholder');$('search').setAttribute('aria-label',t('viewer.search.placeholder'));$('searchModeLabel').textContent=t('viewer.search.medieval');$('searchButton').title=t('viewer.search.run');$('searchButton').setAttribute('aria-label',t('viewer.search.run'));$('searchClose').title=t('viewer.search.close');$('searchClose').setAttribute('aria-label',t('viewer.search.close'));const basePageMode=!!states.get(baseId)?.pageMode;$('prevBase').textContent=t(basePageMode?'viewer.prev_page':'viewer.prev_base');$('nextBase').textContent=t(basePageMode?'viewer.next_page':'viewer.next_base');$('infoClose').textContent=t('viewer.info.close');$('languageLabel').textContent=t('viewer.language')+':';$('showVariantsLabel').textContent=t('viewer.show_variants');$('showVariantsOption').title=t('viewer.show_variants.tip');$('showNotesLabel').textContent=t('viewer.show_notes');$('showNotesOption').title=t('viewer.show_notes.tip');$('showNonLemLabel').textContent=t('viewer.show_nonlem');$('showNonLemOption').title=t('viewer.show_nonlem.tip');$('stats').textContent=[t('viewer.stats',{witnesses:displayWitnesses.length,lines:DATA.meta.lines,variants:DATA.meta.variants}),textChoice()].filter(Boolean).join(' · ');$('onlineNotice').textContent=DATA.meta.external_iiif_images?t('viewer.external_iiif_notice',{count:DATA.meta.external_iiif_images}):'';$('syncNotice').textContent=defaultSyncNotice();updateCardLanguage();renderDocument();updateSearchPanel();if(lineMode&&selectedKey)syncAll();else if(selectedSurface)selectSurface('#'+selectedSurface,false);else for(const w of displayWitnesses)renderWitness(w.id)}
+function applyLanguage(){document.documentElement.lang=uiLang;$('search').placeholder=t('viewer.search.placeholder');$('search').setAttribute('aria-label',t('viewer.search.placeholder'));$('searchModeLabel').textContent=t('viewer.search.medieval');$('searchButton').title=t('viewer.search.run');$('searchButton').setAttribute('aria-label',t('viewer.search.run'));$('searchClose').title=t('viewer.search.close');$('searchClose').setAttribute('aria-label',t('viewer.search.close'));const basePageMode=!!states.get(baseId)?.pageMode;$('prevBase').textContent=t(basePageMode?'viewer.prev_page':'viewer.prev_base');$('nextBase').textContent=t(basePageMode?'viewer.next_page':'viewer.next_base');$('prevBase').hidden=$('nextBase').hidden=!DATA.meta.base_witness;$('infoClose').textContent=t('viewer.info.close');$('languageLabel').textContent=t('viewer.language')+':';$('showVariantsLabel').textContent=t('viewer.show_variants');$('showVariantsOption').title=t('viewer.show_variants.tip');$('showNotesLabel').textContent=t('viewer.show_notes');$('showNotesOption').title=t('viewer.show_notes.tip');$('showNonLemLabel').textContent=t('viewer.show_nonlem');$('showNonLemOption').title=t('viewer.show_nonlem.tip');$('stats').textContent=[DATA.meta.base_witness?t('viewer.stats',{witnesses:displayWitnesses.length,lines:DATA.meta.lines,variants:DATA.meta.variants}):t('viewer.stats.text_only',{variants:DATA.meta.variants}),textChoice()].filter(Boolean).join(' · ');$('onlineNotice').textContent=DATA.meta.external_iiif_images?t('viewer.external_iiif_notice',{count:DATA.meta.external_iiif_images}):'';$('syncNotice').textContent=defaultSyncNotice();updateCardLanguage();renderDocument();updateSearchPanel();if(lineMode&&selectedKey)syncAll();else if(selectedSurface)selectSurface('#'+selectedSurface,false);else for(const w of displayWitnesses)renderWitness(w.id)}
 function setLanguage(code){if(!I18N.catalogs?.[code])return;uiLang=code;safeStorage.setItem('tei-ui-language',code);applyLanguage()}
 $('title').textContent=DATA.meta.title;$('docTitle').textContent=DATA.meta.title;$('prevBase').onclick=()=>moveBase(-1);$('nextBase').onclick=()=>moveBase(1);$('fontMinus').onclick=()=>setScale(readerScale-.1);$('fontPlus').onclick=()=>setScale(readerScale+.1);$('fontReset').onclick=()=>setScale(1);$('search').onkeydown=e=>{if(e.key==='Enter')search()};$('search').oninput=queueSearch;$('searchButton').onclick=search;$('searchPrev').onclick=()=>selectSearchResult(activeSearchHit-1);$('searchNext').onclick=()=>selectSearchResult(activeSearchHit+1);$('searchClose').onclick=()=>{$('search').value='';searchUpdate()};for(const id of ['searchUV','searchIJ','searchCT'])$(id).onchange=()=>searchUpdate(false);$('infoClose').onclick=()=>$('infoDialog').close();document.addEventListener('click',e=>{if(!e.target.closest('.ann-marker'))$('popover').classList.remove('show')});setScale(readerScale);initResizer();buildCards();populateLanguages();initMarkerToggles();selectedKey=lineMode?(lineOrder[0]||null):null;applyLanguage();if(lineMode&&selectedKey)selectLine(selectedKey,false);else if(!selectedSurface){const base=states.get(baseId),sid=base?.physical?.[0]?.p?.tei_surface_id;if(sid||firstDocumentSurface())selectSurface('#'+(firstDocumentSurface()||sid),false)};
 </script></body></html>'''

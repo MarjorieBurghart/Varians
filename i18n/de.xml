@@ -174,6 +174,7 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
 {output}
 
 {witnesses, plural, one {# Textzeuge} other {# Textzeugen}}, {lines, plural, one {# Zeile} other {# Zeilen}} des Pivot-Textzeugen.</string>
+  <string key="webgen.done.text_only">Viewer erstellt:\n{output}\n\nNur Text, ohne Textzeugen.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# Zeile des Pivot-Textzeugen ist nicht mit den Bildern synchronisiert} other {# Zeilen des Pivot-Textzeugen sind nicht mit den Bildern synchronisiert}}: sein Alignment (JSON) hat weniger Zeilen als der Text (Text: {text}, Alignment: {alignment}). Das ist normal, solange das Alignment nicht abgeschlossen ist; andernfalls prüfen Sie das Alignment-JSON des Pivot-Textzeugen (fehlt dort eine Seite?).</string>
   <string key="webgen.assembly_problems">\n\nProbleme beim Zusammensetzen (der betroffene Text fehlt im Viewer):\n{problems}</string>
   <string key="project.open_error">Projekt konnte nicht geöffnet werden</string>
@@ -194,8 +195,10 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="viewer.info.line">{page} · Zeile {line}</string>
   <string key="viewer.info.no_line">Keine Zeile.</string>
   <string key="viewer.stats">{witnesses, plural, one {# Textzeuge} other {# Textzeugen}} · {lines, plural, one {# Zeile} other {# Zeilen}} des Pivot-Textzeugen · {variants, plural, one {# Variante} other {# Varianten}}</string>
+  <string key="viewer.stats.text_only">Nur Text, ohne Textzeugen · {variants, plural, one {# Variante} other {# Varianten}}</string>
   <string key="viewer.toc">Inhalt</string>
   <string key="viewer.text.established">Konstituierter Text (&lt;lem&gt;), sonst {witness}</string>
+  <string key="viewer.text.established_only">Konstituierter Text (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Text von {witness}</string>
   <string key="viewer.text.pivot">der Pivot-Textzeuge</string>
   <string key="viewer.text.missing">{count, plural, one {# Stelle} other {# Stellen}} ohne Lesart von {witness}, markiert</string>
@@ -334,7 +337,7 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.edition.choose">TEI-Edition auswählen</string>
   <string key="project.witnesses">Textzeugen und Ressourcen</string>
   <string key="project.new.info">Das neue Projekt enthält Kopien der TEI, der Alignments, der CSS-Datei, der Ctrl+E-Konfiguration und der Übersetzungen. Die Standard-XSLT bleibt in der Anwendung; eine benutzerdefinierte XSLT wird in das Projekt kopiert. Wählen Sie einen leeren Ordner.</string>
-  <string key="project.new.info.blank">Varians erstellt automatisch eine minimale TEI-Datei in xml/edition.xml. Fügen Sie mindestens einen Textzeugen hinzu und wählen Sie ausdrücklich „Vorerst keine Bilder“, wenn Sie die Transkription ohne Faksimile beginnen. ALTO und Synchronisierung können später ergänzt werden. Im automatischen Schemamodus verweist die neue TEI per xml-model auf TEI All. Wählen Sie einen leeren Ordner.</string>
+  <string key="project.new.info.blank">Varians erstellt automatisch eine minimale TEI-Datei in xml/edition.xml. Textzeugen können jetzt oder später hinzugefügt werden (Projekteinstellungen…); für einen Textzeugen ohne Faksimile wählen Sie „Vorerst keine Bilder“. ALTO und Synchronisierung können später ergänzt werden. Im automatischen Schemamodus verweist die neue TEI per xml-model auf TEI All. Wählen Sie einen leeren Ordner.</string>
   <string key="project.witness.edit.title">Textzeuge des Projekts</string>
   <string key="project.witness.id">Sigle</string>
   <string key="project.witness.xml_id">XML-Kennung: {id}</string>
@@ -361,7 +364,6 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.validation.folder_not_empty">Der gewählte Ordner ist nicht leer. Wählen Sie einen leeren oder neuen Ordner.</string>
   <string key="project.validation.edition_missing">TEI-Datei nicht gefunden:
 {path}</string>
-  <string key="project.validation.no_witness">Fügen Sie mindestens einen Textzeugen hinzu.</string>
   <string key="project.validation.no_base">Legen Sie einen Pivot-Textzeugen für die Synchronisierung fest.</string>
   <string key="project.validation.rendering_missing">Mindestens eine Darstellungsdatei (XSLT, CSS, Ctrl+E-Konfiguration) wurde nicht gefunden.</string>
   <string key="project.validation.i18n_missing">Der Übersetzungsordner wurde nicht gefunden.</string>
@@ -376,6 +378,17 @@ Sie wurde aus der Liste der zuletzt verwendeten Projekte entfernt.</string>
   <string key="project.settings.saved">Die Projekteinstellungen wurden gespeichert. Das Projekt wird jetzt neu geladen.</string>
   <string key="project.listwit.added">Zur &lt;listWit&gt; der Edition hinzugefügt: {witnesses}.</string>
   <string key="project.listwit.no_listwit">Der Header der Edition hat keine &lt;listWit&gt;: Deklarieren Sie {witnesses} dort selbst.</string>
+  <string key="project.listwit.created">Zeugenliste &lt;listWit&gt; im &lt;sourceDesc&gt; der Edition angelegt, mit: {witnesses}.</string>
+  <string key="project.listwit.paragraphs">Nicht zu einer &lt;listWit&gt; hinzugefügt: Der &lt;sourceDesc&gt; der Edition enthält Absätze (&lt;p&gt;), und TEI erlaubt daneben keine &lt;listWit&gt;. Ersetzen Sie diese Absätze durch ein &lt;bibl&gt;, das die Quelle beschreibt, und deklarieren Sie {witnesses} dann in einer &lt;listWit&gt; darunter.</string>
+  <string key="project.listwit.blocked.title">Textzeuge nicht hinzugefügt</string>
+  <string key="project.listwit.blocked.intro">Ein dem Projekt hinzugefügter Textzeuge muss in der Zeugenliste &lt;listWit&gt; der Edition deklariert werden; das ist vorerst nicht möglich für: {witnesses}.</string>
+  <string key="project.listwit.blocked.paragraphs">Der &lt;sourceDesc&gt; der Edition enthält Absätze (&lt;p&gt;), und TEI erlaubt daneben keine &lt;listWit&gt;. Ersetzen Sie diese Absätze durch ein &lt;bibl&gt;, das die Quelle beschreibt.</string>
+  <string key="project.listwit.blocked.no_source_desc">Der Header der Edition hat weder &lt;listWit&gt; noch &lt;sourceDesc&gt;. Fügen Sie am Ende des &lt;fileDesc&gt; einen &lt;sourceDesc&gt; hinzu: Auch leer genügt er, Varians legt darin die &lt;listWit&gt; an.</string>
+  <string key="project.listwit.blocked.malformed">Die Edition ist nicht wohlgeformt. Korrigieren Sie sie.</string>
+  <string key="project.listwit.blocked.id_used">Die Kennung von {witnesses} ist bereits die eines anderen Elements der Edition. Wählen Sie ein anderes Sigle, oder ändern Sie diese Kennung in der Edition.</string>
+  <string key="project.listwit.blocked.outro">Korrigieren und speichern Sie die Edition, und kehren Sie dann zu den Projekteinstellungen zurück, um den Textzeugen hinzuzufügen.</string>
+  <string key="project.listwit.missing.title">Nicht deklarierte Textzeugen</string>
+  <string key="project.listwit.missing">Diese Textzeugen des Projekts sind nicht in der Zeugenliste &lt;listWit&gt; der Edition deklariert: {witnesses}. Dort deklarieren?</string>
   <string key="project.listwit.id_used">Nicht zur &lt;listWit&gt; hinzugefügt: Die Kennung von {witnesses} gehört bereits einem anderen Element der Edition.</string>
   <string key="project.listwit.malformed">Nicht zur &lt;listWit&gt; hinzugefügt: Die Edition ist nicht wohlgeformt ({witnesses}).</string>
   <string key="project.xslt">XSLT-Stylesheet</string>
@@ -611,6 +624,7 @@ Damit Varians nicht erneut hängen bleibt, wird es nicht automatisch geöffnet. 
   <string key="completion.custom.notice">Vorschläge „Projekt“ stammen aus custom-elements.xml und beeinflussen die RELAX-NG-Gültigkeit nicht.</string>
   <string key="completion.custom.replace_notice">Vom Projekt definierte Eingabeliste: Sie ersetzt die hier angezeigten Vorschläge, schränkt die RELAX-NG-Gültigkeit jedoch nicht ein.</string>
   <string key="status.structure.no_alignment">{base}: keine Zeilensynchronisierung</string>
+  <string key="status.structure.no_witness">Kein Textzeuge</string>
   <string key="status.structure.free">{base}: {count, plural, one {# TEI-Zeile} other {# TEI-Zeilen}} (ohne Synchronisierung)</string>
   <string key="manuscript.no_image_source">Dieser Seite ist keine Bildquelle zugeordnet.</string>
   <string key="project.witness.alignment.optional">Synchronisierungsdatei (optional)</string>
@@ -972,7 +986,6 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="project.error.root">Das Wurzelelement von project.xml muss &lt;teiManuscriptProject&gt; (oder &lt;project&gt;) sein.</string>
   <string key="project.error.missing_elements">project.xml muss &lt;edition&gt; und &lt;witnesses&gt; enthalten.</string>
   <string key="project.error.default_xslt_missing">Standard-XSLT-Stylesheet von Varians nicht gefunden: {path}. Die Installation von Varians ist unvollständig.</string>
-  <string key="project.error.no_witness">project.xml deklariert keinen Textzeugen: Fügen Sie in &lt;witnesses&gt; mindestens ein &lt;witness id="…"&gt; hinzu.</string>
   <string key="project.error.no_pivot">project.xml bestimmt keinen Pivot-Textzeugen: Geben Sie ihn mit &lt;witnesses base="…"&gt; oder mit role="base" an genau einem &lt;witness&gt; an.</string>
   <string key="references.other_document">Kurzform: {token} bezeichnet nur dieses Dokument. Um auf dieses Ziel zu verweisen, schreiben Sie {suggestion}.</string>
   <string key="references.problem.other_document">Kurzform, Ziel in einem anderen Dokument: {suggestions} schreiben</string>

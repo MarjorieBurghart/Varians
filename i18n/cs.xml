@@ -174,6 +174,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
 {output}
 
 {witnesses, plural, one {# svědek} few {# svědci} other {# svědků}}, {lines, plural, one {# základní řádek} few {# základní řádky} other {# základních řádků}}.</string>
+  <string key="webgen.done.text_only">Prohlížeč vygenerován:\n{output}\n\nPouze text, bez svědků.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# řádek pivotního svědka není synchronizován} few {# řádky pivotního svědka nejsou synchronizovány} other {# řádků pivotního svědka není synchronizováno}} s obrázky: jeho zarovnání (JSON) má méně řádků než text (text: {text}, zarovnání: {alignment}). To je v pořádku, pokud zarovnání ještě není dokončeno; jinak zkontrolujte JSON zarovnání pivotního svědka (nechybí v něm stránka?).</string>
   <string key="webgen.assembly_problems">\n\nProblémy se sestavením (dotčený text ve vieweru chybí):\n{problems}</string>
   <string key="project.open_error">Projekt se nepodařilo otevřít</string>
@@ -194,8 +195,10 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="viewer.info.line">{page} · řádek {line}</string>
   <string key="viewer.info.no_line">Žádný řádek.</string>
   <string key="viewer.stats">{witnesses, plural, one {# svědek} few {# svědci} other {# svědků}} · {lines, plural, one {# základní řádek} few {# základní řádky} other {# základních řádků}} · {variants, plural, one {# varianta} few {# varianty} other {# variant}}</string>
+  <string key="viewer.stats.text_only">Pouze text, bez svědků · {variants, plural, one {# varianta} few {# varianty} other {# variant}}</string>
   <string key="viewer.toc">Obsah</string>
   <string key="viewer.text.established">Ustavený text (&lt;lem&gt;), jinak {witness}</string>
+  <string key="viewer.text.established_only">Ustavený text (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Text svědka {witness}</string>
   <string key="viewer.text.pivot">pivotní svědek</string>
   <string key="viewer.text.missing">{count, plural, one {# místo bez čtení svědka {witness}, označené} few {# místa bez čtení svědka {witness}, označená} other {# míst bez čtení svědka {witness}, označených}}</string>
@@ -334,7 +337,7 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.edition.choose">Vybrat edici TEI</string>
   <string key="project.witnesses">Textoví svědci a zdroje</string>
   <string key="project.new.info">Nový projekt obsahuje kopie TEI, zarovnání, CSS, konfigurace Ctrl+E a překladů. Výchozí XSLT zůstává v aplikaci; vlastní XSLT se zkopíruje do projektu. Vyberte prázdnou složku.</string>
-  <string key="project.new.info.blank">Varians automaticky vytvoří minimální soubor TEI v xml/edition.xml. Přidejte alespoň jednoho svědka a výslovně zvolte „Zatím bez obrázků“, pokud začínáte transkripci bez faksimile. ALTO a synchronizaci lze přidat později. V automatickém režimu schématu nová TEI odkazuje na TEI All prostřednictvím xml-model. Vyberte prázdnou složku.</string>
+  <string key="project.new.info.blank">Varians automaticky vytvoří minimální soubor TEI v xml/edition.xml. Svědky lze přidat nyní nebo později (Nastavení projektu…); pro svědka bez faksimile zvolte „Zatím bez obrázků“. ALTO a synchronizaci lze přidat později. V automatickém režimu schématu nová TEI odkazuje na TEI All prostřednictvím xml-model. Vyberte prázdnou složku.</string>
   <string key="project.witness.edit.title">Textový svědek projektu</string>
   <string key="project.witness.id">Sigla</string>
   <string key="project.witness.xml_id">Identifikátor XML: {id}</string>
@@ -361,7 +364,6 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.validation.folder_not_empty">Vybraná složka není prázdná. Vyberte prázdnou nebo novou složku.</string>
   <string key="project.validation.edition_missing">Soubor TEI nebyl nalezen:
 {path}</string>
-  <string key="project.validation.no_witness">Přidejte alespoň jednoho textového svědka.</string>
   <string key="project.validation.no_base">Vyberte pivotního svědka pro synchronizaci.</string>
   <string key="project.validation.rendering_missing">Jeden nebo více souborů zobrazení (XSLT, CSS, konfigurace Ctrl+E) nebylo nalezeno.</string>
   <string key="project.validation.i18n_missing">Složka překladů nebyla nalezena.</string>
@@ -376,6 +378,17 @@ Byl odstraněn ze seznamu nedávných projektů.</string>
   <string key="project.settings.saved">Nastavení projektu bylo uloženo. Projekt se nyní znovu načte.</string>
   <string key="project.listwit.added">Přidáno do &lt;listWit&gt; edice: {witnesses}.</string>
   <string key="project.listwit.no_listwit">Záhlaví edice nemá &lt;listWit&gt;: deklarujte {witnesses} sami.</string>
+  <string key="project.listwit.created">Seznam svědků &lt;listWit&gt; vytvořen v &lt;sourceDesc&gt; edice, s: {witnesses}.</string>
+  <string key="project.listwit.paragraphs">Nepřidáno do &lt;listWit&gt;: &lt;sourceDesc&gt; edice obsahuje odstavce (&lt;p&gt;) a TEI vedle nich &lt;listWit&gt; nepřipouští. Nahraďte tyto odstavce prvkem &lt;bibl&gt; popisujícím pramen a pak deklarujte {witnesses} v &lt;listWit&gt; umístěném pod ním.</string>
+  <string key="project.listwit.blocked.title">Svědek nepřidán</string>
+  <string key="project.listwit.blocked.intro">Svědek přidaný do projektu musí být deklarován v seznamu svědků &lt;listWit&gt; edice; zatím to není možné pro: {witnesses}.</string>
+  <string key="project.listwit.blocked.paragraphs">&lt;sourceDesc&gt; edice obsahuje odstavce (&lt;p&gt;) a TEI vedle nich &lt;listWit&gt; nepřipouští. Nahraďte tyto odstavce prvkem &lt;bibl&gt; popisujícím pramen.</string>
+  <string key="project.listwit.blocked.no_source_desc">Záhlaví edice nemá ani &lt;listWit&gt;, ani &lt;sourceDesc&gt;. Přidejte na konec &lt;fileDesc&gt; prvek &lt;sourceDesc&gt;: stačí i prázdný, Varians v něm vytvoří &lt;listWit&gt;.</string>
+  <string key="project.listwit.blocked.malformed">Edice není správně utvořená. Opravte ji.</string>
+  <string key="project.listwit.blocked.id_used">Identifikátor {witnesses} už patří jinému prvku edice. Zvolte jinou siglu, nebo tento identifikátor v edici změňte.</string>
+  <string key="project.listwit.blocked.outro">Opravte edici a uložte ji, pak se vraťte do Nastavení projektu a svědka přidejte.</string>
+  <string key="project.listwit.missing.title">Nedeklarovaní svědci</string>
+  <string key="project.listwit.missing">Tito svědci projektu nejsou deklarováni v seznamu svědků &lt;listWit&gt; edice: {witnesses}. Deklarovat je tam?</string>
   <string key="project.listwit.id_used">Nepřidáno do &lt;listWit&gt;: identifikátor {witnesses} už patří jinému prvku edice.</string>
   <string key="project.listwit.malformed">Nepřidáno do &lt;listWit&gt;: edice není správně utvořená ({witnesses}).</string>
   <string key="project.xslt">Styl XSLT</string>
@@ -611,6 +624,7 @@ Aby se znovu nezablokoval, není automaticky znovu otevřen. Můžete jej otevř
   <string key="completion.custom.notice">Návrhy „Projekt“ pocházejí z custom-elements.xml a neovlivňují platnost podle RELAX NG.</string>
   <string key="completion.custom.replace_notice">Projektový seznam pro zápis: nahrazuje zde zobrazené návrhy, ale neomezuje platnost podle RELAX NG.</string>
   <string key="status.structure.no_alignment">{base}: bez synchronizace řádků</string>
+  <string key="status.structure.no_witness">Žádný svědek</string>
   <string key="status.structure.free">{base}: {count, plural, one {# řádek TEI} few {# řádky TEI} other {# řádků TEI}} (bez synchronizace)</string>
   <string key="manuscript.no_image_source">K této stránce není přiřazen žádný zdroj obrázku.</string>
   <string key="project.witness.alignment.optional">Soubor synchronizace (volitelný)</string>
@@ -972,7 +986,6 @@ Soubor se nesmaže: zůstane na disku.</string>
   <string key="project.error.root">Kořenový prvek project.xml musí být &lt;teiManuscriptProject&gt; (nebo &lt;project&gt;).</string>
   <string key="project.error.missing_elements">project.xml musí obsahovat &lt;edition&gt; a &lt;witnesses&gt;.</string>
   <string key="project.error.default_xslt_missing">Výchozí šablona XSLT programu Varians nebyla nalezena: {path}. Instalace programu Varians je neúplná.</string>
-  <string key="project.error.no_witness">project.xml nedeklaruje žádného svědka: přidejte do &lt;witnesses&gt; alespoň jeden &lt;witness id="…"&gt;.</string>
   <string key="project.error.no_pivot">project.xml neurčuje pivotního svědka: uveďte ho pomocí &lt;witnesses base="…"&gt; nebo pomocí role="base" u jediného &lt;witness&gt;.</string>
   <string key="references.other_document">Krátký tvar: {token} označuje pouze tento dokument. Chcete-li odkázat na tento cíl, napište {suggestion}.</string>
   <string key="references.problem.other_document">Krátký tvar, cíl v jiném dokumentu: napište {suggestions}</string>

@@ -447,12 +447,13 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.base_items = self.witness_items.get(self.base_id, [])
         if self._alignment_problems:
             call_later(0, self, self._report_alignment_problems)
-        base_cfg = self.project.witness_by_id[self.base_id]
+        # Projet sans témoin : pas de pivot, rien à synchroniser.
+        base_cfg = self.project.witness_by_id.get(self.base_id)
         # V0.8.4 : un fichier JSON vide/provisoire n'active pas le mode ligne.
         # Le nombre est mesuré avant toute superposition ALTO, afin qu'un ALTO
         # indépendant ne puisse jamais être pris pour une synchronisation TEI.
         self.base_alignment_available = bool(
-            has_line_synchronization(base_cfg) and (self._base_sync_line_count or 0) > 0
+            base_cfg is not None and has_line_synchronization(base_cfg) and (self._base_sync_line_count or 0) > 0
         )
 
         # V0.7.9.1 : sans synchronisation ligne-à-ligne, la page — et non une
@@ -648,7 +649,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             panel.witnessNavigate.connect(self._witness_panel_navigate)
             if panel.items and not panel.sync_enabled:
                 call_later(0, panel, panel.reload)
-        self.base_panel = self.panels[self.base_id]
+        self.base_panel = self.panels.get(self.base_id)          # None sans témoin
         self.witness_splitter.splitterMoved.connect(self._remember_witness_splitter_sizes)
         self._witness_maximized_id = None
         self._witness_sizes_before_maximize = None
@@ -708,7 +709,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self._build_toolbar()
         self.xml_status = QLabel(_t("status.xml.initial")); self.cursor_status = QLabel(_t("status.cursor", line=1, column=1))
         self.structure_status = QLabel(
-            _t("status.structure.expected", base=self.witness_siglum(self.base_id), count=self.expected_base_lines)
+            _t("status.structure.no_witness") if not self.base_id
+            else _t("status.structure.expected", base=self.witness_siglum(self.base_id), count=self.expected_base_lines)
             if self.expected_base_lines is not None
             else _t("status.structure.no_alignment", base=self.witness_siglum(self.base_id))
         )
@@ -1010,7 +1012,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         else:
             tip = _t("status.structure.assembled.tip") if self._edition_has_parts() else ""
         self.structure_status.setToolTip(tip)
-        if self.expected_base_lines is None:
+        if not self.base_id:
+            # Projet sans témoin : pas de lignes du pivot à compter.
+            self.structure_status.setText(_t("status.structure.no_witness"))
+            self.structure_status.setStyleSheet("color:#746b61")
+        elif self.expected_base_lines is None:
             self.structure_status.setText(_t("status.structure.free", base=self.witness_siglum(self.base_id), count=n))
             self.structure_status.setStyleSheet("color:#746b61")
         elif n == self.expected_base_lines:

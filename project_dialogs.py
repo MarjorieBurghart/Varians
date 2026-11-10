@@ -18,6 +18,7 @@ from iiif_manifest import fetch_manifest, parse_manifest
 from tei_facsimile import default_surface_id, valid_xml_id
 from witness_ids import witness_id_for_siglum
 from app_context import APP_VERSION
+from tei_listwit import add_witnesses_to_listwit, blocking_message
 from i18n import message_text
 from iiif_page_selection import canvas_key, natural_key, propose_exact_ocr_links
 
@@ -908,6 +909,8 @@ class WitnessTable(QWidget):
     ses cellules ; ``witnesses()`` les rend en ``WitnessDraft``."""
     # « Changer le sigle… » (V0.9.4.0) : identifiant du témoin choisi.
     rename_requested = Signal(str)
+    # Un témoin ajouté ou retiré (le tableau peut être vide).
+    witnesses_changed = Signal()
 
     def __init__(self, tr, witnesses=None, base_witness="", parent=None, project_root=None, saved_ids=None):
         super().__init__(parent)
@@ -1059,6 +1062,7 @@ class WitnessTable(QWidget):
                 QMessageBox.warning(self, self.tr("project.validation.title"), conflict)
                 return
             self._append(w, self.table.rowCount() == 0)
+            self.witnesses_changed.emit()
 
     def edit_witness(self):
         """« Modifier… » (ou double-clic) : ouvre la boîte du témoin de la ligne courante et reporte
@@ -1111,6 +1115,7 @@ class WitnessTable(QWidget):
         self.table.removeRow(r)
         if was_base and self.table.rowCount():
             self._mark_base(0)
+        self.witnesses_changed.emit()
 
     def set_base(self):
         """« Définir comme témoin pivot » : le témoin de la ligne courante devient le pivot, les
@@ -1279,6 +1284,7 @@ class NewProjectDialog(QDialog):
         root.addLayout(form)
         group = QGroupBox(tr("project.witnesses")); gl = QVBoxLayout(group)
         self.witnesses_table = WitnessTable(tr, parent=self); gl.addWidget(self.witnesses_table)
+        self.witnesses_table.witnesses_changed.connect(self._creation_mode_changed)
         root.addWidget(group, 1)
         self.info = QLabel(tr("project.new.info")); self.info.setWordWrap(True); root.addWidget(self.info)
         self._creation_mode_changed()
@@ -1297,9 +1303,8 @@ class NewProjectDialog(QDialog):
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.edition_missing", path=edition or "")); return
         if self.schema_mode.currentData() == "file" and not Path(self.schema.text()).expanduser().is_file():
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.schema_missing", path=self.schema.text())); return
-        if not witnesses:
-            QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.no_witness")); return
-        if not self.witnesses_table.base_witness():
+        # Sans témoin, le projet n'a pas de pivot : les témoins s'ajoutent plus tard.
+        if witnesses and not self.witnesses_table.base_witness():
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.no_base")); return
         self.accept()
 
@@ -1307,13 +1312,15 @@ class NewProjectDialog(QDialog):
         mode = self.creation_mode.currentData() or "existing"
         self.edition.setEnabled(mode == "existing")
         if hasattr(self, 'pivot_prepare'):
-            self.pivot_prepare.setEnabled(mode == 'blank')
-            self.pivot_lines.setEnabled(mode == 'blank' and self.pivot_prepare.isChecked())
+            # La transcription du témoin pivot ne se prépare qu'avec un témoin.
+            possible = mode == 'blank' and bool(hasattr(self, "witnesses_table") and self.witnesses_table.witnesses())
+            self.pivot_prepare.setEnabled(possible)
+            self.pivot_lines.setEnabled(possible and self.pivot_prepare.isChecked())
         if hasattr(self, "info"):
             self.info.setText(self.tr("project.new.info.blank" if mode == "blank" else "project.new.info"))
 
     def _pivot_enabled(self, *_):
-        self.pivot_lines.setEnabled(self.pivot_prepare.isChecked() and
+        self.pivot_lines.setEnabled(self.pivot_prepare.isChecked() and self.pivot_prepare.isEnabled() and
                                     self.creation_mode.currentData() == 'blank')
 
     def _schema_mode_changed(self, *_):
@@ -1339,7 +1346,8 @@ class NewProjectDialog(QDialog):
             "xslt_mode": self.xslt_mode.currentData() or "builtin",
             "witnesses": self.witnesses_table.witnesses(),
             "base_witness": self.witnesses_table.base_witness(),
-            "prepare_pivot": self.pivot_prepare.isChecked() and self.creation_mode.currentData() == 'blank',
+            "prepare_pivot": self.pivot_prepare.isChecked() and self.creation_mode.currentData() == 'blank'
+                             and bool(self.witnesses_table.witnesses()),
             "pivot_lines": self.pivot_lines.isChecked(),
         }
 
@@ -1430,7 +1438,10 @@ class ProjectSettingsDialog(QDialog):
         group = QGroupBox(tr("project.witnesses")); gl = QVBoxLayout(group)
         self.witnesses_table = WitnessTable(tr, project.witnesses, project.base_witness, self, project_root=project.root_dir,
                                             saved_ids={w.id for w in project.witnesses}); gl.addWidget(self.witnesses_table)
+        self._saved_witness_ids = {w.id for w in project.witnesses}
         self.witnesses_table.rename_requested.connect(self._rename_requested)
+        self.witnesses_table.witnesses_changed.connect(self._pivot_possible)
+        self._pivot_possible()
         root.addWidget(group, 1)
         # Refresh is an explicit manager action; saving settings never refetches
         # existing IIIF images without a deliberate user request.
@@ -1443,6 +1454,24 @@ class ProjectSettingsDialog(QDialog):
             return self.draft()
         except Exception:
             return None
+
+    def _listwit_blocking(self, edition, witnesses):
+        """Message qui refuse l'ajout de ``witnesses`` si l'édition ne permet
+        pas de les déclarer dans sa <listWit> (essai à blanc) ; sinon None."""
+        try:
+            text = Path(edition).read_bytes().decode("utf-8")
+        except (OSError, UnicodeError):
+            return None
+        report = add_witnesses_to_listwit(text, witnesses)[1]
+        return blocking_message(report, self.tr, [getattr(w, "display_siglum", w.id) for w in witnesses])
+
+    def _pivot_possible(self, *_):
+        """La transcription du témoin pivot ne se prépare qu'avec un témoin."""
+        possible = bool(self.witnesses_table.witnesses())
+        self.pivot_prepare.setEnabled(possible)
+        if not possible:
+            self.pivot_prepare.setChecked(False)
+        self.pivot_lines.setEnabled(possible and self.pivot_prepare.isChecked())
 
     def _rename_requested(self, witness_id):
         """« Changer le sigle… » : la boîte se ferme (code RENAME) et Varians
@@ -1473,10 +1502,14 @@ class ProjectSettingsDialog(QDialog):
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.edition_missing", path=edition)); return
         if self.schema.text() and not Path(self.schema.text()).expanduser().is_file():
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.schema_missing", path=self.schema.text())); return
-        if not witnesses:
-            QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.no_witness")); return
-        if not self.witnesses_table.base_witness():
+        if witnesses and not self.witnesses_table.base_witness():
             QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.no_base")); return
+        # Un témoin ajouté doit pouvoir être déclaré dans la <listWit> de
+        # l'édition : sinon l'ajout attend que l'édition soit corrigée.
+        added = [w for w in witnesses if w.id not in self._saved_witness_ids]
+        blocked = self._listwit_blocking(edition, added) if added else None
+        if blocked:
+            QMessageBox.warning(self, self.tr("project.listwit.blocked.title"), blocked); return
         for w in witnesses:
             if w.alignment is not None and not Path(w.alignment).is_file():
                 QMessageBox.warning(self, self.tr("project.validation.title"), self.tr("project.validation.alignment_missing", path=w.alignment)); return

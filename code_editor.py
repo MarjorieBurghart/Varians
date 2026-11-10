@@ -77,8 +77,12 @@ FOLD_REFRESH_MS = 300
 
 class XMLHighlighter(QSyntaxHighlighter):
     """Coloration syntaxique du XML, bloc par bloc, par expressions régulières : balises, noms
-    d'attributs, valeurs entre guillemets, commentaires, entités. Rien n'est analysé au-delà
-    de la ligne : un commentaire ou une balise sur plusieurs lignes n'est pas coloré."""
+    d'attributs, valeurs entre guillemets, commentaires, entités. Un commentaire peut courir
+    sur plusieurs lignes : l'état du bloc (``IN_COMMENT``) le dit à la ligne suivante, et tout
+    son texte, balises comprises, a la couleur des commentaires. Une balise sur plusieurs
+    lignes n'est pas colorée."""
+    IN_COMMENT = 1
+
     def __init__(self, document):
         super().__init__(document)
         self.tag_fmt = QTextCharFormat(); self.tag_fmt.setForeground(QColor("#315a8a"))
@@ -87,12 +91,38 @@ class XMLHighlighter(QSyntaxHighlighter):
         self.comment_fmt = QTextCharFormat(); self.comment_fmt.setForeground(QColor("#6b7d63"))
         self.entity_fmt = QTextCharFormat(); self.entity_fmt.setForeground(QColor("#327f79"))
 
+    def _comment_spans(self, text):
+        """``(début, fin)`` des commentaires de la ligne ``text``, celui qui
+        vient de la ligne précédente compris ; l'état du bloc dit si le
+        dernier reste ouvert."""
+        spans, position, state = [], 0, 0
+        if self.previousBlockState() == self.IN_COMMENT:
+            end = text.find("-->")
+            if end < 0:
+                self.setCurrentBlockState(self.IN_COMMENT)
+                return [(0, len(text))]
+            spans.append((0, end + 3))
+            position = end + 3
+        while True:
+            start = text.find("<!--", position)
+            if start < 0:
+                break
+            end = text.find("-->", start + 4)
+            if end < 0:
+                spans.append((start, len(text)))
+                state = self.IN_COMMENT
+                break
+            spans.append((start, end + 3))
+            position = end + 3
+        self.setCurrentBlockState(state)
+        return spans
+
     def highlightBlock(self, text):
-        """Colore la ligne ``text`` : commentaires, puis balises (noms d'attributs et valeurs
-        compris), puis entités. Seuls ses ``HIGHLIGHT_LIMIT`` premiers caractères sont colorés."""
+        """Colore la ligne ``text`` : balises (noms d'attributs et valeurs compris) et
+        entités, puis commentaires par-dessus. Seuls ses ``HIGHLIGHT_LIMIT`` premiers
+        caractères sont colorés."""
         text = text[:HIGHLIGHT_LIMIT]
-        for m in re.finditer(r"<!--.*?-->", text):
-            self.setFormat(m.start(), m.end()-m.start(), self.comment_fmt)
+        comments = self._comment_spans(text)
         for m in re.finditer(r"</?[A-Za-z_][\w:.-]*(?:\s+[^<>]*?)?/?>", text):
             self.setFormat(m.start(), m.end()-m.start(), self.tag_fmt)
             chunk = m.group(0)
@@ -102,6 +132,8 @@ class XMLHighlighter(QSyntaxHighlighter):
                 self.setFormat(m.start()+q.start(), q.end()-q.start(), self.value_fmt)
         for m in re.finditer(r"&(?:#\d+|#x[0-9A-Fa-f]+|[A-Za-z][\w.-]*);", text):
             self.setFormat(m.start(), m.end()-m.start(), self.entity_fmt)
+        for start, end in comments:
+            self.setFormat(start, end - start, self.comment_fmt)
 
 
 class LineNumberArea(QWidget):

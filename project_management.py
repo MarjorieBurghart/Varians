@@ -13,6 +13,7 @@ import tempfile
 import xml.etree.ElementTree as ET
 
 from save_io import XmlFile
+from tei_listwit import SOURCE_BIBL_PLACEHOLDER
 from project_config import DEFAULT_APPLICATION_XSLT, WEB_TEXT_MODES, DocumentConfig
 
 
@@ -129,6 +130,78 @@ TEI_NS = "http://www.tei-c.org/ns/1.0"
 XML_NS = "http://www.w3.org/XML/1998/namespace"
 DEFAULT_TEI_RNG = "https://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng"
 
+# Transcription vierge sans témoin : <sourceDesc> reçoit ce mode d'emploi en
+# commentaire, puis un <bibl> de remplissage dont le seul contenu est un
+# commentaire. <bibl> puis <listWit> est un contenu valide de <sourceDesc>
+# (éléments structurés), alors que <p> et <listWit> ensemble ne le sont pas :
+# au premier témoin, tei_listwit remplace ce <bibl> intact par la <listWit>,
+# ou place la <listWit> sous un <bibl> modifié. Le commentaire reste.
+SOURCE_DESC_GUIDE = {
+    "fr": """Témoins de l'édition
+
+Pour une édition numérique savante (scholarly digital edition), cet
+emplacement doit contenir la liste des témoins, <listWit>, avec un
+élément <witness> pour chaque témoin de l'édition (manuscrit, imprimé…).
+C'est nécessaire pour que tout fonctionne.
+
+- Chaque <witness> porte un @xml:id unique, qui sert de sigle :
+  l'apparat critique y renvoie (<rdg wit="#A">), comme les sauts de
+  page et de ligne propres à un témoin (<pb edRef="#A"/>).
+- Si le sigle d'usage n'est pas un identifiant XML valide (il commence
+  par un chiffre, contient une espace…), l'@xml:id en est dérivé et le
+  sigle est donné dans <idno type="siglum">.
+- Le contenu de <witness> décrit le témoin : lieu de conservation,
+  cote, date…
+
+Ajoutez les témoins par Fichier > Paramètres du projet… : Varians les
+déclare ici et les relie à leurs images, à leurs alignements (JSON) et
+à leurs fichiers ALTO/PAGE. Un <witness> écrit seulement dans ce
+fichier reste inconnu du projet : Varians ne lui associe ni panneau,
+ni images, ni synchronisation.
+
+Exemple de liste, telle que Varians l'écrit :
+
+<listWit>
+  <witness xml:id="A">Paris, Bibliothèque nationale de France, latin 1234 (XIIe siècle)</witness>
+  <witness xml:id="B">Troyes, Médiathèque, ms. 567 (XIIIe siècle)</witness>
+  <witness xml:id="_1520"><idno type="siglum">1520</idno>Édition imprimée, Paris, Josse Bade, 1520</witness>
+</listWit>""",
+    "en": """Witnesses of the edition
+
+For a scholarly digital edition, this place must hold the list of
+witnesses, <listWit>, with one <witness> element for each witness of the
+edition (manuscript, printed book…). Everything depends on it.
+
+- Each <witness> has a unique @xml:id, which serves as its siglum: the
+  critical apparatus points to it (<rdg wit="#A">), as do the page and
+  line breaks of one witness (<pb edRef="#A"/>).
+- If the usual siglum is not a valid XML identifier (it starts with a
+  digit, contains a space…), the @xml:id is derived from it and the
+  siglum is given in <idno type="siglum">.
+- The content of <witness> describes the witness: repository,
+  shelfmark, date…
+
+Add the witnesses with File > Project settings…: Varians declares them
+here and links them to their images, their alignments (JSON) and their
+ALTO/PAGE files. A <witness> written only in this file remains unknown
+to the project: Varians gives it no panel, no images and no
+synchronisation.
+
+Example of a list, as Varians writes it:
+
+<listWit>
+  <witness xml:id="A">Paris, Bibliothèque nationale de France, latin 1234 (12th century)</witness>
+  <witness xml:id="B">Troyes, Médiathèque, ms. 567 (13th century)</witness>
+  <witness xml:id="_1520"><idno type="siglum">1520</idno>Printed edition, Paris, Josse Bade, 1520</witness>
+</listWit>""",
+}
+
+
+def _template_language(language) -> str:
+    """Langue des textes du gabarit TEI : anglais pour un projet en anglais,
+    français sinon."""
+    return "en" if (language or "fr").lower().startswith("en") else "fr"
+
 
 def minimal_tei_text(
     title: str,
@@ -167,9 +240,19 @@ def minimal_tei_text(
     # Les témoins sont structurés dès la création de l'édition. Cela fournit
     # immédiatement de vraies cibles TEI pour @wit (#A1, #B, etc.), au lieu
     # d'une description textuelle impossible à référencer.
-    list_wit = ET.SubElement(source_desc, q("listWit"))
     XML_NS = "http://www.w3.org/XML/1998/namespace"
     mixed = []
+    placeholder = None
+    if not any((w.id or "").strip() for w in witnesses):
+        # Aucun témoin : le mode d'emploi de la <listWit> et un <bibl> de
+        # remplissage (voir SOURCE_DESC_GUIDE).
+        template = _template_language(language)
+        source_desc.append(ET.Comment(_indented_comment(SOURCE_DESC_GUIDE[template], depth=4)))
+        placeholder = ET.SubElement(source_desc, q("bibl"))
+        placeholder.append(ET.Comment(SOURCE_BIBL_PLACEHOLDER[template]))
+        witnesses = []
+    else:
+        list_wit = ET.SubElement(source_desc, q("listWit"))
     for witness in witnesses:
         wid = (witness.id or "").strip()
         if not wid:
@@ -192,6 +275,9 @@ def minimal_tei_text(
     ET.indent(root, space="  ")
     for wel in mixed:
         wel.text = None             # contenu mixte : pas d'indentation avant <idno>
+    if placeholder is not None:
+        placeholder.text = None     # <bibl><!-- … --></bibl> sur une ligne
+        placeholder[0].tail = None
     xml = ET.tostring(root, encoding="unicode", short_empty_elements=False)
     prolog = '<?xml version="1.0" encoding="UTF-8"?>\n'
     if schema_mode == "auto":
@@ -204,6 +290,15 @@ def minimal_tei_text(
             'schematypens="http://purl.oclc.org/dsdl/schematron"?>\n'
         )
     return prolog + xml + "\n"
+
+
+def _indented_comment(text: str, depth: int, space: str = "  ") -> str:
+    """Texte d'un commentaire sur plusieurs lignes, indenté pour un nœud de
+    profondeur ``depth`` : chaque ligne un cran plus loin que le nœud, et la
+    fin du commentaire au niveau du nœud."""
+    inner = space * (depth + 1)
+    lines = [(inner + line) if line else "" for line in text.split("\n")]
+    return "\n" + "\n".join(lines) + "\n" + space * depth
 
 
 def write_minimal_tei(
@@ -283,7 +378,7 @@ def write_project_xml(path: str | Path, draft: ProjectDraft) -> Path:
         web_el.set("textWitness", draft.web_text_witness.strip())
     if draft.web_highlight_nonlem:
         web_el.set("highlightNonLem", "true")
-    witnesses_el = ET.SubElement(root, "witnesses", {"base": draft.base_witness})
+    witnesses_el = ET.SubElement(root, "witnesses", {"base": draft.base_witness} if draft.base_witness else {})
     for w in draft.witnesses:
         attrs = {"id": w.id.strip()}
         if w.display_siglum != w.id.strip():
@@ -861,9 +956,8 @@ def create_new_transcription_project(
     même chemin de création que les projets fondés sur une édition existante.
     Cela garantit une arborescence et des ressources strictement identiques.
     """
-    if not witnesses:
-        raise ValueError("NO_WITNESS")
-    if base_witness not in {w.id for w in witnesses}:
+    # Sans témoin, pas de pivot : les témoins s'ajoutent plus tard.
+    if witnesses and base_witness not in {w.id for w in witnesses}:
         raise ValueError("NO_BASE_WITNESS")
     with tempfile.TemporaryDirectory(prefix="varians-new-transcription-") as td:
         source = Path(td) / "edition.xml"

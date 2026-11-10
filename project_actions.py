@@ -23,7 +23,7 @@ from project_management import (
     prepare_iiif_manifests_for_project, prepare_local_images_for_project,
     update_project_web_text, write_project_xml,
 )
-from tei_listwit import add_witnesses_to_listwit_file
+from tei_listwit import add_witnesses_to_listwit_file, report_notes, undeclared_witnesses
 from tei_facsimile import (
     previous_surface_labels, project_facsimile_pages, removable_generated_iiif_surfaces,
     sync_facsimile_file,
@@ -55,7 +55,9 @@ class ProjectActionsMixin:
                 self, _t("webgen.wrong_file.title"), _t("webgen.wrong_file.text")
             )
             return
-        choice = self._ask_web_text()
+        # Sans témoin, le texte seul (établi) : rien à choisir.
+        choice = (self._ask_web_text() if self.project.witnesses
+                  else ("established", "", self.project.web_highlight_nonlem))
         if choice is None:
             return
         if not self._save_edition_for_export():
@@ -73,7 +75,11 @@ class ProjectActionsMixin:
         except Exception as exc:
             QMessageBox.critical(self, _t("webgen.error.title"), str(exc))
             return
-        msg = _t("webgen.done.text", output=output, witnesses=len(data.get("witnesses", [])), lines=data.get("meta", {}).get("lines", 0))
+        if self.project.witnesses:
+            msg = _t("webgen.done.text", output=output, witnesses=len(data.get("witnesses", [])),
+                     lines=data.get("meta", {}).get("lines", 0))
+        else:
+            msg = _t("webgen.done.text_only", output=output)
         if unaligned:
             totals = data.get("meta", {}).get("unaligned_pivot_line_totals") or {}
             msg += _t("webgen.unaligned_lines", count=unaligned, text=totals.get("text", 0),
@@ -237,6 +243,21 @@ class ProjectActionsMixin:
             return
         if result != QDialog.DialogCode.Accepted:
             return
+        # Témoins déjà dans le projet mais absents de la <listWit> de
+        # l'édition : proposés à chaque enregistrement.
+        known = {w.id for w in self.project.witnesses}
+        draft = dlg.draft()
+        try:
+            edition_text = Path(draft.edition).read_bytes().decode("utf-8")
+        except (OSError, UnicodeError):
+            edition_text = ""
+        undeclared = undeclared_witnesses(edition_text, [w for w in draft.witnesses if w.id in known])
+        if undeclared and QMessageBox.question(
+                self, _t("project.listwit.missing.title"),
+                _t("project.listwit.missing", witnesses=", ".join(w.display_siglum for w in undeclared)),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
+            undeclared = []
         try:
             draft = dlg.draft()
             draft.witnesses = prepare_alignment_files_for_project(self.project.root_dir, draft.witnesses)
@@ -252,11 +273,11 @@ class ProjectActionsMixin:
             facsimile_report = sync_facsimile_file(
                 draft.edition, facsimile_pages, previous_surface_labels(self.project.witnesses)
             ) if facsimile_pages else None
-            # Témoins ajoutés au projet : déclarés dans la <listWit> existante
-            # de l'édition (V0.9.2.8.2) ; Varians n'en crée jamais.
-            known = {w.id for w in self.project.witnesses}
+            # Témoins ajoutés au projet (et témoins non déclarés acceptés) :
+            # déclarés dans la <listWit> de l'édition, créée si besoin.
+            undeclared_ids = {w.id for w in undeclared}
             listwit_report = add_witnesses_to_listwit_file(
-                draft.edition, [w for w in draft.witnesses if w.id not in known])
+                draft.edition, [w for w in draft.witnesses if w.id not in known or w.id in undeclared_ids])
             # En passant du mode « XSLT application » au mode « personnalisée »,
             # initialiser une copie locale si elle n'existe pas, sans jamais
             # remplacer un fichier personnalisé déjà présent.
@@ -334,11 +355,7 @@ class ProjectActionsMixin:
                 _t("facsimile.warning.preserved") + "\n\n"
                 + "\n".join(message_text(c, _t) for c in facsimile_report.conflicts),
             )
-        notes = [_t(key, witnesses=", ".join(sigla)) for key, sigla in (
-            ("project.listwit.added", listwit_report.added),
-            ("project.listwit.no_listwit", listwit_report.no_listwit),
-            ("project.listwit.id_used", listwit_report.id_used),
-            ("project.listwit.malformed", listwit_report.malformed)) if sigla]
+        notes = report_notes(listwit_report, _t)
         QMessageBox.information(self, _t("project.settings.saved.title"),
                                 "\n\n".join([_t("project.settings.saved"), *notes]))
         # maybe_save() a déjà été exécuté ; on recharge immédiatement les chemins,

@@ -162,6 +162,7 @@
   <string key="webgen.text.unknown">\n\nUnknown witness in project.xml: {witness}; the pivot is used instead.</string>
   <string key="webgen.done.title">Web viewer generated</string>
   <string key="webgen.done.text">Viewer generated:\n{output}\n\n{witnesses, plural, one {# witness} other {# witnesses}}, {lines, plural, one {# pivot-witness line} other {# pivot-witness lines}}.</string>
+  <string key="webgen.done.text_only">Viewer generated:\n{output}\n\nText only, no witness.</string>
   <string key="webgen.unaligned_lines">\n\n{count, plural, one {# line of the pivot witness is not synchronized} other {# lines of the pivot witness are not synchronized}} with the images: its alignment (JSON) has fewer lines than the text (text: {text}, alignment: {alignment}). This is normal if the alignment is not finished; otherwise, check the pivot witness's alignment JSON (is a page missing?).</string>
   <string key="webgen.assembly_problems">\n\nAssembly problems (the text concerned is missing from the viewer):\n{problems}</string>
   <string key="project.open_error">Could not open project</string>
@@ -182,8 +183,10 @@
   <string key="viewer.info.line">{page} · line {line}</string>
   <string key="viewer.info.no_line">No line.</string>
   <string key="viewer.stats">{witnesses, plural, one {# witness} other {# witnesses}} · {lines, plural, one {# pivot-witness line} other {# pivot-witness lines}} · {variants, plural, one {# variant} other {# variants}}</string>
+  <string key="viewer.stats.text_only">Text only, no witness · {variants, plural, one {# variant} other {# variants}}</string>
   <string key="viewer.toc">Contents</string>
   <string key="viewer.text.established">Established text (&lt;lem&gt;), otherwise {witness}</string>
+  <string key="viewer.text.established_only">Established text (&lt;lem&gt;)</string>
   <string key="viewer.text.witness">Text of {witness}</string>
   <string key="viewer.text.pivot">the pivot witness</string>
   <string key="viewer.text.missing">{count, plural, one {# passage} other {# passages}} without a reading of {witness}, marked</string>
@@ -322,7 +325,7 @@ It has been removed from the recent-project list.</string>
   <string key="project.edition.choose">Choose the TEI edition</string>
   <string key="project.witnesses">Witnesses and resources</string>
   <string key="project.new.info">The new project includes copies of the TEI, alignments, CSS, Ctrl+E configuration and translations. The default XSLT stays in the application; a custom XSLT is copied into the project. Choose an empty folder.</string>
-  <string key="project.new.info.blank">Varians will automatically create a minimal TEI file in xml/edition.xml. Add at least one witness and explicitly choose “No images for now” if you are beginning the transcription without a facsimile. ALTO and synchronization can be added later. In automatic schema mode, the new TEI references TEI All through xml-model. Choose an empty folder.</string>
+  <string key="project.new.info.blank">Varians will automatically create a minimal TEI file in xml/edition.xml. Witnesses can be added now or later (Project settings…); for a witness without a facsimile, choose “No images for now”. ALTO and synchronization can be added later. In automatic schema mode, the new TEI references TEI All through xml-model. Choose an empty folder.</string>
   <string key="project.witness.edit.title">Project witness</string>
   <string key="project.witness.id">Siglum</string>
   <string key="project.witness.xml_id">XML identifier: {id}</string>
@@ -349,7 +352,6 @@ It has been removed from the recent-project list.</string>
   <string key="project.validation.folder_not_empty">The selected folder is not empty. Choose an empty or new folder.</string>
   <string key="project.validation.edition_missing">TEI file not found:
 {path}</string>
-  <string key="project.validation.no_witness">Add at least one witness.</string>
   <string key="project.validation.no_base">Select a pivot witness for synchronization.</string>
   <string key="project.validation.rendering_missing">One or more rendering files (XSLT, CSS, Ctrl+E configuration) could not be found.</string>
   <string key="project.validation.i18n_missing">The translations folder could not be found.</string>
@@ -364,6 +366,17 @@ It has been removed from the recent-project list.</string>
   <string key="project.settings.saved">The project settings were saved. The project will now reload.</string>
   <string key="project.listwit.added">Added to the &lt;listWit&gt; of the edition: {witnesses}.</string>
   <string key="project.listwit.no_listwit">The header of the edition has no &lt;listWit&gt;: declare {witnesses} there yourself.</string>
+  <string key="project.listwit.created">List of witnesses &lt;listWit&gt; created in the &lt;sourceDesc&gt; of the edition, with: {witnesses}.</string>
+  <string key="project.listwit.paragraphs">Not added to a &lt;listWit&gt;: the &lt;sourceDesc&gt; of the edition contains paragraphs (&lt;p&gt;), and TEI allows no &lt;listWit&gt; next to them. Replace these paragraphs with a &lt;bibl&gt; describing the source, then declare {witnesses} in a &lt;listWit&gt; placed below it.</string>
+  <string key="project.listwit.blocked.title">Witness not added</string>
+  <string key="project.listwit.blocked.intro">A witness added to the project must be declared in the edition’s list of witnesses &lt;listWit&gt;; this is not possible for now for: {witnesses}.</string>
+  <string key="project.listwit.blocked.paragraphs">The edition’s &lt;sourceDesc&gt; contains paragraphs (&lt;p&gt;), and TEI allows no &lt;listWit&gt; next to them. Replace these paragraphs with a &lt;bibl&gt; describing the source.</string>
+  <string key="project.listwit.blocked.no_source_desc">The edition’s header has neither &lt;listWit&gt; nor &lt;sourceDesc&gt;. Add a &lt;sourceDesc&gt; at the end of the &lt;fileDesc&gt;: even empty, it is enough, Varians will create the &lt;listWit&gt; in it.</string>
+  <string key="project.listwit.blocked.malformed">The edition is not well-formed. Correct it.</string>
+  <string key="project.listwit.blocked.id_used">The identifier of {witnesses} is already that of another element of the edition. Choose another siglum, or change this identifier in the edition.</string>
+  <string key="project.listwit.blocked.outro">Correct the edition and save it, then come back to Project settings to add the witness.</string>
+  <string key="project.listwit.missing.title">Undeclared witnesses</string>
+  <string key="project.listwit.missing">These witnesses of the project are not declared in the edition’s list of witnesses &lt;listWit&gt;: {witnesses}. Declare them there?</string>
   <string key="project.listwit.id_used">Not added to the &lt;listWit&gt;: the identifier of {witnesses} already belongs to another element of the edition.</string>
   <string key="project.listwit.malformed">Not added to the &lt;listWit&gt;: the edition is not well-formed ({witnesses}).</string>
   <string key="project.xslt">XSLT stylesheet</string>
@@ -599,6 +612,7 @@ So as not to get stuck again, it is not reopened automatically. You can open it 
   <string key="completion.custom.notice">“Project” suggestions come from custom-elements.xml and do not affect RELAX NG validity.</string>
   <string key="completion.custom.replace_notice">Project-defined editing list: it replaces the suggestions shown here, but does not restrict RELAX NG validity.</string>
   <string key="status.structure.no_alignment">{base}: no line synchronization</string>
+  <string key="status.structure.no_witness">No witness</string>
   <string key="status.structure.free">{base}: {count, plural, one {# TEI line} other {# TEI lines}} (without synchronization)</string>
   <string key="manuscript.no_image_source">No image source is associated with this page.</string>
   <string key="project.witness.alignment.optional">Synchronization file (optional)</string>
@@ -960,7 +974,6 @@ The file is not deleted: it stays on disk.</string>
   <string key="project.error.root">The root of project.xml must be &lt;teiManuscriptProject&gt; (or &lt;project&gt;).</string>
   <string key="project.error.missing_elements">project.xml must contain &lt;edition&gt; and &lt;witnesses&gt;.</string>
   <string key="project.error.default_xslt_missing">Varians default XSLT stylesheet not found: {path}. The Varians installation is incomplete.</string>
-  <string key="project.error.no_witness">project.xml declares no witness: add at least one &lt;witness id="…"&gt; in &lt;witnesses&gt;.</string>
   <string key="project.error.no_pivot">project.xml does not designate a pivot witness: declare it with &lt;witnesses base="…"&gt;, or with role="base" on a single &lt;witness&gt;.</string>
   <string key="references.other_document">Short form: {token} only designates this document. To point to this target, write {suggestion}.</string>
   <string key="references.problem.other_document">Short form, target in another document: write {suggestions}</string>
