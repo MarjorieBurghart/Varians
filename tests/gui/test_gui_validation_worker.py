@@ -154,8 +154,8 @@ def test_a_late_result_is_dropped_for_a_destroyed_owner(make_client, schema, qtb
     assert late == []
 
 
-def test_the_compilation_limit_is_two_minutes():
-    assert validation_worker.COMPILE_LIMIT_SEC == 120
+def test_the_compilation_limit_is_one_minute():
+    assert validation_worker.COMPILE_LIMIT_SEC == 60
 
 
 def test_a_compilation_that_never_ends_is_abandoned(make_client, schema, tmp_path, qtbot, monkeypatch):

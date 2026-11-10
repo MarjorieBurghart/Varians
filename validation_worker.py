@@ -70,8 +70,9 @@ _APPLICATION_DIR = Path(__file__).resolve().parent
 # la fenêtre redevient utilisable et le résultat est affiché à son arrivée.
 SYNC_WAIT_MSEC = 2000
 # Durée maximale de la compilation d'un schéma RELAX NG dans le processus
-# (TEI_ALL : une dizaine de secondes) ; au-delà, elle est abandonnée.
-COMPILE_LIMIT_SEC = 120
+# (TEI_ALL, le plus gros schéma de la TEI : une dizaine de secondes) ; au-delà,
+# elle est abandonnée.
+COMPILE_LIMIT_SEC = 60
 _BLOCKED_EVENTS = frozenset({
     QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonRelease, QEvent.Type.MouseButtonDblClick,
     QEvent.Type.KeyPress, QEvent.Type.KeyRelease, QEvent.Type.Wheel, QEvent.Type.Shortcut,

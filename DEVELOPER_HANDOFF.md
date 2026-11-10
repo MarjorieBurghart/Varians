@@ -363,6 +363,8 @@ C'est un module à traiter avec une prudence éditoriale élevée.
 
 Validation complète RELAX NG via lxml, avec cache de schéma compilé et invalidation quand le schéma principal ou ses dépendances changent.
 
+**Schémas que libxml2 ne compile jamais.** Les déclinaisons TEI P5 4.12.0 `tei_ms`, `tei_corpus`, `tei_speech` et `tei_enrich` (modèles « Manuscript description », « Corpus », « Speech », « ENRICH ») font tourner libxml2 sans fin, à mémoire constante, quand il compile les modèles de contenu en automates (`xmlRelaxNGTryCompile`, `xmlRelaxNGCompile` dans `relaxng.c`). Constaté avec libxml2 2.14.6 (celle de lxml 6.1.3) et 2.9.14 (`xmllint` du système) ; `tei_all` n'est pas touché (une dizaine de secondes). Le déclencheur passe par les éléments `trait`, `state` et `facsimile` (`oneOrMore` d'eux-mêmes dans un `choice`) : sans leur automate, ces quatre schémas compilent en moins d'une seconde. Mais aucun contournement n'est sûr : sans automate (contenu rendu « non compilable » par un `<optional><notAllowed/></optional>` qui ne change pas le langage), l'algorithme général de libxml2 rend de fausses erreurs (un `<facsimile>` correct déclaré invalide, « Invalid attribute id ») ; réécrire `oneOrMore(X)` en `group(X, zeroOrMore(X))`, développer les classes ou placer ces éléments en tête du `<start>` ne débloque rien. D'où le filet de `validation_worker` (V0.9.4.4) : la compilation est abandonnée au bout de `COMPILE_LIMIT_SEC` (60 s), le panneau le dit (« RNG : validation abandonnée ») et les autres documents restent validés.
+
 ### `schema_resolution.py`
 
 Détecte les instructions `<?xml-model?>`, résout les schémas locaux/distants, met en cache les RNG distants et leurs dépendances.

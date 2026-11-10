@@ -41,10 +41,13 @@ contre le schéma de sa déclinaison, pris dans la même archive
   `<schemaSpec ident="">` attend son identifiant (« @ident is required »,
   dit le modèle) ;
 - Corpus, ENRICH Manuscript description, Manuscript description et Speech
-  n'ont pas pu être vérifiés : lxml n'a pas compilé leur schéma
-  (`tei_corpus.rng`, `tei_enrich.rng`, `tei_ms.rng`, `tei_speech.rng`) en
-  deux minutes et demie, alors que `tei_all.rng` l'est en une dizaine de
-  secondes.
+  n'ont pas pu être vérifiés : leur schéma (`tei_corpus.rng`,
+  `tei_enrich.rng`, `tei_ms.rng`, `tei_speech.rng`) fait tourner libxml2
+  sans fin, quand il en compile les modèles de contenu en automates (défaut
+  de libxml2, constaté en 2.9.14 et 2.14.6 ; détails dans
+  `DEVELOPER_HANDOFF.md`, `relaxng_validation.py`). Varians abandonne alors
+  la validation au bout d'une minute et le dit ; `tei_all.rng` se compile en
+  une dizaine de secondes.
 
 ## Ce que Varians change
 
