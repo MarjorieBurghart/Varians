@@ -11,7 +11,9 @@ jamais bloquée par la compilation d'un gros schéma.
 - ``validate_async`` : la réponse arrive plus tard, dans le fil principal ;
 - ``validate`` : attend la réponse en laissant tourner la boucle
   d'événements (la fenêtre se redessine, les animations avancent), mais en
-  ignorant clics et frappes, pour qu'aucune action ne parte au milieu.
+  ignorant clics et frappes, pour qu'aucune action ne parte au milieu ; deux
+  secondes au plus (``SYNC_WAIT_MSEC``) : au-delà, elle rend None et la
+  réponse va plus tard au rappel ``late``, comme pour ``validate_async``.
 
 Avec ``parts`` (``{chemin: texte}``, même vide), l'édition est validée
 assemblée par XInclude (``relaxng_validation.validate_document``) ; avec
@@ -30,7 +32,9 @@ la même façon le texte d'un fichier Schematron (``schematron_check``), avec
 
 **Repli** : si le processus ne démarre pas ou s'arrête, la validation se fait
 dans Varians même, comme avant la V0.8.9.2 (la fenêtre est alors bloquée
-pendant la compilation), et les requêtes en cours ne sont pas perdues.
+pendant la compilation), et les requêtes en cours ne sont pas perdues. Un
+processus seulement lent (compilation d'un gros schéma) n'y conduit jamais :
+valider dans Varians figerait la fenêtre pendant toute la compilation.
 """
 from __future__ import annotations
 
@@ -52,9 +56,9 @@ from relaxng_validation import STDERR_LOG, validate_document
 from relaxng_worker import result_from_dict
 
 _APPLICATION_DIR = Path(__file__).resolve().parent
-# Attente maximale d'une validation demandée, au-delà de laquelle Varians
-# valide lui-même (processus bloqué).
-SYNC_TIMEOUT_MSEC = 300_000
+# Attente maximale d'une validation demandée (F8, enregistrement) : au-delà,
+# la fenêtre redevient utilisable et le résultat est affiché à son arrivée.
+SYNC_WAIT_MSEC = 2000
 _BLOCKED_EVENTS = frozenset({
     QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonRelease, QEvent.Type.MouseButtonDblClick,
     QEvent.Type.KeyPress, QEvent.Type.KeyRelease, QEvent.Type.Wheel, QEvent.Type.Shortcut,
@@ -129,10 +133,14 @@ class RelaxNGWorkerClient(QObject):
         return self._submit(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules),
                             owner, callback)
 
-    def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None, rules=None):
+    def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None, rules=None, *,
+                 owner=None, late=None):
         """Valide et renvoie le résultat ; la fenêtre continue de se redessiner
-        pendant l'attente, sans traiter clics ni frappes."""
-        return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules))
+        pendant l'attente, sans traiter clics ni frappes. Sans réponse au bout
+        de ``SYNC_WAIT_MSEC``, renvoie None : la réponse ira à ``late(result)``
+        (voir ``validate_async`` pour ``owner``), ou sera ignorée."""
+        return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules),
+                          owner, late)
 
     def check_schematron_async(self, text, path, owner, callback, texts=None):
         """Vérifie sans attendre le texte du fichier Schematron *path* (voir
@@ -140,18 +148,23 @@ class RelaxNGWorkerClient(QObject):
         inclus non enregistrés (V0.9.2.6)."""
         return self._submit(_check_request(text, path, texts), owner, callback)
 
-    def check_schematron(self, text, path, texts=None):
-        """Vérifie le texte du fichier Schematron *path* et rend le résultat
-        (voir ``validate``)."""
-        return self._wait(_check_request(text, path, texts))
+    def check_schematron(self, text, path, texts=None, *, owner=None, late=None):
+        """Vérifie le texte du fichier Schematron *path* et rend le résultat,
+        ou None au-delà de l'attente (voir ``validate``)."""
+        return self._wait(_check_request(text, path, texts), owner, late)
 
-    def _wait(self, request):
+    def _wait(self, request, owner=None, late=None):
         if QCoreApplication.instance() is None:             # pas de boucle d'événements
             return self._validate_here(request)
         request_id = self._submit(request, None, None)
         if request_id not in self._results:
             self._wait_for(request_id)
-        return self._results.pop(request_id)
+        if request_id in self._results:
+            return self._results.pop(request_id)
+        entry = self._pending.get(request_id)                # toujours en cours : réponse plus tard
+        if entry is not None:
+            entry.owner, entry.callback = owner, (late if late is not None else _ignore)
+        return None
 
     def _submit(self, request, owner, callback):
         self._next_id += 1
@@ -179,7 +192,7 @@ class RelaxNGWorkerClient(QObject):
         timeout = QTimer()
         timeout.setSingleShot(True)
         timeout.timeout.connect(loop.quit)
-        timeout.start(SYNC_TIMEOUT_MSEC)
+        timeout.start(SYNC_WAIT_MSEC)
         blocker = _InputBlocker()
         app = QCoreApplication.instance()
         app.installEventFilter(blocker)
@@ -194,8 +207,6 @@ class RelaxNGWorkerClient(QObject):
             app.removeEventFilter(blocker)
             self._delivered.disconnect(arrived)
             timeout.stop()
-        if request_id not in self._results:                 # processus bloqué
-            self._fall_back("timeout")
 
     # --- Processus ----------------------------------------------------------------
 
@@ -326,6 +337,10 @@ class RelaxNGWorkerClient(QObject):
         if self.busy and self._process is not None:
             self._process.kill()
         self._stop_process()
+
+
+def _ignore(_result):
+    """Rappel d'une réponse que plus personne n'attend."""
 
 
 def _validate_request(xml_text, schema_path, base_url, parts, schematron, rules=None):

@@ -81,8 +81,10 @@ class SchematronCheckMixin:
         self.rng_status.setText(_t("schematron_check.status.running"))
         self.rng_status.setStyleSheet("color:#777")
         if not background:
-            return self._apply_schematron_check(worker_client().check_schematron(text, session.path, texts),
-                                                **options)
+            # Attente bornée : une réponse tardive est affichée à son arrivée.
+            result = worker_client().check_schematron(
+                text, session.path, texts, owner=self, late=self._late_result(self._apply_schematron_check, options))
+            return None if result is None else self._apply_schematron_check(result, **options)
         key = (session, revision, token)
         if self._schematron_check == key:
             return None                                          # déjà demandée

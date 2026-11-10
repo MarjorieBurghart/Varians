@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Validation RELAX NG sans figer la fenêtre : la validation automatique part
 vers le processus séparé, la validation demandée (F8, enregistrement) attend
-sa réponse en laissant la fenêtre se redessiner."""
+sa réponse en laissant la fenêtre se redessiner, deux secondes au plus ; une
+réponse plus tardive est affichée à son arrivée."""
 from __future__ import annotations
 
 import sys
@@ -96,6 +97,42 @@ def test_saving_during_validation_waits_then_warns(open_window, example_project,
     assert time.perf_counter() - started >= 0.9                     # a attendu la validation
     assert dialogs.seen[-1][1] == tr("file.save_rng_invalid.title")
     assert not client.busy
+
+
+def test_a_long_validation_does_not_hold_the_save(open_window, example_project, slow_worker, dialogs, qtbot,
+                                                monkeypatch):
+    # Au-delà de l'attente, le fichier est enregistré sans attendre la
+    # validation ; son résultat s'affiche ensuite.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 300)
+    client = slow_worker(2.0)
+    window = open_window(example_project, wait_validation=False)
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    _insert_after(window, "<body>", "\n<forbidden/>")
+    started = time.perf_counter()
+    assert window.save()
+    assert time.perf_counter() - started < 1.8
+    assert "<forbidden/>" in (example_project.parent / "xml" / "edition.xml").read_text(encoding="utf-8")
+    assert dialogs.seen == []
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert window._last_rng_result is not None and not window._last_rng_result.valid
+    assert window.rng_status.text() not in (tr("rng.status.running"), tr("rng.status.valid"))
+
+
+def test_a_long_manual_validation_shows_its_result_on_arrival(open_window, example_project, slow_worker, qtbot,
+                                                              monkeypatch):
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 300)
+    client = slow_worker(2.0)
+    window = open_window(example_project, wait_validation=False)
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    _insert_after(window, "<body>", "\n<forbidden/>")
+    started = time.perf_counter()
+    window.validate_relaxng_manual()
+    assert time.perf_counter() - started < 1.8
+    assert window.rng_status.text() == tr("rng.status.running")
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert window._last_rng_result is not None and not window._last_rng_result.valid
+    assert window.validation_table.rowCount() >= 1
+    assert window.validation_panel.isVisible()
 
 
 def test_manual_validation_returns_its_result(open_window, example_project, slow_worker):

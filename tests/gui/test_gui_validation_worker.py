@@ -86,9 +86,10 @@ def test_no_answer_for_a_destroyed_owner(make_client, schema, qtbot):
     assert answers == []
 
 
-def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, qtbot):
+def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, qtbot, monkeypatch):
     # Validation de 2 s : une attente bloquante figerait la boucle au moins
     # autant ; le seuil de 1,5 s tolère les pauses d'une machine chargée.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 10000)
     client = make_client(_slow(2.0))
     ticks = []
     timer = QTimer()
@@ -110,6 +111,46 @@ def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, 
     assert clicks == []                                              # clic ignoré pendant l'attente
     qtbot.wait(50)
     assert clicks == []                                              # et non différé
+
+
+def test_after_the_wait_the_result_comes_later(make_client, schema, qtbot, monkeypatch):
+    # Une validation longue ne bloque la fenêtre que le temps de l'attente ;
+    # le résultat va ensuite au rappel, comme une validation automatique.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 300)
+    client = make_client(_slow(2.0))
+    owner = QPushButton()
+    late = []
+    started = time.perf_counter()
+    assert client.validate("<root/>", schema, owner=owner, late=late.append) is None
+    assert time.perf_counter() - started < 1.5
+    assert client.busy and late == []
+    qtbot.waitUntil(lambda: bool(late), timeout=30000)
+    assert late[0].valid and not client.busy
+
+
+def test_a_long_wait_never_validates_in_varians(make_client, schema, qtbot, monkeypatch):
+    # Autrefois, au bout de l'attente, Varians validait lui-même : la fenêtre
+    # se figeait alors pendant toute la compilation.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 200)
+    client = make_client(_slow(1.5))
+    reasons = []
+    client.fellBack.connect(reasons.append)
+    assert client.validate("<root/>", schema) is None               # sans rappel : réponse ignorée
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert client.uses_process and reasons == [] and client._results == {}
+    assert client.validate("<root/>", schema, owner=QPushButton(), late=lambda result: None) is None
+
+
+def test_a_late_result_is_dropped_for_a_destroyed_owner(make_client, schema, qtbot, monkeypatch):
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 200)
+    client = make_client(_slow(1.0))
+    owner = QPushButton()
+    late = []
+    assert client.validate("<root/>", schema, owner=owner, late=late.append) is None
+    owner.deleteLater()
+    qtbot.wait(10)
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert late == []
 
 
 def test_a_dead_worker_falls_back_to_validation_in_varians(make_client, schema, qtbot):

@@ -863,8 +863,26 @@ class ValidationPanelMixin:
         if background:
             self._validate_in_background(text, schema, base_url, options, parts, sources, rules)
             return None
-        return self._apply_rng_result(
-            worker_client().validate(text, schema, base_url, parts=parts, schematron=sources, rules=rules), **options)
+        # Attente bornée (validation_worker.SYNC_WAIT_MSEC) : au-delà, la
+        # fenêtre redevient utilisable et le résultat s'affiche à son arrivée.
+        result = worker_client().validate(text, schema, base_url, parts=parts, schematron=sources, rules=rules,
+                                          owner=self, late=self._late_result(self._apply_rng_result, options))
+        if result is None:
+            return None
+        return self._apply_rng_result(result, **options)
+
+    def _late_result(self, apply, options):
+        """Rappel d'une validation demandée dont la réponse arrive après
+        l'attente : ``apply(result, **options)`` si elle concerne encore le
+        document affiché ; un document quitté sera validé à son retour."""
+        session = self.document
+
+        def arrived(result):
+            if self.document is session:
+                apply(result, **options)
+            elif session.view_state:
+                session.view_state["status"] = None
+        return arrived
 
     def _validate_in_background(self, text, schema, base_url, options, parts=None, sources=(), rules=None):
         """Validation automatique : la fenêtre reste utilisable. Le résultat est
