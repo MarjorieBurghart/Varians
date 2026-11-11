@@ -79,7 +79,7 @@
   <string key="views.units">Upravitelné prvky:</string>
   <string key="views.units.placeholder">prázdné: pravidlo edice</string>
   <string key="views.units.tip">Názvy prvků, které dostanou tužku ✎, oddělené mezerami (například: person place). Počítají se kdekoli v dokumentu.</string>
-  <string key="views.note">Pohled se uloží do souboru projektu. Varians sám přidá tužky ✎ před upravitelné prvky, ať je styl XSLT jakýkoli (XSLT 1.0).</string>
+  <string key="views.note">Pohled se uloží do souboru projektu. Varians sám přidá tužky ✎ před upravitelné prvky, které šablona XSLT 1.0 zpracuje pomocí xsl:apply-templates bez mode (viz nápověda).</string>
   <string key="views.browse.tip">Vybrat soubor</string>
   <string key="views.remove.title">Odebrat pohled</string>
   <string key="views.remove.question">Odebrat pohled „{name}“? Jeho styl XSLT a CSS zůstanou v projektu.</string>

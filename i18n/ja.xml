@@ -79,7 +79,7 @@
   <string key="views.units">編集可能な要素：</string>
   <string key="views.units.placeholder">空欄：エディションの規則</string>
   <string key="views.units.tip">鉛筆 ✎ が付く要素の名前をスペースで区切って入力します（例：person place）。文書のどこにあっても対象になります。</string>
-  <string key="views.note">ビューはプロジェクトファイルに保存されます。XSLTスタイルシートが何であっても（XSLT 1.0）、Varians が編集可能な要素の前に鉛筆 ✎ を自動で付けます。</string>
+  <string key="views.note">ビューはプロジェクトファイルに保存されます。XSLT 1.0 スタイルシートが mode なしの xsl:apply-templates で処理する編集可能な要素の前に、Varians が鉛筆 ✎ を自動で付けます（ヘルプを参照）。</string>
   <string key="views.browse.tip">ファイルを選択</string>
   <string key="views.remove.title">ビューを削除</string>
   <string key="views.remove.question">ビュー「{name}」を削除しますか？ XSLTスタイルシートとCSSはプロジェクトに残ります。</string>

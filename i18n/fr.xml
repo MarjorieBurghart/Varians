@@ -79,7 +79,7 @@
   <string key="views.units">Éléments modifiables :</string>
   <string key="views.units.placeholder">vide : la règle de l’édition</string>
   <string key="views.units.tip">Noms des éléments qui reçoivent un crayon ✎, séparés par des espaces (par exemple : person place). Ils comptent partout dans le document.</string>
-  <string key="views.note">La vue est enregistrée dans le fichier du projet. Varians ajoute lui-même les crayons ✎ devant les éléments modifiables, quelle que soit la feuille XSLT (XSLT 1.0).</string>
+  <string key="views.note">La vue est enregistrée dans le fichier du projet. Varians ajoute lui-même les crayons ✎ devant les éléments modifiables que la feuille XSLT 1.0 traite par xsl:apply-templates, sans mode (voir l’aide).</string>
   <string key="views.browse.tip">Choisir un fichier</string>
   <string key="views.remove.title">Retirer la vue</string>
   <string key="views.remove.question">Retirer la vue « {name} » ? Sa feuille XSLT et sa CSS restent dans le projet.</string>

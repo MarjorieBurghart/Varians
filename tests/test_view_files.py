@@ -129,3 +129,9 @@ def test_a_view_with_starter_files_needs_only_a_name_and_element_names():
     assert check_view("Fiches", None, None, "person", ("Index",), starter=True) is None
     assert check_view("Index", None, None, "", ("Index",), starter=True) == "views.error.taken"
     assert check_view("Fiches", None, None, "<p>", ("Index",), starter=True) == "views.error.units"
+
+
+def test_the_starter_stylesheet_says_how_to_keep_the_pencils():
+    text = starter_stylesheet("Vue")
+    comment = text[text.index("<!--"):text.index("-->")]
+    assert "xsl:apply-templates" in comment and "xsl:for-each" in comment and "mode" in comment

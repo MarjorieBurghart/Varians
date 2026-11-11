@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
 from lxml import etree
 
 from fragment_units import edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers
@@ -182,3 +183,27 @@ def test_elements_of_an_edition_text_stay_inline():
                                     '<listPerson><person><persName>Bernardus</persName></person></listPerson></div>')
     assert "Vidit Petrus ibi." in re.sub(r"<[^>]+>", "", html)
     assert '<p class="person">' not in html and '<p class="forename">' not in html
+
+
+@pytest.mark.parametrize("templates, pencils", [
+    # Ce que l'aide recommande (#view-stylesheet) : apply-templates, sans mode.
+    ('<xsl:template match="/"><html><body><xsl:apply-templates select="//tei:person"/></body></html></xsl:template>'
+     '<xsl:template match="tei:person"><p><xsl:value-of select="tei:persName"/></p></xsl:template>', 2),
+    # Ce qu'elle signale : même rendu, sans crayon.
+    ('<xsl:template match="/"><html><body><xsl:for-each select="//tei:person"><p>'
+     '<xsl:value-of select="tei:persName"/></p></xsl:for-each></body></html></xsl:template>', 0),
+    ('<xsl:template match="/"><html><body><xsl:apply-templates select="//tei:person" mode="m"/></body></html>'
+     '</xsl:template><xsl:template match="tei:person" mode="m"><p><xsl:value-of select="tei:persName"/></p>'
+     '</xsl:template>', 0),
+])
+def test_pencils_need_apply_templates_without_mode(tmp_path, templates, pencils):
+    from fragment_units import chosen_units
+    path = tmp_path / "vue.xsl"
+    path.write_text('<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" '
+                    f'xmlns:tei="{TEI_NS}" exclude-result-prefixes="tei"><xsl:output method="html"/>'
+                    f'{templates}</xsl:stylesheet>', encoding="utf-8")
+    marked, _spans = mark_units(PERSONS, chosen_units(("person",)))
+    xslt = etree.XSLT(etree.fromstring(edit_stylesheet(path).encode("utf-8"), base_url=edit_stylesheet_url(path)))
+    html, count = place_edit_markers(str(xslt(etree.fromstring(marked.encode("utf-8")))), TITLE)
+    assert count == pencils
+    assert "Bernardus" in html and "Petrus" in html

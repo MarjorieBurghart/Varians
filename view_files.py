@@ -28,8 +28,11 @@ _UNIT_NAME = re.compile(r"[A-Za-z_][\w.-]*\Z")
 _STYLESHEET = """<?xml version="1.0" encoding="UTF-8"?>
 <!-- Vue « {name} » : feuille XSLT 1.0 de départ, à adapter.
      Varians ajoute lui-même un crayon devant chaque élément modifiable de
-     la vue, quelle que soit cette feuille. Le texte de l'élément <h1> est le
-     nom de la vue lors de sa création. -->
+     la vue, à une condition : la feuille doit traiter cet élément par
+     xsl:apply-templates, sans mode, avec sa propre règle (xsl:template).
+     Un élément parcouru par xsl:for-each, traité dans un mode ou seulement
+     lu par xsl:value-of est montré, mais sans crayon.
+     Le texte de l'élément <h1> est le nom de la vue lors de sa création. -->
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:tei="http://www.tei-c.org/ns/1.0"

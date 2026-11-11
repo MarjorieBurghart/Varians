@@ -79,7 +79,7 @@
   <string key="views.units">Elementi modificabili:</string>
   <string key="views.units.placeholder">vuoto: la regola dell’edizione</string>
   <string key="views.units.tip">Nomi degli elementi che ricevono una matita ✎, separati da spazi (per esempio: person place). Contano ovunque nel documento.</string>
-  <string key="views.note">La vista è salvata nel file del progetto. Varians aggiunge da sé le matite ✎ davanti agli elementi modificabili, qualunque sia il foglio XSLT (XSLT 1.0).</string>
+  <string key="views.note">La vista è salvata nel file del progetto. Varians aggiunge da sé le matite ✎ davanti agli elementi modificabili che il foglio XSLT 1.0 tratta con xsl:apply-templates, senza mode (vedi la guida).</string>
   <string key="views.browse.tip">Scegli un file</string>
   <string key="views.remove.title">Rimuovi vista</string>
   <string key="views.remove.question">Rimuovere la vista «{name}»? Il suo foglio XSLT e il suo CSS restano nel progetto.</string>

@@ -79,7 +79,7 @@
   <string key="views.units">Редактируемые элементы:</string>
   <string key="views.units.placeholder">пусто: правило издания</string>
   <string key="views.units.tip">Имена элементов, получающих карандаш ✎, через пробел (например: person place). Они учитываются во всём документе.</string>
-  <string key="views.note">Вид сохраняется в файле проекта. Varians сам ставит карандаши ✎ перед редактируемыми элементами, какой бы ни была таблица стилей XSLT (XSLT 1.0).</string>
+  <string key="views.note">Вид сохраняется в файле проекта. Varians сам ставит карандаши ✎ перед редактируемыми элементами, которые таблица стилей XSLT 1.0 обрабатывает через xsl:apply-templates без mode (см. справку).</string>
   <string key="views.browse.tip">Выбрать файл</string>
   <string key="views.remove.title">Удалить вид</string>
   <string key="views.remove.question">Удалить вид «{name}»? Его таблица стилей XSLT и CSS остаются в проекте.</string>
