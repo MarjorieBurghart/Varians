@@ -230,13 +230,52 @@ def unit_names_from_schema(schema_path):
     return names
 
 
-def edit_stylesheet(xsl_path):
+def stylesheet_needs_saxon(xsl_path):
+    """La feuille ``xsl_path`` est en XSLT 2.0 ou 3.0 (V0.9.4.4) : l'aperçu la
+    confie à Saxon. Une feuille 1.0, sans version, illisible ou absente
+    reste à lxml, qui signale l'erreur s'il y en a une."""
+    from xslt_scenarios import stylesheet_info
+    try:
+        with open(xsl_path, encoding="utf-8", errors="replace") as handle:
+            text = handle.read(65536)
+    except OSError:
+        return False
+    info = stylesheet_info(text)
+    if info is None:
+        return False
+    try:
+        return float(info.version) >= 2.0
+    except ValueError:
+        return False
+
+
+def edit_stylesheet(xsl_path, version="1.0"):
     """Feuille enveloppe de la XSLT ``xsl_path`` : celle-ci est importée, et
     chaque élément numéroté par :func:`mark_units` reçoit un crayon
     ``<a class="tei-edit-marker" href="tei-edit://p/N">`` devant ce qu'elle
     produit pour lui ; rien si elle ne produit rien (élément masqué). Les
-    paramètres de la feuille importée restent ceux de la transformation."""
+    paramètres de la feuille importée restent ceux de la transformation.
+
+    En 1.0 (lxml), seul le mode par défaut est intercepté. Pour une feuille
+    2.0 ou 3.0 (``version`` autre que 1.0, Saxon, V0.9.4.4), l'enveloppe est
+    en 3.0 et intercepte l'élément dans tous ses modes (``mode="#all"``) :
+    les feuilles 3.0 rendent souvent le texte dans un mode ; un élément
+    rendu plusieurs fois n'aura qu'un crayon (:func:`place_edit_markers`)."""
     href = html.escape(Path(xsl_path).expanduser().resolve().as_uri(), quote=True)
+    if str(version) != "1.0":
+        return f'''<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="3.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:vx="{EDIT_NS}" exclude-result-prefixes="vx">
+  <xsl:import href="{href}"/>
+  <xsl:template match="*[@vx:edit]" mode="#all">
+    <xsl:variable name="out"><xsl:apply-imports/></xsl:variable>
+    <xsl:if test="normalize-space($out) or $out//*">
+      <a class="tei-edit-marker" href="tei-edit://p/{{@vx:edit}}">&#x270E;</a>
+    </xsl:if>
+    <xsl:copy-of select="$out"/>
+  </xsl:template>
+</xsl:stylesheet>
+'''
     return f'''<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:vx="{EDIT_NS}" xmlns:exsl="http://exslt.org/common" exclude-result-prefixes="vx exsl">
@@ -275,19 +314,24 @@ _DIVE_RE = re.compile(
 def place_edit_markers(html_text, title=""):
     """Met chaque crayon écrit par la feuille enveloppe au début du premier
     bloc qui le suit, avec l'infobulle ``title`` et une espace après lui.
-    Retourne le HTML et le nombre de crayons."""
+    Un élément rendu plusieurs fois (le texte, puis ses notes) garde son
+    premier crayon, les suivants sont écartés (V0.9.4.4). Retourne le HTML
+    et le nombre de crayons."""
     for _ in range(64):
         moved = _DIVE_RE.sub(r"\g<gap>\g<block>\g<marker>", html_text)
         if moved == html_text:
             break
         html_text = moved
     title = html.escape(title or "", quote=True)
-    count = 0
+    seen = set()
 
     def final(match):
-        nonlocal count
-        count += 1
-        return (f'<a href="tei-edit://p/{match.group(1)}" class="tei-edit-marker" title="{title}">'
+        index = match.group(1)
+        if index in seen:
+            return ""
+        seen.add(index)
+        return (f'<a href="tei-edit://p/{index}" class="tei-edit-marker" title="{title}">'
                 '\u270e</a> ')
 
-    return _MARKER_RE.sub(final, html_text), count
+    html_text = _MARKER_RE.sub(final, html_text)
+    return html_text, len(seen)
