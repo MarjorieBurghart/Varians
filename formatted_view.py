@@ -1959,7 +1959,14 @@ class FormattedEditionWidget(QWidget):
         self.info.setStyleSheet("color:#376b3c")
 
     def _preview_params(self):
-        return {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc"), **publication_params()}
+        """Paramètres de la feuille de l'aperçu : le témoin pivot
+        (``baseWitness`` pour la feuille de Varians, ``temoin-de-base`` pour
+        « Édition critique »), le titre du sommaire, la langue et les
+        catalogues ; ``reperes-lignes`` (V0.9.4.4) demande à « Édition
+        critique » les repères de ligne, qu'une publication n'a pas. Une
+        feuille ignore ceux qu'elle ne déclare pas."""
+        return {"baseWitness": self.main.base_id, "temoin-de-base": self.main.base_id, "reperes-lignes": "true",
+                "tocTitle": _t("preview.toc"), **publication_params()}
 
     def _preview_base(self):
         """Adresse du document transformé (pour un ``doc()`` relatif d'une

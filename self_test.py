@@ -185,8 +185,9 @@ def _transform(project_path, engine):
 
 def _preview_saxon(root):
     """Le processus d'aperçu des vues en XSLT 3.0 (saxon_preview), lancé
-    comme Varians le fait : l'édition d'essai, mise en forme par « Apparat
-    en notes », avec ses crayons."""
+    comme Varians le fait : l'édition d'essai, mise en forme par « Édition
+    critique » comme vue de l'édition, avec ses crayons et le repère de
+    ligne du témoin pivot."""
     from fragment_units import mark_units, place_edit_markers
     from saxon_preview import SaxonPreviewClient
     worker = SaxonPreviewClient()
@@ -195,13 +196,16 @@ def _preview_saxon(root):
         if problem:
             raise AssertionError(problem)
         marked, spans = mark_units(EDITION)
-        result = worker.transform(marked, Path(root) / "rendering" / "apparat-en-notes.xsl", {}, timeout=180)
+        result = worker.transform(marked, Path(root) / "rendering" / "edition-critique.xsl",
+                                  {"temoin-de-base": "A", "reperes-lignes": "true"}, timeout=180)
     finally:
         worker.close()
     html, pencils = place_edit_markers(result.html)
-    if "principio" not in html or pencils != len(spans):
-        raise AssertionError(f"aperçu inexact : {pencils} crayon(s) pour {len(spans)} élément(s)")
-    return f"{result.engine} : {pencils} crayon(s)"
+    lines = html.count("tei-line://base/INDEX")
+    if "principio" not in html or pencils != len(spans) or lines != 1:
+        raise AssertionError(f"aperçu inexact : {pencils} crayon(s) pour {len(spans)} élément(s), "
+                             f"{lines} repère(s) de ligne pour 1")
+    return f"{result.engine} : {pencils} crayon(s), {lines} repère de ligne"
 
 
 def _window(project_path, window_class):

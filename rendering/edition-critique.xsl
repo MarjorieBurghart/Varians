@@ -63,6 +63,14 @@
   <!-- Leçons hors <lem> surlignées au départ ; le lecteur coche ou décoche
        la case de la page. -->
   <xsl:param name="surligner-hors-lemme" as="xs:boolean" select="false()"/>
+  <!-- Aperçu de Varians (Varians 0.9.4.4) : un repère invisible par <lb>
+       du témoin pivot (paramètre temoin-de-base), pour suivre les témoins : tous,
+       une seule fois chacun, dans l'ordre du document. Un <lb> qui n'est
+       pas rendu dans le texte (leçon non retenue, autre forme d'un
+       <choice>, note) a le sien à la place de l'apparat ou de l'appel.
+       Seul l'aperçu donne ce paramètre : une publication n'a pas de
+       repères. -->
+  <xsl:param name="reperes-lignes" as="xs:boolean" select="false()"/>
   <!-- Une leçon retenue qui n'est pas un <lem>, dans le texte établi. -->
   <xsl:variable name="hors-lemme" as="xs:boolean"
     select="exists(/tei:TEI/tei:text//tei:app[not(ancestor::tei:note)][f:choix(.)/self::tei:rdg][f:dans-texte-etabli(.)])"/>
@@ -379,6 +387,31 @@
     </div>
   </xsl:template>
 
+  <!-- Repères de ligne de l'aperçu (reperes-lignes). -->
+  <xsl:function name="f:repere-ligne" as="element()?">
+    <xsl:param name="lb" as="element()"/>
+    <xsl:if test="$reperes-lignes and $temoin-de-base != '' and $lb/@edRef = concat('#', $temoin-de-base)">
+      <a class="tei-line-marker" href="tei-line://base/INDEX">&#x2060;</a>
+    </xsl:if>
+  </xsl:function>
+  <!-- Les <lb> de $e qui ne sont pas rendus dans le texte : hors de $rendus,
+       la partie de $e que sa règle rend. -->
+  <xsl:function name="f:lb-caches" as="element()*">
+    <xsl:param name="e" as="element()"/>
+    <xsl:param name="rendus" as="element()*"/>
+    <xsl:sequence select="if ($reperes-lignes) then $e//tei:lb except $rendus//tei:lb else ()"/>
+  </xsl:function>
+  <!-- Leurs repères, avant ($avant) ou après la partie rendue, dans l'ordre
+       du document. -->
+  <xsl:function name="f:reperes-caches" as="element()*">
+    <xsl:param name="e" as="element()"/>
+    <xsl:param name="rendus" as="element()*"/>
+    <xsl:param name="avant" as="xs:boolean"/>
+    <xsl:sequence select="f:lb-caches($e, $rendus)[if ($avant) then exists($rendus) and . &lt;&lt; $rendus[1]
+                                                   else empty($rendus) or not(. &lt;&lt; $rendus[1])]
+                          ! f:repere-ligne(.)"/>
+  </xsl:function>
+
   <xsl:template match="tei:caesura" mode="base">
     <span class="cesure" aria-label="{f:libelle('publication.caesura')}">&#x2003;</span>
   </xsl:template>
@@ -391,18 +424,21 @@
     <xsl:variable name="app" select="."/>
     <xsl:variable name="folios" select="f:folios-ecartes(., $retenue)"/>
     <xsl:apply-templates select="$folios[f:folio-en-tete(., $app)]" mode="base"/>
+    <xsl:sequence select="f:reperes-caches(., $retenue, true())"/>
     <xsl:choose>
       <xsl:when test="exists($retenue)">
         <xsl:apply-templates select="$retenue/node()" mode="base"/>
       </xsl:when>
       <xsl:otherwise><span class="incertain"><xsl:value-of select="$f:non-disponible"/></span></xsl:otherwise>
     </xsl:choose>
+    <xsl:sequence select="f:reperes-caches(., $retenue, false())"/>
     <xsl:call-template name="appel-de-note"/>
     <xsl:apply-templates select="$folios[not(f:folio-en-tete(., $app))]" mode="base"/>
   </xsl:template>
 
   <xsl:template match="tei:note" mode="base">
     <xsl:call-template name="appel-de-note"/>
+    <xsl:sequence select="f:reperes-caches(., (), false())"/>
   </xsl:template>
 
   <xsl:template name="appel-de-note">
@@ -582,6 +618,7 @@
        une note : son appel seulement. -->
   <xsl:template match="tei:ref[f:ref-en-note(.)]" mode="base" priority="1">
     <xsl:call-template name="appel-de-note"/>
+    <xsl:sequence select="f:reperes-caches(., (), false())"/>
   </xsl:template>
   <xsl:template match="tei:ptr" mode="base lecture">
     <xsl:if test="f:lien(@target)"><a href="{string(@target)}"><xsl:value-of select="f:libelle('publication.reference')"/></a></xsl:if>
@@ -601,6 +638,12 @@
   </xsl:template>
   <xsl:template match="tei:choice" mode="base lecture">
     <xsl:apply-templates select="(tei:corr,tei:reg,tei:expan,tei:sic,tei:orig,tei:abbr,*[1])[1]" mode="#current"/>
+  </xsl:template>
+  <xsl:template match="tei:choice" mode="base" priority="1">
+    <xsl:variable name="forme" select="(tei:corr,tei:reg,tei:expan,tei:sic,tei:orig,tei:abbr,*[1])[1]"/>
+    <xsl:sequence select="f:reperes-caches(., $forme, true())"/>
+    <xsl:apply-templates select="$forme" mode="base"/>
+    <xsl:sequence select="f:reperes-caches(., $forme, false())"/>
   </xsl:template>
   <xsl:template match="tei:supplied" mode="base lecture">
     <span class="incertain">[<xsl:apply-templates mode="#current"/>]</span>
@@ -683,6 +726,7 @@
        apparat-commun.xsl) ; avec sauts-lb, celle du témoin choisi est un
        saut de ligne. -->
   <xsl:template match="tei:lb" mode="base">
+    <xsl:sequence select="f:repere-ligne(.)"/>
     <xsl:variable name="groupe" select="f:lb-groupe(.)"/>
     <xsl:choose>
       <xsl:when test="not(. is $groupe[1]) or $groupe/@break = 'no'"/>

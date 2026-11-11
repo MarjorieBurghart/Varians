@@ -169,3 +169,21 @@ def test_the_source_selection_reaches_a_3_0_preview_when_it_is_ready(open_window
     _select(window.editor, start, start + len("sanctorum"))
     window.left_tabs.setCurrentWidget(view)
     qtbot.waitUntil(lambda: view.preview.textCursor().selectedText() == "sanctorum", timeout=20000)
+
+
+def test_the_critical_edition_as_a_view_follows_the_witnesses(open_window, saxon_project, qtbot):
+    """« Édition critique » choisie comme vue de l'édition : l'aperçu lui
+    donne le témoin pivot et ``reperes-lignes`` ; elle écrit un repère par
+    ligne du pivot, sans avertissement de décalage."""
+    import re
+    update_project_edition_views(saxon_project, (ViewConfig("Critique", "${varians}/edition-critique.xsl"),))
+    window = open_window(saxon_project)
+    view = window.formatted_view
+    assert view.select_view("Critique")
+    window.left_tabs.setCurrentWidget(view)
+    expected = len(window.lb_spans())
+    qtbot.waitUntil(lambda: "Saxon" in view.info.text(), timeout=30000)
+    assert len(set(re.findall(r"tei-line://base/(\d+)", view.preview.toHtml()))) == expected
+    lines = tr("preview.updated.timed.lines", elapsed="", engine="", marked="", paragraphs="§",
+               lines=expected).split("§")[1]
+    assert view.info.text().endswith(lines)
