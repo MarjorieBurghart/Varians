@@ -99,7 +99,7 @@
   <string key="preview.info.default">La vista è generata con XSLT + CSS. Le modifiche vengono reinserite elemento per elemento dopo la validazione XML.</string>
   <string key="preview.search.found">Ricerca anteprima: occorrenza {n}/{total} — {query}</string>
   <string key="preview.search.none">Ricerca anteprima: nessuna occorrenza — {query}</string>
-  <string key="preview.files_missing">File XSLT o CSS non trovato. Seleziona i file con i pulsanti qui sopra.</string>
+  <string key="preview.files_missing">Foglio XSLT o CSS non trovato. Controllate la vista scelta (menu Viste → Modifica vista…) o, per la vista del progetto, le impostazioni del progetto.</string>
   <string key="preview.up_to_date">Anteprima già aggiornata · {engine}. Nessun ricaricamento necessario.</string>
   <string key="preview.xml_invalid">Anteprima non aggiornata: l’XML è temporaneamente non ben formato ({error}). Resta visualizzata l’ultima vista valida.</string>
   <string key="preview.updated.lines">Anteprima aggiornata con {paragraphs, plural, one {# paragrafo modificabile} other {# paragrafi modificabili}} · {lines, plural, one {# riga cliccabile} other {# righe cliccabili}} del testimone pivot.</string>

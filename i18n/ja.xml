@@ -99,7 +99,7 @@
   <string key="preview.info.default">このビューはXSLT + CSSで生成されます。変更はXML検証後、要素単位でソースへ反映されます。</string>
   <string key="preview.search.found">プレビュー検索：{n}/{total}件目 — {query}</string>
   <string key="preview.search.none">プレビュー検索：該当なし — {query}</string>
-  <string key="preview.files_missing">XSLTまたはCSSファイルが見つかりません。上のボタンからファイルを選択してください。</string>
+  <string key="preview.files_missing">XSLTスタイルシートまたはCSSが見つかりません。選択中のビュー（ビュー メニュー → ビューを編集…）か、プロジェクトのビューならプロジェクト設定を確認してください。</string>
   <string key="preview.up_to_date">プレビューは最新です · {engine}。再読み込みは不要です。</string>
   <string key="preview.xml_invalid">プレビューを更新できません：XMLが一時的に整形式ではありません（{error}）。最後の有効なビューを表示し続けます。</string>
   <string key="preview.updated.lines">プレビューを更新しました：編集可能な段落 {paragraphs}件 · クリック可能なピボット伝本行 {lines}行。</string>

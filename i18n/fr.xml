@@ -99,7 +99,7 @@
   <string key="preview.info.default">La vue est générée par XSLT + CSS. Les modifications sont réinjectées élément par élément après validation XML.</string>
   <string key="preview.search.found">Recherche aperçu : occurrence {n}/{total} — {query}</string>
   <string key="preview.search.none">Recherche aperçu : aucune occurrence — {query}</string>
-  <string key="preview.files_missing">XSLT ou CSS introuvable. Choisissez les fichiers avec les boutons ci-dessus.</string>
+  <string key="preview.files_missing">Feuille XSLT ou CSS introuvable. Vérifiez la vue choisie (menu Vues → Modifier la vue…) ou, pour la vue du projet, les paramètres du projet.</string>
   <string key="preview.up_to_date">Aperçu déjà à jour · {engine}. Aucun rechargement nécessaire.</string>
   <string key="preview.xml_invalid">Aperçu non actualisé : XML momentanément non bien formé ({error}). La dernière vue valide reste affichée.</string>
   <string key="preview.updated.lines">Aperçu actualisé en {paragraphs, plural, one {# paragraphe éditable} other {# paragraphes éditables}} · {lines, plural, one {# ligne du témoin pivot cliquable} other {# lignes du témoin pivot cliquables}}.</string>

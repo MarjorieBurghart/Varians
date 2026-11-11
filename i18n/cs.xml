@@ -99,7 +99,7 @@
   <string key="preview.info.default">Zobrazení je generováno pomocí XSLT + CSS. Změny se po ověření XML zapisují zpět po jednotlivých prvcích.</string>
   <string key="preview.search.found">Hledání v náhledu: výskyt {n}/{total} — {query}</string>
   <string key="preview.search.none">Hledání v náhledu: bez výskytu — {query}</string>
-  <string key="preview.files_missing">Soubor XSLT nebo CSS nebyl nalezen. Vyberte soubory tlačítky výše.</string>
+  <string key="preview.files_missing">Styl XSLT nebo CSS nebyl nalezen. Zkontrolujte zvolený pohled (nabídka Pohledy → Upravit pohled…) nebo u pohledu projektu nastavení projektu.</string>
   <string key="preview.up_to_date">Náhled je již aktuální · {engine}. Není třeba jej znovu načítat.</string>
   <string key="preview.xml_invalid">Náhled nebyl aktualizován: XML dočasně není správně utvořené ({error}). Zůstává zobrazen poslední platný náhled.</string>
   <string key="preview.updated.lines">Náhled aktualizován: {paragraphs, plural, one {# upravitelný odstavec} few {# upravitelné odstavce} other {# upravitelných odstavců}} · {lines, plural, one {# klikací řádek} few {# klikací řádky} other {# klikacích řádků}} pivotního svědka.</string>

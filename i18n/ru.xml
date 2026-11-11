@@ -99,7 +99,7 @@
   <string key="preview.info.default">Представление создаётся с помощью XSLT + CSS. После проверки XML изменения переносятся обратно по элементам.</string>
   <string key="preview.search.found">Поиск в предпросмотре: совпадение {n}/{total} — {query}</string>
   <string key="preview.search.none">Поиск в предпросмотре: совпадений нет — {query}</string>
-  <string key="preview.files_missing">Файл XSLT или CSS не найден. Выберите файлы кнопками выше.</string>
+  <string key="preview.files_missing">Таблица стилей XSLT или CSS не найдена. Проверьте выбранный вид (меню Виды → Изменить вид…) или, для вида проекта, параметры проекта.</string>
   <string key="preview.up_to_date">Предпросмотр уже актуален · {engine}. Перезагрузка не требуется.</string>
   <string key="preview.xml_invalid">Предпросмотр не обновлён: XML временно не является корректно сформированным ({error}). Продолжает отображаться последнее корректное представление.</string>
   <string key="preview.updated.lines">Предпросмотр обновлён: редактируемых абзацев — {paragraphs} · кликабельных строк опорного свидетеля — {lines}.</string>

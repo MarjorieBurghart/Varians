@@ -99,7 +99,7 @@
   <string key="preview.info.default">Die Ansicht wird mit XSLT + CSS erzeugt. Änderungen werden nach XML-Prüfung elementweise in den Quelltext zurückgeschrieben.</string>
   <string key="preview.search.found">Vorschau-Suche: Treffer {n}/{total} — {query}</string>
   <string key="preview.search.none">Vorschau-Suche: kein Treffer — {query}</string>
-  <string key="preview.files_missing">XSLT- oder CSS-Datei nicht gefunden. Wählen Sie die Dateien mit den Schaltflächen oben aus.</string>
+  <string key="preview.files_missing">XSLT-Stylesheet oder CSS nicht gefunden. Prüfen Sie die gewählte Ansicht (Menü Ansichten → Ansicht bearbeiten…) oder, für die Projektansicht, die Projekteinstellungen.</string>
   <string key="preview.up_to_date">Vorschau bereits aktuell · {engine}. Kein erneutes Laden nötig.</string>
   <string key="preview.xml_invalid">Vorschau nicht aktualisiert: XML ist vorübergehend nicht wohlgeformt ({error}). Die letzte gültige Ansicht bleibt sichtbar.</string>
   <string key="preview.updated.lines">Vorschau aktualisiert: {paragraphs, plural, one {# bearbeitbarer Absatz} other {# bearbeitbare Absätze}} · {lines, plural, one {# anklickbare Zeile} other {# anklickbare Zeilen}} des Pivot-Textzeugen.</string>

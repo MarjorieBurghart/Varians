@@ -99,7 +99,7 @@
   <string key="preview.info.default">The view is generated with XSLT + CSS. Changes are written back element by element after XML validation.</string>
   <string key="preview.search.found">Preview search: match {n}/{total} — {query}</string>
   <string key="preview.search.none">Preview search: no match — {query}</string>
-  <string key="preview.files_missing">XSLT or CSS file not found. Choose the files with the buttons above.</string>
+  <string key="preview.files_missing">XSLT stylesheet or CSS not found. Check the chosen view (Views menu → Edit view…) or, for the project view, the project settings.</string>
   <string key="preview.up_to_date">Preview already up to date · {engine}. No reload needed.</string>
   <string key="preview.xml_invalid">Preview not refreshed: XML is temporarily not well formed ({error}). The last valid view remains displayed.</string>
   <string key="preview.updated.lines">Preview refreshed with {paragraphs, plural, one {# editable paragraph} other {# editable paragraphs}} · {lines, plural, one {# clickable pivot-witness line} other {# clickable pivot-witness lines}}.</string>
