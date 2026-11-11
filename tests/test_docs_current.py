@@ -35,7 +35,8 @@ def test_the_version_history_tells_what_the_current_version_brings():
     CSS de tout document (vues nommées, XSLT 3.0), en tête."""
     entry = _history_entry(CURRENT_VERSION)
     for words in ("Nouveau document XML", "modeles/", "Modèles TEI…", "2 s", "libxml2", "<view>",
-                  "Nouvelle vue…", "XSLT… » et « CSS…", "Saxon", "Édition critique", "repères de ligne"):
+                  "Nouvelle vue…", "XSLT… » et « CSS…", "Saxon", "Édition critique", "repères de ligne",
+                  "projectCss", "var()"):
         assert words in entry, words
 
 

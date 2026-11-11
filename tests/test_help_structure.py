@@ -218,3 +218,26 @@ def test_views_in_xslt_3_and_line_markers_are_explained(language):
                    "<code>reperes-lignes</code>", "edition-critique.xsl", "410", "412"):
         assert needle in part, (language, needle)
     assert 'href="#view-line-markers"' in page[page.index('<p id="view-stylesheet">'):start], language
+
+
+CSS_LABELS = ("views.css", "views.css.mode.auto", "views.css.mode.always", "views.css.mode.never",
+              "views.css.mode.file", "views.css.file")
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_css_of_a_view_is_explained(language):
+    """V0.9.4.4 : la CSS d'une vue — automatique (celle de la feuille si
+    elle a son propre <style>), celle du projet, aucune, un fichier ;
+    variables CSS remplacées ; projectCss dans project.xml. Les libellés
+    cités sont ceux de la boîte, dans son ordre ; « Vues nommées » y
+    renvoie."""
+    page, catalog = _page(language), _catalog(language)
+    start = page.index('<p id="view-css">')
+    paragraph = page[start:page.index("</p>", start)]
+    positions = [paragraph.index(f"<strong>{catalog[key]}</strong>") for key in CSS_LABELS]
+    assert positions == sorted(positions), language
+    for needle in ("<code>&lt;style&gt;</code>", "<code>var(--", 'projectCss="always"', 'projectCss="never"',
+                   "<code>background-color</code>"):
+        assert needle in paragraph, (language, needle)
+    views = page[page.index('<p id="preview-views">'):]
+    assert 'href="#view-css"' in views[:views.index("</p>")], language

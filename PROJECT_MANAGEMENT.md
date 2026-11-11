@@ -405,15 +405,21 @@ document peut avoir des vues nommées :
 
 - `name` et `xslt` sont obligatoires ; une vue sans l'un d'eux, ou dont le
   nom répète celui d'une autre vue du même document, est ignorée.
-- `css` vide ou absent : la CSS du projet.
+- `css` : le fichier CSS de la vue. Sans lui, `projectCss` dit si la CSS du
+  projet s'ajoute : absent, automatiquement (sauf si la feuille produit son
+  propre `<style>`) ; `always`, toujours ; `never`, jamais (une valeur
+  inconnue vaut l'automatique). Les règles de Varians (crayons, repères de
+  ligne) s'ajoutent toujours, et les variables CSS (`var()`) d'un fichier
+  CSS comme d'un `<style>` produit par la feuille sont remplacées par leur
+  valeur, Qt ne les comprenant pas.
 - `units` : les éléments modifiables comme fragment (crayon ✎), comptés
   partout dans le document ; absent, la règle de l'édition. Un nom
   d'élément invalide est écarté.
 - Les vues s'écrivent par le menu « Vues » de la Vue XSLT / CSS (« Nouvelle
   vue… », « Modifier la vue… », « Retirer la vue ») ; project.xml est
   réécrit avec sa copie `.bak`, et les fichiers d'une vue retirée restent.
-  « Nouvelle vue… » peut écrire une feuille XSLT 1.0 et une CSS de départ
-  dans `xslt/` et `rendering/`, sans jamais remplacer un fichier.
+  « Nouvelle vue… » peut écrire une feuille XSLT (1.0 ou 3.0) et une CSS de
+  départ dans `xslt/` et `rendering/`, sans jamais remplacer un fichier.
 - La vue choisie pour chaque document est retenue dans les réglages locaux
   du projet, pas dans project.xml.
 
