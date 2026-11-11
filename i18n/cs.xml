@@ -63,6 +63,8 @@
   <string key="preview.view.project">Pohled projektu</string>
   <string key="preview.view.files.tip">Styl XSLT: {xslt}\nCSS: {css}</string>
   <string key="preview.view.units.tip">Upravitelné prvky: {units}</string>
+  <string key="preview.view.css.auto">automaticky: ta ze šablony XSLT, pokud vytváří vlastní &lt;style&gt;, jinak {css}</string>
+  <string key="preview.view.css.none">žádné: ta ze šablony XSLT</string>
   <string key="views.menu">Pohledy</string>
   <string key="views.new">Nový pohled…</string>
   <string key="views.edit">Upravit pohled…</string>

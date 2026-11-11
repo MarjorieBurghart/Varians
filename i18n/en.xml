@@ -63,6 +63,8 @@
   <string key="preview.view.project">Project view</string>
   <string key="preview.view.files.tip">XSLT stylesheet: {xslt}\nCSS: {css}</string>
   <string key="preview.view.units.tip">Editable elements: {units}</string>
+  <string key="preview.view.css.auto">automatic: the XSLT stylesheet’s own if it produces a &lt;style&gt;, otherwise {css}</string>
+  <string key="preview.view.css.none">none: the XSLT stylesheet’s own</string>
   <string key="views.menu">Views</string>
   <string key="views.new">New view…</string>
   <string key="views.edit">Edit view…</string>

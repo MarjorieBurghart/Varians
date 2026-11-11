@@ -63,6 +63,8 @@
   <string key="preview.view.project">Vista del progetto</string>
   <string key="preview.view.files.tip">Foglio di stile XSLT: {xslt}\nCSS: {css}</string>
   <string key="preview.view.units.tip">Elementi modificabili: {units}</string>
+  <string key="preview.view.css.auto">automatico: quello del foglio XSLT se produce un proprio &lt;style&gt;, altrimenti {css}</string>
+  <string key="preview.view.css.none">nessuno: quello del foglio XSLT</string>
   <string key="views.menu">Viste</string>
   <string key="views.new">Nuova vista…</string>
   <string key="views.edit">Modifica vista…</string>

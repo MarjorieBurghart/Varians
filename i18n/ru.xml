@@ -63,6 +63,8 @@
   <string key="preview.view.project">Вид проекта</string>
   <string key="preview.view.files.tip">Таблица стилей XSLT: {xslt}\nCSS: {css}</string>
   <string key="preview.view.units.tip">Редактируемые элементы: {units}</string>
+  <string key="preview.view.css.auto">автоматически: CSS таблицы стилей XSLT, если она создаёт свой &lt;style&gt;, иначе {css}</string>
+  <string key="preview.view.css.none">нет: CSS самой таблицы стилей XSLT</string>
   <string key="views.menu">Виды</string>
   <string key="views.new">Новый вид…</string>
   <string key="views.edit">Изменить вид…</string>

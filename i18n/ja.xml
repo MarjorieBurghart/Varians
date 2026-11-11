@@ -63,6 +63,8 @@
   <string key="preview.view.project">プロジェクトのビュー</string>
   <string key="preview.view.files.tip">XSLTスタイルシート：{xslt}\nCSS：{css}</string>
   <string key="preview.view.units.tip">編集可能な要素：{units}</string>
+  <string key="preview.view.css.auto">自動：XSLTスタイルシートが独自の &lt;style&gt; を出力すればそれを使い、なければ {css}</string>
+  <string key="preview.view.css.none">なし：XSLTスタイルシート自身のもの</string>
   <string key="views.menu">ビュー</string>
   <string key="views.new">新しいビュー…</string>
   <string key="views.edit">ビューを編集…</string>

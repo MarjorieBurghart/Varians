@@ -150,7 +150,8 @@ def test_the_edition_has_its_named_views(open_window, views_project, qtbot):
     assert view.select_view("Brute")
     assert view.xsl_path == (views_project.parent / "xslt" / "brute.xsl").resolve()
     assert view.css_path == window.project.css                         # CSS du projet
-    assert view.view_combo.toolTip() == tr("preview.view.files.tip", xslt=view.xsl_path, css=view.css_path)
+    assert view.view_combo.toolTip() == tr("preview.view.files.tip", xslt=view.xsl_path,
+                                           css=tr("preview.view.css.auto", css=view.css_path))
     _wait_preview(qtbot, view, "Vue brute")
     assert len(view.preview._paragraph_markers) > 1                    # crayons de l'édition
     assert view.select_view(None)
