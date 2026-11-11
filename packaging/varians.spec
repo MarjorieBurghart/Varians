@@ -10,9 +10,10 @@ décompressé à chaque lancement, et les bibliothèques Qt restent des
 fichiers distincts (LGPL). Les fichiers de données sont lus à côté des
 modules (``Path(__file__).parent``) : ils sont placés dans ``_internal/``
 (``Contents/Resources`` d'un paquet macOS), sous le même nom de dossier
-que dans les sources. Les processus de validation et de transformation
-relancent l'exécutable lui-même (``--relaxng-worker``,
-``--transform-worker``, voir validation_worker et transform_worker)."""
+que dans les sources. Les processus de validation, de transformation et
+d'aperçu Saxon relancent l'exécutable lui-même (``--relaxng-worker``,
+``--transform-worker``, ``--preview-worker`` : voir validation_worker,
+transform_worker et saxon_preview)."""
 import re
 import sys
 from pathlib import Path

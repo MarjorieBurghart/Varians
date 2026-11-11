@@ -14,6 +14,8 @@
   l'interface Qt (``worker_problem``) ;
 - ``transform_lxml``, ``transform_saxon`` : une transformation XSLT dans
   son processus, avec chacun des deux moteurs, de même sans l'interface ;
+- ``preview_saxon`` : le processus d'aperçu des vues en XSLT 3.0
+  (V0.9.4.4), qui reste ouvert, de même ;
 - ``window`` : le projet ouvert dans la fenêtre de Varians, avec son icône,
   puis fermé.
 
@@ -33,7 +35,7 @@ from pathlib import Path
 
 LANGUAGES = ("fr", "en", "de", "ja", "cs", "it", "ru")
 CHECKS = ("translations", "help", "resources", "project", "relaxng_worker", "transform_lxml",
-          "transform_saxon", "window")
+          "transform_saxon", "preview_saxon", "window")
 # Ressources sans lesquelles une fonction de Varians ne marche pas.
 RESOURCES = (
     "rendering/tei-to-html.xsl", "rendering/tei.css", "rendering/edition-critique.xsl",
@@ -181,6 +183,27 @@ def _transform(project_path, engine):
     return f"{engine} : {output}"
 
 
+def _preview_saxon(root):
+    """Le processus d'aperçu des vues en XSLT 3.0 (saxon_preview), lancé
+    comme Varians le fait : l'édition d'essai, mise en forme par « Apparat
+    en notes », avec ses crayons."""
+    from fragment_units import mark_units, place_edit_markers
+    from saxon_preview import SaxonPreviewClient
+    worker = SaxonPreviewClient()
+    try:
+        problem = worker_problem(worker.ping(timeout=180), _frozen())
+        if problem:
+            raise AssertionError(problem)
+        marked, spans = mark_units(EDITION)
+        result = worker.transform(marked, Path(root) / "rendering" / "apparat-en-notes.xsl", {}, timeout=180)
+    finally:
+        worker.close()
+    html, pencils = place_edit_markers(result.html)
+    if "principio" not in html or pencils != len(spans):
+        raise AssertionError(f"aperçu inexact : {pencils} crayon(s) pour {len(spans)} élément(s)")
+    return f"{result.engine} : {pencils} crayon(s)"
+
+
 def _window(project_path, window_class):
     from PySide6.QtWidgets import QApplication
     from app_context import apply_application_icon
@@ -241,6 +264,7 @@ def run(report_path=None, *, root=None, window_class=None, only=CHECKS) -> int:
         check("relaxng_worker", lambda: _relaxng_worker(folder))
         check("transform_lxml", needs_project(lambda path: _transform(path, "lxml")))
         check("transform_saxon", needs_project(lambda path: _transform(path, "saxon")))
+        check("preview_saxon", lambda: _preview_saxon(root))
         if window_class is not None:
             check("window", needs_project(lambda path: _window(path, window_class)))
     ok = bool(checks) and all(item["ok"] for item in checks)

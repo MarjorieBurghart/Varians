@@ -261,3 +261,10 @@ def test_the_workflows_use_actions_that_run_on_node_24():
             assert int(major) >= minimum[action], (workflow.name, action, major)
             found.append(action)
     assert set(found) == set(minimum)
+
+
+def test_the_build_expects_every_check_of_the_self_test():
+    """Une vérification ajoutée à self_test (V0.9.4.4 : preview_saxon) est
+    aussi exigée du rapport de la version construite."""
+    import self_test
+    assert _build().EXPECTED_CHECKS == self_test.CHECKS

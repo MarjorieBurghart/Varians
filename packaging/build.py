@@ -38,7 +38,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 NAME = "Varians"
 EXPECTED_CHECKS = ("translations", "help", "resources", "project", "relaxng_worker", "transform_lxml",
-                   "transform_saxon", "window")
+                   "transform_saxon", "preview_saxon", "window")
 
 
 def app_version(root=ROOT) -> str:
