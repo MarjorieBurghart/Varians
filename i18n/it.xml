@@ -77,7 +77,11 @@
   <string key="views.create_starter.tip">Un foglio XSLT (1.0 o 3.0, a scelta) che mostra tutto il documento, con i segni di riga del testimone pivot, e un CSS semplice, denominati come la vista, nelle cartelle xslt/ e rendering/ del progetto.</string>
   <string key="views.xslt">Foglio XSLT:</string>
   <string key="views.css">CSS:</string>
-  <string key="views.css.placeholder">vuoto: il CSS del progetto</string>
+  <string key="views.css.file">File CSS:</string>
+  <string key="views.css.mode.auto">Automatico: quello del foglio se ha un proprio &lt;style&gt;, altrimenti quello del progetto</string>
+  <string key="views.css.mode.always">Quello del progetto</string>
+  <string key="views.css.mode.never">Nessuno: quello del foglio XSLT</string>
+  <string key="views.css.mode.file">Un file CSS</string>
   <string key="views.units">Elementi modificabili:</string>
   <string key="views.units.placeholder">vuoto: la regola dell’edizione</string>
   <string key="views.units.tip">Nomi degli elementi che ricevono una matita ✎, separati da spazi (per esempio: person place). Contano ovunque nel documento.</string>

@@ -118,8 +118,10 @@ def test_editing_a_view_rewrites_it_and_keeps_the_choice(open_window, views_proj
             == ("Index", "xslt/index.xsl", "rendering/index.css", "person")
 
     def fill(dialog):
+        assert dialog.css_mode_combo.currentData() == "file"
         dialog.name_edit.setText("Fiches")
-        dialog.css_edit.setText("")
+        dialog.css_mode_combo.setCurrentIndex(dialog.css_mode_combo.findData("auto"))
+        assert not dialog.css_edit.isEnabled()
 
     _answer(dialogs, fill, check)
     assert view.edit_view()
@@ -213,3 +215,56 @@ def test_a_new_view_can_start_from_a_3_0_stylesheet(open_window, project_with_do
         if saxon_preview._CLIENT is not None:
             saxon_preview._CLIENT.close()
             saxon_preview._CLIENT = None
+
+
+
+def _mode(dialog, mode):
+    dialog.css_mode_combo.setCurrentIndex(dialog.css_mode_combo.findData(mode))
+
+
+def test_the_css_of_a_view_is_chosen_in_the_dialog(open_window, views_project, dialogs):
+    """V0.9.4.4 : CSS automatique (celle de la feuille si elle a son propre
+    <style>, sinon celle du projet), celle du projet, aucune, ou un
+    fichier ; le champ du fichier ne sert qu'au dernier choix."""
+    window = open_window(views_project)
+    assert window.show_document(_personnes(window))
+    view = window.formatted_view
+    labels = []
+
+    def check(dialog):
+        labels.extend(dialog.css_mode_combo.itemText(i) for i in range(dialog.css_mode_combo.count()))
+        assert dialog.css_mode_combo.currentData() == "file" and not dialog.css_mode_combo.isEnabled()
+        dialog.create_check.setChecked(False)
+        assert dialog.css_mode_combo.isEnabled() and dialog.css_mode_combo.currentData() == "auto"
+        assert not dialog.css_edit.isEnabled()
+
+    for name, mode, expected in (("Auto", "auto", "auto"), ("Projet", "always", "always"),
+                                 ("Aucune", "never", "never")):
+        def fill(dialog, name=name, mode=mode):
+            dialog.create_check.setChecked(False)
+            dialog.name_edit.setText(name)
+            dialog.xslt_edit.setText("xslt/index.xsl")
+            _mode(dialog, mode)
+        _answer(dialogs, fill, check if name == "Auto" else None)
+        assert view.new_view()
+        assert view.current_view.project_css == expected and view.current_view.css == ""
+    assert labels == [tr("views.css.mode.auto"), tr("views.css.mode.always"), tr("views.css.mode.never"),
+                      tr("views.css.mode.file")]
+    written = {v.name: v for v in _personnes_views(views_project)}
+    assert (written["Auto"].project_css, written["Projet"].project_css, written["Aucune"].project_css) == \
+        ("auto", "always", "never")
+
+    assert view.select_view("Aucune")
+
+    def file_without_path(dialog):
+        assert dialog.css_mode_combo.currentData() == "never" and not dialog.css_edit.isEnabled()
+        _mode(dialog, "file")
+        assert dialog.css_edit.isEnabled()
+        dialog.css_edit.setText("")
+        dialog.accept()                                          # refusée : il faut un fichier CSS
+        assert dialog.result() == 0
+        return QDialog.DialogCode.Rejected
+
+    dialogs.expect("dialog", file_without_path)
+    dialogs.expect("warning")
+    assert not view.edit_view()

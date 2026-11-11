@@ -77,7 +77,11 @@
   <string key="views.create_starter.tip">Ein XSLT-Stylesheet (1.0 oder 3.0, nach Wahl), das das ganze Dokument zeigt, mit den Zeilenmarken des Pivot-Textzeugen, und eine einfache CSS, nach der Ansicht benannt, in den Ordnern xslt/ und rendering/ des Projekts.</string>
   <string key="views.xslt">XSLT-Stylesheet:</string>
   <string key="views.css">CSS:</string>
-  <string key="views.css.placeholder">leer: die CSS des Projekts</string>
+  <string key="views.css.file">CSS-Datei:</string>
+  <string key="views.css.mode.auto">Automatisch: die des Stylesheets, wenn es ein eigenes &lt;style&gt; hat, sonst die des Projekts</string>
+  <string key="views.css.mode.always">Die des Projekts</string>
+  <string key="views.css.mode.never">Keine: die des XSLT-Stylesheets</string>
+  <string key="views.css.mode.file">Eine CSS-Datei</string>
   <string key="views.units">Bearbeitbare Elemente:</string>
   <string key="views.units.placeholder">leer: die Regel der Edition</string>
   <string key="views.units.tip">Namen der Elemente, die einen Stift ✎ erhalten, durch Leerzeichen getrennt (zum Beispiel: person place). Sie zählen überall im Dokument.</string>

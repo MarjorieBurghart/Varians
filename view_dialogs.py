@@ -24,6 +24,9 @@ from view_files import STARTER_VERSIONS, check_view, parse_units, starter_paths,
 
 # Moteur de chaque version d'une feuille de départ (libellés transform.engine.*).
 _ENGINES = {"1.0": "lxml", "3.0": "saxon"}
+# CSS d'une vue (V0.9.4.4) : les trois valeurs de ViewConfig.project_css,
+# puis un fichier CSS de la vue.
+CSS_MODES = ("auto", "always", "never", "file")
 
 
 class ViewDialog(QDialog):
@@ -60,9 +63,16 @@ class ViewDialog(QDialog):
         self.version_combo.setVisible(view is None)
         self.xslt_edit, xslt_row = self._file_row(view.xslt if view is not None else "", "xslt")
         form.addRow(_t("views.xslt"), xslt_row)
+        # CSS de la vue : automatique (celle de la feuille si elle produit son
+        # <style>, sinon celle du projet), celle du projet, aucune, un fichier.
+        self.css_mode_combo = QComboBox()
+        for mode in CSS_MODES:
+            self.css_mode_combo.addItem(_t(f"views.css.mode.{mode}"), mode)
+        form.addRow(_t("views.css"), self.css_mode_combo)
         self.css_edit, css_row = self._file_row(view.css if view is not None else "", "css")
-        self.css_edit.setPlaceholderText(_t("views.css.placeholder"))
-        form.addRow(_t("views.css"), css_row)
+        form.addRow(_t("views.css.file"), css_row)
+        if view is not None:
+            self._set_css_mode("file" if view.css.strip() else view.project_css)
         self.units_edit = QLineEdit(" ".join(view.units if view is not None else units))
         self.units_edit.setPlaceholderText(_t("views.units.placeholder"))
         self.units_edit.setToolTip(_t("views.units.tip"))
@@ -78,7 +88,21 @@ class ViewDialog(QDialog):
 
         self.name_edit.textChanged.connect(self._starter_changed)
         self.create_check.toggled.connect(self._starter_changed)
+        self.css_mode_combo.currentIndexChanged.connect(self._css_mode_changed)
         self._starter_changed()
+        self._css_mode_changed()
+
+    def _set_css_mode(self, mode):
+        self.css_mode_combo.setCurrentIndex(max(0, self.css_mode_combo.findData(mode)))
+
+    def _css_mode(self):
+        return self.css_mode_combo.currentData()
+
+    def _css_mode_changed(self, *_args):
+        """Le champ du fichier CSS ne sert qu'à « Un fichier CSS »."""
+        editable = self._css_mode() == "file" and not self._starter()
+        self.css_edit.setEnabled(editable)
+        self.css_edit.browse_button.setEnabled(editable)
 
     def _file_row(self, text, kind):
         row = QWidget()
@@ -101,18 +125,22 @@ class ViewDialog(QDialog):
         montrés et ne se modifient pas ; sans elles, les champs se
         libèrent (vides)."""
         starter = self._starter()
-        for edit in (self.xslt_edit, self.css_edit):
-            edit.setEnabled(not starter)
-            edit.browse_button.setEnabled(not starter)
+        self.xslt_edit.setEnabled(not starter)
+        self.xslt_edit.browse_button.setEnabled(not starter)
         self.version_combo.setEnabled(starter)
+        # La feuille de départ vient avec sa CSS : un fichier.
+        self.css_mode_combo.setEnabled(not starter)
         if starter:
             xslt, css = starter_paths(self.project.root_dir, self.name_edit.text())
             root = Path(self.project.root_dir)
             self.xslt_edit.setText(xslt.relative_to(root).as_posix())
             self.css_edit.setText(css.relative_to(root).as_posix())
+            self._set_css_mode("file")
         elif self.view is None and self.sender() is self.create_check:
             self.xslt_edit.clear()
             self.css_edit.clear()
+            self._set_css_mode("auto")
+        self._css_mode_changed()
 
     def _browse(self, edit, kind):
         from xslt_scenarios import resolve_path, scenario_path
@@ -130,9 +158,12 @@ class ViewDialog(QDialog):
         from xslt_scenarios import resolve_path
         name = self.name_edit.text().strip()
         starter = self._starter()
+        mode = self._css_mode()
         xslt = resolve_path(self.project, self.xslt_edit.text())
-        css = resolve_path(self.project, self.css_edit.text())
+        css = resolve_path(self.project, self.css_edit.text()) if mode == "file" else None
         error = check_view(name, xslt, css, self.units_edit.text(), self.taken, starter=starter)
+        if error is None and mode == "file" and not starter and css is None:
+            error = "views.error.css"                      # « Un fichier CSS » sans fichier
         if error is not None:
             QMessageBox.warning(self, self.windowTitle(), _t(error))
             return
@@ -144,6 +175,7 @@ class ViewDialog(QDialog):
                 QMessageBox.critical(self, _t("file.save.error.title"), str(exc))
                 return
         else:
-            xslt_text, css_text = self.xslt_edit.text().strip(), self.css_edit.text().strip()
-        self.result_view = ViewConfig(name, xslt_text, css_text, units)
+            xslt_text = self.xslt_edit.text().strip()
+            css_text = self.css_edit.text().strip() if mode == "file" else ""
+        self.result_view = ViewConfig(name, xslt_text, css_text, units, "auto" if mode == "file" else mode)
         super().accept()

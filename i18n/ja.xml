@@ -77,7 +77,11 @@
   <string key="views.create_starter.tip">文書全体を表示し、ピボット伝本の行マーカーも出力する XSLT スタイルシート（1.0 か 3.0 を選択）とシンプルな CSS を、ビュー名にちなんだ名前で、プロジェクトの xslt/ と rendering/ フォルダに作成します。</string>
   <string key="views.xslt">XSLTスタイルシート：</string>
   <string key="views.css">CSS：</string>
-  <string key="views.css.placeholder">空欄：プロジェクトのCSS</string>
+  <string key="views.css.file">CSSファイル：</string>
+  <string key="views.css.mode.auto">自動：スタイルシートが独自の &lt;style&gt; を持てばそれ、なければプロジェクトのCSS</string>
+  <string key="views.css.mode.always">プロジェクトのCSS</string>
+  <string key="views.css.mode.never">なし：XSLTスタイルシート自身のもの</string>
+  <string key="views.css.mode.file">CSSファイル</string>
   <string key="views.units">編集可能な要素：</string>
   <string key="views.units.placeholder">空欄：エディションの規則</string>
   <string key="views.units.tip">鉛筆 ✎ が付く要素の名前をスペースで区切って入力します（例：person place）。文書のどこにあっても対象になります。</string>

@@ -77,7 +77,11 @@
   <string key="views.create_starter.tip">Une feuille XSLT (1.0 ou 3.0, au choix) qui montre tout le document, avec les repères de ligne du témoin pivot, et une CSS simple, nommées d’après la vue, dans les dossiers xslt/ et rendering/ du projet.</string>
   <string key="views.xslt">Feuille XSLT :</string>
   <string key="views.css">CSS :</string>
-  <string key="views.css.placeholder">vide : la CSS du projet</string>
+  <string key="views.css.file">Fichier CSS :</string>
+  <string key="views.css.mode.auto">Automatique : celle de la feuille si elle a son propre &lt;style&gt;, sinon celle du projet</string>
+  <string key="views.css.mode.always">Celle du projet</string>
+  <string key="views.css.mode.never">Aucune : celle de la feuille XSLT</string>
+  <string key="views.css.mode.file">Un fichier CSS</string>
   <string key="views.units">Éléments modifiables :</string>
   <string key="views.units.placeholder">vide : la règle de l’édition</string>
   <string key="views.units.tip">Noms des éléments qui reçoivent un crayon ✎, séparés par des espaces (par exemple : person place). Ils comptent partout dans le document.</string>
