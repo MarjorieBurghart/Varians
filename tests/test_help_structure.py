@@ -161,3 +161,22 @@ def test_reopening_a_project_brings_back_the_cursor(language):
     start = page.index('<p id="large-files">')
     reopening = page[page.rindex("<p>", 0, start):start]
     assert CURSOR_PLACE[language] in reopening
+
+
+VIEW_LABELS = ("preview.formatting", "preview.view.project", "views.menu", "views.new", "views.create_starter",
+               "views.units", "views.edit", "views.remove", "views.open_xslt")
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_named_views_are_explained(language):
+    """V0.9.4.4 : la Vue XSLT / CSS de tout document XML du projet, ses vues
+    nommées et leur gestion ; les libellés cités sont ceux de l'interface,
+    dans l'ordre du menu."""
+    page, catalog = _page(language), _catalog(language)
+    paragraph = page[page.index('<p id="preview-views">'):]
+    paragraph = paragraph[:paragraph.index("</p>")]
+    positions = [paragraph.index(f"<strong>{catalog[key]}</strong>") for key in VIEW_LABELS]
+    assert positions == sorted(positions), language
+    assert "<code>&lt;view&gt;</code>" in paragraph and "<code>units</code>" in paragraph, language
+    assert "XSLT 1.0" in paragraph, language
+    assert 'href="#fragment-units"' in paragraph, language

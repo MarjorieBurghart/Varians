@@ -61,7 +61,7 @@ L’application charge ses traductions FR/EN intégrées, puis les **surcharge**
 
 ## À noter
 
-Les boutons `XSLT…` / `CSS…` de la vue de rendu permettent encore un choix **temporaire pour la session** ; pour changer durablement la XSLT d’un projet, utiliser **Paramètres du projet…**.
+Depuis la V0.9.4.4, les boutons `XSLT…` / `CSS…` de la vue de rendu (choix temporaire pour la session) sont remplacés par les **vues nommées** : la liste « Mise en forme » propose la vue du projet, puis les vues du document affiché, écrites dans `project.xml` (`<view>`, voir `PROJECT_MANAGEMENT.md`). La feuille de la vue du projet se change toujours dans **Paramètres du projet…**.
 
 ## V0.9.2.0 — scénarios de transformation
 
