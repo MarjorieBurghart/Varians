@@ -33,6 +33,13 @@ def schema(tmp_path):
     clear_relaxng_cache()
 
 
+def _responses(output):
+    """Les réponses d'une sortie du processus, sans ses annonces de
+    compilation (``compiling``, ``compiled``)."""
+    lines = (json.loads(line) for line in output.splitlines())
+    return [line for line in lines if "compiling" not in line and "compiled" not in line]
+
+
 def _validate(schema, xml, request_id=1):
     return handle_request({"id": request_id, "op": "validate", "xml": xml, "schema": str(schema),
                            "base_url": None})
@@ -101,7 +108,9 @@ def test_serve_answers_each_line_then_stops_at_end_of_input(schema):
         os.close(in_read)
         os.close(out_write)
     with os.fdopen(out_read, "rb") as output:
-        responses = [json.loads(line) for line in output.read().splitlines()]
+        lines = [json.loads(line) for line in output.read().splitlines()]
+    # Les annonces de compilation (voir plus bas) ne sont pas des réponses.
+    responses = [line for line in lines if "compiling" not in line and "compiled" not in line]
     assert [r.get("id") for r in responses] == [1, 2, None]
     # Hors du processus de validation, les règles Schematron gardent ensuite
     # l'accès au réseau : Saxon le retirerait à tout le processus.
@@ -122,7 +131,7 @@ def test_varians_itself_starts_the_worker_without_loading_qt(schema):
                ).encode("utf-8"),
         capture_output=True, timeout=60, cwd=str(schema.parent))
     assert process.returncode == 0, process.stderr.decode("utf-8", "replace")
-    ping, validation = (json.loads(line) for line in process.stdout.splitlines())
+    ping, validation = _responses(process.stdout)
     assert ping["ok"] is True and ping["qt_loaded"] is False and ping["gui_loaded"] is False
     assert result_from_dict(validation["result"]).valid
 
@@ -248,8 +257,41 @@ def test_the_worker_reports_where_an_incorrect_rule_is(tmp_path, schema):
             input=(json.dumps(request) + "\n").encode("utf-8"), stdout=subprocess.PIPE, stderr=errors,
             timeout=120, cwd=str(tmp_path), env=dict(os.environ, VARIANS_STDERR_LOG=str(log)))
     assert process.returncode == 0, log.read_text(encoding="utf-8", errors="replace")
-    result = result_from_dict(json.loads(process.stdout.splitlines()[0])["result"])
+    result = result_from_dict(_responses(process.stdout)[0]["result"])
     assert result.valid and result.issues == ()
     [error] = result.schematron_errors
     assert (error.file, error.line, error.type_name) == (str(rules), 5, "xpath")
     assert error.message.startswith("XPST0003")
+
+
+def _serve(requests):
+    data = b"".join(json.dumps(r).encode("utf-8") + b"\n" for r in requests)
+    in_read, in_write = os.pipe()
+    out_read, out_write = os.pipe()
+    os.write(in_write, data)
+    os.close(in_write)
+    try:
+        assert serve(in_read, out_write) == 0
+    finally:
+        os.close(in_read)
+        os.close(out_write)
+    with os.fdopen(out_read, "rb") as output:
+        return [json.loads(line) for line in output.read().splitlines()]
+
+
+def test_the_worker_announces_each_schema_compilation(schema):
+    # Le client distingue ainsi une compilation sans fin (certains schémas
+    # TEI dans libxml2) d'une longue validation : voir validation_worker.
+    import relaxng_validation
+    lines = _serve([{"id": 1, "op": "validate", "xml": "<root/>", "schema": str(schema)},
+                    {"id": 2, "op": "validate", "xml": "<root><p>a</p></root>", "schema": str(schema)}])
+    key = str(schema.resolve())
+    assert lines[:2] == [{"id": 1, "compiling": key}, {"id": 1, "compiled": key}]
+    assert [line["id"] for line in lines[2:]] == [1, 2]                 # schéma déjà compilé
+    assert all("result" in line for line in lines[2:])
+    assert relaxng_validation.COMPILE_NOTICE is None                    # rendu après serve()
+
+
+def test_an_abandoned_result_survives_a_json_round_trip():
+    result = ValidationResult(True, False, True, False, (), "compilation abandoned", abandoned=True)
+    assert result_from_dict(json.loads(json.dumps(result_to_dict(result)))) == result

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Validation RELAX NG sans figer la fenêtre : la validation automatique part
 vers le processus séparé, la validation demandée (F8, enregistrement) attend
-sa réponse en laissant la fenêtre se redessiner."""
+sa réponse en laissant la fenêtre se redessiner, deux secondes au plus ; une
+réponse plus tardive est affichée à son arrivée."""
 from __future__ import annotations
 
 import sys
@@ -17,6 +18,7 @@ from app_context import tr
 from validation_worker import RelaxNGWorkerClient
 
 SLOW_WORKER = Path(__file__).with_name("slow_relaxng_worker.py")
+STUCK_WORKER = Path(__file__).with_name("stuck_relaxng_worker.py")
 
 
 @pytest.fixture
@@ -98,6 +100,42 @@ def test_saving_during_validation_waits_then_warns(open_window, example_project,
     assert not client.busy
 
 
+def test_a_long_validation_does_not_hold_the_save(open_window, example_project, slow_worker, dialogs, qtbot,
+                                                monkeypatch):
+    # Au-delà de l'attente, le fichier est enregistré sans attendre la
+    # validation ; son résultat s'affiche ensuite.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 300)
+    client = slow_worker(2.0)
+    window = open_window(example_project, wait_validation=False)
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    _insert_after(window, "<body>", "\n<forbidden/>")
+    started = time.perf_counter()
+    assert window.save()
+    assert time.perf_counter() - started < 1.8
+    assert "<forbidden/>" in (example_project.parent / "xml" / "edition.xml").read_text(encoding="utf-8")
+    assert dialogs.seen == []
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert window._last_rng_result is not None and not window._last_rng_result.valid
+    assert window.rng_status.text() not in (tr("rng.status.running"), tr("rng.status.valid"))
+
+
+def test_a_long_manual_validation_shows_its_result_on_arrival(open_window, example_project, slow_worker, qtbot,
+                                                              monkeypatch):
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 300)
+    client = slow_worker(2.0)
+    window = open_window(example_project, wait_validation=False)
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    _insert_after(window, "<body>", "\n<forbidden/>")
+    started = time.perf_counter()
+    window.validate_relaxng_manual()
+    assert time.perf_counter() - started < 1.8
+    assert window.rng_status.text() == tr("rng.status.running")
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert window._last_rng_result is not None and not window._last_rng_result.valid
+    assert window.validation_table.rowCount() >= 1
+    assert window.validation_panel.isVisible()
+
+
 def test_manual_validation_returns_its_result(open_window, example_project, slow_worker):
     slow_worker(0.5)
     window = open_window(example_project, wait_validation=False)
@@ -114,3 +152,28 @@ def test_an_unavailable_worker_is_reported_once_and_validation_still_works(open_
     window = open_window(example_project)
     assert window.rng_status.text() == tr("rng.status.valid")
     assert window.statusBar().currentMessage() == tr("rng.worker.fallback", reason=client.fallback_reason)
+
+
+def test_an_abandoned_compilation_is_shown_and_can_be_retried(open_window, example_project, qtbot, monkeypatch):
+    # Schéma dont la compilation ne finit jamais (comme tei_ms.rng dans
+    # libxml2 avant le correctif de relaxng_validation) : la validation est
+    # abandonnée, l'état le dit, et ↻ la relance.
+    monkeypatch.setattr(validation_worker, "COMPILE_LIMIT_SEC", 1)
+    xml = example_project.parent / "xml"
+    (xml / "bloque.rng").write_text((xml / "test.rng").read_text(encoding="utf-8"), encoding="utf-8")
+    edition = xml / "edition.xml"
+    edition.write_text(edition.read_text(encoding="utf-8").replace('href="test.rng"', 'href="bloque.rng"'),
+                       encoding="utf-8")
+    client = RelaxNGWorkerClient([sys.executable, str(STUCK_WORKER)])
+    monkeypatch.setattr(validation_worker, "_client", client)
+    try:
+        window = open_window(example_project, wait_validation=False)
+        qtbot.waitUntil(lambda: window.rng_status.text() == tr("rng.status.abandoned"), timeout=20000)
+        assert window.validation_summary.text() == tr("rng.panel.abandoned", path="bloque.rng", seconds=1)
+        assert window._last_rng_result.abandoned
+        started = time.perf_counter()
+        window.refresh_schema_cache()                                # bouton ↻
+        assert time.perf_counter() - started >= 0.9                 # essayé de nouveau
+        assert window.rng_status.text() == tr("rng.status.abandoned")
+    finally:
+        client.shutdown()

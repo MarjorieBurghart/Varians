@@ -55,6 +55,7 @@ from project_config import DocumentConfig
 from relaxng_validation import ValidationIssue, lxml_available, relaxng_schema_token
 from schema_resolution import detect_xml_models, resolve_schema, rules_outside, schema_site
 from text_search import Utf16Positions
+import validation_worker
 from validation_worker import worker_client
 from xml_assembly import path_key
 
@@ -477,9 +478,11 @@ class ValidationPanelMixin:
         self.validate_relaxng_document(show_panel=True, show_success_message=True, ask_rules=True)
 
     def refresh_schema_cache(self):
-        """Force le rechargement d'un RNG distant déclaré par xml-model."""
+        """Force le rechargement d'un RNG distant déclaré par xml-model ; un
+        schéma dont la compilation a été abandonnée est essayé de nouveau."""
         self._completion_model = None
         self._completion_model_key = None
+        worker_client().forget_abandoned()
         self.validate_relaxng_document(show_panel=True, show_success_message=True, refresh_schema=True,
                                        ask_rules=True)
 
@@ -863,8 +866,26 @@ class ValidationPanelMixin:
         if background:
             self._validate_in_background(text, schema, base_url, options, parts, sources, rules)
             return None
-        return self._apply_rng_result(
-            worker_client().validate(text, schema, base_url, parts=parts, schematron=sources, rules=rules), **options)
+        # Attente bornée (validation_worker.SYNC_WAIT_MSEC) : au-delà, la
+        # fenêtre redevient utilisable et le résultat s'affiche à son arrivée.
+        result = worker_client().validate(text, schema, base_url, parts=parts, schematron=sources, rules=rules,
+                                          owner=self, late=self._late_result(self._apply_rng_result, options))
+        if result is None:
+            return None
+        return self._apply_rng_result(result, **options)
+
+    def _late_result(self, apply, options):
+        """Rappel d'une validation demandée dont la réponse arrive après
+        l'attente : ``apply(result, **options)`` si elle concerne encore le
+        document affiché ; un document quitté sera validé à son retour."""
+        session = self.document
+
+        def arrived(result):
+            if self.document is session:
+                apply(result, **options)
+            elif session.view_state:
+                session.view_state["status"] = None
+        return arrived
 
     def _validate_in_background(self, text, schema, base_url, options, parts=None, sources=(), rules=None):
         """Validation automatique : la fenêtre reste utilisable. Le résultat est
@@ -919,6 +940,16 @@ class ValidationPanelMixin:
             rng_valid = (_t("rng.status.no_xml_model"), "color:#777")
         else:
             rng_valid = (_t("rng.status.valid"), "color:#376b3c")
+
+        if result.abandoned:                                # compilation trop longue (validation_worker)
+            self._clear_validation_table()
+            self.validation_summary.setText(_t("rng.panel.abandoned", path=schema_name,
+                                               seconds=validation_worker.COMPILE_LIMIT_SEC))
+            self.rng_status.setText(_t("rng.status.abandoned"))
+            self.rng_status.setStyleSheet("color:#a14b2f;font-weight:600")
+            if show_panel:
+                self.show_validation_panel()
+            return result
 
         if not result.schema_loaded:
             self._populate_validation_issues(result.issues, jump_to_xml=False)

@@ -939,6 +939,21 @@ Varians は表示と解析のためにファイル全体を読み込みます。
   <string key="documents.new.title">新しいXML文書</string>
   <string key="documents.new.root">ルート要素名：</string>
   <string key="documents.new.root_invalid">「{name}」は有効なXML要素名ではありません。</string>
+  <string key="documents.new.template">テンプレート：</string>
+  <string key="documents.new.edition">校訂本文と同じスキーマ</string>
+  <string key="documents.new.edition.tip">TEIの「All」スケルトンに、校訂本文のスキーマを宣言したもの。</string>
+  <string key="documents.new.edition.none">校訂本文はスキーマを宣言しておらず（&lt;?xml-model?&gt;）、プロジェクトも指定していません。</string>
+  <string key="documents.new.group.project">プロジェクトのテンプレート（{folder}/）</string>
+  <string key="documents.new.project.tip">プロジェクトの{folder}/フォルダにあるXML文書を、そのままコピーします。</string>
+  <string key="documents.new.project.empty">テンプレートがありません。プロジェクトの{folder}/フォルダにXML文書を置いてください。</string>
+  <string key="documents.new.group.tei">TEI P5（{version}）</string>
+  <string key="documents.new.tei.source">TEIのテンプレート。Oxygenが「TEI P5」で提供しているものと同じです（© TEI Consortium、CC BY 3.0またはBSD 2ライセンス）。</string>
+  <string key="documents.new.empty">空のXML文書（ルート要素を指定）</string>
+  <string key="documents.new.schema">スキーマ：{schema}</string>
+  <string key="documents.new.schema.project">スキーマ：{schema}（プロジェクトのスキーマ）</string>
+  <string key="documents.new.schema.none">スキーマ：なし</string>
+  <string key="documents.new.preview">文書の内容：</string>
+  <string key="documents.new.file">ファイル：</string>
   <string key="documents.new.exists">このファイルはすでに存在するため、置き換えません：
 {path}</string>
   <string key="documents.remove.menu">文書をプロジェクトから外す</string>
@@ -1030,6 +1045,8 @@ Varians は表示と解析のためにファイル全体を読み込みます。
   <string key="rng.worker.fallback">RELAX NG の検証を Varians 内で行います（検証プロセスを利用できません：{reason}）。大きなスキーマのコンパイル中はウィンドウが応答しなくなることがあります。</string>
   <string key="rng.status.running">RNG：検証中…</string>
   <string key="rng.status.running.tip">RELAX NG の検証を別プロセスで実行中です。ウィンドウはそのまま使えます。TEI_ALL のような大きなスキーマでは、最初の検証に 10 秒ほどかかることがあります。</string>
+  <string key="rng.status.abandoned">RNG：検証を中止</string>
+  <string key="rng.panel.abandoned">検証を中止しました。スキーマ {path} を{seconds}秒以内にコンパイルできませんでした。↻ ボタンで再試行します。スキーマを変更すると自動的に再試行されます。</string>
   <string key="parts.save_as.title">版の部分</string>
   <string key="parts.save_as.text">この版は相対パスで部分を取り込んでいます：
 {hrefs}

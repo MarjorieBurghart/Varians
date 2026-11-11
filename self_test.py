@@ -38,7 +38,8 @@ CHECKS = ("translations", "help", "resources", "project", "relaxng_worker", "tra
 RESOURCES = (
     "rendering/tei-to-html.xsl", "rendering/tei.css", "rendering/edition-critique.xsl",
     "rendering/apparat-en-notes.xsl", "rendering/custom-elements.xml",
-    "resources/templates/project-template.xml", "resources/schxslt2", "resources/schemas",
+    "resources/templates/project-template.xml", "resources/templates/tei/All.xml",
+    "resources/schxslt2", "resources/schemas",
     "resources/tei-stylesheets/tei-xsl-7.61.0.zip", "resources/icons/feuilleter.svg",
     "resources/varians_logo.png", "resources/icons/varians.png",
     "web_viewer/geometry.js", "web_viewer/iiif.js", "web_viewer/fulltext_search.js",
@@ -135,6 +136,8 @@ def _relaxng_worker(folder):
     completed = subprocess.run(default_worker_command(), input=requests.encode("utf-8"), capture_output=True,
                                timeout=120, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     lines = [json.loads(line) for line in completed.stdout.decode("utf-8").splitlines() if line.strip()]
+    # Les annonces de compilation du schéma ne sont pas des réponses.
+    lines = [line for line in lines if "compiling" not in line and "compiled" not in line]
     if completed.returncode != 0 or len(lines) != 3:
         raise AssertionError(f"code {completed.returncode} : {completed.stderr.decode('utf-8', 'replace')[-800:]}")
     ping, valid, invalid = lines

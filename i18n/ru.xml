@@ -939,6 +939,21 @@ Varians загружает файл целиком, чтобы показать 
   <string key="documents.new.title">Новый XML-документ</string>
   <string key="documents.new.root">Имя корневого элемента:</string>
   <string key="documents.new.root_invalid">«{name}» не является допустимым именем XML-элемента.</string>
+  <string key="documents.new.template">Шаблон:</string>
+  <string key="documents.new.edition">Та же схема, что у издания</string>
+  <string key="documents.new.edition.tip">Каркас TEI «All» со схемой издания.</string>
+  <string key="documents.new.edition.none">Издание не объявляет схему (&lt;?xml-model?&gt;), и проект её не задаёт.</string>
+  <string key="documents.new.group.project">Шаблоны проекта ({folder}/)</string>
+  <string key="documents.new.project.tip">XML-документы из папки {folder}/ проекта, копируются без изменений.</string>
+  <string key="documents.new.project.empty">Нет шаблонов: поместите XML-документы в папку {folder}/ проекта.</string>
+  <string key="documents.new.group.tei">TEI P5 ({version})</string>
+  <string key="documents.new.tei.source">Шаблоны TEI — те, что Oxygen предлагает в разделе «TEI P5» (© TEI Consortium, лицензия CC BY 3.0 или BSD 2).</string>
+  <string key="documents.new.empty">Пустой XML-документ (корневой элемент на выбор)</string>
+  <string key="documents.new.schema">Схема: {schema}</string>
+  <string key="documents.new.schema.project">Схема: {schema} (схема проекта)</string>
+  <string key="documents.new.schema.none">Схема: нет</string>
+  <string key="documents.new.preview">Содержимое документа:</string>
+  <string key="documents.new.file">Файл:</string>
   <string key="documents.new.exists">Этот файл уже существует; он не будет заменён:
 {path}</string>
   <string key="documents.remove.menu">Исключить документ из проекта</string>
@@ -1030,6 +1045,8 @@ Varians загружает файл целиком, чтобы показать 
   <string key="rng.worker.fallback">Проверка RELAX NG выполняется внутри Varians (процесс проверки недоступен: {reason}): во время компиляции большой схемы окно может зависнуть.</string>
   <string key="rng.status.running">RNG: идёт проверка…</string>
   <string key="rng.status.running.tip">Проверка RELAX NG выполняется в отдельном процессе: окном можно пользоваться. Первая проверка по большой схеме, например TEI_ALL, может занять около десяти секунд.</string>
+  <string key="rng.status.abandoned">RNG: проверка прервана</string>
+  <string key="rng.panel.abandoned">Проверка прервана: схему {path} не удалось скомпилировать за {seconds} секунд. Кнопка ↻ повторяет попытку; изменённая схема проверяется заново автоматически.</string>
   <string key="parts.save_as.title">Части издания</string>
   <string key="parts.save_as.text">Издание включает свои части по относительным путям:
 {hrefs}

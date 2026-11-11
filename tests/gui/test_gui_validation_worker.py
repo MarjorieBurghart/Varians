@@ -19,6 +19,7 @@ from validation_worker import RelaxNGWorkerClient, default_worker_command
 
 ROOT = Path(__file__).resolve().parents[2]
 SLOW_WORKER = Path(__file__).with_name("slow_relaxng_worker.py")
+STUCK_WORKER = Path(__file__).with_name("stuck_relaxng_worker.py")
 SCHEMA = """<?xml version="1.0"?>
 <grammar xmlns="http://relaxng.org/ns/structure/1.0">
   <start><element name="root"><zeroOrMore><element name="p"><text/></element></zeroOrMore></element></start>
@@ -86,9 +87,10 @@ def test_no_answer_for_a_destroyed_owner(make_client, schema, qtbot):
     assert answers == []
 
 
-def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, qtbot):
+def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, qtbot, monkeypatch):
     # Validation de 2 s : une attente bloquante figerait la boucle au moins
     # autant ; le seuil de 1,5 s tolère les pauses d'une machine chargée.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 10000)
     client = make_client(_slow(2.0))
     ticks = []
     timer = QTimer()
@@ -110,6 +112,109 @@ def test_waiting_keeps_the_window_alive_and_ignores_clicks(make_client, schema, 
     assert clicks == []                                              # clic ignoré pendant l'attente
     qtbot.wait(50)
     assert clicks == []                                              # et non différé
+
+
+def test_after_the_wait_the_result_comes_later(make_client, schema, qtbot, monkeypatch):
+    # Une validation longue ne bloque la fenêtre que le temps de l'attente ;
+    # le résultat va ensuite au rappel, comme une validation automatique.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 300)
+    client = make_client(_slow(2.0))
+    owner = QPushButton()
+    late = []
+    started = time.perf_counter()
+    assert client.validate("<root/>", schema, owner=owner, late=late.append) is None
+    assert time.perf_counter() - started < 1.5
+    assert client.busy and late == []
+    qtbot.waitUntil(lambda: bool(late), timeout=30000)
+    assert late[0].valid and not client.busy
+
+
+def test_a_long_wait_never_validates_in_varians(make_client, schema, qtbot, monkeypatch):
+    # Autrefois, au bout de l'attente, Varians validait lui-même : la fenêtre
+    # se figeait alors pendant toute la compilation.
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 200)
+    client = make_client(_slow(1.5))
+    reasons = []
+    client.fellBack.connect(reasons.append)
+    assert client.validate("<root/>", schema) is None               # sans rappel : réponse ignorée
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert client.uses_process and reasons == [] and client._results == {}
+    assert client.validate("<root/>", schema, owner=QPushButton(), late=lambda result: None) is None
+
+
+def test_a_late_result_is_dropped_for_a_destroyed_owner(make_client, schema, qtbot, monkeypatch):
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 200)
+    client = make_client(_slow(1.0))
+    owner = QPushButton()
+    late = []
+    assert client.validate("<root/>", schema, owner=owner, late=late.append) is None
+    owner.deleteLater()
+    qtbot.wait(10)
+    qtbot.waitUntil(lambda: not client.busy, timeout=30000)
+    assert late == []
+
+
+def test_the_compilation_limit_is_one_minute():
+    assert validation_worker.COMPILE_LIMIT_SEC == 60
+
+
+def test_a_compilation_that_never_ends_is_abandoned(make_client, schema, tmp_path, qtbot, monkeypatch):
+    # Un schéma peut faire tourner libxml2 sans fin (tei_ms, tei_corpus…
+    # avant le correctif de relaxng_validation) : la compilation est
+    # abandonnée, le processus relancé pour les autres requêtes, et le schéma
+    # n'est plus essayé.
+    monkeypatch.setattr(validation_worker, "COMPILE_LIMIT_SEC", 1)
+    stuck = tmp_path / "bloque.rng"
+    stuck.write_text(SCHEMA, encoding="utf-8")
+    client = make_client([sys.executable, str(STUCK_WORKER)])
+    owner = QPushButton()
+    answers = []
+    client.validate_async("<root/>", stuck, None, owner, lambda result: answers.append(("bloque", result)))
+    client.validate_async("<root/>", schema, None, owner, lambda result: answers.append(("essai", result)))
+    first = client._process
+    qtbot.waitUntil(lambda: len(answers) == 2, timeout=20000)
+    results = dict(answers)
+    assert results["bloque"].abandoned and not results["bloque"].schema_loaded and not results["bloque"].valid
+    assert results["essai"].valid                                   # relancée dans un nouveau processus
+    assert first.poll() is not None and client._process is not first
+    assert client.uses_process and not client.busy
+    # Le schéma abandonné ne part plus vers le processus…
+    started = time.perf_counter()
+    assert client.validate("<root/>", stuck).abandoned
+    assert time.perf_counter() - started < 1.0
+    # … jusqu'à ce qu'on le redemande (bouton ↻ du panneau de validation).
+    client.forget_abandoned()
+    answers.clear()
+    started = time.perf_counter()
+    client.validate_async("<root/>", stuck, None, owner, answers.append)
+    qtbot.waitUntil(lambda: bool(answers), timeout=20000)
+    assert answers[0].abandoned and time.perf_counter() - started >= 0.9
+
+
+def test_a_changed_schema_is_tried_again(make_client, tmp_path, qtbot, monkeypatch):
+    monkeypatch.setattr(validation_worker, "COMPILE_LIMIT_SEC", 1)
+    stuck = tmp_path / "bloque.rng"
+    stuck.write_text(SCHEMA, encoding="utf-8")
+    client = make_client([sys.executable, str(STUCK_WORKER)])
+    answers = []
+    client.validate_async("<root/>", stuck, None, QPushButton(), answers.append)
+    qtbot.waitUntil(lambda: bool(answers), timeout=20000)
+    stuck.write_text(SCHEMA + "\n", encoding="utf-8")                 # schéma modifié
+    answers.clear()
+    started = time.perf_counter()
+    client.validate_async("<root/>", stuck, None, QPushButton(), answers.append)
+    qtbot.waitUntil(lambda: bool(answers), timeout=20000)
+    assert answers[0].abandoned and time.perf_counter() - started >= 0.9
+
+
+def test_a_long_validation_is_not_a_stuck_compilation(make_client, schema, qtbot, monkeypatch):
+    # Seule une compilation annoncée et jamais finie est abandonnée.
+    monkeypatch.setattr(validation_worker, "COMPILE_LIMIT_SEC", 1)
+    client = make_client(_slow(2.0))
+    answers = []
+    client.validate_async("<root/>", schema, None, QPushButton(), answers.append)
+    qtbot.waitUntil(lambda: bool(answers), timeout=20000)
+    assert answers[0].valid and not answers[0].abandoned
 
 
 def test_a_dead_worker_falls_back_to_validation_in_varians(make_client, schema, qtbot):

@@ -927,6 +927,21 @@ Appliquer ces données aux panneaux des témoins ? Le texte TEI ne sera pas modi
   <string key="documents.new.title">Nouveau document XML</string>
   <string key="documents.new.root">Nom de l’élément racine :</string>
   <string key="documents.new.root_invalid">« {name} » n’est pas un nom d’élément XML valide.</string>
+  <string key="documents.new.template">Modèle :</string>
+  <string key="documents.new.edition">Même schéma que l’édition</string>
+  <string key="documents.new.edition.tip">Le squelette « All » de la TEI, avec le schéma de l’édition.</string>
+  <string key="documents.new.edition.none">L’édition ne déclare aucun schéma (&lt;?xml-model?&gt;), et le projet n’en impose pas.</string>
+  <string key="documents.new.group.project">Modèles du projet ({folder}/)</string>
+  <string key="documents.new.project.tip">Les documents XML placés dans le dossier {folder}/ du projet, copiés tels quels.</string>
+  <string key="documents.new.project.empty">Aucun modèle : placez des documents XML dans le dossier {folder}/ du projet.</string>
+  <string key="documents.new.group.tei">TEI P5 ({version})</string>
+  <string key="documents.new.tei.source">Modèles de la TEI, ceux qu’Oxygen propose sous « TEI P5 » (© TEI Consortium, licence CC BY 3.0 ou BSD 2).</string>
+  <string key="documents.new.empty">Document XML vide (élément racine au choix)</string>
+  <string key="documents.new.schema">Schéma : {schema}</string>
+  <string key="documents.new.schema.project">Schéma : {schema} (schéma du projet)</string>
+  <string key="documents.new.schema.none">Schéma : aucun</string>
+  <string key="documents.new.preview">Contenu du document :</string>
+  <string key="documents.new.file">Fichier :</string>
   <string key="documents.new.exists">Ce fichier existe déjà ; il n’est pas remplacé :
 {path}</string>
   <string key="documents.remove.menu">Retirer le document du projet</string>
@@ -1018,6 +1033,8 @@ Le fichier n’est pas supprimé : il reste sur le disque.</string>
   <string key="rng.worker.fallback">Validation RELAX NG faite dans Varians (processus de validation indisponible : {reason}) : la fenêtre peut se figer pendant la compilation d’un gros schéma.</string>
   <string key="rng.status.running">RNG : validation en cours…</string>
   <string key="rng.status.running.tip">Validation RELAX NG en cours dans un processus séparé : la fenêtre reste utilisable. La première validation d’un gros schéma comme TEI_ALL peut prendre une dizaine de secondes.</string>
+  <string key="rng.status.abandoned">RNG : validation abandonnée</string>
+  <string key="rng.panel.abandoned">Validation abandonnée : la compilation du schéma {path} n’a pas abouti en {seconds} secondes. Le bouton ↻ essaie de nouveau ; un schéma modifié est essayé de nouveau de lui-même.</string>
   <string key="parts.save_as.title">Parties de l’édition</string>
   <string key="parts.save_as.text">L’édition inclut ses parties par des chemins relatifs :
 {hrefs}

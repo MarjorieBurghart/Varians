@@ -34,6 +34,12 @@ descripteur 1 :
   ``qt_loaded`` y est vrai, ``gui_loaded`` jamais) ;
 - une requête incorrecte → ``{"id": …, "error": "…"}``.
 
+Avant sa réponse, une requête qui compile un schéma RELAX NG l'annonce :
+``{"id": 1, "compiling": "chemin.rng"}`` puis ``{"id": 1, "compiled":
+"chemin.rng"}`` (V0.9.4.4). Le client distingue ainsi une compilation qui ne
+finit pas (certains schémas TEI font tourner libxml2 sans fin) d'une longue
+validation.
+
 Les descripteurs sont lus directement : ``sys.stdin`` et ``sys.stdout``
 peuvent être absents dans une application Windows sans console. La sortie
 d'erreur est le fichier que nomme la variable ``VARIANS_STDERR_LOG`` (voir
@@ -87,7 +93,8 @@ def result_from_dict(data):
                             bool(data["valid"]), issues, str(data.get("error", "")),
                             schematron_rules=tuple(str(path) for path in data.get("schematron_rules", ())),
                             schematron_errors=tuple(_rules_error(item) for item in data.get("schematron_errors", ())),
-                            schematron_error=str(data.get("schematron_error", "")))
+                            schematron_error=str(data.get("schematron_error", "")),
+                            abandoned=bool(data.get("abandoned", False)))
 
 
 def handle_request(request):
@@ -140,24 +147,38 @@ def serve(input_fd=0, output_fd=1):
 
 
 def _serve(input_fd, output_fd):
+    import relaxng_validation
     reader = os.fdopen(input_fd, "rb", closefd=False)
     writer = os.fdopen(output_fd, "wb", closefd=False)
-    for line in reader:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            request = json.loads(line.decode("utf-8"))
-        except ValueError as exc:
-            response = {"id": None, "error": f"invalid JSON: {exc}"}
-        else:
-            try:
-                response = handle_request(request)
-            except Exception as exc:                  # jamais d'arrêt sur une requête
-                request_id = request.get("id") if isinstance(request, dict) else None
-                response = {"id": request_id, "error": f"{type(exc).__name__}: {exc}"}
-        writer.write(json.dumps(response, ensure_ascii=False).encode("utf-8") + b"\n")
+
+    def send(data):
+        writer.write(json.dumps(data, ensure_ascii=False).encode("utf-8") + b"\n")
         writer.flush()
+
+    current = {"id": None}
+
+    def notice(phase, path):
+        send({"id": current["id"], ("compiling" if phase == "start" else "compiled"): path})
+
+    previous, relaxng_validation.COMPILE_NOTICE = relaxng_validation.COMPILE_NOTICE, notice
+    try:
+        for line in reader:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                request = json.loads(line.decode("utf-8"))
+            except ValueError as exc:
+                response = {"id": None, "error": f"invalid JSON: {exc}"}
+            else:
+                current["id"] = request.get("id") if isinstance(request, dict) else None
+                try:
+                    response = handle_request(request)
+                except Exception as exc:                  # jamais d'arrêt sur une requête
+                    response = {"id": current["id"], "error": f"{type(exc).__name__}: {exc}"}
+            send(response)
+    finally:
+        relaxng_validation.COMPILE_NOTICE = previous
     return 0
 
 

@@ -161,6 +161,12 @@ def isolated_environment(tmp_path, monkeypatch, tei_stylesheets_folder):
     for var in ("HOME", "USERPROFILE", "LOCALAPPDATA", "APPDATA"):
         monkeypatch.setenv(var, str(home))
     monkeypatch.setenv("VARIANS_TEI_STYLESHEETS", str(tei_stylesheets_folder))
+    # Une validation demandée (F8, enregistrement) attend deux secondes au
+    # plus ; une machine de test chargée peut dépasser ce délai (première
+    # compilation Schematron par Saxon). Les tests lisent le résultat aussitôt
+    # après : ils l'attendent donc ; ceux du délai le raccourcissent.
+    import validation_worker
+    monkeypatch.setattr(validation_worker, "SYNC_WAIT_MSEC", 120_000)
 
     def _no_network(*args, **kwargs):
         raise OSError("Accès réseau interdit pendant les tests")

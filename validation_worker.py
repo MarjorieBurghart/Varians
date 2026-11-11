@@ -11,7 +11,9 @@ jamais bloquée par la compilation d'un gros schéma.
 - ``validate_async`` : la réponse arrive plus tard, dans le fil principal ;
 - ``validate`` : attend la réponse en laissant tourner la boucle
   d'événements (la fenêtre se redessine, les animations avancent), mais en
-  ignorant clics et frappes, pour qu'aucune action ne parte au milieu.
+  ignorant clics et frappes, pour qu'aucune action ne parte au milieu ; deux
+  secondes au plus (``SYNC_WAIT_MSEC``) : au-delà, elle rend None et la
+  réponse va plus tard au rappel ``late``, comme pour ``validate_async``.
 
 Avec ``parts`` (``{chemin: texte}``, même vide), l'édition est validée
 assemblée par XInclude (``relaxng_validation.validate_document``) ; avec
@@ -28,9 +30,21 @@ incorrecte ; il est effacé à l'arrêt du processus.
 la même façon le texte d'un fichier Schematron (``schematron_check``), avec
 (V0.9.2.6) le texte non enregistré des fichiers qu'il inclut (``texts``).
 
+**Compilation sans fin** : le processus annonce chaque compilation de schéma
+RELAX NG (relaxng_worker). Un schéma peut faire tourner libxml2 sans fin
+(c'était le cas de tei_ms, tei_corpus, tei_speech et tei_enrich avant le
+correctif de relaxng_validation, ``single_patterns_unwrapped``) ; au-delà de
+``COMPILE_LIMIT_SEC``, la compilation est abandonnée : le processus est
+arrêté, puis relancé pour les autres requêtes ; celles de ce schéma reçoivent
+un résultat ``abandoned``, comme toute requête suivante pour ce schéma tant
+qu'il n'a pas changé ou qu'on ne le redemande pas (``forget_abandoned``,
+bouton ↻ du panneau de validation).
+
 **Repli** : si le processus ne démarre pas ou s'arrête, la validation se fait
 dans Varians même, comme avant la V0.8.9.2 (la fenêtre est alors bloquée
-pendant la compilation), et les requêtes en cours ne sont pas perdues.
+pendant la compilation), et les requêtes en cours ne sont pas perdues. Un
+processus seulement lent (compilation d'un gros schéma) n'y conduit jamais :
+valider dans Varians figerait la fenêtre pendant toute la compilation.
 """
 from __future__ import annotations
 
@@ -41,6 +55,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -48,13 +63,17 @@ import shiboken6
 from PySide6.QtCore import QCoreApplication, QEvent, QEventLoop, QObject, QTimer, Qt, Signal
 from PySide6.QtWidgets import QApplication
 
-from relaxng_validation import STDERR_LOG, validate_document
+from relaxng_validation import STDERR_LOG, ValidationResult, validate_document
 from relaxng_worker import result_from_dict
 
 _APPLICATION_DIR = Path(__file__).resolve().parent
-# Attente maximale d'une validation demandée, au-delà de laquelle Varians
-# valide lui-même (processus bloqué).
-SYNC_TIMEOUT_MSEC = 300_000
+# Attente maximale d'une validation demandée (F8, enregistrement) : au-delà,
+# la fenêtre redevient utilisable et le résultat est affiché à son arrivée.
+SYNC_WAIT_MSEC = 2000
+# Durée maximale de la compilation d'un schéma RELAX NG dans le processus
+# (TEI_ALL, le plus gros schéma de la TEI : une dizaine de secondes) ; au-delà,
+# elle est abandonnée.
+COMPILE_LIMIT_SEC = 60
 _BLOCKED_EVENTS = frozenset({
     QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonRelease, QEvent.Type.MouseButtonDblClick,
     QEvent.Type.KeyPress, QEvent.Type.KeyRelease, QEvent.Type.Wheel, QEvent.Type.Shortcut,
@@ -89,6 +108,7 @@ class RelaxNGWorkerClient(QObject):
     busyChanged = Signal(bool)
     # Le processus est indisponible : raison, émise une seule fois.
     fellBack = Signal(str)
+    # (génération du processus, données reçues)
     _received = Signal(object)
     _delivered = Signal(int)
 
@@ -104,6 +124,15 @@ class RelaxNGWorkerClient(QObject):
         self._stopping = False
         self.fallback_reason = ""
         self.compilations = None
+        # Processus successifs : les messages d'un processus arrêté sont ignorés.
+        self._generation = 0
+        # Compilation en cours : (requête, chemin du schéma, début).
+        self._compiling = None
+        # Schémas abandonnés : chemin → signature du fichier.
+        self._abandoned = {}
+        self._watchdog = QTimer(self)
+        self._watchdog.setInterval(500)
+        self._watchdog.timeout.connect(self._check_compilation)
         self._received.connect(self._on_received)
 
     @property
@@ -129,10 +158,14 @@ class RelaxNGWorkerClient(QObject):
         return self._submit(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules),
                             owner, callback)
 
-    def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None, rules=None):
+    def validate(self, xml_text, schema_path, base_url=None, parts=None, schematron=None, rules=None, *,
+                 owner=None, late=None):
         """Valide et renvoie le résultat ; la fenêtre continue de se redessiner
-        pendant l'attente, sans traiter clics ni frappes."""
-        return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules))
+        pendant l'attente, sans traiter clics ni frappes. Sans réponse au bout
+        de ``SYNC_WAIT_MSEC``, renvoie None : la réponse ira à ``late(result)``
+        (voir ``validate_async`` pour ``owner``), ou sera ignorée."""
+        return self._wait(_validate_request(xml_text, schema_path, base_url, parts, schematron, rules),
+                          owner, late)
 
     def check_schematron_async(self, text, path, owner, callback, texts=None):
         """Vérifie sans attendre le texte du fichier Schematron *path* (voir
@@ -140,33 +173,99 @@ class RelaxNGWorkerClient(QObject):
         inclus non enregistrés (V0.9.2.6)."""
         return self._submit(_check_request(text, path, texts), owner, callback)
 
-    def check_schematron(self, text, path, texts=None):
-        """Vérifie le texte du fichier Schematron *path* et rend le résultat
-        (voir ``validate``)."""
-        return self._wait(_check_request(text, path, texts))
+    def check_schematron(self, text, path, texts=None, *, owner=None, late=None):
+        """Vérifie le texte du fichier Schematron *path* et rend le résultat,
+        ou None au-delà de l'attente (voir ``validate``)."""
+        return self._wait(_check_request(text, path, texts), owner, late)
 
-    def _wait(self, request):
+    def _wait(self, request, owner=None, late=None):
         if QCoreApplication.instance() is None:             # pas de boucle d'événements
             return self._validate_here(request)
         request_id = self._submit(request, None, None)
         if request_id not in self._results:
             self._wait_for(request_id)
-        return self._results.pop(request_id)
+        if request_id in self._results:
+            return self._results.pop(request_id)
+        entry = self._pending.get(request_id)                # toujours en cours : réponse plus tard
+        if entry is not None:
+            entry.owner, entry.callback = owner, (late if late is not None else _ignore)
+        return None
 
     def _submit(self, request, owner, callback):
         self._next_id += 1
         request_id = self._next_id
         request = dict(request, id=request_id)
         entry = _Pending(request, owner, callback)
-        if not self._ensure_process():
-            self._deliver(request_id, entry, self._validate_here(request), was_pending=False)
+        abandoned = self._abandoned_result(request)
+        if abandoned is not None:                           # schéma abandonné : pas d'essai
+            self._deliver(request_id, entry, abandoned, was_pending=False)
             return request_id
+        self._send(request_id, entry)
+        return request_id
+
+    def _send(self, request_id, entry):
+        """Confie la requête au processus (lancé au besoin), ou la valide
+        dans Varians s'il est indisponible."""
+        if not self._ensure_process():
+            self._deliver(request_id, entry, self._validate_here(entry.request), was_pending=False)
+            return
         was_busy = self.busy
         self._pending[request_id] = entry
         if not was_busy:
             self.busyChanged.emit(True)
-        self._outgoing.put((json.dumps(request, ensure_ascii=False) + "\n").encode("utf-8"))
-        return request_id
+        self._outgoing.put((json.dumps(entry.request, ensure_ascii=False) + "\n").encode("utf-8"))
+
+    # --- Compilations abandonnées ---------------------------------------------------
+
+    def forget_abandoned(self):
+        """Les schémas abandonnés seront essayés de nouveau (bouton ↻)."""
+        self._abandoned.clear()
+
+    def _abandoned_result(self, request):
+        """Résultat « abandonné » d'une requête dont le schéma a été abandonné
+        (et n'a pas changé depuis), sinon None."""
+        schema = request.get("schema") if request.get("op") == "validate" else ""
+        if not schema or not self._abandoned:
+            return None
+        key = _schema_key(schema)
+        if key in self._abandoned and self._abandoned[key] == _schema_signature(key):
+            return _abandoned(key)
+        return None
+
+    def _check_compilation(self):
+        """Minuterie : abandonne une compilation trop longue."""
+        if self._compiling is None:
+            self._watchdog.stop()
+            return
+        _request_id, schema, started = self._compiling
+        if time.monotonic() - started >= COMPILE_LIMIT_SEC:
+            self._abandon(schema)
+
+    def _abandon(self, schema):
+        """Arrête le processus qui compile ``schema`` sans fin ; les requêtes
+        de ce schéma reçoivent un résultat « abandonné », les autres partent
+        vers un nouveau processus."""
+        key = _schema_key(schema)
+        self._abandoned[key] = _schema_signature(key)
+        self._compiling = None
+        self._watchdog.stop()
+        self._generation += 1
+        process, self._process = self._process, None
+        if process is not None:
+            process.kill()
+        if self._outgoing is not None:
+            self._outgoing.put(None)
+        self._outgoing = None
+        self._stop_process()
+        pending, self._pending = sorted(self._pending.items()), {}
+        stuck = [(request_id, entry) for request_id, entry in pending
+                 if entry.request.get("op") == "validate" and entry.request.get("schema")
+                 and _schema_key(entry.request["schema"]) == key]
+        for request_id, entry in pending:                    # les autres d'abord : busy reste vrai
+            if (request_id, entry) not in stuck:
+                self._send(request_id, entry)
+        for request_id, entry in stuck:
+            self._deliver(request_id, entry, _abandoned(key), was_pending=True)
 
     def _wait_for(self, request_id):
         loop = QEventLoop()
@@ -179,7 +278,7 @@ class RelaxNGWorkerClient(QObject):
         timeout = QTimer()
         timeout.setSingleShot(True)
         timeout.timeout.connect(loop.quit)
-        timeout.start(SYNC_TIMEOUT_MSEC)
+        timeout.start(SYNC_WAIT_MSEC)
         blocker = _InputBlocker()
         app = QCoreApplication.instance()
         app.installEventFilter(blocker)
@@ -194,8 +293,6 @@ class RelaxNGWorkerClient(QObject):
             app.removeEventFilter(blocker)
             self._delivered.disconnect(arrived)
             timeout.stop()
-        if request_id not in self._results:                 # processus bloqué
-            self._fall_back("timeout")
 
     # --- Processus ----------------------------------------------------------------
 
@@ -217,7 +314,7 @@ class RelaxNGWorkerClient(QObject):
         self._outgoing = queue.Queue()
         threading.Thread(target=self._write_loop, args=(self._process.stdin, self._outgoing),
                          name="relaxng-worker-writer", daemon=True).start()
-        threading.Thread(target=self._read_loop, args=(self._process.stdout,),
+        threading.Thread(target=self._read_loop, args=(self._process.stdout, self._generation),
                          name="relaxng-worker-reader", daemon=True).start()
         return True
 
@@ -239,7 +336,7 @@ class RelaxNGWorkerClient(QObject):
         except (OSError, ValueError):
             pass
 
-    def _read_loop(self, stdout):
+    def _read_loop(self, stdout, generation):
         """Fil de lecture : transmet chaque réponse au fil principal, puis
         ``None`` quand le processus s'arrête."""
         try:
@@ -250,18 +347,32 @@ class RelaxNGWorkerClient(QObject):
                     continue
                 if not shiboken6.isValid(self):
                     return
-                self._received.emit(data)
+                self._received.emit((generation, data))
         except (OSError, ValueError):
             pass
         if shiboken6.isValid(self):
-            self._received.emit(None)
+            self._received.emit((generation, None))
 
-    def _on_received(self, data):
+    def _on_received(self, payload):
+        generation, data = payload
+        if generation != self._generation:                  # processus arrêté (compilation abandonnée)
+            return
         if data is None:
             if not self._stopping and not self.fallback_reason:
                 code = self._process.poll() if self._process is not None else None
                 self._fall_back(f"process ended ({code})")
             return
+        if "compiling" in data:                             # annonce : la compilation commence
+            self._compiling = (data.get("id"), str(data["compiling"]), time.monotonic())
+            self._watchdog.start()
+            return
+        if "compiled" in data:
+            self._compiling = None
+            self._watchdog.stop()
+            return
+        if self._compiling is not None and self._compiling[0] == data.get("id"):
+            self._compiling = None
+            self._watchdog.stop()
         entry = self._pending.pop(data.get("id"), None)
         if entry is None:
             return
@@ -297,6 +408,8 @@ class RelaxNGWorkerClient(QObject):
         if not self.fallback_reason:
             self.fallback_reason = reason or "unavailable"
             self.fellBack.emit(self.fallback_reason)
+        self._compiling = None
+        self._watchdog.stop()
         self._stop_process()
         for request_id in sorted(self._pending):
             entry = self._pending.pop(request_id)
@@ -323,9 +436,37 @@ class RelaxNGWorkerClient(QObject):
         """Arrête le processus (fermeture de Varians) ; une validation en cours
         n'est pas attendue."""
         self._stopping = True
+        self._watchdog.stop()
         if self.busy and self._process is not None:
             self._process.kill()
         self._stop_process()
+
+
+def _schema_key(schema):
+    """Chemin absolu d'un schéma, pour reconnaître le même fichier."""
+    try:
+        return str(Path(schema).expanduser().resolve())
+    except (OSError, ValueError):
+        return str(schema)
+
+
+def _schema_signature(key):
+    """Signature du fichier du schéma : un schéma modifié est essayé de nouveau."""
+    try:
+        stat = os.stat(key)
+    except OSError:
+        return None
+    return stat.st_mtime_ns, stat.st_size
+
+
+def _abandoned(schema):
+    """Résultat d'une validation dont la compilation du schéma a été abandonnée."""
+    return ValidationResult(True, False, True, False, (),
+                            f"RELAX NG compilation abandoned after {COMPILE_LIMIT_SEC} s: {schema}", abandoned=True)
+
+
+def _ignore(_result):
+    """Rappel d'une réponse que plus personne n'attend."""
 
 
 def _validate_request(xml_text, schema_path, base_url, parts, schematron, rules=None):

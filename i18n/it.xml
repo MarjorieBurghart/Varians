@@ -939,6 +939,21 @@ Applicarle ai pannelli dei testimoni? Il testo TEI non verrà modificato.</strin
   <string key="documents.new.title">Nuovo documento XML</string>
   <string key="documents.new.root">Nome dell’elemento radice:</string>
   <string key="documents.new.root_invalid">«{name}» non è un nome di elemento XML valido.</string>
+  <string key="documents.new.template">Modello:</string>
+  <string key="documents.new.edition">Stesso schema dell’edizione</string>
+  <string key="documents.new.edition.tip">Lo scheletro TEI «All», con lo schema dell’edizione.</string>
+  <string key="documents.new.edition.none">L’edizione non dichiara alcuno schema (&lt;?xml-model?&gt;) e il progetto non ne impone.</string>
+  <string key="documents.new.group.project">Modelli del progetto ({folder}/)</string>
+  <string key="documents.new.project.tip">I documenti XML della cartella {folder}/ del progetto, copiati così come sono.</string>
+  <string key="documents.new.project.empty">Nessun modello: inserite documenti XML nella cartella {folder}/ del progetto.</string>
+  <string key="documents.new.group.tei">TEI P5 ({version})</string>
+  <string key="documents.new.tei.source">Modelli della TEI, quelli che Oxygen propone sotto «TEI P5» (© TEI Consortium, licenza CC BY 3.0 o BSD 2).</string>
+  <string key="documents.new.empty">Documento XML vuoto (elemento radice a scelta)</string>
+  <string key="documents.new.schema">Schema: {schema}</string>
+  <string key="documents.new.schema.project">Schema: {schema} (schema del progetto)</string>
+  <string key="documents.new.schema.none">Schema: nessuno</string>
+  <string key="documents.new.preview">Contenuto del documento:</string>
+  <string key="documents.new.file">File:</string>
   <string key="documents.new.exists">Questo file esiste già; non viene sostituito:
 {path}</string>
   <string key="documents.remove.menu">Rimuovi il documento dal progetto</string>
@@ -1030,6 +1045,8 @@ Il file non viene eliminato: resta sul disco.</string>
   <string key="rng.worker.fallback">Validazione RELAX NG eseguita in Varians (processo di validazione non disponibile: {reason}): la finestra può bloccarsi durante la compilazione di uno schema grande.</string>
   <string key="rng.status.running">RNG: validazione in corso…</string>
   <string key="rng.status.running.tip">Validazione RELAX NG in corso in un processo separato: la finestra resta utilizzabile. La prima validazione con uno schema grande come TEI_ALL può richiedere una decina di secondi.</string>
+  <string key="rng.status.abandoned">RNG: validazione interrotta</string>
+  <string key="rng.panel.abandoned">Validazione interrotta: lo schema {path} non è stato compilato entro {seconds} secondi. Il pulsante ↻ riprova; uno schema modificato viene riprovato da sé.</string>
   <string key="parts.save_as.title">Parti dell’edizione</string>
   <string key="parts.save_as.text">L’edizione include le sue parti tramite percorsi relativi:
 {hrefs}

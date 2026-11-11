@@ -927,6 +927,21 @@ Apply them to the witness panels? The TEI text will not be changed.</string>
   <string key="documents.new.title">New XML document</string>
   <string key="documents.new.root">Root element name:</string>
   <string key="documents.new.root_invalid">“{name}” is not a valid XML element name.</string>
+  <string key="documents.new.template">Template:</string>
+  <string key="documents.new.edition">Same schema as the edition</string>
+  <string key="documents.new.edition.tip">The TEI “All” skeleton, with the edition’s schema.</string>
+  <string key="documents.new.edition.none">The edition declares no schema (&lt;?xml-model?&gt;), and the project does not impose one.</string>
+  <string key="documents.new.group.project">Project templates ({folder}/)</string>
+  <string key="documents.new.project.tip">The XML documents placed in the project’s {folder}/ folder, copied as they are.</string>
+  <string key="documents.new.project.empty">No template: place XML documents in the project’s {folder}/ folder.</string>
+  <string key="documents.new.group.tei">TEI P5 ({version})</string>
+  <string key="documents.new.tei.source">TEI templates, those Oxygen offers under “TEI P5” (© TEI Consortium, CC BY 3.0 or BSD 2 licence).</string>
+  <string key="documents.new.empty">Empty XML document (root element of your choice)</string>
+  <string key="documents.new.schema">Schema: {schema}</string>
+  <string key="documents.new.schema.project">Schema: {schema} (project schema)</string>
+  <string key="documents.new.schema.none">Schema: none</string>
+  <string key="documents.new.preview">Document contents:</string>
+  <string key="documents.new.file">File:</string>
   <string key="documents.new.exists">This file already exists; it is not replaced:
 {path}</string>
   <string key="documents.remove.menu">Remove the document from the project</string>
@@ -1018,6 +1033,8 @@ The file is not deleted: it stays on disk.</string>
   <string key="rng.worker.fallback">RELAX NG validation done inside Varians (validation process unavailable: {reason}): the window may freeze while a large schema is compiled.</string>
   <string key="rng.status.running">RNG: validating…</string>
   <string key="rng.status.running.tip">RELAX NG validation running in a separate process: the window remains usable. The first validation against a large schema such as TEI_ALL may take about ten seconds.</string>
+  <string key="rng.status.abandoned">RNG: validation abandoned</string>
+  <string key="rng.panel.abandoned">Validation abandoned: the schema {path} could not be compiled within {seconds} seconds. The ↻ button tries again; a modified schema is tried again automatically.</string>
   <string key="parts.save_as.title">Parts of the edition</string>
   <string key="parts.save_as.text">The edition includes its parts through relative paths:
 {hrefs}

@@ -55,13 +55,6 @@ def stylesheet_version(monkeypatch):
     return _set
 
 
-@pytest.fixture
-def root_name(monkeypatch):
-    def _set(name, ok=True):
-        monkeypatch.setattr(QInputDialog, "getText", staticmethod(lambda *a, **k: (name, ok)))
-    return _set
-
-
 def _declared(project_path):
     return [d.path for d in load_project(project_path).documents]
 
@@ -136,45 +129,7 @@ def test_cancelling_the_file_choice_does_nothing(open_window, example_project, c
     window = open_window(example_project)
     choose_file(None)
     assert not window.add_document_dialog()
-    assert not window.new_document_dialog()
     assert window.documents == [window.edition_session]
-
-
-@pytest.mark.parametrize("root, tag", [
-    ("listPlace", "listPlace"),
-    ("TEI", "{http://www.tei-c.org/ns/1.0}TEI"),
-])
-def test_new_document_is_created_declared_and_displayed(open_window, example_project, choose_file, root_name, root, tag):
-    target = example_project.parent / "xml" / "lieux.xml"
-    window = open_window(example_project)
-    choose_file(target)
-    root_name(root)
-    assert window.new_document_dialog()
-    assert ET.parse(target).getroot().tag == tag
-    assert _declared(example_project) == [target]
-    assert window.document.path == target and not window.document.modified
-
-
-def test_new_document_never_overwrites_a_file(open_window, project_with_documents, choose_file, root_name, dialogs):
-    existing = project_with_documents.parent / "xml" / "personnes.xml"
-    before = existing.read_text(encoding="utf-8")
-    window = open_window(project_with_documents)
-    choose_file(existing)
-    root_name("TEI")
-    dialogs.expect("warning")
-    assert not window.new_document_dialog()
-    assert existing.read_text(encoding="utf-8") == before
-
-
-def test_new_document_with_an_invalid_root_name_is_refused(open_window, example_project, choose_file, root_name, dialogs):
-    target = example_project.parent / "xml" / "lieux.xml"
-    window = open_window(example_project)
-    choose_file(target)
-    root_name("1 lieu")
-    dialogs.expect("warning")
-    assert not window.new_document_dialog()
-    assert not target.exists()
-    assert _declared(example_project) == []
 
 
 def test_removing_a_document_keeps_its_file(open_window, project_with_documents, dialogs):

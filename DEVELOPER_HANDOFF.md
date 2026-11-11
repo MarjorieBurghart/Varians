@@ -126,7 +126,11 @@ i18n/
 web_output/
   viewer.html
   images/...
+[modeles/]
+  [<modèle>.xml]
 ```
+
+`modeles/` (facultatif, jamais créé par Varians) : les modèles de document du projet, proposés par « Nouveau document XML… » sous « Modèles du projet » et copiés tels quels (`document_templates.project_templates`).
 
 `project.xml` contient la configuration du projet, pas les préférences personnelles d'interface. Les témoins affichés et les hauteurs de panneaux sont stockés dans `QSettings`, indexés par le chemin du projet.
 
@@ -358,6 +362,8 @@ C'est un module à traiter avec une prudence éditoriale élevée.
 ### `relaxng_validation.py`
 
 Validation complète RELAX NG via lxml, avec cache de schéma compilé et invalidation quand le schéma principal ou ses dépendances changent.
+
+**Schémas sur lesquels libxml2 tournait sans fin (V0.9.4.4).** Les déclinaisons TEI P5 4.12.0 `tei_ms`, `tei_corpus`, `tei_speech` et `tei_enrich` (modèles « Manuscript description », « Corpus », « Speech », « ENRICH ») faisaient tourner libxml2 sans fin, à mémoire et profondeur de pile constantes (constaté en 2.14.6, celle de lxml 6.1.3, et en 2.9.14, `xmllint` du système) ; `tei_all` n'est pas touché. Cause, trouvée en suivant dans le processus bloqué la liste parcourue (gdb, structures de `relaxng.c`) : `xmlRelaxNGSimplify` traite l'élément `state` (ou `trait`), dont le contenu est un `<group>` à un seul enfant contenant `oneOrMore(ref state)` ; il retombe par cette référence sur `state` pendant qu'il le traite, et la passe imbriquée déroule le groupe et déplace les références d'attributs (`att.global.attributes`…) vers la liste `attrs` ; la première passe reprend avec des pointeurs périmés et les déplace de nouveau : la liste devient circulaire et `xmlRelaxNGSimplify` la parcourt sans fin. Dans `tei_all`, le module *certainty* ajoute `zeroOrMore(precision)` en tête de ce groupe, qui a alors deux enfants et n'est pas déroulé. Correctif : `single_patterns_unwrapped` déroule d'avance, dans l'arbre lu (le fichier n'est pas modifié), chaque `<group>`, `<interleave>` ou `<choice>` à un seul motif enfant — même langage, et libxml2 n'a plus rien à dérouler. Le plus petit schéma qui reproduit la boucle est dans `tests/test_relaxng_libxml2_loop.py`. Vérifié : mêmes verdicts et mêmes erreurs avec `tei_all` (seuls des messages venus d'alternatives abandonnées changent de libellé), les 21 modèles TEI validés contre leur schéma. Fausses pistes écartées : désactiver les automates (contenu rendu « non compilable ») fait rendre de fausses erreurs à l'algorithme général de libxml2 ; réécrire `oneOrMore(X)`, développer les classes ou réordonner `<start>` ne débloque rien. Le filet de `validation_worker` reste pour un schéma inconnu : compilation abandonnée au bout de `COMPILE_LIMIT_SEC` (60 s), « RNG : validation abandonnée ».
 
 ### `schema_resolution.py`
 

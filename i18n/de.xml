@@ -939,6 +939,21 @@ In die Handschriftenansichten übernehmen? Der TEI-Text bleibt unverändert.</st
   <string key="documents.new.title">Neues XML-Dokument</string>
   <string key="documents.new.root">Name des Wurzelelements:</string>
   <string key="documents.new.root_invalid">„{name}“ ist kein gültiger XML-Elementname.</string>
+  <string key="documents.new.template">Vorlage:</string>
+  <string key="documents.new.edition">Gleiches Schema wie die Edition</string>
+  <string key="documents.new.edition.tip">Das TEI-Gerüst „All“ mit dem Schema der Edition.</string>
+  <string key="documents.new.edition.none">Die Edition deklariert kein Schema (&lt;?xml-model?&gt;), und das Projekt schreibt keines vor.</string>
+  <string key="documents.new.group.project">Projektvorlagen ({folder}/)</string>
+  <string key="documents.new.project.tip">Die XML-Dokumente im Ordner {folder}/ des Projekts, unverändert kopiert.</string>
+  <string key="documents.new.project.empty">Keine Vorlage: Legen Sie XML-Dokumente in den Ordner {folder}/ des Projekts.</string>
+  <string key="documents.new.group.tei">TEI P5 ({version})</string>
+  <string key="documents.new.tei.source">Vorlagen der TEI, die Oxygen unter „TEI P5“ anbietet (© TEI Consortium, Lizenz CC BY 3.0 oder BSD 2).</string>
+  <string key="documents.new.empty">Leeres XML-Dokument (Wurzelelement nach Wahl)</string>
+  <string key="documents.new.schema">Schema: {schema}</string>
+  <string key="documents.new.schema.project">Schema: {schema} (Projektschema)</string>
+  <string key="documents.new.schema.none">Schema: keines</string>
+  <string key="documents.new.preview">Inhalt des Dokuments:</string>
+  <string key="documents.new.file">Datei:</string>
   <string key="documents.new.exists">Diese Datei existiert bereits und wird nicht ersetzt:
 {path}</string>
   <string key="documents.remove.menu">Dokument aus dem Projekt entfernen</string>
@@ -1030,6 +1045,8 @@ Die Datei wird nicht gelöscht: Sie bleibt auf dem Datenträger.</string>
   <string key="rng.worker.fallback">RELAX-NG-Validierung innerhalb von Varians (Validierungsprozess nicht verfügbar: {reason}): Das Fenster kann einfrieren, während ein großes Schema kompiliert wird.</string>
   <string key="rng.status.running">RNG: wird validiert…</string>
   <string key="rng.status.running.tip">RELAX-NG-Validierung läuft in einem eigenen Prozess: Das Fenster bleibt benutzbar. Die erste Validierung mit einem großen Schema wie TEI_ALL kann etwa zehn Sekunden dauern.</string>
+  <string key="rng.status.abandoned">RNG: Validierung abgebrochen</string>
+  <string key="rng.panel.abandoned">Validierung abgebrochen: Das Schema {path} konnte nicht innerhalb von {seconds} Sekunden kompiliert werden. Die Schaltfläche ↻ versucht es erneut; ein geändertes Schema wird von selbst erneut versucht.</string>
   <string key="parts.save_as.title">Teile der Edition</string>
   <string key="parts.save_as.text">Die Edition bindet ihre Teile über relative Pfade ein:
 {hrefs}
