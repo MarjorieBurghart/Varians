@@ -176,7 +176,8 @@ def isolated_environment(tmp_path, monkeypatch, tei_stylesheets_folder):
     import iiif_manifest
     import schema_resolution
     import tei_stylesheets
-    for module in (iiif_local, iiif_manifest, schema_resolution, tei_stylesheets):
+    import tei_templates
+    for module in (iiif_local, iiif_manifest, schema_resolution, tei_stylesheets, tei_templates):
         monkeypatch.setattr(module, "urlopen", _no_network)
 
     # Images distantes (IIIF/Gallica) : échec immédiat et explicite, sans les

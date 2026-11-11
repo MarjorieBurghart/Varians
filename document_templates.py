@@ -28,13 +28,15 @@ from pathlib import Path, PureWindowsPath
 from urllib.parse import quote, unquote, urlparse
 from xml.sax.saxutils import escape
 
+import tei_templates as tei_library
 from project_config import DocumentConfig
 from schema_resolution import detect_xml_models
 
 HERE = Path(__file__).resolve().parent
-TEI_TEMPLATES_DIR = HERE / "resources" / "templates" / "tei"
-# Version de TEI P5 dont viennent les modèles livrés.
-TEI_TEMPLATES_VERSION = "4.12.0"
+# Modèles livrés avec Varians et leur version de TEI P5 ; une version plus
+# récente peut être installée (tei_templates) : tei_templates_version().
+TEI_TEMPLATES_DIR = tei_library.BUNDLED_DIR
+TEI_TEMPLATES_VERSION = tei_library.BUNDLED_VERSION
 # Dossier des modèles d'un projet, dans le dossier du projet.
 PROJECT_TEMPLATES_FOLDER = "modeles"
 # Squelette de « Même schéma que l'édition ».
@@ -75,11 +77,17 @@ def _declared_rng(text):
     return ""
 
 
+def tei_templates_version():
+    """Version de TEI P5 des modèles qui servent (``tei_templates.current``)."""
+    return tei_library.current().version
+
+
 def tei_templates():
     """Les modèles de la TEI, dans l'ordre d'Oxygen : alphabétique, sans
     tenir compte de la casse."""
     templates = []
-    for path in sorted(TEI_TEMPLATES_DIR.glob("*.xml"), key=lambda path: path.stem.casefold()):
+    folder = tei_library.current().folder
+    for path in sorted(folder.glob("*.xml"), key=lambda path: path.stem.casefold()):
         schema = _declared_rng(path.read_text(encoding="utf-8"))
         templates.append(DocumentTemplate("tei", path.stem, path, schema))
     return templates

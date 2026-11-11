@@ -5,7 +5,9 @@ Les TEI Stylesheets (V0.9.2.2) s'installent au premier usage dans le dossier
 de données de l'utilisateur : pendant les tests, ce dossier est remplacé par
 un dossier temporaire commun à la session (``VARIANS_TEI_STYLESHEETS``), où
 l'archive livrée n'est extraite qu'une fois. Les tests de l'interface
-(tests/gui/conftest.py) font de même.
+(tests/gui/conftest.py) font de même. Les squelettes TEI téléchargés
+(tei_templates) vont de même dans un dossier temporaire, vide : les
+squelettes livrés servent, sauf dans les tests qui en installent.
 """
 from __future__ import annotations
 
@@ -24,3 +26,15 @@ def tei_stylesheets_library(tmp_path_factory):
         os.environ.pop("VARIANS_TEI_STYLESHEETS", None)
     else:
         os.environ["VARIANS_TEI_STYLESHEETS"] = previous
+
+
+@pytest.fixture(autouse=True, scope="session")
+def tei_templates_library(tmp_path_factory):
+    folder = tmp_path_factory.mktemp("tei-templates")
+    previous = os.environ.get("VARIANS_TEI_TEMPLATES")
+    os.environ["VARIANS_TEI_TEMPLATES"] = str(folder)
+    yield folder
+    if previous is None:
+        os.environ.pop("VARIANS_TEI_TEMPLATES", None)
+    else:
+        os.environ["VARIANS_TEI_TEMPLATES"] = previous
