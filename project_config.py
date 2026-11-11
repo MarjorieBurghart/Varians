@@ -123,13 +123,21 @@ class ViewConfig:
     ``xslt`` et ``css`` sont gardés tels qu'ils sont écrits, comme les chemins
     des scénarios de transformation : relatifs au projet, ou ``${varians}/…``
     (feuilles fournies avec Varians) ; ``xslt_scenarios.resolve_path`` les
-    résout. ``css`` vide : la CSS du projet. ``units`` : les éléments
-    modifiables comme fragment (noms locaux), où qu'ils soient dans le
-    document ; vide : la règle de l'édition (fragment_units)."""
+    résout. ``css`` : la CSS de la vue ; sans elle, ``project_css`` dit si
+    la CSS du projet s'ajoute : ``auto`` (attribut ``projectCss`` absent :
+    oui, sauf si la feuille produit son propre ``<style>``), ``always`` ou
+    ``never``. ``units`` : les éléments modifiables comme fragment (noms
+    locaux), où qu'ils soient dans le document ; vide : la règle de
+    l'édition (fragment_units)."""
     name: str
     xslt: str
     css: str = ""
     units: tuple[str, ...] = ()
+    project_css: str = "auto"
+
+
+# Valeurs de ViewConfig.project_css (attribut projectCss, V0.9.4.4).
+PROJECT_CSS_MODES = ("auto", "always", "never")
 
 
 @dataclass(frozen=True)
@@ -340,7 +348,9 @@ def _parse_views(parent: ET.Element | None) -> tuple[ViewConfig, ...]:
             continue
         names.add(name)
         units = tuple(unit for unit in (view_el.get("units") or "").split() if _UNIT_NAME.fullmatch(unit))
-        views.append(ViewConfig(name, xslt, (view_el.get("css") or "").strip(), units))
+        project_css = (view_el.get("projectCss") or "").strip()
+        views.append(ViewConfig(name, xslt, (view_el.get("css") or "").strip(), units,
+                                project_css if project_css in PROJECT_CSS_MODES else "auto"))
     return tuple(views)
 
 

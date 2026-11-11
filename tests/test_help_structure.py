@@ -218,3 +218,55 @@ def test_views_in_xslt_3_and_line_markers_are_explained(language):
                    "<code>reperes-lignes</code>", "edition-critique.xsl", "410", "412"):
         assert needle in part, (language, needle)
     assert 'href="#view-line-markers"' in page[page.index('<p id="view-stylesheet">'):start], language
+
+
+CSS_LABELS = ("views.css", "views.css.mode.auto", "views.css.mode.always", "views.css.mode.never",
+              "views.css.mode.file", "views.css.file")
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_css_of_a_view_is_explained(language):
+    """V0.9.4.4 : la CSS d'une vue — automatique (celle de la feuille si
+    elle a son propre <style>), celle du projet, aucune, un fichier ;
+    variables CSS remplacées ; projectCss dans project.xml. Les libellés
+    cités sont ceux de la boîte, dans son ordre ; « Vues nommées » y
+    renvoie."""
+    page, catalog = _page(language), _catalog(language)
+    start = page.index('<p id="view-css">')
+    paragraph = page[start:page.index("</p>", start)]
+    positions = [paragraph.index(f"<strong>{catalog[key]}</strong>") for key in CSS_LABELS]
+    assert positions == sorted(positions), language
+    for needle in ("<code>&lt;style&gt;</code>", "<code>var(--", 'projectCss="always"', 'projectCss="never"',
+                   "<code>background-color</code>"):
+        assert needle in paragraph, (language, needle)
+    views = page[page.index('<p id="preview-views">'):]
+    assert 'href="#view-css"' in views[:views.index("</p>")], language
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_an_external_css_of_a_view_is_explained(language):
+    """V0.9.4.4 : une CSS appelée par <link rel="stylesheet"> n'est pas lue
+    par l'aperçu (Qt ne la charge pas) ; elle se déclare dans la vue (« Un
+    fichier CSS »), le <link> servant au navigateur ; <link> et <style> :
+    seul le <style> compte en automatique ; règles après un @media
+    ignorées."""
+    page, catalog = _page(language), _catalog(language)
+    start = page.index('<p id="view-css">')
+    paragraph = page[start:page.index("</p>", start)]
+    link = paragraph.index('<code>&lt;link rel="stylesheet"&gt;</code>')
+    for needle in (f"<strong>{catalog['views.css.mode.file']}</strong>", f"<strong>{catalog['views.css.file']}</strong>",
+                   '<code>css="xslt/catalogue.css"</code>', f"<strong>{catalog['toolbar.transform']}</strong>",
+                   "<code>@media</code>"):
+        assert needle in paragraph[link:], (language, needle)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_javascript_in_a_view_is_explained(language):
+    """V0.9.4.4 : l'aperçu n'exécute pas le JavaScript d'une feuille
+    (<script> ignoré, onclick sans effet) ; pour une page qui en a besoin,
+    un scénario de Transformer et un navigateur."""
+    page, catalog = _page(language), _catalog(language)
+    start = page.index("</pre>", page.index('<p id="view-stylesheet">'))
+    rest = page[start:page.index("</p>", start)]
+    for needle in ("<code>&lt;script&gt;</code>", "<code>onclick</code>", f"<strong>{catalog['toolbar.transform']}</strong>"):
+        assert needle in rest, (language, needle)

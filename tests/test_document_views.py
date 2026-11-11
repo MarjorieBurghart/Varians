@@ -109,3 +109,24 @@ def test_a_missing_view_file_says_where_to_fix_it():
         catalog = {s.get("key"): s.text or "" for s in ET.parse(root / "i18n" / f"{language}.xml").getroot()}
         message = catalog["preview.files_missing"]
         assert catalog["views.menu"] in message and catalog["views.edit"] in message, language
+
+
+def test_a_view_says_whether_the_project_css_is_added(tmp_path):
+    """V0.9.4.4 : ``projectCss`` — absent (automatique : la CSS du projet,
+    sauf si la feuille produit son propre <style>), ``always`` (toujours),
+    ``never`` (jamais) ; une valeur inconnue vaut l'automatique."""
+    path = _project(tmp_path, documents=(
+        '<documents><document file="xml/a.xml">'
+        '<view name="Auto" xslt="xslt/a.xsl"/>'
+        '<view name="Projet" xslt="xslt/b.xsl" projectCss="always"/>'
+        '<view name="Aucune" xslt="xslt/c.xsl" projectCss="never"/>'
+        '<view name="Inconnue" xslt="xslt/d.xsl" projectCss="parfois"/>'
+        '</document></documents>'))
+    views = load_project(path).documents[0].views
+    assert [view.project_css for view in views] == ["auto", "always", "never", "auto"]
+    assert ViewConfig("Auto", "xslt/a.xsl").project_css == "auto"
+    update_project_documents(path, list(load_project(path).documents))
+    written = [v.attrib for v in ET.parse(path).getroot().findall("documents/document/view")]
+    assert written[0] == {"name": "Auto", "xslt": "xslt/a.xsl"}
+    assert written[1]["projectCss"] == "always" and written[2]["projectCss"] == "never"
+    assert "projectCss" not in written[3]

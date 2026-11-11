@@ -63,6 +63,8 @@
   <string key="preview.view.project">Pohled projektu</string>
   <string key="preview.view.files.tip">Styl XSLT: {xslt}\nCSS: {css}</string>
   <string key="preview.view.units.tip">Upravitelné prvky: {units}</string>
+  <string key="preview.view.css.auto">automaticky: ta ze šablony XSLT, pokud vytváří vlastní &lt;style&gt;, jinak {css}</string>
+  <string key="preview.view.css.none">žádné: ta ze šablony XSLT</string>
   <string key="views.menu">Pohledy</string>
   <string key="views.new">Nový pohled…</string>
   <string key="views.edit">Upravit pohled…</string>
@@ -75,7 +77,11 @@
   <string key="views.create_starter.tip">Šablona XSLT (1.0 nebo 3.0, podle volby), která zobrazí celý dokument se značkami řádků pivotního svědka, a jednoduché CSS, pojmenované podle pohledu, ve složkách xslt/ a rendering/ projektu.</string>
   <string key="views.xslt">Styl XSLT:</string>
   <string key="views.css">CSS:</string>
-  <string key="views.css.placeholder">prázdné: CSS projektu</string>
+  <string key="views.css.file">Soubor CSS:</string>
+  <string key="views.css.mode.auto">Automaticky: ta ze šablony, pokud má vlastní &lt;style&gt;, jinak ta z projektu</string>
+  <string key="views.css.mode.always">Ta z projektu</string>
+  <string key="views.css.mode.never">Žádné: ta ze šablony XSLT</string>
+  <string key="views.css.mode.file">Soubor CSS</string>
   <string key="views.units">Upravitelné prvky:</string>
   <string key="views.units.placeholder">prázdné: pravidlo edice</string>
   <string key="views.units.tip">Názvy prvků, které dostanou tužku ✎, oddělené mezerami (například: person place). Počítají se kdekoli v dokumentu.</string>

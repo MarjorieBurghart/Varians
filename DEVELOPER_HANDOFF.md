@@ -162,7 +162,7 @@ Exemple simplifié :
 </teiManuscriptProject>
 ```
 
-Vues nommées de la Vue XSLT / CSS (V0.9.4.4) : `<view name="…" xslt="…" css="…" units="…"/>` sous `<edition>` (vues de l'édition, en plus de celle du projet, définie par `<rendering>`) ou sous un `<document>` de `<documents>`. `xslt` et `css` s'écrivent comme les chemins des scénarios (relatifs au projet, ou `${varians}/…`) ; `css` vide : celle du projet ; `units` : noms d'éléments modifiables séparés par des blancs, comptés partout dans le document (`fragment_units.ChosenUnits`) ; sans `units`, la règle de l'édition. La vue choisie pour chaque document est une préférence locale (`projectView/<empreinte>/previewViews`), pas une donnée du projet. Voir `CODE_MAP.md`, « V0.9.4.4 — vues nommées ». Une feuille de vue en XSLT 2.0 ou 3.0 est confiée à Saxon, dans le processus d'aperçu `saxon_preview` (Varians relancé avec `--preview-worker`, comme `--relaxng-worker` et `--transform-worker`), jamais dans le fil de la fenêtre ; voir « V0.9.4.4 — vues en XSLT 2.0 et 3.0 ». La synchronisation avec les témoins associe le n-ième repère `tei-line://base/INDEX` de l'aperçu à la n-ième ligne du pivot : une feuille doit les écrire tous, une seule fois chacun, dans l'ordre du document (l'aperçu signale un écart).
+Vues nommées de la Vue XSLT / CSS (V0.9.4.4) : `<view name="…" xslt="…" css="…" units="…"/>` sous `<edition>` (vues de l'édition, en plus de celle du projet, définie par `<rendering>`) ou sous un `<document>` de `<documents>`. `xslt` et `css` s'écrivent comme les chemins des scénarios (relatifs au projet, ou `${varians}/…`) ; `css` absent : la CSS du projet s'ajoute selon `projectCss` (absent : sauf si la feuille produit son propre `<style>` ; `always` ; `never`) ; `units` : noms d'éléments modifiables séparés par des blancs, comptés partout dans le document (`fragment_units.ChosenUnits`) ; sans `units`, la règle de l'édition. La vue choisie pour chaque document est une préférence locale (`projectView/<empreinte>/previewViews`), pas une donnée du projet. Voir `CODE_MAP.md`, « V0.9.4.4 — vues nommées ». Une feuille de vue en XSLT 2.0 ou 3.0 est confiée à Saxon, dans le processus d'aperçu `saxon_preview` (Varians relancé avec `--preview-worker`, comme `--relaxng-worker` et `--transform-worker`), jamais dans le fil de la fenêtre ; voir « V0.9.4.4 — vues en XSLT 2.0 et 3.0 ». La synchronisation avec les témoins associe le n-ième repère `tei-line://base/INDEX` de l'aperçu à la n-ième ligne du pivot : une feuille doit les écrire tous, une seule fois chacun, dans l'ordre du document (l'aperçu signale un écart).
 
 ### Sources d'images
 
@@ -1094,6 +1094,12 @@ VARIANS V0.9.4.4 — MODÈLES DE DOCUMENT ET VUES XSLT / CSS
   L'aperçu prévient quand les repères de ligne d'une feuille ne
   correspondent pas aux lignes du témoin pivot. Aide : écrire la feuille
   d'une vue, suivre les témoins avec sa propre feuille.
+• CSS d'une vue : automatiquement, la CSS du projet ne s'ajoute pas à une
+  feuille qui produit son propre <style> ; la boîte de la vue permet un
+  autre choix (celle du projet, aucune, un fichier ; projectCss dans
+  project.xml). Les variables CSS, que Qt ne comprend pas (var()), sont
+  remplacées par leur valeur, aussi dans le <style> produit par la
+  feuille.
 • Vérification d'une installation (--self-test) : le processus d'aperçu
   Saxon.
 

@@ -63,6 +63,8 @@
   <string key="preview.view.project">Вид проекта</string>
   <string key="preview.view.files.tip">Таблица стилей XSLT: {xslt}\nCSS: {css}</string>
   <string key="preview.view.units.tip">Редактируемые элементы: {units}</string>
+  <string key="preview.view.css.auto">автоматически: CSS таблицы стилей XSLT, если она создаёт свой &lt;style&gt;, иначе {css}</string>
+  <string key="preview.view.css.none">нет: CSS самой таблицы стилей XSLT</string>
   <string key="views.menu">Виды</string>
   <string key="views.new">Новый вид…</string>
   <string key="views.edit">Изменить вид…</string>
@@ -75,7 +77,11 @@
   <string key="views.create_starter.tip">Таблица стилей XSLT (1.0 или 3.0, на выбор), показывающая весь документ, с маркерами строк опорного свидетеля, и простая CSS, названные по виду, в папках xslt/ и rendering/ проекта.</string>
   <string key="views.xslt">Таблица стилей XSLT:</string>
   <string key="views.css">CSS:</string>
-  <string key="views.css.placeholder">пусто: CSS проекта</string>
+  <string key="views.css.file">Файл CSS:</string>
+  <string key="views.css.mode.auto">Автоматически: CSS таблицы стилей, если у неё есть свой &lt;style&gt;, иначе CSS проекта</string>
+  <string key="views.css.mode.always">CSS проекта</string>
+  <string key="views.css.mode.never">Нет: CSS самой таблицы стилей XSLT</string>
+  <string key="views.css.mode.file">Файл CSS</string>
   <string key="views.units">Редактируемые элементы:</string>
   <string key="views.units.placeholder">пусто: правило издания</string>
   <string key="views.units.tip">Имена элементов, получающих карандаш ✎, через пробел (например: person place). Они учитываются во всём документе.</string>

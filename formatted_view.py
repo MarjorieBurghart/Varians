@@ -261,16 +261,51 @@ def pick_xml_occurrence(xml_text, visible, descriptor, start=0, end=None):
     return choose_occurrence(occurrences, descriptor.get("occurrence"), target)
 
 
+_ROOT_BLOCK = re.compile(r":root\s*\{(.*?)\}", re.I | re.S)
+_CSS_DECLARATION = re.compile(r"(--[\w-]+)\s*:\s*([^;]+)")
+_CSS_VAR = re.compile(r"var\(\s*(--[\w-]+)\s*(?:,\s*([^()]*(?:\([^()]*\)[^()]*)*))?\)")
+_STYLE_BLOCK = re.compile(r"(<style\b[^>]*>)(.*?)(</style\s*>)", re.I | re.S)
+
+
 def resolve_css_variables(css_text):
-    """Résout les variables CSS :root pour le moteur HTML simplifié de Qt."""
-    m = re.search(r":root\s*\{(.*?)\}", css_text, re.I | re.S)
-    if not m:
+    """Résout les variables CSS des blocs ``:root`` pour le moteur HTML
+    simplifié de Qt, qui ne comprend pas ``var()`` : chaque ``var(--x)`` prend
+    la valeur de ``--x`` ; une variable peut en citer une autre ; une
+    variable inconnue prend sa valeur de repli (``var(--x, repli)``)."""
+    blocks = list(_ROOT_BLOCK.finditer(css_text))
+    if not blocks:
         return css_text
-    variables = dict(re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", m.group(1)))
-    out = css_text[:m.start()] + css_text[m.end():]
-    for name, value in variables.items():
-        out = out.replace(f"var({name})", value.strip())
+    variables = {}
+    for block in blocks:
+        variables.update((name, value.strip()) for name, value in _CSS_DECLARATION.findall(block.group(1)))
+    out = _ROOT_BLOCK.sub("", css_text)
+
+    def value(match):
+        name, fallback = match.group(1), match.group(2)
+        if name in variables:
+            return variables[name]
+        return fallback.strip() if fallback is not None else match.group(0)
+
+    for _ in range(8):                       # variables qui en citent d'autres
+        resolved = _CSS_VAR.sub(value, out)
+        if resolved == out:
+            break
+        out = resolved
     return out
+
+
+def resolve_style_variables(html_text):
+    """Les variables CSS des ``<style>`` d'une page produite par une feuille
+    XSLT, remplacées par leur valeur (V0.9.4.4) ; le reste de la page ne
+    change pas."""
+    return _STYLE_BLOCK.sub(lambda m: m.group(1) + resolve_css_variables(m.group(2)) + m.group(3), html_text)
+
+
+def has_own_style(html_text):
+    """La page produite par la feuille a son propre ``<style>`` (V0.9.4.4) :
+    une vue sans fichier CSS laisse alors de côté la CSS du projet, sauf
+    ``projectCss="always"``."""
+    return _STYLE_BLOCK.search(html_text) is not None
 
 
 # Règles de base de l'aperçu (V0.9.3.0), placées avant la CSS du projet, qui
@@ -800,7 +835,7 @@ def render_preview(xml_text, xsl_path, params, marker_title, cache=None, check=F
         html_text, engine = transform_with_xslt(xml_text, xsl_path, params, edit_markers=True, cache=cache)
     html_text, clickable_lines, _text_links = make_line_segments_clickable(html_text)
     html_text, marked = place_edit_markers(html_text, marker_title)
-    return html_text, clickable_lines, marked, engine
+    return resolve_style_variables(html_text), clickable_lines, marked, engine
 
 
 def _transform_without_lxml(xml_text, xsl_path, params, first_error, edit_markers=False):
@@ -1171,10 +1206,31 @@ class FormattedEditionWidget(QWidget):
                 return path
         return self.main.project.xslt
 
+    def _css_mode(self):
+        """CSS de l'aperçu (V0.9.4.4) : ``file`` (fichier de la vue),
+        ``project`` (vue du projet, ou ``projectCss="always"``), ``never``
+        (aucune) ou ``auto`` (celle du projet, sauf si la feuille produit son
+        propre ``<style>``)."""
+        view = self._current_view
+        if view is None:
+            return "project"
+        if view.css.strip():
+            return "file"
+        return {"always": "project", "never": "never"}.get(view.project_css, "auto")
+
+    def _preview_css(self, html_text):
+        """CSS donnée à l'aperçu pour ``html_text`` : les règles de Varians
+        (crayons, repères), puis, selon ``_css_mode``, le fichier CSS de la
+        vue ou celui du projet."""
+        mode = self._css_mode()
+        if mode == "never" or (mode == "auto" and has_own_style(html_text)):
+            return PREVIEW_BASE_CSS
+        return self._resolved_css_cached()
+
     @property
     def css_path(self):
-        """CSS de la vue choisie ; une vue nommée sans CSS prend celle du
-        projet."""
+        """Fichier CSS de la vue choisie ; une vue nommée sans fichier CSS
+        renvoie à celui du projet (``_css_mode`` dit s'il sert)."""
         view = self._current_view
         if view is not None:
             path = self._view_file(view.css)
@@ -1351,7 +1407,10 @@ class FormattedEditionWidget(QWidget):
         if view is None:
             lines.append(_t("project.xslt.mode.builtin" if self.main.project.xslt_mode == "builtin"
                             else "project.xslt.mode.file"))
-        lines.append(_t("preview.view.files.tip", xslt=self.xsl_path, css=self.css_path))
+        mode = self._css_mode()
+        css = (_t("preview.view.css.none") if mode == "never"
+               else _t("preview.view.css.auto", css=self.css_path) if mode == "auto" else self.css_path)
+        lines.append(_t("preview.view.files.tip", xslt=self.xsl_path, css=css))
         if view is not None and view.units:
             lines.append(_t("preview.view.units.tip", units=", ".join(view.units)))
         self.view_combo.setToolTip("\n".join(lines))
@@ -1940,7 +1999,7 @@ class FormattedEditionWidget(QWidget):
         return sources, xml_text, spans, names
 
     def _preview_files_missing(self):
-        if self.xsl_path.exists() and self.css_path.exists():
+        if self.xsl_path.exists() and (self._css_mode() == "never" or self.css_path.exists()):
             return False
         self.info.setText(_t("preview.files_missing"))
         self.info.setStyleSheet("color:#a14b2f")
@@ -2131,7 +2190,7 @@ class FormattedEditionWidget(QWidget):
             old_anchor_line = self.preview.active_line_ordinal
         old_bar = self.preview.verticalScrollBar()
         old_ratio = (old_bar.value() / old_bar.maximum()) if old_bar.maximum() > 0 else 0.0
-        css = self._resolved_css_cached()
+        css = self._preview_css(html_text)
 
         # setHtml() et zoomIn()/zoomOut() n’ont pas des sémantiques identiques
         # selon la nature des tailles CSS. Remettre explicitement le widget à
