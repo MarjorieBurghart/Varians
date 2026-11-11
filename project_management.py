@@ -507,14 +507,16 @@ def documents_element(root_dir: Path, documents) -> ET.Element | None:
 
 
 def view_element(view) -> ET.Element:
-    """Élément ``<view name xslt css units/>`` d'une vue nommée
+    """Élément ``<view name xslt css units projectCss/>`` d'une vue nommée
     (``project_config.ViewConfig``) ; ``css`` et ``units`` seulement s'ils
-    sont donnés."""
+    sont donnés, ``projectCss`` s'il n'est pas automatique."""
     attrs = {"name": view.name, "xslt": view.xslt}
     if view.css:
         attrs["css"] = view.css
     if view.units:
         attrs["units"] = " ".join(view.units)
+    if getattr(view, "project_css", "auto") != "auto":
+        attrs["projectCss"] = view.project_css
     return ET.Element("view", attrs)
 
 
