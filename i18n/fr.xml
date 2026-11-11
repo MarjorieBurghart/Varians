@@ -60,6 +60,9 @@
   <string key="manuscript.loading">Chargement des images…</string>
   <string key="manuscript.image_failed">Image non chargée{detail}</string>
   <string key="preview.formatting">Mise en forme :</string>
+  <string key="preview.view.project">Vue du projet</string>
+  <string key="preview.view.files.tip">Feuille XSLT : {xslt}\nCSS : {css}</string>
+  <string key="preview.view.units.tip">Éléments modifiables : {units}</string>
   <string key="preview.refresh">Actualiser</string>
   <string key="preview.auto">Aperçu auto</string>
   <string key="preview.size">Taille :</string>
@@ -240,8 +243,6 @@
   <string key="console.viewer_generated">Viewer généré : {path}</string>
   <string key="console.viewer_stats">Témoins : {witnesses} · lignes du témoin pivot : {lines}</string>
   <string key="console.unaligned_lines">{count, plural, one {# ligne du témoin pivot n'est pas synchronisée} other {# lignes du témoin pivot ne sont pas synchronisées}} avec les images : son alignement (JSON) compte moins de lignes que le texte (texte : {text}, alignement : {alignment}).</string>
-  <string key="preview.choose_xslt">Choisir une feuille XSLT</string>
-  <string key="preview.choose_css">Choisir une feuille CSS</string>
   <string key="preview.updated.timed.lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# élément modifiable} other {# éléments modifiables}} · {lines, plural, one {# ligne du témoin pivot cliquable} other {# lignes du témoin pivot cliquables}}.</string>
   <string key="preview.updated.timed.no_lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# élément modifiable} other {# éléments modifiables}}. Cette XSLT ne produit pas de marqueurs de ligne du témoin pivot.</string>
   <string key="viewer.image_unavailable">Image IIIF indisponible</string>

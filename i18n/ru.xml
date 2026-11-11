@@ -60,6 +60,9 @@
   <string key="manuscript.loading">Загрузка изображений…</string>
   <string key="manuscript.image_failed">Не удалось загрузить изображение{detail}</string>
   <string key="preview.formatting">Оформление:</string>
+  <string key="preview.view.project">Вид проекта</string>
+  <string key="preview.view.files.tip">Таблица стилей XSLT: {xslt}\nCSS: {css}</string>
+  <string key="preview.view.units.tip">Редактируемые элементы: {units}</string>
   <string key="preview.refresh">Обновить</string>
   <string key="preview.auto">Автоматический предпросмотр</string>
   <string key="preview.size">Размер:</string>
@@ -252,8 +255,6 @@
   <string key="console.viewer_generated">Просмотрщик создан: {path}</string>
   <string key="console.viewer_stats">Свидетелей: {witnesses} · строк опорного свидетеля: {lines}</string>
   <string key="console.unaligned_lines">{count, plural, one {# строка опорного свидетеля не синхронизирована} few {# строки опорного свидетеля не синхронизированы} many {# строк опорного свидетеля не синхронизированы} other {# строки опорного свидетеля не синхронизированы}} с изображениями: в его выравнивании (JSON) меньше строк, чем в тексте (текст: {text}, выравнивание: {alignment}).</string>
-  <string key="preview.choose_xslt">Выбрать таблицу стилей XSLT</string>
-  <string key="preview.choose_css">Выбрать таблицу стилей CSS</string>
   <string key="preview.updated.timed.lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs} · кликабельных строк опорного свидетеля {lines}.</string>
   <string key="preview.updated.timed.no_lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs}. Этот XSLT не создаёт маркеры строк опорного свидетеля.</string>
   <string key="viewer.image_unavailable">Изображение IIIF недоступно</string>

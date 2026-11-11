@@ -60,6 +60,9 @@
   <string key="manuscript.loading">Caricamento immagini…</string>
   <string key="manuscript.image_failed">Impossibile caricare l’immagine{detail}</string>
   <string key="preview.formatting">Formattazione:</string>
+  <string key="preview.view.project">Vista del progetto</string>
+  <string key="preview.view.files.tip">Foglio di stile XSLT: {xslt}\nCSS: {css}</string>
+  <string key="preview.view.units.tip">Elementi modificabili: {units}</string>
   <string key="preview.refresh">Aggiorna</string>
   <string key="preview.auto">Anteprima automatica</string>
   <string key="preview.size">Dimensione:</string>
@@ -252,8 +255,6 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="console.viewer_generated">Viewer generato: {path}</string>
   <string key="console.viewer_stats">Testimoni: {witnesses} · righe del testimone pivot: {lines}</string>
   <string key="console.unaligned_lines">{count, plural, one {# riga del testimone pivot non è sincronizzata} other {# righe del testimone pivot non sono sincronizzate}} con le immagini: il suo allineamento (JSON) ha meno righe del testo (testo: {text}, allineamento: {alignment}).</string>
-  <string key="preview.choose_xslt">Scegli foglio di stile XSLT</string>
-  <string key="preview.choose_css">Scegli foglio di stile CSS</string>
   <string key="preview.updated.timed.lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# elemento modificabile} other {# elementi modificabili}} · {lines, plural, one {# riga cliccabile} other {# righe cliccabili}} del testimone pivot.</string>
   <string key="preview.updated.timed.no_lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# elemento modificabile} other {# elementi modificabili}}. Questo XSLT non produce marcatori di riga del testimone pivot.</string>
   <string key="viewer.image_unavailable">Immagine IIIF non disponibile</string>

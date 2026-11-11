@@ -60,6 +60,9 @@
   <string key="manuscript.loading">Načítání obrázků…</string>
   <string key="manuscript.image_failed">Obrázek se nepodařilo načíst{detail}</string>
   <string key="preview.formatting">Formátování:</string>
+  <string key="preview.view.project">Pohled projektu</string>
+  <string key="preview.view.files.tip">Styl XSLT: {xslt}\nCSS: {css}</string>
+  <string key="preview.view.units.tip">Upravitelné prvky: {units}</string>
   <string key="preview.refresh">Aktualizovat</string>
   <string key="preview.auto">Automatický náhled</string>
   <string key="preview.size">Velikost:</string>
@@ -252,8 +255,6 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="console.viewer_generated">Prohlížeč vygenerován: {path}</string>
   <string key="console.viewer_stats">Svědci: {witnesses} · základní řádky: {lines}</string>
   <string key="console.unaligned_lines">{count, plural, one {# řádek pivotního svědka není synchronizován} few {# řádky pivotního svědka nejsou synchronizovány} other {# řádků pivotního svědka není synchronizováno}} s obrázky: jeho zarovnání (JSON) má méně řádků než text (text: {text}, zarovnání: {alignment}).</string>
-  <string key="preview.choose_xslt">Vybrat styl XSLT</string>
-  <string key="preview.choose_css">Vybrat styl CSS</string>
   <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}} · {lines, plural, one {# klikací řádek} few {# klikací řádky} other {# klikacích řádků}} pivotního svědka.</string>
   <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}}. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
   <string key="viewer.image_unavailable">Obrázek IIIF není dostupný</string>

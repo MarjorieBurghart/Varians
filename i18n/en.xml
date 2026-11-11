@@ -60,6 +60,9 @@
   <string key="manuscript.loading">Loading images…</string>
   <string key="manuscript.image_failed">Image could not be loaded{detail}</string>
   <string key="preview.formatting">Formatting:</string>
+  <string key="preview.view.project">Project view</string>
+  <string key="preview.view.files.tip">XSLT stylesheet: {xslt}\nCSS: {css}</string>
+  <string key="preview.view.units.tip">Editable elements: {units}</string>
   <string key="preview.refresh">Refresh</string>
   <string key="preview.auto">Auto preview</string>
   <string key="preview.size">Size:</string>
@@ -240,8 +243,6 @@
   <string key="console.viewer_generated">Viewer generated: {path}</string>
   <string key="console.viewer_stats">Witnesses: {witnesses} · pivot-witness lines: {lines}</string>
   <string key="console.unaligned_lines">{count, plural, one {# line of the pivot witness is not synchronized} other {# lines of the pivot witness are not synchronized}} with the images: its alignment (JSON) has fewer lines than the text (text: {text}, alignment: {alignment}).</string>
-  <string key="preview.choose_xslt">Choose XSLT stylesheet</string>
-  <string key="preview.choose_css">Choose CSS stylesheet</string>
   <string key="preview.updated.timed.lines">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}} · {lines, plural, one {# clickable pivot-witness line} other {# clickable pivot-witness lines}}.</string>
   <string key="preview.updated.timed.no_lines">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}}. This XSLT does not produce pivot-witness line markers.</string>
   <string key="viewer.image_unavailable">IIIF image unavailable</string>

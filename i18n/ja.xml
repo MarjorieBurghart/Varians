@@ -60,6 +60,9 @@
   <string key="manuscript.loading">画像を読み込み中…</string>
   <string key="manuscript.image_failed">画像を読み込めませんでした{detail}</string>
   <string key="preview.formatting">表示形式：</string>
+  <string key="preview.view.project">プロジェクトのビュー</string>
+  <string key="preview.view.files.tip">XSLTスタイルシート：{xslt}\nCSS：{css}</string>
+  <string key="preview.view.units.tip">編集可能な要素：{units}</string>
   <string key="preview.refresh">更新</string>
   <string key="preview.auto">自動プレビュー</string>
   <string key="preview.size">サイズ：</string>
@@ -252,8 +255,6 @@
   <string key="console.viewer_generated">ビューアを生成しました：{path}</string>
   <string key="console.viewer_stats">伝本：{witnesses} · ピボット伝本行：{lines}</string>
   <string key="console.unaligned_lines">ピボット伝本の {count} 行が画像と同期していません。アラインメント（JSON）の行数がテキストより少ないためです（テキスト：{text}、アラインメント：{alignment}）。</string>
-  <string key="preview.choose_xslt">XSLTスタイルシートを選択</string>
-  <string key="preview.choose_css">CSSスタイルシートを選択</string>
   <string key="preview.updated.timed.lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な要素 {marked}/{paragraphs}件 · クリック可能なピボット伝本行 {lines}行。</string>
   <string key="preview.updated.timed.no_lines">{elapsed}秒でプレビューを更新 · {engine} · 編集可能な要素 {marked}/{paragraphs}件。このXSLTはピボット伝本の行マーカーを生成しません。</string>
   <string key="viewer.image_unavailable">IIIF画像を利用できません</string>

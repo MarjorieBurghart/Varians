@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-"""Vue XSLT / CSS : aperçu mis en forme de l'édition, synchronisé avec la source, et édition par fragments."""
+"""Vue XSLT / CSS : aperçu mis en forme du document affiché (l'édition ou un
+document XML du projet), synchronisé avec la source, et édition par
+fragments. Chaque document a la vue du projet et ses vues nommées
+(project.xml, ``<view>``), choisies dans une liste (V0.9.4.4)."""
 from __future__ import annotations
 
 import bisect
 import hashlib
 import html as html_lib
+import json
 import re
 import shutil
 import subprocess
@@ -18,7 +22,7 @@ from pathlib import Path
 from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QColor, QKeySequence, QTextCursor
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QInputDialog, QLabel,
+    QApplication, QCheckBox, QComboBox, QDialog, QHBoxLayout, QInputDialog, QLabel,
     QLineEdit, QMessageBox, QPushButton, QSizePolicy, QSplitter, QTextBrowser, QTextEdit, QToolButton,
     QVBoxLayout, QWidget,
 )
@@ -30,7 +34,9 @@ from selection_sync import choose_occurrence, occurrence_index_for_position
 from tei_facsimile import position_inside_xml_markup
 from text_search import SearchError
 from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
-from fragment_units import edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers, unit_spans
+from fragment_units import (
+    chosen_units, edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers, unit_spans,
+)
 from replace_bar import search_error_text
 from xslt_engines import xslt_error_text as _xslt_error_text
 
@@ -841,8 +847,13 @@ class FormattedEditionWidget(QWidget):
     def __init__(self, main_window):
         super().__init__(main_window)
         self.main = main_window
-        self.xsl_path = self.main.project.xslt
-        self.css_path = self.main.project.css
+        # Vue choisie (V0.9.4.4) : None pour la vue du projet (feuille et CSS
+        # de <rendering>), sinon une vue nommée (ViewConfig) du document
+        # affiché. _view_key : le document dont la liste montre les vues
+        # (l'édition, pour elle et ses parties) ; _views : ses vues nommées.
+        self._current_view = None
+        self._view_key = None
+        self._views = ()
         self.current_paragraph = None
         self.fragment_original = ""
         # Document (édition ou partie) dont vient le fragment ouvert, et
@@ -867,11 +878,12 @@ class FormattedEditionWidget(QWidget):
         root.setSpacing(5)
 
         top = QHBoxLayout()
-        self.xsl_label = QLabel(self.xsl_path.name)
-        self._update_xsl_label()
-        self.css_label = QLabel(self.css_path.name)
-        self.xsl_btn = QPushButton("XSLT…")
-        self.css_btn = QPushButton("CSS…")
+        # Liste des vues du document affiché : la vue du projet, puis ses
+        # vues nommées. Elle remplace les boutons « XSLT… » et « CSS… », dont
+        # le choix ne valait que pour la session.
+        self.view_combo = QComboBox()
+        self.view_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        self.view_combo.setMinimumContentsLength(12)
         self.refresh_btn = QPushButton(_t("preview.refresh"))
         self.auto_check = QCheckBox(_t("preview.auto"))
         self.auto_check.setChecked(True)
@@ -883,11 +895,7 @@ class FormattedEditionWidget(QWidget):
         self.font_plus_btn.setToolTip(_t("preview.font_plus.tip"))
         self.formatting_label = QLabel(_t("preview.formatting"))
         top.addWidget(self.formatting_label)
-        top.addWidget(self.xsl_label)
-        top.addWidget(self.xsl_btn)
-        top.addWidget(QLabel("+"))
-        top.addWidget(self.css_label)
-        top.addWidget(self.css_btn)
+        top.addWidget(self.view_combo)
         top.addWidget(self.refresh_btn)
         top.addWidget(self.auto_check)
         top.addSpacing(8)
@@ -1095,8 +1103,8 @@ class FormattedEditionWidget(QWidget):
         self._preview_executor = None
         self._background_xslt_cache = {}
         self.preview_job_done.connect(self._background_preview_done)
-        self.xsl_btn.clicked.connect(self.choose_xslt)
-        self.css_btn.clicked.connect(self.choose_css)
+        self.view_combo.currentIndexChanged.connect(self._view_chosen)
+        self.context_changed()
         self.refresh_btn.clicked.connect(self.refresh_preview)
         self.apply_btn.clicked.connect(self.apply_fragment)
         self.reload_btn.clicked.connect(self.reload_fragment)
@@ -1111,17 +1119,173 @@ class FormattedEditionWidget(QWidget):
         self.fragment_editor.set_visual_wrap(bool(enabled))
         _settings().setValue("fragmentVisualWrap", bool(enabled))
 
-    def _update_xsl_label(self):
-        self.xsl_label.setToolTip(
-            _t("project.xslt.mode.builtin" if self.main.project.xslt_mode == "builtin"
-               else "project.xslt.mode.file") + "\n" + str(self.xsl_path)
-        )
+    # -- Vues (V0.9.4.4) ----------------------------------------------------------
+
+    @property
+    def current_view(self):
+        """Vue choisie : None pour la vue du projet, sinon une vue nommée
+        (``ViewConfig``) du document affiché."""
+        return self._current_view
+
+    @property
+    def xsl_path(self):
+        """Feuille XSLT de la vue choisie : celle de la vue nommée (chemin
+        relatif au projet, ou ``${varians}/…``), sinon celle du projet."""
+        view = self._current_view
+        if view is not None:
+            path = self._view_file(view.xslt)
+            if path is not None:
+                return path
+        return self.main.project.xslt
+
+    @property
+    def css_path(self):
+        """CSS de la vue choisie ; une vue nommée sans CSS prend celle du
+        projet."""
+        view = self._current_view
+        if view is not None:
+            path = self._view_file(view.css)
+            if path is not None:
+                return path
+        return self.main.project.css
+
+    def _view_file(self, raw):
+        from xslt_scenarios import resolve_path
+        return resolve_path(self.main.project, raw)
+
+    def _view_context(self):
+        """``(clé, vues nommées)`` du document affiché : pour l'édition et
+        ses parties, celles de l'édition (``<edition>``) ; pour un document
+        auxiliaire, celles de son ``<document>``. La clé (chemin relatif au
+        projet) retient la vue choisie dans les réglages du projet."""
+        main = self.main
+        session = getattr(main, "document", None)
+        if session is None or session.in_edition or session.path is None:
+            edition = getattr(main, "edition_session", None)
+            path = getattr(edition, "path", None) or main.project.edition
+            return "edition:" + main._place_key(path), tuple(main.project.edition_views)
+        config = main.document_config(session)
+        return main._place_key(session.path), tuple(config.views) if config is not None else ()
+
+    def _remembered_views(self):
+        try:
+            data = json.loads(_settings().value(self.main._view_settings_key("previewViews"), "") or "{}")
+        except (TypeError, ValueError):
+            data = {}
+        return data if isinstance(data, dict) else {}
+
+    def _remember_view(self):
+        if self._view_key is None:
+            return
+        data = self._remembered_views()
+        if self._current_view is None:
+            data.pop(self._view_key, None)
+        else:
+            data[self._view_key] = self._current_view.name
+        _settings().setValue(self.main._view_settings_key("previewViews"), json.dumps(data, ensure_ascii=False))
+
+    def context_changed(self):
+        """Document affiché changé, ou ses vues : la liste montre celles du
+        nouveau document, et la vue qui y avait été choisie la dernière fois.
+        Passer de l'édition à l'une de ses parties ne change rien : l'aperçu
+        reste celui de l'édition assemblée."""
+        key, views = self._view_context()
+        if key == self._view_key and views == self._views:
+            return
+        self._view_key, self._views = key, views
+        name = self._remembered_views().get(key)
+        self._current_view = next((view for view in views if view.name == name), None)
+        self._fill_view_combo()
+        self._reset_preview(clear=True)
+
+    def _fill_view_combo(self):
+        combo = self.view_combo
+        combo.blockSignals(True)
+        try:
+            combo.clear()
+            combo.addItem(_t("preview.view.project"), None)
+            for view in self._views:
+                combo.addItem(view.name, view.name)
+            index = combo.findData(self._current_view.name) if self._current_view is not None else 0
+            combo.setCurrentIndex(max(0, index))
+        finally:
+            combo.blockSignals(False)
+        self._update_view_tip()
+
+    def _update_view_tip(self):
+        view = self._current_view
+        lines = []
+        if view is None:
+            lines.append(_t("project.xslt.mode.builtin" if self.main.project.xslt_mode == "builtin"
+                            else "project.xslt.mode.file"))
+        lines.append(_t("preview.view.files.tip", xslt=self.xsl_path, css=self.css_path))
+        if view is not None and view.units:
+            lines.append(_t("preview.view.units.tip", units=", ".join(view.units)))
+        self.view_combo.setToolTip("\n".join(lines))
+
+    def select_view(self, name):
+        """Choisit la vue ``name`` du document affiché (None : la vue du
+        projet), comme dans la liste. False si elle n'existe pas ou si le
+        changement est annulé (fragment modifié)."""
+        index = 0 if name is None else self.view_combo.findData(name)
+        if index < 0:
+            return False
+        if index != self.view_combo.currentIndex():
+            self.view_combo.setCurrentIndex(index)
+        current = self._current_view
+        return (current.name if current is not None else None) == name
+
+    def _view_chosen(self, index):
+        """Choix dans la liste des vues : un fragment ouvert est d'abord
+        appliqué ou abandonné (sinon le choix est annulé), puis l'aperçu est
+        refait avec la feuille, la CSS et les éléments modifiables de la
+        vue."""
+        name = self.view_combo.itemData(index)
+        view = next((v for v in self._views if v.name == name), None)
+        if view == self._current_view:
+            return
+        if not self.frag_box.isHidden() and not self.close_fragment_editor():
+            previous = self.view_combo.findData(self._current_view.name) if self._current_view is not None else 0
+            self.view_combo.blockSignals(True)
+            self.view_combo.setCurrentIndex(max(0, previous))
+            self.view_combo.blockSignals(False)
+            return
+        self._current_view = view
+        self._remember_view()
+        self._update_view_tip()
+        self._reset_preview(clear=False)
+        if self.isVisible():
+            self.refresh_preview(force=True)
+
+    def _reset_preview(self, clear):
+        """L'aperçu est à refaire (autre vue, autre document) : ses éléments
+        modifiables seront relevés à nouveau. Avec ``clear``, il est vidé : il
+        montrait un autre document."""
+        self.preview_timer.stop()
+        self._preview_generation += 1           # un aperçu en cours est dépassé
+        self.unit_names = None
+        self.sources = None
+        self.dirty_preview = True
+        self._last_preview_key = None
+        if clear:
+            self.preview.clear()
+            self.preview.rebuild_line_markers()
+
+    def view_unit_names(self):
+        """Éléments modifiables de la vue choisie : ceux qu'elle nomme
+        (``units``, comptés partout dans le document), sinon la règle de
+        l'édition (schéma du document, sinon TEI P5)."""
+        view = self._current_view
+        if view is not None and view.units:
+            return chosen_units(view.units)
+        return self.main.fragment_unit_names()
 
     def retranslate_ui(self):
         """Remet les textes de la vue dans la langue de l'interface, puis retransforme l'aperçu
         (``force=True``) : la feuille XSLT y écrit aussi des textes traduits (titre de la table
         des matières…)."""
-        self._update_xsl_label()
+        self.view_combo.setItemText(0, _t("preview.view.project"))
+        self._update_view_tip()
         self.edit_paragraph_action.setText(_t("preview.edit_paragraph"))
         self.refresh_btn.setText(_t("preview.refresh"))
         self.auto_check.setText(_t("preview.auto"))
@@ -1601,26 +1765,6 @@ class FormattedEditionWidget(QWidget):
         if self.dirty_preview:
             self.refresh_preview()
 
-    def choose_xslt(self):
-        """Bouton « XSLT… » : choisit une autre feuille XSLT et retransforme l'aperçu. Le choix
-        n'est pas enregistré dans le projet."""
-        fn, _ = QFileDialog.getOpenFileName(self, _t("preview.choose_xslt"), str(self.xsl_path.parent), f"XSLT (*.xsl *.xslt);;{_t('common.all_files')} (*)")
-        if fn:
-            self.xsl_path = Path(fn)
-            self.xsl_label.setText(self.xsl_path.name)
-            self.dirty_preview = True
-            self.refresh_preview(force=True)
-
-    def choose_css(self):
-        """Bouton « CSS… » : choisit une autre feuille CSS et retransforme l'aperçu. Le choix n'est
-        pas enregistré dans le projet."""
-        fn, _ = QFileDialog.getOpenFileName(self, _t("preview.choose_css"), str(self.css_path.parent), f"CSS (*.css);;{_t('common.all_files')} (*)")
-        if fn:
-            self.css_path = Path(fn)
-            self.css_label.setText(self.css_path.name)
-            self.dirty_preview = True
-            self.refresh_preview(force=True)
-
     def _file_signature(self, path):
         try:
             st = Path(path).stat()
@@ -1641,9 +1785,10 @@ class FormattedEditionWidget(QWidget):
         Édition en parties (XInclude) : l'édition assemblée, quel que soit le
         document affiché ; ses éléments modifiables et ses lignes restent
         rattachés à leur fichier (V0.9.1.5). Chaque élément modifiable porte
-        son rang (vx:edit), celui de son crayon ✎."""
-        names = self.main.fragment_unit_names()
-        if self.main._edition_has_parts():
+        son rang (vx:edit), celui de son crayon ✎. Un document auxiliaire,
+        ou une édition sans parties : le document affiché."""
+        names = self.view_unit_names()
+        if self.main._preview_shows_assembly():
             sources = self.main._assembled_preview_sources(names)
             xml_text = (sources.text if sources is not None
                         else self.main.edition_session.text_document.toPlainText())
@@ -1925,7 +2070,7 @@ class FormattedEditionWidget(QWidget):
         return False
 
     def _unit_names(self):
-        return self.unit_names or self.main.fragment_unit_names()
+        return self.unit_names or self.view_unit_names()
 
     def _fragment_source(self, idx):
         """L'élément modifiable de rang ``idx`` de l'aperçu (V0.9.2.9 ;
@@ -1936,7 +2081,7 @@ class FormattedEditionWidget(QWidget):
         contient l'élément, édition ou partie, lu au besoin sans être
         affiché ; sinon, c'est le document affiché."""
         main = self.main
-        if not main._edition_has_parts():
+        if not main._preview_shows_assembly():
             text = main.editor.toPlainText()
             spans = unit_spans(text, self._unit_names())
             if not 0 <= idx < len(spans):
@@ -1958,7 +2103,7 @@ class FormattedEditionWidget(QWidget):
         # Nom de l'élément ouvert (V0.9.2.9), sans préfixe : « <lg> ».
         name = re.match(r"\s*<(?:[^\s/>:!?]+:)?([^\s/>:!?]+)", self.fragment_original or "")
         element = f"<{name.group(1)}>" if name else ""
-        if self.main._edition_has_parts() and self.fragment_session is not None:
+        if self.main._preview_shows_assembly() and self.fragment_session is not None:
             self.frag_label.setText(_t("fragment.label.file", element=element, index=self.current_paragraph + 1,
                                        total=self._fragment_total, file=Path(self.fragment_session.path).name))
         else:

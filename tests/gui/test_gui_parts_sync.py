@@ -135,7 +135,7 @@ def test_the_witnesses_stay_on_a_part_and_leave_on_an_auxiliary_document(open_wi
     assert not window.action_save_as.isEnabled()
     aux = next(s for s in window.documents if s.is_auxiliary)
     window.show_document(aux)
-    assert not window.left_tabs.isTabEnabled(preview) and not window.action_preview.isEnabled()
+    assert window.left_tabs.isTabEnabled(preview) and window.action_preview.isEnabled()      # sa vue (V0.9.4.4)
     assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
     assert not detached.isVisible()
     assert not any(action.isEnabled() for action in _witness_actions(window))

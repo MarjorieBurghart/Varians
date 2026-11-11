@@ -83,7 +83,7 @@ def test_a_part_keeps_the_witnesses_and_the_preview(open_window, sermons_project
     assert not window.action_save_as.isEnabled()
     window.show_document(_doc(window, "personnes.xml"))
     assert window.witness_scroll.isHidden() and window.structure_status.isHidden()
-    assert not window.left_tabs.isTabEnabled(preview) and not window.action_preview.isEnabled()
+    assert window.left_tabs.isTabEnabled(preview) and window.action_preview.isEnabled()      # sa vue (V0.9.4.4)
     window.show_document(window.edition_session)
     assert window.witness_scroll.isHidden() is witnesses_hidden
     assert window.left_tabs.isTabEnabled(preview) and window.action_save_as.isEnabled()

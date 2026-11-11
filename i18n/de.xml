@@ -60,6 +60,9 @@
   <string key="manuscript.loading">Bilder werden geladen…</string>
   <string key="manuscript.image_failed">Bild konnte nicht geladen werden{detail}</string>
   <string key="preview.formatting">Formatierung:</string>
+  <string key="preview.view.project">Projektansicht</string>
+  <string key="preview.view.files.tip">XSLT-Stylesheet: {xslt}\nCSS: {css}</string>
+  <string key="preview.view.units.tip">Bearbeitbare Elemente: {units}</string>
   <string key="preview.refresh">Aktualisieren</string>
   <string key="preview.auto">Automatische Vorschau</string>
   <string key="preview.size">Größe:</string>
@@ -252,8 +255,6 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="console.viewer_generated">Viewer erzeugt: {path}</string>
   <string key="console.viewer_stats">Textzeugen: {witnesses} · Zeilen des Pivot-Textzeugen: {lines}</string>
   <string key="console.unaligned_lines">{count, plural, one {# Zeile des Pivot-Textzeugen ist nicht mit den Bildern synchronisiert} other {# Zeilen des Pivot-Textzeugen sind nicht mit den Bildern synchronisiert}}: sein Alignment (JSON) hat weniger Zeilen als der Text (Text: {text}, Alignment: {alignment}).</string>
-  <string key="preview.choose_xslt">XSLT-Stylesheet auswählen</string>
-  <string key="preview.choose_css">CSS-Stylesheet auswählen</string>
   <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs, plural, one {# bearbeitbares Element} other {# bearbeitbare Elemente}} · {lines, plural, one {# anklickbare Zeile} other {# anklickbare Zeilen}} des Pivot-Textzeugen.</string>
   <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs, plural, one {# bearbeitbares Element} other {# bearbeitbare Elemente}}. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
   <string key="viewer.image_unavailable">IIIF-Bild nicht verfügbar</string>

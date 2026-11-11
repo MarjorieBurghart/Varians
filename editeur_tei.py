@@ -1211,7 +1211,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self._previous_left_tab_index = index
         # Édition en parties (V0.9.1.5) : l'aperçu montre toute l'édition ; ses
         # repères de ligne et ses paragraphes renvoient chacun à son fichier.
-        parts = self._edition_has_parts()
+        # Un document auxiliaire (V0.9.4.4) : l'aperçu montre ce document.
+        parts = self._preview_shows_assembly()
 
         if self.left_tabs.widget(index) is self.formatted_view:
             # XML -> XSLT : la chaîne seule ne suffit pas ("qui" peut apparaître
