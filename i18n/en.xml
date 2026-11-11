@@ -275,6 +275,7 @@
   <string key="preview.saxon.timeout">Preview stopped: the XSLT stylesheet did not finish in {seconds} s. The last view stays displayed.</string>
   <string key="preview.saxon.missing">Saxon is not installed: an XSLT 2.0 or 3.0 stylesheet cannot be displayed.</string>
   <string key="preview.saxon.failed">The Saxon preview process stopped: {error}</string>
+  <string key="preview.lines_mismatch">The stylesheet produces {lines, plural, one {# line marker} other {# line markers}} for {expected, plural, one {# line} other {# lines}} of the pivot witness: synchronization with the witnesses will be shifted.</string>
   <string key="viewer.image_unavailable">IIIF image unavailable</string>
   <string key="status.base_line">{base} line {line}/{total}</string>
   <string key="common.all_files">All files</string>

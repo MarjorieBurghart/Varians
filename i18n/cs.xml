@@ -287,6 +287,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="preview.saxon.timeout">Náhled zastaven: šablona XSLT neskončila do {seconds} s. Zůstává zobrazen poslední pohled.</string>
   <string key="preview.saxon.missing">Saxon není nainstalován: šablonu XSLT 2.0 nebo 3.0 nelze zobrazit.</string>
   <string key="preview.saxon.failed">Proces náhledu Saxon se zastavil: {error}</string>
+  <string key="preview.lines_mismatch">Šablona vytváří {lines, plural, one {# značku řádku} few {# značky řádků} other {# značek řádků}} pro {expected, plural, one {# řádek} few {# řádky} other {# řádků}} pivotního svědka: synchronizace se svědky bude posunutá.</string>
   <string key="viewer.image_unavailable">Obrázek IIIF není dostupný</string>
   <string key="status.base_line">{base} řádek {line}/{total}</string>
   <string key="common.all_files">Všechny soubory</string>

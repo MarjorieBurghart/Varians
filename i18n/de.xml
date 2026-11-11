@@ -287,6 +287,7 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="preview.saxon.timeout">Vorschau angehalten: Das XSLT-Stylesheet wurde nicht in {seconds} s fertig. Die letzte Ansicht bleibt angezeigt.</string>
   <string key="preview.saxon.missing">Saxon ist nicht installiert: Ein XSLT-2.0- oder -3.0-Stylesheet kann nicht angezeigt werden.</string>
   <string key="preview.saxon.failed">Der Saxon-Vorschauprozess wurde beendet: {error}</string>
+  <string key="preview.lines_mismatch">Das Stylesheet erzeugt {lines, plural, one {# Zeilenmarke} other {# Zeilenmarken}} für {expected, plural, one {# Zeile} other {# Zeilen}} des Pivot-Textzeugen: Die Synchronisierung mit den Textzeugen wird verschoben sein.</string>
   <string key="viewer.image_unavailable">IIIF-Bild nicht verfügbar</string>
   <string key="status.base_line">{base} Zeile {line}/{total}</string>
   <string key="common.all_files">Alle Dateien</string>

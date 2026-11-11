@@ -1970,6 +1970,19 @@ class FormattedEditionWidget(QWidget):
             return str(getattr(main.edition_session, "path", "") or main.project.edition)
         return str(getattr(main.document, "path", "") or "")
 
+    def _expected_line_count(self):
+        """Nombre de lignes du témoin pivot auxquelles vont les repères de
+        l'aperçu de l'édition (V0.9.4.4) : celles de l'édition assemblée,
+        sinon les <lb/> du pivot du document affiché ; None hors de
+        l'édition ou sans pivot."""
+        main = self.main
+        document = getattr(main, "document", None)
+        if document is None or not document.in_edition or not getattr(main, "base_id", ""):
+            return None
+        if self.sources is not None:
+            return len(self.sources.lines)
+        return len(main.lb_spans())
+
     def _preview_error_text(self, exc):
         """Texte d'un échec de l'aperçu : délai dépassé, Saxon absent ou
         arrêté (V0.9.4.4), sinon l'erreur de la feuille, avec son lieu."""
@@ -2143,8 +2156,17 @@ class FormattedEditionWidget(QWidget):
                                  marked=marked, paragraphs=len(spans)))
             self.info.setStyleSheet("color:#376b3c")
         elif clickable_lines:
-            self.info.setText(_t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans), lines=clickable_lines))
-            self.info.setStyleSheet("color:#376b3c")
+            text = _t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked,
+                      paragraphs=len(spans), lines=clickable_lines)
+            expected = self._expected_line_count()
+            if expected is not None and expected != clickable_lines:
+                # V0.9.4.4 : le n-ième repère va à la n-ième ligne du pivot ;
+                # un repère omis ou répété décale tout ce qui suit.
+                self.info.setText(text + " " + _t("preview.lines_mismatch", lines=clickable_lines, expected=expected))
+                self.info.setStyleSheet("color:#9a6a2f")
+            else:
+                self.info.setText(text)
+                self.info.setStyleSheet("color:#376b3c")
         else:
             self.info.setText(_t("preview.updated.timed.no_lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans)))
             self.info.setStyleSheet("color:#9a6a2f")

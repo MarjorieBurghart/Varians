@@ -287,6 +287,7 @@
   <string key="preview.saxon.timeout">Предпросмотр остановлен: таблица стилей XSLT не завершилась за {seconds} с. Остаётся последний вид.</string>
   <string key="preview.saxon.missing">Saxon не установлен: таблицу стилей XSLT 2.0 или 3.0 показать нельзя.</string>
   <string key="preview.saxon.failed">Процесс предпросмотра Saxon остановился: {error}</string>
+  <string key="preview.lines_mismatch">Таблица стилей создаёт маркеров строк: {lines}, а строк опорного свидетеля: {expected}. Синхронизация со свидетелями будет сдвинута.</string>
   <string key="viewer.image_unavailable">Изображение IIIF недоступно</string>
   <string key="status.base_line">{base} строка {line}/{total}</string>
   <string key="common.all_files">Все файлы</string>

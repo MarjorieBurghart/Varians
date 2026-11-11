@@ -287,6 +287,7 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="preview.saxon.timeout">Anteprima interrotta: il foglio XSLT non è terminato in {seconds} s. Resta mostrata l’ultima vista.</string>
   <string key="preview.saxon.missing">Saxon non è installato: un foglio XSLT 2.0 o 3.0 non può essere mostrato.</string>
   <string key="preview.saxon.failed">Il processo di anteprima Saxon si è arrestato: {error}</string>
+  <string key="preview.lines_mismatch">Il foglio produce {lines, plural, one {# segno di riga} other {# segni di riga}} per {expected, plural, one {# riga} other {# righe}} del testimone pivot: la sincronizzazione con i testimoni sarà sfasata.</string>
   <string key="viewer.image_unavailable">Immagine IIIF non disponibile</string>
   <string key="status.base_line">Riga {base} {line}/{total}</string>
   <string key="common.all_files">Tutti i file</string>

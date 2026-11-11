@@ -275,6 +275,7 @@
   <string key="preview.saxon.timeout">Aperçu arrêté : la feuille XSLT n’a pas fini en {seconds} s. La dernière vue reste affichée.</string>
   <string key="preview.saxon.missing">Saxon n’est pas installé : une feuille XSLT 2.0 ou 3.0 ne peut pas être affichée.</string>
   <string key="preview.saxon.failed">Le processus d’aperçu Saxon s’est arrêté : {error}</string>
+  <string key="preview.lines_mismatch">La feuille produit {lines, plural, one {# repère de ligne} other {# repères de ligne}} pour {expected, plural, one {# ligne} other {# lignes}} du témoin pivot : la synchronisation avec les témoins sera décalée.</string>
   <string key="viewer.image_unavailable">Image IIIF indisponible</string>
   <string key="status.base_line">Ligne {base} {line}/{total}</string>
   <string key="common.all_files">Tous les fichiers</string>
