@@ -7,19 +7,23 @@ option, ses éléments modifiables (vide : la règle de l'édition). Les chemins
 s'écrivent comme dans les scénarios de transformation : relatifs au projet,
 ou ``${varians}/…`` pour une feuille fournie avec Varians. Une nouvelle vue
 peut avoir une feuille XSLT 1.0 et une CSS de départ, écrites à
-l'acceptation (``view_files.write_starter``)."""
+l'acceptation (``view_files.write_starter``), en XSLT 1.0 (lxml) ou
+3.0 (Saxon, V0.9.4.4)."""
 from __future__ import annotations
 
 from pathlib import Path
 
 from PySide6.QtWidgets import (
-    QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
+    QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
     QMessageBox, QPushButton, QVBoxLayout, QWidget,
 )
 
 from app_context import tr as _t
 from project_config import ViewConfig
-from view_files import check_view, parse_units, starter_paths, write_starter
+from view_files import STARTER_VERSIONS, check_view, parse_units, starter_paths, write_starter
+
+# Moteur de chaque version d'une feuille de départ (libellés transform.engine.*).
+_ENGINES = {"1.0": "lxml", "3.0": "saxon"}
 
 
 class ViewDialog(QDialog):
@@ -46,6 +50,14 @@ class ViewDialog(QDialog):
         self.create_check.setChecked(view is None)
         self.create_check.setVisible(view is None)
         form.addRow("", self.create_check)
+        # Version de la feuille de départ (V0.9.4.4) : 1.0 (lxml) ou 3.0 (Saxon).
+        self.version_combo = QComboBox()
+        for version in STARTER_VERSIONS:
+            self.version_combo.addItem(_t(f"transform.engine.{_ENGINES[version]}"), version)
+        self.version_label = QLabel(_t("documents.new_stylesheet.version"))
+        form.addRow(self.version_label, self.version_combo)
+        self.version_label.setVisible(view is None)
+        self.version_combo.setVisible(view is None)
         self.xslt_edit, xslt_row = self._file_row(view.xslt if view is not None else "", "xslt")
         form.addRow(_t("views.xslt"), xslt_row)
         self.css_edit, css_row = self._file_row(view.css if view is not None else "", "css")
@@ -92,6 +104,7 @@ class ViewDialog(QDialog):
         for edit in (self.xslt_edit, self.css_edit):
             edit.setEnabled(not starter)
             edit.browse_button.setEnabled(not starter)
+        self.version_combo.setEnabled(starter)
         if starter:
             xslt, css = starter_paths(self.project.root_dir, self.name_edit.text())
             root = Path(self.project.root_dir)
@@ -126,7 +139,7 @@ class ViewDialog(QDialog):
         units = parse_units(self.units_edit.text())
         if starter:
             try:
-                xslt_text, css_text = write_starter(self.project.root_dir, name)
+                xslt_text, css_text = write_starter(self.project.root_dir, name, self.version_combo.currentData())
             except OSError as exc:
                 QMessageBox.critical(self, _t("file.save.error.title"), str(exc))
                 return

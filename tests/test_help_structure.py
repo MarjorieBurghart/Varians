@@ -200,3 +200,21 @@ def test_writing_the_stylesheet_of_a_view_is_explained(language):
     units = page[page.index('<p id="fragment-units">'):]
     units = units[:units.index("</p>")]
     assert 'href="#view-stylesheet"' in units, language
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_views_in_xslt_3_and_line_markers_are_explained(language):
+    """V0.9.4.4 : une vue en XSLT 2.0 ou 3.0 passe par Saxon (crayons dans
+    tous les modes) ; une feuille personnalisée suit les témoins si elle
+    écrit les repères de ligne du pivot, avec la règle donnée en exemple ;
+    l'avertissement de décalage ; « Édition critique » comme vue."""
+    page = _page(language)
+    start = page.index('<p id="view-stylesheet">')
+    stylesheet = page[start:page.index("</p>", start)]
+    assert "Saxon" in stylesheet and "3.0" in stylesheet and "<code>mode</code>" in stylesheet, language
+    start = page.index('<p id="view-line-markers">')
+    part = page[start:page.index("</p>", page.index("</pre>", start))]
+    for needle in ("<code>baseWitness</code>", "tei-line://base/INDEX", "tei-line-marker", "<code>INDEX</code>",
+                   "<code>reperes-lignes</code>", "edition-critique.xsl", "410", "412"):
+        assert needle in part, (language, needle)
+    assert 'href="#view-line-markers"' in page[page.index('<p id="view-stylesheet">'):start], language

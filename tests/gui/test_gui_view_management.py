@@ -177,3 +177,39 @@ def test_the_stylesheet_of_a_view_opens_in_a_tab(open_window, views_project):
     count = len(window.documents)
     assert view.open_view_stylesheet()                                  # déjà ouverte : pas de doublon
     assert len(window.documents) == count and window.document.path == stylesheet
+
+
+def test_a_new_view_can_start_from_a_3_0_stylesheet(open_window, project_with_documents, dialogs, qtbot):
+    """V0.9.4.4 : la feuille de départ en XSLT 1.0 (lxml) ou 3.0 (Saxon) ;
+    le choix ne vaut que pour une feuille de départ."""
+    import pytest
+    from xslt_scenarios import saxon_available
+    if not saxon_available():
+        pytest.skip("Saxon (saxonche) n'est pas installé")
+    import saxon_preview
+    window = open_window(project_with_documents)
+    root = project_with_documents.parent
+    assert window.show_document(_personnes(window))
+    view = window.formatted_view
+
+    def fill(dialog):
+        assert [dialog.version_combo.itemText(i) for i in range(dialog.version_combo.count())] == [
+            tr("transform.engine.lxml"), tr("transform.engine.saxon")]
+        assert dialog.version_combo.currentIndex() == 0 and dialog.version_combo.isEnabled()
+        dialog.create_check.setChecked(False)
+        assert not dialog.version_combo.isEnabled()
+        dialog.create_check.setChecked(True)
+        dialog.name_edit.setText("Fiches 3")
+        dialog.version_combo.setCurrentIndex(1)
+
+    _answer(dialogs, fill)
+    try:
+        assert view.new_view()
+        assert 'version="3.0"' in (root / "xslt" / "fiches-3.xsl").read_text(encoding="utf-8")
+        _wait_preview(qtbot, view, "Bernardus")
+        qtbot.waitUntil(lambda: "Saxon" in view.info.text(), timeout=15000)
+        assert [index for _marker, _pos, index in view.preview._paragraph_markers] == [0, 1]
+    finally:
+        if saxon_preview._CLIENT is not None:
+            saxon_preview._CLIENT.close()
+            saxon_preview._CLIENT = None

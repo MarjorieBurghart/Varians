@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS = ["translations", "help", "resources", "project", "relaxng_worker", "transform_lxml",
-          "transform_saxon", "window"]
+          "transform_saxon", "preview_saxon", "window"]
 
 
 def _environment(tmp_path):

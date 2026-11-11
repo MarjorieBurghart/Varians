@@ -4,9 +4,9 @@ sans Qt.
 
 Une vue (``project_config.ViewConfig``) associe une feuille XSLT, une CSS et,
 en option, les éléments modifiables comme fragment. « Nouvelle vue… » peut
-écrire une feuille XSLT 1.0 et une CSS de départ, nommées d'après la vue,
-dans ``xslt/`` et ``rendering/`` du projet (``write_starter``), sans jamais
-remplacer un fichier. La feuille de départ montre tout document : chaque
+écrire une feuille XSLT de départ (1.0, ou 3.0 depuis V0.9.4.4) et une CSS,
+nommées d'après la vue, dans ``xslt/`` et ``rendering/`` du projet
+(``write_starter``), sans jamais remplacer un fichier. La feuille de départ montre tout document : chaque
 entrée d'une liste est un paragraphe ; ailleurs, un élément qui contient du
 texte est un paragraphe, un élément qui ne contient que des éléments, un
 bloc ; dans un paragraphe, les éléments restent en ligne. Varians y ajoute
@@ -25,19 +25,35 @@ STARTER_FOLDERS = ("xslt", "rendering")
 DEFAULT_SLUG = "vue"
 _UNIT_NAME = re.compile(r"[A-Za-z_][\w.-]*\Z")
 
-_STYLESHEET = """<?xml version="1.0" encoding="UTF-8"?>
-<!-- Vue « {name} » : feuille XSLT 1.0 de départ, à adapter.
+_COMMENT = {
+    "1.0": """<!-- Vue « {name} » : feuille XSLT 1.0 de départ, à adapter.
      Varians ajoute lui-même un crayon devant chaque élément modifiable de
      la vue, à une condition : la feuille doit traiter cet élément par
      xsl:apply-templates, sans mode, avec sa propre règle (xsl:template).
      Un élément parcouru par xsl:for-each, traité dans un mode ou seulement
-     lu par xsl:value-of est montré, mais sans crayon.
+     lu par xsl:value-of est montré, mais sans crayon.""",
+    "3.0": """<!-- Vue « {name} » : feuille XSLT 3.0 de départ, à adapter (Saxon).
+     Varians ajoute lui-même un crayon devant chaque élément modifiable de
+     la vue, à une condition : la feuille doit traiter cet élément par
+     xsl:apply-templates, avec sa propre règle (xsl:template) ; en 3.0, dans
+     le mode de son choix. Un élément parcouru par xsl:for-each ou seulement
+     lu par xsl:value-of est montré, mais sans crayon.""",
+}
+
+_STYLESHEET = """<?xml version="1.0" encoding="UTF-8"?>
+{comment}
+     Synchronisation avec les témoins : la règle tei:lb écrit un repère par
+     ligne du témoin pivot (paramètre baseWitness), à garder telle quelle :
+     tous les repères, une seule fois chacun, dans l'ordre du document.
      Le texte de l'élément <h1> est le nom de la vue lors de sa création. -->
-<xsl:stylesheet version="1.0"
+<xsl:stylesheet version="{version}"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   xmlns:tei="http://www.tei-c.org/ns/1.0"
   exclude-result-prefixes="tei">
   <xsl:output method="html" encoding="UTF-8"/>
+
+  <!-- Identifiant du témoin pivot, donné par Varians. -->
+  <xsl:param name="baseWitness" select="''"/>
 
   <xsl:template match="/">
     <html>
@@ -49,8 +65,16 @@ _STYLESHEET = """<?xml version="1.0" encoding="UTF-8"?>
     </html>
   </xsl:template>
 
-  <!-- L'en-tête TEI n'est pas montré. -->
-  <xsl:template match="tei:teiHeader"/>
+  <!-- L'en-tête TEI et le fac-similé ne sont pas montrés. -->
+  <xsl:template match="tei:teiHeader | tei:facsimile"/>
+
+  <!-- Repère invisible d'une ligne du témoin pivot ; Varians remplace INDEX
+       par 0, 1, 2… dans l'ordre de la page. -->
+  <xsl:template match="tei:lb">
+    <xsl:if test="@edRef = concat('#', $baseWitness)">
+      <a class="tei-line-marker" href="tei-line://base/INDEX"><xsl:text>&#8288;</xsl:text></a>
+    </xsl:if>
+  </xsl:template>
 
   <!-- Chaque entrée d'une liste (enfant de listPerson, listPlace,
        listBibl, list…) est un paragraphe ; ailleurs, un élément qui contient
@@ -72,6 +96,8 @@ _STYLESHEET = """<?xml version="1.0" encoding="UTF-8"?>
   </xsl:template>
 </xsl:stylesheet>
 """
+
+STARTER_VERSIONS = tuple(_COMMENT)
 
 _CSS = """/* Vue « {name} » : CSS de départ, à adapter. */
 body {{ line-height: 1.6; }}
@@ -106,9 +132,13 @@ def starter_paths(root, name) -> tuple[Path, Path]:
     return _free(root / STARTER_FOLDERS[0], slug + ".xsl"), _free(root / STARTER_FOLDERS[1], slug + ".css")
 
 
-def starter_stylesheet(name) -> str:
-    """Feuille XSLT 1.0 de départ de la vue ``name``."""
-    return _STYLESHEET.format(name=escape(str(name), quote=False).replace("--", "- -"))
+def starter_stylesheet(name, version="1.0") -> str:
+    """Feuille XSLT de départ de la vue ``name``, en 1.0 (lxml) ou en 3.0
+    (Saxon, V0.9.4.4), avec la règle des repères de ligne du pivot."""
+    if version not in _COMMENT:
+        raise ValueError(version)
+    name = escape(str(name), quote=False).replace("--", "- -")
+    return _STYLESHEET.format(comment=_COMMENT[version].format(name=name), version=version, name=name)
 
 
 def starter_css(name) -> str:
@@ -117,13 +147,15 @@ def starter_css(name) -> str:
     return _CSS.format(name=str(name).replace("*/", "* /").replace("/*", "/ *"))
 
 
-def write_starter(root, name) -> tuple[str, str]:
-    """Écrit la feuille et la CSS de départ de la vue ``name`` dans le
-    projet ``root`` (jamais par-dessus un fichier) ; renvoie leurs chemins
-    relatifs au projet, tels que project.xml les écrit."""
+def write_starter(root, name, version="1.0") -> tuple[str, str]:
+    """Écrit la feuille (``version`` : 1.0 ou 3.0) et la CSS de départ de la
+    vue ``name`` dans le projet ``root`` (jamais par-dessus un fichier) ;
+    renvoie leurs chemins relatifs au projet, tels que project.xml les
+    écrit."""
     root = Path(root)
     written = []
-    for path, text in zip(starter_paths(root, name), (starter_stylesheet(name), starter_css(name))):
+    texts = (starter_stylesheet(name, version), starter_css(name))
+    for path, text in zip(starter_paths(root, name), texts):
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "x", encoding="utf-8", newline="\n") as output:
             output.write(text)
