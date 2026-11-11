@@ -1,6 +1,6 @@
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.9.4.3**
+**Version de référence : 0.9.4.4**
 
 Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
@@ -1059,6 +1059,44 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.4 — MODÈLES DE DOCUMENT ET VUES XSLT / CSS
+
+• Nouveau document XML : les modèles de la TEI (TEI P5, les mêmes que dans
+  Oxygen XML Editor : All, Lite, Bare, Manuscript description, Corpus,
+  Drama…, avec leurs textes d'exemple en anglais), « Même schéma que
+  l'édition », les modèles du dossier modeles/ du projet et un document
+  vide d'élément racine libre. Le document créé déclare son schéma et est
+  validé dès son affichage.
+• Modèles TEI à jour, comme les TEI Stylesheets : au lancement, au plus une
+  fois par mois, Varians propose les modèles d'une nouvelle version de TEI
+  P5 (seuls les modèles sont lus dans l'archive de la TEI, quelques
+  mégaoctets) ; bouton « Modèles TEI… » dans la boîte.
+• Validation jamais figée : F8 et l'enregistrement attendent 2 s au plus,
+  le résultat s'affiche à son arrivée ; une compilation de schéma sans fin
+  est abandonnée au bout d'une minute (« RNG : validation abandonnée »).
+  Correctif de la boucle sans fin de libxml2 sur les schémas « Manuscript
+  description », « Corpus », « Speech » et « ENRICH » de la TEI.
+• Vue XSLT / CSS pour tout document XML du projet (index, fichier
+  d'autorités, texte glosé…), sauf une feuille XSLT ou un fichier
+  Schematron, modifiable par fragments (crayons ✎). Vues nommées dans
+  project.xml (<view>, sous <edition> ou <document>) : liste « Mise en
+  forme » (vue du projet, puis vues du document, retenue par document),
+  menu « Vues » (Nouvelle vue…, avec feuille et CSS de départ ; Modifier
+  la vue… ; Retirer la vue, fichiers gardés ; Ouvrir la feuille XSLT),
+  éléments modifiables propres à une vue.
+  Les boutons « XSLT… » et « CSS… » disparaissent. La feuille de Varians
+  montre aussi un document sans <text> (une entrée de liste par
+  paragraphe).
+• Vues en XSLT 2.0 et 3.0, par Saxon, dans un processus à part : la
+  fenêtre ne se fige jamais ; crayons dans tous les modes ; feuille de
+  départ en 1.0 ou 3.0. « Édition critique », choisie comme vue de
+  l'édition, suit les témoins (repères de ligne dans l'aperçu seulement).
+  L'aperçu prévient quand les repères de ligne d'une feuille ne
+  correspondent pas aux lignes du témoin pivot. Aide : écrire la feuille
+  d'une vue, suivre les témoins avec sa propre feuille.
+• Vérification d'une installation (--self-test) : le processus d'aperçu
+  Saxon.
+
 VARIANS V0.9.4.3 — PROJET SANS TÉMOIN
 
 • Un projet peut se créer sans aucun témoin (édition, validation, aperçu,
