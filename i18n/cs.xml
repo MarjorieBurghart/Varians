@@ -283,6 +283,10 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}} · {lines, plural, one {# klikací řádek} few {# klikací řádky} other {# klikacích řádků}} pivotního svědka.</string>
   <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}}. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
   <string key="preview.updated.timed.document">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}}.</string>
+  <string key="preview.refreshing">Aktualizace náhledu…</string>
+  <string key="preview.saxon.timeout">Náhled zastaven: šablona XSLT neskončila do {seconds} s. Zůstává zobrazen poslední pohled.</string>
+  <string key="preview.saxon.missing">Saxon není nainstalován: šablonu XSLT 2.0 nebo 3.0 nelze zobrazit.</string>
+  <string key="preview.saxon.failed">Proces náhledu Saxon se zastavil: {error}</string>
   <string key="viewer.image_unavailable">Obrázek IIIF není dostupný</string>
   <string key="status.base_line">{base} řádek {line}/{total}</string>
   <string key="common.all_files">Všechny soubory</string>

@@ -271,6 +271,10 @@
   <string key="preview.updated.timed.lines">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}} · {lines, plural, one {# clickable pivot-witness line} other {# clickable pivot-witness lines}}.</string>
   <string key="preview.updated.timed.no_lines">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}}. This XSLT does not produce pivot-witness line markers.</string>
   <string key="preview.updated.timed.document">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}}.</string>
+  <string key="preview.refreshing">Refreshing the preview…</string>
+  <string key="preview.saxon.timeout">Preview stopped: the XSLT stylesheet did not finish in {seconds} s. The last view stays displayed.</string>
+  <string key="preview.saxon.missing">Saxon is not installed: an XSLT 2.0 or 3.0 stylesheet cannot be displayed.</string>
+  <string key="preview.saxon.failed">The Saxon preview process stopped: {error}</string>
   <string key="viewer.image_unavailable">IIIF image unavailable</string>
   <string key="status.base_line">{base} line {line}/{total}</string>
   <string key="common.all_files">All files</string>

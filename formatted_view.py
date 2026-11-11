@@ -35,7 +35,8 @@ from tei_facsimile import position_inside_xml_markup
 from text_search import SearchError
 from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
 from fragment_units import (
-    chosen_units, edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers, unit_spans,
+    chosen_units, edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers, stylesheet_needs_saxon,
+    unit_spans,
 )
 from replace_bar import search_error_text
 from xslt_engines import xslt_error_text as _xslt_error_text
@@ -778,14 +779,25 @@ def transform_with_xslt(xml_text, xsl_path, params=None, edit_markers=False, cac
         raise RuntimeError(_xslt_error_text(exc, xsl_path, log)) from exc
 
 
-def render_preview(xml_text, xsl_path, params, marker_title, cache=None, check=False):
+def render_preview(xml_text, xsl_path, params, marker_title, cache=None, check=False, base=""):
     """La partie lourde de l'aperçu, sans Qt ni état de la fenêtre :
     ``(html, lignes cliquables, crayons, moteur)``. Avec *check*, le XML est
     d'abord vérifié (ET.ParseError). Peut se faire hors du fil de la
-    fenêtre, avec son propre *cache* de feuilles compilées (red team 2, A8)."""
+    fenêtre, avec son propre *cache* de feuilles compilées (red team 2, A8).
+
+    Une feuille 2.0 ou 3.0 (V0.9.4.4) est confiée au processus d'aperçu
+    Saxon (``saxon_preview``) : appel bloquant, à faire hors du fil de la
+    fenêtre ; ``base`` est l'adresse du document, pour un ``doc()``
+    relatif. Une erreur de Saxon lève ``saxon_preview.PreviewError``."""
     if check:
         ET.fromstring(xml_text)
-    html_text, engine = transform_with_xslt(xml_text, xsl_path, params, edit_markers=True, cache=cache)
+    if stylesheet_needs_saxon(xsl_path):
+        import saxon_preview
+        result = saxon_preview.client().transform(xml_text, xsl_path, params, base=base,
+                                                 timeout=saxon_preview.PREVIEW_TIMEOUT_SEC)
+        html_text, engine = result.html, result.engine
+    else:
+        html_text, engine = transform_with_xslt(xml_text, xsl_path, params, edit_markers=True, cache=cache)
     html_text, clickable_lines, _text_links = make_line_segments_clickable(html_text)
     html_text, marked = place_edit_markers(html_text, marker_title)
     return html_text, clickable_lines, marked, engine
@@ -1117,6 +1129,10 @@ class FormattedEditionWidget(QWidget):
         self.preview_timer.timeout.connect(self._refresh_preview_in_background)
         # Actualisation automatique hors du fil de la fenêtre (red team 2, A8).
         self._preview_generation = 0
+        # Génération de l'aperçu en cours dans un autre fil (None : aucun), et
+        # ce qui attend qu'il soit affiché (when_ready, V0.9.4.4).
+        self._pending_job = None
+        self._ready_callbacks = []
         self._preview_executor = None
         self._background_xslt_cache = {}
         self.preview_job_done.connect(self._background_preview_done)
@@ -1381,6 +1397,8 @@ class FormattedEditionWidget(QWidget):
         montrait un autre document."""
         self.preview_timer.stop()
         self._preview_generation += 1           # un aperçu en cours est dépassé
+        self._pending_job = None
+        self._ready_callbacks = []              # ils visaient l'aperçu d'avant
         self.unit_names = None
         self.sources = None
         self.dirty_preview = True
@@ -1943,6 +1961,29 @@ class FormattedEditionWidget(QWidget):
     def _preview_params(self):
         return {"baseWitness": self.main.base_id, "tocTitle": _t("preview.toc"), **publication_params()}
 
+    def _preview_base(self):
+        """Adresse du document transformé (pour un ``doc()`` relatif d'une
+        feuille 3.0) : l'édition quand l'aperçu la montre assemblée, sinon
+        le document affiché."""
+        main = self.main
+        if main._preview_shows_assembly():
+            return str(getattr(main.edition_session, "path", "") or main.project.edition)
+        return str(getattr(main.document, "path", "") or "")
+
+    def _preview_error_text(self, exc):
+        """Texte d'un échec de l'aperçu : délai dépassé, Saxon absent ou
+        arrêté (V0.9.4.4), sinon l'erreur de la feuille, avec son lieu."""
+        from saxon_preview import PreviewError
+        if isinstance(exc, PreviewError):
+            if exc.code == "timeout":
+                return _t("preview.saxon.timeout", seconds=exc.detail)
+            if exc.code == "saxon_missing":
+                return _t("preview.saxon.missing")
+            if exc.code == "worker_failed":
+                return _t("preview.saxon.failed", error=exc.detail)
+            return _t("preview.transform_error", error=exc.detail or exc.code)
+        return _t("preview.transform_error", error=exc)
+
     def refresh_preview(self, force=False):
         """Transforme la source par la feuille XSLT, dans le fil de la fenêtre, et affiche le
         résultat avec la CSS ; pour une édition en parties, c'est l'édition assemblée qui est
@@ -1965,36 +2006,45 @@ class FormattedEditionWidget(QWidget):
             self.info.setText(_t("preview.xml_invalid", error=exc))
             self.info.setStyleSheet("color:#a14b2f")
             return
+        if stylesheet_needs_saxon(self.xsl_path):
+            # Saxon (V0.9.4.4) : hors du fil de la fenêtre, même à la demande.
+            self.info.setText(_t("preview.refreshing"))
+            self.info.setStyleSheet("color:#746b61")
+            self._refresh_preview_in_background(force=True)
+            return
         started = time.perf_counter()
         try:
-            rendered = render_preview(xml_text, self.xsl_path, self._preview_params(), _t("preview.edit_paragraph"))
+            rendered = render_preview(xml_text, self.xsl_path, self._preview_params(), _t("preview.edit_paragraph"),
+                                      base=self._preview_base())
             self._show_preview(rendered, preview_key, names, spans, started)
         except Exception as exc:
-            self.info.setText(_t("preview.transform_error", error=exc))
+            self.info.setText(self._preview_error_text(exc))
             self.info.setStyleSheet("color:#a13d32")
 
-    def _refresh_preview_in_background(self):
+    def _refresh_preview_in_background(self, force=False):
         """Actualisation automatique, après une pause de la frappe (red team
         2, A8) : la transformation (0,85 s par Mo) se fait hors du fil de la
         fenêtre, qui reste libre ; seul l'affichage du résultat s'y fait. Un
         résultat dépassé (le texte a changé depuis, ou l'aperçu a été
-        actualisé autrement) est jeté."""
+        actualisé autrement) est jeté. Avec ``force``, l'aperçu est refait
+        même s'il semble à jour (actualisation demandée, feuille 3.0)."""
         sources, xml_text, spans, names = self._preview_inputs()
         if self._preview_files_missing():
             return
         preview_key = self._preview_key(xml_text, names)
-        if preview_key == self._last_preview_key:
+        if not force and preview_key == self._last_preview_key:
             self._preview_up_to_date()
             return
         self._preview_generation += 1
         generation = self._preview_generation
         xsl_path, params, title = self.xsl_path, self._preview_params(), _t("preview.edit_paragraph")
+        base = self._preview_base()
         started = time.perf_counter()
         cache = self._background_xslt_cache
 
         def job():
             try:
-                return "ok", render_preview(xml_text, xsl_path, params, title, cache=cache, check=True)
+                return "ok", render_preview(xml_text, xsl_path, params, title, cache=cache, check=True, base=base)
             except ET.ParseError as exc:
                 return "xml", exc
             except Exception as exc:
@@ -2008,18 +2058,39 @@ class FormattedEditionWidget(QWidget):
 
         if self._preview_executor is None:
             self._preview_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="varians-preview")
+        self._pending_job = generation
         self._preview_executor.submit(job).add_done_callback(finished)
+
+    def when_ready(self, callback):
+        """Appelle ``callback`` quand l'aperçu affiché est à jour : tout de
+        suite (au tour suivant de la boucle d'événements) s'il l'est, sinon
+        après l'affichage de l'aperçu en cours dans un autre fil (feuille
+        3.0, V0.9.4.4). Sert à y reporter la sélection de la source. Rien
+        n'est appelé si cet aperçu échoue."""
+        if self._pending_job is not None and self._pending_job == self._preview_generation:
+            self._ready_callbacks.append(callback)
+        else:
+            call_later(20, self, callback)
+
+    def _run_ready_callbacks(self, shown):
+        callbacks, self._ready_callbacks = self._ready_callbacks, []
+        if shown:
+            for callback in callbacks:
+                call_later(20, self, callback)
 
     def _background_preview_done(self, payload):
         generation, (status, value), sources, spans, names, preview_key, started = payload
         if generation != self._preview_generation:
             return
+        self._pending_job = None
         if status == "xml":
             self.info.setText(_t("preview.xml_invalid", error=value))
             self.info.setStyleSheet("color:#a14b2f")
+            self._run_ready_callbacks(False)
         elif status == "error":
-            self.info.setText(_t("preview.transform_error", error=value))
+            self.info.setText(self._preview_error_text(value))
             self.info.setStyleSheet("color:#a13d32")
+            self._run_ready_callbacks(False)
         else:
             self.sources = sources
             try:
@@ -2027,6 +2098,7 @@ class FormattedEditionWidget(QWidget):
             except Exception as exc:
                 self.info.setText(_t("preview.transform_error", error=exc))
                 self.info.setStyleSheet("color:#a13d32")
+                self._run_ready_callbacks(False)
 
     def _show_preview(self, rendered, preview_key, names, spans, started):
         """Affiche le résultat de ``render_preview``, à la même place."""
@@ -2076,6 +2148,7 @@ class FormattedEditionWidget(QWidget):
         else:
             self.info.setText(_t("preview.updated.timed.no_lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans)))
             self.info.setStyleSheet("color:#9a6a2f")
+        self._run_ready_callbacks(True)
 
     def _activate_line(self, idx, move_xml_cursor=True):
         """Repère de ligne ``idx`` de l'aperçu : le curseur de la source et les

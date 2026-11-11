@@ -283,6 +283,10 @@ Die Datei kann gespeichert werden; anschließend müssen die Bildausrichtungs-Ca
   <string key="preview.updated.timed.lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs, plural, one {# bearbeitbares Element} other {# bearbeitbare Elemente}} · {lines, plural, one {# anklickbare Zeile} other {# anklickbare Zeilen}} des Pivot-Textzeugen.</string>
   <string key="preview.updated.timed.no_lines">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs, plural, one {# bearbeitbares Element} other {# bearbeitbare Elemente}}. Diese XSLT erzeugt keine Zeilenmarken für den Pivot-Textzeugen.</string>
   <string key="preview.updated.timed.document">Vorschau in {elapsed} s aktualisiert · {engine} · {marked}/{paragraphs, plural, one {# bearbeitbares Element} other {# bearbeitbare Elemente}}.</string>
+  <string key="preview.refreshing">Vorschau wird aktualisiert…</string>
+  <string key="preview.saxon.timeout">Vorschau angehalten: Das XSLT-Stylesheet wurde nicht in {seconds} s fertig. Die letzte Ansicht bleibt angezeigt.</string>
+  <string key="preview.saxon.missing">Saxon ist nicht installiert: Ein XSLT-2.0- oder -3.0-Stylesheet kann nicht angezeigt werden.</string>
+  <string key="preview.saxon.failed">Der Saxon-Vorschauprozess wurde beendet: {error}</string>
   <string key="viewer.image_unavailable">IIIF-Bild nicht verfügbar</string>
   <string key="status.base_line">{base} Zeile {line}/{total}</string>
   <string key="common.all_files">Alle Dateien</string>

@@ -1261,7 +1261,9 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 if n is not None:
                     self.formatted_view.scroll_to_t1_line(n)
 
-            call_later(20, self, restore_preview_context)
+            # Quand l'aperçu est prêt : une feuille 3.0 le rend plus tard,
+            # hors du fil de la fenêtre (V0.9.4.4).
+            self.formatted_view.when_ready(restore_preview_context)
             return
 
         if index == 0 and previous == 1:
