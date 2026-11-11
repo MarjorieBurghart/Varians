@@ -6,6 +6,7 @@ from save_io import XmlFile
 from witness_ids import witness_title
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import xml.etree.ElementTree as ET
 
 
@@ -115,6 +116,23 @@ class WitnessConfig:
 
 
 @dataclass(frozen=True)
+class ViewConfig:
+    """Vue nommée d'un document (V0.9.4.4) : ``<view name="…" xslt="…"
+    css="…" units="…"/>`` sous ``<edition>`` ou ``<document>``.
+
+    ``xslt`` et ``css`` sont gardés tels qu'ils sont écrits, comme les chemins
+    des scénarios de transformation : relatifs au projet, ou ``${varians}/…``
+    (feuilles fournies avec Varians) ; ``xslt_scenarios.resolve_path`` les
+    résout. ``css`` vide : la CSS du projet. ``units`` : les éléments
+    modifiables comme fragment (noms locaux), où qu'ils soient dans le
+    document ; vide : la règle de l'édition (fragment_units)."""
+    name: str
+    xslt: str
+    css: str = ""
+    units: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class DocumentConfig:
     """Document XML auxiliaire du projet (fichier d'autorités, notes…), édité
     à côté de l'édition mais sans aperçu ni témoins."""
@@ -124,6 +142,8 @@ class DocumentConfig:
     # renseigné qu'en mode file.
     schema_mode: str = "auto"
     schema: Path | None = None
+    # Vues nommées (V0.9.4.4), dans l'ordre de project.xml.
+    views: tuple[ViewConfig, ...] = ()
 
     @property
     def display_label(self) -> str:
@@ -237,6 +257,9 @@ class ProjectConfig:
     # Texte établi (V0.9.3.1) : leçons hors <lem> surlignées au départ
     # (<webViewer highlightNonLem="true">) ; le lecteur le change dans l'en-tête.
     web_highlight_nonlem: bool = False
+    # Vues nommées de l'édition (V0.9.4.4), en plus de celle du projet
+    # (<rendering>) : <edition><view …/></edition>.
+    edition_views: tuple[ViewConfig, ...] = ()
 
     @property
     def root_dir(self) -> Path:
@@ -299,6 +322,28 @@ def _parse_schema(root: ET.Element, root_dir: Path) -> tuple[str, Path | None, s
     return mode, schema, "relaxng"
 
 
+_UNIT_NAME = re.compile(r"[A-Za-z_][\w.-]*")
+
+
+def _parse_views(parent: ET.Element | None) -> tuple[ViewConfig, ...]:
+    """Vues nommées ``<view>`` de ``parent`` (``<edition>`` ou
+    ``<document>``). Une vue sans nom ou sans feuille XSLT est ignorée ; à nom
+    égal, la première est gardée ; un nom d'élément modifiable incorrect est
+    ignoré."""
+    if parent is None:
+        return ()
+    views, names = [], set()
+    for view_el in parent.findall("view"):
+        name = (view_el.get("name") or "").strip()
+        xslt = (view_el.get("xslt") or "").strip()
+        if not name or not xslt or name in names:
+            continue
+        names.add(name)
+        units = tuple(unit for unit in (view_el.get("units") or "").split() if _UNIT_NAME.fullmatch(unit))
+        views.append(ViewConfig(name, xslt, (view_el.get("css") or "").strip(), units))
+    return tuple(views)
+
+
 def _parse_documents(root: ET.Element, root_dir: Path, edition: Path) -> tuple[DocumentConfig, ...]:
     """Lit <documents><document file label schema schemaFile/></documents>.
 
@@ -329,7 +374,8 @@ def _parse_documents(root: ET.Element, root_dir: Path, edition: Path) -> tuple[D
             if not raw_schema:
                 raise _missing_attribute(f'<document file="{raw_file}" schema="{source}">', 'schemaFile="…"')
             schema = _resolve(root_dir, raw_schema, raw_schema)
-        documents.append(DocumentConfig(path, (document_el.get("label") or "").strip(), mode, schema))
+        documents.append(DocumentConfig(path, (document_el.get("label") or "").strip(), mode, schema,
+                                        _parse_views(document_el)))
     return tuple(documents)
 
 
@@ -615,6 +661,7 @@ def load_project(path: str | Path) -> ProjectConfig:
         web_text_mode=web_text_mode,
         web_text_witness=web_text_witness,
         web_highlight_nonlem=web_highlight_nonlem,
+        edition_views=_parse_views(edition_el),
         translations_dir=translations_dir,
         language=language,
         fallback_language=fallback_language,
