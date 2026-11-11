@@ -31,7 +31,8 @@ from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
 from large_files import confirm_large_files, file_size, is_large
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines, structure_signature
 from preview_sources import preview_sources
-from project_management import update_project_documents
+from project_config import DocumentConfig
+from project_management import update_project_documents, update_project_edition_views
 from lxml import etree
 from xml_assembly import assemble, path_key
 
@@ -272,6 +273,36 @@ class DocumentTabsMixin:
             return None
         key = path_key(session.path)
         return next((config for config in self.project.documents if path_key(config.path) == key), None)
+
+    def set_preview_views(self, views):
+        """Écrit les vues nommées du document affiché dans project.xml (copie
+        ``.bak``) : sous ``<edition>`` pour l'édition et ses parties, sous
+        son ``<document>`` pour un document auxiliaire. False, avec un
+        message, si l'écriture échoue."""
+        views = tuple(views)
+        try:
+            if self.document.in_edition:
+                update_project_edition_views(self.project.path, views)
+                self.project = replace(self.project, edition_views=views)
+            else:
+                key = path_key(self.document.path)
+                configs = [replace(config, views=views) if path_key(config.path) == key else config
+                           for config in self.project.documents]
+                update_project_documents(self.project.path, configs)
+                self.project = replace(self.project, documents=tuple(configs))
+        except Exception as exc:
+            QMessageBox.critical(self, _t("documents.error.title"), str(exc))
+            return False
+        return True
+
+    def open_project_file(self, path):
+        """Affiche le fichier ``path`` du projet : son onglet s'il est ouvert,
+        sinon il est ajouté aux documents du projet (project.xml)."""
+        key = path_key(path)
+        session = next((s for s in self.documents if s.path is not None and path_key(s.path) == key), None)
+        if session is not None:
+            return self.show_document(session)
+        return self._register_document(DocumentConfig(Path(path)))
 
     def _document_has_view(self):
         """Le document affiché a une Vue XSLT / CSS : l'édition, ses parties

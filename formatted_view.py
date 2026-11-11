@@ -23,7 +23,7 @@ from PySide6.QtCore import QRegularExpression, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QColor, QKeySequence, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QHBoxLayout, QInputDialog, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QSizePolicy, QSplitter, QTextBrowser, QTextEdit, QToolButton,
+    QLineEdit, QMenu, QMessageBox, QPushButton, QSizePolicy, QSplitter, QTextBrowser, QTextEdit, QToolButton,
     QVBoxLayout, QWidget,
 )
 from app_context import _settings, call_later, tr as _t
@@ -884,6 +884,22 @@ class FormattedEditionWidget(QWidget):
         self.view_combo = QComboBox()
         self.view_combo.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.view_combo.setMinimumContentsLength(12)
+        # Menu « Vues » : créer, modifier, retirer une vue nommée du document
+        # affiché, ouvrir sa feuille XSLT.
+        self.views_button = QToolButton()
+        self.views_button.setText(_t("views.menu"))
+        self.views_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        views_menu = QMenu(self.views_button)
+        self.new_view_action = views_menu.addAction(_t("views.new"))
+        self.edit_view_action = views_menu.addAction(_t("views.edit"))
+        self.remove_view_action = views_menu.addAction(_t("views.remove"))
+        views_menu.addSeparator()
+        self.open_view_stylesheet_action = views_menu.addAction(_t("views.open_xslt"))
+        self.views_button.setMenu(views_menu)
+        self.new_view_action.triggered.connect(self.new_view)
+        self.edit_view_action.triggered.connect(self.edit_view)
+        self.remove_view_action.triggered.connect(self.remove_view)
+        self.open_view_stylesheet_action.triggered.connect(self.open_view_stylesheet)
         self.refresh_btn = QPushButton(_t("preview.refresh"))
         self.auto_check = QCheckBox(_t("preview.auto"))
         self.auto_check.setChecked(True)
@@ -896,6 +912,7 @@ class FormattedEditionWidget(QWidget):
         self.formatting_label = QLabel(_t("preview.formatting"))
         top.addWidget(self.formatting_label)
         top.addWidget(self.view_combo)
+        top.addWidget(self.views_button)
         top.addWidget(self.refresh_btn)
         top.addWidget(self.auto_check)
         top.addSpacing(8)
@@ -1211,6 +1228,106 @@ class FormattedEditionWidget(QWidget):
         finally:
             combo.blockSignals(False)
         self._update_view_tip()
+        self._update_view_actions()
+
+    def _update_view_actions(self):
+        """La vue du projet ne se modifie ni ne se retire ici (Paramètres du
+        projet…) ; seule une feuille du projet s'ouvre dans un onglet."""
+        named = self._current_view is not None
+        self.edit_view_action.setEnabled(named)
+        self.remove_view_action.setEnabled(named)
+        self.open_view_stylesheet_action.setEnabled(named and self._project_stylesheet() is not None)
+
+    def _project_stylesheet(self):
+        """Feuille XSLT de la vue nommée choisie, si elle est un fichier du
+        projet ; sinon None (feuille de Varians, fichier absent…)."""
+        if self._current_view is None:
+            return None
+        path = self.xsl_path
+        try:
+            path.relative_to(Path(self.main.project.root_dir).resolve())
+        except ValueError:
+            return None
+        return path if path.is_file() else None
+
+    def _views_may_change(self):
+        """Avant d'écrire les vues : un fragment ouvert est appliqué ou
+        abandonné (ses éléments modifiables peuvent changer) ; False si
+        l'utilisateur annule."""
+        return self.frag_box.isHidden() or self.close_fragment_editor()
+
+    def _store_views(self, views, chosen):
+        """Écrit les vues nommées du document affiché dans project.xml, puis
+        montre ``chosen`` (None : la vue du projet). False si l'écriture
+        échoue (message déjà affiché)."""
+        if not self.main.set_preview_views(views):
+            return False
+        data = self._remembered_views()
+        if chosen is None:
+            data.pop(self._view_key, None)
+        else:
+            data[self._view_key] = chosen.name
+        _settings().setValue(self.main._view_settings_key("previewViews"), json.dumps(data, ensure_ascii=False))
+        self._views = None                       # liste à refaire
+        self.context_changed()
+        if self.isVisible():
+            self.refresh_preview(force=True)
+        return True
+
+    def _view_dialog(self, view=None, units=()):
+        from view_dialogs import ViewDialog
+        taken = [v.name for v in self._views if v is not view]
+        dialog = ViewDialog(self, self.main.project, view=view, taken=taken, units=units)
+        if dialog.exec() != QDialog.DialogCode.Accepted or dialog.result_view is None:
+            return None
+        return dialog.result_view
+
+    def new_view(self):
+        """« Nouvelle vue… » : vue nommée du document affiché, avec au choix
+        une feuille XSLT 1.0 et une CSS de départ ; pour un document
+        auxiliaire, les entrées de sa première liste sont proposées comme
+        éléments modifiables. La nouvelle vue est choisie."""
+        from view_files import suggested_units
+        if not self._views_may_change():
+            return False
+        session = self.main.document
+        units = () if session is None or session.in_edition else suggested_units(self.main.editor.toPlainText())
+        view = self._view_dialog(units=units)
+        if view is None:
+            return False
+        return self._store_views(tuple(self._views) + (view,), view)
+
+    def edit_view(self):
+        """« Modifier la vue… » : nom, feuille, CSS et éléments modifiables de
+        la vue choisie ; ses anciens fichiers restent."""
+        current = self._current_view
+        if current is None or not self._views_may_change():
+            return False
+        view = self._view_dialog(current)
+        if view is None:
+            return False
+        return self._store_views(tuple(view if v == current else v for v in self._views), view)
+
+    def remove_view(self):
+        """« Retirer la vue » : après confirmation, la vue choisie quitte
+        project.xml ; ses fichiers restent. La vue du projet est alors
+        choisie."""
+        current = self._current_view
+        if current is None:
+            return False
+        answer = QMessageBox.question(
+            self, _t("views.remove.title"), _t("views.remove.question", name=current.name),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if answer != QMessageBox.StandardButton.Yes or not self._views_may_change():
+            return False
+        return self._store_views(tuple(v for v in self._views if v != current), None)
+
+    def open_view_stylesheet(self):
+        """« Ouvrir la feuille XSLT » : la feuille de la vue choisie, si elle
+        est dans le projet, s'affiche dans son onglet (ajoutée aux documents
+        du projet au besoin) ; F8 la vérifie."""
+        path = self._project_stylesheet()
+        return path is not None and self.main.open_project_file(path)
 
     def _update_view_tip(self):
         view = self._current_view
@@ -1253,6 +1370,7 @@ class FormattedEditionWidget(QWidget):
         self._current_view = view
         self._remember_view()
         self._update_view_tip()
+        self._update_view_actions()
         self._reset_preview(clear=False)
         if self.isVisible():
             self.refresh_preview(force=True)
@@ -1286,6 +1404,11 @@ class FormattedEditionWidget(QWidget):
         des matières…)."""
         self.view_combo.setItemText(0, _t("preview.view.project"))
         self._update_view_tip()
+        self.views_button.setText(_t("views.menu"))
+        self.new_view_action.setText(_t("views.new"))
+        self.edit_view_action.setText(_t("views.edit"))
+        self.remove_view_action.setText(_t("views.remove"))
+        self.open_view_stylesheet_action.setText(_t("views.open_xslt"))
         self.edit_paragraph_action.setText(_t("preview.edit_paragraph"))
         self.refresh_btn.setText(_t("preview.refresh"))
         self.auto_check.setText(_t("preview.auto"))
