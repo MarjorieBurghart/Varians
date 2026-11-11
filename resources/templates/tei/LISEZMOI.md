@@ -36,18 +36,17 @@ Chaque modèle a été validé par lxml (le validateur RELAX NG de Varians)
 contre le schéma de sa déclinaison, pris dans la même archive
 (`xml/tei/custom/schema/relaxng/`) :
 
-- 16 modèles sont valides ;
+- 20 modèles sont valides ;
 - « TEI for writing TEI Customizations » ne l'est pas, volontairement :
   `<schemaSpec ident="">` attend son identifiant (« @ident is required »,
-  dit le modèle) ;
-- Corpus, ENRICH Manuscript description, Manuscript description et Speech
-  n'ont pas pu être vérifiés : leur schéma (`tei_corpus.rng`,
-  `tei_enrich.rng`, `tei_ms.rng`, `tei_speech.rng`) fait tourner libxml2
-  sans fin, quand il en compile les modèles de contenu en automates (défaut
-  de libxml2, constaté en 2.9.14 et 2.14.6 ; détails dans
-  `DEVELOPER_HANDOFF.md`, `relaxng_validation.py`). Varians abandonne alors
-  la validation au bout d'une minute et le dit ; `tei_all.rng` se compile en
-  une dizaine de secondes.
+  dit le modèle).
+
+Les schémas de Corpus, ENRICH Manuscript description, Manuscript description
+et Speech (`tei_corpus.rng`, `tei_enrich.rng`, `tei_ms.rng`,
+`tei_speech.rng`) faisaient tourner libxml2 sans fin (défaut de libxml2,
+constaté en 2.9.14 et 2.14.6) ; Varians les compile grâce au correctif de
+`relaxng_validation.single_patterns_unwrapped` (détails dans
+`DEVELOPER_HANDOFF.md`). Les modèles ont été vérifiés avec ce correctif.
 
 ## Ce que Varians change
 

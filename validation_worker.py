@@ -31,8 +31,9 @@ la même façon le texte d'un fichier Schematron (``schematron_check``), avec
 (V0.9.2.6) le texte non enregistré des fichiers qu'il inclut (``texts``).
 
 **Compilation sans fin** : le processus annonce chaque compilation de schéma
-RELAX NG (relaxng_worker). Certains schémas TEI (tei_ms, tei_corpus,
-tei_speech, tei_enrich) font tourner libxml2 sans fin ; au-delà de
+RELAX NG (relaxng_worker). Un schéma peut faire tourner libxml2 sans fin
+(c'était le cas de tei_ms, tei_corpus, tei_speech et tei_enrich avant le
+correctif de relaxng_validation, ``single_patterns_unwrapped``) ; au-delà de
 ``COMPILE_LIMIT_SEC``, la compilation est abandonnée : le processus est
 arrêté, puis relancé pour les autres requêtes ; celles de ce schéma reçoivent
 un résultat ``abandoned``, comme toute requête suivante pour ce schéma tant

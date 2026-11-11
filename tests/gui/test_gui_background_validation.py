@@ -156,7 +156,8 @@ def test_an_unavailable_worker_is_reported_once_and_validation_still_works(open_
 
 def test_an_abandoned_compilation_is_shown_and_can_be_retried(open_window, example_project, qtbot, monkeypatch):
     # Schéma dont la compilation ne finit jamais (comme tei_ms.rng dans
-    # libxml2) : la validation est abandonnée, l'état le dit, et ↻ la relance.
+    # libxml2 avant le correctif de relaxng_validation) : la validation est
+    # abandonnée, l'état le dit, et ↻ la relance.
     monkeypatch.setattr(validation_worker, "COMPILE_LIMIT_SEC", 1)
     xml = example_project.parent / "xml"
     (xml / "bloque.rng").write_text((xml / "test.rng").read_text(encoding="utf-8"), encoding="utf-8")

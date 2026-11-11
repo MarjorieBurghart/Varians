@@ -159,9 +159,10 @@ def test_the_compilation_limit_is_one_minute():
 
 
 def test_a_compilation_that_never_ends_is_abandoned(make_client, schema, tmp_path, qtbot, monkeypatch):
-    # Certains schémas TEI (tei_ms, tei_corpus…) font tourner libxml2 sans
-    # fin : la compilation est abandonnée, le processus relancé pour les
-    # autres requêtes, et le schéma n'est plus essayé.
+    # Un schéma peut faire tourner libxml2 sans fin (tei_ms, tei_corpus…
+    # avant le correctif de relaxng_validation) : la compilation est
+    # abandonnée, le processus relancé pour les autres requêtes, et le schéma
+    # n'est plus essayé.
     monkeypatch.setattr(validation_worker, "COMPILE_LIMIT_SEC", 1)
     stuck = tmp_path / "bloque.rng"
     stuck.write_text(SCHEMA, encoding="utf-8")

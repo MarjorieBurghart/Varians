@@ -265,6 +265,47 @@ def _schema_dependency_signature(schema_path: Path) -> tuple:
     return signature
 
 
+_RNG_NS = "{http://relaxng.org/ns/structure/1.0}"
+_SINGLE_PATTERN_TAGS = (_RNG_NS + "group", _RNG_NS + "interleave", _RNG_NS + "choice")
+
+
+def single_patterns_unwrapped(schema_doc) -> int:
+    """Remplace, dans l'arbre lxml ``schema_doc``, chaque ``<group>``,
+    ``<interleave>`` ou ``<choice>`` qui n'a qu'un motif enfant par cet
+    enfant (même langage) ; rend leur nombre. Les annotations (documentation,
+    règles Schematron intégrées) suivent l'enfant.
+
+    libxml2 fait lui-même ce déroulement en simplifiant le schéma ; mais sur
+    un élément qui se contient lui-même (``oneOrMore(ref state)``), sa
+    simplification repasse sur l'élément pendant qu'elle le traite, déroule
+    le groupe et déplace les références d'attributs, puis les déplace de
+    nouveau : la liste des attributs devient circulaire et la compilation ne
+    finit jamais (``state``, ``trait`` des déclinaisons TEI sans le module
+    certainty : tei_ms, tei_corpus, tei_speech, tei_enrich). Déroulés
+    d'avance, ces motifs ne sont plus touchés par libxml2."""
+    root = schema_doc.getroot() if hasattr(schema_doc, "getroot") else schema_doc
+    count = 0
+    # Ordre inverse du document : les descendants avant leurs ancêtres.
+    for node in reversed(list(root.iter(*_SINGLE_PATTERN_TAGS))):
+        parent = node.getparent()
+        if parent is None:
+            continue
+        patterns = [child for child in node if isinstance(child.tag, str) and child.tag.startswith(_RNG_NS)]
+        if len(patterns) != 1:
+            continue
+        pattern = patterns[0]
+        annotations = [child for child in node if child is not pattern and isinstance(child.tag, str)]
+        pattern.tail = node.tail
+        parent.replace(node, pattern)
+        anchor = pattern
+        for annotation in annotations:
+            annotation.tail = None
+            anchor.addnext(annotation)
+            anchor = annotation
+        count += 1
+    return count
+
+
 def _compiled_relaxng(schema_path: Path) -> _CompiledSchema:
     """Retourne un RNG compilé, en recompilant uniquement si nécessaire."""
     global _RELAXNG_CACHE_COMPILATIONS
@@ -283,6 +324,7 @@ def _compiled_relaxng(schema_path: Path) -> _CompiledSchema:
         try:
             schema_parser = etree.XMLParser(resolve_entities=False, no_network=True, recover=False)
             schema_doc = etree.parse(str(schema_path), schema_parser)
+            single_patterns_unwrapped(schema_doc)            # boucle de libxml2, voir la fonction
             relaxng = etree.RelaxNG(schema_doc)
         finally:
             if notice is not None:
