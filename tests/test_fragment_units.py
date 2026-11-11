@@ -196,3 +196,57 @@ def test_the_schema_is_read_again_when_it_changes(tmp_path):
     stat = schema.stat()
     os.utime(schema, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1_000_000))
     assert "lg" in unit_names_from_schema(schema)
+
+
+# --- Éléments choisis par une vue (V0.9.4.4) ---------------------------------------------------
+
+PERSONS = ('<listPerson xmlns="http://www.tei-c.org/ns/1.0"><head>Personnes</head>'
+           '<person xml:id="a"><persName>A</persName><note>n</note></person>'
+           '<person xml:id="b"><persName>B</persName></person>'
+           '<listPerson><person xml:id="c"><persName>C</persName></person></listPerson>'
+           '</listPerson>')
+
+
+def _texts(text, spans):
+    return [text[start:end] for start, end in spans]
+
+
+def test_the_elements_chosen_by_a_view_count_anywhere():
+    from fragment_units import chosen_units
+    names = chosen_units(["person"])
+    found = _texts(PERSONS, unit_spans(PERSONS, names))
+    assert [piece[:19] for piece in found] == ['<person xml:id="a">', '<person xml:id="b">', '<person xml:id="c">']
+    # Sans choix, la règle de l'édition : toute la liste est un seul élément.
+    assert len(unit_spans(PERSONS, TEI_UNIT_NAMES)) == 1
+
+
+def test_chosen_elements_count_outside_the_body_too():
+    from fragment_units import chosen_units
+    text = _tei("<p>corps</p>", front="<front><p>avant</p></front>")
+    assert len(unit_spans(text, TEI_UNIT_NAMES)) == 1                  # seul le <body> compte
+    assert [piece for piece in _texts(text, unit_spans(text, chosen_units({"p"})))] == [
+        "<p>Diffusion libre</p>", "<p>avant</p>", "<p>corps</p>"]
+
+
+def test_the_outermost_chosen_element_wins():
+    from fragment_units import chosen_units
+    found = _texts(PERSONS, unit_spans(PERSONS, chosen_units({"person", "note", "persName"})))
+    assert [piece[:19] for piece in found] == ['<person xml:id="a">', '<person xml:id="b">', '<person xml:id="c">']
+
+
+def test_chosen_elements_are_marked_and_found_in_a_tree():
+    from fragment_units import chosen_units
+    names = chosen_units({"person"})
+    marked, spans = mark_units(PERSONS, names)
+    root = etree.fromstring(marked.encode("utf-8"))
+    assert [e.get(f"{{{EDIT_NS}}}edit") for e in root.iter(f"{{{TEI_NS}}}person")] == ["0", "1", "2"]
+    tree_units = unit_elements(etree.fromstring(PERSONS.encode("utf-8")), names)
+    assert [e.get("{http://www.w3.org/XML/1998/namespace}id") for e in tree_units] == ["a", "b", "c"]
+    assert len(spans) == 3
+
+
+def test_chosen_units_are_a_set_of_names():
+    from fragment_units import ChosenUnits, chosen_units
+    names = chosen_units(("person", "place", "person"))
+    assert isinstance(names, ChosenUnits) and names == {"person", "place"}
+    assert not isinstance(TEI_UNIT_NAMES, ChosenUnits)
