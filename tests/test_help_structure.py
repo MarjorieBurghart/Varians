@@ -258,3 +258,15 @@ def test_an_external_css_of_a_view_is_explained(language):
                    '<code>css="xslt/catalogue.css"</code>', f"<strong>{catalog['toolbar.transform']}</strong>",
                    "<code>@media</code>"):
         assert needle in paragraph[link:], (language, needle)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_javascript_in_a_view_is_explained(language):
+    """V0.9.4.4 : l'aperçu n'exécute pas le JavaScript d'une feuille
+    (<script> ignoré, onclick sans effet) ; pour une page qui en a besoin,
+    un scénario de Transformer et un navigateur."""
+    page, catalog = _page(language), _catalog(language)
+    start = page.index("</pre>", page.index('<p id="view-stylesheet">'))
+    rest = page[start:page.index("</p>", start)]
+    for needle in ("<code>&lt;script&gt;</code>", "<code>onclick</code>", f"<strong>{catalog['toolbar.transform']}</strong>"):
+        assert needle in rest, (language, needle)
