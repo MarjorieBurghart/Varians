@@ -6,9 +6,10 @@ Une vue (``project_config.ViewConfig``) associe une feuille XSLT, une CSS et,
 en option, les éléments modifiables comme fragment. « Nouvelle vue… » peut
 écrire une feuille XSLT 1.0 et une CSS de départ, nommées d'après la vue,
 dans ``xslt/`` et ``rendering/`` du projet (``write_starter``), sans jamais
-remplacer un fichier. La feuille de départ montre tout document : un élément
-qui contient du texte est un paragraphe (ses éléments y restent en ligne), un
-élément qui ne contient que des éléments est un bloc. Varians y ajoute
+remplacer un fichier. La feuille de départ montre tout document : chaque
+entrée d'une liste est un paragraphe ; ailleurs, un élément qui contient du
+texte est un paragraphe, un élément qui ne contient que des éléments, un
+bloc ; dans un paragraphe, les éléments restent en ligne. Varians y ajoute
 lui-même les crayons ✎, comme pour toute feuille.
 """
 from __future__ import annotations
@@ -48,15 +49,17 @@ _STYLESHEET = """<?xml version="1.0" encoding="UTF-8"?>
   <!-- L'en-tête TEI n'est pas montré. -->
   <xsl:template match="tei:teiHeader"/>
 
-  <!-- Dans un paragraphe, un élément reste en ligne ; ailleurs, un élément
-       qui contient du texte est un paragraphe, un autre un bloc. La classe
-       est le nom de l'élément (p.persName, div.person…), pour la CSS. -->
+  <!-- Chaque entrée d'une liste (enfant de listPerson, listPlace,
+       listBibl, list…) est un paragraphe ; ailleurs, un élément qui contient
+       du texte est un paragraphe, un autre un bloc. Dans un paragraphe, les
+       éléments restent en ligne. La classe est le nom de l'élément
+       (p.person, span.persName…), pour la CSS. -->
   <xsl:template match="*">
     <xsl:choose>
-      <xsl:when test="ancestor::*[text()[normalize-space()]]">
+      <xsl:when test="ancestor::*[starts-with(local-name(..), 'list') or text()[normalize-space()]]">
         <span class="{{local-name()}}"><xsl:apply-templates/></span>
       </xsl:when>
-      <xsl:when test="text()[normalize-space()] or not(*)">
+      <xsl:when test="starts-with(local-name(..), 'list') or text()[normalize-space()] or not(*)">
         <p class="{{local-name()}}"><xsl:apply-templates/></p>
       </xsl:when>
       <xsl:otherwise>

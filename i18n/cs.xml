@@ -282,6 +282,7 @@ Soubor lze uložit, ale mezipaměti zarovnání obrazů bude poté nutné znovu 
   <string key="console.unaligned_lines">{count, plural, one {# řádek pivotního svědka není synchronizován} few {# řádky pivotního svědka nejsou synchronizovány} other {# řádků pivotního svědka není synchronizováno}} s obrázky: jeho zarovnání (JSON) má méně řádků než text (text: {text}, zarovnání: {alignment}).</string>
   <string key="preview.updated.timed.lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}} · {lines, plural, one {# klikací řádek} few {# klikací řádky} other {# klikacích řádků}} pivotního svědka.</string>
   <string key="preview.updated.timed.no_lines">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}}. Tento XSLT nevytváří značky řádků pivotního svědka.</string>
+  <string key="preview.updated.timed.document">Náhled aktualizován za {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# upravitelný prvek} few {# upravitelné prvky} other {# upravitelných prvků}}.</string>
   <string key="viewer.image_unavailable">Obrázek IIIF není dostupný</string>
   <string key="status.base_line">{base} řádek {line}/{total}</string>
   <string key="common.all_files">Všechny soubory</string>

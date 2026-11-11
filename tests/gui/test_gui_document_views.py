@@ -10,6 +10,7 @@ document. Les boutons « XSLT… » et « CSS… » (choix pour la session) ont
 disparu."""
 from __future__ import annotations
 
+import re
 from dataclasses import replace
 
 import pytest
@@ -101,6 +102,10 @@ def test_a_document_view_uses_its_stylesheet_and_its_pencils(open_window, views_
     assert view.view_combo.toolTip().endswith(tr("preview.view.units.tip", units="person"))
     _wait_preview(qtbot, view, "Index des personnes")
     assert [index for _marker, _pos, index in view.preview._paragraph_markers] == [0, 1]
+    # Un document sans témoin : pas d'avertissement sur les lignes du pivot.
+    pattern = re.escape(tr("preview.updated.timed.document", elapsed="\x00", engine=view._last_preview_engine,
+                           marked=2, paragraphs=2)).replace("\x00", r"[\d.]+")
+    assert re.fullmatch(pattern, view.info.text()), view.info.text()
     assert _content(view, 0).startswith("Fiche : Bernardus")
     assert _content(view, 1).startswith("Fiche : Petrus")
     _click_pencil(qtbot, view, 1)

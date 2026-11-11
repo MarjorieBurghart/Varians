@@ -270,6 +270,7 @@
   <string key="console.unaligned_lines">{count, plural, one {# line of the pivot witness is not synchronized} other {# lines of the pivot witness are not synchronized}} with the images: its alignment (JSON) has fewer lines than the text (text: {text}, alignment: {alignment}).</string>
   <string key="preview.updated.timed.lines">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}} · {lines, plural, one {# clickable pivot-witness line} other {# clickable pivot-witness lines}}.</string>
   <string key="preview.updated.timed.no_lines">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}}. This XSLT does not produce pivot-witness line markers.</string>
+  <string key="preview.updated.timed.document">Preview refreshed in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# editable element} other {# editable elements}}.</string>
   <string key="viewer.image_unavailable">IIIF image unavailable</string>
   <string key="status.base_line">{base} line {line}/{total}</string>
   <string key="common.all_files">All files</string>

@@ -270,6 +270,7 @@
   <string key="console.unaligned_lines">{count, plural, one {# ligne du témoin pivot n'est pas synchronisée} other {# lignes du témoin pivot ne sont pas synchronisées}} avec les images : son alignement (JSON) compte moins de lignes que le texte (texte : {text}, alignement : {alignment}).</string>
   <string key="preview.updated.timed.lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# élément modifiable} other {# éléments modifiables}} · {lines, plural, one {# ligne du témoin pivot cliquable} other {# lignes du témoin pivot cliquables}}.</string>
   <string key="preview.updated.timed.no_lines">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# élément modifiable} other {# éléments modifiables}}. Cette XSLT ne produit pas de marqueurs de ligne du témoin pivot.</string>
+  <string key="preview.updated.timed.document">Aperçu actualisé en {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# élément modifiable} other {# éléments modifiables}}.</string>
   <string key="viewer.image_unavailable">Image IIIF indisponible</string>
   <string key="status.base_line">Ligne {base} {line}/{total}</string>
   <string key="common.all_files">Tous les fichiers</string>

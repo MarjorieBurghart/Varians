@@ -2064,7 +2064,13 @@ class FormattedEditionWidget(QWidget):
         self._last_preview_key = preview_key
         self._last_preview_engine = engine
         elapsed = time.perf_counter() - started
-        if clickable_lines:
+        document = getattr(self.main, "document", None)
+        if document is not None and not document.in_edition:
+            # Un document sans témoin (V0.9.4.4) : rien à dire des lignes du pivot.
+            self.info.setText(_t("preview.updated.timed.document", elapsed=f"{elapsed:.2f}", engine=engine,
+                                 marked=marked, paragraphs=len(spans)))
+            self.info.setStyleSheet("color:#376b3c")
+        elif clickable_lines:
             self.info.setText(_t("preview.updated.timed.lines", elapsed=f"{elapsed:.2f}", engine=engine, marked=marked, paragraphs=len(spans), lines=clickable_lines))
             self.info.setStyleSheet("color:#376b3c")
         else:

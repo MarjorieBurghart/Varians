@@ -282,6 +282,7 @@
   <string key="console.unaligned_lines">{count, plural, one {# строка опорного свидетеля не синхронизирована} few {# строки опорного свидетеля не синхронизированы} many {# строк опорного свидетеля не синхронизированы} other {# строки опорного свидетеля не синхронизированы}} с изображениями: в его выравнивании (JSON) меньше строк, чем в тексте (текст: {text}, выравнивание: {alignment}).</string>
   <string key="preview.updated.timed.lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs} · кликабельных строк опорного свидетеля {lines}.</string>
   <string key="preview.updated.timed.no_lines">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs}. Этот XSLT не создаёт маркеры строк опорного свидетеля.</string>
+  <string key="preview.updated.timed.document">Предпросмотр обновлён за {elapsed} с · {engine} · редактируемых элементов {marked}/{paragraphs}.</string>
   <string key="viewer.image_unavailable">Изображение IIIF недоступно</string>
   <string key="status.base_line">{base} строка {line}/{total}</string>
   <string key="common.all_files">Все файлы</string>

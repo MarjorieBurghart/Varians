@@ -282,6 +282,7 @@ Il file può essere salvato, ma le cache di allineamento delle immagini dovranno
   <string key="console.unaligned_lines">{count, plural, one {# riga del testimone pivot non è sincronizzata} other {# righe del testimone pivot non sono sincronizzate}} con le immagini: il suo allineamento (JSON) ha meno righe del testo (testo: {text}, allineamento: {alignment}).</string>
   <string key="preview.updated.timed.lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# elemento modificabile} other {# elementi modificabili}} · {lines, plural, one {# riga cliccabile} other {# righe cliccabili}} del testimone pivot.</string>
   <string key="preview.updated.timed.no_lines">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# elemento modificabile} other {# elementi modificabili}}. Questo XSLT non produce marcatori di riga del testimone pivot.</string>
+  <string key="preview.updated.timed.document">Anteprima aggiornata in {elapsed} s · {engine} · {marked}/{paragraphs, plural, one {# elemento modificabile} other {# elementi modificabili}}.</string>
   <string key="viewer.image_unavailable">Immagine IIIF non disponibile</string>
   <string key="status.base_line">Riga {base} {line}/{total}</string>
   <string key="common.all_files">Tutti i file</string>

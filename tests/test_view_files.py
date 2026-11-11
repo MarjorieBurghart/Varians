@@ -3,9 +3,10 @@
 
 « Nouvelle vue… » peut écrire une feuille XSLT 1.0 et une CSS de départ,
 nommées d'après la vue, dans ``xslt/`` et ``rendering/`` du projet, sans
-jamais remplacer un fichier. La feuille montre tout document : un élément
-qui contient du texte est un paragraphe, un autre un bloc ; les crayons ✎
-sont ceux de Varians. Pour un document auxiliaire, les éléments modifiables
+jamais remplacer un fichier. La feuille montre tout document : une entrée de
+liste est un paragraphe, son contenu en ligne ; ailleurs, un élément qui
+contient du texte est un paragraphe, un autre un bloc ; les crayons ✎ sont
+ceux de Varians. Pour un document auxiliaire, les éléments modifiables
 proposés sont les entrées de sa première liste (``<person>`` d'un
 ``<listPerson>``)."""
 from __future__ import annotations
@@ -67,8 +68,8 @@ def test_the_starter_stylesheet_shows_any_document_with_its_pencils(tmp_path):
     assert "<h1>Fiches &amp; &lt;notes&gt;</h1>" in html
     paragraphs = [re.sub(r"<[^>]+>", "", p).replace("✎", "").strip()
                   for p in re.findall(r"<p\b[^>]*>(.*?)</p>", html, re.S)]
-    assert paragraphs == ["Bernardus", "1090", "Petrus"]
-    assert re.search(r'<div class="person">\s*<p class="persName"><a href="tei-edit://p/0"', html)
+    assert paragraphs == ["Bernardus 1090", "Petrus"]                 # une entrée, un paragraphe
+    assert re.search(r'<p class="person"><a href="tei-edit://p/0"[^>]*>✎</a> <span class="persName">Bernardus', html)
 
 
 def test_the_starter_stylesheet_keeps_elements_inline_in_a_paragraph(tmp_path):
