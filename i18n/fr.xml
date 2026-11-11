@@ -72,14 +72,14 @@
   <string key="views.edit.title">Modifier la vue</string>
   <string key="views.name">Nom :</string>
   <string key="views.create_starter">Créer une feuille XSLT et une CSS de départ</string>
-  <string key="views.create_starter.tip">Une feuille XSLT 1.0 qui montre tout le document et une CSS simple, nommées d’après la vue, dans les dossiers xslt/ et rendering/ du projet.</string>
+  <string key="views.create_starter.tip">Une feuille XSLT (1.0 ou 3.0, au choix) qui montre tout le document, avec les repères de ligne du témoin pivot, et une CSS simple, nommées d’après la vue, dans les dossiers xslt/ et rendering/ du projet.</string>
   <string key="views.xslt">Feuille XSLT :</string>
   <string key="views.css">CSS :</string>
   <string key="views.css.placeholder">vide : la CSS du projet</string>
   <string key="views.units">Éléments modifiables :</string>
   <string key="views.units.placeholder">vide : la règle de l’édition</string>
   <string key="views.units.tip">Noms des éléments qui reçoivent un crayon ✎, séparés par des espaces (par exemple : person place). Ils comptent partout dans le document.</string>
-  <string key="views.note">La vue est enregistrée dans le fichier du projet. Varians ajoute lui-même les crayons ✎ devant les éléments modifiables que la feuille XSLT 1.0 traite par xsl:apply-templates, sans mode (voir l’aide).</string>
+  <string key="views.note">La vue est enregistrée dans le fichier du projet. Une feuille en XSLT 1.0 est traitée par lxml, une feuille en 2.0 ou 3.0 par Saxon. Varians ajoute lui-même les crayons ✎ devant les éléments modifiables que la feuille traite par xsl:apply-templates (en 1.0, sans mode) : voir l’aide.</string>
   <string key="views.browse.tip">Choisir un fichier</string>
   <string key="views.remove.title">Retirer la vue</string>
   <string key="views.remove.question">Retirer la vue « {name} » ? Sa feuille XSLT et sa CSS restent dans le projet.</string>

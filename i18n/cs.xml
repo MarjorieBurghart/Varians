@@ -72,14 +72,14 @@
   <string key="views.edit.title">Upravit pohled</string>
   <string key="views.name">Název:</string>
   <string key="views.create_starter">Vytvořit výchozí styl XSLT a CSS</string>
-  <string key="views.create_starter.tip">Styl XSLT 1.0, který zobrazí celý dokument, a jednoduché CSS, pojmenované podle pohledu, ve složkách xslt/ a rendering/ projektu.</string>
+  <string key="views.create_starter.tip">Šablona XSLT (1.0 nebo 3.0, podle volby), která zobrazí celý dokument se značkami řádků pivotního svědka, a jednoduché CSS, pojmenované podle pohledu, ve složkách xslt/ a rendering/ projektu.</string>
   <string key="views.xslt">Styl XSLT:</string>
   <string key="views.css">CSS:</string>
   <string key="views.css.placeholder">prázdné: CSS projektu</string>
   <string key="views.units">Upravitelné prvky:</string>
   <string key="views.units.placeholder">prázdné: pravidlo edice</string>
   <string key="views.units.tip">Názvy prvků, které dostanou tužku ✎, oddělené mezerami (například: person place). Počítají se kdekoli v dokumentu.</string>
-  <string key="views.note">Pohled se uloží do souboru projektu. Varians sám přidá tužky ✎ před upravitelné prvky, které šablona XSLT 1.0 zpracuje pomocí xsl:apply-templates bez mode (viz nápověda).</string>
+  <string key="views.note">Pohled se uloží do souboru projektu. Šablonu XSLT 1.0 zpracuje lxml, šablonu 2.0 nebo 3.0 Saxon. Varians sám přidá tužky ✎ před upravitelné prvky, které šablona zpracuje pomocí xsl:apply-templates (v 1.0 bez mode): viz nápověda.</string>
   <string key="views.browse.tip">Vybrat soubor</string>
   <string key="views.remove.title">Odebrat pohled</string>
   <string key="views.remove.question">Odebrat pohled „{name}“? Jeho styl XSLT a CSS zůstanou v projektu.</string>

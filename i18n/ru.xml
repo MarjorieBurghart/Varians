@@ -72,14 +72,14 @@
   <string key="views.edit.title">Изменить вид</string>
   <string key="views.name">Название:</string>
   <string key="views.create_starter">Создать начальную таблицу стилей XSLT и CSS</string>
-  <string key="views.create_starter.tip">Таблица стилей XSLT 1.0, показывающая весь документ, и простая CSS, названные по виду, в папках xslt/ и rendering/ проекта.</string>
+  <string key="views.create_starter.tip">Таблица стилей XSLT (1.0 или 3.0, на выбор), показывающая весь документ, с маркерами строк опорного свидетеля, и простая CSS, названные по виду, в папках xslt/ и rendering/ проекта.</string>
   <string key="views.xslt">Таблица стилей XSLT:</string>
   <string key="views.css">CSS:</string>
   <string key="views.css.placeholder">пусто: CSS проекта</string>
   <string key="views.units">Редактируемые элементы:</string>
   <string key="views.units.placeholder">пусто: правило издания</string>
   <string key="views.units.tip">Имена элементов, получающих карандаш ✎, через пробел (например: person place). Они учитываются во всём документе.</string>
-  <string key="views.note">Вид сохраняется в файле проекта. Varians сам ставит карандаши ✎ перед редактируемыми элементами, которые таблица стилей XSLT 1.0 обрабатывает через xsl:apply-templates без mode (см. справку).</string>
+  <string key="views.note">Вид сохраняется в файле проекта. Таблицу стилей XSLT 1.0 обрабатывает lxml, таблицу 2.0 или 3.0 — Saxon. Varians сам ставит карандаши ✎ перед редактируемыми элементами, которые таблица стилей обрабатывает через xsl:apply-templates (в 1.0 — без mode): см. справку.</string>
   <string key="views.browse.tip">Выбрать файл</string>
   <string key="views.remove.title">Удалить вид</string>
   <string key="views.remove.question">Удалить вид «{name}»? Его таблица стилей XSLT и CSS остаются в проекте.</string>

@@ -72,14 +72,14 @@
   <string key="views.edit.title">Edit view</string>
   <string key="views.name">Name:</string>
   <string key="views.create_starter">Create a starter XSLT stylesheet and CSS</string>
-  <string key="views.create_starter.tip">An XSLT 1.0 stylesheet that shows the whole document and a simple CSS, named after the view, in the project’s xslt/ and rendering/ folders.</string>
+  <string key="views.create_starter.tip">An XSLT stylesheet (1.0 or 3.0, as you choose) that shows the whole document, with the pivot witness line markers, and a simple CSS, named after the view, in the project’s xslt/ and rendering/ folders.</string>
   <string key="views.xslt">XSLT stylesheet:</string>
   <string key="views.css">CSS:</string>
   <string key="views.css.placeholder">empty: the project CSS</string>
   <string key="views.units">Editable elements:</string>
   <string key="views.units.placeholder">empty: the edition rule</string>
   <string key="views.units.tip">Names of the elements that get a ✎ pencil, separated by spaces (for example: person place). They count anywhere in the document.</string>
-  <string key="views.note">The view is saved in the project file. Varians adds the ✎ pencils itself before the editable elements that the XSLT 1.0 stylesheet processes with xsl:apply-templates, without a mode (see the help).</string>
+  <string key="views.note">The view is saved in the project file. An XSLT 1.0 stylesheet is processed by lxml, a 2.0 or 3.0 stylesheet by Saxon. Varians adds the ✎ pencils itself before the editable elements that the stylesheet processes with xsl:apply-templates (in 1.0, without a mode): see the help.</string>
   <string key="views.browse.tip">Choose a file</string>
   <string key="views.remove.title">Remove view</string>
   <string key="views.remove.question">Remove the view “{name}”? Its XSLT stylesheet and CSS stay in the project.</string>

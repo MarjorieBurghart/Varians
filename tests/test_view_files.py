@@ -12,6 +12,7 @@ proposés sont les entrées de sa première liste (``<person>`` d'un
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pytest
 from lxml import etree
@@ -135,3 +136,67 @@ def test_the_starter_stylesheet_says_how_to_keep_the_pencils():
     text = starter_stylesheet("Vue")
     comment = text[text.index("<!--"):text.index("-->")]
     assert "xsl:apply-templates" in comment and "xsl:for-each" in comment and "mode" in comment
+
+
+# -- Feuille de départ 3.0 et repères de ligne (V0.9.4.4) -------------------------
+
+EDITION = (f'<TEI xmlns="{TEI_NS}"><teiHeader><fileDesc><titleStmt><title>T</title></titleStmt></fileDesc>'
+           '</teiHeader><facsimile><surface><graphic url="a.jpg"/></surface><surface><graphic url="b.jpg"/>'
+           '</surface></facsimile><text><body><p><lb edRef="#A"/>Prima <lb edRef="#B"/>linea '
+           '<app><lem>uera</lem><rdg>falsa<lb edRef="#A"/></rdg></app></p><p><lb edRef="#A"/>secunda</p>'
+           '</body></text></TEI>')
+
+
+def _lxml(path, xml_text, **params):
+    xslt = etree.XSLT(etree.parse(str(path)))
+    return str(xslt(etree.fromstring(xml_text.encode("utf-8")),
+                    **{k: etree.XSLT.strparam(v) for k, v in params.items()}))
+
+
+def _saxon(path, xml_text, **params):
+    from saxonche import PySaxonProcessor
+    processor = PySaxonProcessor(license=False)
+    executable = processor.new_xslt30_processor().compile_stylesheet(stylesheet_file=str(path))
+    for name, value in params.items():
+        executable.set_parameter(name, processor.make_atomic_value("untypedAtomic", value))
+    return executable.transform_to_string(xdm_node=processor.parse_xml(xml_text=xml_text))
+
+
+@pytest.mark.parametrize("version", ["1.0", "3.0"])
+def test_the_starter_writes_one_line_marker_per_pivot_line(tmp_path, version):
+    from xslt_scenarios import saxon_available
+    if version == "3.0" and not saxon_available():
+        pytest.skip("Saxon (saxonche) n'est pas installé")
+    path = tmp_path / "vue.xsl"
+    path.write_text(starter_stylesheet("Vue", version), encoding="utf-8")
+    assert etree.parse(str(path)).getroot().get("version") == version
+    html = (_lxml if version == "1.0" else _saxon)(path, EDITION, baseWitness="A")
+    assert re.findall(r'class="tei-line-marker" href="tei-line://base/INDEX"', html).__len__() == 3
+    assert "a.jpg" not in html and html.count('class="graphic"') == 0         # pas le fac-similé
+    assert "Prima" in html and "secunda" in html
+
+
+def test_the_3_0_starter_says_modes_are_fine():
+    text = starter_stylesheet("Vue", "3.0")
+    comment = text[text.index("<!--"):text.index("-->")]
+    assert "3.0" in comment and "mode" in comment and "xsl:for-each" in comment and "baseWitness" in text
+
+
+def test_a_3_0_starter_is_written(tmp_path):
+    xslt, css = write_starter(tmp_path, "Gloses", "3.0")
+    assert xslt == "xslt/gloses.xsl" and css == "rendering/gloses.css"
+    assert 'version="3.0"' in (tmp_path / xslt).read_text(encoding="utf-8")
+    assert 'version="1.0"' in (tmp_path / write_starter(tmp_path, "Gloses")[0]).read_text(encoding="utf-8")
+
+
+def test_the_view_dialog_texts_speak_of_both_versions():
+    """La boîte « Nouvelle vue » (×7) : la feuille de départ en 1.0 ou 3.0,
+    avec les repères de ligne ; 2.0 et 3.0 par Saxon, crayons par
+    xsl:apply-templates."""
+    import xml.etree.ElementTree as ET
+    root = Path(__file__).resolve().parents[1]
+    for language in ("fr", "en", "de", "cs", "it", "ru", "ja"):
+        catalog = {s.get("key"): s.text or "" for s in ET.parse(root / "i18n" / f"{language}.xml").getroot()}
+        assert "1.0" in catalog["views.create_starter.tip"] and "3.0" in catalog["views.create_starter.tip"], language
+        note = catalog["views.note"]
+        assert "Saxon" in note and "3.0" in note and "xsl:apply-templates" in note, language

@@ -72,14 +72,14 @@
   <string key="views.edit.title">Modifica vista</string>
   <string key="views.name">Nome:</string>
   <string key="views.create_starter">Crea un foglio XSLT e un CSS di partenza</string>
-  <string key="views.create_starter.tip">Un foglio XSLT 1.0 che mostra tutto il documento e un CSS semplice, denominati come la vista, nelle cartelle xslt/ e rendering/ del progetto.</string>
+  <string key="views.create_starter.tip">Un foglio XSLT (1.0 o 3.0, a scelta) che mostra tutto il documento, con i segni di riga del testimone pivot, e un CSS semplice, denominati come la vista, nelle cartelle xslt/ e rendering/ del progetto.</string>
   <string key="views.xslt">Foglio XSLT:</string>
   <string key="views.css">CSS:</string>
   <string key="views.css.placeholder">vuoto: il CSS del progetto</string>
   <string key="views.units">Elementi modificabili:</string>
   <string key="views.units.placeholder">vuoto: la regola dell’edizione</string>
   <string key="views.units.tip">Nomi degli elementi che ricevono una matita ✎, separati da spazi (per esempio: person place). Contano ovunque nel documento.</string>
-  <string key="views.note">La vista è salvata nel file del progetto. Varians aggiunge da sé le matite ✎ davanti agli elementi modificabili che il foglio XSLT 1.0 tratta con xsl:apply-templates, senza mode (vedi la guida).</string>
+  <string key="views.note">La vista è salvata nel file del progetto. Un foglio XSLT 1.0 è trattato da lxml, un foglio 2.0 o 3.0 da Saxon. Varians aggiunge da sé le matite ✎ davanti agli elementi modificabili che il foglio tratta con xsl:apply-templates (in 1.0, senza mode): vedi la guida.</string>
   <string key="views.browse.tip">Scegli un file</string>
   <string key="views.remove.title">Rimuovi vista</string>
   <string key="views.remove.question">Rimuovere la vista «{name}»? Il suo foglio XSLT e il suo CSS restano nel progetto.</string>
