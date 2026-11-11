@@ -64,9 +64,22 @@ ou sous la licence [BSD à deux clauses](http://www.opensource.org/licenses/BSD-
 Copyright 2013 TEI Consortium. Le texte est dans `LICENCE.txt`, qui doit
 accompagner ces fichiers.
 
-## Mettre à jour les modèles
+## Mises à jour faites par Varians
 
-Pour une nouvelle version de TEI P5 (ici `X.Y.Z`) :
+Comme pour les TEI Stylesheets, Varians vérifie au lancement, au plus une
+fois par mois, la dernière version de TEI P5 (fichier `P5/VERSION` de la
+branche `released` de TEIC/TEI) ; une version plus récente que celle de ce
+dossier est proposée à l'utilisateur, qui l'installe ou non (bouton
+« Modèles TEI… » de la boîte « Nouveau document XML » pour le faire à la
+main). Varians ne lit alors, dans l'archive publiée de cette version, que
+son répertoire et les squelettes (requêtes partielles « Range », quelques
+mégaoctets sur plus de 300), puis la licence ; il les installe dans le
+dossier de données de l'utilisateur, hors de ce dossier, qui ne change pas
+(module `tei_templates`).
+
+## Mettre à jour les modèles livrés
+
+Pour livrer une nouvelle version de TEI P5 avec Varians (ici `X.Y.Z`) :
 
 1. télécharger `tei-X.Y.Z.zip` depuis la page des versions du dépôt TEIC/TEI
    (Releases) ;
@@ -75,6 +88,6 @@ Pour une nouvelle version de TEI P5 (ici `X.Y.Z`) :
    `tei_*.doc.xml` ; remplacer `LICENCE.txt` par `P5/COPYING.txt` de
    l'étiquette `P5_Release_X.Y.Z` ;
 3. mettre à jour ce LISEZMOI (version, adresse, empreintes) et
-   `TEI_TEMPLATES_VERSION` dans `document_templates.py` ;
+   `BUNDLED_VERSION` dans `tei_templates.py` ;
 4. lancer les tests (`tests/test_document_templates.py` contrôle les modèles
    livrés : liste, racines, schémas déclarés).
