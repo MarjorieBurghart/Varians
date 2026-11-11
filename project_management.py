@@ -500,8 +500,39 @@ def documents_element(root_dir: Path, documents) -> ET.Element | None:
             if document.schema is None:
                 raise ValueError("Le mode de schéma projet exige un fichier RELAX NG.")
             attrs["schemaFile"] = portable_path(root_dir, Path(document.schema))
-        ET.SubElement(documents_el, "document", attrs)
+        document_el = ET.SubElement(documents_el, "document", attrs)
+        for view in getattr(document, "views", ()):
+            document_el.append(view_element(view))
     return documents_el
+
+
+def view_element(view) -> ET.Element:
+    """Élément ``<view name xslt css units/>`` d'une vue nommée
+    (``project_config.ViewConfig``) ; ``css`` et ``units`` seulement s'ils
+    sont donnés."""
+    attrs = {"name": view.name, "xslt": view.xslt}
+    if view.css:
+        attrs["css"] = view.css
+    if view.units:
+        attrs["units"] = " ".join(view.units)
+    return ET.Element("view", attrs)
+
+
+def update_project_edition_views(path: str | Path, views) -> Path:
+    """Remplace les vues nommées de l'édition (``<view>`` de ``<edition>``)
+    sans modifier le reste de project.xml ; l'ancienne version est copiée en
+    ``.bak``."""
+    project = XmlFile(Path(path).expanduser().resolve())
+    edition_el = project.tree.getroot().find("edition")
+    if edition_el is None:
+        raise ValueError("project.xml n'a pas d'élément <edition>.")
+    for view_el in edition_el.findall("view"):
+        edition_el.remove(view_el)
+    for view in views:
+        edition_el.append(view_element(view))
+    if not views:
+        edition_el.text = None
+    return project.write()
 
 
 def xpath_queries_element(queries) -> ET.Element | None:

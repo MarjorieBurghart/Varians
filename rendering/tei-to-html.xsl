@@ -145,10 +145,42 @@
           </nav>
         </xsl:if>
         <main>
-          <xsl:apply-templates select="//tei:front | //tei:body | //tei:back"/>
+          <xsl:choose>
+            <xsl:when test="//tei:front | //tei:body | //tei:back">
+              <xsl:apply-templates select="//tei:front | //tei:body | //tei:back"/>
+            </xsl:when>
+            <!-- Document sans texte (Varians 0.9.4.4) : liste de personnes,
+                 de lieux, bibliographie… Voir la règle « hors du texte »
+                 plus bas. -->
+            <xsl:otherwise>
+              <xsl:apply-templates select="/*"/>
+            </xsl:otherwise>
+          </xsl:choose>
         </main>
       </body>
     </html>
+  </xsl:template>
+
+  <!-- Hors du texte (Varians 0.9.4.4) : un document sans <text> (fichier
+       d'autorités, bibliographie…) est montré lui aussi. Chaque entrée d'une
+       liste (enfant de listPerson, listPlace, listBibl, list…) est un
+       paragraphe, son contenu en ligne ; ailleurs, un élément qui contient
+       du texte est un paragraphe, un élément qui ne contient que des
+       éléments, un bloc. Priorité basse : les règles propres à un élément
+       l'emportent. Les éléments du texte de l'édition n'y sont pas soumis :
+       sans règle propre, ils restent en ligne. -->
+  <xsl:template match="*[not(ancestor-or-self::tei:text)]" priority="-1">
+    <xsl:choose>
+      <xsl:when test="ancestor::*[starts-with(local-name(..), 'list') or text()[normalize-space()]]">
+        <xsl:apply-templates/>
+      </xsl:when>
+      <xsl:when test="starts-with(local-name(..), 'list') or text()[normalize-space()] or not(*)">
+        <p class="{local-name()}"><xsl:apply-templates/></p>
+      </xsl:when>
+      <xsl:otherwise>
+        <div class="{local-name()}"><xsl:apply-templates/></div>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <!-- BODY -->

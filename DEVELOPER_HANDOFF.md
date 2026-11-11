@@ -162,6 +162,8 @@ Exemple simplifié :
 </teiManuscriptProject>
 ```
 
+Vues nommées de la Vue XSLT / CSS (V0.9.4.4) : `<view name="…" xslt="…" css="…" units="…"/>` sous `<edition>` (vues de l'édition, en plus de celle du projet, définie par `<rendering>`) ou sous un `<document>` de `<documents>`. `xslt` et `css` s'écrivent comme les chemins des scénarios (relatifs au projet, ou `${varians}/…`) ; `css` vide : celle du projet ; `units` : noms d'éléments modifiables séparés par des blancs, comptés partout dans le document (`fragment_units.ChosenUnits`) ; sans `units`, la règle de l'édition. La vue choisie pour chaque document est une préférence locale (`projectView/<empreinte>/previewViews`), pas une donnée du projet. Voir `CODE_MAP.md`, « V0.9.4.4 — vues nommées ».
+
 ### Sources d'images
 
 `<images type="...">` accepte :

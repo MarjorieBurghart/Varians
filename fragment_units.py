@@ -55,6 +55,18 @@ TEI_UNIT_NAMES = frozenset({
 
 UNIT_CLASSES = ("model.divPart", "model.inter")
 
+
+class ChosenUnits(frozenset):
+    """Éléments modifiables choisis par une vue (``<view units="…">``,
+    V0.9.4.4) : ils comptent où qu'ils soient dans le document, et non
+    seulement dans le ``<body>`` ; un élément choisi dans un autre ne compte
+    pas (le plus extérieur l'emporte)."""
+
+
+def chosen_units(names):
+    """Les éléments ``names`` (noms locaux) choisis par une vue."""
+    return ChosenUnits(names)
+
 # Une balise, ou ce qui n'en contient pas : commentaire, CDATA, instruction
 # de traitement, déclaration de type de document.
 _TOKEN_RE = re.compile(
@@ -103,6 +115,8 @@ def _unit_tags(text, names, whole):
 
 
 def _units_of(text, names):
+    if isinstance(names, ChosenUnits):
+        return _unit_tags(text, names, whole=True)[0]
     found, has_body = _unit_tags(text, names, whole=False)
     if not has_body:
         found, _ = _unit_tags(text, names, whole=True)
@@ -137,7 +151,7 @@ def _local(element):
 def unit_elements(root, names=TEI_UNIT_NAMES):
     """Éléments modifiables de l'arbre lxml ``root``, dans l'ordre du
     document : même règle que :func:`unit_spans`."""
-    whole = not any(_local(e) == "body" for e in root.iter())
+    whole = isinstance(names, ChosenUnits) or not any(_local(e) == "body" for e in root.iter())
     found = []
     pending = [(root, whole)]
     while pending:

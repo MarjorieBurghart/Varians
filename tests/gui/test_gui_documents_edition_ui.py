@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Interface réservée à l'édition : aperçu, témoins et commandes associées
-sont indisponibles quand un document auxiliaire est affiché, puis rétablis à
-l'identique au retour sur l'édition."""
+"""Interface réservée à l'édition : témoins et commandes associées sont
+indisponibles quand un document auxiliaire est affiché, puis rétablis à
+l'identique au retour sur l'édition. L'aperçu (Vue XSLT / CSS) sert tout
+document XML du projet depuis V0.9.4.4, sauf une feuille XSLT ou un fichier
+Schematron."""
 from __future__ import annotations
 
 from PySide6.QtWidgets import QMessageBox
@@ -20,14 +22,31 @@ def _witness_actions(window):
             window.action_refresh_synchronizations]
 
 
-def test_preview_is_reserved_to_the_edition(open_window, project_with_documents):
+SCHEMATRON = ('<schema xmlns="http://purl.oclc.org/dsdl/schematron"><pattern><rule context="*">'
+              '<assert test="true()">ok</assert></rule></pattern></schema>\n')
+
+
+def test_preview_is_refused_to_stylesheets_and_schematron(open_window, project_with_documents):
+    from project_config import DocumentConfig, load_project
+    from project_management import update_project_documents
+    root = project_with_documents.parent
+    (root / "xml" / "vue.xsl").write_text(
+        '<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>\n', encoding="utf-8")
+    (root / "xml" / "regles.sch").write_text(SCHEMATRON, encoding="utf-8")
+    project = load_project(project_with_documents)
+    update_project_documents(project_with_documents, list(project.documents) + [
+        DocumentConfig(root / "xml" / "vue.xsl"), DocumentConfig(root / "xml" / "regles.sch")])
     window = open_window(project_with_documents)
     preview = window.left_tabs.indexOf(window.formatted_view)
-    window.show_document(_aux(window))
-    assert not window.left_tabs.isTabEnabled(preview)
-    assert not window.action_preview.isEnabled()
-    window.action_preview.trigger()
-    assert window.left_tabs.currentIndex() == 0
+    personnes, stylesheet, schematron = window.documents[1:]
+    window.show_document(personnes)
+    assert window.left_tabs.isTabEnabled(preview) and window.action_preview.isEnabled()
+    for session in (stylesheet, schematron):
+        window.show_document(session)
+        assert not window.left_tabs.isTabEnabled(preview)
+        assert not window.action_preview.isEnabled()
+        window.action_preview.trigger()
+        assert window.left_tabs.currentIndex() == 0
 
     window.show_document(window.edition_session)
     assert window.left_tabs.isTabEnabled(preview)

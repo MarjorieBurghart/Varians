@@ -31,7 +31,8 @@ from fragment_units import TEI_UNIT_NAMES, unit_names_from_schema
 from large_files import confirm_large_files, file_size, is_large
 from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines, structure_signature
 from preview_sources import preview_sources
-from project_management import update_project_documents
+from project_config import DocumentConfig
+from project_management import update_project_documents, update_project_edition_views
 from lxml import etree
 from xml_assembly import assemble, path_key
 
@@ -217,13 +218,21 @@ class DocumentTabsMixin:
         assemblée."""
         return any(session.is_part for session in self.documents)
 
+    def _preview_shows_assembly(self):
+        """L'aperçu montre l'édition assemblée : l'édition ou l'une de ses
+        parties est affichée, et elle a des parties. Pour un document
+        auxiliaire, l'aperçu montre ce document (V0.9.4.4)."""
+        document = getattr(self, "document", None)
+        return document is not None and document.in_edition and self._edition_has_parts()
+
     def _assembled_preview_sources(self, names=None):
         """Sources de l'aperçu de l'édition assemblée (``preview_sources``),
-        parties comprises (texte en mémoire des parties ouvertes), quel que
-        soit le document affiché ; None pour une édition sans parties, ou mal
-        formée. ``names`` : les éléments modifiables, par défaut ceux de
+        parties comprises (texte en mémoire des parties ouvertes), que
+        l'édition ou l'une de ses parties soit affichée ; None pour une
+        édition sans parties, ou mal formée, et quand un document auxiliaire
+        est affiché. ``names`` : les éléments modifiables, par défaut ceux de
         l'aperçu affiché."""
-        if not self._edition_has_parts():
+        if not self._preview_shows_assembly():
             return None
         edition = self.edition_session
         parts = {s.path: s.text_document.toPlainText() for s in self.documents
@@ -236,8 +245,11 @@ class DocumentTabsMixin:
         """Noms des éléments modifiables comme fragment (V0.9.2.9) : les
         classes model.divPart et model.inter du schéma RELAX NG trouvé par la
         dernière validation de l'édition (sans accès au réseau), sinon la
-        liste de TEI P5 (fragment_units)."""
-        sessions = (getattr(self, "edition_session", None), getattr(self, "document", None))
+        liste de TEI P5 (fragment_units). Pour un document auxiliaire affiché,
+        son propre schéma d'abord (V0.9.4.4)."""
+        edition, document = getattr(self, "edition_session", None), getattr(self, "document", None)
+        auxiliary = document is not None and not document.in_edition
+        sessions = (document, edition) if auxiliary else (edition, document)
         for session in sessions:
             resolution = getattr(session, "last_schema_resolution", None)
             path = getattr(resolution, "schema_path", None)
@@ -248,9 +260,60 @@ class DocumentTabsMixin:
     def _preview_unit_names(self):
         """Éléments modifiables de l'aperçu affiché : ceux de sa dernière
         actualisation, pour que les rangs des crayons ne changent pas avant
-        la suivante."""
+        la suivante ; sinon ceux de la vue choisie."""
         view = getattr(self, "formatted_view", None)
-        return getattr(view, "unit_names", None) or self.fragment_unit_names()
+        if view is None:
+            return self.fragment_unit_names()
+        return view.unit_names or view.view_unit_names()
+
+    def document_config(self, session):
+        """``DocumentConfig`` (project.xml) du document auxiliaire
+        ``session``, ou None."""
+        if session is None or session.path is None:
+            return None
+        key = path_key(session.path)
+        return next((config for config in self.project.documents if path_key(config.path) == key), None)
+
+    def set_preview_views(self, views):
+        """Écrit les vues nommées du document affiché dans project.xml (copie
+        ``.bak``) : sous ``<edition>`` pour l'édition et ses parties, sous
+        son ``<document>`` pour un document auxiliaire. False, avec un
+        message, si l'écriture échoue."""
+        views = tuple(views)
+        try:
+            if self.document.in_edition:
+                update_project_edition_views(self.project.path, views)
+                self.project = replace(self.project, edition_views=views)
+            else:
+                key = path_key(self.document.path)
+                configs = [replace(config, views=views) if path_key(config.path) == key else config
+                           for config in self.project.documents]
+                update_project_documents(self.project.path, configs)
+                self.project = replace(self.project, documents=tuple(configs))
+        except Exception as exc:
+            QMessageBox.critical(self, _t("documents.error.title"), str(exc))
+            return False
+        return True
+
+    def open_project_file(self, path):
+        """Affiche le fichier ``path`` du projet : son onglet s'il est ouvert,
+        sinon il est ajouté aux documents du projet (project.xml)."""
+        key = path_key(path)
+        session = next((s for s in self.documents if s.path is not None and path_key(s.path) == key), None)
+        if session is not None:
+            return self.show_document(session)
+        return self._register_document(DocumentConfig(Path(path)))
+
+    def _document_has_view(self):
+        """Le document affiché a une Vue XSLT / CSS : l'édition, ses parties
+        et tout document XML du projet (V0.9.4.4), sauf une feuille XSLT ou
+        un fichier Schematron (que F8 vérifie)."""
+        document = getattr(self, "document", None)
+        if document is None:
+            return False
+        if document.in_edition:
+            return True
+        return self._displayed_stylesheet() is None and self._displayed_schematron() is None
 
     def _edition_file_session(self, path, load=False):
         """Document du fichier ``path`` de l'édition (l'édition ou l'une de ses
@@ -610,8 +673,9 @@ class DocumentTabsMixin:
                 QMessageBox.critical(self, _t("file.open.error.title"), str(exc))
                 return False
         # L'aperçu montre l'édition assemblée : passer d'une partie à l'autre
-        # ne le quitte pas (V0.9.1.5) ; un document auxiliaire, si.
-        if self.document.in_edition and not session.in_edition and not self._leave_edition_view():
+        # ne le quitte pas (V0.9.1.5) ; aller vers un document auxiliaire ou
+        # en venir, si : l'aperçu montre alors un autre document (V0.9.4.4).
+        if not (self.document.in_edition and session.in_edition) and not self._leave_edition_view():
             return False
         if text is not None:
             self._load_session_text(session, text)
@@ -624,9 +688,11 @@ class DocumentTabsMixin:
         return True
 
     def _leave_edition_view(self):
-        """Avant d'afficher un autre document que l'édition : un fragment
-        modifié dans l'aperçu est appliqué ou abandonné (ou la demande est
-        annulée), puis l'onglet de la source est affiché."""
+        """Avant d'afficher un document dont l'aperçu n'est pas celui du
+        document affiché (un document auxiliaire, ou l'édition depuis l'un
+        d'eux) : un fragment modifié dans l'aperçu est appliqué ou abandonné
+        (ou la demande est annulée), puis l'onglet de la source est
+        affiché."""
         view = self.formatted_view
         if not view.frag_box.isHidden() and not view.close_fragment_editor():
             return False
@@ -900,10 +966,12 @@ class DocumentTabsMixin:
                 self.action_refresh_synchronizations]
 
     def _apply_edition_ui(self):
-        """Aperçu et « Enregistrer l'édition sous… » : réservés à l'édition.
-        Témoins (y compris détachés), état de structure et commandes des
-        témoins : pour l'édition et ses parties (V0.9.1.0). Masqués quand un
-        autre document est affiché, puis rétablis à l'identique."""
+        """« Enregistrer l'édition sous… » : réservé à l'édition. Témoins (y
+        compris détachés), état de structure et commandes des témoins : pour
+        l'édition et ses parties (V0.9.1.0). Masqués quand un autre document
+        est affiché, puis rétablis à l'identique. La Vue XSLT / CSS : pour
+        tout document qui en a une (``_document_has_view``, V0.9.4.4), avec
+        les vues de ce document."""
         edition = self._edition_displayed()
         hidden = getattr(self, "_edition_ui_hidden", None)
         if edition and hidden is not None:
@@ -915,16 +983,18 @@ class DocumentTabsMixin:
                                                 for action in self._edition_only_actions()]
             for action, _enabled in hidden:
                 action.setEnabled(False)
-        # L'aperçu (l'édition assemblée) : pour l'édition et ses parties
-        # (V0.9.1.5).
+        # L'aperçu : l'édition assemblée pour l'édition et ses parties
+        # (V0.9.1.5), le document affiché sinon (V0.9.4.4).
         witnesses = self.document.in_edition
+        viewable = self._document_has_view()
         preview = self.left_tabs.indexOf(self.formatted_view)
+        self.formatted_view.context_changed()
         hidden = getattr(self, "_preview_ui_hidden", None)
-        if witnesses and hidden is not None:
+        if viewable and hidden is not None:
             self._preview_ui_hidden = None
             self.action_preview.setEnabled(hidden)
             self.left_tabs.setTabEnabled(preview, True)
-        elif not witnesses and hidden is None:
+        elif not viewable and hidden is None:
             self._preview_ui_hidden = self.action_preview.isEnabled()
             self.action_preview.setEnabled(False)
             self.left_tabs.setTabEnabled(preview, False)

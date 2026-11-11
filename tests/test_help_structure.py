@@ -161,3 +161,42 @@ def test_reopening_a_project_brings_back_the_cursor(language):
     start = page.index('<p id="large-files">')
     reopening = page[page.rindex("<p>", 0, start):start]
     assert CURSOR_PLACE[language] in reopening
+
+
+VIEW_LABELS = ("preview.formatting", "preview.view.project", "views.menu", "views.new", "views.create_starter",
+               "views.units", "views.edit", "views.remove", "views.open_xslt")
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_named_views_are_explained(language):
+    """V0.9.4.4 : la Vue XSLT / CSS de tout document XML du projet, ses vues
+    nommées et leur gestion ; les libellés cités sont ceux de l'interface,
+    dans l'ordre du menu."""
+    page, catalog = _page(language), _catalog(language)
+    paragraph = page[page.index('<p id="preview-views">'):]
+    paragraph = paragraph[:paragraph.index("</p>")]
+    positions = [paragraph.index(f"<strong>{catalog[key]}</strong>") for key in VIEW_LABELS]
+    assert positions == sorted(positions), language
+    assert "<code>&lt;view&gt;</code>" in paragraph and "<code>units</code>" in paragraph, language
+    assert "XSLT 1.0" in paragraph, language
+    assert 'href="#fragment-units"' in paragraph, language
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_writing_the_stylesheet_of_a_view_is_explained(language):
+    """V0.9.4.4 : la seule condition pour que Varians place les crayons
+    (chaque élément modifiable traité par xsl:apply-templates, sans mode),
+    avec un exemple, et ce qui en prive (xsl:for-each, mode) ; l'attribut
+    vx:edit, l'enregistrement de la feuille, XSLT 1.0, le CSS de Qt.
+    « Éléments modifiables » y renvoie au lieu de dire que la feuille n'a
+    rien à prévoir."""
+    page, catalog = _page(language), _catalog(language)
+    start = page.index('<p id="view-stylesheet">')
+    part = page[start:page.index("</p>", page.index("</pre>", start))]
+    for needle in ("<code>xsl:apply-templates</code>", "<code>xsl:for-each</code>", "<code>mode</code>",
+                   "<code>vx:edit</code>", "<kbd>Ctrl+S</kbd>", "XSLT 1.0", "<code>@media</code>",
+                   "&lt;xsl:apply-templates select=\"//tei:person\"/&gt;", catalog["views.open_xslt"]):
+        assert needle in part, (language, needle)
+    units = page[page.index('<p id="fragment-units">'):]
+    units = units[:units.index("</p>")]
+    assert 'href="#view-stylesheet"' in units, language

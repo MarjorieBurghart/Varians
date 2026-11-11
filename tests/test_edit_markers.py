@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
 from lxml import etree
 
 from fragment_units import edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers
@@ -128,3 +129,81 @@ def test_the_pencil_of_a_table_goes_into_its_caption_or_its_first_cell():
 def test_the_title_is_escaped():
     html, _count = place_edit_markers('<a class="tei-edit-marker" href="tei-edit://p/0">✎</a>x', 'Ce « <p> » & co')
     assert 'title="Ce « &lt;p&gt; » &amp; co"' in html
+
+
+# -- Documents sans <text> (V0.9.4.4) --------------------------------------------
+
+PERSONS = (f'<listPerson xmlns="{TEI_NS}">\n'
+           '  <person xml:id="b"><persName>Bernardus</persName> <birth>1090</birth></person>\n'
+           '  <person xml:id="p"><persName><forename>Petrus</forename> <surname>Lombardus</surname></persName>'
+           '<note>magister</note></person>\n'
+           '</listPerson>')
+
+
+def _render_document(xml_text, names=None):
+    from fragment_units import TEI_UNIT_NAMES, chosen_units
+    marked, _spans = mark_units(xml_text, chosen_units(names) if names else TEI_UNIT_NAMES)
+    xslt = etree.XSLT(etree.fromstring(edit_stylesheet(BUILTIN).encode("utf-8"),
+                                       base_url=edit_stylesheet_url(BUILTIN)))
+    return place_edit_markers(str(xslt(etree.fromstring(marked.encode("utf-8")))), TITLE)
+
+
+def _paragraphs(html):
+    return [re.sub(r"<[^>]+>", "", p).replace("✎", "").strip()
+            for p in re.findall(r"<p\b[^>]*>(.*?)</p>", html, re.S)]
+
+
+def test_the_varians_stylesheet_shows_a_document_without_text():
+    """Une liste de personnes (fichier d'autorités) : chaque entrée est un
+    paragraphe, son contenu en ligne ; avant, l'aperçu était vide. Les
+    règles propres à un élément (la note entre crochets) l'emportent."""
+    html, count = _render_document(PERSONS)
+    assert _paragraphs(html) == ["Bernardus 1090", "Petrus Lombardus[magister]"]
+    assert count == 1                                    # la liste entière, règle de l'édition
+
+
+def test_each_chosen_entry_of_a_document_without_text_has_its_pencil():
+    html, count = _render_document(PERSONS, ("person",))
+    assert count == 2 and _indexes(html) == [0, 1]
+    assert re.search(r'<p class="person">' + re.escape(_marker(0)) + "Bernardus", html)
+    assert re.search(r'<p class="person">' + re.escape(_marker(1)) + "Petrus", html)
+
+
+def test_outside_lists_leaves_are_paragraphs_and_the_header_stays_hidden():
+    xml_text = (f'<TEI xmlns="{TEI_NS}"><teiHeader><fileDesc><titleStmt><title>Lieux</title></titleStmt>'
+                '</fileDesc></teiHeader><standOff><listPlace><place><placeName>Clairvaux</placeName></place>'
+                '</listPlace><desc>Lieux cités</desc></standOff></TEI>')
+    html, _count = _render_document(xml_text)
+    assert _paragraphs(html) == ["Clairvaux", "Lieux cités"]
+    assert "<h1>Lieux</h1>" in html                      # le titre, comme pour l'édition
+
+
+def test_elements_of_an_edition_text_stay_inline():
+    html, _count = _render(BUILTIN, '<div><p>Vidit <persName><forename>Petrus</forename></persName> ibi.</p>'
+                                    '<listPerson><person><persName>Bernardus</persName></person></listPerson></div>')
+    assert "Vidit Petrus ibi." in re.sub(r"<[^>]+>", "", html)
+    assert '<p class="person">' not in html and '<p class="forename">' not in html
+
+
+@pytest.mark.parametrize("templates, pencils", [
+    # Ce que l'aide recommande (#view-stylesheet) : apply-templates, sans mode.
+    ('<xsl:template match="/"><html><body><xsl:apply-templates select="//tei:person"/></body></html></xsl:template>'
+     '<xsl:template match="tei:person"><p><xsl:value-of select="tei:persName"/></p></xsl:template>', 2),
+    # Ce qu'elle signale : même rendu, sans crayon.
+    ('<xsl:template match="/"><html><body><xsl:for-each select="//tei:person"><p>'
+     '<xsl:value-of select="tei:persName"/></p></xsl:for-each></body></html></xsl:template>', 0),
+    ('<xsl:template match="/"><html><body><xsl:apply-templates select="//tei:person" mode="m"/></body></html>'
+     '</xsl:template><xsl:template match="tei:person" mode="m"><p><xsl:value-of select="tei:persName"/></p>'
+     '</xsl:template>', 0),
+])
+def test_pencils_need_apply_templates_without_mode(tmp_path, templates, pencils):
+    from fragment_units import chosen_units
+    path = tmp_path / "vue.xsl"
+    path.write_text('<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" '
+                    f'xmlns:tei="{TEI_NS}" exclude-result-prefixes="tei"><xsl:output method="html"/>'
+                    f'{templates}</xsl:stylesheet>', encoding="utf-8")
+    marked, _spans = mark_units(PERSONS, chosen_units(("person",)))
+    xslt = etree.XSLT(etree.fromstring(edit_stylesheet(path).encode("utf-8"), base_url=edit_stylesheet_url(path)))
+    html, count = place_edit_markers(str(xslt(etree.fromstring(marked.encode("utf-8")))), TITLE)
+    assert count == pencils
+    assert "Bernardus" in html and "Petrus" in html

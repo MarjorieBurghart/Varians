@@ -385,6 +385,38 @@ affichés… », clic droit ▸ « Masquer l’onglet ») ne sont pas enregistr�
 (`QSettings`) propre à chaque projet. L’ordre des `<document>` dans
 `project.xml` reste celui de leur ajout.
 
+
+## V0.9.4.4 — Vues nommées (`<view>`)
+
+Chaque document XML du projet a sa Vue XSLT / CSS (sauf une feuille XSLT et
+un fichier Schematron). En plus de la vue du projet (`<rendering>`), un
+document peut avoir des vues nommées :
+
+```xml
+<edition file="xml/edition.xml">
+  <view name="Apparat en notes" xslt="${varians}/apparat-en-notes.xsl"/>
+</edition>
+<documents>
+  <document file="xml/personnes.xml" label="Personnes">
+    <view name="Index" xslt="xslt/index.xsl" css="rendering/index.css" units="person"/>
+  </document>
+</documents>
+```
+
+- `name` et `xslt` sont obligatoires ; une vue sans l'un d'eux, ou dont le
+  nom répète celui d'une autre vue du même document, est ignorée.
+- `css` vide ou absent : la CSS du projet.
+- `units` : les éléments modifiables comme fragment (crayon ✎), comptés
+  partout dans le document ; absent, la règle de l'édition. Un nom
+  d'élément invalide est écarté.
+- Les vues s'écrivent par le menu « Vues » de la Vue XSLT / CSS (« Nouvelle
+  vue… », « Modifier la vue… », « Retirer la vue ») ; project.xml est
+  réécrit avec sa copie `.bak`, et les fichiers d'une vue retirée restent.
+  « Nouvelle vue… » peut écrire une feuille XSLT 1.0 et une CSS de départ
+  dans `xslt/` et `rendering/`, sans jamais remplacer un fichier.
+- La vue choisie pour chaque document est retenue dans les réglages locaux
+  du projet, pas dans project.xml.
+
 ## V0.8.9.1 — Requêtes XPath nommées (`<xpathQueries>`)
 
 Les requêtes de « Mes requêtes », dans Aide ▸ « Débugger l’apparat… », sont
