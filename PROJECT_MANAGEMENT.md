@@ -412,6 +412,10 @@ document peut avoir des vues nommées :
   ligne) s'ajoutent toujours, et les variables CSS (`var()`) d'un fichier
   CSS comme d'un `<style>` produit par la feuille sont remplacées par leur
   valeur, Qt ne les comprenant pas.
+- Une CSS externe que la feuille appelle par `<link rel="stylesheet">`
+  n'est pas lue par l'aperçu (Qt ne la charge pas) : elle se déclare dans
+  la vue, par `css`. Le `<link>` sert quand la page est ouverte dans un
+  navigateur (scénarios de transformation).
 - `units` : les éléments modifiables comme fragment (crayon ✎), comptés
   partout dans le document ; absent, la règle de l'édition. Un nom
   d'élément invalide est écarté.
