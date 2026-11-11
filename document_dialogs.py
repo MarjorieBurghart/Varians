@@ -30,8 +30,8 @@ from code_editor import XMLHighlighter
 # Document vide d'élément racine choisi (nom historique).
 from document_templates import empty_document_text as new_document_text
 from document_templates import (
-    PROJECT_TEMPLATES_FOLDER, TEI_TEMPLATES_VERSION, document_config, document_text, edition_template,
-    empty_template, project_templates, rebased_models, tei_templates,
+    PROJECT_TEMPLATES_FOLDER, document_config, document_text, edition_template, empty_template,
+    project_templates, rebased_models, tei_templates, tei_templates_version,
 )
 from project_config import DocumentConfig
 from xml_roots import SCHEMATRON_NS
@@ -183,10 +183,9 @@ class NewDocumentDialog(QDialog):
             hint.setToolTip(0, hint.text(0))
             group.addChild(hint)
 
-        group = self._group(_t("documents.new.group.tei", version=TEI_TEMPLATES_VERSION))
-        group.setToolTip(0, _t("documents.new.tei.source"))
-        for template in tei_templates():
-            group.addChild(self._entry(template.name, template))
+        self._tei_group = self._group(_t("documents.new.group.tei", version=tei_templates_version()))
+        self._tei_group.setToolTip(0, _t("documents.new.tei.source"))
+        self._fill_tei_group()
         self.tree.addTopLevelItem(self._entry(_t("documents.new.empty"), empty_template()))
         self.tree.expandAll()
 
@@ -230,6 +229,10 @@ class NewDocumentDialog(QDialog):
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel, self)
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
+        # Version des squelettes TEI et leurs mises à jour (tei_templates_ui).
+        self.tei_templates_button = self.buttons.addButton(_t("tei_templates.button"),
+                                                           QDialogButtonBox.ButtonRole.ResetRole)
+        self.tei_templates_button.clicked.connect(self._show_tei_templates)
 
         layout = QVBoxLayout(self)
         layout.addWidget(QLabel(_t("documents.new.template"), self))
@@ -243,6 +246,35 @@ class NewDocumentDialog(QDialog):
         self.path_edit.textChanged.connect(lambda *_: self._template_changed())
         if not self.select_template("edition"):
             self.select_template("tei", "All")
+
+    def _fill_tei_group(self):
+        """Les squelettes TEI de la version qui sert, dans leur groupe ; le
+        modèle choisi reste choisi s'il existe encore."""
+        selected = self.selected_template()
+        group = self._tei_group
+        self._items = [(template, item) for template, item in self._items if item.parent() is not group]
+        group.takeChildren()
+        group.setText(0, _t("documents.new.group.tei", version=tei_templates_version()))
+        for template in tei_templates():
+            group.addChild(self._entry(template.name, template))
+        group.setExpanded(True)
+        if selected is not None and selected.kind == "tei" and not self.select_template("tei", selected.name):
+            self.select_template("tei", "All")
+
+    def _show_tei_templates(self):
+        """« Modèles TEI… » : la fenêtre des squelettes TEI ; une version
+        installée sert aussitôt."""
+        from tei_templates_ui import TeiTemplatesDialog
+        TeiTemplatesDialog(self).exec()
+        self._fill_tei_group()
+
+    def tei_group_title(self):
+        """Titre du groupe des squelettes TEI (« TEI P5 (4.12.0) »)."""
+        return self._tei_group.text(0)
+
+    def tei_template_names(self):
+        """Noms des squelettes TEI de la liste."""
+        return [self._tei_group.child(index).text(0) for index in range(self._tei_group.childCount())]
 
     def _group(self, text):
         """Groupe de modèles : ni choisi ni grisé."""
