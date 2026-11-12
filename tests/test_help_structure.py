@@ -294,3 +294,17 @@ def test_what_the_preview_can_display_is_explained(language):
     assert 'href="#view-html"' in rest[:rest.index("</p>")], language
     css = page[page.index('<p id="view-css">'):]
     assert 'href="#view-html"' in css[:css.index("</p>")], language
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_moving_a_selection_between_views_is_explained(language):
+    """V0.9.4.5 : une sélection passe de l'aperçu à la source, et à
+    l'éditeur de fragment, par son texte et son contexte : à travers des
+    balises et des entités, sans <lb/> ni crayon ; une sélection
+    introuvable est signalée dans la barre d'état."""
+    page = _page(language)
+    start = page.index('<p id="view-selection">')
+    paragraph = page[start:page.index("</p>", start)]
+    for needle in ('<code>&lt;lb break="no"/&gt;</code>', "<code>&lt;persName&gt;</code>", "<code>&lt;hi&gt;</code>",
+                   "<code>&amp;amp;</code>", "<code>&lt;lb/&gt;</code>", "✎", "XPath"):
+        assert needle in paragraph, (language, needle)

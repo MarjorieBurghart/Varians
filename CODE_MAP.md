@@ -46,7 +46,7 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Aide (V0.9.3.1) : un chapitre par tâche, sept langues | `help/*.html`, `main_menus.py` (`TEI_GUIDE_URL`) | `test_help_structure.py`, `test_i18n_keys.py`, `gui/test_gui_apparatus_debug.py` |
 | Frappe rapide avec des fac-similés (V0.9.3.2) | `witness_sync._refresh_folio_navigation`, `image_sources.surface_labels`, `folio_navigation` (`facsimile_markup`, `facsimile_surfaces`, `folio_marks`, `_pb_tags`, `_TextMemo`) | `test_folio_refresh_performance.py` |
 | Tableaux dans les feuilles livrées (V0.9.3.0) | `rendering/tei-to-html.xsl`, `rendering/tei.css`, `rendering/edition-critique.xsl`, `fragment_units._DIVE_RE` | `test_tei_to_html_rendering.py`, `test_edition_critique_saxon.py`, `test_edit_markers.py` |
-| Sync sélection XML/XSLT | `selection_sync.py`, `editeur_tei.py` | `test_selection_onglets_sans_qt.py`, `test_v083_display_navigation.py` |
+| Sélection d'une vue à l'autre (source, aperçu, fragment) | `selection_quote.py`, `editeur_tei.py`, `formatted_view.py` | `test_selection_quote.py`, `gui/test_gui_selection_quote.py`, `gui/test_gui_selection_transfer.py` |
 | UI desktop | `editeur_tei.py` | tests statiques versionnés + tests manuels Qt |
 | Viewer web | `web_viewer/generator.py` | `test_v082_page_sync.py`, `test_v084_consolidation.py` |
 | Viewer web d'une édition assemblée (V0.9.1.6) | `web_viewer/assembled_document.py`, `web_viewer/segment_views.py`, `web_viewer/sync_model.js`, `segment_model.py` | `test_v0916_export_*.py`, `test_v0916_sync_model.py` (node), `test_v0916_viewer_*.py` (Chromium) |
@@ -390,6 +390,15 @@ Fonctionnement : aide, paragraphe « Texte de lecture » (`viewer-text`, à la f
 - Libellé d'un témoin sans son sigle : `edition-critique.xsl` (« Sigles des témoins » : `$marques`, `<idno type="siglum">` et tout élément qui ne contient que le sigle ou l'identifiant) ; `legacy_v11_core.extract_witness_labels`, même règle.
 - Aller-retour Source → XSLT / CSS → Source : `MainWindow._preview_round_trip` (document, révision, sélections de la source et de l'aperçu), `_select_source_span`.
 - Choix du texte du viewer : `legacy_v11_core.choose_reading_status` (modes `established` / `witness`, `reading_witnesses` : @wit d'un `<rdgGrp>`), `extract_reading_document(text_mode, text_witness)` ; témoin sans leçon : segment `missing` (texte de repli, ou repère « ∅ »), annotation `missing`, `missing_readings` ; lignes du pivot d'une leçon non affichée : `pivot_marks_in`, `spread_lines` (réparties dans le texte affiché), segment `line-anchor` si le témoin omet le passage (`sync_model.js`, `segment_views`). `generator.build_dataset(text_mode, text_witness)` → `meta.text` ; JS `textChoice`, `missingTitle`, classes `no-reading`, `no-reading-empty`. Réglage : `ProjectConfig.web_text_mode`, `web_text_witness` (`<webViewer text textWitness>`), `project_management.update_project_web_text`. Boîte : `web_text_dialog.WebTextDialog`, `MainWindow._ask_web_text`.
+
+## V0.9.4.5 — sélection d'une vue à l'autre
+
+- `selection_quote` (sans Qt) : `xml_compact`, `plain_compact` (`CompactText` : `text`, `starts`, `span`, `range_of`, `index_at`), `quote` (`Quote` : `exact`, `prefix`, `suffix`, `ratio`), `resolve(compact, quote, scope, hint)` (trigrammes pondérés par la proximité, accord exact en appoint ; au-delà de `_MANY` candidats, tri grossier en C avant).
+- Aperçu : `ClickablePreview._compact` (vidé par `rebuild_line_markers`), `selection_context` (`quote`, `paragraph`, `relative`, `line`), `select_quote(context, focus, anywhere)`.
+- Allers-retours : `_preview_round_trip` (source → aperçu → source), `_source_round_trip` et `ClickablePreview.restore_selection` (aperçu → source → aperçu).
+- Source : `MainWindow._source_compact` (gardé tant que `editor.toPlainText()` rend le même texte), `_source_unit_spans` (même garde), `_source_unit_at`, `_source_unit_span` (affiche le fichier d'une partie), `_source_selection_context`, `_select_source_quote(context, near_cursor)` ; `_left_tab_changed` ; message `selection.not_found.source` / `.preview` dans la barre d'état.
+- Fragment : `FormattedEditionWidget._preview_selection_to_fragment`, `_fragment_selection_to_preview` (dans l'élément ouvert seulement, `anywhere=False`).
+- Retirés : `xml_occurrences`, `xml_selection_descriptor`, `pick_xml_occurrence`, `_xml_selection_pattern`, `ClickablePreview.selection_descriptor`, `select_visible_text_in_paragraph`, `select_visible_text_near_line`, `MainWindow._select_xml_text_in_paragraph`, `_select_xml_text_near_ordinal`, `selection_sync.choose_occurrence`, `occurrence_index_for_position`. Gardés : l'aller-retour (`_preview_round_trip`) et le repère structurel (`xml_selection_structure`, `select_structure`) des résultats XPath.
 
 ## V0.9.4.4 — vues en XSLT 2.0 et 3.0 (Saxon) et repères de ligne
 
