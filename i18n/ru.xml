@@ -48,6 +48,8 @@
   <string key="status.saved">Сохранено: {path}</string>
   <string key="status.search.xml.found">Поиск в XML: совпадение {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Поиск в XML: совпадений нет — {query}</string>
+  <string key="selection.not_found.source">Выделение не найдено в исходном тексте: этого текста там нет в таком виде (возможно, его добавила таблица стилей XSLT).</string>
+  <string key="selection.not_found.preview">Выделение не найдено в предпросмотре: таблица стилей XSLT не показывает этот текст в таком виде.</string>
   <string key="status.ctrl_e.config">Настройка Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Вернуться к соответствию для текущего фрагмента XML</string>
   <string key="manuscript.lead.tip">Вести издание: когда кнопка нажата, стрелки и выбор листа этой рукописи перемещают и курсор в издании; когда отпущена, они только листают рукопись.</string>

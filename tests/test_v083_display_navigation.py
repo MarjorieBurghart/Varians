@@ -1,16 +1,9 @@
 from pathlib import Path
 
-from selection_sync import containing_span_index, occurrence_index_for_position, choose_occurrence
+from selection_sync import containing_span_index
 from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def test_selection_sync_uses_occurrence_not_first_global_match():
-    spans = [(10, 13), (25, 28), (40, 43)]
-    assert occurrence_index_for_position(spans, 26) == 1
-    assert choose_occurrence(spans, 1, 10) == (25, 28)
-    assert choose_occurrence(spans, 99, 41) == (40, 43)
 
 
 def test_containing_paragraph_span():
@@ -46,14 +39,17 @@ def test_toolbar_and_display_menu_are_reorganized():
     assert source.index('spacer.setSizePolicy', xml_block) < source.index('self.search_source_label = QLabel', xml_block)
 
 
-def test_selection_transfer_has_paragraph_occurrence_descriptor():
+def test_selection_transfer_uses_a_quote_with_its_context():
+    """V0.9.4.5 : la sélection passe d'un onglet à l'autre par sa citation et
+    son contexte (selection_quote) ; l'élément modifiable ne fait que
+    départager."""
     source = application_source()
-    assert 'def selection_descriptor(self, text, selection_start):' in source
-    assert 'def select_visible_text_in_paragraph(self, text, descriptor, focus=True):' in source
-    assert 'def _source_selection_descriptor(self, text, selection_start):' in source
-    assert 'def _select_xml_text_in_paragraph(self, text, descriptor):' in source
-    assert 'preview.select_visible_text_in_paragraph(selected, desc)' in source
-    assert 'self._select_xml_text_in_paragraph(selected, desc)' in source
+    assert 'def selection_context(self):' in source
+    assert 'def select_quote(self, context, focus=True, anywhere=True):' in source
+    assert 'def _source_selection_context(self, cursor):' in source
+    assert 'def _select_source_quote(self, context, near_cursor=False):' in source
+    assert 'preview.select_quote(context)' in source
+    assert 'self._select_source_quote(context, near_cursor)' in source
 
 
 def test_i18n_display_keys_match():

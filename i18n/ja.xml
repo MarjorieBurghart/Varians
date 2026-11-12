@@ -48,6 +48,8 @@
   <string key="status.saved">保存しました：{path}</string>
   <string key="status.search.xml.found">XML検索：{n}/{total}件目 — {query}</string>
   <string key="status.search.xml.none">XML検索：該当なし — {query}</string>
+  <string key="selection.not_found.source">選択範囲がソースに見つかりません。このテキストはソースにそのままの形では存在しません（XSLTスタイルシートが出力したものかもしれません）。</string>
+  <string key="selection.not_found.preview">選択範囲がプレビューに見つかりません。XSLTスタイルシートはこのテキストをそのままの形では表示していません。</string>
   <string key="status.ctrl_e.config">Ctrl+E 設定：{path}</string>
   <string key="manuscript.home.tip">XMLの現在箇所に対応する位置へ戻る</string>
   <string key="manuscript.lead.tip">エディションを導く：押した状態では、この写本の矢印とフォリオの選択でエディションのカーソルも移動します。戻すと、写本をめくるだけになります。</string>

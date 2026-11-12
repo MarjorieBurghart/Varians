@@ -48,6 +48,8 @@
   <string key="status.saved">Uloženo: {path}</string>
   <string key="status.search.xml.found">Hledání v XML: výskyt {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Hledání v XML: bez výskytu — {query}</string>
+  <string key="selection.not_found.source">Výběr nebyl ve zdroji nalezen: tento text se v něm v této podobě nevyskytuje (možná pochází ze šablony XSLT).</string>
+  <string key="selection.not_found.preview">Výběr nebyl v náhledu nalezen: šablona XSLT tento text v této podobě nezobrazuje.</string>
   <string key="status.ctrl_e.config">Nastavení Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Vrátit se ke korespondenci aktuální pasáže XML</string>
   <string key="manuscript.lead.tip">Vést edici: je-li stisknuto, šipky a výběr folia tohoto rukopisu posouvají také kurzor v edici; po uvolnění jen listují rukopisem.</string>
