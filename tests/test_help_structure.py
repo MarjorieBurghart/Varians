@@ -270,3 +270,27 @@ def test_javascript_in_a_view_is_explained(language):
     rest = page[start:page.index("</p>", start)]
     for needle in ("<code>&lt;script&gt;</code>", "<code>onclick</code>", f"<strong>{catalog['toolbar.transform']}</strong>"):
         assert needle in rest, (language, needle)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_what_the_preview_can_display_is_explained(language):
+    """L'aperçu n'est pas un navigateur : Qt y affiche un HTML 4 et une CSS 2
+    simplifiés. Ce qui est compris (tableaux, largeurs par attribut), ce qui
+    ne l'est pas (flex, padding d'un <div>, em, pseudo-classes…), rien ne se
+    masque, balises HTML 5 et formulaires, images à adresse complète ;
+    « Écrire la feuille d'une vue » et « La CSS d'une vue » y renvoient."""
+    page, catalog = _page(language), _catalog(language)
+    start = page.index('<p id="view-html">')
+    part = page[start:page.index("</ul>", start)]
+    for needle in ("HTML 4", "CSS 2", f"<strong>{catalog['toolbar.transform']}</strong>",
+                   "<code>&lt;table&gt;</code>", '<code>&lt;td width="30%"&gt;</code>', "<code>padding</code>",
+                   "<code>display: flex</code>", "<code>border-radius</code>", "<code>em</code>",
+                   "<code>!important</code>", "<code>:hover</code>", "<code>::before</code>", "<code>@media</code>",
+                   "<code>display: none</code>", "<code>hidden</code>", "<code>xsl:if</code>",
+                   "<code>&lt;section&gt;</code>", "<code>&lt;details&gt;</code>", "<code>&lt;input&gt;</code>",
+                   "<code>file:///", "static-base-uri()", "base-uri(/)"):
+        assert needle in part, (language, needle)
+    rest = page[page.index("</pre>", page.index('<p id="view-stylesheet">')):]
+    assert 'href="#view-html"' in rest[:rest.index("</p>")], language
+    css = page[page.index('<p id="view-css">'):]
+    assert 'href="#view-html"' in css[:css.index("</p>")], language
