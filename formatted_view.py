@@ -469,19 +469,30 @@ class ClickablePreview(QTextBrowser):
                                   hint=None if position is None else compact.index_at(positions.python(position)))
         if found is None:
             return False
-        a, b = (positions.qt(index) for index in compact.span(*found))
+        self._select_range(*(positions.qt(index) for index in compact.span(*found)), focus=focus)
+        return True
+
+    def restore_selection(self, size, start, end):
+        """Rend la sélection ``start``–``end`` de l'aperçu (aller-retour,
+        V0.9.4.5), s'il n'a pas changé depuis (``size`` : son nombre de
+        caractères). False sinon."""
+        if self.document().characterCount() != size or not 0 <= start < end < size:
+            return False
+        self._select_range(start, end)
+        return True
+
+    def _select_range(self, start, end, focus=True):
         self.clearSearchMatch()
         cursor = QTextCursor(self.document())
-        cursor.setPosition(a)
-        cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
+        cursor.setPosition(start)
+        cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
         self.setTextCursor(cursor)
         self.ensureCursorVisible()
         if focus:
             self.setFocus()
-        line = self.line_for_position(a)
+        line = self.line_for_position(start)
         if line is not None:
             self.active_line_ordinal = line
-        return True
 
     def _words_in(self, words, start, end, target, at_end):
         """Position des mots ``words`` (les plus nombreux qu'on trouve, en

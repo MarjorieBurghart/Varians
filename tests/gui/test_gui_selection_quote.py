@@ -8,7 +8,8 @@ Un document de notices sans ``<lb/>`` : rien ne repère les lignes. La vue
 en fin de page, avec un appel « [1] ». Une sélection traverse une balise
 (``<persName>``) ou une entité (``&amp;``) ; un mot répété est retrouvé à
 sa place, même quand une note rendue ailleurs fausserait un décompte des
-occurrences. Une sélection introuvable est signalée dans la barre d'état."""
+occurrences. Une sélection introuvable est signalée dans la barre d'état.
+Un index en fin de page affiche une seconde fois les noms de personne."""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -49,6 +50,9 @@ SHEET = """<?xml version="1.0" encoding="UTF-8"?>
       {paragraphs}
       <div class="notes">
         <xsl:for-each select="//tei:note"><p>[<xsl:value-of select="position()"/>] <xsl:value-of select="."/></p></xsl:for-each>
+      </div>
+      <div class="index">
+        <xsl:for-each select="//tei:persName"><p>Index : <xsl:value-of select="."/></p></xsl:for-each>
       </div>
     </body></html>
   </xsl:template>
@@ -149,6 +153,21 @@ def test_a_text_written_by_the_stylesheet_is_reported(open_window, notices_proje
     window.left_tabs.setCurrentIndex(0)
     qtbot.waitUntil(lambda: window.statusBar().currentMessage() == tr("selection.not_found.source"), timeout=5000)
     assert not window.editor.textCursor().hasSelection()
+
+
+def test_a_round_trip_from_the_preview_comes_back_to_the_same_place(open_window, notices_project, qtbot):
+    """« Paulus » est affiché deux fois (texte, index) pour un seul texte de la
+    source : sélectionné dans l'index, puis la source sans rien changer, le
+    retour à l'aperçu rend la sélection de l'index."""
+    window, view = _show(open_window, notices_project, qtbot, "Sans crayons")
+    in_index = _nth(view.preview.toPlainText(), "Paulus", 1)
+    assert view.preview.toPlainText()[in_index[0] - len("Index : "):in_index[0]] == "Index : "
+    selected, _start = _preview_to_source(window, view, qtbot, "Paulus", 1)
+    assert selected == "Paulus"
+    view.preview.setTextCursor(QTextCursor(view.preview.document()))
+    window.left_tabs.setCurrentWidget(view)
+    qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=5000)
+    assert _selection(view.preview) == in_index
 
 
 # --- Source → aperçu --------------------------------------------------------

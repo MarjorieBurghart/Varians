@@ -1075,6 +1075,18 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             cached = self._source_compact_cache = (text, xml_compact(text))
         return cached
 
+    def _source_unit_spans(self, text=None):
+        """``unit_spans`` de la source pour les éléments modifiables de
+        l'aperçu, gardés tant que le texte et ces éléments ne changent pas
+        (V0.9.4.5 : relevé coûteux sur un gros fichier)."""
+        text = self.editor.toPlainText() if text is None else text
+        names = self._preview_unit_names()
+        key = (type(names), names)
+        cached = getattr(self, "_source_units_cache", None)
+        if cached is None or cached[0] is not text or cached[1] != key:
+            cached = self._source_units_cache = (text, key, unit_spans(text, names))
+        return cached[2]
+
     def _source_unit_at(self, position):
         """Élément modifiable de l'aperçu (V0.9.2.9) qui contient la position
         ``position`` de la source : ``(rang, début, fin)``, ou None. Pour une
@@ -1086,7 +1098,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             if pidx is None:
                 return None
             return pidx, sources.paragraphs[pidx].start, sources.paragraphs[pidx].end
-        spans = unit_spans(self.editor.toPlainText(), self._preview_unit_names())
+        spans = self._source_unit_spans()
         pidx = containing_span_index(spans, position)
         return None if pidx is None else (pidx, *spans[pidx])
 
@@ -1101,7 +1113,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 if span is None or not self._show_file_position(span.path, span.start):
                     return None
                 return span.start, span.end
-            return unit_spans(self.editor.toPlainText(), self._preview_unit_names())[int(paragraph)]
+            return self._source_unit_spans()[int(paragraph)]
         except (IndexError, TypeError, ValueError):
             return None
 
@@ -1134,7 +1146,7 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                      if span is not None and path_key(span.path) == key]
         else:
             units = [(index, a, b) for index, (a, b)
-                     in enumerate(unit_spans(source, self._preview_unit_names()))]
+                     in enumerate(self._source_unit_spans(source))]
         qt = self.editor.positions(source)
         return xml_selection_structure(source, qt.python(cursor.selectionStart()), qt.python(cursor.selectionEnd()),
                                        units)
@@ -1226,9 +1238,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         parts = self._preview_shows_assembly()
 
         if self.left_tabs.widget(index) is self.formatted_view:
-            # XML -> XSLT : la chaîne seule ne suffit pas ("qui" peut apparaître
-            # plusieurs fois). On transporte aussi le paragraphe et le rang de
-            # l'occurrence à l'intérieur de ce paragraphe.
+            # XML -> XSLT : la sélection est retrouvée par son texte et son
+            # contexte ("qui" peut apparaître plusieurs fois, V0.9.4.5).
             source_cursor = self.editor.textCursor()
             qt = self.editor.positions()
             source_pos = qt.python(source_cursor.selectionStart() if source_cursor.hasSelection()
@@ -1249,13 +1260,23 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             self._preview_round_trip = None
             round_trip = (self.document, self.editor.document().revision(),
                           qt.python(source_cursor.selectionStart()), qt.python(source_cursor.selectionEnd()))
+            # Aller-retour dans l'autre sens (V0.9.4.5) : une sélection venue de
+            # l'aperçu et inchangée y revient à sa place, même quand la feuille
+            # affiche plusieurs fois ce texte de la source (index, résumé).
+            back, self._source_round_trip = getattr(self, "_source_round_trip", None), None
+            preview_back = None
+            if (back and source_cursor.hasSelection() and back[0] is self.document
+                    and back[1] == self.editor.document().revision()
+                    and back[2:4] == (source_cursor.selectionStart(), source_cursor.selectionEnd())):
+                preview_back = back[4:]
             self.formatted_view.became_visible()
 
-            def restore_preview_context(n=ordinal, context=context, shape=structure):
+            def restore_preview_context(n=ordinal, context=context, shape=structure, back=preview_back):
                 preview = self.formatted_view.preview
                 # Un élément entier (résultat XPath), un apparat, une note :
                 # leur texte n'est pas celui de l'aperçu, d'où la structure.
-                if (context and preview.select_quote(context)) or (shape and preview.select_structure(shape)):
+                if ((back and preview.restore_selection(*back)) or (context and preview.select_quote(context))
+                        or (shape and preview.select_structure(shape))):
                     cursor = preview.textCursor()
                     self._preview_round_trip = round_trip + (cursor.selectionStart(), cursor.selectionEnd())
                     return
@@ -1270,7 +1291,8 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             return
 
         if index == 0 and previous == 1:
-            # XSLT -> XML : même descripteur positionnel dans l'autre sens.
+            # XSLT -> XML : la sélection est retrouvée par son texte et son
+            # contexte (V0.9.4.5).
             preview_cursor = self.formatted_view.preview.textCursor()
             has_selection = preview_cursor.hasSelection()
             trip, self._preview_round_trip = getattr(self, "_preview_round_trip", None), None
@@ -1294,10 +1316,16 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
             elif ordinal is not None:
                 self.navigate_to_base_ordinal(ordinal, move_xml_cursor=True)
 
-            def restore_xml_context(context=context, near_cursor=near_cursor, shown=self.document):
+            preview_back = (self.formatted_view.preview.document().characterCount(),
+                            preview_cursor.selectionStart(), preview_cursor.selectionEnd())
+
+            def restore_xml_context(context=context, near_cursor=near_cursor, shown=self.document, back=preview_back):
                 if self.document is not shown:
                     return  # un autre document est affiché entre-temps
                 if context and self._select_source_quote(context, near_cursor):
+                    cursor = self.editor.textCursor()
+                    self._source_round_trip = (self.document, self.editor.document().revision(),
+                                               cursor.selectionStart(), cursor.selectionEnd()) + back
                     return
                 if context:
                     self.statusBar().showMessage(_t("selection.not_found.source"), 6000)
