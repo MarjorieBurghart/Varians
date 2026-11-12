@@ -259,8 +259,8 @@ def test_a_selection_from_the_preview_does_not_come_back(open_window, example_pr
     window = open_window(example_project)
     view = _open_fragment(window, qtbot, 2)
     calls = []
-    original = view.preview.select_visible_text_in_paragraph
-    monkeypatch.setattr(view.preview, "select_visible_text_in_paragraph",
+    original = view.preview.select_quote
+    monkeypatch.setattr(view.preview, "select_quote",
                         lambda *args, **kwargs: calls.append(args) or original(*args, **kwargs))
     _double_click(qtbot, view, _preview_occurrences(view, "premium", 2)[1][0])
     qtbot.waitUntil(lambda: view.fragment_editor.textCursor().hasSelection(), timeout=3000)

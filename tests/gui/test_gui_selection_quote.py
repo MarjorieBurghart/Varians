@@ -174,3 +174,38 @@ def test_a_source_selection_absent_from_the_preview_is_reported(open_window, not
     window.left_tabs.setCurrentWidget(view)
     qtbot.waitUntil(lambda: window.statusBar().currentMessage() == tr("selection.not_found.preview"), timeout=5000)
     assert not view.preview.textCursor().hasSelection()
+
+
+# --- Aperçu ↔ éditeur de fragment -------------------------------------------
+
+def _open_fragment(open_window, project, qtbot, paragraph):
+    window, view = _show(open_window, project, qtbot, "Avec crayons")
+    assert view.load_fragment(paragraph)
+    return window, view
+
+
+def test_a_preview_selection_across_an_entity_is_selected_in_the_fragment(open_window, notices_project, qtbot):
+    _window, view = _open_fragment(open_window, notices_project, qtbot, 1)
+    _select(view.preview, *_nth(view.preview.toPlainText(), "fratres & sorores", 0))
+    view.preview.textSelected.emit()
+    assert view.fragment_editor.textCursor().selectedText() == "fratres &amp; sorores"
+
+
+def test_a_note_does_not_shift_the_occurrence_in_the_fragment(open_window, notices_project, qtbot):
+    _window, view = _open_fragment(open_window, notices_project, qtbot, 2)
+    _select(view.preview, *_nth(view.preview.toPlainText(), "dixit", 3))          # « iterum dixit »
+    view.preview.textSelected.emit()
+    fragment = view.fragment_editor.toPlainText()
+    start = fragment.index("dixit ad omnes")
+    assert _selection(view.fragment_editor) == (start, start + len("dixit"))
+
+
+def test_a_fragment_selection_finds_its_place_in_the_preview(open_window, notices_project, qtbot):
+    _window, view = _open_fragment(open_window, notices_project, qtbot, 2)
+    view.fragment_editor.setFocus()
+    qtbot.waitUntil(view.fragment_editor.hasFocus, timeout=3000)
+    start = view.fragment_editor.toPlainText().index("dixit ad omnes")
+    _select(view.fragment_editor, start, start + len("dixit"))
+    qtbot.waitUntil(lambda: view.preview.textCursor().hasSelection(), timeout=3000)
+    target = view.preview.toPlainText().index("dixit ad omnes")
+    assert _selection(view.preview) == (target, target + len("dixit"))

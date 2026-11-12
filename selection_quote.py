@@ -31,8 +31,9 @@ from bisect import bisect_left
 from dataclasses import dataclass
 
 CONTEXT = 32             # caractères visibles (sans blancs) gardés de part et d'autre
-_FINE_SCORING = 2000      # au-delà, l'entourage n'est comparé finement que pour les meilleurs
-_CLEAR = 8               # entourage identique sur au moins 8 caractères, seul en tête : choisi
+_MANY = 400              # au-delà, un premier tri grossier ne garde que les plus prometteurs
+_KEPT = 200
+_SLACK = 16              # l'entourage cherché déborde le contexte : texte ajouté par la feuille
 _GRAM = 3
 
 # Un seul passage : chaque mot de texte, ou ce qui n'en est pas (balise,
@@ -185,6 +186,19 @@ def _grams(text):
     return {text[k:k + _GRAM] for k in range(len(text) - _GRAM + 1)}
 
 
+def _weighted_grams(text, context, before):
+    """Trigrammes du contexte ``text``, chacun pesant d'autant plus qu'il
+    est près de la sélection (``before`` : le contexte la précède)."""
+    weights = {}
+    for k in range(len(text) - _GRAM + 1):
+        distance = len(text) - _GRAM - k if before else k
+        weight = (context + 1 - distance) / (context + 1)
+        gram = text[k:k + _GRAM]
+        if weight > weights.get(gram, 0):
+            weights[gram] = weight
+    return weights
+
+
 def resolve(compact, wanted, scope=None, hint=None):
     """Caractères ``(i, j)`` de ``compact`` où se trouve la citation
     ``wanted`` ; None si son texte n'y est pas.
@@ -192,7 +206,13 @@ def resolve(compact, wanted, scope=None, hint=None):
     ``scope`` : ``(i, j)`` où chercher (un élément modifiable) ; ``hint`` :
     caractère près duquel la sélection devrait être (repère de ligne, place
     dans l'élément), qui départage des entourages qui se valent ; sans lui,
-    la place relative de la citation."""
+    la place relative de la citation.
+
+    L'entourage est comparé par ses trigrammes, chacun pesant d'autant plus
+    qu'il est près de la sélection : un texte que la feuille ajoute contre
+    elle (« [ » d'un apparat, appel de note, numéro) n'en retire que
+    quelques-uns, au lieu d'arrêter une comparaison caractère par
+    caractère ; l'accord exact au plus près ne fait que s'y ajouter."""
     if wanted is None or not wanted.exact:
         return None
     text, exact = compact.text, wanted.exact
@@ -208,28 +228,36 @@ def resolve(compact, wanted, scope=None, hint=None):
     if len(candidates) == 1:
         return candidates[0], candidates[0] + size
     target = hint if hint is not None else wanted.ratio * len(text)
+    reach = context + _SLACK
 
-    # Entourage identique caractère à caractère, au plus près de la sélection.
-    def exact_score(at):
-        return (_common_suffix(wanted.prefix, text[max(0, at - context):at])
-                + _common_prefix(wanted.suffix, text[at + size:at + size + context]))
+    def before(at):
+        return text[max(0, at - reach):at]
 
-    scored = [(exact_score(at), at) for at in candidates]
-    best_score = max(score for score, _at in scored)
-    leaders = [item for item in scored if item[0] == best_score]
-    if len(leaders) == 1 and best_score >= _CLEAR:
-        return leaders[0][1], leaders[0][1] + size
-    # Entourage semblable, même dérangé par un texte que la feuille a ajouté
-    # contre la sélection (appel de note, numéro) : trigrammes communs, pour
-    # les candidats les mieux placés.
-    prefix_grams, suffix_grams = _grams(wanted.prefix), _grams(wanted.suffix)
+    def after(at):
+        return text[at + size:at + size + reach]
 
-    def fine_score(item):
-        score, at = item
-        before = _grams(text[max(0, at - context):at])
-        after = _grams(text[at + size:at + size + context])
-        return 2 * score + len(prefix_grams & before) + len(suffix_grams & after)
+    if len(candidates) > _MANY:
+        # Tri grossier, en C : morceaux de 4 caractères du contexte présents
+        # dans l'entourage.
+        pieces_before = [wanted.prefix[k:k + 4] for k in range(max(0, len(wanted.prefix) - 4), -1, -4)][:8]
+        pieces_after = [wanted.suffix[k:k + 4] for k in range(0, max(0, len(wanted.suffix) - 3), 4)][:8]
 
-    best = max(heapq.nlargest(_FINE_SCORING, scored, key=lambda item: (item[0], -abs(item[1] - target))),
-               key=lambda item: (fine_score(item), -abs(item[1] - target)))
-    return best[1], best[1] + size
+        def rough(at):
+            near_before, near_after = before(at), after(at)
+            return (sum(piece in near_before for piece in pieces_before)
+                    + sum(piece in near_after for piece in pieces_after))
+
+        candidates = heapq.nlargest(_KEPT, candidates, key=lambda at: (rough(at), -abs(at - target)))
+    prefix_grams = _weighted_grams(wanted.prefix, context, before=True)
+    suffix_grams = _weighted_grams(wanted.suffix, context, before=False)
+
+    def score(at):
+        near_before, near_after = _grams(before(at)), _grams(after(at))
+        shared = (sum(weight for gram, weight in prefix_grams.items() if gram in near_before)
+                  + sum(weight for gram, weight in suffix_grams.items() if gram in near_after))
+        close = (_common_suffix(wanted.prefix, text[max(0, at - context):at])
+                 + _common_prefix(wanted.suffix, text[at + size:at + size + context]))
+        return shared + close / 4
+
+    best = max(candidates, key=lambda at: (score(at), -abs(at - target)))
+    return best, best + size

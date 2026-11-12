@@ -30,9 +30,7 @@ from app_context import _settings, call_later, tr as _t
 from code_editor import CodeEditor, find_in_plain_editor
 from completion_ui import CompletionDialog
 from custom_completion import load_custom_completion
-from selection_quote import plain_compact, quote as quote_selection, resolve as resolve_quote
-from selection_sync import choose_occurrence, occurrence_index_for_position
-from tei_facsimile import position_inside_xml_markup
+from selection_quote import plain_compact, quote as quote_selection, resolve as resolve_quote, xml_compact
 from text_search import SearchError, Utf16Positions
 from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
 from fragment_units import (
@@ -160,65 +158,6 @@ def _rich_selection_pattern(text):
     return "".join(parts)
 
 
-def _xml_selection_pattern(text):
-    """Regex Python pour retrouver un texte visible dans la source XML.
-
-    Entre deux caractères d'un même mot, un ``lb break="no"`` accompagné de
-    ses retours à la ligne est autorisé. Une sélection issue de l'aperçu peut
-    ainsi devenir, dans la source, une sélection continue incluant la balise lb.
-    """
-    clean = (text or "").replace("\u2060", "")
-    clean = clean.replace("\u2029", " ").replace("\u2028", " ")
-    clean = re.sub(r"\s+", " ", clean).strip()
-    if not clean:
-        return ""
-    lb_no = r"<(?:[A-Za-z_][\w.-]*:)?lb\b(?=[^>]*\bbreak\s*=\s*[\"']no[\"'])[^>]*?/?>"
-    lb_break = r"<(?:[A-Za-z_][\w.-]*:)?lb\b(?![^>]*\bbreak\s*=\s*[\"']no[\"'])[^>]*?/?>"
-    no_break_sep = r"(?:\s*" + lb_no + r"\s*)*"
-    visible_space = r"(?:\s+|\s*" + lb_break + r"\s*)+"
-    parts = []
-    for i, ch in enumerate(clean):
-        if ch.isspace():
-            parts.append(visible_space)
-        else:
-            parts.append(re.escape(ch))
-            if i + 1 < len(clean) and not clean[i + 1].isspace():
-                parts.append(no_break_sep)
-    return "".join(parts)
-
-
-def xml_occurrences(xml_text, visible, start=0, end=None):
-    """Plages où le texte visible ``visible`` apparaît dans ``xml_text[start:end]``.
-
-    Sert à la source XML comme au fragment ouvert. Une occurrence visible
-    seulement dans un nom de balise ou une valeur d'attribut est écartée ; une
-    sélection traversant un lb break=no reste admise, car son premier
-    caractère est du texte.
-    """
-    pattern = _xml_selection_pattern(visible)
-    if not pattern:
-        return []
-    end = len(xml_text) if end is None else int(end)
-    try:
-        matches = list(re.finditer(pattern, xml_text[start:end], flags=re.DOTALL))
-    except re.error:
-        return []
-    return [(start + m.start(), start + m.end()) for m in matches
-            if not position_inside_xml_markup(xml_text, start + m.start())]
-
-
-def xml_selection_descriptor(xml_text, visible, selection_start, start=0, end=None):
-    """Rang de la sélection parmi les occurrences de ``visible`` dans
-    ``xml_text[start:end]``, et longueur du texte visible qui la précède
-    depuis ``start``. Ce décalage approximatif sert seulement de repli si la
-    transformation XSLT a modifié le nombre d'occurrences."""
-    occurrences = xml_occurrences(xml_text, visible, start, end)
-    return {
-        "occurrence": occurrence_index_for_position(occurrences, selection_start),
-        "relative": len(_selection_xml_to_visible_text(xml_text[start:int(selection_start)])),
-    }
-
-
 def xml_selection_structure(xml_text, selection_start, selection_end, units, words=3):
     """Repère structurel d'une sélection de la source (V0.9.3.0), pour
     l'aperçu, quand son texte n'y apparaît pas tel quel (élément entier choisi
@@ -244,22 +183,6 @@ def xml_selection_structure(xml_text, selection_start, selection_end, units, wor
         "head_relative": len(_selection_xml_to_visible_text(xml_text[fa:max(fa, start)])),
         "tail_relative": len(_selection_xml_to_visible_text(xml_text[la:min(end, lb)])),
     }
-
-
-def pick_xml_occurrence(xml_text, visible, descriptor, start=0, end=None):
-    """Occurrence de ``visible`` décrite par ``descriptor`` (rang, sinon
-    décalage visible depuis ``start``), ou None."""
-    occurrences = xml_occurrences(xml_text, visible, start, end)
-    target = None
-    # Pour le repli positionnel, on approxime l'offset visible en balayant
-    # les occurrences candidates ; l'index d'occurrence reste prioritaire.
-    if descriptor.get("relative") is not None and occurrences:
-        wanted = int(descriptor.get("relative") or 0)
-        target = min(
-            occurrences,
-            key=lambda ab: abs(len(_selection_xml_to_visible_text(xml_text[start:ab[0]])) - wanted),
-        )[0]
-    return choose_occurrence(occurrences, descriptor.get("occurrence"), target)
 
 
 _ROOT_BLOCK = re.compile(r":root\s*\{(.*?)\}", re.I | re.S)
@@ -492,44 +415,6 @@ class ClickablePreview(QTextBrowser):
                 return content_pos, end
         return None
 
-    def _visible_occurrences_in_paragraph(self, text, paragraph_index):
-        bounds = self.paragraph_bounds(paragraph_index)
-        pattern = _rich_selection_pattern(text)
-        if not bounds or not pattern:
-            return []
-        start, end = bounds
-        expr = QRegularExpression(pattern)
-        occurrences = []
-        scan = QTextCursor(self.document())
-        scan.setPosition(start)
-        while True:
-            hit = self.document().find(expr, scan)
-            if hit.isNull():
-                break
-            a, b = hit.selectionStart(), hit.selectionEnd()
-            if a >= end:
-                break
-            if a >= start and b <= end:
-                occurrences.append((a, b))
-            scan = QTextCursor(self.document())
-            scan.setPosition(max(b, a + 1))
-        return occurrences
-
-    def selection_descriptor(self, text, selection_start):
-        """Décrit une sélection de l'aperçu qui montre ``text`` et commence à ``selection_start`` :
-        ``paragraph`` (rang de l'élément modifiable), ``occurrence`` (rang de ``text`` parmi ses
-        occurrences dans cet élément) et ``relative`` (décalage depuis le début de l'élément) ;
-        None hors de tout élément. Sert à retrouver la même occurrence dans la source ou le
-        fragment."""
-        pidx = self.paragraph_for_position(selection_start)
-        if pidx is None:
-            return None
-        occurrences = self._visible_occurrences_in_paragraph(text, pidx)
-        occ = occurrence_index_for_position(occurrences, selection_start)
-        bounds = self.paragraph_bounds(pidx)
-        rel = max(0, int(selection_start) - int(bounds[0])) if bounds else None
-        return {"paragraph": pidx, "occurrence": occ, "relative": rel}
-
     def _compact(self):
         """Texte de l'aperçu sans blancs (``selection_quote.plain_compact``)
         et positions Qt ↔ Python, gardés jusqu'au rendu suivant (V0.9.4.5)."""
@@ -560,11 +445,11 @@ class ClickablePreview(QTextBrowser):
         relative = i - compact.index_at(positions.python(bounds[0])) if bounds else None
         return {"quote": wanted, "paragraph": paragraph, "relative": relative, "line": self.line_for_position(start)}
 
-    def select_quote(self, context, focus=True):
+    def select_quote(self, context, focus=True, anywhere=True):
         """Sélectionne dans l'aperçu ce que décrit ``context`` (voir
         ``selection_context``) : dans l'élément modifiable ``paragraph`` s'il
-        y est, sinon dans toute la page, près du repère ``line`` en cas de
-        doute. False si le texte n'y est pas (V0.9.4.5)."""
+        y est, sinon (``anywhere``) dans toute la page, près du repère
+        ``line`` en cas de doute. False si le texte n'y est pas (V0.9.4.5)."""
         wanted = (context or {}).get("quote")
         if wanted is None:
             return False
@@ -577,7 +462,7 @@ class ClickablePreview(QTextBrowser):
             relative = context.get("relative")
             found = resolve_quote(compact, wanted, scope=scope,
                                   hint=None if relative is None else scope[0] + int(relative))
-        if found is None:
+        if found is None and (anywhere or not bounds):
             line = context.get("line")
             position = self._line_to_position.get(int(line)) if line is not None else None
             found = resolve_quote(compact, wanted,
@@ -585,35 +470,6 @@ class ClickablePreview(QTextBrowser):
         if found is None:
             return False
         a, b = (positions.qt(index) for index in compact.span(*found))
-        self.clearSearchMatch()
-        cursor = QTextCursor(self.document())
-        cursor.setPosition(a)
-        cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
-        self.setTextCursor(cursor)
-        self.ensureCursorVisible()
-        if focus:
-            self.setFocus()
-        line = self.line_for_position(a)
-        if line is not None:
-            self.active_line_ordinal = line
-        return True
-
-    def select_visible_text_in_paragraph(self, text, descriptor, focus=True):
-        """Sélectionne ``text`` dans un paragraphe de l'aperçu, à l'occurrence
-        décrite par ``descriptor``. ``focus=False`` : le focus reste où il est
-        (sélection venue de l'éditeur de fragment)."""
-        if not descriptor:
-            return False
-        pidx = descriptor.get("paragraph")
-        occurrences = self._visible_occurrences_in_paragraph(text, pidx)
-        bounds = self.paragraph_bounds(pidx)
-        target = None
-        if bounds and descriptor.get("relative") is not None:
-            target = int(bounds[0]) + int(descriptor.get("relative") or 0)
-        chosen = choose_occurrence(occurrences, descriptor.get("occurrence"), target)
-        if not chosen:
-            return False
-        a, b = chosen
         self.clearSearchMatch()
         cursor = QTextCursor(self.document())
         cursor.setPosition(a)
@@ -730,46 +586,6 @@ class ClickablePreview(QTextBrowser):
             bar = self.verticalScrollBar()
             target = bar.value() + rect.center().y() - self.viewport().height() // 2
             bar.setValue(max(bar.minimum(), min(bar.maximum(), target)))
-        return True
-
-    def select_visible_text_near_line(self, text, ordinal=None):
-        """Sélectionne réellement ``text`` près d'une ligne du témoin pivot.
-
-        Contrairement au surlignage de recherche, il s'agit ici d'une sélection
-        volontaire de l'utilisateur transférée depuis l'autre onglet. Elle doit
-        donc rester une vraie sélection QTextCursor.
-        """
-        pattern = _rich_selection_pattern(text)
-        if not pattern:
-            return False
-        expr = QRegularExpression(pattern)
-        occurrences = []
-        scan = QTextCursor(self.document())
-        scan.movePosition(QTextCursor.MoveOperation.Start)
-        while True:
-            hit = self.document().find(expr, scan)
-            if hit.isNull():
-                break
-            a, b = hit.selectionStart(), hit.selectionEnd()
-            occurrences.append((a, b))
-            scan = QTextCursor(self.document())
-            scan.setPosition(max(b, a + 1))
-        if not occurrences:
-            return False
-        target = self.textCursor().position()
-        if ordinal is not None:
-            target = self._line_to_position.get(int(ordinal), target)
-        a, b = min(occurrences, key=lambda ab: abs(ab[0] - target))
-        self.clearSearchMatch()
-        cursor = QTextCursor(self.document())
-        cursor.setPosition(a)
-        cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
-        self.setTextCursor(cursor)
-        self.ensureCursorVisible()
-        self.setFocus()
-        line = self.line_for_position(a)
-        if line is not None:
-            self.active_line_ordinal = line
         return True
 
     def mousePressEvent(self, event):
@@ -2523,25 +2339,23 @@ class FormattedEditionWidget(QWidget):
     def _preview_selection_to_fragment(self):
         """Une sélection faite dans l'aperçu est aussi sélectionnée dans
         l'éditeur de fragment, qui prend le focus, si elle commence dans le
-        paragraphe ouvert. La même occurrence est cherchée dans le texte
-        actuel du fragment, même modifié."""
+        paragraphe ouvert. Elle y est retrouvée par son texte et son contexte
+        (V0.9.4.5), dans le texte actuel du fragment, même modifié."""
         if self.current_paragraph is None or self.frag_box.isHidden():
             return False
-        cursor = self.preview.textCursor()
-        text = cursor.selectedText().replace("⁠", "")
-        if not text.strip():
-            return False
-        descriptor = self.preview.selection_descriptor(text, cursor.selectionStart())
-        if not descriptor or descriptor.get("paragraph") != self.current_paragraph:
+        context = self.preview.selection_context()
+        if context is None or context.get("paragraph") != self.current_paragraph:
             return False
         fragment = self.fragment_editor.toPlainText()
-        chosen = pick_xml_occurrence(fragment, text, descriptor)
-        if not chosen:
+        compact = xml_compact(fragment)
+        found = resolve_quote(compact, context["quote"], hint=context.get("relative"))
+        if found is None:
             return False
+        start, end = compact.span(*found)
         qt = self.fragment_editor.positions(fragment)
         selection = QTextCursor(self.fragment_editor.document())
-        selection.setPosition(qt.qt(chosen[0]))
-        selection.setPosition(qt.qt(chosen[1]), QTextCursor.MoveMode.KeepAnchor)
+        selection.setPosition(qt.qt(start))
+        selection.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
         self.fragment_editor.setTextCursor(selection)
         # La sélection vient de l'aperçu : elle n'y est pas renvoyée.
         self._fragment_selection_timer.stop()
@@ -2552,21 +2366,24 @@ class FormattedEditionWidget(QWidget):
     def _fragment_selection_to_preview(self):
         """Une sélection faite dans l'éditeur de fragment est aussi
         sélectionnée dans l'aperçu, qui défile jusqu'à elle ; le focus reste
-        dans le fragment. Une sélection faite seulement de balises, ou un
-        texte absent de l'aperçu (tapé, pas encore appliqué), n'y change rien."""
+        dans le fragment. Elle y est cherchée dans le seul élément ouvert,
+        par son texte et son contexte (V0.9.4.5). Une sélection faite
+        seulement de balises, ou un texte absent de l'aperçu (tapé, pas
+        encore appliqué), n'y change rien."""
         if self.current_paragraph is None or self.frag_box.isHidden():
             return False
         cursor = self.fragment_editor.textCursor()
         if not cursor.hasSelection():
             return False
-        text = _selection_xml_to_visible_text(cursor.selectedText())
-        if not text:
-            return False
         fragment = self.fragment_editor.toPlainText()
-        descriptor = xml_selection_descriptor(fragment, text,
-                                              self.fragment_editor.positions(fragment).python(cursor.selectionStart()))
-        descriptor["paragraph"] = self.current_paragraph
-        return self.preview.select_visible_text_in_paragraph(text, descriptor, focus=False)
+        compact = xml_compact(fragment)
+        qt = self.fragment_editor.positions(fragment)
+        i, j = compact.range_of(qt.python(cursor.selectionStart()), qt.python(cursor.selectionEnd()))
+        wanted = quote_selection(compact, i, j)
+        if wanted is None:
+            return False
+        return self.preview.select_quote({"quote": wanted, "paragraph": self.current_paragraph, "relative": i},
+                                         focus=False, anywhere=False)
 
     def close_fragment_editor(self):
         """Ferme l’éditeur de fragment sans perdre silencieusement une correction."""

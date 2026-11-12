@@ -100,6 +100,16 @@ def test_an_expanded_abbreviation_is_found():
     assert _preview_to_xml("dominus noster", "dominus noster", xml) == "dominus</expan></choice> noster"
 
 
+def test_an_attribute_value_is_never_chosen():
+    """Un mot présent seulement dans une valeur d'attribut n'est pas du
+    texte (ancien test_v0912_fragment_selection)."""
+    xml = '<p><hi rend="premium">uerbum</hi> premium</p>'
+    view = plain_compact("uerbum premium")
+    target = xml_compact(xml)
+    i, j = view.range_of(len("uerbum "), len("uerbum premium"))
+    assert target.span(*resolve(target, quote(view, i, j)))[0] == xml.rindex("premium")
+
+
 def test_a_comment_is_never_chosen():
     xml = "<TEI><!-- Jean de la --><p>Jean de la Rochelle</p></TEI>"
     view = plain_compact("Jean de la Rochelle")

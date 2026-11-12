@@ -1,16 +1,9 @@
 from pathlib import Path
 
-from selection_sync import containing_span_index, occurrence_index_for_position, choose_occurrence
+from selection_sync import containing_span_index
 from varians_source import application_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
-
-
-def test_selection_sync_uses_occurrence_not_first_global_match():
-    spans = [(10, 13), (25, 28), (40, 43)]
-    assert occurrence_index_for_position(spans, 26) == 1
-    assert choose_occurrence(spans, 1, 10) == (25, 28)
-    assert choose_occurrence(spans, 99, 41) == (40, 43)
 
 
 def test_containing_paragraph_span():
@@ -52,7 +45,7 @@ def test_selection_transfer_uses_a_quote_with_its_context():
     départager."""
     source = application_source()
     assert 'def selection_context(self):' in source
-    assert 'def select_quote(self, context, focus=True):' in source
+    assert 'def select_quote(self, context, focus=True, anywhere=True):' in source
     assert 'def _source_selection_context(self, cursor):' in source
     assert 'def _select_source_quote(self, context, near_cursor=False):' in source
     assert 'preview.select_quote(context)' in source
