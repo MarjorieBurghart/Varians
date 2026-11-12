@@ -79,10 +79,8 @@ from large_files import confirm_large_files, large_project_files
 from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
 from save_io import atomic_write_text_with_backup
 from pivot_lines import pivot_lb_pattern
-from formatted_view import (
-    _selection_xml_to_visible_text, _xml_selection_pattern, FormattedEditionWidget,
-    pick_xml_occurrence, xml_selection_descriptor, xml_selection_structure,
-)
+from formatted_view import FormattedEditionWidget, xml_selection_structure
+from selection_quote import quote as quote_selection, resolve as resolve_quote, xml_compact
 from fragment_units import unit_spans
 from xml_assembly import path_key
 from manuscript_panel import ManuscriptPanel
@@ -1068,25 +1066,61 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         indice Python)."""
         return self.ordinal_at_position(self.editor.positions().python(self.editor.textCursor().position()))
 
-    def _source_selection_descriptor(self, text, selection_start):
-        """Élément modifiable de l'aperçu (V0.9.2.9 ; auparavant le
-        paragraphe) qui contient la sélection, et rang de l'occurrence dans
-        cet élément. Pour une édition en parties (V0.9.1.5), l'élément est
-        celui de l'aperçu de toute l'édition."""
-        source = self.editor.toPlainText()
+    def _source_compact(self):
+        """Texte visible de la source (``selection_quote.xml_compact``),
+        gardé tant que le texte ne change pas (V0.9.4.5) ; ``(texte, carte)``."""
+        text = self.editor.toPlainText()
+        cached = getattr(self, "_source_compact_cache", None)
+        if cached is None or cached[0] is not text:
+            cached = self._source_compact_cache = (text, xml_compact(text))
+        return cached
+
+    def _source_unit_at(self, position):
+        """Élément modifiable de l'aperçu (V0.9.2.9) qui contient la position
+        ``position`` de la source : ``(rang, début, fin)``, ou None. Pour une
+        édition en parties (V0.9.1.5), le rang est celui de l'aperçu de
+        toute l'édition."""
         sources = self._assembled_preview_sources()
         if sources is not None:
-            pidx = sources.paragraph_at(self.document.path, selection_start)
+            pidx = sources.paragraph_at(self.document.path, position)
             if pidx is None:
                 return None
-            start, end = sources.paragraphs[pidx].start, sources.paragraphs[pidx].end
-        else:
-            spans = unit_spans(source, self._preview_unit_names())
-            pidx = containing_span_index(spans, selection_start)
-            if pidx is None:
-                return None
-            start, end = spans[pidx]
-        return {"paragraph": pidx, **xml_selection_descriptor(source, text, selection_start, start, end)}
+            return pidx, sources.paragraphs[pidx].start, sources.paragraphs[pidx].end
+        spans = unit_spans(self.editor.toPlainText(), self._preview_unit_names())
+        pidx = containing_span_index(spans, position)
+        return None if pidx is None else (pidx, *spans[pidx])
+
+    def _source_unit_span(self, paragraph):
+        """``(début, fin)`` dans la source de l'élément modifiable de rang
+        ``paragraph`` de l'aperçu, ou None. Pour une édition en parties, le
+        fichier qui le contient est d'abord affiché."""
+        sources = self._assembled_preview_sources()
+        try:
+            if sources is not None:
+                span = sources.paragraphs[int(paragraph)]
+                if span is None or not self._show_file_position(span.path, span.start):
+                    return None
+                return span.start, span.end
+            return unit_spans(self.editor.toPlainText(), self._preview_unit_names())[int(paragraph)]
+        except (IndexError, TypeError, ValueError):
+            return None
+
+    def _source_selection_context(self, cursor):
+        """La sélection de la source décrite pour l'aperçu (V0.9.4.5) :
+        ``quote`` (citation et contexte), et pour départager ``paragraph``
+        (élément modifiable) et ``relative`` (caractères visibles depuis son
+        début) ; None si elle n'a pas de texte visible."""
+        text, compact = self._source_compact()
+        qt = self.editor.positions(text)
+        start = qt.python(cursor.selectionStart())
+        i, j = compact.range_of(start, qt.python(cursor.selectionEnd()))
+        wanted = quote_selection(compact, i, j)
+        if wanted is None:
+            return None
+        unit = self._source_unit_at(start)
+        if unit is None:
+            return {"quote": wanted, "paragraph": None, "relative": None}
+        return {"quote": wanted, "paragraph": unit[0], "relative": i - compact.index_at(unit[1])}
 
     def _source_selection_structure(self, cursor):
         """Repère structurel de la sélection de la source pour l'aperçu
@@ -1105,29 +1139,33 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         return xml_selection_structure(source, qt.python(cursor.selectionStart()), qt.python(cursor.selectionEnd()),
                                        units)
 
-    def _select_xml_text_in_paragraph(self, text, descriptor):
-        """Sélectionne dans la source l'occurrence décrite par ``descriptor``.
-        Pour une édition en parties (V0.9.1.5), le fichier qui contient ce
-        paragraphe de l'aperçu est d'abord affiché."""
-        if not descriptor:
+    def _select_source_quote(self, context, near_cursor=False):
+        """Sélectionne dans la source ce que décrit ``context`` (voir
+        ``ClickablePreview.selection_context``) : dans l'élément modifiable
+        ``paragraph`` s'il y est, sinon dans tout le fichier, près du curseur
+        avec ``near_cursor`` (placé sur le repère de ligne de la sélection),
+        sinon à la même place relative. False si le texte n'y est pas
+        (V0.9.4.5)."""
+        wanted = (context or {}).get("quote")
+        if wanted is None:
             return False
-        sources = self._assembled_preview_sources()
-        try:
-            if sources is not None:
-                span = sources.paragraphs[int(descriptor.get("paragraph"))]
-                if span is None or not self._show_file_position(span.path, span.start):
-                    return False
-                pstart, pend = span.start, span.end
-            else:
-                pstart, pend = unit_spans(self.editor.toPlainText(),
-                                          self._preview_unit_names())[int(descriptor.get("paragraph"))]
-        except (IndexError, TypeError, ValueError):
+        found = None
+        paragraph = context.get("paragraph")
+        span = self._source_unit_span(paragraph) if paragraph is not None else None
+        text, compact = self._source_compact()
+        if span is not None:
+            scope = compact.range_of(*span)
+            relative = context.get("relative")
+            found = resolve_quote(compact, wanted, scope=scope,
+                                  hint=None if relative is None else scope[0] + int(relative))
+        if found is None:
+            hint = None
+            if near_cursor:
+                hint = compact.index_at(self.editor.positions(text).python(self.editor.textCursor().position()))
+            found = resolve_quote(compact, wanted, hint=hint)
+        if found is None:
             return False
-        source = self.editor.toPlainText()
-        chosen = pick_xml_occurrence(source, text, descriptor, pstart, pend)
-        if not chosen:
-            return False
-        self._select_source_span(*chosen)
+        self._select_source_span(*compact.span(*found))
         return True
 
     def _select_source_span(self, start, end):
@@ -1139,38 +1177,6 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self.editor.setTextCursor(cursor)
         self.editor.centerCursor()
         self.editor.setFocus()
-
-    def _select_xml_text_near_ordinal(self, text, ordinal=None):
-        """Projette une sélection de l'aperçu dans la source XML.
-
-        Si le texte traverse un lb break=no, la sélection XML inclut la balise
-        et les blancs de mise en forme intermédiaires : un QTextCursor ne peut
-        pas sélectionner deux fragments disjoints.
-        """
-        pattern = _xml_selection_pattern(text)
-        if not pattern:
-            return False
-        source = self.editor.toPlainText()
-        try:
-            matches = list(re.finditer(pattern, source, flags=re.DOTALL))
-        except re.error:
-            return False
-        if not matches:
-            return False
-        qt = self.editor.positions(source)
-        anchor = qt.python(self.editor.textCursor().position())
-        spans = self.lb_spans()
-        if ordinal is not None and spans:
-            n = max(0, min(len(spans) - 1, int(ordinal)))
-            anchor = spans[n][0]
-        match = min(matches, key=lambda m: abs(m.start() - anchor))
-        cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(qt.qt(match.start()))
-        cursor.setPosition(qt.qt(match.end()), QTextCursor.MoveMode.KeepAnchor)
-        self.editor.setTextCursor(cursor)
-        self.editor.centerCursor()
-        self.editor.setFocus()
-        return True
 
     def _cursor_changed(self):
         c=self.editor.textCursor(); self.cursor_status.setText(_t("status.cursor", line=c.blockNumber()+1, column=c.positionInBlock()+1))
@@ -1232,15 +1238,12 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 ordinal = sources.line_before(self.document.path, source_pos) if sources is not None else None
             else:
                 ordinal = self.ordinal_at_position(source_pos)
-            selected_visible = (
-                _selection_xml_to_visible_text(source_cursor.selectedText())
-                if source_cursor.hasSelection() else ""
-            )
-            descriptor = (
-                self._source_selection_descriptor(selected_visible, source_pos)
-                if selected_visible else None
-            )
-            structure = self._source_selection_structure(source_cursor) if selected_visible else None
+            # Sélection décrite par son texte et son contexte (V0.9.4.5) :
+            # l'élément modifiable et le repère de ligne ne font que départager.
+            context = self._source_selection_context(source_cursor) if source_cursor.hasSelection() else None
+            if context is not None:
+                context["line"] = ordinal
+            structure = self._source_selection_structure(source_cursor) if context is not None else None
             # Aller-retour (V0.9.3.0) : tant que la sélection faite dans
             # l'aperçu y reste, le retour à la source rend celle de départ.
             self._preview_round_trip = None
@@ -1248,16 +1251,16 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                           qt.python(source_cursor.selectionStart()), qt.python(source_cursor.selectionEnd()))
             self.formatted_view.became_visible()
 
-            def restore_preview_context(n=ordinal, selected=selected_visible, desc=descriptor, shape=structure):
+            def restore_preview_context(n=ordinal, context=context, shape=structure):
                 preview = self.formatted_view.preview
                 # Un élément entier (résultat XPath), un apparat, une note :
                 # leur texte n'est pas celui de l'aperçu, d'où la structure.
-                if ((selected and desc and preview.select_visible_text_in_paragraph(selected, desc))
-                        or (selected and preview.select_visible_text_near_line(selected, n))
-                        or (shape and preview.select_structure(shape))):
+                if (context and preview.select_quote(context)) or (shape and preview.select_structure(shape)):
                     cursor = preview.textCursor()
                     self._preview_round_trip = round_trip + (cursor.selectionStart(), cursor.selectionEnd())
                     return
+                if context:
+                    self.statusBar().showMessage(_t("selection.not_found.preview"), 6000)
                 if n is not None:
                     self.formatted_view.scroll_to_t1_line(n)
 
@@ -1277,33 +1280,27 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
                 call_later(0, self, lambda span=trip[2:4], shown=self.document:
                            self.document is shown and self._select_source_span(*span))
                 return
-            selected_visible = (
-                preview_cursor.selectedText().replace("\u2060", "")
-                if has_selection else ""
-            )
-            descriptor = (
-                self.formatted_view.preview.selection_descriptor(selected_visible, preview_cursor.selectionStart())
-                if has_selection and selected_visible else None
-            )
-            ordinal = None
-            if has_selection:
-                ordinal = self.formatted_view.preview.line_for_position(preview_cursor.selectionStart())
+            # Sélection décrite par son texte et son contexte (V0.9.4.5).
+            context = self.formatted_view.preview.selection_context() if has_selection else None
+            ordinal = context.get("line") if context is not None else None
+            # Le curseur de la source, placé sur le repère de ligne de la
+            # sélection, départage des passages semblables.
+            near_cursor = ordinal is not None
             if ordinal is None:
                 ordinal = self.formatted_view.current_preview_line()
             if ordinal is not None and parts:
                 # Le repère de l'aperçu mène au fichier qui contient la ligne.
                 self.navigate_to_preview_line(ordinal)
-                ordinal = None          # la sélection est cherchée près du curseur
             elif ordinal is not None:
                 self.navigate_to_base_ordinal(ordinal, move_xml_cursor=True)
 
-            def restore_xml_context(selected=selected_visible, n=ordinal, desc=descriptor, shown=self.document):
+            def restore_xml_context(context=context, near_cursor=near_cursor, shown=self.document):
                 if self.document is not shown:
                     return  # un autre document est affiché entre-temps
-                if selected and desc and self._select_xml_text_in_paragraph(selected, desc):
+                if context and self._select_source_quote(context, near_cursor):
                     return
-                if selected and self._select_xml_text_near_ordinal(selected, n):
-                    return
+                if context:
+                    self.statusBar().showMessage(_t("selection.not_found.source"), 6000)
                 self.editor.setFocus()
 
             call_later(0, self, restore_xml_context)

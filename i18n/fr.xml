@@ -48,6 +48,8 @@
   <string key="status.saved">Enregistré : {path}</string>
   <string key="status.search.xml.found">Recherche XML : occurrence {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Recherche XML : aucune occurrence — {query}</string>
+  <string key="selection.not_found.source">Sélection non retrouvée dans la source : ce texte n’y figure pas tel quel (il vient peut-être de la feuille XSLT).</string>
+  <string key="selection.not_found.preview">Sélection non retrouvée dans l’aperçu : la feuille XSLT n’affiche pas ce texte tel quel.</string>
   <string key="status.ctrl_e.config">Configuration Ctrl+E : {path}</string>
   <string key="manuscript.home.tip">Revenir à la correspondance du passage XML</string>
   <string key="manuscript.lead.tip">Mener l’édition : enfoncé, les flèches et le choix du folio de ce manuscrit déplacent aussi le curseur dans l’édition ; relâché, ils ne font que feuilleter le manuscrit.</string>

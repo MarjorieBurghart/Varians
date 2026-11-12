@@ -33,8 +33,9 @@ assert m2, pat2
 
 source_text = application_source()
 block = source_text.split('def _left_tab_changed(self, index):', 1)[1].split('def validate_text(', 1)[0]
-assert '_selection_xml_to_visible_text' in block
-assert 'select_visible_text_near_line' in block
-assert '_select_xml_text_near_ordinal' in block
+assert '_source_selection_context' in block
+assert 'selection_context()' in block
+assert 'select_quote' in block
+assert '_select_source_quote' in block
 assert 'selectionStart()' in block
 print('OK : sélection XML<->XSLT, break=no, lb normal et branchement sur changement d’onglet')

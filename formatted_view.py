@@ -30,9 +30,10 @@ from app_context import _settings, call_later, tr as _t
 from code_editor import CodeEditor, find_in_plain_editor
 from completion_ui import CompletionDialog
 from custom_completion import load_custom_completion
+from selection_quote import plain_compact, quote as quote_selection, resolve as resolve_quote
 from selection_sync import choose_occurrence, occurrence_index_for_position
 from tei_facsimile import position_inside_xml_markup
-from text_search import SearchError
+from text_search import SearchError, Utf16Positions
 from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
 from fragment_units import (
     chosen_units, edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers, stylesheet_needs_saxon,
@@ -434,6 +435,7 @@ class ClickablePreview(QTextBrowser):
         chacun) et crayons ``tei-edit://p/N`` (début du texte de chaque élément modifiable, après
         le crayon et son espace). À appeler après chaque ``setHtml`` : les méthodes de position
         de l'aperçu s'y fient."""
+        self._compact_cache = None
         marks = []
         paragraphs = []
         block = self.document().begin()
@@ -527,6 +529,74 @@ class ClickablePreview(QTextBrowser):
         bounds = self.paragraph_bounds(pidx)
         rel = max(0, int(selection_start) - int(bounds[0])) if bounds else None
         return {"paragraph": pidx, "occurrence": occ, "relative": rel}
+
+    def _compact(self):
+        """Texte de l'aperçu sans blancs (``selection_quote.plain_compact``)
+        et positions Qt ↔ Python, gardés jusqu'au rendu suivant (V0.9.4.5)."""
+        count = self.document().characterCount()
+        cached = getattr(self, "_compact_cache", None)
+        if cached is None or cached[0] != count:
+            plain = self.toPlainText()
+            cached = self._compact_cache = (count, plain_compact(plain), Utf16Positions(plain))
+        return cached[1], cached[2]
+
+    def selection_context(self):
+        """La sélection de l'aperçu décrite pour une autre vue (V0.9.4.5) :
+        ``quote`` (citation et contexte, ``selection_quote``), et pour
+        départager ``paragraph`` (élément modifiable), ``relative`` (caractères
+        visibles depuis son début) et ``line`` (repère de ligne du pivot) ;
+        None sans texte sélectionné."""
+        cursor = self.textCursor()
+        if not cursor.hasSelection():
+            return None
+        compact, positions = self._compact()
+        start = cursor.selectionStart()
+        i, j = compact.range_of(positions.python(start), positions.python(cursor.selectionEnd()))
+        wanted = quote_selection(compact, i, j)
+        if wanted is None:
+            return None
+        paragraph = self.paragraph_for_position(start)
+        bounds = self.paragraph_bounds(paragraph) if paragraph is not None else None
+        relative = i - compact.index_at(positions.python(bounds[0])) if bounds else None
+        return {"quote": wanted, "paragraph": paragraph, "relative": relative, "line": self.line_for_position(start)}
+
+    def select_quote(self, context, focus=True):
+        """Sélectionne dans l'aperçu ce que décrit ``context`` (voir
+        ``selection_context``) : dans l'élément modifiable ``paragraph`` s'il
+        y est, sinon dans toute la page, près du repère ``line`` en cas de
+        doute. False si le texte n'y est pas (V0.9.4.5)."""
+        wanted = (context or {}).get("quote")
+        if wanted is None:
+            return False
+        compact, positions = self._compact()
+        found = None
+        paragraph = context.get("paragraph")
+        bounds = self.paragraph_bounds(paragraph) if paragraph is not None else None
+        if bounds:
+            scope = compact.range_of(positions.python(bounds[0]), positions.python(bounds[1]))
+            relative = context.get("relative")
+            found = resolve_quote(compact, wanted, scope=scope,
+                                  hint=None if relative is None else scope[0] + int(relative))
+        if found is None:
+            line = context.get("line")
+            position = self._line_to_position.get(int(line)) if line is not None else None
+            found = resolve_quote(compact, wanted,
+                                  hint=None if position is None else compact.index_at(positions.python(position)))
+        if found is None:
+            return False
+        a, b = (positions.qt(index) for index in compact.span(*found))
+        self.clearSearchMatch()
+        cursor = QTextCursor(self.document())
+        cursor.setPosition(a)
+        cursor.setPosition(b, QTextCursor.MoveMode.KeepAnchor)
+        self.setTextCursor(cursor)
+        self.ensureCursorVisible()
+        if focus:
+            self.setFocus()
+        line = self.line_for_position(a)
+        if line is not None:
+            self.active_line_ordinal = line
+        return True
 
     def select_visible_text_in_paragraph(self, text, descriptor, focus=True):
         """Sélectionne ``text`` dans un paragraphe de l'aperçu, à l'occurrence

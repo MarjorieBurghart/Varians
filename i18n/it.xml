@@ -48,6 +48,8 @@
   <string key="status.saved">Salvato: {path}</string>
   <string key="status.search.xml.found">Ricerca XML: occorrenza {n}/{total} — {query}</string>
   <string key="status.search.xml.none">Ricerca XML: nessuna occorrenza — {query}</string>
+  <string key="selection.not_found.source">Selezione non trovata nella sorgente: questo testo non vi compare così com’è (forse viene dal foglio XSLT).</string>
+  <string key="selection.not_found.preview">Selezione non trovata nell’anteprima: il foglio XSLT non mostra questo testo così com’è.</string>
   <string key="status.ctrl_e.config">Configurazione Ctrl+E: {path}</string>
   <string key="manuscript.home.tip">Torna alla corrispondenza del passo XML</string>
   <string key="manuscript.lead.tip">Guidare l’edizione: se premuto, le frecce e la scelta del foglio di questo manoscritto spostano anche il cursore nell’edizione; se rilasciato, sfogliano soltanto il manoscritto.</string>

@@ -48,6 +48,8 @@
   <string key="status.saved">Saved: {path}</string>
   <string key="status.search.xml.found">XML search: match {n}/{total} — {query}</string>
   <string key="status.search.xml.none">XML search: no match — {query}</string>
+  <string key="selection.not_found.source">Selection not found in the source: this text does not appear there as such (it may come from the XSLT stylesheet).</string>
+  <string key="selection.not_found.preview">Selection not found in the preview: the XSLT stylesheet does not display this text as such.</string>
   <string key="status.ctrl_e.config">Ctrl+E configuration: {path}</string>
   <string key="manuscript.home.tip">Return to the correspondence for the XML passage</string>
   <string key="manuscript.lead.tip">Lead the edition: when pressed, the arrows and the folio list of this manuscript also move the cursor in the edition; when released, they only browse the manuscript.</string>
