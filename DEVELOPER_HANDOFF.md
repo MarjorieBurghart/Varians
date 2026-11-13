@@ -93,6 +93,12 @@ web_viewer/generator.py
 
 Le logiciel vise Windows en priorité, mais le code utilise autant que possible `pathlib`, Qt et Python standard pour rester portable.
 
+**macOS (V0.9.4.6).** La suite des tests passe sous macOS (workflow Tests : Ubuntu, Windows, macOS ; voir `docs/DEVELOPPEMENT.md`). Trois particularités de macOS y sont traitées :
+
+- Qt n'affiche pas le titre d'une boîte de message (`QMessageBox.setWindowTitle` n'y fait rien, et les fonctions toutes faites `question`, `warning`, `information`, `critical` le perdent aussi). `mac_message_boxes.install()`, appelé au démarrage par `editeur_tei.py`, fait sous macOS seulement du titre le message principal (en gras) et passe le texte en dessous (texte informatif), comme une alerte du Mac. Le titre est gardé dans une propriété de la boîte (`mac_message_boxes.title_of`), que lit aussi le script des boîtes des tests (`tests/gui/conftest.py`).
+- Entrée dans la liste d'une `QListWidget` n'y émet pas `itemActivated` : `completion_ui.CompletionDialog.eventFilter` insère l'entrée sélectionnée sur Entrée dans la liste (Ctrl+E et Ctrl+Espace).
+- Qt y apprend la fin d'un `QProcess` par le signal SIGCHLD. Saxon (Java), chargé dans Varians quand Varians valide lui-même des règles Schematron (processus de validation indisponible), remet ce signal à son état par défaut : la fin des QProcess n'est plus annoncée. Varians n'emploie donc pas QProcess : les processus séparés (validation, transformation, aperçu Saxon) sont lancés par `subprocess` et attendus par des fils, qui rendent leurs résultats dans le fil principal par des signaux Qt.
+
 ---
 
 ## 3. Arborescence d'un projet Varians
@@ -705,7 +711,7 @@ Appliqué depuis la V0.9.2.3 (`schematron.py`, SchXslt2 livré dans `resources/s
 
 ### Transformations
 
-Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus `transform_worker`, interface `transform_ui`), TEI Stylesheets depuis la V0.9.2.2 (`tei_stylesheets`) ; squelettes de document TEI depuis la V0.9.4.4 (`tei_templates`, `tei_templates_ui` : même mécanisme de mise à jour, mais seuls les squelettes sont lus dans l'archive de TEI P5, par requêtes partielles « Range »). Depuis la V0.9.2.7 : formats en plusieurs fichiers (`xslt_packages` : pages HTML, DOCX, ODT, EPUB, archive faite par Varians), pré-passage TEI → TEI (`TransformScenario.prepare`), paramètres sans type pour Saxon, `${pivot}`, sous-groupe « TEI Stylesheets », scénario « Édition critique (HTML) » (`rendering/edition-critique.xsl`, règles communes avec le pré-passage DOCX/ODT dans `rendering/apparat-commun.xsl`). Restent hors champ : PDF, images des pages HTML, notes de l'éditeur appelées par des lettres dans Word et LibreOffice (chiffres romains, i, ii…, comme ces logiciels numérotent les notes de fin), textes de l'édition critique dans d'autres langues que le français.
+Scénarios XSLT depuis la V0.9.2.0 (`xslt_scenarios`, `xslt_engines`, processus `transform_worker`, client `transform_runner` — processus attendu par un fil depuis la V0.9.4.6, sans QProcess —, interface `transform_ui`), TEI Stylesheets depuis la V0.9.2.2 (`tei_stylesheets`) ; squelettes de document TEI depuis la V0.9.4.4 (`tei_templates`, `tei_templates_ui` : même mécanisme de mise à jour, mais seuls les squelettes sont lus dans l'archive de TEI P5, par requêtes partielles « Range »). Depuis la V0.9.2.7 : formats en plusieurs fichiers (`xslt_packages` : pages HTML, DOCX, ODT, EPUB, archive faite par Varians), pré-passage TEI → TEI (`TransformScenario.prepare`), paramètres sans type pour Saxon, `${pivot}`, sous-groupe « TEI Stylesheets », scénario « Édition critique (HTML) » (`rendering/edition-critique.xsl`, règles communes avec le pré-passage DOCX/ODT dans `rendering/apparat-commun.xsl`). Restent hors champ : PDF, images des pages HTML, notes de l'éditeur appelées par des lettres dans Word et LibreOffice (chiffres romains, i, ii…, comme ces logiciels numérotent les notes de fin), textes de l'édition critique dans d'autres langues que le français.
 
 ### Recherche et remplacement
 
