@@ -35,3 +35,17 @@ def test_the_development_guide_names_the_tested_systems():
     part = part[:part.index("\n## ")]
     for words in ("Ubuntu", "Windows", "macOS", "3.12", "3.13", "constraints.txt"):
         assert words in part, words
+
+
+def test_a_blocked_test_cannot_hold_the_job_and_failures_are_named():
+    """Un test bloqué ne retient pas le job jusqu'à la limite de GitHub
+    (6 heures) : durée maximale du job ; au-delà de 10 minutes, pytest
+    affiche la pile d'appels du test (faulthandler, sans dépendance de plus).
+    Les tests en échec sont nommés en fin de passe (-rfE), et un à un sous
+    macOS (-v)."""
+    job = WORKFLOW[WORKFLOW.index("  tests:"):]
+    assert "    timeout-minutes: 90\n" in job
+    command = WORKFLOW[WORKFLOW.index("      - name: Tests\n"):]
+    command = command[:command.index("\n\n") if "\n\n" in command else len(command)]
+    for option in ("-rfE", "-o faulthandler_timeout=600", "runner.os == 'macOS' && '-v' || '-q'"):
+        assert option in command, option

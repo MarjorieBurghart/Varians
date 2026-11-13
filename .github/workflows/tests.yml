@@ -9,6 +9,9 @@ jobs:
   tests:
     name: ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
+    # Un test bloqué ne retient pas le job jusqu'à la limite de GitHub
+    # (6 heures) ; macOS est environ trois fois plus lent qu'Ubuntu.
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -64,4 +67,7 @@ jobs:
         run: python -m compileall -q .
 
       - name: Tests
-        run: python -m pytest -q --disable-warnings
+        # -rfE : les tests en échec nommés en fin de passe ; sous macOS, un à
+        # un (-v). Un test qui dépasse 10 minutes : pile d'appels affichée
+        # (faulthandler de pytest, sans dépendance de plus).
+        run: python -m pytest ${{ runner.os == 'macOS' && '-v' || '-q' }} --disable-warnings -rfE -o faulthandler_timeout=600
