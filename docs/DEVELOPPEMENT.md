@@ -70,10 +70,9 @@ dépendances (`constraints.txt`). Un job dure au plus 45 minutes ; les tests en
 dépasse 10 minutes est affichée (`faulthandler_timeout`). Les résultats sont
 visibles dans l'onglet *Actions* du dépôt.
 
-macOS y est aussi depuis la V0.9.4.6, avec Python 3.12. La passe y est
-environ trois fois plus longue (une heure ; durée maximale du job : 90
-minutes, 45 ailleurs), et le dossier temporaire est pris hors de
-`/var/folders`, lien vers `/private/var` que Varians résout
+macOS y est aussi depuis la V0.9.4.6, avec Python 3.12 ; la passe y prend,
+comme ailleurs, une vingtaine de minutes. Le dossier temporaire y est pris
+hors de `/var/folders`, lien vers `/private/var` que Varians résout
 (`TMPDIR=$RUNNER_TEMP`). Les premières passes y avaient montré trois défauts
 propres à macOS, corrigés : le titre des boîtes de message, que Qt n'affiche
 pas sous macOS (`mac_message_boxes` en fait le message principal) ; Entrée

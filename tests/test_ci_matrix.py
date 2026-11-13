@@ -7,8 +7,8 @@ test bloqué ne retient pas le job ; les tests en échec sont nommés.
 
 macOS (V0.9.4.6) : titres des boîtes de message (mac_message_boxes),
 Entrée dans la liste de Ctrl+E, et fin des transformations attendue sans
-QProcess (transform_runner) ; la passe y est environ trois fois plus
-longue, et le dossier temporaire est pris hors de /var/folders."""
+QProcess (transform_runner) ; le dossier temporaire y est pris hors de
+/var/folders. Une passe prend une vingtaine de minutes partout."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -40,8 +40,7 @@ def test_a_blocked_test_cannot_hold_the_job_and_failures_are_named():
     affiche la pile d'appels du test (faulthandler, sans dépendance de plus).
     Les tests en échec sont nommés en fin de passe (-rfE)."""
     job = WORKFLOW[WORKFLOW.index("  tests:"):]
-    # macOS : une passe environ trois fois plus longue.
-    assert "    timeout-minutes: ${{ matrix.os == 'macos-latest' && 90 || 45 }}\n" in job
+    assert "    timeout-minutes: 45\n" in job
     command = WORKFLOW[WORKFLOW.index("      - name: Tests\n"):]
     for option in ("python -m pytest -q", "-rfE", "-o faulthandler_timeout=600"):
         assert option in command, option
@@ -53,4 +52,4 @@ def test_the_development_guide_names_the_tested_systems():
     part = part[:part.index("\n## ")]
     for words in ("Ubuntu", "Windows", "3.12", "3.13", "constraints.txt", "macOS", "TMPDIR"):
         assert words in part, words
-    assert "n'y est pas encore" not in part
+    assert "n'y est pas encore" not in part and "trois fois plus longue" not in part

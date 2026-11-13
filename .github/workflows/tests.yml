@@ -10,9 +10,8 @@ jobs:
     name: ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     # Un test bloqué ne retient pas le job jusqu'à la limite de GitHub
-    # (6 heures) ; une passe prend une vingtaine de minutes, environ une
-    # heure sous macOS.
-    timeout-minutes: ${{ matrix.os == 'macos-latest' && 90 || 45 }}
+    # (6 heures) ; une passe prend une vingtaine de minutes, macOS compris.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
