@@ -5,13 +5,22 @@
 ```bash
 python -m venv .venv
 # Windows : .venv\Scripts\activate    —    Linux/macOS : source .venv/bin/activate
-python -m pip install -r requirements-dev.txt
+python -m pip install -r requirements-dev.txt -c constraints.txt
 python editeur_tei.py                    # ou : python editeur_tei.py chemin/vers/project.xml
 ```
 
 `requirements.txt` contient les dépendances d'exécution (PySide6, lxml, et
 Saxon-HE, paquet `saxonche`, pour les scénarios XSLT 3.0) ;
 `requirements-dev.txt` y ajoute les outils de test (pytest, pytest-qt).
+
+`constraints.txt` fixe les **versions testées** de ces dépendances (V0.9.4.6).
+Les tests de GitHub Actions et la construction des archives l'emploient
+(`-c constraints.txt`) : une nouvelle version de PySide6, de lxml ou de Saxon
+ne change pas une release sans qu'on l'ait voulu. Sans `-c constraints.txt`,
+pip prend les dernières versions. Pour monter une version : l'installer,
+lancer toute la suite des tests et `packaging/build.py` (qui vérifie
+l'installation construite), puis changer `constraints.txt` dans un commit à
+part.
 
 ## Tests
 
@@ -69,7 +78,7 @@ Archives sans Python à installer, construites par PyInstaller
 `packaging/LISEZMOI.md`. Pour construire sur sa machine :
 
 ```bash
-python -m pip install -r requirements.txt -r packaging/requirements.txt
+python -m pip install -r requirements.txt -r packaging/requirements.txt -c constraints.txt
 python packaging/build.py            # archive dans build/binaries/
 ```
 

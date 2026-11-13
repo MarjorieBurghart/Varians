@@ -34,6 +34,10 @@ lxml et Saxon (paquet saxonche).
   Sous Windows : exécutez une fois installer_dependances.bat
   Ailleurs :     pip install -r requirements.txt
 
+  Ces commandes prennent les dernières versions des bibliothèques ; les
+  versions testées sont dans constraints.txt :
+                 pip install -r requirements.txt -c constraints.txt
+
 
 LANCEMENT
 ---------
