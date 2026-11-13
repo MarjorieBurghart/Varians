@@ -31,16 +31,20 @@ def _history_entry(version):
 
 
 def test_the_version_history_tells_what_the_current_version_brings():
-    """0.9.4.4 : modèles de document, validation jamais figée, vues XSLT /
-    CSS de tout document (vues nommées, XSLT 3.0), en tête."""
+    """0.9.4.5 : une sélection retrouvée d'une vue à l'autre par son texte et
+    son contexte, en tête."""
     entry = _history_entry(CURRENT_VERSION)
-    for words in ("Nouveau document XML", "modeles/", "Modèles TEI…", "2 s", "libxml2", "<view>",
-                  "Nouvelle vue…", "XSLT… » et « CSS…", "Saxon", "Édition critique", "repères de ligne",
-                  "projectCss", "var()"):
+    for words in ("Vue XSLT / CSS", "éditeur de fragment", "<persName>", "&amp;", "<lb/>", "crayon",
+                  "commentaire", "aller-retour", "barre d'état", "10 s"):
         assert words in entry, words
 
 
 def test_the_version_history_keeps_the_previous_versions():
+    entry = _history_entry("0.9.4.4")
+    for words in ("Nouveau document XML", "modeles/", "Modèles TEI…", "2 s", "libxml2", "<view>",
+                  "Nouvelle vue…", "XSLT… » et « CSS…", "Saxon", "Édition critique", "repères de ligne",
+                  "projectCss", "var()"):
+        assert words in entry, words
     entry = _history_entry("0.9.4.3")
     for words in ("sans témoin", "<listWit>", "<bibl>", "<sourceDesc>", "Paramètres du projet",
                   "texte seul", "commentaire", "curseur"):

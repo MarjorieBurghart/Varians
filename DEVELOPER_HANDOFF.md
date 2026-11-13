@@ -1,6 +1,6 @@
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.9.4.4**
+**Version de référence : 0.9.4.5**
 
 Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
@@ -1059,6 +1059,27 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.5 — SÉLECTION D'UNE VUE À L'AUTRE
+
+• Une sélection passe de la Vue XSLT / CSS à la source, et inversement, et
+  entre l'aperçu et l'éditeur de fragment, par son texte et ce qui
+  l'entoure (citation et contexte, comme une annotation du web), et non
+  plus par un rang d'occurrence. Elle peut traverser une balise
+  (<persName>, <hi>, <choice>…) ou une entité (&amp;, &#8217;) : avant,
+  rien n'était trouvé. Un mot répété revient à sa place sans <lb/> ni
+  crayon ✎ (avant : l'occurrence la plus proche de l'ancien curseur, un
+  commentaire XML compris), même quand la feuille rend les notes en fin
+  de page ou ajoute des appels de note.
+• Un aller-retour sans changement marche dans les deux sens : aperçu →
+  source → aperçu rend aussi la sélection de départ, même quand la feuille
+  affiche plusieurs fois le même texte de la source (index, résumé,
+  registre).
+• Une sélection introuvable (texte écrit par la feuille, titre non
+  affiché) est signalée dans la barre d'état.
+• Plus rapide : le passage de la source à l'aperçu prenait plus de 10 s
+  sur un fichier de 456 Ko avec une feuille « catalogue », 64 ms
+  désormais ; édition exemple : 22 ms au lieu de 155 ms.
+
 VARIANS V0.9.4.4 — MODÈLES DE DOCUMENT ET VUES XSLT / CSS
 
 • Nouveau document XML : les modèles de la TEI (TEI P5, les mêmes que dans

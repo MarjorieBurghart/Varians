@@ -19,7 +19,7 @@ import shiboken6
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QSettings, QTimer, QTranslator
 
 HERE = Path(__file__).resolve().parent
-APP_VERSION = "0.9.4.4"
+APP_VERSION = "0.9.4.5"
 # Icône de Varians : le logo sur un carré blanc arrondi (packaging/make_icon.py).
 ICON_PATH = HERE / "resources" / "icons" / "varians.png"
 # Identifiant d'application Windows (barre des tâches) en mode source.
