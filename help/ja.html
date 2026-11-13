@@ -638,7 +638,7 @@ xml/sermons/s01.xml, s02.xml, s03.xml …</pre>
 <li><strong>編集</strong>：元に戻す、やり直し、切り取り、コピー、貼り付け、すべて選択、XML をインデント、参照。最初の6つはフォーカスのあるフィールド（XML、断片、テキストフィールド）に、それ以外の場合は XML に作用します。ショートカットは各フィールドのものがそのまま使えます。<strong>XML をインデント</strong> は表示中の文書に作用し、<strong>参照</strong> はプロジェクト全体の参照を検査します（<a href="#references">文書間の参照</a>を参照）。</li>
 <li><strong>検索</strong>：単純検索、前の一致、次の一致、すべての一致を一覧表示、検索と置換…；大文字と小文字を区別、正規表現；XPath 検索（<a href="#search-replace">検索と置換</a>を参照）。</li>
 <li><strong>表示</strong>：画像を再読み込み、表示する伝本を選択…、表示する文書を選択…、伝本の配置、XMLの折りたたみ、写本の状態を診断…、同期データを再読み込み…、言語。</li>
-<li><strong>ヘルプ</strong>：校異をデバッグ…、Enigma、ラテン語辞書、TEI要素ガイド、Variansヘルプ、Variansについて…。</li>
+<li><strong>ヘルプ</strong>：校異をデバッグ…、Enigma、ラテン語辞書、TEI要素ガイド、Variansヘルプ、エラーログ、Variansについて…。</li>
 </ul>
 <p>ツールバーには、<strong>Webビューアを生成</strong>、<strong>変換</strong>、<strong>RNG検証</strong>、<strong>XMLソース</strong> と <strong>XSLT/CSSビュー</strong> のタブ、XML の検索（<strong>ソースを検索：</strong>。<strong>Aa</strong>、<strong>.*</strong>、<strong>すべて一覧</strong> 付き）、<strong>XPath</strong> があります。</p>
 </section>
@@ -646,4 +646,6 @@ xml/sermons/s01.xml, s02.xml, s03.xml …</pre>
 <p>Variansに同梱されたファイルは、形式と内部の仕組みを詳しく説明しています：<code>PROJECT_MANAGEMENT.md</code>（プロジェクトと <code>project.xml</code>）、<code>ALIGNMENT_FORMAT.md</code>（整列ファイル）、<code>IMAGE_SOURCES.md</code>、<code>ALTO_IMPORT.md</code>、<code>FACSIMILE_PAGES.md</code>、<code>SYNCHRONIZATION.md</code>、<code>CUSTOM_ELEMENTS.md</code>（<code>custom-elements.xml</code>）、<code>XSLT_SCENARIOS.md</code>、<code>I18N_FORMAT.md</code>（翻訳）、<code>DEVELOPER_HANDOFF.md</code>（アーキテクチャ）。</p>
 <h3>オンラインリソース</h3>
 <p><strong>ヘルプ</strong> メニューは、Enigma のサイト、ラテン語辞書 Vocabula（<strong>ラテン語辞書</strong>、<kbd>Ctrl+?</kbd>、選択したテキストで検索）、そして <strong>TEI要素ガイド</strong>（TEI Consortium のサイトにある TEI P5 の要素一覧で、各要素の定義と属性が示されます）をブラウザーで開きます。<strong>Variansについて…</strong> には、Variansの情報とバージョンが表示されます。</p>
+<h3>エラーログ</h3>
+<p id="error-log">問題が起きると、Varians はそれをエラーログ（ファイル <code>varians.log</code>）に記録します：予期しないエラー（ステータスバーに表示されます）、メッセージボックスに表示されたエラー、停止した検証・変換・プレビューのプロセスと、そのメッセージです。ログにはファイル名とエラーメッセージが含まれますが、文書の本文は含まれません。サイズは 1 MB までで、ほかに古いファイルが 2 つ残ります。<strong>ヘルプ → エラーログ</strong> でそのフォルダーが開きます：Windows では <code>%LOCALAPPDATA%\Varians\logs</code>、macOS では <code>~/Library/Logs/Varians</code>、Linux では <code>~/.local/state/varians/logs</code>。問題を報告するときは <code>varians.log</code> を添付してください。</p>
 </body></html>
