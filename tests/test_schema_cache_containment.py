@@ -7,7 +7,6 @@ jamais ailleurs. Le chemin du cache venait du chemin de l'adresse, décodé
 Windows, par exemple). Sans réseau : ``urlopen`` est remplacé."""
 from __future__ import annotations
 
-from pathlib import Path
 
 import pytest
 

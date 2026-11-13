@@ -11,7 +11,6 @@ import http.server
 import json
 import shutil
 import threading
-from dataclasses import replace
 from pathlib import Path
 
 import pytest

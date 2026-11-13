@@ -6,7 +6,6 @@ le total, 3790, est celui de T1.json. RLS_185 occupe les lignes 116 à 280,
 comme dans l'édition en un seul fichier."""
 from __future__ import annotations
 
-import pytest
 from PySide6.QtWidgets import QMessageBox
 
 import document_tabs

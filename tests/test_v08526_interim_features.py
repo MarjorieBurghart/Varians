@@ -80,7 +80,6 @@ def test_export_preserves_lb_links_and_bundles_search_module(tmp_path):
 
 
 def test_languages_and_help_maintained():
-    keys=None
     for lang in ('fr','en','de','ja','cs','it','ru'):
         strings=ET.parse(ROOT/'i18n'/f'{lang}.xml').getroot().findall('string')
         mapping={x.get('key'):x.text for x in strings}

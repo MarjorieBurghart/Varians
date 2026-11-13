@@ -3,8 +3,7 @@ from pathlib import Path
 from math import isclose
 import xml.etree.ElementTree as ET
 
-from image_sources import (image_scene_reference_crop, page_image_dimensions,
-                           page_image_request)
+from image_sources import (image_scene_reference_crop, page_image_request)
 from resource_state import secondary_sync_link_count
 from varians_source import application_source, CURRENT_VERSION
 

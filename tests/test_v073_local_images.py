@@ -3,7 +3,7 @@ import tempfile
 
 from project_management import (
     WitnessDraft, LocalImageDraft, ProjectDraft,
-    write_project_xml, prepare_local_images_for_project, create_new_transcription_project,
+    write_project_xml, prepare_local_images_for_project,
 )
 from project_config import load_project
 from image_sources import apply_witness_image_policy, page_image_source, page_image_request, image_only_items

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import functools
 import http.server
-import io
 import os
 import re
 import threading

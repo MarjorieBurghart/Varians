@@ -231,10 +231,8 @@ def minimal_tei_text(
 
     if (language or "fr").lower().startswith("en"):
         publication_text = "Edition in preparation."
-        source_prefix = "Transcription in progress"
     else:
         publication_text = "Édition en préparation."
-        source_prefix = "Transcription en cours"
     ET.SubElement(publication, q("p")).text = publication_text
 
     # Les témoins sont structurés dès la création de l'édition. Cela fournit
@@ -783,7 +781,6 @@ def prepare_alto_files_for_project(project_dir: str | Path, witnesses: list[Witn
                     raise FileNotFoundError(f"Fichier ALTO introuvable : {src}")
                 normalized.append(AltoFileDraft(src, item.label or src.stem))
             # Rebase links as well: the editor can declare relative paths.
-            link_map = {str(Path(x.path).expanduser().resolve()): str(x.path) for x in files}
             normalized_links = [
                 (str(Path(source).expanduser().resolve()), canvas)
                 for source, canvas in getattr(witness, 'iiif_ocr_links', ())

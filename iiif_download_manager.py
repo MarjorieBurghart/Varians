@@ -10,7 +10,7 @@ import threading
 
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QComboBox,
-    QPushButton, QLabel, QTextEdit, QProgressBar, QMessageBox)
+    QPushButton, QLabel, QTextEdit, QProgressBar)
 
 from iiif_local import plan_witness_copy, download_witness_copy
 

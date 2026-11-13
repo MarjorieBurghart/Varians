@@ -102,7 +102,6 @@ def test_edition_views_are_written_without_touching_the_rest(tmp_path):
 def test_a_missing_view_file_says_where_to_fix_it():
     """Les boutons « XSLT… » et « CSS… » ont disparu : le message d'une
     feuille ou d'une CSS introuvable renvoie au menu « Vues »."""
-    import html as htmlmod
     from pathlib import Path
     root = Path(__file__).resolve().parents[1]
     for language in ("fr", "en", "de", "cs", "it", "ru", "ja"):

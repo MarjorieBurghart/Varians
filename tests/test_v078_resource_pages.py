@@ -92,7 +92,6 @@ def test_alto_is_not_line_synchronization():
 
 
 def test_editor_uses_explicit_sync_not_alto_for_expected_line_count():
-    root=Path(__file__).resolve().parents[1]
     source=application_source()
     assert 'self._base_sync_line_count = None' in source
     assert 'self.base_alignment_available = bool(' in source

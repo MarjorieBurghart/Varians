@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
-    QFormLayout, QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+    QFormLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
     QLineEdit, QMessageBox, QPushButton, QScrollArea, QTableWidget, QTableWidgetItem,
     QVBoxLayout, QWidget,
 )
@@ -287,8 +287,6 @@ class IIIFCanvasPicker(QDialog):
 
     def _accept(self):
         selected, links = self.selection()
-        explicit_sync = self.sync_selection()
-        ids = [pid for pid, _ in explicit_sync]
         chosen_ids = [self.table.cellWidget(i, 4).currentData()
                       for i in range(self.table.rowCount())
                       if self.table.item(i, 0).checkState() == Qt.CheckState.Checked]

@@ -7,7 +7,7 @@ from project_config import load_project
 from image_sources import apply_witness_image_policy, page_navigation_items, display_window_indices
 from alto_import import build_alto_cache
 from tei_facsimile import (
-    FacsimilePage, default_surface_id, facsimile_ref_at_position,
+    FacsimilePage, facsimile_ref_at_position,
     project_facsimile_pages, sync_facsimile_text, upsert_pb_at_position, position_inside_xml_markup,
 )
 from varians_source import application_source
@@ -250,7 +250,6 @@ def test_existing_prefixed_facsimile_is_reused_not_duplicated():
 
 
 def test_mark_page_ui_blocks_inside_markup_before_facsimile_sync():
-    root=Path(__file__).resolve().parents[1]
     editor=application_source()
     start=editor.index('def _mark_page_in_tei')
     chunk=editor[start:start+2600]

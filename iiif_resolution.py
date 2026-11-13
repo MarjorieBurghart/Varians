@@ -9,7 +9,7 @@ modified; all overlays are shallow copies with presentation metadata.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from urllib.parse import urlsplit, urlunsplit, unquote
+from urllib.parse import urlsplit, urlunsplit
 import re
 
 from iiif_page_selection import canvas_key

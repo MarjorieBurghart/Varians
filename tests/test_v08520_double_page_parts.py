@@ -12,10 +12,10 @@ from varians_source import application_source, application_ast
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from folio_navigation import folios_for_witness, markable_part_for_line, split_surface_into_folios
-from tei_facsimile import upsert_pb_at_position, position_inside_xml_markup
-from image_sources import page_image_source, page_image_dimensions
+from tei_facsimile import upsert_pb_at_position
+from image_sources import page_image_source
 from text_search import Utf16Positions
-from test_v08519_split_dialog import ui_method, Dialog, Widget, Input, Spin, DialogButtons, Messages, make_context, Hook
+from test_v08519_split_dialog import ui_method, Messages
 
 XML='''<TEI xmlns="http://www.tei-c.org/ns/1.0"><facsimile>
 <surface xml:id="L-p0008" n="008 - f002v-003r"><graphic url="spread.jpg"/></surface>
@@ -155,7 +155,6 @@ def test_no_additional_toolbar_row_and_thumbnail_preview_full_page():
 
 
 def test_preview_iiif_uses_reduced_full_canvas_not_current_line_crop():
-    source=application_source()
     tree=application_ast()
     fun=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='_iiif_split_preview_request')
     namespace={'page_image_source':page_image_source,'generic_image_request':lambda *a,**k:None}

@@ -423,7 +423,7 @@ def apply_witness_image_policy(
         if not source_value or project_root is None:
             return cache
         try:
-            from iiif_manifest import cache_path as iiif_cache_path, read_cache, overlay_manifest
+            from iiif_manifest import cache_path as iiif_cache_path, read_cache
             try:
                 manifest = read_cache(iiif_cache_path(project_root, witness_id or "witness"), source_value)
             except ValueError:

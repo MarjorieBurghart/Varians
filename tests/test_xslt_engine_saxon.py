@@ -318,7 +318,6 @@ def test_the_css_is_copied_and_named_to_the_stylesheet_of_varians(project):
 
 # --- Paquets DOCX, ODT, EPUB et pages HTML (V0.9.2.7) ----------------------------------------
 
-import io
 import struct
 import zipfile
 import zlib

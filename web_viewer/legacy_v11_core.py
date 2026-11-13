@@ -823,7 +823,6 @@ def extract_corrected_pages(path: Path, target: str, page_resolver=None, base_li
             # Déduplique les annotations de variante si un <app> franchit un <lb> :
             # la variante doit être présente sur chaque ligne où elle est rendue.
             present_variant_ids = {r.get("ann_id") for r in line["runs"] if r["type"] == "variant"}
-            known_ids = {a["id"] for a in line["annotations"]}
             # Les apps qui commencent avant un lb peuvent ne pas avoir été ajoutés à cette nouvelle ligne.
             # On les récupère depuis les tooltips/runs lors du rendu ; on laisse annotations vide si besoin.
             line["present_variant_ids"] = [x for x in present_variant_ids if x]

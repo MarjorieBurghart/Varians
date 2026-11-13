@@ -59,7 +59,6 @@ def test_pb_n_ambiguous_or_unknown_or_mismatched_facs_never_guessed():
 
 def _editor_method(name):
     """Extract a real MainWindow method for Qt-free behavioral tests."""
-    src = application_source()
     module = application_ast()
     cls = next(x for x in module.body if isinstance(x, ast.ClassDef) and x.name == 'MainWindow')
     fn = next(x for x in cls.body if isinstance(x, ast.FunctionDef) and x.name == name)

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from typing import Iterable
 
 _QNAME_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.:-]*")
 # Reste d'une balise d'élément après « < » : jusqu'au premier « > » situé hors

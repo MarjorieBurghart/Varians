@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
-from typing import Iterable
 
 from xml_tag_pairs import scan_xml_tags, tag_pairs
 
