@@ -61,6 +61,7 @@
   <string key="manuscript.no_iiif">Für dieses Fenster ist keine Bildquelle verfügbar.</string>
   <string key="manuscript.loading">Bilder werden geladen…</string>
   <string key="manuscript.image_failed">Bild konnte nicht geladen werden{detail}</string>
+  <string key="manuscript.image_too_large">Bild größer als {size} MB, nicht heruntergeladen</string>
   <string key="preview.formatting">Formatierung:</string>
   <string key="preview.view.project">Projektansicht</string>
   <string key="preview.view.files.tip">XSLT-Stylesheet: {xslt}\nCSS: {css}</string>

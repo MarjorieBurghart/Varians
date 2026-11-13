@@ -5,13 +5,22 @@
 ```bash
 python -m venv .venv
 # Windows : .venv\Scripts\activate    —    Linux/macOS : source .venv/bin/activate
-python -m pip install -r requirements-dev.txt
+python -m pip install -r requirements-dev.txt -c constraints.txt
 python editeur_tei.py                    # ou : python editeur_tei.py chemin/vers/project.xml
 ```
 
 `requirements.txt` contient les dépendances d'exécution (PySide6, lxml, et
 Saxon-HE, paquet `saxonche`, pour les scénarios XSLT 3.0) ;
 `requirements-dev.txt` y ajoute les outils de test (pytest, pytest-qt).
+
+`constraints.txt` fixe les **versions testées** de ces dépendances (V0.9.4.6).
+Les tests de GitHub Actions et la construction des archives l'emploient
+(`-c constraints.txt`) : une nouvelle version de PySide6, de lxml ou de Saxon
+ne change pas une release sans qu'on l'ait voulu. Sans `-c constraints.txt`,
+pip prend les dernières versions. Pour monter une version : l'installer,
+lancer toute la suite des tests et `packaging/build.py` (qui vérifie
+l'installation construite), puis changer `constraints.txt` dans un commit à
+part.
 
 ## Tests
 
@@ -53,9 +62,20 @@ d'écran.
 
 ## Tests automatiques sur GitHub
 
-`.github/workflows/tests.yml` lance la suite complète sous Ubuntu et
-Windows à chaque envoi et pull request. Les résultats sont visibles dans
-l'onglet *Actions* du dépôt.
+`.github/workflows/tests.yml` lance la suite complète sous Ubuntu et Windows
+avec Python 3.12, la version des archives, et sous Ubuntu avec Python 3.13
+(V0.9.4.6), à chaque envoi et pull request, avec les versions testées des
+dépendances (`constraints.txt`). Un job dure au plus 45 minutes ; les tests en
+échec sont nommés en fin de passe (`-rfE`), et la pile d'appels d'un test qui
+dépasse 10 minutes est affichée (`faulthandler_timeout`). Les résultats sont
+visibles dans l'onglet *Actions* du dépôt.
+
+macOS n'y est pas encore. Une première passe (V0.9.4.6) y a montré 26 tests
+en échec sur les 728 premiers (boîtes de question, clavier de la liste de
+Ctrl+E, transformations) et un test bloqué : F8 sur une feuille XSLT, dont le
+processus de vérification ne rend jamais la main. C'est à traiter à part ;
+sous macOS, le dossier temporaire doit être pris hors de `/var/folders`, lien
+vers `/private/var` que Varians résout (`TMPDIR=$RUNNER_TEMP`).
 
 `.github/workflows/binaries.yml` (« Binaries ») construit et vérifie la
 version prête à l'emploi sur Windows, macOS (Apple Silicon et Intel) et
@@ -69,7 +89,7 @@ Archives sans Python à installer, construites par PyInstaller
 `packaging/LISEZMOI.md`. Pour construire sur sa machine :
 
 ```bash
-python -m pip install -r requirements.txt -r packaging/requirements.txt
+python -m pip install -r requirements.txt -r packaging/requirements.txt -c constraints.txt
 python packaging/build.py            # archive dans build/binaries/
 ```
 
