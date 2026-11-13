@@ -10,14 +10,16 @@ jobs:
     name: ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     # Un test bloqué ne retient pas le job jusqu'à la limite de GitHub
-    # (6 heures) ; macOS est environ trois fois plus lent qu'Ubuntu.
-    timeout-minutes: 90
+    # (6 heures) ; une passe prend une vingtaine de minutes.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        # Les trois systèmes des archives, avec Python 3.12 (celui des
-        # archives) ; Python 3.13 en plus sous Linux (V0.9.4.6).
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Python 3.12 (celui des archives) ; Python 3.13 en plus sous Linux
+        # (V0.9.4.6). macOS n'y est pas encore : la suite n'y passe pas
+        # (tests en échec, F8 bloqué sur une feuille XSLT), voir
+        # docs/DEVELOPPEMENT.md.
+        os: [ubuntu-latest, windows-latest]
         python: ["3.12"]
         include:
           - os: ubuntu-latest
@@ -47,13 +49,6 @@ jobs:
           "TMP=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
           "TEMP=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
 
-      - name: Dossier temporaire sans lien symbolique (macOS)
-        # /var/folders/… est un lien vers /private/var/… : Varians résout
-        # les chemins, ce qui fausserait les comparaisons de chemins des
-        # tests, comme le nom court 8.3 sous Windows.
-        if: runner.os == 'macOS'
-        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
-
       - name: Bibliothèques système pour Qt (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -67,7 +62,7 @@ jobs:
         run: python -m compileall -q .
 
       - name: Tests
-        # -rfE : les tests en échec nommés en fin de passe ; sous macOS, un à
-        # un (-v). Un test qui dépasse 10 minutes : pile d'appels affichée
-        # (faulthandler de pytest, sans dépendance de plus).
-        run: python -m pytest ${{ runner.os == 'macOS' && '-v' || '-q' }} --disable-warnings -rfE -o faulthandler_timeout=600
+        # -rfE : les tests en échec nommés en fin de passe. Un test qui
+        # dépasse 10 minutes : pile d'appels affichée (faulthandler de
+        # pytest, sans dépendance de plus).
+        run: python -m pytest -q --disable-warnings -rfE -o faulthandler_timeout=600

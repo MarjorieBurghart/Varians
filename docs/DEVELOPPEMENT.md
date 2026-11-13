@@ -62,11 +62,20 @@ d'écran.
 
 ## Tests automatiques sur GitHub
 
-`.github/workflows/tests.yml` lance la suite complète sous Ubuntu, Windows
-et macOS avec Python 3.12, la version des archives, et sous Ubuntu avec
-Python 3.13 (V0.9.4.6), à chaque envoi et pull request, avec les versions
-testées des dépendances (`constraints.txt`). Les résultats sont visibles dans
-l'onglet *Actions* du dépôt.
+`.github/workflows/tests.yml` lance la suite complète sous Ubuntu et Windows
+avec Python 3.12, la version des archives, et sous Ubuntu avec Python 3.13
+(V0.9.4.6), à chaque envoi et pull request, avec les versions testées des
+dépendances (`constraints.txt`). Un job dure au plus 45 minutes ; les tests en
+échec sont nommés en fin de passe (`-rfE`), et la pile d'appels d'un test qui
+dépasse 10 minutes est affichée (`faulthandler_timeout`). Les résultats sont
+visibles dans l'onglet *Actions* du dépôt.
+
+macOS n'y est pas encore. Une première passe (V0.9.4.6) y a montré 26 tests
+en échec sur les 728 premiers (boîtes de question, clavier de la liste de
+Ctrl+E, transformations) et un test bloqué : F8 sur une feuille XSLT, dont le
+processus de vérification ne rend jamais la main. C'est à traiter à part ;
+sous macOS, le dossier temporaire doit être pris hors de `/var/folders`, lien
+vers `/private/var` que Varians résout (`TMPDIR=$RUNNER_TEMP`).
 
 `.github/workflows/binaries.yml` (« Binaries ») construit et vérifie la
 version prête à l'emploi sur Windows, macOS (Apple Silicon et Intel) et
