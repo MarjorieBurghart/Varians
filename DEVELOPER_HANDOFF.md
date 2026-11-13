@@ -1,6 +1,6 @@
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.9.4.5**
+**Version de référence : 0.9.4.6**
 
 Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
@@ -1069,6 +1069,32 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.6 — MACOS, JOURNAL DES ERREURS, TÉLÉCHARGEMENTS VÉRIFIÉS
+
+• macOS : la suite des tests y passe désormais, et GitHub Actions la lance
+  à chaque envoi, avec Ubuntu et Windows. Trois défauts propres au Mac
+  sont corrigés. Les boîtes de message n'y montraient pas leur titre
+  (« Document non valide », « Fichier modifié hors de Varians »…) : il
+  devient leur message principal, en gras. Entrée dans la liste de Ctrl+E
+  et de Ctrl+Espace n'insérait rien. F8 sur une feuille XSLT et
+  « Transformer » pouvaient rester bloqués jusqu'à la fermeture de
+  Varians, une fois Saxon chargé dans la fenêtre (validation faite par
+  Varians lui-même, avec des règles Schematron) : les transformations
+  sont désormais attendues comme la validation.
+• Journal des erreurs (Aide → Journal des erreurs) : le fichier
+  varians.log garde les erreurs inattendues (la barre d'état les
+  signale), les erreurs affichées et les processus séparés en échec ;
+  1 Mo au plus, plus deux fichiers plus anciens ; jamais le texte des
+  documents. À joindre à un signalement.
+• Téléchargements vérifiés : une version téléchargée des TEI Stylesheets
+  est comparée à l'empreinte SHA-256 que GitHub publie ; différente, elle
+  est refusée. Les modèles TEI, lus par morceaux dans l'archive de TEI P5,
+  ont le contrôle CRC-32 de chaque modèle lu.
+• Robustesse : « Page ↗ » d'un témoin n'ouvre plus qu'une adresse web
+  (http, https) ; l'image d'un témoin est refusée au-delà de 250 Mo ;
+  versions testées des dépendances (constraints.txt) pour les tests et
+  les archives ; tests aussi sous Python 3.13.
+
 VARIANS V0.9.4.5 — SÉLECTION D'UNE VUE À L'AUTRE
 
 • Une sélection passe de la Vue XSLT / CSS à la source, et inversement, et

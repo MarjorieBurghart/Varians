@@ -31,15 +31,20 @@ def _history_entry(version):
 
 
 def test_the_version_history_tells_what_the_current_version_brings():
-    """0.9.4.5 : une sélection retrouvée d'une vue à l'autre par son texte et
-    son contexte, en tête."""
+    """0.9.4.6 : macOS (titres des boîtes de message, Entrée dans la liste de
+    Ctrl+E, F8 et Transformer qui ne restent plus bloqués), journal des
+    erreurs, téléchargements vérifiés et robustesse, en tête."""
     entry = _history_entry(CURRENT_VERSION)
-    for words in ("Vue XSLT / CSS", "éditeur de fragment", "<persName>", "&amp;", "<lb/>", "crayon",
-                  "commentaire", "aller-retour", "barre d'état", "10 s"):
+    for words in ("macOS", "Ctrl+E", "F8", "Transformer", "Journal des erreurs", "varians.log", "SHA-256",
+                  "CRC-32", "Page ↗", "250 Mo", "constraints.txt", "Python 3.13"):
         assert words in entry, words
 
 
 def test_the_version_history_keeps_the_previous_versions():
+    entry = _history_entry("0.9.4.5")
+    for words in ("Vue XSLT / CSS", "éditeur de fragment", "<persName>", "&amp;", "<lb/>", "crayon",
+                  "commentaire", "aller-retour", "barre d'état", "10 s"):
+        assert words in entry, words
     entry = _history_entry("0.9.4.4")
     for words in ("Nouveau document XML", "modeles/", "Modèles TEI…", "2 s", "libxml2", "<view>",
                   "Nouvelle vue…", "XSLT… » et « CSS…", "Saxon", "Édition critique", "repères de ligne",
