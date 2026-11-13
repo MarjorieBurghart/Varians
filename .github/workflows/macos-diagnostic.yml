@@ -1,7 +1,6 @@
-# Diagnostic macOS (temporaire, V0.9.4.6) : les tests qui échouent ou se
-# bloquent sous macOS, seuls, avec leurs messages d'erreur complets, en
-# quelques minutes au lieu d'une heure pour toute la suite. Il sera retiré
-# quand macOS rejoindra le workflow Tests.
+# Diagnostic macOS (temporaire, V0.9.4.6) : la suite sous macOS, chaque test
+# nommé, pour trouver ce qui y échoue ou s'y bloque. Il sera retiré quand
+# macOS rejoindra le workflow Tests.
 name: Diagnostic macOS
 
 on:
@@ -14,9 +13,9 @@ permissions:
 
 jobs:
   macos:
-    name: macOS / tests en cause
+    name: macOS / suite complète
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     env:
       QT_QPA_PLATFORM: offscreen
       PYTHONUTF8: "1"
@@ -38,34 +37,7 @@ jobs:
       - name: Dépendances
         run: python -m pip install -r requirements-dev.txt -c constraints.txt
 
-      - name: Tests en échec sous macOS
-        continue-on-error: true
-        run: >-
-          python -m pytest -v -rfE --tb=short -p no:cacheprovider -o faulthandler_timeout=120
-          tests/gui/test_gui_ctrl_e_choice.py
-          tests/gui/test_gui_parts.py::test_a_part_that_is_not_saved_cancels_the_web_export
-          tests/gui/test_gui_parts.py::test_the_web_export_of_a_simple_project_does_not_warn
-          tests/gui/test_gui_parts.py::test_the_web_export_of_an_edition_in_parts_saves_its_parts_first
-          tests/gui/test_gui_large_files.py::test_opening_a_large_project_from_varians_asks_first
-          tests/gui/test_gui_large_files.py::test_showing_a_large_document_asks_first
-          tests/gui/test_gui_transform_scenarios.py::test_a_tei_stylesheet_opens_as_a_new_customization_stylesheet
-          tests/gui/test_gui_transform_scenarios.py::test_an_outside_stylesheet_is_copied_into_xslt_and_the_scenario_uses_the_copy
-          tests/gui/test_gui_transform_run.py::test_an_error_of_the_stylesheet_is_shown_with_its_line
-          tests/gui/test_gui_transform_run.py::test_the_predefined_scenario_runs_from_the_list
-          tests/gui/test_gui_assembled_validation.py::test_saving_a_part_checks_the_assembled_edition
-          tests/gui/test_gui_background_validation.py::test_saving_during_validation_waits_then_warns
-          tests/gui/test_gui_declared_encoding.py::test_a_non_utf8_declaration_is_corrected_before_saving
-          tests/gui/test_gui_documents_saving.py::test_web_export_saves_the_edition_even_when_not_displayed
-          tests/gui/test_gui_external_changes.py::test_saving_over_an_external_change_asks_first
-          tests/gui/test_gui_project_without_witness.py::test_the_web_viewer_is_generated_without_text_choice
-          tests/gui/test_gui_schema_sites.py::test_a_schema_on_another_site_is_downloaded_only_once_allowed
-          tests/gui/test_gui_schematron.py::test_saving_asks_first_for_a_schematron_error
-          tests/gui/test_gui_schematron_documents.py::test_saving_rules_with_errors_asks_first
-          tests/gui/test_gui_schematron_outside.py::test_rules_outside_the_project_are_applied_only_once_accepted
-          tests/gui/test_gui_startup_guard.py::test_a_large_last_project_is_reopened_only_on_request
-
-      - name: Test bloqué sous macOS (F8 sur une feuille XSLT)
-        timeout-minutes: 5
-        run: >-
-          python -m pytest -v -rfE --tb=long -s -p no:cacheprovider -o faulthandler_timeout=60
-          tests/gui/test_gui_xslt_check.py::test_f8_checks_the_displayed_stylesheet_and_lists_its_errors
+      - name: Suite complète sous macOS
+        # Chaque test nommé (-v) ; un test qui dépasse 10 minutes : pile
+        # d'appels affichée ; les échecs résumés en fin de passe.
+        run: python -m pytest -v -rfE --tb=short -p no:cacheprovider -o faulthandler_timeout=600
