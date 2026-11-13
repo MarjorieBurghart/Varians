@@ -13,12 +13,14 @@ permissions:
 
 jobs:
   macos:
-    name: macOS / suite complète
+    name: macOS / interface et sonde QProcess
     runs-on: macos-latest
-    timeout-minutes: 90
+    timeout-minutes: 45
     env:
       QT_QPA_PLATFORM: offscreen
       PYTHONUTF8: "1"
+      # Sonde : un QProcess de contrôle après chaque test (voir le module).
+      PYTHONPATH: .github/macos-diagnostic
     steps:
       - uses: actions/checkout@v5
 
@@ -37,7 +39,9 @@ jobs:
       - name: Dépendances
         run: python -m pip install -r requirements-dev.txt -c constraints.txt
 
-      - name: Suite complète sous macOS
-        # Chaque test nommé (-v) ; un test qui dépasse 10 minutes : pile
-        # d'appels affichée ; les échecs résumés en fin de passe.
-        run: python -m pytest -v -rfE --tb=short -p no:cacheprovider -o faulthandler_timeout=600
+      - name: Tests de l'interface sous macOS, avec la sonde
+        # Chaque test nommé (-v) ; après chaque test, la fin d'un QProcess de
+        # contrôle et le gestionnaire de SIGCHLD ; arrêt au premier test après
+        # lequel la fin n'arrive plus. Un test qui dépasse 10 minutes : pile
+        # d'appels affichée.
+        run: python -m pytest tests/gui -v -s -rfE --tb=short -p no:cacheprovider -p varians_macos_probe -o faulthandler_timeout=600
