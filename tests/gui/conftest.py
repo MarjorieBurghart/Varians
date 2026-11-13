@@ -40,6 +40,7 @@ if str(ROOT / "tests") not in sys.path:
 PySide6 = pytest.importorskip("PySide6")
 from PySide6.QtCore import QEvent, QThreadPool  # noqa: E402
 from PySide6.QtWidgets import QApplication, QDialog, QMessageBox  # noqa: E402
+from mac_message_boxes import title_of  # noqa: E402
 
 
 # Schéma minimal : racine TEI, contenu libre, sauf l'élément <forbidden>
@@ -124,14 +125,15 @@ class DialogScript:
 
     # QMessageBox(self) … box.exec() --------------------------------------
     def box_exec(self, box):
-        role = self._next("box", box.windowTitle(), box.text())
+        # Sous macOS, Qt ne retient pas le titre : celui que Varians retient.
+        role = self._next("box", title_of(box), box.text())
         if role is None:
             return 0
         for button in box.buttons():
             if (button.text() == role) if isinstance(role, str) else (box.buttonRole(button) == role):
                 button.click()
                 return 0
-        raise UnexpectedDialog(f"Aucun bouton {role!r} dans « {box.windowTitle()} »")
+        raise UnexpectedDialog(f"Aucun bouton {role!r} dans « {title_of(box)} »")
 
     # QDialog(...) … dlg.exec() ---------------------------------------------
     def dialog_exec(self, dialog):
