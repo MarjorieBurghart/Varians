@@ -6,7 +6,6 @@ secondary synchronisation is authorized only by existing base_keys.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from test_v08526_web_page_anchor_resolution import create_project

@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from xml_tag_pairs import (
     scan_xml_tags, tag_pairs, opening_pair_at_context,
@@ -83,7 +82,6 @@ def test_invalid_or_self_closing_new_opening_is_not_mirrored():
 
 
 def test_static_editor_integration_v080():
-    root = Path(__file__).resolve().parents[1]
     source = application_source()
     assert f'APP_VERSION = "{CURRENT_VERSION}"' in source
     # opening_pair_at_context était importé sans être utilisé (import retiré en

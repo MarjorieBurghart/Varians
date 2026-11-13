@@ -22,7 +22,6 @@ def test_four_panels_have_scroll_extent_instead_of_compressed_heights():
 
 
 def _real_method(name):
-    source = application_source()
     cls = next(n for n in application_ast().body if isinstance(n,ast.ClassDef) and n.name=='MainWindow')
     f = next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name==name)
     ns = {}

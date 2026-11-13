@@ -7,7 +7,6 @@ cibles stables de pb/@facs, avec @edRef pour lever les homonymies entre témoins
 Aucune relation de ligne ALTO/JSON n'est inférée ici.
 """
 from __future__ import annotations
-import bisect
 from dataclasses import dataclass
 import html
 import re

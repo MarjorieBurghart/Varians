@@ -1,10 +1,8 @@
 from pathlib import Path
-import tempfile
 
 from alto_import import parse_layout_file, build_alto_cache, overlay_alto
 from iiif_manifest import write_cache, cache_path
-from iiif_local import (apply_working_copy, download_witness_copy, _request_url,
-                        store_dir)
+from iiif_local import (apply_working_copy, download_witness_copy, store_dir)
 from project_management import WitnessDraft, ProjectDraft, write_project_xml
 from project_config import load_project
 from image_sources import apply_witness_image_policy
@@ -145,7 +143,6 @@ def test_roundtrip_project_flags_by_witness(tmp_path):
 def test_web_export_option_overrides_desktop_choice_independently(tmp_path, monkeypatch):
     """The web generator must NOT inherit the Qt working-copy preference."""
     from dataclasses import replace
-    from iiif_manifest import read_cache
     from web_viewer.generator import build_dataset, package_local_images
     from project_config import load_project
     from pathlib import Path

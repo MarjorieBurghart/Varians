@@ -28,7 +28,6 @@ from PySide6.QtWidgets import (
 from app_context import tr as _t
 from code_editor import XMLHighlighter
 # Document vide d'élément racine choisi (nom historique).
-from document_templates import empty_document_text as new_document_text
 from document_templates import (
     PROJECT_TEMPLATES_FOLDER, document_config, document_text, edition_template, empty_template,
     project_templates, rebased_models, tei_templates, tei_templates_version,

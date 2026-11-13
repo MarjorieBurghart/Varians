@@ -60,6 +60,20 @@ ou la variable `CHROMIUM` vers un Chromium déjà installé). Les scripts
 `tests/manual_*_chromium.py` se lancent à la main et font des captures
 d'écran.
 
+**Vérification du code** (V0.9.4.7) : ruff, dépendance de développement à
+version fixée, relève avec des règles minimales (`ruff.toml`) ce qui est un
+vrai défaut : import ou variable inutilisés, nom non défini, erreur de
+syntaxe, argument par défaut modifiable (B006), fonction créée dans une
+boucle qui voit la variable de la dernière itération (B023). Le style
+(longueur des lignes…) n'est pas vérifié. Avant un envoi :
+
+```bash
+python -m ruff check .          # --fix retire les imports inutilisés
+```
+
+Le workflow Tests le lance avant la suite des tests, et
+`tests/test_code_check.py` aussi, en local, si ruff est installé.
+
 ## Tests automatiques sur GitHub
 
 `.github/workflows/tests.yml` lance la suite complète sous Ubuntu et Windows

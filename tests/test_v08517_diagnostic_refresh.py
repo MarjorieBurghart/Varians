@@ -8,8 +8,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 from witness_resource_refresh import (assemble_resources, diagnostic_rows,
-                                      changed_witnesses, read_alignment_json,
-                                      sync_fingerprint)
+                                      changed_witnesses, read_alignment_json)
 from varians_source import application_source, application_ast, node_source, CURRENT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -187,7 +186,6 @@ def _real_refresh_method(monkeypatch):
     import ast
     import textwrap
     import witness_resource_refresh as refresh_mod
-    source=application_source()
     cls=next(n for n in application_ast().body
              if isinstance(n,ast.ClassDef) and n.name=='MainWindow')
     func=next(n for n in cls.body

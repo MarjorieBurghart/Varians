@@ -265,7 +265,6 @@ def format_tei_xml(xml_text: str, *, rng_model=None, custom_config=None, indent:
         # jamais recevoir de blancs supplémentaires, même avec formatting=block.
         actual_inline = direct_nonwhite_text or has_direct_lb or custom_mode == "inline"
         schema_inline = (rng_allows_text is True and custom_mode != "block")
-        inline_context = inherited_inline or actual_inline or schema_inline
 
         can_format_here = False
         if not inherited_inline and not direct_nonwhite_text and not has_direct_lb and not direct_special_markup \

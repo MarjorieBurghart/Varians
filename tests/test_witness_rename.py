@@ -965,7 +965,6 @@ def test_a_pointer_meant_for_a_person_is_left_alone(tmp_path):
 
 
 def test_two_witnesses_never_get_the_same_identifier(tmp_path):
-    from witness_rename import apply_witness_rename
     project_xml = _project(tmp_path)
     stale = load_project(project_xml)               # la fenêtre ouverte avant l'ajout
     project_xml.write_text(project_xml.read_text(encoding="utf-8").replace(

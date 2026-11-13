@@ -12,7 +12,6 @@ occurrences. Une sélection introuvable est signalée dans la barre d'état.
 Un index en fin de page affiche une seconde fois les noms de personne."""
 from __future__ import annotations
 
-from dataclasses import replace
 
 import pytest
 from PySide6.QtGui import QTextCursor

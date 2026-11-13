@@ -2,7 +2,6 @@
 """Aller de la référence à sa cible (F12, Ctrl+clic, menu) et revenir (Alt+←)."""
 from __future__ import annotations
 
-import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QContextMenuEvent
 from PySide6.QtWidgets import QApplication, QMenu

@@ -5,7 +5,6 @@ texte pour assemble_resources, et numérotation des lignes par segment
 (pivot_lines). Jeu « corpus » (tests/corpus_data.py)."""
 from __future__ import annotations
 
-from pathlib import Path
 
 import pytest
 

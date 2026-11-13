@@ -1,6 +1,5 @@
 """V0.8.5.10: frame selection at sync, page and column boundaries."""
 from pathlib import Path
-import ast
 from image_sources import (
     matched_line_center, valid_matched_indices, visible_line_frame_indices,
     display_window_indices, effective_line_bbox,

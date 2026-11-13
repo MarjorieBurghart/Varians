@@ -1,0 +1,14 @@
+# Vérification du code par ruff (V0.9.4.7) ; voir docs/DEVELOPPEMENT.md et
+# tests/test_code_check.py. Des règles minimales, qui ne visent que de vrais
+# défauts : pyflakes (F : import ou variable inutilisés, nom non défini…),
+# erreurs de syntaxe (E9), argument par défaut modifiable (B006), fonction
+# créée dans une boucle qui voit la variable de la dernière itération (B023).
+# Pas de règles de style.
+
+[lint]
+select = ["F", "E9", "B006", "B023"]
+
+[lint.per-file-ignores]
+# Une fixture importée d'un autre fichier de tests, puis reçue en paramètre,
+# n'est pas une redéfinition.
+"tests/**" = ["F811"]

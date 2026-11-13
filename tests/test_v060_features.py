@@ -1,5 +1,4 @@
 from pathlib import Path
-import hashlib
 from varians_source import application_source
 
 ROOT = Path(__file__).resolve().parents[1]

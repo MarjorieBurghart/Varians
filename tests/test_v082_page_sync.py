@@ -77,7 +77,6 @@ def test_web_viewer_contains_page_mode_click_sync_and_contextual_labels():
 
 
 def test_editor_passes_witness_to_page_marker_and_syncs_per_witness():
-    root = Path(__file__).resolve().parents[1]
     editor = application_source()
     assert 'witness_id=witness_id' in editor
     assert 'surface_ids=panel._surface_indices.keys()' in editor

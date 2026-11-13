@@ -293,7 +293,7 @@ def test_the_message_is_the_text_with_normalized_spaces(tmp_path):
 
 @needs_saxon
 def test_an_error_in_a_part_of_an_assembled_edition_is_reported_in_that_part(tmp_path):
-    part = _write(tmp_path, "s01.xml", f"""<?xml version="1.0"?>
+    _write(tmp_path, "s01.xml", f"""<?xml version="1.0"?>
 <div xmlns="{TEI}">
   <p>Un sermon.</p>
   <lg/>

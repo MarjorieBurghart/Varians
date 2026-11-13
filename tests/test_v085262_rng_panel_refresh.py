@@ -176,7 +176,6 @@ def test_real_relaxng_cache_discards_old_error_log(tmp_path):
 
 def test_outdated_schema_resolution_is_not_published(monkeypatch):
     """A late completion must not repopulate errors from an earlier revision."""
-    import builtins
     method = _method('_validate_relaxng_document_impl')
     ui = DummyMain()
     ui._rng_watch_enabled = True

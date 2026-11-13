@@ -1,5 +1,4 @@
 from pathlib import Path
-import json
 import tempfile
 
 from image_sources import (

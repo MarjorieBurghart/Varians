@@ -33,7 +33,6 @@ from pivot_lines import include_spans, pivot_lb_pattern, pivot_lines, structure_
 from preview_sources import preview_sources
 from project_config import DocumentConfig
 from project_management import update_project_documents, update_project_edition_views
-from lxml import etree
 from xml_assembly import assemble, path_key
 
 

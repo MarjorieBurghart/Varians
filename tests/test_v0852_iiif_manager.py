@@ -1,6 +1,5 @@
 """Regression tests for selective, resumable IIIF downloads without Qt/network."""
 import threading
-from pathlib import Path
 
 from iiif_manifest import cache_path, write_cache, read_cache
 from iiif_local import plan_witness_copy, download_witness_copy, apply_working_copy

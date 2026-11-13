@@ -638,8 +638,6 @@ def test_each_help_explains_how_to_search_the_help():
     """V0.9.2.8 : la recherche dans l'aide, et la version qui l'annonce avec
     les commandes passées dans le menu Éditer."""
     for language in LANGUAGES:
-        root = ET.parse(ROOT / "i18n" / f"{language}.xml").getroot()
-        catalog = {string.get("key"): string.text for string in root.findall("string")}
         page = (ROOT / "help" / f"{language}.html").read_text(encoding="utf-8")
         section = _help_section(page, "search-replace")
         item = section[section.index('<li id="help-search">'):]

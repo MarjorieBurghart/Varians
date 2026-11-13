@@ -324,7 +324,7 @@ def project_facsimile_pages(witnesses, project_root: str | Path, edition_path: s
                                 explicit_links=getattr(witness, 'iiif_page_links', ()))
                             linked = {match.key for match in matches.values() if match.key}
                             selected = [(i, page) for i, page in selected if canvas_key(page) in linked]
-                    except (OSError, ValueError, TypeError) as exc:
+                    except (OSError, ValueError, TypeError):
                         # Fail closed: an unreadable JSON is not justification
                         # to add the entire manifest to the scholar's TEI.
                         selected = []

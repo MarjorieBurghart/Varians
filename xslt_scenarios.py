@@ -612,7 +612,7 @@ def customization_text(raw, comment="", examples="") -> str:
     if examples:
         lines.append("  " + " ".join(str(examples).replace("--", "- -").split()))
     lines += ["    " + _PARAMETER_EXAMPLE, "    " + _TEMPLATE_EXAMPLES[html], "-->"]
-    namespaces = f'\n    xmlns:tei="http://www.tei-c.org/ns/1.0"' + (f' xmlns="{XHTML_NAMESPACE}"' if html else "")
+    namespaces = '\n    xmlns:tei="http://www.tei-c.org/ns/1.0"' + (f' xmlns="{XHTML_NAMESPACE}"' if html else "")
     lines += [f'<xsl:stylesheet version="3.0" xmlns:xsl="{XSL_NAMESPACE}"{namespaces}',
               '    exclude-result-prefixes="#all">',
               f'  <xsl:import href="{tei_stylesheets.OFFICIAL_URI}{"/".join(parts)}"/>',
