@@ -22,7 +22,7 @@ import error_log
 
 HERE = Path(__file__).resolve().parent
 _journal = error_log.logger("interface")
-APP_VERSION = "0.9.4.5"
+APP_VERSION = "0.9.4.6"
 # Icône de Varians : le logo sur un carré blanc arrondi (packaging/make_icon.py).
 ICON_PATH = HERE / "resources" / "icons" / "varians.png"
 # Identifiant d'application Windows (barre des tâches) en mode source.
