@@ -10,6 +10,8 @@ rien ne change. Ici, le comportement de Qt sous macOS est simulé :
 ``setWindowTitle`` ne retient rien."""
 from __future__ import annotations
 
+import sys
+
 import pytest
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox
@@ -103,8 +105,14 @@ def test_the_default_buttons_of_a_question_are_yes_and_no(macos):
 
 
 def test_elsewhere_nothing_changes(qapp):
+    """Sous Linux et Windows, rien n'est mis sur ``QMessageBox`` ; sous macOS,
+    la couche est en place dès le démarrage de Varians."""
+    import editeur_tei  # noqa: F401  (démarrage : install())
+    names = ("setWindowTitle", "exec", "question", "warning", "information", "critical")
+    before = {name: QMessageBox.__dict__.get(name) for name in names}
     assert mac.install("linux") is False and mac.install("win32") is False
-    assert QMessageBox.setWindowTitle is not None and not mac.installed()
+    assert {name: QMessageBox.__dict__.get(name) for name in names} == before
+    assert mac.installed() == (sys.platform == "darwin")
 
 
 def test_the_application_installs_it_at_startup():
