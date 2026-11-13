@@ -70,12 +70,18 @@ dépendances (`constraints.txt`). Un job dure au plus 45 minutes ; les tests en
 dépasse 10 minutes est affichée (`faulthandler_timeout`). Les résultats sont
 visibles dans l'onglet *Actions* du dépôt.
 
-macOS n'y est pas encore. Une première passe (V0.9.4.6) y a montré 26 tests
-en échec sur les 728 premiers (boîtes de question, clavier de la liste de
-Ctrl+E, transformations) et un test bloqué : F8 sur une feuille XSLT, dont le
-processus de vérification ne rend jamais la main. C'est à traiter à part ;
-sous macOS, le dossier temporaire doit être pris hors de `/var/folders`, lien
-vers `/private/var` que Varians résout (`TMPDIR=$RUNNER_TEMP`).
+macOS y est aussi depuis la V0.9.4.6, avec Python 3.12. La passe y est
+environ trois fois plus longue (une heure ; durée maximale du job : 90
+minutes, 45 ailleurs), et le dossier temporaire est pris hors de
+`/var/folders`, lien vers `/private/var` que Varians résout
+(`TMPDIR=$RUNNER_TEMP`). Les premières passes y avaient montré trois défauts
+propres à macOS, corrigés : le titre des boîtes de message, que Qt n'affiche
+pas sous macOS (`mac_message_boxes` en fait le message principal) ; Entrée
+dans la liste de Ctrl+E et Ctrl+Espace, qui n'y validait pas l'entrée ; et
+la fin des transformations (F8 sur une feuille XSLT, « Transformer »), plus
+annoncée une fois Saxon chargé dans Varians, Java remettant à zéro le signal
+SIGCHLD dont dépend QProcess sous macOS (`transform_runner` attend désormais
+son processus dans un fil).
 
 `.github/workflows/binaries.yml` (« Binaries ») construit et vérifie la
 version prête à l'emploi sur Windows, macOS (Apple Silicon et Intel) et
