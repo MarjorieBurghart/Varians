@@ -36,7 +36,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "selection_quote", "mac_message_boxes", "error_log", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_ui", "self_test", "large_files", "document_templates", "tei_templates", "tei_templates_ui", "view_files", "view_dialogs", "saxon_preview"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "selection_quote", "mac_message_boxes", "error_log", "error_log_ui", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_ui", "self_test", "large_files", "document_templates", "tei_templates", "tei_templates_ui", "view_files", "view_dialogs", "saxon_preview"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -95,6 +95,7 @@ from main_menus import MainMenusMixin, TEI_GUIDE_URL
 from help_dialogs import (
     _build_varians_card, _open_external, _open_latin_dictionary, _show_about, _show_software_help,
 )
+from error_log_ui import open_log_folder
 from witness_workspace import WitnessWorkspaceMixin
 from document_io import DocumentIOMixin
 from completion_ui import CompletionMixin
@@ -107,6 +108,7 @@ from document_dialogs import DocumentDialogsMixin
 from references_ui import ReferencesMixin
 from apparatus_ui import ApparatusDebugMixin
 import error_log
+import error_log_ui
 import mac_message_boxes
 
 # Sous macOS, le titre d'une boîte de message devient son message principal :
@@ -1605,6 +1607,9 @@ class WelcomeWindow(QMainWindow):
         self.action_software_help = self._make_action(
             _t("help.software"), "F1", lambda: _show_software_help(self)
         )
+        self.action_error_log = self._make_action(
+            _t("help.error_log"), "", lambda: open_log_folder(self), _t("help.error_log.tip")
+        )
         self.action_about = self._make_action(
             _t("help.about"), "", lambda: _show_about(self)
         )
@@ -1614,6 +1619,7 @@ class WelcomeWindow(QMainWindow):
         self.help_menu.addAction(self.action_tei_guide)
         self.help_menu.addSeparator()
         self.help_menu.addAction(self.action_software_help)
+        self.help_menu.addAction(self.action_error_log)
         self.help_menu.addSeparator()
         self.help_menu.addAction(self.action_about)
         self.addAction(self.action_latin_dictionary)
@@ -1879,6 +1885,9 @@ def main():
     de sortie de l'application, 2 si le projet passé en argument ne s'ouvre
     pas."""
     app = QApplication.instance() or QApplication(sys.argv)
+    # Journal des erreurs (V0.9.4.6) : exceptions non rattrapées, erreurs
+    # montrées, processus séparés en échec.
+    error_log_ui.install_for_application()
     apply_application_icon(app)
     _install_light_selection_palette(app)
     startup_language = str(_settings().value("startupLanguage", "fr") or "fr")

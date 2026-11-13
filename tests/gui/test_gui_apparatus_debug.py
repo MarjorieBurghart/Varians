@@ -50,7 +50,7 @@ def test_the_command_opens_the_help_menu(open_window, example_project):
         window.action_debug_apparatus, separator,
         window.action_enigma, window.action_latin_dictionary, separator,
         window.action_tei_guide, separator,
-        window.action_software_help, window.action_about]
+        window.action_software_help, window.action_error_log, window.action_about]
     assert window.action_debug_apparatus.text() == tr("apparatus.menu")
 
 

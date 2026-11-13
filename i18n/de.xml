@@ -638,6 +638,10 @@ Verwenden Sie Datei &gt; Neues Projekt… oder Datei &gt; Projekt öffnen…</st
   <string key="xpath.none">Kein Element entspricht diesem XPath-Ausdruck.</string>
   <string key="menu.close_project">Projekt schließen</string>
   <string key="help.about">Über…</string>
+  <string key="help.error_log">Fehlerprotokoll</string>
+  <string key="help.error_log.tip">Öffnet den Ordner des Fehlerprotokolls, das einer Problemmeldung beigefügt werden kann.</string>
+  <string key="error_log.unexpected">Unerwarteter Fehler, im Fehlerprotokoll vermerkt (Hilfe → Fehlerprotokoll).</string>
+  <string key="error_log.unavailable">Der Ordner des Fehlerprotokolls konnte nicht angelegt werden:\n{folder}</string>
   <string key="welcome.subtitle">TEI-XML-Editor für Textkritik</string>
   <string key="large_file.title">Sehr große Datei</string>
   <string key="large_file.item">{file}: {size} MB</string>

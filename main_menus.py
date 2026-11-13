@@ -17,6 +17,7 @@ from app_context import (
 from help_dialogs import (
     _open_external, _open_latin_dictionary, _show_about, _show_software_help,
 )
+from error_log_ui import open_log_folder
 from project_config import load_project, update_project_language
 from text_search import SearchOptions
 
@@ -412,6 +413,9 @@ class MainMenusMixin:
         self.action_debug_apparatus = self._make_action(
             _t("apparatus.menu"), "", self.debug_apparatus, _t("apparatus.menu.tip")
         )
+        self.action_error_log = self._make_action(
+            _t("help.error_log"), "", lambda: open_log_folder(self), _t("help.error_log.tip")
+        )
         self.action_about = self._make_action(
             _t("help.about"), "", lambda: _show_about(self)
         )
@@ -426,6 +430,7 @@ class MainMenusMixin:
         menu.addAction(self.action_tei_guide)
         menu.addSeparator()
         menu.addAction(self.action_software_help)
+        menu.addAction(self.action_error_log)
         menu.addAction(self.action_about)
         self.addAction(self.action_latin_dictionary)
         self.addAction(self.action_software_help)
@@ -517,6 +522,8 @@ class MainMenusMixin:
         self.action_latin_dictionary.setText(_t("help.latin_dictionary"))
         self.action_tei_guide.setText(_t("help.tei_guide"))
         self.action_software_help.setText(_t("help.software"))
+        self.action_error_log.setText(_t("help.error_log"))
+        self.action_error_log.setToolTip(_t("help.error_log.tip"))
         self.action_debug_apparatus.setText(_t("apparatus.menu"))
         self.action_debug_apparatus.setToolTip(_t("apparatus.menu.tip"))
         self.action_about.setText(_t("help.about"))
