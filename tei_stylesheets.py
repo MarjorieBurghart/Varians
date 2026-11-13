@@ -23,14 +23,22 @@ installe hors des projets, dans le dossier de données de l'utilisateur
   suivant (``remove_old_versions``), jamais pendant une transformation.
 - **Réseau** : ``latest_version`` lit la dernière version publiée ;
   ``download`` télécharge une archive, par morceaux, avec progression, Annuler
-  et un plafond de taille. Aucune autre fonction n'emploie le réseau.
+  et un plafond de taille ; ``published_digest`` lit l'empreinte SHA-256 que
+  GitHub publie pour cette archive. Aucune autre fonction n'emploie le réseau.
+- **Empreinte** (V0.9.4.6) : avant l'installation, ``check_digest`` compare
+  l'archive téléchargée à l'empreinte publiée par GitHub ; différente,
+  l'archive est refusée (``digest_mismatch``). Si GitHub n'en donne pas ou ne
+  répond pas (réseau qui bloque son API, limite de requêtes), l'archive est
+  installée et le journal des erreurs le note : refuser bloquerait les mises
+  à jour dans ces réseaux, et l'archive vient déjà de GitHub, en HTTPS.
 
 Les erreurs sont des ``LibraryError`` dont le ``code`` (``network``,
-``invalid_reply``, ``invalid_archive``, ``cancelled``, ``write_failed``)
-permet à l'interface d'écrire un message traduit.
+``invalid_reply``, ``invalid_archive``, ``digest_mismatch``, ``cancelled``,
+``write_failed``) permet à l'interface d'écrire un message traduit.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -45,10 +53,13 @@ from http.client import HTTPException
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from urllib.request import Request, urlopen
 
+import error_log
 from project_config import APPLICATION_ROOT
 
 RELEASE_URL = "https://github.com/TEIC/Stylesheets/releases/download/v{version}/tei-xsl-{version}.zip"
 LATEST_URL = "https://raw.githubusercontent.com/TEIC/Stylesheets/released/VERSION"
+# Release de GitHub (API) : l'empreinte SHA-256 de chacun de ses fichiers.
+DIGEST_URL = "https://api.github.com/repos/TEIC/Stylesheets/releases/tags/v{version}"
 # Adresse officielle des feuilles, que leur catalogue (catalog.xml) renvoie
 # vers les fichiers installés.
 OFFICIAL_URI = "http://www.tei-c.org/release/xml/tei/stylesheet/"
@@ -66,6 +77,10 @@ MAX_EXTRACTED_BYTES = 100 * 1024 * 1024
 MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024
 CHUNK = 256 * 1024
 HEADERS = {"User-Agent": "Varians (TEI Stylesheets)"}
+MAX_RELEASE_BYTES = 1024 * 1024
+
+_SHA256 = re.compile(r"sha256:([0-9a-fA-F]{64})")
+_journal = error_log.logger("tei_stylesheets")
 
 _VERSION = re.compile(r"\d{1,4}(?:\.\d{1,6}){1,3}")
 
@@ -414,3 +429,67 @@ def download(version: str, folder, progress=None, cancel=None, *, url: str = REL
             part.unlink(missing_ok=True)
         except OSError:
             pass
+
+
+# --- Empreinte SHA-256 (V0.9.4.6) ---------------------------------------------------------------
+
+def published_digest(version: str, url: str = DIGEST_URL, timeout: float = 15) -> str | None:
+    """Empreinte SHA-256 que GitHub publie pour ``tei-xsl-<version>.zip``
+    (64 chiffres hexadécimaux, en minuscules), ou None si la release n'en
+    donne pas. ``LibraryError`` (``network``, ``invalid_reply``) si GitHub ne
+    répond pas ou répond mal."""
+    if parse_version(version) is None:
+        raise LibraryError("invalid_reply", str(version)[:40])
+    headers = dict(HEADERS, Accept="application/vnd.github+json")
+    try:
+        with urlopen(Request(url.format(version=version), headers=headers), timeout=timeout) as reply:
+            data = reply.read(MAX_RELEASE_BYTES + 1)
+    except (OSError, ValueError, HTTPException) as error:
+        raise LibraryError("network", str(error)) from error
+    if len(data) > MAX_RELEASE_BYTES:
+        raise LibraryError("invalid_reply", "réponse trop grande")
+    try:
+        release = json.loads(data.decode("utf-8"))
+    except ValueError as error:
+        raise LibraryError("invalid_reply", data[:40].decode("utf-8", "replace")) from error
+    assets = release.get("assets") if isinstance(release, dict) else None
+    name = f"tei-xsl-{version}.zip"
+    for asset in assets if isinstance(assets, list) else ():
+        if isinstance(asset, dict) and asset.get("name") == name:
+            match = _SHA256.fullmatch(str(asset.get("digest") or ""))
+            return match.group(1).lower() if match else None
+    return None
+
+
+def file_sha256(path) -> str:
+    """Empreinte SHA-256 du fichier ``path``, en minuscules."""
+    digest = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for chunk in iter(lambda: stream.read(CHUNK), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def check_digest(path, version: str, *, url: str = DIGEST_URL, timeout: float = 15) -> bool:
+    """Compare l'archive ``path`` de ``version`` à l'empreinte que GitHub
+    publie. True : vérifiée ; False : GitHub n'en donne pas ou ne répond pas
+    (noté dans le journal, l'installation peut continuer) ;
+    ``LibraryError("digest_mismatch")`` : différente, l'archive est refusée."""
+    try:
+        expected = published_digest(version, url=url, timeout=timeout)
+    except LibraryError as error:
+        _journal.warning("TEI Stylesheets %s : empreinte SHA-256 non vérifiée, GitHub injoignable (%s : %s)",
+                         version, error.code, error.detail)
+        return False
+    if expected is None:
+        _journal.warning("TEI Stylesheets %s : empreinte SHA-256 non vérifiée, GitHub n'en publie pas", version)
+        return False
+    try:
+        actual = file_sha256(path)
+    except OSError as error:
+        raise LibraryError("write_failed", str(error)) from error
+    if actual != expected:
+        raise LibraryError("digest_mismatch", f"{actual} ≠ {expected}")
+    _journal.info("TEI Stylesheets %s : empreinte SHA-256 vérifiée (%s)", version, actual)
+    return True
+

@@ -1221,6 +1221,7 @@ Varians создаст в проекте таблицу настройки, ко
   <string key="tei_stylesheets.error.network">Сайт консорциума TEI недоступен: {detail}</string>
   <string key="tei_stylesheets.error.invalid_reply">Неожиданный ответ консорциума TEI: {detail}</string>
   <string key="tei_stylesheets.error.invalid_archive">Неверный архив TEI Stylesheets: {detail}. Установленная версия сохранена.</string>
+  <string key="tei_stylesheets.error.digest_mismatch">Загруженный архив не соответствует контрольной сумме SHA-256, опубликованной на GitHub: он не установлен. Установленная версия сохранена.</string>
   <string key="tei_stylesheets.error.write_failed">Невозможно записать в папку TEI Stylesheets: {detail}</string>
   <string key="tei_templates.button">Шаблоны TEI…</string>
   <string key="tei_templates.title">Шаблоны документов TEI</string>

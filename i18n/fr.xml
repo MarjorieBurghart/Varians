@@ -1209,6 +1209,7 @@ Elle importe la feuille {name} du TEI Consortium. Les paramètres (xsl:param) et
   <string key="tei_stylesheets.error.network">Le site du TEI Consortium est inaccessible : {detail}</string>
   <string key="tei_stylesheets.error.invalid_reply">Réponse inattendue du TEI Consortium : {detail}</string>
   <string key="tei_stylesheets.error.invalid_archive">Archive des TEI Stylesheets incorrecte : {detail}. La version installée est gardée.</string>
+  <string key="tei_stylesheets.error.digest_mismatch">L’archive téléchargée ne correspond pas à l’empreinte SHA-256 publiée par GitHub : elle n’est pas installée. La version installée est gardée.</string>
   <string key="tei_stylesheets.error.write_failed">Écriture impossible dans le dossier des TEI Stylesheets : {detail}</string>
   <string key="tei_templates.button">Modèles TEI…</string>
   <string key="tei_templates.title">Modèles de document TEI</string>

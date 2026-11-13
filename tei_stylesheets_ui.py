@@ -42,7 +42,7 @@ LAST_CHECK_SETTING = "teiStylesheets/lastCheck"
 CHECK_INTERVAL_DAYS = 30
 # Codes d'erreur qui ont un message (``tei_stylesheets.error.<code>``) ;
 # ``cancelled`` n'en est pas une.
-ERROR_CODES = ("network", "invalid_reply", "invalid_archive", "write_failed")
+ERROR_CODES = ("network", "invalid_reply", "invalid_archive", "digest_mismatch", "write_failed")
 
 _RUNNING = set()            # opérations en cours, gardées en vie jusqu'à leur fin
 _PROGRESS = None            # fenêtre de progression de l'installation en cours
@@ -205,6 +205,9 @@ def _install_work(version, cancel):
         try:
             path = tei_stylesheets.download(version, folder, progress=progress, cancel=cancel.is_set)
             progress(-1, 0)                                         # installation
+            # Empreinte SHA-256 publiée par GitHub : différente, l'archive est
+            # refusée ; absente, le journal le note (V0.9.4.6).
+            tei_stylesheets.check_digest(path, version)
             return tei_stylesheets.install_zip(path, expected_version=version, source="downloaded")
         finally:
             shutil.rmtree(folder, ignore_errors=True)

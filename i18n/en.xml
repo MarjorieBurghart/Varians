@@ -1209,6 +1209,7 @@ It imports the stylesheet {name} of the TEI Consortium. The parameters (xsl:para
   <string key="tei_stylesheets.error.network">The TEI Consortium site cannot be reached: {detail}</string>
   <string key="tei_stylesheets.error.invalid_reply">Unexpected reply from the TEI Consortium: {detail}</string>
   <string key="tei_stylesheets.error.invalid_archive">Incorrect TEI Stylesheets archive: {detail}. The installed version is kept.</string>
+  <string key="tei_stylesheets.error.digest_mismatch">The downloaded archive does not match the SHA-256 digest published by GitHub: it is not installed. The installed version is kept.</string>
   <string key="tei_stylesheets.error.write_failed">Cannot write to the TEI Stylesheets folder: {detail}</string>
   <string key="tei_templates.button">TEI templates…</string>
   <string key="tei_templates.title">TEI document templates</string>
