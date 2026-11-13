@@ -70,7 +70,7 @@ Exemple : une liste `valuesMode="replace"` peut remplacer les valeurs proposées
 
 ## 2. Dépendances, lancement et environnement
 
-Dépendances Python : `requirements.txt` (PySide6, lxml, saxonche) ; pour construire la version prête à l'emploi, en plus, `packaging/requirements.txt` (PyInstaller, Pillow, certifi).
+Dépendances Python : `requirements.txt` (PySide6, lxml, saxonche) ; pour construire la version prête à l'emploi, en plus, `packaging/requirements.txt` (PyInstaller, Pillow, certifi). Pour développer : `requirements-dev.txt` (pytest, pytest-qt, ruff) ; versions testées dans `constraints.txt`. Vérification du code : `python -m ruff check .`, règles minimales dans `ruff.toml` (voir `docs/DEVELOPPEMENT.md`), lancée par le workflow Tests (V0.9.4.7).
 
 Sous Windows, les scripts fournis sont :
 

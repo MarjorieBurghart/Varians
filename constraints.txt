@@ -21,6 +21,7 @@ saxonche==13.1.1
 # Tests (requirements-dev.txt).
 pytest==9.2.0
 pytest-qt==4.5.0
+ruff==0.16.9
 
 # Construction des archives (packaging/requirements.txt ; PyInstaller y est
 # déjà fixé).
