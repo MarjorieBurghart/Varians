@@ -12,8 +12,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # Les trois systèmes des archives, avec Python 3.12 (celui des
+        # archives) ; Python 3.13 en plus sous Linux (V0.9.4.6).
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python: ["3.12"]
+        include:
+          - os: ubuntu-latest
+            python: "3.13"
     env:
       # Qt sans écran : l'application graphique est pilotée par les tests.
       QT_QPA_PLATFORM: offscreen
@@ -38,6 +43,13 @@ jobs:
         run: |
           "TMP=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
           "TEMP=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
+
+      - name: Dossier temporaire sans lien symbolique (macOS)
+        # /var/folders/… est un lien vers /private/var/… : Varians résout
+        # les chemins, ce qui fausserait les comparaisons de chemins des
+        # tests, comme le nom court 8.3 sous Windows.
+        if: runner.os == 'macOS'
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
 
       - name: Bibliothèques système pour Qt (Linux)
         if: runner.os == 'Linux'

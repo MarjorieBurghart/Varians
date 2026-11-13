@@ -62,8 +62,10 @@ d'écran.
 
 ## Tests automatiques sur GitHub
 
-`.github/workflows/tests.yml` lance la suite complète sous Ubuntu et
-Windows à chaque envoi et pull request. Les résultats sont visibles dans
+`.github/workflows/tests.yml` lance la suite complète sous Ubuntu, Windows
+et macOS avec Python 3.12, la version des archives, et sous Ubuntu avec
+Python 3.13 (V0.9.4.6), à chaque envoi et pull request, avec les versions
+testées des dépendances (`constraints.txt`). Les résultats sont visibles dans
 l'onglet *Actions* du dépôt.
 
 `.github/workflows/binaries.yml` (« Binaries ») construit et vérifie la
