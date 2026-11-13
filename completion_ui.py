@@ -88,6 +88,7 @@ class CompletionDialog(QDialog):
         self.list_widget.itemActivated.connect(lambda _item: self._accept_current())
         self.list_widget.itemDoubleClicked.connect(lambda _item: self._accept_current())
         self.filter_box.installEventFilter(self)
+        self.list_widget.installEventFilter(self)
         self.filter_box.setText(prefix or "")
         self._refilter(prefix or "")
         self.filter_box.setFocus()
@@ -118,7 +119,13 @@ class CompletionDialog(QDialog):
     def eventFilter(self, watched, event):
         """↓ ou Tab dans le champ passe à la liste. Sans entrée sélectionnée
         (Ctrl+E), la première l'est ; sinon ↓ descend d'une entrée (Ctrl+Espace,
-        où la première est présélectionnée) et Tab la garde."""
+        où la première est présélectionnée) et Tab la garde. Entrée dans la
+        liste insère l'entrée (V0.9.4.6) : sous macOS, Qt n'« active » pas une
+        entrée de liste par Entrée, qu'il réserve à l'édition."""
+        if (watched is self.list_widget and event.type() == QEvent.Type.KeyPress
+                and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)):
+            self._accept_current()
+            return True
         if (watched is self.filter_box and event.type() == QEvent.Type.KeyPress
                 and event.key() in (Qt.Key.Key_Down, Qt.Key.Key_Tab, Qt.Key.Key_Backtab)
                 and self.list_widget.count()):

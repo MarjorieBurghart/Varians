@@ -10,16 +10,14 @@ jobs:
     name: ${{ matrix.os }} / Python ${{ matrix.python }}
     runs-on: ${{ matrix.os }}
     # Un test bloqué ne retient pas le job jusqu'à la limite de GitHub
-    # (6 heures) ; une passe prend une vingtaine de minutes.
+    # (6 heures) ; une passe prend une vingtaine de minutes, macOS compris.
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
         # Python 3.12 (celui des archives) ; Python 3.13 en plus sous Linux
-        # (V0.9.4.6). macOS n'y est pas encore : la suite n'y passe pas
-        # (tests en échec, F8 bloqué sur une feuille XSLT), voir
-        # docs/DEVELOPPEMENT.md.
-        os: [ubuntu-latest, windows-latest]
+        # (V0.9.4.6).
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python: ["3.12"]
         include:
           - os: ubuntu-latest
@@ -48,6 +46,12 @@ jobs:
         run: |
           "TMP=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
           "TEMP=$env:RUNNER_TEMP" >> $env:GITHUB_ENV
+
+      - name: Dossier temporaire sans lien symbolique (macOS)
+        # /var/folders/… est un lien vers /private/var/…, que Varians résout,
+        # ce qui fausse les comparaisons de chemins de certains tests.
+        if: runner.os == 'macOS'
+        run: echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"
 
       - name: Bibliothèques système pour Qt (Linux)
         if: runner.os == 'Linux'

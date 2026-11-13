@@ -22,6 +22,8 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Menu ▾ de tous les onglets (V0.9.2.8) | `document_tabs.py` | `gui/test_gui_document_tabs_menu.py` |
 | Bouton au livre : mener l'édition ou feuilleter (V0.9.2.8.1) | `manuscript_panel.py`, `witness_workspace.py`, `resources/icons/feuilleter.svg` | `gui/test_gui_witness_lead.py` |
 | Choix de l'élément de Ctrl+E (V0.9.2.8.1) | `completion_ui.CompletionDialog` | `gui/test_gui_ctrl_e_choice.py` |
+| macOS : titre des boîtes de message (V0.9.4.6) | `mac_message_boxes.py` (`install`, `present`, `title_of`), `editeur_tei.py` | `gui/test_gui_mac_message_boxes.py` |
+| Processus de transformation attendu par un fil, sans QProcess (V0.9.4.6) | `transform_runner.py` (`TransformRunner`, `_Relay`, `_wait`) | `gui/test_gui_transform_runner.py` |
 | Sigle et identifiant d'un témoin (V0.9.2.8.2) | `witness_ids.py`, `project_config.py`, `project_management.py`, `project_dialogs.py` | `test_witness_siglum.py`, `test_witness_siglum_outputs.py`, `gui/test_gui_witness_siglum.py`, `gui/test_gui_witness_siglum_display.py` |
 | Changer le sigle d'un témoin (V0.9.4.0) | `witness_rename.py` (sans Qt), `witness_rename_ui.py`, `project_dialogs.py` (`WitnessTable.rename_btn`, `ProjectSettingsDialog.RENAME`), `project_actions.project_settings_dialog` | `test_witness_rename.py`, `gui/test_gui_witness_rename.py`, `test_help_witness_rename.py` |
 | Démarrage : dernier projet rouvert, démarrage interrompu, fichiers de plus de 20 Mo | `editeur_tei.startup_window`, `show_startup_window`, `app_context.startup_pending_project` / `mark_startup_pending` / `forget_startup_pending`, `large_files.py` (aussi `_replace_with_project`, `WelcomeWindow._open_project_path`, `show_document`) | `test_large_files.py`, `gui/test_gui_startup_guard.py`, `gui/test_gui_large_files.py` |
@@ -233,7 +235,7 @@ Fonctionnement, format et sécurité : `XSLT_SCENARIOS.md`.
 - `project_config.py` : `TransformScenario`, `ProjectConfig.transformations`, `_parse_transformations` ; `project_management.py` : `transformations_element`, `update_project_transformations`.
 - `xslt_scenarios.py` : `resolve_path`, `scenario_path`, `stylesheet_path`, `predefined_scenarios`, `project_sources`, `scenario_source`, `scenario_problems`, `scenario_request`.
 - `xslt_engines.py` : `run`, `TransformResult`, `_run_lxml` (résolveur réseau), `_run_saxon` (deux passages pour `xsl:result-document`), `_write_outputs`.
-- `transform_worker.py` (`--transform-worker`) et `transform_runner.py` (`TransformRunner`).
+- `transform_worker.py` (`--transform-worker`) et `transform_runner.py` (`TransformRunner` : `subprocess` attendu par un fil, compte rendu rendu dans le fil principal par `_Relay`, jamais pendant `start` ; depuis la V0.9.4.6, sans QProcess, dont la fin n'est plus annoncée sous macOS une fois Saxon chargé dans Varians).
 - `transform_ui.py` : `ScenarioListDialog`, `ScenarioDialog`, `TransformScenariosMixin` (`run_transform_scenario`, `_save_for_transform`, `_transform_finished`).
 
 ## V0.9.2.1 — feuilles XSLT éditées dans Varians
@@ -343,7 +345,7 @@ Fonctionnement : aide, sections « Suivre un manuscrit dans son propre ordre » 
 - `manuscript_panel.ManuscriptPanel` : bouton à bascule `lead_btn` (icône `resources/icons/feuilleter.svg`, `LEAD_ICON` ; enfoncé, style discret `_LEAD_BUTTON_QSS`), après ← → ⤺ ; `leads_edition`, `set_leads_edition`, signal `leadsEditionChanged` ; relâché, `navigate` ne fait que `browse` et le choix du folio n'émet pas `witnessNavigate`.
 - `witness_workspace` : `_load_leading_witnesses`, `_witness_lead_changed` (réglage local `projectView/…/witnessLeadsEdition`, état de chaque témoin) ; `editeur_tei` applique l'état à la création des panneaux, par défaut enfoncé pour le pivot seul. Les tests du parcours des témoins (`test_gui_witness_route.py`, `test_gui_witness_pages_route.py`) enfoncent le bouton de tous les panneaux.
 - `apparatus_xpath.app_without_lem_xpath` ; `apparatus_ui.ApparatusDebugDialog.no_lem_radio`, troisième choix, disponible sans `<listWit>`.
-- `completion_ui.CompletionDialog` (mode `allow_custom`, Ctrl+E) : pas de présélection ; `eventFilter` (Tab, ↓ : première entrée) ; `_accept_current` insère l'entrée sélectionnée, sinon le texte saisi. Ctrl+Espace (présélection de la première entrée) ne change pas.
+- `completion_ui.CompletionDialog` (mode `allow_custom`, Ctrl+E) : pas de présélection ; `eventFilter` (Tab, ↓ : première entrée) ; `_accept_current` insère l'entrée sélectionnée, sinon le texte saisi. Ctrl+Espace (présélection de la première entrée) ne change pas. Entrée dans la liste (V0.9.4.6) : `eventFilter` de la liste appelle `_accept_current` (sous macOS, Entrée n'y émet pas `itemActivated`).
 
 ## V0.9.2.8.2 — sigles des témoins, crayon et F2, projet de test
 

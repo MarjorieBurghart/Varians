@@ -174,3 +174,20 @@ def test_ctrl_space_down_on_the_last_entry_stays_there(ctrl_e):
     dialog = ctrl_e(items=[("persName", "rng")], allow_custom=False)
     QTest.keyClick(dialog.filter_box, Qt.Key.Key_Down)
     assert dialog.focusWidget() is dialog.list_widget and _selected(dialog) == ["persName"]
+
+
+@pytest.mark.parametrize("key", [Qt.Key.Key_Return, Qt.Key.Key_Enter])
+@pytest.mark.parametrize("allow_custom", [True, False])
+def test_return_in_the_list_inserts_the_entry_without_item_activation(ctrl_e, key, allow_custom):
+    """V0.9.4.6 : sous macOS, Qt n'« active » pas une entrée de liste par
+    Entrée (il la réserve à l'édition et active par Cmd+O) ; Entrée dans la
+    liste de Ctrl+E ou de Ctrl+Espace ne faisait rien. La boîte la traite
+    elle-même ; ici, l'activation est coupée comme sous macOS."""
+    dialog = ctrl_e(allow_custom=allow_custom)
+    dialog.list_widget.itemActivated.disconnect()
+    QTest.keyClick(dialog.filter_box, Qt.Key.Key_Down)
+    QTest.keyClick(dialog.list_widget, Qt.Key.Key_Down)
+    chosen = _selected(dialog)
+    assert len(chosen) == 1
+    QTest.keyClick(dialog.list_widget, key)
+    assert dialog.result() == dialog.DialogCode.Accepted and dialog.selected_value == chosen[0]

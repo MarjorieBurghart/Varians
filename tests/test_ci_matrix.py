@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """Systèmes et versions de Python des tests de GitHub Actions (V0.9.4.6).
 
-La suite des tests passe sous Ubuntu et Windows avec Python 3.12 (version
-de référence des archives), et sous Ubuntu avec Python 3.13. macOS n'y est
-pas encore : une première passe y a montré des tests en échec et un test
-bloqué (F8 sur une feuille XSLT), à traiter à part. Un test bloqué ne
-retient pas le job ; les tests en échec sont nommés."""
+La suite des tests passe sous Ubuntu, Windows et macOS avec Python 3.12
+(version de référence des archives), et sous Ubuntu avec Python 3.13. Un
+test bloqué ne retient pas le job ; les tests en échec sont nommés.
+
+macOS (V0.9.4.6) : titres des boîtes de message (mac_message_boxes),
+Entrée dans la liste de Ctrl+E, et fin des transformations attendue sans
+QProcess (transform_runner) ; le dossier temporaire y est pris hors de
+/var/folders. Une passe prend une vingtaine de minutes partout."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,8 +17,16 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = (ROOT / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
 
 
-def test_the_tests_run_on_ubuntu_and_windows():
-    assert "os: [ubuntu-latest, windows-latest]" in WORKFLOW
+def test_the_tests_run_on_ubuntu_windows_and_macos():
+    assert "os: [ubuntu-latest, windows-latest, macos-latest]" in WORKFLOW
+
+
+def test_macos_takes_its_temporary_folder_outside_var_folders():
+    """/var/folders/… est un lien vers /private/var/…, que Varians résout :
+    les comparaisons de chemins des tests seraient faussées."""
+    step = WORKFLOW[WORKFLOW.index("      - name: Dossier temporaire sans lien symbolique (macOS)\n"):]
+    step = step[:step.index("\n\n")]
+    assert "if: runner.os == 'macOS'" in step and 'echo "TMPDIR=$RUNNER_TEMP" >> "$GITHUB_ENV"' in step
 
 
 def test_the_tests_run_with_python_3_12_and_3_13():
@@ -39,5 +50,6 @@ def test_the_development_guide_names_the_tested_systems():
     guide = (ROOT / "docs" / "DEVELOPPEMENT.md").read_text(encoding="utf-8")
     part = guide[guide.index("## Tests automatiques sur GitHub"):]
     part = part[:part.index("\n## ")]
-    for words in ("Ubuntu", "Windows", "3.12", "3.13", "constraints.txt", "macOS"):
+    for words in ("Ubuntu", "Windows", "3.12", "3.13", "constraints.txt", "macOS", "TMPDIR"):
         assert words in part, words
+    assert "n'y est pas encore" not in part and "trois fois plus longue" not in part
