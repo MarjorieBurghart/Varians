@@ -326,3 +326,17 @@ def test_the_error_log_is_explained(language):
     for needle in (catalog["help.error_log"], "<code>varians.log</code>", r"<code>%LOCALAPPDATA%\Varians\logs</code>",
                    "<code>~/Library/Logs/Varians</code>", "<code>~/.local/state/varians/logs</code>", {"fr": "1 Mo", "ru": "1 МБ"}.get(language, "1 MB")):
         assert needle in paragraph, (language, needle)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_check_of_downloads_is_explained(language):
+    """V0.9.4.6 : l'empreinte SHA-256 des TEI Stylesheets téléchargées est
+    comparée à celle que publie GitHub ; sans empreinte, le journal des
+    erreurs le note ; les modèles TEI, lus par morceaux, ont leur CRC-32."""
+    page = _page(language)
+    section = page[page.index('<section id="tei-stylesheets">'):]
+    section = section[:section.index("</section>")]
+    start = section.index('<p id="tei-stylesheets-digest">')
+    paragraph = section[start:section.index("</p>", start)]
+    for needle in ("SHA-256", "GitHub", "CRC-32", 'href="#error-log"'):
+        assert needle in paragraph, (language, needle)

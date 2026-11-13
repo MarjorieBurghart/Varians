@@ -23,6 +23,7 @@ Ce fichier complète `DEVELOPER_HANDOFF.md`. Il sert de repère rapide pendant u
 | Bouton au livre : mener l'édition ou feuilleter (V0.9.2.8.1) | `manuscript_panel.py`, `witness_workspace.py`, `resources/icons/feuilleter.svg` | `gui/test_gui_witness_lead.py` |
 | Choix de l'élément de Ctrl+E (V0.9.2.8.1) | `completion_ui.CompletionDialog` | `gui/test_gui_ctrl_e_choice.py` |
 | macOS : titre des boîtes de message (V0.9.4.6) | `mac_message_boxes.py` (`install`, `present`, `title_of`), `editeur_tei.py` | `gui/test_gui_mac_message_boxes.py` |
+| Empreinte SHA-256 des TEI Stylesheets téléchargées (V0.9.4.6) | `tei_stylesheets.check_digest` (`published_digest`, `file_sha256`), `tei_stylesheets_ui._install_work` | `test_tei_stylesheets.py`, `gui/test_gui_tei_stylesheets.py`, `test_tei_templates.py` (CRC-32 des squelettes) |
 | Journal des erreurs (V0.9.4.6) | `error_log.py` (sans Qt : `log_dir`, `install`, `logger`, `add_listener`), `error_log_ui.py` (`install_for_application`, `open_log_folder`) | `test_error_log.py`, `gui/test_gui_error_log.py`, `gui/test_gui_error_log_sources.py`, `test_help_structure.py` |
 | Processus de transformation attendu par un fil, sans QProcess (V0.9.4.6) | `transform_runner.py` (`TransformRunner`, `_Relay`, `_wait`) | `gui/test_gui_transform_runner.py` |
 | Sigle et identifiant d'un témoin (V0.9.2.8.2) | `witness_ids.py`, `project_config.py`, `project_management.py`, `project_dialogs.py` | `test_witness_siglum.py`, `test_witness_siglum_outputs.py`, `gui/test_gui_witness_siglum.py`, `gui/test_gui_witness_siglum_display.py` |
@@ -255,7 +256,7 @@ Fonctionnement : `XSLT_SCENARIOS.md` (« Feuilles éditées dans Varians »).
 
 Fonctionnement : `XSLT_SCENARIOS.md` (« TEI Stylesheets »).
 
-- `tei_stylesheets.py` (sans Qt) : `library_dir`, `parse_version`, `is_newer`, `Installed` (`catalog`, `licence`), `installed`, `active`, `install_zip` (`_destination`, `_extract`), `remove_old_versions`, `bundled_zip`, `ensure_installed`, `latest_version`, `download`, `LibraryError` ; archive livrée `resources/tei-stylesheets/` (LISEZMOI).
+- `tei_stylesheets.py` (sans Qt) : `library_dir`, `parse_version`, `is_newer`, `Installed` (`catalog`, `licence`), `installed`, `active`, `install_zip` (`_destination`, `_extract`), `remove_old_versions`, `bundled_zip`, `ensure_installed`, `latest_version`, `download`, `published_digest`, `file_sha256`, `check_digest` (V0.9.4.6 : empreinte SHA-256 publiée par GitHub, `digest_mismatch`), `LibraryError` ; archive livrée `resources/tei-stylesheets/` (LISEZMOI).
 - `xslt_scenarios.py` : `TEI_PREFIX` (`${tei}/`), `tei_library`, `TEI_SCENARIOS` et `predefined_scenarios(translate, language)`, problème `tei_missing`, `catalogs` et `library` dans `scenario_request` (`_employs`), `check_request`, `customization_name`, `customization_text` (`_wrap`).
 - `xslt_engines.py` : `_saxon_catalogs` (exécution et vérification), journal `library`.
 - `transform_ui.py` : `TransformScenariosMixin._customize` (« Ouvrir la feuille » d'un scénario TEI), `_use_stylesheet`, `tei_stylesheets_dialog` ; `ScenarioListDialog.tei_stylesheets` (bouton « TEI Stylesheets… ») ; `predefined()` passe la langue de l'interface. `xslt_check_ui._check_stylesheet` emploie `check_request`.

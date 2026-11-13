@@ -254,6 +254,18 @@ servent aux scénarios prédéfinis « TEI : … ».
   témoin, puis renommage. Une archive refusée ne change rien. Les anciennes
   versions, les versions incomplètes et les dossiers `.tmp-…` sont supprimés
   au lancement suivant (`remove_old_versions`).
+- **Empreinte** (V0.9.4.6) : avant l'installation d'une version téléchargée,
+  `check_digest` compare l'empreinte SHA-256 de l'archive (`file_sha256`) à
+  celle que GitHub publie pour `tei-xsl-<version>.zip` (`published_digest`,
+  API `releases/tags/v<version>`, champ `digest`). Différente : l'archive
+  est refusée (`digest_mismatch`), la version installée est gardée.
+  Absente ou GitHub injoignable : l'archive est installée et le journal des
+  erreurs le note ; refuser bloquerait les mises à jour dans les réseaux qui
+  bloquent l'API de GitHub ou épuisent sa limite de requêtes (60 par heure
+  et par adresse), pour un gain faible : l'archive vient déjà de GitHub, en
+  HTTPS. Les squelettes TEI (`tei_templates`) sont lus par morceaux dans
+  l'archive de TEI P5 : seule la somme de contrôle (CRC-32) de chaque
+  squelette lu peut être vérifiée, et l'est (`zipfile`).
 - **Scénarios prédéfinis** (`TEI_SCENARIOS`) : « TEI : HTML », « TEI :
   texte », « TEI : Markdown », « TEI : LaTeX », et depuis la V0.9.2.7
   « TEI : HTML en plusieurs fichiers », « TEI : DOCX (Word) », « TEI : ODT
