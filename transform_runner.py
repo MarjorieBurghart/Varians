@@ -36,9 +36,11 @@ import threading
 import shiboken6
 from PySide6.QtCore import QObject, Qt, Signal, Slot
 
+import error_log
 from transform_worker import failed_worker, new_stderr_log, read_answer, worker_command
 from xslt_engines import TransformResult
 
+_journal = error_log.logger("transformation")
 # Exécutions en cours : clé → TransformRunner (le fil n'a que la clé).
 _waiting = {}
 _keys = itertools.count(1)
@@ -157,6 +159,8 @@ class TransformRunner(QObject):
             self._deliver(read_answer(output, self._stderr_log))
 
     def _deliver(self, result):
+        if result.error_code == "worker_failed":
+            _journal.warning("Processus de transformation en échec : %s", result.error)
         self._done = True
         self._process = self._held["process"] = None
         if self._stderr_log is not None:

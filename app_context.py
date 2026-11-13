@@ -18,7 +18,10 @@ import sys
 import shiboken6
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QSettings, QTimer, QTranslator
 
+import error_log
+
 HERE = Path(__file__).resolve().parent
+_journal = error_log.logger("interface")
 APP_VERSION = "0.9.4.5"
 # Icône de Varians : le logo sur un carré blanc arrondi (packaging/make_icon.py).
 ICON_PATH = HERE / "resources" / "icons" / "varians.png"
@@ -91,11 +94,14 @@ def apply_qt_language(code) -> bool:
 
 def error_message(exc) -> str:
     """Texte d'une exception pour l'interface : traduit lorsqu'elle porte une
-    clé des catalogues (``project_config.ProjectConfigError``), sinon tel quel."""
+    clé des catalogues (``project_config.ProjectConfigError``), sinon tel quel.
+    L'erreur est notée dans le journal (``error_log``), avec sa pile d'appels
+    si elle a été levée (V0.9.4.6)."""
     key = getattr(exc, "key", None)
-    if key:
-        return tr(key, default=str(exc), **getattr(exc, "values", {}))
-    return str(exc)
+    text = tr(key, default=str(exc), **getattr(exc, "values", {})) if key else str(exc)
+    _journal.warning("Erreur montrée : %s", text,
+                     exc_info=exc if getattr(exc, "__traceback__", None) is not None else None)
+    return text
 
 
 # --- Appels différés -----------------------------------------------------------

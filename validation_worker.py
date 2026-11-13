@@ -63,6 +63,7 @@ import shiboken6
 from PySide6.QtCore import QCoreApplication, QEvent, QEventLoop, QObject, QTimer, Qt, Signal
 from PySide6.QtWidgets import QApplication
 
+import error_log
 from relaxng_validation import STDERR_LOG, ValidationResult, validate_document
 from relaxng_worker import result_from_dict
 
@@ -93,6 +94,18 @@ class _Pending:
     request: dict
     owner: object = None
     callback: object = None          # None : attendue par validate()
+
+
+_journal = error_log.logger("validation")
+
+
+def _tail_text(path, size=2000):
+    """`` ; sortie d'erreur : …`` (fin du fichier ``path``), ou rien."""
+    try:
+        text = Path(path).read_text(encoding="utf-8", errors="replace").strip()[-size:]
+    except (OSError, TypeError):
+        return ""
+    return f" ; sortie d'erreur : {text}" if text else ""
 
 
 class _InputBlocker(QObject):
@@ -246,6 +259,7 @@ class RelaxNGWorkerClient(QObject):
         de ce schéma reçoivent un résultat « abandonné », les autres partent
         vers un nouveau processus."""
         key = _schema_key(schema)
+        _journal.warning("Compilation du schéma %s abandonnée au bout de %s s", schema, COMPILE_LIMIT_SEC)
         self._abandoned[key] = _schema_signature(key)
         self._compiling = None
         self._watchdog.stop()
@@ -404,9 +418,12 @@ class RelaxNGWorkerClient(QObject):
 
     def _fall_back(self, reason):
         """Le processus est indisponible : valider désormais dans Varians, y
-        compris les requêtes en attente."""
+        compris les requêtes en attente. Noté dans le journal, avec la fin de
+        sa sortie d'erreur."""
         if not self.fallback_reason:
             self.fallback_reason = reason or "unavailable"
+            _journal.warning("Processus de validation indisponible (%s), validation dans Varians%s",
+                             self.fallback_reason, _tail_text(self.stderr_log))
             self.fellBack.emit(self.fallback_reason)
         self._compiling = None
         self._watchdog.stop()
