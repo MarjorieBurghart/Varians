@@ -38,7 +38,8 @@ def test_the_folder_follows_the_system(tmp_path):
         Path(r"C:\Users\m\AppData\Local") / "Varians" / "logs"
     assert error_log.log_dir("darwin", {}, home) == home / "Library" / "Logs" / "Varians"
     assert error_log.log_dir("linux", {}, home) == home / ".local" / "state" / "varians" / "logs"
-    assert error_log.log_dir("linux", {"XDG_STATE_HOME": "/etat"}, home) == Path("/etat") / "varians" / "logs"
+    state = tmp_path / "etat"
+    assert error_log.log_dir("linux", {"XDG_STATE_HOME": str(state)}, home) == state / "varians" / "logs"
     assert error_log.log_dir("linux", {"XDG_STATE_HOME": "relatif"}, home) == home / ".local" / "state" / "varians" / "logs"
     assert error_log.log_dir("win32", {error_log.ENVIRONMENT: str(tmp_path / "ici")}, home) == tmp_path / "ici"
 

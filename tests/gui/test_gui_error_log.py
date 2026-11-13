@@ -6,6 +6,7 @@ signalement)."""
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import pytest
 from PySide6 import QtCore
@@ -64,7 +65,7 @@ def test_the_help_menu_opens_the_folder_of_the_journal(journal_folder, opened, o
     assert window.action_error_log.text() == tr("help.error_log")
     assert window.action_error_log.toolTip() == tr("help.error_log.tip")
     window.action_error_log.trigger()
-    assert [url.toLocalFile() for url in opened] == [str(journal_folder)]
+    assert [Path(url.toLocalFile()) for url in opened] == [journal_folder]       # « / » sous Windows aussi
     assert journal_folder.is_dir()                                         # créé s'il manquait
 
 
@@ -74,7 +75,7 @@ def test_the_welcome_window_has_the_entry_too(journal_folder, opened, editor_mod
     actions = window.help_menu.actions()
     assert actions.index(window.action_error_log) == actions.index(window.action_software_help) + 1
     window.action_error_log.trigger()
-    assert [url.toLocalFile() for url in opened] == [str(journal_folder)]
+    assert [Path(url.toLocalFile()) for url in opened] == [journal_folder]       # « / » sous Windows aussi
 
 
 def test_a_folder_that_cannot_be_made_is_said(journal_folder, opened, open_window, sermons_project, dialogs,
