@@ -10,7 +10,8 @@ from pathlib import Path
 import pytest
 
 from document_dialogs import (STYLESHEET_VERSIONS, copy_document_into_project, document_target_path,
-                              new_document_text, new_stylesheet_text)
+                              new_stylesheet_text)
+from document_templates import empty_document_text as new_document_text
 
 XSL = "{http://www.w3.org/1999/XSL/Transform}"
 
