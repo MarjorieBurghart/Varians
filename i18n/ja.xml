@@ -61,6 +61,7 @@
   <string key="manuscript.no_iiif">このウィンドウで利用できる画像ソースがありません。</string>
   <string key="manuscript.loading">画像を読み込み中…</string>
   <string key="manuscript.image_failed">画像を読み込めませんでした{detail}</string>
+  <string key="manuscript.image_too_large">{size} MBを超える画像のため、ダウンロードしませんでした</string>
   <string key="preview.formatting">表示形式：</string>
   <string key="preview.view.project">プロジェクトのビュー</string>
   <string key="preview.view.files.tip">XSLTスタイルシート：{xslt}\nCSS：{css}</string>

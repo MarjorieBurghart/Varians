@@ -16,6 +16,40 @@ from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 
 DISK_CACHE = Path.home() / ".cache_tei_manuscript_editor"
 DISK_CACHE.mkdir(parents=True, exist_ok=True)
+# Taille maximale d'une image téléchargée (V0.9.4.6), comme une copie IIIF
+# locale (iiif_local.MAX_IMAGE_BYTES) : un serveur qui répond sans fin ne
+# remplit pas la mémoire.
+MAX_IMAGE_BYTES = 250 * 1024 * 1024
+_CHUNK = 1024 * 1024
+
+
+class ImageTooLarge(ValueError):
+    """Image de plus de ``MAX_IMAGE_BYTES`` octets, annoncée ou reçue."""
+
+    def __init__(self, limit):
+        super().__init__(f"image larger than {limit} bytes")
+        self.limit = limit
+
+
+def read_limited(reply, limit):
+    """Octets de la réponse ``reply``, lus par morceaux ; ``ImageTooLarge``
+    si elle annonce ou dépasse ``limit`` octets."""
+    announced = (getattr(reply, "headers", None) or {}).get("Content-Length")
+    try:
+        too_large = announced is not None and int(announced) > limit
+    except (TypeError, ValueError):
+        too_large = False
+    if too_large:
+        raise ImageTooLarge(limit)
+    chunks, total = [], 0
+    while True:
+        chunk = reply.read(_CHUNK)
+        if not chunk:
+            return b"".join(chunks)
+        total += len(chunk)
+        if total > limit:
+            raise ImageTooLarge(limit)
+        chunks.append(chunk)
 
 
 class FetchSignals(QObject):
@@ -89,7 +123,7 @@ class FetchWorker(QRunnable):
             },
         )
         with urllib.request.urlopen(req, timeout=45) as resp:
-            return resp.read()
+            return read_limited(resp, MAX_IMAGE_BYTES)
 
     def _emit(self, data, error, mode):
         """Transmet le résultat, sauf si son destinataire a disparu entre-temps.
@@ -134,7 +168,10 @@ class FetchWorker(QRunnable):
             # Si le recadrage IIIF Gallica échoue, on tente le fallback highres.
 
         msg = str(last_exc) if last_exc else "échec réseau"
-        if "429" in msg or "Too Many Requests" in msg:
+        if isinstance(last_exc, ImageTooLarge):
+            from app_context import tr
+            msg = tr("manuscript.image_too_large", size=last_exc.limit // (1024 * 1024))
+        elif "429" in msg or "Too Many Requests" in msg:
             msg = "Gallica limite temporairement les requêtes (HTTP 429)."
         elif "10054" in msg or "forcibly closed" in msg.lower() or "reset" in msg.lower():
             msg = "Gallica a réinitialisé la connexion (WinError 10054), même après plusieurs nouvelles tentatives."

@@ -61,6 +61,7 @@
   <string key="manuscript.no_iiif">Aucune source d’image disponible pour cette fenêtre.</string>
   <string key="manuscript.loading">Chargement des images…</string>
   <string key="manuscript.image_failed">Image non chargée{detail}</string>
+  <string key="manuscript.image_too_large">image de plus de {size} Mo, non téléchargée</string>
   <string key="preview.formatting">Mise en forme :</string>
   <string key="preview.view.project">Vue du projet</string>
   <string key="preview.view.files.tip">Feuille XSLT : {xslt}\nCSS : {css}</string>
