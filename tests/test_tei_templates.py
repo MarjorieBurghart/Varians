@@ -339,6 +339,26 @@ def test_a_missing_release_is_a_network_error(server):
     assert error.value.code == "network"
 
 
+
+def test_a_template_altered_in_the_archive_is_refused(server, library):
+    """V0.9.4.6 : seuls quelques fichiers de l'archive de TEI P5 sont lus
+    (requêtes « Range ») ; son empreinte entière ne peut donc pas être
+    vérifiée, mais celle (CRC-32) de chaque squelette lu l'est : un squelette
+    altéré refuse tout l'ensemble, rien n'est installé."""
+    folder, url, _log, _handler = server
+    archive = _publish(folder)
+    with zipfile.ZipFile(archive) as bundle:
+        info = bundle.getinfo(PREFIX + "Bare.xml")
+    data = bytearray(archive.read_bytes())
+    start = info.header_offset + 30 + len(info.filename.encode()) + len(info.extra)
+    position = data.index(b"<TEI", start)
+    data[position + 1:position + 4] = b"XYZ"                          # même taille, autre contenu
+    archive.write_bytes(bytes(data))
+    with pytest.raises(LibraryError) as error:
+        lib.download_and_install("4.13.0", **_urls(url))
+    assert error.value.code == "invalid_archive" and "CRC" in error.value.detail
+    assert lib.current().version == lib.BUNDLED_VERSION
+
 def test_a_downloaded_version_is_installed_and_serves(server, library):
     folder, url, _log, _handler = server
     _publish(folder)

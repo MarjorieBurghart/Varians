@@ -1221,6 +1221,7 @@ Es importiert das Stylesheet {name} des TEI Consortium. Die hier geschriebenen P
   <string key="tei_stylesheets.error.network">Die Website des TEI Consortium ist nicht erreichbar: {detail}</string>
   <string key="tei_stylesheets.error.invalid_reply">Unerwartete Antwort des TEI Consortium: {detail}</string>
   <string key="tei_stylesheets.error.invalid_archive">Fehlerhaftes Archiv der TEI Stylesheets: {detail}. Die installierte Version bleibt erhalten.</string>
+  <string key="tei_stylesheets.error.digest_mismatch">Das heruntergeladene Archiv stimmt nicht mit der von GitHub veröffentlichten SHA-256-Prüfsumme überein: Es wird nicht installiert. Die installierte Version bleibt erhalten.</string>
   <string key="tei_stylesheets.error.write_failed">Schreiben in den Ordner der TEI Stylesheets nicht möglich: {detail}</string>
   <string key="tei_templates.button">TEI-Vorlagen…</string>
   <string key="tei_templates.title">TEI-Dokumentvorlagen</string>

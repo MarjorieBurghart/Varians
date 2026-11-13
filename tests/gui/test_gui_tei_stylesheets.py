@@ -47,11 +47,20 @@ class FakeTeiC:
     """Le TEI-C : sa dernière version, et ses archives. ``hold`` : le
     téléchargement attend Annuler."""
 
-    def __init__(self, monkeypatch, latest=NEW, error=None, hold=False):
-        self.latest, self.error, self.hold = latest, error, hold
-        self.checks, self.downloads = 0, []
+    def __init__(self, monkeypatch, latest=NEW, error=None, hold=False, digest="archive"):
+        self.latest, self.error, self.hold, self.digest = latest, error, hold, digest
+        self.checks, self.downloads, self.digests = 0, [], []
         monkeypatch.setattr(tei_stylesheets, "latest_version", self.latest_version)
         monkeypatch.setattr(tei_stylesheets, "download", self.download)
+        monkeypatch.setattr(tei_stylesheets, "published_digest", self.published_digest)
+
+    def published_digest(self, version, *args, **kwargs):
+        """Empreinte publiée par GitHub : celle de l'archive (« archive »),
+        une autre (« autre »), aucune (None)."""
+        self.digests.append(version)
+        if self.digest == "archive":
+            return tei_stylesheets.file_sha256(self.downloads[-1][1] / f"tei-xsl-{version}.zip")
+        return "0" * 64 if self.digest == "autre" else None
 
     def latest_version(self, *args, **kwargs):
         self.checks += 1
@@ -220,6 +229,37 @@ def test_a_damaged_archive_keeps_the_installed_version(open_window, sermons_proj
     window.action_tei_stylesheets.trigger()
     assert dialogs.seen[-1][2].startswith(tr("tei_stylesheets.error.invalid_archive", detail="\0").split("\0")[0])
     assert tei_stylesheets.active() == library
+
+
+def test_the_digest_published_by_github_is_checked_before_installing(open_window, sermons_project, dialogs, qtbot,
+                                                                   library, monkeypatch):
+    fake = FakeTeiC(monkeypatch)
+    window = open_window(sermons_project)
+    dialogs.expect("dialog", _in_window(qtbot, lambda dialog: dialog.check_btn.click()))
+    dialogs.expect("box", ROLE.AcceptRole)
+    window.action_tei_stylesheets.trigger()
+    assert fake.digests == [NEW] and tei_stylesheets.active().version == NEW
+
+
+def test_an_archive_that_differs_from_its_digest_is_refused(open_window, sermons_project, dialogs, qtbot, library,
+                                                            monkeypatch):
+    FakeTeiC(monkeypatch, digest="autre")
+    window = open_window(sermons_project)
+    dialogs.expect("dialog", _in_window(qtbot, lambda dialog: dialog.check_btn.click()))
+    dialogs.expect("box", ROLE.AcceptRole)
+    dialogs.expect("warning")
+    window.action_tei_stylesheets.trigger()
+    assert dialogs.seen[-1][2] == tr("tei_stylesheets.error.digest_mismatch")
+    assert tei_stylesheets.active() == library                         # la version installée est gardée
+
+
+def test_without_digest_the_archive_is_installed(open_window, sermons_project, dialogs, qtbot, library, monkeypatch):
+    FakeTeiC(monkeypatch, digest=None)
+    window = open_window(sermons_project)
+    dialogs.expect("dialog", _in_window(qtbot, lambda dialog: dialog.check_btn.click()))
+    dialogs.expect("box", ROLE.AcceptRole)
+    window.action_tei_stylesheets.trigger()
+    assert tei_stylesheets.active().version == NEW
 
 
 # --- Au lancement --------------------------------------------------------------------------------

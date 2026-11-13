@@ -1221,6 +1221,7 @@ TEI Consortium のスタイルシート {name} をインポートします。こ
   <string key="tei_stylesheets.error.network">TEI Consortium のサイトに接続できません：{detail}</string>
   <string key="tei_stylesheets.error.invalid_reply">TEI Consortium から予期しない応答がありました：{detail}</string>
   <string key="tei_stylesheets.error.invalid_archive">TEI Stylesheets のアーカイブが正しくありません：{detail}。インストール済みのバージョンを保持します。</string>
+  <string key="tei_stylesheets.error.digest_mismatch">ダウンロードしたアーカイブが GitHub の公開する SHA-256 ダイジェストと一致しないため、インストールしません。インストール済みのバージョンを保持します。</string>
   <string key="tei_stylesheets.error.write_failed">TEI Stylesheets のフォルダに書き込めません：{detail}</string>
   <string key="tei_templates.button">TEIテンプレート…</string>
   <string key="tei_templates.title">TEI文書テンプレート</string>

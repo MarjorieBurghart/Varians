@@ -1221,6 +1221,7 @@ Importa il foglio {name} del TEI Consortium. I parametri (xsl:param) e le regole
   <string key="tei_stylesheets.error.network">Il sito del TEI Consortium non è raggiungibile: {detail}</string>
   <string key="tei_stylesheets.error.invalid_reply">Risposta inattesa del TEI Consortium: {detail}</string>
   <string key="tei_stylesheets.error.invalid_archive">Archivio dei TEI Stylesheets non corretto: {detail}. La versione installata è mantenuta.</string>
+  <string key="tei_stylesheets.error.digest_mismatch">L’archivio scaricato non corrisponde all’impronta SHA-256 pubblicata da GitHub: non viene installato. La versione installata viene mantenuta.</string>
   <string key="tei_stylesheets.error.write_failed">Impossibile scrivere nella cartella dei TEI Stylesheets: {detail}</string>
   <string key="tei_templates.button">Modelli TEI…</string>
   <string key="tei_templates.title">Modelli di documento TEI</string>

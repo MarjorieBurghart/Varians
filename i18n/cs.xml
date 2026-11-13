@@ -1221,6 +1221,7 @@ Importuje šablonu {name} konsorcia TEI. Parametry (xsl:param) a pravidla (xsl:t
   <string key="tei_stylesheets.error.network">Web konsorcia TEI není dostupný: {detail}</string>
   <string key="tei_stylesheets.error.invalid_reply">Neočekávaná odpověď konsorcia TEI: {detail}</string>
   <string key="tei_stylesheets.error.invalid_archive">Nesprávný archiv TEI Stylesheets: {detail}. Nainstalovaná verze zůstává.</string>
+  <string key="tei_stylesheets.error.digest_mismatch">Stažený archiv neodpovídá otisku SHA-256, který zveřejňuje GitHub: není nainstalován. Nainstalovaná verze zůstává.</string>
   <string key="tei_stylesheets.error.write_failed">Do složky TEI Stylesheets nelze zapisovat: {detail}</string>
   <string key="tei_templates.button">Šablony TEI…</string>
   <string key="tei_templates.title">Šablony dokumentů TEI</string>

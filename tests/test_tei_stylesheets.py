@@ -5,6 +5,7 @@ archive livrée avec Varians, dernière version publiée et téléchargement."""
 from __future__ import annotations
 
 import functools
+import hashlib
 import http.server
 import json
 import os
@@ -385,3 +386,90 @@ def test_only_a_real_version_is_downloaded(tmp_path):
     with pytest.raises(LibraryError) as error:
         lib.download("../../x", tmp_path, url="http://127.0.0.1:9/{version}")
     assert error.value.code == "invalid_reply"
+
+
+# --- Empreinte SHA-256 publiée par GitHub (V0.9.4.6) ----------------------------------------------
+#
+# Avant d'installer une archive téléchargée, Varians la compare à l'empreinte
+# SHA-256 que GitHub publie pour chaque fichier d'une release. Différente :
+# l'archive est refusée. Absente (release sans empreinte) ou GitHub
+# injoignable : l'archive est installée, et le journal des erreurs le note.
+
+def _release(folder, version="7.62.0", digest=None, name=None, assets=None):
+    """Réponse de l'API de GitHub pour la release ``v<version>``."""
+    if assets is None:
+        asset = {"name": name or f"tei-xsl-{version}.zip", "size": 1}
+        if digest is not False:
+            asset["digest"] = digest
+        assets = [{"name": "notes.txt", "digest": "sha256:" + "0" * 64}, asset]
+    path = folder / "releases" / f"v{version}"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"tag_name": f"v{version}", "assets": assets}), encoding="utf-8")
+
+
+def _digest_url(url):
+    return url + "releases/v{version}"
+
+
+def test_the_digest_comes_from_the_github_release(server, tmp_path):
+    folder, url = server
+    archive = _published(folder)
+    expected = lib.file_sha256(archive)
+    assert expected == hashlib.sha256(archive.read_bytes()).hexdigest()
+    _release(folder, digest="sha256:" + expected.upper())
+    assert lib.published_digest("7.62.0", url=_digest_url(url)) == expected
+    assert lib.DIGEST_URL.format(version="7.62.0") == \
+        "https://api.github.com/repos/TEIC/Stylesheets/releases/tags/v7.62.0"
+
+
+@pytest.mark.parametrize("digest, name", [(None, None), (False, None), ("md5:abc", None), ("sha256:xyz", None),
+                                          ("sha256:" + "a" * 64, "autre.zip")])
+def test_a_release_without_usable_digest_gives_none(server, digest, name):
+    folder, url = server
+    _release(folder, digest=digest, name=name)
+    assert lib.published_digest("7.62.0", url=_digest_url(url)) is None
+
+
+@pytest.mark.parametrize("reply, code", [(None, "network"), ("<html>limite atteinte</html>", "invalid_reply"),
+                                         ("[]", None)])
+def test_a_wrong_github_reply_is_reported(server, reply, code):
+    folder, url = server
+    if reply is not None:
+        (folder / "releases").mkdir()
+        (folder / "releases" / "v7.62.0").write_text(reply, encoding="utf-8")
+    if code is None:
+        assert lib.published_digest("7.62.0", url=_digest_url(url)) is None
+        return
+    with pytest.raises(LibraryError) as error:
+        lib.published_digest("7.62.0", url=_digest_url(url))
+    assert error.value.code == code
+
+
+def test_a_matching_archive_is_verified_and_written_in_the_journal(server, caplog):
+    folder, url = server
+    archive = _published(folder)
+    _release(folder, digest="sha256:" + lib.file_sha256(archive))
+    caplog.set_level("INFO", logger="varians")
+    assert lib.check_digest(archive, "7.62.0", url=_digest_url(url)) is True
+    assert any("vérifiée" in record.getMessage() for record in caplog.records)
+
+
+def test_a_different_archive_is_refused(server):
+    folder, url = server
+    archive = _published(folder)
+    _release(folder, digest="sha256:" + "0" * 64)
+    with pytest.raises(LibraryError) as error:
+        lib.check_digest(archive, "7.62.0", url=_digest_url(url))
+    assert error.value.code == "digest_mismatch" and lib.file_sha256(archive) in error.value.detail
+
+
+@pytest.mark.parametrize("published", ["sans empreinte", "injoignable"])
+def test_without_digest_the_archive_is_installed_and_the_journal_says_so(server, caplog, published):
+    folder, url = server
+    archive = _published(folder)
+    if published == "sans empreinte":
+        _release(folder, digest=None)
+    caplog.set_level("INFO", logger="varians")
+    assert lib.check_digest(archive, "7.62.0", url=_digest_url(url)) is False
+    [record] = [r for r in caplog.records if r.name == "varians.tei_stylesheets"]
+    assert record.levelname == "WARNING" and "non vérifiée" in record.getMessage()
