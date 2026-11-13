@@ -626,6 +626,10 @@ Use File &gt; New project… or File &gt; Open project…</string>
   <string key="xpath.none">No element matches this XPath expression.</string>
   <string key="menu.close_project">Close project</string>
   <string key="help.about">About…</string>
+  <string key="help.error_log">Error Log</string>
+  <string key="help.error_log.tip">Opens the folder of the error log, to attach when reporting a problem.</string>
+  <string key="error_log.unexpected">Unexpected error, recorded in the error log (Help → Error Log).</string>
+  <string key="error_log.unavailable">The folder of the error log could not be created:\n{folder}</string>
   <string key="welcome.subtitle">TEI XML Editor for textual criticism</string>
   <string key="large_file.title">Very large file</string>
   <string key="large_file.item">{file}: {size} MB</string>

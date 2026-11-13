@@ -14,6 +14,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import NamedTuple
 
+import error_log
+
+_journal = error_log.logger("files")
+
 
 # Déclaration XML en tête du texte, et son pseudo-attribut encoding.
 _ENCODING_DECLARATION = re.compile(r"""\A\ufeff?<\?xml\s[^?>]*?\bencoding\s*=\s*(["'])([^"']*)\1""")
@@ -127,7 +131,8 @@ def atomic_write_text_with_backup(path: str | Path, text: str, *, encoding: str 
             try:
                 temp_path.unlink(missing_ok=True)
             except Exception:
-                pass
+                # Reste un fichier caché à côté du document : noté (V0.9.4.6).
+                _journal.warning("Fichier temporaire non effacé : %s", temp_path, exc_info=True)
 
 
 # --- project.xml ---------------------------------------------------------------------------

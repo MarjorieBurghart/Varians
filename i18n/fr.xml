@@ -626,6 +626,10 @@ Utilisez Fichier &gt; Nouveau projet… ou Fichier &gt; Ouvrir un projet…</str
   <string key="xpath.none">Aucun élément ne correspond à cette expression XPath.</string>
   <string key="menu.close_project">Fermer le projet</string>
   <string key="help.about">À propos…</string>
+  <string key="help.error_log">Journal des erreurs</string>
+  <string key="help.error_log.tip">Ouvre le dossier du journal des erreurs, à joindre pour signaler un problème.</string>
+  <string key="error_log.unexpected">Erreur inattendue, notée dans le journal des erreurs (Aide → Journal des erreurs).</string>
+  <string key="error_log.unavailable">Le dossier du journal des erreurs n’a pas pu être créé :\n{folder}</string>
   <string key="welcome.subtitle">Editeur XML TEI pour l'ecdotique</string>
   <string key="large_file.title">Fichier très volumineux</string>
   <string key="large_file.item">{file} : {size} Mo</string>

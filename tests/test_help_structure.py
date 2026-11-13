@@ -308,3 +308,21 @@ def test_moving_a_selection_between_views_is_explained(language):
     for needle in ('<code>&lt;lb break="no"/&gt;</code>', "<code>&lt;persName&gt;</code>", "<code>&lt;hi&gt;</code>",
                    "<code>&amp;amp;</code>", "<code>&lt;lb/&gt;</code>", "✎", "XPath"):
         assert needle in paragraph, (language, needle)
+
+
+@pytest.mark.parametrize("language", LANGUAGES)
+def test_the_error_log_is_explained(language):
+    """V0.9.4.6 : Aide → Journal des erreurs, entre l'aide du logiciel et
+    « À propos » ; ce que le journal contient (jamais le texte des
+    documents), où il est sous chaque système, sa taille limitée, et comment
+    l'envoyer."""
+    catalog, page = _catalog(language), _page(language)
+    start = page.index('<section id="menus">')
+    menus = page[start:page.index("</section>", start)]
+    positions = [menus.index(catalog[key]) for key in ("help.software", "help.error_log", "help.about")]
+    assert positions == sorted(positions), language
+    start = page.index('<p id="error-log">')
+    paragraph = page[start:page.index("</p>", start)]
+    for needle in (catalog["help.error_log"], "<code>varians.log</code>", r"<code>%LOCALAPPDATA%\Varians\logs</code>",
+                   "<code>~/Library/Logs/Varians</code>", "<code>~/.local/state/varians/logs</code>", {"fr": "1 Mo", "ru": "1 МБ"}.get(language, "1 MB")):
+        assert needle in paragraph, (language, needle)

@@ -638,6 +638,10 @@
   <string key="xpath.none">Элементы, соответствующие этому выражению XPath, не найдены.</string>
   <string key="menu.close_project">Закрыть проект</string>
   <string key="help.about">О программе…</string>
+  <string key="help.error_log">Журнал ошибок</string>
+  <string key="help.error_log.tip">Открывает папку журнала ошибок, который можно приложить к сообщению о проблеме.</string>
+  <string key="error_log.unexpected">Непредвиденная ошибка записана в журнал ошибок (Справка → Журнал ошибок).</string>
+  <string key="error_log.unavailable">Не удалось создать папку журнала ошибок:\n{folder}</string>
   <string key="welcome.subtitle">Редактор TEI XML для текстологии</string>
   <string key="large_file.title">Очень большой файл</string>
   <string key="large_file.item">{file}: {size} МБ</string>

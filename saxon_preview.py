@@ -39,9 +39,12 @@ import threading
 from dataclasses import dataclass
 from pathlib import Path
 
+import error_log
+
 _APPLICATION_DIR = Path(__file__).resolve().parent
 
 PREVIEW_TIMEOUT_SEC = 60
+_journal = error_log.logger("preview")
 # Feuilles compilées gardées par le processus (les plus anciennes partent).
 CACHE_SIZE = 8
 
@@ -263,6 +266,12 @@ class SaxonPreviewClient:
         except (OSError, TypeError):
             return ""
 
+    @staticmethod
+    def _failure(code, detail):
+        """L'erreur du processus d'aperçu, notée dans le journal (V0.9.4.6)."""
+        _journal.warning("Processus d'aperçu en échec (%s) : %s", code, detail)
+        return PreviewError(code, detail)
+
     def _ask(self, request, timeout):
         with self._lock:
             if self._process is None or self._process.poll() is not None:
@@ -276,17 +285,17 @@ class SaxonPreviewClient:
             except OSError as exc:
                 detail = self._stderr_tail() or str(exc)
                 self._stop()
-                raise PreviewError("worker_failed", detail) from exc
+                raise self._failure("worker_failed", detail) from exc
             while True:
                 try:
                     line = self._answers.get(timeout=timeout)
                 except queue.Empty:
                     self._stop()
-                    raise PreviewError("timeout", str(timeout)) from None
+                    raise self._failure("timeout", str(timeout)) from None
                 if line is None:
                     detail = self._stderr_tail() or "no answer"
                     self._stop()
-                    raise PreviewError("worker_failed", detail)
+                    raise self._failure("worker_failed", detail)
                 try:
                     answer = json.loads(line.decode("utf-8"))
                 except ValueError:
