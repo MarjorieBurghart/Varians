@@ -276,15 +276,20 @@ def page_image_request(page: dict, crop: dict | None, project_root: str | Path |
 
 
 def full_page_target(page: dict, project_root: str | Path | None = None):
-    """Retourne (kind, target) pour ouvrir la page complète."""
+    """Retourne (kind, target) pour ouvrir la page complète : ``("file",
+    chemin)``, ``("url", adresse web)`` ou ``("none", None)``."""
     src = page_image_source(page, project_root)
     if src.kind == "file" and src.file_path is not None:
         if not src.file_path.exists() and isinstance((src.raw or {}).get('remote_iiif'), dict):
             old = {'image': (src.raw or {})['remote_iiif']}
             return full_page_target(old, project_root)
         return "file", src.file_path
-    if src.kind == "iiif" and (src.image_url or src.service):
-        return "url", (src.image_url or src.service)
+    if src.kind == "iiif":
+        # Une adresse venue du projet n'est ouverte que si c'est une adresse
+        # web (V0.9.4.6) : pas de file:, smb:, javascript:…
+        for candidate in (src.image_url, src.service):
+            if candidate and str(candidate).strip().lower().startswith(("http://", "https://")):
+                return "url", candidate
     return "none", None
 
 
