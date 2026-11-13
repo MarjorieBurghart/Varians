@@ -125,8 +125,14 @@ réactif, « Annuler » tue le processus (`cancelled`), et un plantage de
 Saxon ou une boucle sans fin n'emporte pas Varians. La commande
 (`transform_worker.worker_command`) est valable depuis les sources comme dans
 une version autonome. Sa sortie d'erreur est un fichier temporaire
-(`new_stderr_log`), passé par `TransformRunner` (QProcess) ou, sans Qt, par
-`transform_worker.run_in_process`, qu'emploient les tests de Saxon. Saxon garde le verrou de
+(`new_stderr_log`), passé par `TransformRunner` ou, sans Qt, par
+`transform_worker.run_in_process`, qu'emploient les tests de Saxon.
+`TransformRunner` attend son processus dans un fil (`subprocess`), comme le
+client du processus de validation, et en rend le compte rendu dans le fil
+principal (V0.9.4.6) : sous macOS, Qt apprend la fin d'un QProcess par le
+signal SIGCHLD, que Saxon (Java), chargé dans Varians quand Varians valide
+lui-même des règles Schematron, remet à son état par défaut ; F8 sur une
+feuille XSLT et « Transformer » restaient alors bloqués. Saxon garde le verrou de
 Python pendant une transformation : dans un même processus, un serveur http
 en Python ne pourrait pas lui répondre (les tests lancent le leur à part).
 

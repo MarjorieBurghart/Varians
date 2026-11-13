@@ -24,7 +24,8 @@ La sortie d'erreur du processus est un fichier, donné dès sa création, dont
 le chemin est dans la requête (``stderr_log``) : Saxon y écrit ses erreurs
 avec leur lieu, et c'est la seule façon sûre de les lire sous Windows.
 ``run_in_process`` fait ainsi sans Qt ; ``transform_runner`` de même, avec
-QProcess.
+un fil qui attend le processus (V0.9.4.6 : sans QProcess, dont la fin n'est
+plus annoncée sous macOS quand Saxon a été chargé dans Varians).
 """
 from __future__ import annotations
 

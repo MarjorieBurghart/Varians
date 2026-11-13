@@ -13,14 +13,12 @@ permissions:
 
 jobs:
   macos:
-    name: macOS / client du processus de transformation
+    name: macOS / suite complète
     runs-on: macos-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       QT_QPA_PLATFORM: offscreen
       PYTHONUTF8: "1"
-      # Sonde : un QProcess de contrôle après chaque test (voir le module).
-      PYTHONPATH: .github/macos-diagnostic
     steps:
       - uses: actions/checkout@v5
 
@@ -39,8 +37,7 @@ jobs:
       - name: Dépendances
         run: python -m pip install -r requirements-dev.txt -c constraints.txt
 
-      - name: Client du processus de transformation sous macOS
-        # La sonde a montré que SIGCHLD remis à son état par défaut (Saxon,
-        # chargé dans Varians) fait perdre la fin des QProcess : le test qui
-        # le reproduit doit échouer ici avant la correction.
-        run: python -m pytest tests/gui/test_gui_transform_runner.py -v -rfE --tb=short -p no:cacheprovider -o faulthandler_timeout=600
+      - name: Suite complète sous macOS
+        # Chaque test nommé (-v) ; un test qui dépasse 10 minutes : pile
+        # d'appels affichée ; les échecs résumés en fin de passe.
+        run: python -m pytest -v -rfE --tb=short -p no:cacheprovider -o faulthandler_timeout=600

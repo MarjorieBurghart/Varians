@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 
 import pytest
+import shiboken6
+from PySide6.QtCore import QObject
 
 from project_config import TransformScenario, load_project
 from transform_runner import TransformRunner
@@ -76,3 +78,34 @@ def test_the_end_of_a_process_still_arrives_after_sigchld_is_reset(qtbot):
         runner.start({})
         runner.cancel()
     assert blocker.args[0].error_code == "cancelled" and not runner.running()
+
+
+def test_the_runner_does_not_use_qprocess():
+    """Voir ci-dessus : le processus est attendu par un fil (subprocess),
+    comme celui de la validation, sans dépendre de SIGCHLD."""
+    import ast
+    import transform_runner
+    tree = ast.parse(Path(transform_runner.__file__).read_text(encoding="utf-8"))
+    imported = {alias.name for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom))
+                for alias in node.names}
+    assert "QProcess" not in imported and "subprocess" in imported
+
+
+def test_a_runner_destroyed_during_a_run_stops_its_process(qtbot, tmp_path):
+    """Fenêtre fermée pendant une transformation : le processus est arrêté
+    (comme le faisait QProcess)."""
+    beat = tmp_path / "battement"
+    script = ("import pathlib, time\n"
+              f"path = pathlib.Path({str(beat)!r})\n"
+              "while True:\n"
+              "    path.write_text(str(time.time()))\n"
+              "    time.sleep(0.05)\n")
+    parent = QObject()
+    runner = TransformRunner([sys.executable, "-c", script], parent)
+    runner.start({})
+    qtbot.waitUntil(beat.exists, timeout=20_000)
+    shiboken6.delete(parent)
+    time.sleep(1)
+    last = beat.read_text()
+    time.sleep(0.5)
+    assert beat.read_text() == last
