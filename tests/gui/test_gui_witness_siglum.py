@@ -20,7 +20,7 @@ def tr(editor_module):
 
 
 def _dialog(qtbot, tr, witness=None):
-    from project_dialogs import WitnessEditDialog
+    from witness_edit_dialog import WitnessEditDialog
     dialog = WitnessEditDialog(tr, witness)
     qtbot.addWidget(dialog)
     return dialog
@@ -75,7 +75,7 @@ def test_an_unchanged_siglum_keeps_the_identifier(qtbot, tr):
 
 
 def _table(qtbot, tr, witnesses, base="T1"):
-    from project_dialogs import WitnessTable
+    from witness_table import WitnessTable
     table = WitnessTable(tr, witnesses, base)
     qtbot.addWidget(table)
     return table

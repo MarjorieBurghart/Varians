@@ -226,7 +226,7 @@ def test_static_editor_and_web_viewer_have_page_mode_hooks():
     root=Path(__file__).resolve().parents[1]
     editor=application_source()
     web=(root/'web_viewer'/'generator.py').read_text(encoding='utf-8')
-    dialogs=(root/'project_dialogs.py').read_text(encoding='utf-8')
+    dialogs=(root/'witness_edit_dialog.py').read_text(encoding='utf-8')   # fiche du témoin (V0.9.4.7)
     assert 'markPageRequested = Signal(str, str, str)' in editor
     assert 'page_navigation_items(cache, self.project.root_dir)' in editor
     assert '_sync_page_panels_to_cursor' in editor
