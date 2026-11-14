@@ -150,6 +150,8 @@ Varians fermé de force) ne rouvre pas le même projet la fois suivante. Celle-c
 | `xpath_panel.py` | recherche XPath |
 | `witness_workspace.py` | disposition des panneaux de témoins |
 | `witness_sync.py` | synchronisation XML ↔ témoins, folios, ressources |
+| `witness_rename_plan.py` | changer le sigle d'un témoin : le plan, sans rien écrire (`plan_witness_rename`) ; lecture du journal d'un changement interrompu ; sans Qt |
+| `witness_rename.py` | changer le sigle d'un témoin : application du plan d'un bloc, journal, reprise après interruption, report des réglages d'affichage ; sans Qt |
 | `main_menus.py` | barre d'outils, menus, projets récents, langue |
 | `project_actions.py` | export web, ouverture/création/réglages de projet |
 | `project_dialogs.py` | boîtes « Nouveau projet » et « Paramètres du projet », préparation du pivot |
