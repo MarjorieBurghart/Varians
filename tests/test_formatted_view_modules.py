@@ -7,7 +7,10 @@ responsabilité, sans changement du code déplacé :
 - ``preview_browser`` : le navigateur de l'aperçu (``ClickablePreview``) et
   la recherche dans un texte enrichi ;
 - ``formatted_views`` : les vues nommées (``ViewsMixin``) ;
-- ``fragment_editor`` : l'éditeur de fragment (``FragmentEditorMixin``).
+- ``fragment_editor`` : l'éditeur de fragment (``FragmentEditorMixin``) ;
+- ``preview_find`` : rechercher dans l'aperçu, rechercher et remplacer dans
+  le fragment (``PreviewFindMixin``) ;
+- ``element_wrap`` : Ctrl+E, entourer d'un élément (``ElementWrapMixin``).
 
 Les méthodes de ``FormattedEditionWidget`` déplacées vivent dans des classes
 « mixin » dont il hérite, comme celles de la fenêtre principale.
@@ -38,6 +41,11 @@ MIXINS = {
     "fragment_editor": ("FragmentEditorMixin", ["edit_selected_paragraph", "load_fragment", "reload_fragment",
                                                 "apply_fragment", "close_fragment_editor",
                                                 "fragment_has_unapplied_changes"]),
+    "preview_find": ("PreviewFindMixin", ["show_preview_find", "hide_preview_find", "find_preview_next",
+                                          "find_preview_previous", "show_fragment_find", "hide_fragment_find",
+                                          "find_fragment_next", "find_fragment_previous", "replace_fragment_next",
+                                          "replace_fragment_all"]),
+    "element_wrap": ("ElementWrapMixin", ["wrap_selection_with_element"]),
 }
 MODULES = [*PARTS, *MIXINS]
 

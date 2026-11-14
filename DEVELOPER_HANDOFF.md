@@ -693,17 +693,13 @@ Pour un changement de format projet ou JSON : documenter explicitement la lectur
 
 ## 19. Zones à risque / dette technique
 
-### `editeur_tei.py` très volumineux
+### Modules volumineux
 
-Il concentre encore de nombreuses classes Qt. Une refactorisation progressive serait utile, mais doit être menée par extraction testée, pas par réécriture globale.
+Un gros module se découpe par extraction testée, jamais par réécriture : le code est déplacé tel quel ; les méthodes d'une grande classe Qt passent dans des classes « mixin » dont elle hérite (un module par responsabilité) ; les tests de l'interface (`tests/gui/`) passent avant et après chaque étape, et un test de structure vérifie où vit chaque partie. Une méthode déplacée cherche ses noms dans son nouveau module : un test qui remplace un nom d'un module (`monkeypatch.setattr(module, "nom", …)`) doit viser le module où ce nom est employé.
 
-Candidats :
-
-- contrôleur de validation ;
-- contrôleur de recherche ;
-- contrôleur de manuscrits/images ;
-- construction des menus/barres ;
-- gestion des préférences de vue.
+- `editeur_tei.py` : découpé en V0.8.6.0 (7 900 → environ 1 900 lignes), mixins de `MainWindow` dans `main_menus`, `validation_panel`, `document_tabs`, `witness_workspace`… (carte : `docs/DEVELOPPEMENT.md`).
+- `formatted_view.py` : découpé en V0.9.4.7 (2 489 → 1 040 lignes) : `preview_css` (sans Qt), `preview_browser`, `formatted_views`, `fragment_editor`, `preview_find`, `element_wrap` (`tests/test_formatted_view_modules.py`). La transformation XSLT et la chaîne de l'aperçu restent dans `formatted_view` : les tests y remplacent `transform_with_xslt`.
+- Candidats suivants : `project_dialogs.py` (1 558 lignes, cinq boîtes de dialogue indépendantes), `witness_rename.py` (1 525 : plan d'une part, application et reprise de l'autre), `rng_completion.py` (1 308), `MainWindow` (1 241 lignes, 46 méthodes) ; `web_viewer/legacy_v11_core.extract_reading_document`, une fonction de 913 lignes, à ne découper qu'après des tests de caractérisation du viewer web.
 
 ### `legacy_v11_core.py`
 

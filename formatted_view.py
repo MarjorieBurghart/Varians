@@ -18,26 +18,23 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtGui import QAction, QKeySequence, QTextCursor
+from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QDialog, QHBoxLayout, QInputDialog, QLabel,
-    QLineEdit, QMenu, QMessageBox, QPushButton, QSizePolicy, QSplitter, QToolButton,
+    QApplication, QCheckBox, QComboBox, QHBoxLayout, QLabel,
+    QLineEdit, QMenu, QPushButton, QSizePolicy, QSplitter, QToolButton,
     QVBoxLayout, QWidget,
 )
 from app_context import _settings, call_later, tr as _t
-from code_editor import CodeEditor, find_in_plain_editor
-from completion_ui import CompletionDialog
-from custom_completion import load_custom_completion
-from text_search import SearchError
-from code_editor import replace_all_in_plain_editor, replace_in_plain_editor
+from code_editor import CodeEditor
 from fragment_units import (
     edit_stylesheet, edit_stylesheet_url, mark_units, place_edit_markers, stylesheet_needs_saxon,
 )
 from formatted_views import ViewsMixin
+from element_wrap import ElementWrapMixin
 from fragment_editor import FragmentEditorMixin
-from preview_browser import ClickablePreview, find_in_rich_editor
+from preview_find import PreviewFindMixin
+from preview_browser import ClickablePreview
 from preview_css import PREVIEW_BASE_CSS, resolve_css_variables, resolve_style_variables
-from replace_bar import search_error_text
 from xslt_engines import xslt_error_text as _xslt_error_text
 
 
@@ -281,7 +278,7 @@ def _transform_without_lxml(xml_text, xsl_path, params, first_error, edit_marker
     )
 
 
-class FormattedEditionWidget(ViewsMixin, FragmentEditorMixin, QWidget):
+class FormattedEditionWidget(ViewsMixin, FragmentEditorMixin, PreviewFindMixin, ElementWrapMixin, QWidget):
     """Vue XSLT/CSS + édition sûre du fragment TEI correspondant au paragraphe choisi."""
 
     # Résultat d'une actualisation faite dans un autre fil (red team 2, A8),
@@ -636,60 +633,6 @@ class FormattedEditionWidget(ViewsMixin, FragmentEditorMixin, QWidget):
             or (focus is not None and self.preview_find_bar.isAncestorOf(focus))
         )
 
-    def show_preview_find(self):
-        """Montre la barre « Rechercher dans l’aperçu : » et y met le focus (Ctrl+F dans l'onglet
-        de l'aperçu). Une sélection courte de l'aperçu (une ligne, 120 caractères au plus)
-        devient le texte cherché."""
-        self.preview_find_bar.setVisible(True)
-        selected = self.preview.textCursor().selectedText().strip()
-        if selected and "\u2029" not in selected and len(selected) <= 120:
-            self.preview_find_box.setText(selected)
-        self.preview_find_box.setFocus()
-        self.preview_find_box.selectAll()
-
-    def hide_preview_find(self):
-        """Bouton « ✕ » : cache la barre de recherche de l'aperçu, efface le surlignage de
-        l'occurrence et rend le focus à l'aperçu."""
-        self.preview_find_bar.setVisible(False)
-        self.preview_find_status.setText("")
-        self.preview.clearSearchMatch()
-        self.preview.setFocus()
-
-    def _find_preview(self, backwards=False):
-        q = self.preview_find_box.text()
-        if not q:
-            self.show_preview_find()
-            return
-        found, n, total = find_in_rich_editor(self.preview, q, backwards=backwards)
-        if found:
-            self.preview_find_status.setText(f"{n}/{total}")
-            self.preview_find_status.setStyleSheet("color:#5f574f")
-            match = getattr(self.preview, "_search_match", None)
-            pos = match[0] if match else self.preview.textCursor().position()
-            line = self.preview.line_for_position(pos)
-            if line is not None:
-                self.preview.active_line_ordinal = line
-                # Rester dans l'onglet XSLT tout en synchronisant XML et images.
-                self._activate_line(line, move_xml_cursor=True)
-            self.info.setText(_t("preview.search.found", n=n, total=total, query=q))
-            self.info.setStyleSheet("color:#376b3c")
-        else:
-            self.preview_find_status.setText("0/0")
-            self.preview_find_status.setStyleSheet("color:#a13d32;font-weight:600")
-            self.info.setText(_t("preview.search.none", query=q))
-            self.info.setStyleSheet("color:#a13d32")
-        # Éviter que le bouton Suivant/Précédent conserve le focus clavier.
-        self.preview_find_box.setFocus()
-
-    def find_preview_next(self):
-        """Occurrence suivante dans l'aperçu (Entrée, « ▶ », F3) : la source et les témoins vont à
-        sa ligne, l'onglet de l'aperçu restant affiché. Sans texte cherché, montre la barre."""
-        self._find_preview(False)
-
-    def find_preview_previous(self):
-        """Comme ``find_preview_next``, vers l'arrière (« ◀ », Maj+F3)."""
-        self._find_preview(True)
-
     def current_preview_line(self):
         """Ligne du témoin pivot où en est la lecture de l'aperçu : le repère au centre de la zone
         visible, sinon la dernière ligne active ; None si l'aperçu n'en a pas. Sert au retour
@@ -708,292 +651,6 @@ class FormattedEditionWidget(ViewsMixin, FragmentEditorMixin, QWidget):
         if self.dirty_preview:
             self.refresh_preview()
         call_later(0, self, lambda n=int(ordinal): self.preview.scroll_to_line(n, center=True))
-
-    @staticmethod
-    def _is_simple_xml_qname(name):
-        """Valide le sous-ensemble de QName accepté par Ctrl+E/configuration."""
-        name_part = r"[A-Za-z_][A-Za-z0-9_.-]*"
-        return bool(name and re.fullmatch(rf"{name_part}(?::{name_part})?", name))
-
-    def _custom_attributes_for_element(self, element):
-        """Relit custom-elements.xml et renvoie les attributs configurés.
-
-        Le fichier est volontairement relu à chaque Ctrl+E afin qu'une
-        modification prenne effet sans redémarrage. La configuration décrit
-        une aide de saisie : elle n'altère jamais la validation RELAX NG.
-        """
-        custom_file = self.main.project.custom_elements
-        if not custom_file.exists():
-            return []
-        try:
-            config = load_custom_completion(custom_file)
-        except Exception as exc:
-            if str(exc) == "ROOT_NOT_CUSTOM_ELEMENTS":
-                raise ValueError(_t("ctrl_e.config.root_error", file=custom_file.name)) from exc
-            raise ValueError(
-                _t("ctrl_e.config.read_error", file=custom_file.name, error=exc)
-            ) from exc
-
-        attrs = []
-        for attr in config.attributes_for(element):
-            if not self._is_simple_xml_qname(attr.name):
-                raise ValueError(
-                    _t("ctrl_e.config.attr_error", file=custom_file.name, name=repr(attr.name))
-                )
-            attrs.append((attr.name, attr.default_value, attr.has_default))
-        return attrs
-
-    def wrap_selection_with_element(self, target_editor=None, editor_label="fragment TEI"):
-        """Ctrl+E : entourer la sélection ou insérer un élément au point d'insertion.
-
-        Avec sélection, seul le CONTENU d'origine demeure sélectionné, sans
-        les balises ajoutées : Ctrl+E répété insère donc le deuxième élément
-        à l'intérieur du premier (comportement de type Oxygen).
-        Sans sélection, on crée une paire de balises avec le curseur à
-        l'intérieur. Le suffixe « / » (ex. « lb/ ») crée une balise vide.
-        Si un attribut de custom-elements.xml n'a pas de defaultValue,
-        le point d'insertion sans sélection reste dans le premier attribut vide.
-        La commande est commune à la source XML et à l'éditeur de fragment.
-        """
-        target_editor = target_editor or self.fragment_editor
-        cursor = target_editor.textCursor()
-        has_selection = cursor.hasSelection()
-
-        # V0.6.0 : Ctrl+E fusionne le contexte RNG et les aides du projet ;
-        # d'abord les éléments réellement admissibles à cette position. Le champ
-        # reste éditable : la personnalisation de saisie et les documents en cours
-        # de correction ne sont donc pas bloqués par le sélecteur.
-        suggestion_pos = target_editor.positions().python(cursor.selectionStart() if has_selection
-                                                          else cursor.position())
-        suggestion_provider = getattr(self.main, "rng_element_suggestions", None)
-        suggestions = (
-            suggestion_provider(target_editor, suggestion_pos)
-            if callable(suggestion_provider) else ()
-        )
-        if suggestions:
-            dlg = CompletionDialog(
-                _t("ctrl_e.dialog.title"),
-                _t("ctrl_e.suggestions.label"),
-                suggestions,
-                "",
-                self,
-                allow_custom=True,
-            )
-            try:
-                point = target_editor.viewport().mapToGlobal(target_editor.cursorRect().bottomLeft())
-                dlg.move(point)
-            except Exception:
-                pass
-            if dlg.exec() != QDialog.DialogCode.Accepted or not dlg.selected_value:
-                return
-            element = dlg.selected_value.strip()
-        else:
-            element, ok = QInputDialog.getText(
-                self,
-                _t("ctrl_e.dialog.title"),
-                _t("ctrl_e.dialog.label"),
-                QLineEdit.EchoMode.Normal,
-                "",
-            )
-            if not ok:
-                return
-            element = element.strip()
-        self_closing = element.endswith("/")
-        if self_closing:
-            element = element[:-1].strip()
-
-        if not self._is_simple_xml_qname(element):
-            QMessageBox.warning(
-                self,
-                _t("ctrl_e.invalid_element.title"),
-                _t("ctrl_e.invalid_element.text"),
-            )
-            return
-        if self_closing and has_selection:
-            QMessageBox.warning(
-                self,
-                _t("ctrl_e.invalid_element.title"),
-                _t("ctrl_e.self_closing_requires_empty"),
-            )
-            return
-
-        try:
-            custom_attrs = self._custom_attributes_for_element(element)
-        except ValueError as exc:
-            QMessageBox.warning(
-                self,
-                _t("ctrl_e.invalid_config.title"),
-                str(exc) + _t("ctrl_e.invalid_config.suffix"),
-            )
-            return
-
-        # Le QTextCursor capture la sélection avant l'ouverture du dialogue.
-        # Qt y sépare les lignes par U+2029 : les restituer en LF conserve
-        # exactement le XML multiligne sélectionné. Un U+2028 du texte reste
-        # tel quel (red team, A1).
-        selected = cursor.selectedText().replace("\u2029", "\n")
-        selection_start = cursor.selectionStart()
-        # Préserver aussi le sens de la sélection : Qt place position() à
-        # gauche pour une sélection faite de droite à gauche.
-        selection_reversed = has_selection and cursor.position() == selection_start
-
-        opening_tag = f"<{element}"
-        empty_attr_cursor_offset = None
-        for name, value, has_default in custom_attrs:
-            opening_tag += f' {name}="'
-            if not has_default and empty_attr_cursor_offset is None:
-                empty_attr_cursor_offset = len(opening_tag)
-            opening_tag += html_lib.escape(str(value), quote=True) + '"'
-        opening_tag += "/>" if self_closing else ">"
-
-        replacement = (opening_tag if self_closing
-                       else opening_tag + selected + f"</{element}>")
-        cursor.beginEditBlock()
-        cursor.insertText(replacement)
-        cursor.endEditBlock()
-
-        new_cursor = QTextCursor(target_editor.document())
-        # QTextCursor utilise des offsets UTF-16 et non la longueur Python :
-        # des caractères non-BMP (emoji, etc.) doivent compter pour 2 unités.
-        utf16_length = lambda text: len(text.encode("utf-16-le")) // 2
-        if has_selection:
-            # Garder précisément le texte initial sélectionné, PAS les balises.
-            # Exemple : <app>[uerbum]</app> puis Ctrl+E « rdg » produit
-            # <app><rdg>[uerbum]</rdg></app>, dans le bon ordre d'imbrication.
-            content_start = selection_start + utf16_length(opening_tag)
-            content_end = content_start + utf16_length(selected)
-            if selection_reversed:
-                new_cursor.setPosition(content_end)
-                new_cursor.setPosition(content_start, QTextCursor.MoveMode.KeepAnchor)
-            else:
-                new_cursor.setPosition(content_start)
-                new_cursor.setPosition(content_end, QTextCursor.MoveMode.KeepAnchor)
-        elif empty_attr_cursor_offset is not None:
-            # Aucun texte sélectionné : compléter d'abord le 1er attribut vide.
-            new_cursor.setPosition(selection_start + utf16_length(opening_tag[:empty_attr_cursor_offset]))
-        elif self_closing:
-            # <lb/> : point d'insertion immédiatement après la balise vide.
-            new_cursor.setPosition(selection_start + utf16_length(replacement))
-        else:
-            # <note>|</note> : prêt à saisir le contenu de l'élément.
-            new_cursor.setPosition(selection_start + utf16_length(opening_tag))
-        target_editor.setTextCursor(new_cursor)
-        target_editor.setFocus()
-
-        if custom_attrs:
-            attrs_msg = ", ".join(name for name, _, _ in custom_attrs)
-            msg = _t("ctrl_e.inserted_attrs", element=element, attrs=attrs_msg, file=self.main.project.custom_elements.name)
-        elif self_closing:
-            msg = _t("ctrl_e.inserted_self_closing", element=element)
-        elif not has_selection:
-            msg = _t("ctrl_e.inserted_empty", element=element)
-        else:
-            msg = _t("ctrl_e.inserted", element=element)
-        self.main.statusBar().showMessage(msg, 2600)
-
-    def show_fragment_find(self, replace=False):
-        """Montre la ligne « Rechercher dans le fragment : » (Ctrl+F) et, avec ``replace``
-        (Ctrl+H), la ligne « Remplacer par : », cachée sinon. Une sélection courte du fragment
-        (une ligne, 120 caractères au plus) devient le texte cherché ; le focus va à la
-        recherche."""
-        # Ctrl+F : la recherche seule ; Ctrl+H (replace) : avec « Remplacer par ».
-        self.fragment_find_bar.setVisible(True)
-        self.fragment_replace_row.setVisible(bool(replace))
-        # Si du texte est sélectionné, il devient naturellement la recherche.
-        selected = self.fragment_editor.textCursor().selectedText().strip()
-        if selected and "\u2029" not in selected and len(selected) <= 120:
-            self.fragment_find_box.setText(selected)
-        self.fragment_find_box.setFocus()
-        self.fragment_find_box.selectAll()
-
-    def add_fragment_find_options(self, actions):
-        """Boutons des options de recherche de la fenêtre (« Aa », « .* »),
-        après le champ de recherche du fragment (V0.9.2.8)."""
-        layout = self._fragment_find_layout
-        index = layout.indexOf(self.fragment_find_box) + 1
-        for offset, action in enumerate(actions):
-            button = QToolButton(self.fragment_find_bar)
-            button.setDefaultAction(action)
-            button.setAutoRaise(True)
-            layout.insertWidget(index + offset, button)
-
-    def hide_fragment_find(self):
-        """Bouton « × » : cache la recherche et le remplacement du fragment et rend le focus à
-        l'éditeur de fragment. Le surlignage de l'occurrence trouvée, lui, reste affiché."""
-        self.fragment_find_bar.setVisible(False)
-        self.fragment_replace_row.setVisible(False)
-        self.fragment_find_status.setText("")
-        self.fragment_editor.setFocus()
-
-    def _find_fragment(self, backwards=False):
-        q = self.fragment_find_box.text()
-        if not q:
-            self.show_fragment_find()
-            return
-        try:
-            # Avec la ligne « Remplacer par », le texte cherché est pris tel quel.
-            found, n, total = find_in_plain_editor(self.fragment_editor, q, backwards=backwards,
-                                                   options=self.main.search_options(),
-                                                   exact=not self.fragment_replace_row.isHidden())
-        except SearchError as error:
-            self._fragment_search_error(error)
-            self.fragment_find_box.setFocus()
-            return
-        if found:
-            self.fragment_find_status.setText(f"{n}/{total}")
-            self.fragment_find_status.setStyleSheet("color:#5f574f")
-        else:
-            self.fragment_find_status.setText("0/0")
-            self.fragment_find_status.setStyleSheet("color:#a13d32;font-weight:600")
-        # Même protection pour l'éditeur de fragment (il est lui aussi éditable).
-        self.fragment_find_box.setFocus()
-
-    def find_fragment_next(self):
-        """Occurrence suivante dans le fragment (Entrée, « ▶ », F3), avec les options de recherche
-        de la fenêtre (« Aa », « .* ») ; sans texte cherché, montre la barre. Quand la ligne
-        « Remplacer par : » est visible, le texte cherché garde ses blancs du début et de la fin."""
-        self._find_fragment(False)
-
-    def replace_fragment_next(self):
-        """« Remplacer » : remplace dans le fragment l'occurrence surlignée par le texte de
-        « Remplacer par : », si elle correspond toujours à la recherche, puis cherche la
-        suivante. Seul l'éditeur de fragment change : le XML attend « Appliquer au XML »."""
-        query = self.fragment_find_box.text()
-        if not query:
-            self.fragment_find_box.setFocus()
-            return
-        try:
-            _replaced, (found, n, total) = replace_in_plain_editor(
-                self.fragment_editor, query, self.fragment_replace_box.text(), self.main.search_options())
-        except SearchError as error:
-            self._fragment_search_error(error)
-            return
-        self.fragment_find_status.setText(f"{n}/{total}" if found else "0/0")
-
-    def replace_fragment_all(self):
-        """« Tout remplacer » dans le fragment, en une seule étape d'annulation ; le nombre de
-        remplacements s'affiche dans la barre d'état. Le XML attend « Appliquer au XML »."""
-        query = self.fragment_find_box.text()
-        if not query:
-            self.fragment_find_box.setFocus()
-            return
-        try:
-            count = replace_all_in_plain_editor(
-                self.fragment_editor, query, self.fragment_replace_box.text(), self.main.search_options())
-        except SearchError as error:
-            self._fragment_search_error(error)
-            return
-        self.fragment_find_status.setText("")
-        self.main.statusBar().showMessage(_t("replace.done", count=count), 5000)
-
-    def _fragment_search_error(self, error):
-        self.fragment_find_status.setText("!")
-        self.fragment_find_status.setStyleSheet("color:#a13d32;font-weight:600")
-        self.main.statusBar().showMessage(search_error_text(error), 5000)
-
-    def find_fragment_previous(self):
-        """Comme ``find_fragment_next``, vers l'arrière (« ◀ », Maj+F3)."""
-        self._find_fragment(True)
 
     def _preview_zoom_label(self):
         # L’API Qt travaille en crans typographiques, pas en vrais pourcentages.
