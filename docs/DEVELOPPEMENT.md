@@ -152,6 +152,11 @@ Varians fermé de force) ne rouvre pas le même projet la fois suivante. Celle-c
 | `witness_sync.py` | synchronisation XML ↔ témoins, folios, ressources |
 | `main_menus.py` | barre d'outils, menus, projets récents, langue |
 | `project_actions.py` | export web, ouverture/création/réglages de projet |
+| `project_dialogs.py` | boîtes « Nouveau projet » et « Paramètres du projet », préparation du pivot |
+| `witness_table.py` | table des témoins de ces deux boîtes (`WitnessTable`) : ajouter, modifier, retirer, ordonner, changer le sigle |
+| `witness_edit_dialog.py` | fiche d'un témoin (`WitnessEditDialog`) : sigle, images locales ou IIIF, ALTO/PAGE, synchronisation |
+| `iiif_canvas_picker.py` | choix des pages d'un Manifest IIIF (`IIIFCanvasPicker`) |
+| `project_widgets.py` | `PathRow`, ligne « chemin + Parcourir… » des boîtes du projet |
 | `document_tabs.py` | documents du projet affichés : édition, ses parties (XInclude) et documents auxiliaires |
 | `document_display.py` | onglets affichés et leur ordre (préférence locale du projet), fenêtre « Documents affichés », clic droit sur un onglet |
 | `document_dialogs.py` | ajouter, créer, retirer un document XML auxiliaire |

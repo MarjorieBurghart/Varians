@@ -324,9 +324,9 @@ Création et sérialisation des projets :
 - préparation des images, ALTO et alignements ;
 - création d'un projet portable.
 
-### `project_dialogs.py`
+### `project_dialogs.py` et la fiche des témoins
 
-Dialogues Qt de création/modification de projet et de témoins. L'ordre des images/ALTO y est éditable.
+Dialogues Qt de création/modification de projet (`project_dialogs.py` : « Nouveau projet », « Paramètres du projet », préparation du pivot) et de témoins : table des témoins (`witness_table.py`), fiche d'un témoin (`witness_edit_dialog.py`, où l'ordre des images/ALTO est éditable), choix des pages IIIF (`iiif_canvas_picker.py`), ligne de chemin `PathRow` (`project_widgets.py`). Un seul module jusqu'à la V0.9.4.7.
 
 ### `image_sources.py`
 
@@ -699,7 +699,8 @@ Un gros module se découpe par extraction testée, jamais par réécriture : le 
 
 - `editeur_tei.py` : découpé en V0.8.6.0 (7 900 → environ 1 900 lignes), mixins de `MainWindow` dans `main_menus`, `validation_panel`, `document_tabs`, `witness_workspace`… (carte : `docs/DEVELOPPEMENT.md`).
 - `formatted_view.py` : découpé en V0.9.4.7 (2 489 → 1 040 lignes) : `preview_css` (sans Qt), `preview_browser`, `formatted_views`, `fragment_editor`, `preview_find`, `element_wrap` (`tests/test_formatted_view_modules.py`). La transformation XSLT et la chaîne de l'aperçu restent dans `formatted_view` : les tests y remplacent `transform_with_xslt`.
-- Candidats suivants : `project_dialogs.py` (1 558 lignes, cinq boîtes de dialogue indépendantes), `witness_rename.py` (1 525 : plan d'une part, application et reprise de l'autre), `rng_completion.py` (1 308), `MainWindow` (1 241 lignes, 46 méthodes) ; `web_viewer/legacy_v11_core.extract_reading_document`, une fonction de 913 lignes, à ne découper qu'après des tests de caractérisation du viewer web.
+- `project_dialogs.py` : découpé en V0.9.4.7 (1 558 → 413 lignes) : `witness_table`, `witness_edit_dialog`, `iiif_canvas_picker`, `project_widgets` (`tests/test_project_dialogs_modules.py`) ; les dépendances vont dans un seul sens.
+- Candidats suivants : `witness_rename.py` (1 525 : plan d'une part, application et reprise de l'autre), `rng_completion.py` (1 308), `MainWindow` (1 241 lignes, 46 méthodes) ; `web_viewer/legacy_v11_core.extract_reading_document`, une fonction de 913 lignes, à ne découper qu'après des tests de caractérisation du viewer web.
 
 ### `legacy_v11_core.py`
 

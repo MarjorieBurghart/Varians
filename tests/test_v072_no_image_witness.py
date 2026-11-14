@@ -58,7 +58,8 @@ def test_legacy_witness_without_images_block_stays_auto():
 
 
 def test_no_image_source_is_visible_in_witness_ui_and_defaults_for_new_witnesses():
-    source = (ROOT / "project_dialogs.py").read_text(encoding="utf-8")
+    # Fiche et table des témoins (autrefois dans project_dialogs.py, V0.9.4.7).
+    source = "".join((ROOT / name).read_text(encoding="utf-8") for name in ("witness_edit_dialog.py", "witness_table.py"))
     assert 'project.witness.images.none' in source
     assert 'project.witness.images.auto' in source
     assert 'self.image_source.currentData() or "none"' in source

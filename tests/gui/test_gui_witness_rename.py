@@ -178,7 +178,7 @@ def test_the_siglum_of_a_saved_witness_is_locked_in_its_box(open_window, example
 
 def test_the_rename_button_is_only_in_the_project_settings(qtbot):
     from app_context import tr
-    from project_dialogs import WitnessTable
+    from witness_table import WitnessTable
     from project_management import WitnessDraft
     table = WitnessTable(tr, [WitnessDraft("T1", "Troyes 816")], "T1")
     qtbot.addWidget(table)
