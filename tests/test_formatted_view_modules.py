@@ -5,7 +5,12 @@ formatted_view.py (2 489 lignes) est réparti en modules, un par
 responsabilité, sans changement du code déplacé :
 - ``preview_css`` (sans Qt) : règles CSS de l'aperçu et variables CSS ;
 - ``preview_browser`` : le navigateur de l'aperçu (``ClickablePreview``) et
-  la recherche dans un texte enrichi.
+  la recherche dans un texte enrichi ;
+- ``formatted_views`` : les vues nommées (``ViewsMixin``) ;
+- ``fragment_editor`` : l'éditeur de fragment (``FragmentEditorMixin``).
+
+Les méthodes de ``FormattedEditionWidget`` déplacées vivent dans des classes
+« mixin » dont il hérite, comme celles de la fenêtre principale.
 
 ``formatted_view`` garde la transformation XSLT, la chaîne de l'aperçu et la
 construction de la vue. Les modules sont protégés, comme les autres modules
@@ -27,6 +32,14 @@ PARTS = {
     "preview_css": ["PREVIEW_BASE_CSS", "has_own_style", "resolve_css_variables", "resolve_style_variables"],
     "preview_browser": ["ClickablePreview", "find_in_rich_editor"],
 }
+MIXINS = {
+    "formatted_views": ("ViewsMixin", ["current_view", "xsl_path", "css_path", "context_changed", "new_view",
+                                       "edit_view", "remove_view", "select_view", "view_unit_names"]),
+    "fragment_editor": ("FragmentEditorMixin", ["edit_selected_paragraph", "load_fragment", "reload_fragment",
+                                                "apply_fragment", "close_fragment_editor",
+                                                "fragment_has_unapplied_changes"]),
+}
+MODULES = [*PARTS, *MIXINS]
 
 
 def _local_module_names():
@@ -56,6 +69,17 @@ def test_each_part_lives_in_its_module(module, names):
     assert not set(names) & _defined_in(ROOT / "formatted_view.py")
 
 
+@pytest.mark.parametrize("module, spec", MIXINS.items())
+def test_the_widget_is_made_of_its_parts(module, spec):
+    """Les méthodes déplacées sont celles du mixin, dont la vue hérite."""
+    from formatted_view import FormattedEditionWidget
+    mixin_name, methods = spec
+    mixin = getattr(importlib.import_module(module), mixin_name)
+    assert issubclass(FormattedEditionWidget, mixin)
+    for name in methods:
+        assert name in vars(mixin) and name not in vars(FormattedEditionWidget), name
+
+
 def test_the_preview_css_needs_no_qt():
     code = "import sys, preview_css; print([m for m in sys.modules if m.startswith('PySide6')])"
     result = subprocess.run([sys.executable, "-c", code], cwd=ROOT, capture_output=True, text=True, timeout=60)
@@ -64,15 +88,15 @@ def test_the_preview_css_needs_no_qt():
 
 
 def test_the_parts_are_protected_like_the_other_local_modules():
-    assert set(PARTS) | {"formatted_view"} <= _local_module_names()
+    assert set(MODULES) | {"formatted_view"} <= _local_module_names()
 
 
 def test_the_module_map_names_the_parts():
     guide = (ROOT / "docs" / "DEVELOPPEMENT.md").read_text(encoding="utf-8")
-    for module in PARTS:
+    for module in MODULES:
         assert f"| `{module}.py` |" in guide, module
 
 
 def test_the_parts_import_cleanly():
-    for module in PARTS:
+    for module in MODULES:
         importlib.import_module(module)
