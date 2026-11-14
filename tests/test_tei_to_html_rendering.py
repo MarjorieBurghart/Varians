@@ -250,7 +250,7 @@ def test_the_parentheses_of_a_stage_direction_hug_its_text():
 
 
 def test_the_preview_styles_the_speeches_even_with_the_stylesheet_of_an_older_project():
-    from formatted_view import PREVIEW_BASE_CSS
+    from preview_css import PREVIEW_BASE_CSS
     for rule in (".speaker {", ".stage {", "div.stage {"):
         assert rule in PREVIEW_BASE_CSS, rule
     assert "small-caps" in PREVIEW_BASE_CSS.split(".speaker {")[1].split("}")[0]
