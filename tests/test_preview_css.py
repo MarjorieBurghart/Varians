@@ -5,7 +5,7 @@ feuille XSLT (Qt ne comprend pas ``var()``) ; une feuille qui produit son
 propre <style>."""
 from __future__ import annotations
 
-from formatted_view import has_own_style, resolve_css_variables, resolve_style_variables
+from preview_css import has_own_style, resolve_css_variables, resolve_style_variables
 
 
 def test_css_variables_are_replaced_by_their_value():

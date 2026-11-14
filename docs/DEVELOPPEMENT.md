@@ -175,7 +175,13 @@ Composants autonomes utilisés par la fenêtre :
 | `transform_runner.py` | client de ce processus : lancer, annuler, compte rendu |
 | `busy_indicator.py` | lueur animée de la barre d'état pendant une validation |
 | `code_editor.py` | éditeur de la source XML (`CodeEditor`) |
-| `formatted_view.py` | aperçu XSLT/CSS et édition par fragments |
+| `formatted_view.py` | vue XSLT/CSS : construction, transformation XSLT, chaîne de l'aperçu (actualisation, affichage) |
+| `preview_css.py` | CSS de l'aperçu : règles de Varians, variables CSS résolues, feuille qui a son `<style>`, sans Qt |
+| `preview_browser.py` | navigateur de l'aperçu (`ClickablePreview`), recherche dans un texte enrichi |
+| `formatted_views.py` | vues nommées de la vue XSLT/CSS (`ViewsMixin`) : liste, Nouvelle vue / Modifier / Retirer, feuille et CSS de la vue choisie |
+| `fragment_editor.py` | éditeur de fragment (`FragmentEditorMixin`) : ouvrir, recharger, réinjecter un élément modifiable ; sélection reportée entre l'aperçu et le fragment |
+| `preview_find.py` | rechercher dans l'aperçu, rechercher et remplacer dans le fragment (`PreviewFindMixin`) |
+| `element_wrap.py` | Ctrl+E dans le fragment : entourer d'un élément, attributs de custom-elements.xml (`ElementWrapMixin`) |
 | `manuscript_panel.py` | panneau d'un témoin manuscrit |
 | `image_fetch.py` | téléchargement des images, cache disque |
 | `help_dialogs.py` | aide, dictionnaire latin, « À propos » |
