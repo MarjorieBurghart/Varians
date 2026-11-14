@@ -226,11 +226,12 @@ def test_an_interrupted_change_is_undone_when_the_project_opens(open_window, exa
                                                                  monkeypatch):
     import save_io
     import witness_rename
+    import witness_rename_plan
     from project_config import load_project
     root = example_project.parent
     edition = root / "xml" / "edition.xml"
     before = edition.read_text(encoding="utf-8")
-    plan = witness_rename.plan_witness_rename(load_project(example_project), "P", "P2")
+    plan = witness_rename_plan.plan_witness_rename(load_project(example_project), "P", "P2")
     write = save_io.atomic_write_text_with_backup
     calls = []
 
@@ -293,8 +294,9 @@ def _interrupt(example_project, monkeypatch):
     """Changement P → P2 interrompu après deux fichiers écrits."""
     import save_io
     import witness_rename
+    import witness_rename_plan
     from project_config import load_project
-    plan = witness_rename.plan_witness_rename(load_project(example_project), "P", "P2")
+    plan = witness_rename_plan.plan_witness_rename(load_project(example_project), "P", "P2")
     write = save_io.atomic_write_text_with_backup
     calls = []
 

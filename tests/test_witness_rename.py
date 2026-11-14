@@ -2,7 +2,7 @@
 """Changer le sigle d'un témoin (V0.9.4.0) : le plan des changements.
 
 Le sigle P devient P2 (un nouveau manuscrit P1 a été trouvé). Le plan
-(``witness_rename.plan_witness_rename``, sans Qt) dit tout ce qui change,
+(``witness_rename_plan.plan_witness_rename``, sans Qt) dit tout ce qui change,
 fichier par fichier, avant que rien ne soit écrit :
 
 - project.xml : le témoin (identifiant, sigle, nom affiché), le pivot,
@@ -28,7 +28,8 @@ import pytest
 
 from corpus_data import TINY_PNG, copy_example
 from project_config import load_project
-from witness_rename import migrate_view_settings, plan_witness_rename
+from witness_rename import migrate_view_settings
+from witness_rename_plan import plan_witness_rename
 
 TEI = "http://www.tei-c.org/ns/1.0"
 
@@ -416,7 +417,9 @@ def test_the_view_settings_follow_the_witness():
 
 
 def test_the_messages_of_the_plan_exist_in_every_language():
-    source = (Path(__file__).resolve().parents[1] / "witness_rename.py").read_text(encoding="utf-8")
+    # Plan et application, dans deux modules depuis la V0.9.4.7.
+    root = Path(__file__).resolve().parents[1]
+    source = "".join((root / name).read_text(encoding="utf-8") for name in ("witness_rename_plan.py", "witness_rename.py"))
     keys = set(re.findall(r'Message\(\s*"(witness_rename\.[\w.]+)"', source))
     assert {"witness_rename.empty", "witness_rename.same", "witness_rename.taken", "witness_rename.unknown",
             "witness_rename.id_used", "witness_rename.target_exists", "witness_rename.malformed",

@@ -2,7 +2,7 @@
 """Boîte « Changer le sigle d'un témoin » (V0.9.4.0).
 
 Ouverte par le bouton « Changer le sigle… » de Fichier ▸ Paramètres du
-projet… : nouveau sigle, « Aperçu » (witness_rename.plan_witness_rename :
+projet… : nouveau sigle, « Aperçu » (witness_rename_plan.plan_witness_rename :
 fichiers modifiés et nombre de changements, fichiers renommés, citations du
 sigle à vérifier), « Appliquer » (witness_rename.apply_witness_rename, d'un
 bloc). « Appliquer » n'est possible qu'après un aperçu sans refus du sigle
@@ -18,7 +18,8 @@ from PySide6.QtWidgets import (
 
 from i18n import message_text
 from witness_ids import witness_id_for_siglum
-from witness_rename import RenameError, apply_witness_rename, migrate_view_settings, plan_witness_rename
+from witness_rename import RenameError, apply_witness_rename, migrate_view_settings
+from witness_rename_plan import plan_witness_rename
 
 # Au-delà, l'aperçu n'énumère plus les citations (il en donne le nombre).
 MENTIONS_SHOWN = 200
