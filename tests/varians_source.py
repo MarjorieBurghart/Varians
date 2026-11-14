@@ -3,9 +3,11 @@
 
 Depuis V0.8.6.0, le code de ``editeur_tei.py`` est réparti entre plusieurs
 modules (``app_context``, ``document_session`` et les mixins de
-``MainWindow``). Les tests qui inspectent le source ou extraient une méthode
-de ``MainWindow`` passent par ces fonctions plutôt que de lire un seul
-fichier.
+``MainWindow``) ; depuis V0.9.4.7, celui de ``formatted_view.py`` aussi
+(``preview_css``, ``preview_browser`` et les mixins de
+``FormattedEditionWidget``). Les tests qui inspectent le source ou extraient
+une méthode passent par ces fonctions plutôt que de lire un seul fichier.
+Les méthodes d'un mixin sont rendues à la classe qui en hérite.
 """
 from __future__ import annotations
 
@@ -31,6 +33,12 @@ APPLICATION_MODULES = (
     "app_context.py",
     "document_session.py",
     "formatted_view.py",
+    "preview_css.py",
+    "preview_browser.py",
+    "formatted_views.py",
+    "fragment_editor.py",
+    "preview_find.py",
+    "element_wrap.py",
     "manuscript_panel.py",
     "code_editor.py",
     "witness_sync.py",
@@ -75,30 +83,46 @@ def _trees():
     return [(path, ast.parse(path.read_text(encoding="utf-8"))) for path in module_paths()]
 
 
+@lru_cache(maxsize=None)
+def _mixin_hosts():
+    """Mixin → classe qui en hérite (``MainWindow``, ``FormattedEditionWidget``…)."""
+    hosts = {}
+    for _path, tree in _trees():
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef):
+                for base in node.bases:
+                    if isinstance(base, ast.Name) and base.id.endswith("Mixin"):
+                        hosts[base.id] = node.name
+    return hosts
+
+
+def _host(mixin_name):
+    """Classe qui hérite du mixin ; ``MainWindow`` si aucune (comportement
+    d'avant V0.9.4.7)."""
+    return _mixin_hosts().get(mixin_name, "MainWindow")
+
+
+def _belongs_to(node, class_name):
+    """Vrai si la classe ``node`` est ``class_name`` ou l'un de ses mixins."""
+    return node.name == class_name or (node.name.endswith("Mixin") and _host(node.name) == class_name)
+
+
 def main_window_classes():
     """``MainWindow`` et les mixins dont elle hérite, avec leur fichier."""
     result = []
     for path, tree in _trees():
         for node in tree.body:
-            if isinstance(node, ast.ClassDef) and (node.name == "MainWindow" or node.name.endswith("Mixin")):
+            if isinstance(node, ast.ClassDef) and _belongs_to(node, "MainWindow"):
                 result.append((path, node))
     return result
 
 
 def class_method_node(class_name: str, method_name: str):
-    """Nœud AST et fichier d'une méthode.
-
-    ``class_name == "MainWindow"`` cherche aussi dans les mixins de
-    ``MainWindow`` ; tout autre nom de classe est cherché tel quel.
-    """
+    """Nœud AST et fichier d'une méthode, cherchée dans la classe et dans les
+    mixins dont elle hérite."""
     for path, tree in _trees():
         for node in tree.body:
-            if not isinstance(node, ast.ClassDef):
-                continue
-            if class_name == "MainWindow":
-                if not (node.name == "MainWindow" or node.name.endswith("Mixin")):
-                    continue
-            elif node.name != class_name:
+            if not isinstance(node, ast.ClassDef) or not _belongs_to(node, class_name):
                 continue
             for item in node.body:
                 if isinstance(item, ast.FunctionDef) and item.name == method_name:
@@ -119,14 +143,14 @@ def method_source(class_name: str, method_name: str) -> str:
 def application_ast() -> ast.Module:
     """Arbre syntaxique de l'interface, tous modules réunis.
 
-    Les méthodes des mixins sont replacées dans le corps de ``MainWindow``,
-    comme lorsqu'elles étaient toutes définies dans ``editeur_tei.py`` ; les
-    classes ``*Mixin`` elles-mêmes sont omises. L'arbre est partagé entre les
-    tests : ne pas le modifier.
+    Les méthodes des mixins sont replacées dans le corps de la classe qui en
+    hérite (``MainWindow``, ``FormattedEditionWidget``), comme lorsqu'elles y
+    étaient définies ; les classes ``*Mixin`` elles-mêmes sont omises.
+    L'arbre est partagé entre les tests : ne pas le modifier.
     """
     body = []
-    main_window = None
-    mixin_methods = []
+    hosts = {}
+    mixin_methods = {}
     for path, tree in _trees():
         for node in tree.body:
             if isinstance(node, ast.ClassDef) and node.name.endswith("Mixin"):
@@ -134,15 +158,16 @@ def application_ast() -> ast.Module:
                     if isinstance(item, ast.FunctionDef):
                         item = copy.deepcopy(item)
                         _tag(item, path)
-                        mixin_methods.append(item)
+                        mixin_methods.setdefault(_host(node.name), []).append(item)
                 continue
             node = copy.deepcopy(node)
             _tag(node, path)
-            if isinstance(node, ast.ClassDef) and node.name == "MainWindow":
-                main_window = node
+            if isinstance(node, ast.ClassDef):
+                hosts.setdefault(node.name, node)
             body.append(node)
-    if main_window is not None:
-        main_window.body.extend(mixin_methods)
+    for class_name, methods in mixin_methods.items():
+        if class_name in hosts:
+            hosts[class_name].body.extend(methods)
     return ast.Module(body=body, type_ignores=[])
 
 
