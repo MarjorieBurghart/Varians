@@ -34,6 +34,8 @@ APPLICATION_MODULES = (
     "editeur_tei.py",
     "source_selection.py",
     "pivot_line_index.py",
+    "xml_health.py",
+    "find_commands.py",
     "app_context.py",
     "document_session.py",
     "formatted_view.py",

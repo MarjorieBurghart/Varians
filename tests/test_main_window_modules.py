@@ -11,6 +11,11 @@ changement du code déplacé :
 - ``pivot_line_index`` (``PivotLineIndexMixin``) : repères de ligne du pivot
   dans le texte de l'éditeur, rang d'un repère, état de structure de la barre
   d'état.
+- ``xml_health`` (``XmlHealthMixin``, ``XmlHealthWorker``) : contrôle de
+  bonne formation, hors du fil de la fenêtre après la frappe, aussitôt avant
+  un enregistrement ; couleur des onglets selon l'état du document ;
+- ``find_commands`` (``FindCommandsMixin``) : Ctrl+F, F3 et Maj+F3 selon
+  l'endroit (fragment, aperçu, XML source), recherche dans le XML source.
 
 Les modules n'importent pas ``editeur_tei`` (il peut être lancé comme
 script), sont protégés des anciennes installations gardées par Spyder
@@ -36,7 +41,15 @@ MIXINS = {
     "pivot_line_index": ("PivotLineIndexMixin", [
         "_source_contents_changed", "_set_lb_spans", "_rebuild_lb_cache", "lb_spans",
         "ordinal_at_position", "ordinal_at_cursor"]),
+    "xml_health": ("XmlHealthMixin", [
+        "_set_document_health", "_xml_health_text", "_retranslate_xml_health", "_apply_xml_health_result",
+        "validate_text", "validate_editor", "_async_xml_health_finished"]),
+    "find_commands": ("FindCommandsMixin", [
+        "_focus_inside", "focus_find", "_find_source", "find_source_next", "find_source_previous", "find_next",
+        "find_previous"]),
 }
+# Classes de premier niveau qui suivent leurs méthodes.
+CLASSES = {"xml_health": ["XmlHealthSignals", "XmlHealthWorker"]}
 
 
 def _editor_tree():
@@ -64,6 +77,14 @@ def test_the_methods_live_in_their_mixin(module, spec):
     own = {item.name for item in _main_window().body if isinstance(item, ast.FunctionDef)}
     for name in methods:
         assert name in vars(mixin) and name not in own, name
+
+
+@pytest.mark.parametrize("module, names", CLASSES.items())
+def test_the_classes_follow_their_methods(module, names):
+    tree = ast.parse((ROOT / f"{module}.py").read_text(encoding="utf-8"))
+    defined = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
+    assert set(names) <= defined
+    assert not set(names) & {node.name for node in _editor_tree().body if isinstance(node, ast.ClassDef)}
 
 
 @pytest.mark.parametrize("module, spec", MIXINS.items())

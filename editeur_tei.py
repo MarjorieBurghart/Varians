@@ -35,7 +35,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "project_widgets", "iiif_canvas_picker", "witness_edit_dialog", "witness_table", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "selection_quote", "mac_message_boxes", "error_log", "error_log_ui", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "preview_css", "preview_browser", "formatted_views", "fragment_editor", "preview_find", "element_wrap", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_plan", "witness_rename_ui", "source_selection", "pivot_line_index", "self_test", "large_files", "document_templates", "tei_templates", "tei_templates_ui", "view_files", "view_dialogs", "saxon_preview"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "project_widgets", "iiif_canvas_picker", "witness_edit_dialog", "witness_table", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "selection_quote", "mac_message_boxes", "error_log", "error_log_ui", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "preview_css", "preview_browser", "formatted_views", "fragment_editor", "preview_find", "element_wrap", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_plan", "witness_rename_ui", "source_selection", "pivot_line_index", "xml_health", "find_commands", "self_test", "large_files", "document_templates", "tei_templates", "tei_templates_ui", "view_files", "view_dialogs", "saxon_preview"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -81,8 +81,7 @@ from pivot_lines import pivot_lb_pattern
 from formatted_view import FormattedEditionWidget
 from xml_assembly import path_key
 from manuscript_panel import ManuscriptPanel
-from code_editor import CodeEditor, TextDocument, find_in_plain_editor, XMLHighlighter
-from text_search import SearchError
+from code_editor import CodeEditor, TextDocument, XMLHighlighter
 from replace_bar import ReplaceBarMixin
 from search_results import SearchResultsMixin
 from witness_resource_refresh import AlignmentError, alignment_error_text, read_alignment_json
@@ -106,6 +105,8 @@ from references_ui import ReferencesMixin
 from apparatus_ui import ApparatusDebugMixin
 from source_selection import SourceSelectionMixin
 from pivot_line_index import PivotLineIndexMixin
+from xml_health import XmlHealthMixin
+from find_commands import FindCommandsMixin
 import error_log
 import error_log_ui
 import mac_message_boxes
@@ -132,7 +133,7 @@ from iiif_local import apply_working_copy
 from tei_formatter import format_tei_xml
 
 try:
-    from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot, QRunnable, QThreadPool, QEvent
+    from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent
     from PySide6.QtGui import QTextCursor, QAction, QKeySequence
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QSplitter, QToolBar, QFileDialog, QMessageBox,
@@ -169,49 +170,6 @@ set_i18n(I18N)
 
 def _t(key, /, default=None, **values):
     return tr(key, default=default, **values)
-
-
-class XmlHealthSignals(QObject):
-    """Signal de ``XmlHealthWorker`` : le résultat du contrôle de bonne
-    formation revient au fil principal (``_async_xml_health_finished``)."""
-    # revision QTextDocument, bien formé, ligne, colonne 0-based, message, spans lb
-    finished = Signal(int, bool, int, int, str, object)
-
-
-class XmlHealthWorker(QRunnable):
-    """Contrôle XML automatique hors du thread graphique.
-
-    La validation explicite (sauvegarde/F8) reste synchrone ; seul le contrôle
-    de bonne formation déclenché après la frappe est déplacé ici.
-    """
-
-    def __init__(self, revision, text, lb_pattern):
-        super().__init__()
-        self.revision = int(revision)
-        self.text = text
-        self.lb_pattern = lb_pattern
-        self.signals = XmlHealthSignals()
-
-    @Slot()
-    def run(self):
-        well_formed = True
-        line = 0
-        column = 0
-        message = ""
-        spans = None
-        try:
-            ET.fromstring(self.text)
-            # Profiter du même instantané de texte pour reconstruire les repères
-            # de lignes sans provoquer une seconde copie de QPlainTextEdit.
-            spans = [(m.start(), m.end()) for m in self.lb_pattern.finditer(self.text)]
-        except ET.ParseError as exc:
-            well_formed = False
-            line, column = getattr(exc, "position", (0, 0)) or (0, 0)
-            message = str(exc)
-        self.signals.finished.emit(
-            self.revision, well_formed, int(line or 0), int(column or 0),
-            message, spans,
-        )
 
 
 class CtrlEConfigDialog(QDialog):
@@ -300,7 +258,7 @@ def _document_attribute(path):
     )
 
 
-class MainWindow(PivotLineIndexMixin, SourceSelectionMixin, WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, TransformScenariosMixin, StylesheetCheckMixin, SchematronCheckMixin, SchematronRulesMixin, ReplaceBarMixin, SearchResultsMixin, QMainWindow):
+class MainWindow(SourceSelectionMixin, PivotLineIndexMixin, XmlHealthMixin, FindCommandsMixin, WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, TransformScenariosMixin, StylesheetCheckMixin, SchematronCheckMixin, SchematronRulesMixin, ReplaceBarMixin, SearchResultsMixin, QMainWindow):
     """Fenêtre d'un projet : éditeur XML source, aperçu mis en forme, panneaux
     des témoins, menus et barres d'outils. Le constructeur lit ``project.xml``
     et les ressources des témoins (alignements, ALTO, images) ; les commandes
@@ -974,34 +932,6 @@ class MainWindow(PivotLineIndexMixin, SourceSelectionMixin, WitnessSyncMixin, Te
         dlg.exec()
         self.statusBar().showMessage(_t("status.ctrl_e.config", path=custom_file), 6000)
 
-    def _set_document_health(self, state):
-        """Signale visuellement la santé XML dans les deux onglets.
-
-        malformed = rouge pâle ; rng_invalid = orange pâle ; normal = thème Qt.
-        Le rouge est prioritaire : un XML mal formé n'est pas validable en RNG.
-        """
-        state = state if state in {"normal", "malformed", "rng_invalid"} else "normal"
-        self._document_health = state
-        tabbar = self.left_tabs.tabBar()
-        if state == "malformed":
-            tabbar.setStyleSheet(
-                "QTabBar::tab { background:#f6d2d2; } "
-                "QTabBar::tab:selected { background:#efbcbc; }"
-            )
-            tip = _t("xml.health.malformed.tooltip")
-        elif state == "rng_invalid":
-            tabbar.setStyleSheet(
-                "QTabBar::tab { background:#f8e3bd; } "
-                "QTabBar::tab:selected { background:#f2d59f; }"
-            )
-            tip = _t("xml.health.rng_invalid.tooltip")
-        else:
-            tabbar.setStyleSheet("")
-            tip = ""
-        for i in range(self.left_tabs.count()):
-            self.left_tabs.setTabToolTip(i, tip)
-        self._refresh_document_tab(self.document)
-
     def _set_title(self):
         name = self.current_path.name if self.current_path else _t("app.untitled"); mark = " *" if self.modified else ""
         self.setWindowTitle(_t("app.window.file", project=self.project.title, name=name, mark=mark))
@@ -1043,194 +973,6 @@ class MainWindow(PivotLineIndexMixin, SourceSelectionMixin, WitnessSyncMixin, Te
                 self.rng_refresh_timer.start()
         if hasattr(self, 'formatted_view'):
             self.formatted_view.source_changed()
-
-    def _xml_health_text(self, well_formed, line=0, column=0, error=""):
-        if well_formed:
-            return _t("xml.valid")
-        where = _t("xml.invalid.where", line=line, column=column + 1) if line else ""
-        return _t("xml.invalid", where=where, error=error)
-
-    def _retranslate_xml_health(self):
-        """Contrôle XML refait dans la nouvelle langue, comme au premier
-        affichage d'un onglet (red team 2, D6)."""
-        if getattr(self, "document", None) is None:
-            return
-        self._last_xml_health_revision = -1
-        self.validate_text(False)
-
-    def _apply_xml_health_result(self, well_formed, line=0, column=0, error="", spans=None, show_message=False):
-        if not well_formed:
-            msg = self._xml_health_text(False, line, column, error)
-            self.xml_status.setText(msg); self.xml_status.setStyleSheet("color:#a13d32")
-            self._set_document_health("malformed")
-            if show_message:
-                QMessageBox.warning(self, _t("xml.invalid.title"), msg)
-            return False
-        self.xml_status.setText(self._xml_health_text(True)); self.xml_status.setStyleSheet("color:#376b3c")
-        if spans is not None:
-            self._set_lb_spans(spans)
-        current_revision = self.editor.document().revision()
-        if (
-            self._last_rng_revision == current_revision
-            and self._last_rng_result is not None
-            and self._last_rng_result.well_formed
-            and self._rng_invalid_for(self.document, self._last_rng_result)
-        ):
-            self._set_document_health("rng_invalid")
-        else:
-            self._set_document_health("normal")
-        return True
-
-    def validate_text(self, show_message=False, *, text=None, revision=None):
-        """Contrôle synchrone pour les opérations exigeant une réponse immédiate.
-
-        V0.5.6 accepte un instantané déjà extrait de l'éditeur afin que Ctrl+S ne
-        recopie pas plusieurs fois un gros document. Si le contrôle automatique a
-        déjà validé exactement la révision courante, la sauvegarde peut réutiliser
-        directement ce résultat sans reparsing XML.
-        """
-        revision = self.editor.document().revision() if revision is None else int(revision)
-        if revision == self._last_xml_health_revision and self._last_xml_health_well_formed is not None:
-            return bool(self._last_xml_health_well_formed)
-        text = self.editor.toPlainText() if text is None else text
-        try:
-            ET.fromstring(text)
-        except ET.ParseError as exc:
-            line, col = getattr(exc, "position", (0, 0)) or (0, 0)
-            self._last_xml_health_revision = revision
-            self._last_xml_health_well_formed = False
-            return self._apply_xml_health_result(False, line, col, str(exc), None, show_message)
-        spans = [(m.start(), m.end()) for m in self.lb_base_re.finditer(text)]
-        self._last_xml_health_revision = revision
-        self._last_xml_health_well_formed = True
-        return self._apply_xml_health_result(True, spans=spans, show_message=show_message)
-
-    def validate_editor(self):
-        """Contrôle automatique asynchrone après une pause de saisie."""
-        revision = self.editor.document().revision()
-        if revision == self._last_xml_health_revision:
-            return
-        if self._xml_health_running:
-            self._xml_health_pending = True
-            return
-        text = self.editor.toPlainText()
-        self._xml_health_running = True
-        self._xml_health_pending = False
-        self._xml_health_session = self.document
-        worker = XmlHealthWorker(revision, text, self.lb_base_re)
-        self._xml_health_worker = worker
-        worker.signals.finished.connect(self._async_xml_health_finished)
-        self._xml_health_pool.start(worker)
-
-    @Slot(int, bool, int, int, str, object)
-    def _async_xml_health_finished(self, revision, well_formed, line, column, error, spans):
-        self._xml_health_running = False
-        self._xml_health_worker = None
-        # Le résultat ne vaut que pour le document contrôlé : un autre a pu
-        # être affiché entre-temps (les révisions sont propres à chaque document).
-        checked = self._xml_health_session
-        self._xml_health_session = None
-        same_document = checked is None or checked is self.document
-        current_revision = self.editor.document().revision()
-        if same_document and revision == current_revision:
-            self._last_xml_health_revision = revision
-            self._last_xml_health_well_formed = bool(well_formed)
-            self._apply_xml_health_result(well_formed, line, column, error, spans, False)
-        # Si le document a changé pendant un contrôle exceptionnellement long
-        # et que le timer a déjà expiré, programmer une nouvelle passe courte.
-        if (self._xml_health_pending or not same_document or revision != current_revision) and not self.validate_timer.isActive():
-            self._xml_health_pending = False
-            call_later(180, self, self.validate_editor)
-
-    def _focus_inside(self, widget):
-        focus = QApplication.focusWidget()
-        return bool(focus is widget or (focus is not None and widget.isAncestorOf(focus)))
-
-    def focus_find(self):
-        """Ctrl+F (« Recherche simple ») selon l'endroit : la barre de recherche de
-        l'éditeur de fragment s'il a le focus, celle de l'aperçu si son onglet est affiché ;
-        sinon le champ de recherche de la barre d'outils reçoit le focus, et
-        reprend la sélection de l'éditeur XML si elle tient sur une ligne (120
-        caractères au plus)."""
-        # Ctrl+F est contextuel aux trois espaces d'édition/lecture.
-        if self.formatted_view.focus_is_in_fragment():
-            self.formatted_view.show_fragment_find()
-            return
-        if self.left_tabs.currentWidget() is self.formatted_view:
-            self.formatted_view.show_preview_find()
-            return
-        selected = self.editor.textCursor().selectedText().strip()
-        if selected and "\u2029" not in selected and len(selected) <= 120:
-            self.find_box.setText(selected)
-        self.find_box.setFocus()
-        self.find_box.selectAll()
-
-    def _find_source(self, backwards=False, field=None):
-        # *field* : le champ de la recherche, celui de la barre d'outils ou
-        # celui de la barre de remplacement (V0.9.2.8), qui garde le focus.
-        box = field or self.find_box
-        q = box.text()
-        if not q:
-            box.setFocus()
-            return
-        try:
-            found, n, total = find_in_plain_editor(self.editor, q, backwards=backwards,
-                                                   options=self.search_options(), exact=field is not None)
-        except SearchError as error:
-            self.statusBar().showMessage(_t("search.error.pattern", detail=error.detail), 5000)
-            self.replace_status.setText("!")
-            box.setFocus()
-            return
-        if found:
-            self.left_tabs.setCurrentIndex(0)
-            self.statusBar().showMessage(_t("status.search.xml.found", n=n, total=total, query=q), 2500)
-        else:
-            self.statusBar().showMessage(_t("status.search.xml.none", query=q), 3000)
-        self.replace_status.setText(f"{n}/{total}" if found else "0/0")
-        self.search_results_follow()
-        # Entrée reste associée à la recherche suivante, jamais à l'édition XML.
-        # La mise en évidence fluo demeure visible dans l'éditeur sans focus.
-        if field is None:
-            self.find_box.setFocus()
-        else:
-            field.setFocus()
-
-    def find_source_next(self):
-        """Occurrence suivante, dans le XML source, du texte du champ de recherche
-        de la barre d'outils (touche Entrée de ce champ)."""
-        self._find_source(False)
-
-    def find_source_previous(self):
-        """Occurrence précédente, dans le XML source, du texte du champ de
-        recherche de la barre d'outils."""
-        self._find_source(True)
-
-    def find_next(self):
-        """F3 (« Occurrence suivante ») selon l'endroit : dans l'éditeur de fragment
-        s'il a le focus et que sa barre de recherche est ouverte ; dans l'aperçu si son
-        onglet est affiché (sa barre de recherche fermée, elle s'ouvre seulement) ;
-        sinon dans le XML source."""
-        if self.formatted_view.fragment_find_bar.isVisible() and self.formatted_view.focus_is_in_fragment():
-            self.formatted_view.find_fragment_next()
-        elif self.left_tabs.currentWidget() is self.formatted_view:
-            if not self.formatted_view.preview_find_bar.isVisible():
-                self.formatted_view.show_preview_find()
-            else:
-                self.formatted_view.find_preview_next()
-        else:
-            self._find_source(False)
-
-    def find_previous(self):
-        """Shift+F3 (« Occurrence précédente ») : comme ``find_next``, en remontant."""
-        if self.formatted_view.fragment_find_bar.isVisible() and self.formatted_view.focus_is_in_fragment():
-            self.formatted_view.find_fragment_previous()
-        elif self.left_tabs.currentWidget() is self.formatted_view:
-            if not self.formatted_view.preview_find_bar.isVisible():
-                self.formatted_view.show_preview_find()
-            else:
-                self.formatted_view.find_preview_previous()
-        else:
-            self._find_source(True)
 
     def closeEvent(self,event):
         if self._force_close or self.confirm_close_application():
