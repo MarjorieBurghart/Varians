@@ -35,7 +35,7 @@ sys.path[:] = [_CURRENT_DIR] + [
     _entry for _entry in sys.path
     if not _entry or Path(_entry).resolve() != _APPLICATION_DIR
 ]
-_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "project_widgets", "iiif_canvas_picker", "witness_edit_dialog", "witness_table", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "selection_quote", "mac_message_boxes", "error_log", "error_log_ui", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "preview_css", "preview_browser", "formatted_views", "fragment_editor", "preview_find", "element_wrap", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_plan", "witness_rename_ui", "self_test", "large_files", "document_templates", "tei_templates", "tei_templates_ui", "view_files", "view_dialogs", "saxon_preview"}
+_LOCAL_MODULE_NAMES = {"project_config", "project_management", "project_dialogs", "project_widgets", "iiif_canvas_picker", "witness_edit_dialog", "witness_table", "i18n", "relaxng_validation", "schema_resolution", "rng_completion", "xpath_search", "save_io", "custom_completion", "image_sources", "iiif_manifest", "iiif_local", "iiif_selection", "iiif_download_manager", "iiif_page_selection", "alto_import", "tei_facsimile", "xml_tag_pairs", "tei_formatter", "selection_sync", "selection_quote", "mac_message_boxes", "error_log", "error_log_ui", "witness_resource_refresh", "resource_state", "witness_layout", "iiif_resolution", "folio_navigation", "xml_folding", "document_session", "app_context", "formatted_view", "preview_css", "preview_browser", "formatted_views", "fragment_editor", "preview_find", "element_wrap", "image_fetch", "manuscript_panel", "code_editor", "witness_sync", "project_actions", "main_menus", "help_dialogs", "witness_workspace", "document_io", "completion_ui", "validation_panel", "xpath_panel", "document_tabs", "document_display", "document_dialogs", "xml_references", "references_ui", "apparatus_xpath", "apparatus_ui", "relaxng_worker", "validation_worker", "busy_indicator", "xml_assembly", "pivot_lines", "text_alignments", "text_segments", "lacunae", "witness_route", "preview_sources", "segment_model", "xslt_engines", "transform_worker", "xslt_scenarios", "transform_runner", "transform_ui", "xslt_check_ui", "xslt_completion", "tei_stylesheets", "tei_stylesheets_ui", "schematron", "schematron_check", "schematron_check_ui", "schematron_completion", "xml_roots", "xml_model_edit", "schematron_rules_dialog", "xslt_packages", "text_search", "replace_bar", "help_search", "search_results", "fragment_units", "witness_rename", "witness_rename_plan", "witness_rename_ui", "source_selection", "pivot_line_index", "xml_health", "find_commands", "window_setup", "self_test", "large_files", "document_templates", "tei_templates", "tei_templates_ui", "view_files", "view_dialogs", "saxon_preview"}
 for _module_name, _module in tuple(sys.modules.items()):
     if _module_name not in _LOCAL_MODULE_NAMES and not (
         _module_name == "web_viewer" or _module_name.startswith("web_viewer.")
@@ -64,8 +64,7 @@ if __name__ == "__main__" and sys.argv[1:2] == ["--preview-worker"]:
     from saxon_preview import serve
     raise SystemExit(serve(stderr_log=sys.argv[2] if len(sys.argv) > 2 else None))
 
-from project_config import load_project, has_line_synchronization
-from resource_state import primary_sync_line_count, secondary_sync_link_count
+from project_config import load_project
 from project_management import create_portable_project, create_new_transcription_project
 from project_dialogs import NewProjectDialog, run_pivot_scaffold_dialog
 from i18n import I18nManager
@@ -75,20 +74,15 @@ from app_context import (
     forget_open_project, startup_pending_project, mark_startup_pending, forget_startup_pending,
 )
 from large_files import confirm_large_files, large_project_files
-from document_session import DocumentSession, LB_EDIT_LOOKBACK, LbIndex
+from document_session import DocumentSession
 from save_io import atomic_write_text_with_backup
 from pivot_lines import pivot_lb_pattern
-from formatted_view import FormattedEditionWidget, xml_selection_structure
-from selection_quote import quote as quote_selection, resolve as resolve_quote, xml_compact
-from fragment_units import unit_spans
 from xml_assembly import path_key
-from manuscript_panel import ManuscriptPanel
-from code_editor import CodeEditor, TextDocument, find_in_plain_editor, XMLHighlighter
-from text_search import SearchError
+from code_editor import CodeEditor, XMLHighlighter
 from replace_bar import ReplaceBarMixin
 from search_results import SearchResultsMixin
-from witness_resource_refresh import AlignmentError, alignment_error_text, read_alignment_json
-from witness_sync import WitnessSyncMixin, flatten_primary, flatten_secondary
+from witness_resource_refresh import alignment_error_text
+from witness_sync import WitnessSyncMixin
 from project_actions import ProjectActionsMixin
 from main_menus import MainMenusMixin, TEI_GUIDE_URL
 from help_dialogs import (
@@ -101,11 +95,16 @@ from completion_ui import CompletionMixin
 from validation_panel import ValidationPanelMixin
 from xpath_panel import XPathPanelMixin
 from document_tabs import DocumentTabsMixin
-from text_segments import TEXT_ABSENT, TextSegmentsMixin
+from text_segments import TextSegmentsMixin
 from document_display import DocumentDisplayMixin
 from document_dialogs import DocumentDialogsMixin
 from references_ui import ReferencesMixin
 from apparatus_ui import ApparatusDebugMixin
+from source_selection import SourceSelectionMixin
+from pivot_line_index import PivotLineIndexMixin
+from xml_health import XmlHealthMixin
+from find_commands import FindCommandsMixin
+from window_setup import WindowSetupMixin
 import error_log
 import error_log_ui
 import mac_message_boxes
@@ -118,27 +117,19 @@ _journal = error_log.logger("window")
 from transform_ui import TransformScenariosMixin
 from xslt_check_ui import StylesheetCheckMixin
 from schematron_check_ui import SchematronCheckMixin
-from schematron_rules_dialog import ClickableLabel, SchematronRulesMixin
+from schematron_rules_dialog import SchematronRulesMixin
 from tei_stylesheets_ui import at_launch as tei_stylesheets_at_launch
 from tei_templates_ui import at_launch as tei_templates_at_launch
-from busy_indicator import BusyIndicator
-from validation_worker import worker_client
 from rng_completion import XmlContextCache
-from image_sources import (
-    page_image_source, apply_witness_image_policy, image_only_items, page_navigation_items,
-)
-from alto_import import apply_witness_alto_policy
-from iiif_local import apply_working_copy
 from tei_formatter import format_tei_xml
-from selection_sync import containing_span_index
 
 try:
-    from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot, QRunnable, QThreadPool, QEvent
+    from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, Slot
     from PySide6.QtGui import QTextCursor, QAction, QKeySequence
     from PySide6.QtWidgets import (
-        QApplication, QMainWindow, QWidget, QSplitter, QToolBar, QFileDialog, QMessageBox,
-        QLabel, QSizePolicy, QVBoxLayout, QHBoxLayout, QCheckBox, QScrollArea, QFrame,
-        QTabWidget, QDialog, QDialogButtonBox, QMenu, QToolButton,
+        QApplication, QMainWindow, QWidget, QToolBar, QFileDialog, QMessageBox,
+        QLabel, QSizePolicy, QVBoxLayout, QFrame,
+        QDialog, QDialogButtonBox, QMenu, QToolButton,
     )
 except ImportError:
     print("PySide6 n'est pas installé.")
@@ -170,49 +161,6 @@ set_i18n(I18N)
 
 def _t(key, /, default=None, **values):
     return tr(key, default=default, **values)
-
-
-class XmlHealthSignals(QObject):
-    """Signal de ``XmlHealthWorker`` : le résultat du contrôle de bonne
-    formation revient au fil principal (``_async_xml_health_finished``)."""
-    # revision QTextDocument, bien formé, ligne, colonne 0-based, message, spans lb
-    finished = Signal(int, bool, int, int, str, object)
-
-
-class XmlHealthWorker(QRunnable):
-    """Contrôle XML automatique hors du thread graphique.
-
-    La validation explicite (sauvegarde/F8) reste synchrone ; seul le contrôle
-    de bonne formation déclenché après la frappe est déplacé ici.
-    """
-
-    def __init__(self, revision, text, lb_pattern):
-        super().__init__()
-        self.revision = int(revision)
-        self.text = text
-        self.lb_pattern = lb_pattern
-        self.signals = XmlHealthSignals()
-
-    @Slot()
-    def run(self):
-        well_formed = True
-        line = 0
-        column = 0
-        message = ""
-        spans = None
-        try:
-            ET.fromstring(self.text)
-            # Profiter du même instantané de texte pour reconstruire les repères
-            # de lignes sans provoquer une seconde copie de QPlainTextEdit.
-            spans = [(m.start(), m.end()) for m in self.lb_pattern.finditer(self.text)]
-        except ET.ParseError as exc:
-            well_formed = False
-            line, column = getattr(exc, "position", (0, 0)) or (0, 0)
-            message = str(exc)
-        self.signals.finished.emit(
-            self.revision, well_formed, int(line or 0), int(column or 0),
-            message, spans,
-        )
 
 
 class CtrlEConfigDialog(QDialog):
@@ -301,7 +249,7 @@ def _document_attribute(path):
     )
 
 
-class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, TransformScenariosMixin, StylesheetCheckMixin, SchematronCheckMixin, SchematronRulesMixin, ReplaceBarMixin, SearchResultsMixin, QMainWindow):
+class MainWindow(WindowSetupMixin, SourceSelectionMixin, PivotLineIndexMixin, XmlHealthMixin, FindCommandsMixin, WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainMenusMixin, WitnessWorkspaceMixin, DocumentIOMixin, CompletionMixin, ValidationPanelMixin, XPathPanelMixin, DocumentTabsMixin, DocumentDisplayMixin, DocumentDialogsMixin, ReferencesMixin, ApparatusDebugMixin, TransformScenariosMixin, StylesheetCheckMixin, SchematronCheckMixin, SchematronRulesMixin, ReplaceBarMixin, SearchResultsMixin, QMainWindow):
     """Fenêtre d'un projet : éditeur XML source, aperçu mis en forme, panneaux
     des témoins, menus et barres d'outils. Le constructeur lit ``project.xml``
     et les ressources des témoins (alignements, ALTO, images) ; les commandes
@@ -398,353 +346,13 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         self._last_xml_health_revision = -1
         self._last_xml_health_well_formed = None
 
-        # V0.7.0 : les ressources d'un témoin sont facultatives. Un témoin
-        # sans fichier d'alignement reste un témoin parfaitement valide ; son
-        # panneau existe mais la synchronisation ALTO/base_keys est inactive.
-        self.alignment_caches = {}
-        self._raw_alignment_caches = {}
-        self.witness_items = {}
-        self.base_maps = {}
-        self.base_by_key = {}
-        # Le nombre de lignes attendu par la TEI vient exclusivement du JSON
-        # de synchronisation du témoin pivot. Un ALTO indépendant n'est pas
-        # une synchronisation et ne doit jamais imposer ce nombre.
-        self._base_sync_line_count = None
-        self._secondary_sync_link_counts = {}
-        # Un fichier d'alignement abîmé (red team 2, B5) : le projet s'ouvre,
-        # sans synchroniser ce seul témoin, et c'est dit.
-        self._alignment_problems = []
-        for w in self.witness_configs:
-            cache = None
-            if has_line_synchronization(w):
-                try:
-                    cache = read_alignment_json(w.alignment)
-                except AlignmentError as exc:
-                    self._alignment_problems.append((w, exc))
-            if cache is not None:
-                if w.is_base:
-                    self._base_sync_line_count = primary_sync_line_count(cache)
-                else:
-                    self._secondary_sync_link_counts[w.id] = secondary_sync_link_count(cache)
-            else:
-                cache = {"meta": {"witness": w.id, "role": w.role}, "pages": []}
-                if not w.is_base:
-                    self._secondary_sync_link_counts[w.id] = 0
-            self._raw_alignment_caches[w.id] = cache
-            cache = apply_witness_alto_policy(
-                cache, getattr(w, "alto_source_type", "auto"),
-                [x.path for x in getattr(w, "alto_files", ())], self.project.root_dir,
-                w.id, w.role,
-                strict_no_ordinal=(getattr(w, 'image_source_type', '') == 'iiif'),
-            )
-            cache = apply_witness_image_policy(
-                cache, getattr(w, "image_source_type", "auto"),
-                getattr(w, "image_source_value", None), self.project.root_dir,
-                getattr(w, "image_files", ()), w.id,
-                getattr(w, 'iiif_selection_mode', 'all'),
-                getattr(w, 'iiif_selected_canvases', ()),
-                getattr(w, 'iiif_ocr_links', ()),
-                getattr(w, 'iiif_page_links', ()),
-            )
-            if getattr(w, 'iiif_local_copy', False) and w.image_source_type == 'iiif':
-                cache = apply_working_copy(cache, self.project.root_dir, w.id)
-            self.alignment_caches[w.id] = cache
-            if w.is_base:
-                items, by_key = flatten_primary(cache)
-                self.witness_items[w.id] = items
-                self.base_by_key = by_key
-            else:
-                items, by_base = flatten_secondary(cache)
-                self.witness_items[w.id] = items
-                self.base_maps[w.id] = by_base
-        self.base_items = self.witness_items.get(self.base_id, [])
-        if self._alignment_problems:
-            call_later(0, self, self._report_alignment_problems)
-        # Projet sans témoin : pas de pivot, rien à synchroniser.
-        base_cfg = self.project.witness_by_id.get(self.base_id)
-        # V0.8.4 : un fichier JSON vide/provisoire n'active pas le mode ligne.
-        # Le nombre est mesuré avant toute superposition ALTO, afin qu'un ALTO
-        # indépendant ne puisse jamais être pris pour une synchronisation TEI.
-        self.base_alignment_available = bool(
-            base_cfg is not None and has_line_synchronization(base_cfg) and (self._base_sync_line_count or 0) > 0
-        )
-
-        # V0.7.9.1 : sans synchronisation ligne-à-ligne, la page — et non une
-        # pseudo-ligne ALTO — est l'unité de navigation. L'ALTO reste disponible
-        # pour dessiner tous les cadres de la page, mais ne détermine pas un crop.
-        self.witness_display_items = {}
-        for w in self.witness_configs:
-            cache = self.alignment_caches.get(w.id, {})
-            line_sync = self.base_alignment_available and (
-                w.is_base or self._secondary_sync_link_counts.get(w.id, 0) > 0
-            )
-            if line_sync:
-                display = self.witness_items.get(w.id, [])
-            else:
-                display = page_navigation_items(cache, self.project.root_dir)
-                if not display:
-                    display = self.witness_items.get(w.id, []) or image_only_items(cache, self.project.root_dir)
-            self.witness_display_items[w.id] = display
-
-        # La colonne manuscrits n'a aucune raison d'occuper la moitié de l'écran
-        # lorsqu'aucune page d'aucun témoin ne possède réellement de source
-        # d'image. ALTO et synchronisation peuvent parfaitement exister seuls.
-        self.has_any_images = any(
-            page_image_source(page, self.project.root_dir).available
-            for cache in self.alignment_caches.values()
-            for page in (cache.get("pages", []) or [])
-        )
-        self.expected_base_lines = self._base_sync_line_count if self.base_alignment_available else None
-        self._last_synced_surface = None
-
-        self.editor = CodeEditor()
-        # Le QTextDocument appartient au document ouvert, non à l'éditeur.
-        self.document.text_document = TextDocument(self)
-        self.editor.set_text_document(self.document.text_document)
-        self.highlighter = XMLHighlighter(self.editor.document())
-        self.formatted_view = FormattedEditionWidget(self)
-        self.editor.attribute_completion_provider = self._auto_attribute_choices
-        self.formatted_view.fragment_editor.attribute_completion_provider = self._auto_attribute_choices
-        self.editor.value_completion_provider = self._auto_value_choices
-        self.formatted_view.fragment_editor.value_completion_provider = self._auto_value_choices
-        # Invalidation incrémentale : les points lexicaux antérieurs à l'édition
-        # restent valides et accélèrent les Ctrl+Espace suivants. Les
-        # modifications arrivent en indices Python (red team, A2).
-        self.editor.text_change_listener = self._source_contents_changed
-        self.formatted_view.fragment_editor.text_change_listener = (
-            lambda position, _removed, _added, _text: self._fragment_completion_context_cache.invalidate_from(position)
-        )
-
-        self.source_wrap_element_action = QAction(_t("fragment.wrap"), self.editor)
-        self.source_wrap_element_action.setShortcut(QKeySequence("Ctrl+E"))
-        self.source_wrap_element_action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
-        self.source_wrap_element_action.triggered.connect(
-            lambda: self.formatted_view.wrap_selection_with_element(self.editor, _t("ctrl_e.where.source"))
-        )
-        self.editor.addAction(self.source_wrap_element_action)
-
-        self.source_completion_action = QAction(_t("completion.action"), self.editor)
-        self.source_completion_action.setShortcut(QKeySequence("Ctrl+Space"))
-        self.source_completion_action.setShortcutContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
-        self.source_completion_action.triggered.connect(lambda: self.show_rng_completion(self.editor))
-        self.editor.addAction(self.source_completion_action)
-        self._install_reference_actions()
-
-        self.left_tabs = QTabWidget()
-
-        # Vue XML source : la case n'agit que sur l'affichage. Elle ne modifie
-        # ni le texte, ni les numéros de lignes, ni les offsets utilisés par les
-        # synchronisations et validations.
-        self.source_tab = QWidget()
-        source_layout = QVBoxLayout(self.source_tab)
-        source_layout.setContentsMargins(0, 0, 0, 0)
-        source_layout.setSpacing(2)
-        source_options = QHBoxLayout()
-        source_options.setContentsMargins(4, 2, 4, 0)
-        self.source_visual_wrap = QCheckBox(_t("source.visual_wrap"), self.source_tab)
-        wrap_setting = _settings().value("sourceVisualWrap", False)
-        if isinstance(wrap_setting, str):
-            wrap_setting = wrap_setting.strip().lower() in {"1", "true", "yes", "on"}
-        self.source_visual_wrap.setChecked(bool(wrap_setting))
-        self.editor.set_visual_wrap(bool(wrap_setting))
-        self.source_visual_wrap.toggled.connect(self._set_source_visual_wrap)
-        source_options.addWidget(self.source_visual_wrap)
-        source_options.addStretch(1)
-        source_layout.addLayout(source_options)
-        source_layout.addWidget(self.editor, 1)
-        # Chercher et remplacer (Ctrl+H, V0.9.2.8) : sous l'éditeur, fermée au départ.
-        source_layout.addWidget(self._build_replace_bar())
-
-        self.left_tabs.addTab(self.source_tab, _t("tab.xml_source"))
-        self.left_tabs.addTab(self.formatted_view, _t("tab.preview"))
-        self._previous_left_tab_index = 0
-        self.left_tabs.currentChanged.connect(self._left_tab_changed)
-        self._last_save_context = "source"
-        QApplication.instance().focusChanged.connect(self._track_edit_focus)
-
-        # Each witness retains an independently resizable panel inside a scroll
-        # area.  A naked vertical splitter used to squeeze the 4th manuscript
-        # into an unusable sliver as the window height stayed fixed.
-        self.panels = {}
-        self._witness_image_available = {}
-        self.witness_splitter = QSplitter(Qt.Orientation.Vertical)
-        self.witness_splitter.setChildrenCollapsible(True)
-        # The former fixed 560-px minimum prevented shrinking the manuscript
-        # side and therefore constrained the editor/manuscript balance.
-        self.witness_splitter.setMinimumWidth(0)
-        self.witness_horizontal_splitter = QSplitter(Qt.Orientation.Horizontal)
-        self.witness_grid_splitter = QSplitter(Qt.Orientation.Vertical)
-        self._grid_rows = [QSplitter(Qt.Orientation.Horizontal), QSplitter(Qt.Orientation.Horizontal)]
-        for row in self._grid_rows:
-            self.witness_grid_splitter.addWidget(row)
-        self.workspace_root = QWidget(self)
-        workspace_layout = QVBoxLayout(self.workspace_root)
-        workspace_layout.setContentsMargins(0, 0, 0, 0)
-        workspace_layout.setSpacing(0)
-        for view in (self.witness_splitter, self.witness_horizontal_splitter,
-                     self.witness_grid_splitter):
-            workspace_layout.addWidget(view, 1)
-        self.witness_horizontal_splitter.hide()
-        self.witness_grid_splitter.hide()
-        self.witness_scroll = QScrollArea(self)
-        self.witness_scroll.setWidgetResizable(True)
-        self.witness_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.witness_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.witness_scroll.setMinimumWidth(0)
-        self.witness_scroll.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.witness_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        # Stable viewport widget: changing orientation never calls
-        # QScrollArea.setWidget() again (which would DELETE the old widget).
-        self.witness_scroll.setWidget(self.workspace_root)
-        leading = self._load_leading_witnesses()
-        for w in self.witness_configs:
-            panel = ManuscriptPanel(
-                w.id,
-                w.display_title,
-                self.witness_display_items[w.id],
-                self.base_maps.get(w.id),
-                is_base=w.is_base,
-                base_label=self.witness_titles[self.base_id],
-                project_root=self.project.root_dir,
-                sync_enabled=((self.base_alignment_available and bool(self.base_items)) if w.is_base
-                              else bool(self.base_alignment_available and self._secondary_sync_link_counts.get(w.id, 0) > 0)),
-            )
-            self.panels[w.id] = panel
-            # Les flèches de ce manuscrit mènent-elles l'édition (V0.9.2.8.1) ?
-            # Retenu pour le projet ; par défaut, celles du pivot seulement.
-            panel.set_leads_edition(leading.get(w.id, w.is_base))
-            panel.leadsEditionChanged.connect(self._witness_lead_changed)
-            if not w.is_base and has_line_synchronization(w) and self.base_alignment_available:
-                # A configured JSON is not necessarily a line synchronization.
-                # Make the fallback visible instead of letting the user infer
-                # from colored ALTO frames that line alignment is operational.
-                links = self._secondary_sync_link_counts.get(w.id, 0)
-                if links == 0:
-                    problem = _t('manuscript.sync.no_base_keys')
-                elif not set(self.base_maps.get(w.id) or {}).intersection(self.base_by_key):
-                    problem = _t('manuscript.sync.unmatched_base_keys')
-                else:
-                    problem = ''
-                if problem:
-                    panel.sync_issue.setText(problem)
-                    panel.sync_issue.setToolTip(problem)
-                    panel.sync_issue.show()
-            cache = self.alignment_caches.get(w.id, {})
-            unmatched_layout = int((cache.get('meta') or {}).get('iiif_unassociated_layout_count') or 0)
-            if unmatched_layout:
-                # Optional OCR geometry must never hide the corresponding
-                # IIIF manuscript. Explain why its frames are not yet drawn.
-                message = _t('manuscript.iiif_unassociated_layout.tip', count=unmatched_layout)
-                panel.header.setToolTip(message)
-                panel.status.setToolTip(message)
-            # Un témoin qui n'a de JSON que pour des textes synchronisés à
-            # part (V0.9.1.1) garde son panneau, sauf s'il est déclaré sans image.
-            self._witness_image_available[w.id] = any(
-                page_image_source(page, self.project.root_dir).available
-                for page in (cache.get("pages", []) or [])
-            ) or (w.id in self._text_witness_ids() and getattr(w, "image_source_type", "auto") != "none")
-            # Sans donnée pour l'édition, dans un projet à textes à part : le
-            # panneau le dit, comme le viewer web (red team 2, D5).
-            if not self.witness_display_items[w.id] and self._text_witness_ids():
-                panel.set_absent(TEXT_ABSENT)
-            self.witness_splitter.addWidget(panel)
-            # Ces commandes écrivent dans l'édition : refusées si un autre
-            # document est affiché.
-            panel.markPageRequested.connect(self._edition_write(self._mark_page_in_tei))
-            panel.splitFolioRequested.connect(self._edition_write(self._split_double_folio))
-            panel.maximizeRequested.connect(self._toggle_witness_panel_maximize)
-            panel.detachRequested.connect(self._toggle_detached_witness)
-            # Connect once, even if synchronization becomes active later. Le
-            # pivot peut changer avec le texte affiché : seul le panneau du
-            # pivot du moment émet ce signal.
-            panel.primaryNavigate.connect(self._edition_navigation(self._primary_panel_navigate))
-            # Les flèches de tout panneau mènent l'édition (V0.9.1.4).
-            panel.witnessNavigate.connect(self._witness_panel_navigate)
-            if panel.items and not panel.sync_enabled:
-                call_later(0, panel, panel.reload)
-        self.base_panel = self.panels.get(self.base_id)          # None sans témoin
-        self.witness_splitter.splitterMoved.connect(self._remember_witness_splitter_sizes)
-        self._witness_maximized_id = None
-        self._witness_sizes_before_maximize = None
-        self._witness_display_order = self._load_witness_display_order()
-        self._reordering_witness_panels = False
-        self._changing_workspace = False
-        self._closing_workspace = False
-        self._workspace_before_maximize = None
-        self._detached_windows = {}
-        self._workspace_mode = self._load_workspace_mode()
-        self._visible_witness_ids = self._load_visible_witness_ids()
-        self.witness_horizontal_splitter.splitterMoved.connect(self._remember_workspace_sizes)
-        self.witness_grid_splitter.splitterMoved.connect(self._remember_workspace_sizes)
-        for row in self._grid_rows:
-            row.splitterMoved.connect(self._remember_workspace_sizes)
-
-        # Colonne gauche : les deux vues de l'édition + panneau de validation
-        # RELAX NG rétractable. Le panneau reste fermé tant qu'il n'est pas
-        # utile, afin de ne pas pénaliser les petits écrans.
-        self.validation_panel = self._build_validation_panel()
-        self.xpath_panel = self._build_xpath_panel()
-        self.references_panel = self._build_references_panel()
-        self.search_results_panel = self._build_search_results_panel()
-        self._bottom_panels = [self.validation_panel, self.xpath_panel, self.references_panel,
-                               self.search_results_panel]
-        self.left_splitter = QSplitter(Qt.Orientation.Vertical)
-        self.left_splitter.addWidget(self._build_document_area(self.left_tabs))
-        self.left_splitter.setStretchFactor(0, 1)
-        for index, panel in enumerate(self._bottom_panels, 1):
-            self.left_splitter.addWidget(panel)
-            self.left_splitter.setStretchFactor(index, 0)
-        self.left_splitter.setSizes([760] + [0] * len(self._bottom_panels))
-        # Do not let sizeHint/minimums from the XML widgets force a 50:50
-        # layout. The splitter handle may be dragged down to ~20% editor width.
-        self.left_splitter.setMinimumWidth(140)
-        self.left_tabs.setMinimumWidth(0)
-
-        # ``witness_splitter`` stays available to the sizing/maximize logic;
-        # ``manuscript_scroll`` now points to the actual scroll container.
-        self.manuscript_scroll = self.witness_scroll
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        splitter.addWidget(self.left_splitter)
-        splitter.addWidget(self.witness_scroll)
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 1)
-        splitter.setChildrenCollapsible(False)
-        splitter.setHandleWidth(6)
-        self.main_splitter = splitter
-        self._restoring_main_splitter_ratio = False
-        splitter.splitterMoved.connect(self._remember_main_splitter_ratio)
-        self._main_splitter_last_visible_sizes = [780, 870]
-        self.setCentralWidget(splitter)
-        self._apply_witness_visibility(initial=True)
-        call_later(0, self, self._restore_main_splitter_ratio)
-        call_later(0, self, self._restore_detached_witnesses)
-
+        # Étapes de la construction (window_setup, sauf la barre d'outils).
+        self._load_witness_resources()
+        self._build_document_views()
+        self._build_witness_panels()
+        self._build_main_layout()
         self._build_toolbar()
-        self.xml_status = QLabel(_t("status.xml.initial")); self.cursor_status = QLabel(_t("status.cursor", line=1, column=1))
-        self.structure_status = QLabel(
-            _t("status.structure.no_witness") if not self.base_id
-            else _t("status.structure.expected", base=self.witness_siglum(self.base_id), count=self.expected_base_lines)
-            if self.expected_base_lines is not None
-            else _t("status.structure.no_alignment", base=self.witness_siglum(self.base_id))
-        )
-        self.rng_status = QLabel(_t("rng.status.none") if self._schema_mode == "none" else _t("rng.status.pending"))
-        # Lueur qui tourne pendant une validation dans le processus séparé.
-        self.rng_busy = BusyIndicator(self)
-        self.rng_busy.setToolTip(_t("rng.status.running.tip"))
-        worker = worker_client()
-        worker.busyChanged.connect(self._rng_busy_changed)
-        self._rng_busy_changed(worker.busy)
-        # Un clic ouvre « Règles Schematron du document… » (V0.9.2.5).
-        self.schematron_status = ClickableLabel("")
-        self.schematron_status.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.schematron_status.clicked.connect(self.schematron_rules_dialog)
-        self.statusBar().addWidget(self.xml_status,1)
-        self.statusBar().addPermanentWidget(self.rng_busy)
-        self.statusBar().addPermanentWidget(self.rng_status)
-        self.statusBar().addPermanentWidget(self.schematron_status)
-        self.statusBar().addPermanentWidget(self.structure_status)
-        self.statusBar().addPermanentWidget(self.cursor_status)
-        self._set_document_health("normal")
+        self._build_status_bar()
 
         self.sync_timer = QTimer(self); self.sync_timer.setSingleShot(True); self.sync_timer.setInterval(55); self.sync_timer.timeout.connect(self.sync_panels_to_cursor)
         # Le contrôle automatique reste systématique après une courte pause,
@@ -975,229 +583,10 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         dlg.exec()
         self.statusBar().showMessage(_t("status.ctrl_e.config", path=custom_file), 6000)
 
-    def _set_document_health(self, state):
-        """Signale visuellement la santé XML dans les deux onglets.
-
-        malformed = rouge pâle ; rng_invalid = orange pâle ; normal = thème Qt.
-        Le rouge est prioritaire : un XML mal formé n'est pas validable en RNG.
-        """
-        state = state if state in {"normal", "malformed", "rng_invalid"} else "normal"
-        self._document_health = state
-        tabbar = self.left_tabs.tabBar()
-        if state == "malformed":
-            tabbar.setStyleSheet(
-                "QTabBar::tab { background:#f6d2d2; } "
-                "QTabBar::tab:selected { background:#efbcbc; }"
-            )
-            tip = _t("xml.health.malformed.tooltip")
-        elif state == "rng_invalid":
-            tabbar.setStyleSheet(
-                "QTabBar::tab { background:#f8e3bd; } "
-                "QTabBar::tab:selected { background:#f2d59f; }"
-            )
-            tip = _t("xml.health.rng_invalid.tooltip")
-        else:
-            tabbar.setStyleSheet("")
-            tip = ""
-        for i in range(self.left_tabs.count()):
-            self.left_tabs.setTabToolTip(i, tip)
-        self._refresh_document_tab(self.document)
-
     def _set_title(self):
         name = self.current_path.name if self.current_path else _t("app.untitled"); mark = " *" if self.modified else ""
         self.setWindowTitle(_t("app.window.file", project=self.project.title, name=name, mark=mark))
         self._refresh_document_tab(self.document)
-
-    def _source_contents_changed(self, position, chars_removed, chars_added, text):
-        """Invalide seulement ce que l'édition rend réellement obsolète.
-        Rappel de l'éditeur (``text_change_listener``) : indices Python de
-        ``text``, le texte après la modification."""
-        self._source_completion_context_cache.invalidate_from(position)
-        lb = self.document.lb
-        if lb.dirty:
-            return
-        start = max(0, int(position))
-        inserted = text[start:start + max(0, int(chars_added))]
-        # Texte qui précède la modification : permet de savoir si elle a lieu
-        # à l'intérieur d'une balise.
-        end = start + max(0, int(chars_added))
-        lb.apply_edit(position, chars_removed, chars_added, inserted, text[max(0, start - LB_EDIT_LOOKBACK):start],
-                      removed_text=getattr(self.editor, "last_removed_text", None), following=text[end:end + 2])
-
-    def _set_lb_spans(self, spans):
-        self.document.lb.set(spans)
-        if not self.document.in_edition:
-            return  # l'état de structure est celui de l'édition
-        # Édition en parties : lignes comptées dans l'édition assemblée, ou
-        # dans le texte synchronisé à part qui est affiché.
-        n = self._base_line_count()
-        sync = self._text_sync_of(self._active_segment) if self._active_segment is not None else None
-        if sync is not None:
-            tip = _t("status.structure.text.tip", base=self.witness_siglum(self.base_id), name=sync.name)
-        else:
-            tip = _t("status.structure.assembled.tip") if self._edition_has_parts() else ""
-        self.structure_status.setToolTip(tip)
-        if not self.base_id:
-            # Projet sans témoin : pas de lignes du pivot à compter.
-            self.structure_status.setText(_t("status.structure.no_witness"))
-            self.structure_status.setStyleSheet("color:#746b61")
-        elif self.expected_base_lines is None:
-            self.structure_status.setText(_t("status.structure.free", base=self.witness_siglum(self.base_id), count=n))
-            self.structure_status.setStyleSheet("color:#746b61")
-        elif n == self.expected_base_lines:
-            self.structure_status.setText(_t("status.structure.ok", base=self.witness_siglum(self.base_id), count=n)); self.structure_status.setStyleSheet("color:#376b3c")
-        else:
-            self.structure_status.setText(_t("status.structure.changed", base=self.witness_siglum(self.base_id), count=n, expected=self.expected_base_lines)); self.structure_status.setStyleSheet("color:#a14b2f;font-weight:600")
-
-    def _rebuild_lb_cache(self, text=None):
-        if text is None:
-            text = self.editor.toPlainText()
-        self._set_lb_spans(LbIndex.scan(text, self.lb_base_re))
-
-    def lb_spans(self):
-        """Positions ``(début, fin)`` des ``<lb/>`` du témoin pivot dans le texte de
-        l'éditeur. L'index est d'abord rebalayé s'il est périmé (``dirty``) ; dans
-        l'édition, l'état de structure de la barre d'état est alors mis à jour."""
-        if self.document.lb.dirty:
-            self._rebuild_lb_cache()
-        return self.document.lb.spans
-
-    def ordinal_at_position(self, position):
-        """Rang (à partir de 0) du dernier ``<lb/>`` du pivot qui commence avant ou
-        à ``position`` (indice Python dans le texte de l'éditeur) ; 0 avant le
-        premier, None si le texte n'en a aucun. Compté dans le seul document
-        affiché ; pour une édition en parties, voir ``_base_ordinal_at``."""
-        self.lb_spans()
-        return self.document.lb.ordinal_at(position)
-
-    def ordinal_at_cursor(self):
-        """``ordinal_at_position`` au curseur de l'éditeur (position Qt convertie en
-        indice Python)."""
-        return self.ordinal_at_position(self.editor.positions().python(self.editor.textCursor().position()))
-
-    def _source_compact(self):
-        """Texte visible de la source (``selection_quote.xml_compact``),
-        gardé tant que le texte ne change pas (V0.9.4.5) ; ``(texte, carte)``."""
-        text = self.editor.toPlainText()
-        cached = getattr(self, "_source_compact_cache", None)
-        if cached is None or cached[0] is not text:
-            cached = self._source_compact_cache = (text, xml_compact(text))
-        return cached
-
-    def _source_unit_spans(self, text=None):
-        """``unit_spans`` de la source pour les éléments modifiables de
-        l'aperçu, gardés tant que le texte et ces éléments ne changent pas
-        (V0.9.4.5 : relevé coûteux sur un gros fichier)."""
-        text = self.editor.toPlainText() if text is None else text
-        names = self._preview_unit_names()
-        key = (type(names), names)
-        cached = getattr(self, "_source_units_cache", None)
-        if cached is None or cached[0] is not text or cached[1] != key:
-            cached = self._source_units_cache = (text, key, unit_spans(text, names))
-        return cached[2]
-
-    def _source_unit_at(self, position):
-        """Élément modifiable de l'aperçu (V0.9.2.9) qui contient la position
-        ``position`` de la source : ``(rang, début, fin)``, ou None. Pour une
-        édition en parties (V0.9.1.5), le rang est celui de l'aperçu de
-        toute l'édition."""
-        sources = self._assembled_preview_sources()
-        if sources is not None:
-            pidx = sources.paragraph_at(self.document.path, position)
-            if pidx is None:
-                return None
-            return pidx, sources.paragraphs[pidx].start, sources.paragraphs[pidx].end
-        spans = self._source_unit_spans()
-        pidx = containing_span_index(spans, position)
-        return None if pidx is None else (pidx, *spans[pidx])
-
-    def _source_unit_span(self, paragraph):
-        """``(début, fin)`` dans la source de l'élément modifiable de rang
-        ``paragraph`` de l'aperçu, ou None. Pour une édition en parties, le
-        fichier qui le contient est d'abord affiché."""
-        sources = self._assembled_preview_sources()
-        try:
-            if sources is not None:
-                span = sources.paragraphs[int(paragraph)]
-                if span is None or not self._show_file_position(span.path, span.start):
-                    return None
-                return span.start, span.end
-            return self._source_unit_spans()[int(paragraph)]
-        except (IndexError, TypeError, ValueError):
-            return None
-
-    def _source_selection_context(self, cursor):
-        """La sélection de la source décrite pour l'aperçu (V0.9.4.5) :
-        ``quote`` (citation et contexte), et pour départager ``paragraph``
-        (élément modifiable) et ``relative`` (caractères visibles depuis son
-        début) ; None si elle n'a pas de texte visible."""
-        text, compact = self._source_compact()
-        qt = self.editor.positions(text)
-        start = qt.python(cursor.selectionStart())
-        i, j = compact.range_of(start, qt.python(cursor.selectionEnd()))
-        wanted = quote_selection(compact, i, j)
-        if wanted is None:
-            return None
-        unit = self._source_unit_at(start)
-        if unit is None:
-            return {"quote": wanted, "paragraph": None, "relative": None}
-        return {"quote": wanted, "paragraph": unit[0], "relative": i - compact.index_at(unit[1])}
-
-    def _source_selection_structure(self, cursor):
-        """Repère structurel de la sélection de la source pour l'aperçu
-        (``xml_selection_structure``, V0.9.3.0) : éléments modifiables du
-        document affiché, rangés comme dans l'aperçu."""
-        source = self.editor.toPlainText()
-        sources = self._assembled_preview_sources()
-        if sources is not None:
-            key = path_key(self.document.path)
-            units = [(index, span.start, span.end) for index, span in enumerate(sources.paragraphs)
-                     if span is not None and path_key(span.path) == key]
-        else:
-            units = [(index, a, b) for index, (a, b)
-                     in enumerate(self._source_unit_spans(source))]
-        qt = self.editor.positions(source)
-        return xml_selection_structure(source, qt.python(cursor.selectionStart()), qt.python(cursor.selectionEnd()),
-                                       units)
-
-    def _select_source_quote(self, context, near_cursor=False):
-        """Sélectionne dans la source ce que décrit ``context`` (voir
-        ``ClickablePreview.selection_context``) : dans l'élément modifiable
-        ``paragraph`` s'il y est, sinon dans tout le fichier, près du curseur
-        avec ``near_cursor`` (placé sur le repère de ligne de la sélection),
-        sinon à la même place relative. False si le texte n'y est pas
-        (V0.9.4.5)."""
-        wanted = (context or {}).get("quote")
-        if wanted is None:
-            return False
-        found = None
-        paragraph = context.get("paragraph")
-        span = self._source_unit_span(paragraph) if paragraph is not None else None
-        text, compact = self._source_compact()
-        if span is not None:
-            scope = compact.range_of(*span)
-            relative = context.get("relative")
-            found = resolve_quote(compact, wanted, scope=scope,
-                                  hint=None if relative is None else scope[0] + int(relative))
-        if found is None:
-            hint = None
-            if near_cursor:
-                hint = compact.index_at(self.editor.positions(text).python(self.editor.textCursor().position()))
-            found = resolve_quote(compact, wanted, hint=hint)
-        if found is None:
-            return False
-        self._select_source_span(*compact.span(*found))
-        return True
-
-    def _select_source_span(self, start, end):
-        """Sélectionne ``start``…``end`` (indices Python) dans la source."""
-        qt = self.editor.positions()
-        cursor = QTextCursor(self.editor.document())
-        cursor.setPosition(qt.qt(start))
-        cursor.setPosition(qt.qt(end), QTextCursor.MoveMode.KeepAnchor)
-        self.editor.setTextCursor(cursor)
-        self.editor.centerCursor()
-        self.editor.setFocus()
 
     def _cursor_changed(self):
         c=self.editor.textCursor(); self.cursor_status.setText(_t("status.cursor", line=c.blockNumber()+1, column=c.positionInBlock()+1))
@@ -1236,190 +625,11 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         if hasattr(self, 'formatted_view'):
             self.formatted_view.source_changed()
 
-    def _left_tab_changed(self, index):
-        if not hasattr(self, "formatted_view"):
-            return
-        previous = getattr(self, "_previous_left_tab_index", 0)
-        self._previous_left_tab_index = index
-        # Édition en parties (V0.9.1.5) : l'aperçu montre toute l'édition ; ses
-        # repères de ligne et ses paragraphes renvoient chacun à son fichier.
-        # Un document auxiliaire (V0.9.4.4) : l'aperçu montre ce document.
-        parts = self._preview_shows_assembly()
-
-        if self.left_tabs.widget(index) is self.formatted_view:
-            # XML -> XSLT : la sélection est retrouvée par son texte et son
-            # contexte ("qui" peut apparaître plusieurs fois, V0.9.4.5).
-            source_cursor = self.editor.textCursor()
-            qt = self.editor.positions()
-            source_pos = qt.python(source_cursor.selectionStart() if source_cursor.hasSelection()
-                                   else source_cursor.position())
-            if parts:
-                sources = self._assembled_preview_sources()
-                ordinal = sources.line_before(self.document.path, source_pos) if sources is not None else None
-            else:
-                ordinal = self.ordinal_at_position(source_pos)
-            # Sélection décrite par son texte et son contexte (V0.9.4.5) :
-            # l'élément modifiable et le repère de ligne ne font que départager.
-            context = self._source_selection_context(source_cursor) if source_cursor.hasSelection() else None
-            if context is not None:
-                context["line"] = ordinal
-            structure = self._source_selection_structure(source_cursor) if context is not None else None
-            # Aller-retour (V0.9.3.0) : tant que la sélection faite dans
-            # l'aperçu y reste, le retour à la source rend celle de départ.
-            self._preview_round_trip = None
-            round_trip = (self.document, self.editor.document().revision(),
-                          qt.python(source_cursor.selectionStart()), qt.python(source_cursor.selectionEnd()))
-            # Aller-retour dans l'autre sens (V0.9.4.5) : une sélection venue de
-            # l'aperçu et inchangée y revient à sa place, même quand la feuille
-            # affiche plusieurs fois ce texte de la source (index, résumé).
-            back, self._source_round_trip = getattr(self, "_source_round_trip", None), None
-            preview_back = None
-            if (back and source_cursor.hasSelection() and back[0] is self.document
-                    and back[1] == self.editor.document().revision()
-                    and back[2:4] == (source_cursor.selectionStart(), source_cursor.selectionEnd())):
-                preview_back = back[4:]
-            self.formatted_view.became_visible()
-
-            def restore_preview_context(n=ordinal, context=context, shape=structure, back=preview_back):
-                preview = self.formatted_view.preview
-                # Un élément entier (résultat XPath), un apparat, une note :
-                # leur texte n'est pas celui de l'aperçu, d'où la structure.
-                if ((back and preview.restore_selection(*back)) or (context and preview.select_quote(context))
-                        or (shape and preview.select_structure(shape))):
-                    cursor = preview.textCursor()
-                    self._preview_round_trip = round_trip + (cursor.selectionStart(), cursor.selectionEnd())
-                    return
-                if context:
-                    self.statusBar().showMessage(_t("selection.not_found.preview"), 6000)
-                if n is not None:
-                    self.formatted_view.scroll_to_t1_line(n)
-
-            # Quand l'aperçu est prêt : une feuille 3.0 le rend plus tard,
-            # hors du fil de la fenêtre (V0.9.4.4).
-            self.formatted_view.when_ready(restore_preview_context)
-            return
-
-        if index == 0 and previous == 1:
-            # XSLT -> XML : la sélection est retrouvée par son texte et son
-            # contexte (V0.9.4.5).
-            preview_cursor = self.formatted_view.preview.textCursor()
-            has_selection = preview_cursor.hasSelection()
-            trip, self._preview_round_trip = getattr(self, "_preview_round_trip", None), None
-            if (trip and has_selection and trip[0] is self.document
-                    and trip[1] == self.editor.document().revision()
-                    and trip[4:] == (preview_cursor.selectionStart(), preview_cursor.selectionEnd())):
-                call_later(0, self, lambda span=trip[2:4], shown=self.document:
-                           self.document is shown and self._select_source_span(*span))
-                return
-            # Sélection décrite par son texte et son contexte (V0.9.4.5).
-            context = self.formatted_view.preview.selection_context() if has_selection else None
-            ordinal = context.get("line") if context is not None else None
-            # Le curseur de la source, placé sur le repère de ligne de la
-            # sélection, départage des passages semblables.
-            near_cursor = ordinal is not None
-            if ordinal is None:
-                ordinal = self.formatted_view.current_preview_line()
-            if ordinal is not None and parts:
-                # Le repère de l'aperçu mène au fichier qui contient la ligne.
-                self.navigate_to_preview_line(ordinal)
-            elif ordinal is not None:
-                self.navigate_to_base_ordinal(ordinal, move_xml_cursor=True)
-
-            preview_back = (self.formatted_view.preview.document().characterCount(),
-                            preview_cursor.selectionStart(), preview_cursor.selectionEnd())
-
-            def restore_xml_context(context=context, near_cursor=near_cursor, shown=self.document, back=preview_back):
-                if self.document is not shown:
-                    return  # un autre document est affiché entre-temps
-                if context and self._select_source_quote(context, near_cursor):
-                    cursor = self.editor.textCursor()
-                    self._source_round_trip = (self.document, self.editor.document().revision(),
-                                               cursor.selectionStart(), cursor.selectionEnd()) + back
-                    return
-                if context:
-                    self.statusBar().showMessage(_t("selection.not_found.source"), 6000)
-                self.editor.setFocus()
-
-            call_later(0, self, restore_xml_context)
-
-    def _xml_health_text(self, well_formed, line=0, column=0, error=""):
-        if well_formed:
-            return _t("xml.valid")
-        where = _t("xml.invalid.where", line=line, column=column + 1) if line else ""
-        return _t("xml.invalid", where=where, error=error)
-
-    def _retranslate_xml_health(self):
-        """Contrôle XML refait dans la nouvelle langue, comme au premier
-        affichage d'un onglet (red team 2, D6)."""
-        if getattr(self, "document", None) is None:
-            return
-        self._last_xml_health_revision = -1
-        self.validate_text(False)
-
-    def _apply_xml_health_result(self, well_formed, line=0, column=0, error="", spans=None, show_message=False):
-        if not well_formed:
-            msg = self._xml_health_text(False, line, column, error)
-            self.xml_status.setText(msg); self.xml_status.setStyleSheet("color:#a13d32")
-            self._set_document_health("malformed")
-            if show_message:
-                QMessageBox.warning(self, _t("xml.invalid.title"), msg)
-            return False
-        self.xml_status.setText(self._xml_health_text(True)); self.xml_status.setStyleSheet("color:#376b3c")
-        if spans is not None:
-            self._set_lb_spans(spans)
-        current_revision = self.editor.document().revision()
-        if (
-            self._last_rng_revision == current_revision
-            and self._last_rng_result is not None
-            and self._last_rng_result.well_formed
-            and self._rng_invalid_for(self.document, self._last_rng_result)
-        ):
-            self._set_document_health("rng_invalid")
-        else:
-            self._set_document_health("normal")
-        return True
-
-    def validate_text(self, show_message=False, *, text=None, revision=None):
-        """Contrôle synchrone pour les opérations exigeant une réponse immédiate.
-
-        V0.5.6 accepte un instantané déjà extrait de l'éditeur afin que Ctrl+S ne
-        recopie pas plusieurs fois un gros document. Si le contrôle automatique a
-        déjà validé exactement la révision courante, la sauvegarde peut réutiliser
-        directement ce résultat sans reparsing XML.
-        """
-        revision = self.editor.document().revision() if revision is None else int(revision)
-        if revision == self._last_xml_health_revision and self._last_xml_health_well_formed is not None:
-            return bool(self._last_xml_health_well_formed)
-        text = self.editor.toPlainText() if text is None else text
-        try:
-            ET.fromstring(text)
-        except ET.ParseError as exc:
-            line, col = getattr(exc, "position", (0, 0)) or (0, 0)
-            self._last_xml_health_revision = revision
-            self._last_xml_health_well_formed = False
-            return self._apply_xml_health_result(False, line, col, str(exc), None, show_message)
-        spans = [(m.start(), m.end()) for m in self.lb_base_re.finditer(text)]
-        self._last_xml_health_revision = revision
-        self._last_xml_health_well_formed = True
-        return self._apply_xml_health_result(True, spans=spans, show_message=show_message)
-
-    def validate_editor(self):
-        """Contrôle automatique asynchrone après une pause de saisie."""
-        revision = self.editor.document().revision()
-        if revision == self._last_xml_health_revision:
-            return
-        if self._xml_health_running:
-            self._xml_health_pending = True
-            return
-        text = self.editor.toPlainText()
-        self._xml_health_running = True
-        self._xml_health_pending = False
-        self._xml_health_session = self.document
-        worker = XmlHealthWorker(revision, text, self.lb_base_re)
-        self._xml_health_worker = worker
-        worker.signals.finished.connect(self._async_xml_health_finished)
-        self._xml_health_pool.start(worker)
-
+    # Slot Qt d'un signal émis dans un autre fil (XmlHealthWorker) : défini
+    # ici, dans MainWindow même, et non dans le mixin xml_health. PySide lie
+    # alors la connexion à la fenêtre et l'oublie à sa destruction ; défini
+    # dans un mixin, un résultat arrivé pendant la destruction serait livré
+    # après, sur un éditeur détruit (test_gui_xml_health_teardown).
     @Slot(int, bool, int, int, str, object)
     def _async_xml_health_finished(self, revision, well_formed, line, column, error, spans):
         self._xml_health_running = False
@@ -1439,96 +649,6 @@ class MainWindow(WitnessSyncMixin, TextSegmentsMixin, ProjectActionsMixin, MainM
         if (self._xml_health_pending or not same_document or revision != current_revision) and not self.validate_timer.isActive():
             self._xml_health_pending = False
             call_later(180, self, self.validate_editor)
-
-    def _focus_inside(self, widget):
-        focus = QApplication.focusWidget()
-        return bool(focus is widget or (focus is not None and widget.isAncestorOf(focus)))
-
-    def focus_find(self):
-        """Ctrl+F (« Recherche simple ») selon l'endroit : la barre de recherche de
-        l'éditeur de fragment s'il a le focus, celle de l'aperçu si son onglet est affiché ;
-        sinon le champ de recherche de la barre d'outils reçoit le focus, et
-        reprend la sélection de l'éditeur XML si elle tient sur une ligne (120
-        caractères au plus)."""
-        # Ctrl+F est contextuel aux trois espaces d'édition/lecture.
-        if self.formatted_view.focus_is_in_fragment():
-            self.formatted_view.show_fragment_find()
-            return
-        if self.left_tabs.currentWidget() is self.formatted_view:
-            self.formatted_view.show_preview_find()
-            return
-        selected = self.editor.textCursor().selectedText().strip()
-        if selected and "\u2029" not in selected and len(selected) <= 120:
-            self.find_box.setText(selected)
-        self.find_box.setFocus()
-        self.find_box.selectAll()
-
-    def _find_source(self, backwards=False, field=None):
-        # *field* : le champ de la recherche, celui de la barre d'outils ou
-        # celui de la barre de remplacement (V0.9.2.8), qui garde le focus.
-        box = field or self.find_box
-        q = box.text()
-        if not q:
-            box.setFocus()
-            return
-        try:
-            found, n, total = find_in_plain_editor(self.editor, q, backwards=backwards,
-                                                   options=self.search_options(), exact=field is not None)
-        except SearchError as error:
-            self.statusBar().showMessage(_t("search.error.pattern", detail=error.detail), 5000)
-            self.replace_status.setText("!")
-            box.setFocus()
-            return
-        if found:
-            self.left_tabs.setCurrentIndex(0)
-            self.statusBar().showMessage(_t("status.search.xml.found", n=n, total=total, query=q), 2500)
-        else:
-            self.statusBar().showMessage(_t("status.search.xml.none", query=q), 3000)
-        self.replace_status.setText(f"{n}/{total}" if found else "0/0")
-        self.search_results_follow()
-        # Entrée reste associée à la recherche suivante, jamais à l'édition XML.
-        # La mise en évidence fluo demeure visible dans l'éditeur sans focus.
-        if field is None:
-            self.find_box.setFocus()
-        else:
-            field.setFocus()
-
-    def find_source_next(self):
-        """Occurrence suivante, dans le XML source, du texte du champ de recherche
-        de la barre d'outils (touche Entrée de ce champ)."""
-        self._find_source(False)
-
-    def find_source_previous(self):
-        """Occurrence précédente, dans le XML source, du texte du champ de
-        recherche de la barre d'outils."""
-        self._find_source(True)
-
-    def find_next(self):
-        """F3 (« Occurrence suivante ») selon l'endroit : dans l'éditeur de fragment
-        s'il a le focus et que sa barre de recherche est ouverte ; dans l'aperçu si son
-        onglet est affiché (sa barre de recherche fermée, elle s'ouvre seulement) ;
-        sinon dans le XML source."""
-        if self.formatted_view.fragment_find_bar.isVisible() and self.formatted_view.focus_is_in_fragment():
-            self.formatted_view.find_fragment_next()
-        elif self.left_tabs.currentWidget() is self.formatted_view:
-            if not self.formatted_view.preview_find_bar.isVisible():
-                self.formatted_view.show_preview_find()
-            else:
-                self.formatted_view.find_preview_next()
-        else:
-            self._find_source(False)
-
-    def find_previous(self):
-        """Shift+F3 (« Occurrence précédente ») : comme ``find_next``, en remontant."""
-        if self.formatted_view.fragment_find_bar.isVisible() and self.formatted_view.focus_is_in_fragment():
-            self.formatted_view.find_fragment_previous()
-        elif self.left_tabs.currentWidget() is self.formatted_view:
-            if not self.formatted_view.preview_find_bar.isVisible():
-                self.formatted_view.show_preview_find()
-            else:
-                self.formatted_view.find_preview_previous()
-        else:
-            self._find_source(True)
 
     def closeEvent(self,event):
         if self._force_close or self.confirm_close_application():

@@ -148,6 +148,11 @@ Varians fermé de force) ne rouvre pas le même projet la fois suivante. Celle-c
 | `validation_panel.py` | panneau et validation RELAX NG, résolution du schéma |
 | `completion_ui.py` | complétion Ctrl+Espace guidée par le schéma |
 | `xpath_panel.py` | recherche XPath |
+| `source_selection.py` | passage de l'onglet « XML source » à l'aperçu et retour : la sélection retrouvée par son texte et son contexte |
+| `pivot_line_index.py` | repères de ligne du pivot (`<lb/>`) dans l'éditeur, rang d'un repère, état de structure de la barre d'état |
+| `xml_health.py` | contrôle de bonne formation : hors du fil de la fenêtre après la frappe (`XmlHealthWorker`), aussitôt avant un enregistrement ; couleur des onglets selon l'état du document |
+| `find_commands.py` | Ctrl+F, F3 et Maj+F3 selon l'endroit (fragment, aperçu, XML source), recherche dans le XML source |
+| `window_setup.py` | étapes de la construction de la fenêtre, appelées par `MainWindow.__init__` : ressources des témoins, éditeur et aperçu, panneaux des témoins, disposition, barre d'état |
 | `witness_workspace.py` | disposition des panneaux de témoins |
 | `witness_sync.py` | synchronisation XML ↔ témoins, folios, ressources |
 | `witness_rename_plan.py` | changer le sigle d'un témoin : le plan, sans rien écrire (`plan_witness_rename`) ; lecture du journal d'un changement interrompu ; sans Qt |
