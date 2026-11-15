@@ -149,7 +149,7 @@ Le parseur est `project_config.load_project()`.
 Exemple simplifié :
 
 ```xml
-<teiManuscriptProject>
+<teiManuscriptProject version="1">
   <title>Mon édition</title>
   <edition file="xml/edition.xml"/>
   <interface translationsDir="i18n" language="fr" fallbackLanguage="en"/>
@@ -169,6 +169,8 @@ Exemple simplifié :
 ```
 
 Vues nommées de la Vue XSLT / CSS (V0.9.4.4) : `<view name="…" xslt="…" css="…" units="…"/>` sous `<edition>` (vues de l'édition, en plus de celle du projet, définie par `<rendering>`) ou sous un `<document>` de `<documents>`. `xslt` et `css` s'écrivent comme les chemins des scénarios (relatifs au projet, ou `${varians}/…`) ; `css` absent : la CSS du projet s'ajoute selon `projectCss` (absent : sauf si la feuille produit son propre `<style>` ; `always` ; `never`) ; `units` : noms d'éléments modifiables séparés par des blancs, comptés partout dans le document (`fragment_units.ChosenUnits`) ; sans `units`, la règle de l'édition. La vue choisie pour chaque document est une préférence locale (`projectView/<empreinte>/previewViews`), pas une donnée du projet. Voir `CODE_MAP.md`, « V0.9.4.4 — vues nommées ». Une feuille de vue en XSLT 2.0 ou 3.0 est confiée à Saxon, dans le processus d'aperçu `saxon_preview` (Varians relancé avec `--preview-worker`, comme `--relaxng-worker` et `--transform-worker`), jamais dans le fil de la fenêtre ; voir « V0.9.4.4 — vues en XSLT 2.0 et 3.0 ». La synchronisation avec les témoins associe le n-ième repère `tei-line://base/INDEX` de l'aperçu à la n-ième ligne du pivot : une feuille doit les écrire tous, une seule fois chacun, dans l'ordre du document (l'aperçu signale un écart). L'aperçu est un `QTextBrowser` (texte riche de Qt), pas un navigateur : un HTML 4 et une CSS 2 simplifiés, sans JavaScript. Ce qu'il comprend ou non, vérifié dans Qt 6.12, est décrit dans l'aide, « Ce que l'aperçu sait afficher » (`#view-html`) : mise en page par tableaux, largeurs par attribut HTML, ni flex ni grid, ni `padding` ni `border` sur un `<div>`, `display: none` sans effet, balises HTML 5 non reconnues comme blocs, image à adresse relative non trouvée (l'aperçu n'a ni `setSearchPaths` ni adresse de base). À revérifier si Qt change de version.
+
+Numéro de format (V0.9.4.7) : `write_project_xml` écrit `<teiManuscriptProject version="1">`. Ce numéro ne change que si le format change vraiment : un élément ou un attribut renommé, déplacé, ou dont le sens change, de sorte qu'une ancienne version de Varians lirait mal un nouveau projet, ou que Varians lirait mal un ancien. Un élément ou un attribut facultatif ajouté, que les versions précédentes ignorent sans dommage, ne le change pas. Varians ne lit pas encore ce numéro (`load_project` accepte aussi l'ancienne racine `<project>`). Varians-Synchro, lui, fonde dessus sa compatibilité avec Varians, au lieu d'un numéro de version de Varians : il écrit `project.xml` en version 1, et sa CI, qui ouvre chaque semaine l'export avec la dernière release de Varians, vérifie que Varians écrit toujours ce numéro. Pour changer de format : monter le numéro, garder la lecture de l'ancien format, le dire dans l'historique des versions et prévenir Varians-Synchro. Même règle pour les synchronisations (chapitre 6). `tests/test_format_versions.py` vérifie que le numéro écrit ici est celui qu'écrit le code.
 
 ### Sources d'images
 
@@ -282,6 +284,7 @@ Règles :
 
 - `base_keys` peut être vide, contenir une ou plusieurs clés ;
 - `keys816` est accepté en lecture uniquement pour compatibilité ;
+- `meta.format_version` ne change que si le format change, selon la même règle que le numéro de format de `project.xml` (chapitre 4) ; Varians-Synchro écrit la version 1 ;
 - les nouveaux outils doivent écrire `base_keys` ;
 - une synchronisation peut représenter 1↔1, 1↔n, n↔1 ou absence ;
 - l'alignement est une correspondance textuelle/spatiale, **pas** un relevé de variantes critiques.
