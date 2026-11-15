@@ -69,11 +69,6 @@ class FindCommandsMixin:
         de la barre d'outils (touche Entrée de ce champ)."""
         self._find_source(False)
 
-    def find_source_previous(self):
-        """Occurrence précédente, dans le XML source, du texte du champ de
-        recherche de la barre d'outils."""
-        self._find_source(True)
-
     def find_next(self):
         """F3 (« Occurrence suivante ») selon l'endroit : dans l'éditeur de fragment
         s'il a le focus et que sa barre de recherche est ouverte ; dans l'aperçu si son
