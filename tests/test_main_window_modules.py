@@ -51,8 +51,7 @@ MIXINS = {
         "_set_document_health", "_xml_health_text", "_retranslate_xml_health", "_apply_xml_health_result",
         "validate_text", "validate_editor"]),
     "find_commands": ("FindCommandsMixin", [
-        "_focus_inside", "focus_find", "_find_source", "find_source_next", "find_source_previous", "find_next",
-        "find_previous"]),
+        "focus_find", "_find_source", "find_source_next", "find_next", "find_previous"]),
     "window_setup": ("WindowSetupMixin", [
         "_load_witness_resources", "_build_document_views", "_build_witness_panels", "_build_main_layout",
         "_build_status_bar"]),
@@ -97,6 +96,18 @@ def test_the_classes_follow_their_methods(module, names):
     defined = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
     assert set(names) <= defined
     assert not set(names) & {node.name for node in _editor_tree().body if isinstance(node, ast.ClassDef)}
+
+
+def test_the_unused_search_helpers_are_gone():
+    """``_focus_inside`` et ``find_source_previous`` n'étaient appelées nulle
+    part (depuis l'import de la V0.8.5.26.2 au moins, ni dans
+    Varians-Synchro) : elles sont retirées. Le bouton « précédent » et Maj+F3
+    passent par ``find_previous``, qui cherche en remontant dans le XML source
+    quand son onglet est affiché."""
+    for path in sorted(ROOT.glob("*.py")):
+        text = path.read_text(encoding="utf-8")
+        for name in ("_focus_inside", "find_source_previous"):
+            assert f"def {name}(" not in text, (path.name, name)
 
 
 def test_the_cross_thread_slot_stays_in_the_window():

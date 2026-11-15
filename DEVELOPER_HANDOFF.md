@@ -1,6 +1,6 @@
 # Varians — dossier de transmission développeur
 
-**Version de référence : 0.9.4.6**
+**Version de référence : 0.9.4.7**
 
 Ce dossier s'est enrichi version après version : les chapitres 1 à 21 décrivent les principes, les contrats et l'architecture ; les sections qui suivent, par fonction et par version, complètent ou précisent ces chapitres (la plus récente fait foi). Repères rapides : `CODE_MAP.md` (carte du code), `docs/DEVELOPPEMENT.md` (installer, tester, construire, publier) et « Historique des versions » ci-dessous.
 
@@ -1072,6 +1072,28 @@ Le panneau RNG ne doit jamais afficher le tableau correspondant à une ancienne 
 Cet historique était tenu dans `README.txt` jusqu’à la version 0.9.3.0, de la plus récente à la plus ancienne ; `README.txt` ne présente plus que le logiciel, son installation et son lancement.
 
 ```text
+VARIANS V0.9.4.7 — CODE RÉORGANISÉ ET VÉRIFIÉ
+
+• Aucun changement visible : cette version ne modifie ni l'interface ni
+  le comportement de Varians. Elle rend le code plus facile à lire et à
+  modifier, et le vérifie davantage.
+• Vérification du code par ruff avant chaque passe des tests : imports et
+  variables inutilisés, noms non définis, erreurs de syntaxe, deux pièges
+  courants (argument par défaut modifiable, fonction créée dans une
+  boucle). Les restes d'anciennes versions qu'il relevait sont retirés.
+• Gros modules découpés, sans changement du code déplacé, en commençant
+  par ce qui change le plus souvent : la vue XSLT / CSS
+  (formatted_view.py : 2 489 → 1 040 lignes), les boîtes du projet
+  (project_dialogs.py : 1 560 → 407 lignes), le changement de sigle d'un
+  témoin (witness_rename.py : le plan et l'application dans deux
+  modules), la fenêtre principale (editeur_tei.py : 1 917 → 1 036 lignes ;
+  son constructeur passe de 430 à 94 lignes). La carte des modules est
+  dans docs/DEVELOPPEMENT.md ; la règle (découper ce qui change souvent,
+  non ce qui est long) au chapitre 19 de ce dossier.
+• Deux méthodes que rien n'appelait sont retirées : _focus_inside et
+  find_source_previous (le bouton « précédent » et Maj+F3 passaient déjà
+  par find_previous).
+
 VARIANS V0.9.4.6 — MACOS, JOURNAL DES ERREURS, TÉLÉCHARGEMENTS VÉRIFIÉS
 
 • macOS : la suite des tests y passe désormais, et GitHub Actions la lance

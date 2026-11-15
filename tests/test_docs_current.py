@@ -31,16 +31,20 @@ def _history_entry(version):
 
 
 def test_the_version_history_tells_what_the_current_version_brings():
-    """0.9.4.6 : macOS (titres des boîtes de message, Entrée dans la liste de
-    Ctrl+E, F8 et Transformer qui ne restent plus bloqués), journal des
-    erreurs, téléchargements vérifiés et robustesse, en tête."""
+    """0.9.4.7 : aucun changement visible ; vérification du code par ruff,
+    gros modules découpés, méthodes jamais appelées retirées, en tête."""
     entry = _history_entry(CURRENT_VERSION)
-    for words in ("macOS", "Ctrl+E", "F8", "Transformer", "Journal des erreurs", "varians.log", "SHA-256",
-                  "CRC-32", "Page ↗", "250 Mo", "constraints.txt", "Python 3.13"):
+    for words in ("Aucun changement visible", "ruff", "formatted_view.py", "project_dialogs.py",
+                  "witness_rename.py", "editeur_tei.py", "docs/DEVELOPPEMENT.md", "chapitre 19",
+                  "_focus_inside", "find_source_previous"):
         assert words in entry, words
 
 
 def test_the_version_history_keeps_the_previous_versions():
+    entry = _history_entry("0.9.4.6")
+    for words in ("macOS", "Ctrl+E", "F8", "Transformer", "Journal des erreurs", "varians.log", "SHA-256",
+                  "CRC-32", "Page ↗", "250 Mo", "constraints.txt", "Python 3.13"):
+        assert words in entry, words
     entry = _history_entry("0.9.4.5")
     for words in ("Vue XSLT / CSS", "éditeur de fragment", "<persName>", "&amp;", "<lb/>", "crayon",
                   "commentaire", "aller-retour", "barre d'état", "10 s"):
