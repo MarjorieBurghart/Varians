@@ -2,6 +2,8 @@
 
 Les fichiers d'alignement constituent le contrat entre le futur outil d'alignement et l'éditeur.
 
+Le numéro de version (`format_version`) ne change que si le format change de façon incompatible : un champ renommé, déplacé ou dont le sens change. Un champ facultatif ajouté, que les lecteurs ignorent sans dommage, ne le change pas. Varians-Synchro, qui écrit ces fichiers, fonde sur ce numéro sa compatibilité avec Varians (voir `DEVELOPER_HANDOFF.md`, chapitres 4 et 6).
+
 ## Racine
 
 ```json
