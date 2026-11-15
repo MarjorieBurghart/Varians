@@ -13,7 +13,8 @@ changement du code déplacé :
   d'état.
 - ``xml_health`` (``XmlHealthMixin``, ``XmlHealthWorker``) : contrôle de
   bonne formation, hors du fil de la fenêtre après la frappe, aussitôt avant
-  un enregistrement ; couleur des onglets selon l'état du document ;
+  un enregistrement ; couleur des onglets selon l'état du document. Le slot
+  qui reçoit le résultat du travailleur reste dans ``MainWindow`` ;
 - ``find_commands`` (``FindCommandsMixin``) : Ctrl+F, F3 et Maj+F3 selon
   l'endroit (fragment, aperçu, XML source), recherche dans le XML source.
 - ``window_setup`` (``WindowSetupMixin``) : les étapes du constructeur,
@@ -48,7 +49,7 @@ MIXINS = {
         "ordinal_at_position", "ordinal_at_cursor"]),
     "xml_health": ("XmlHealthMixin", [
         "_set_document_health", "_xml_health_text", "_retranslate_xml_health", "_apply_xml_health_result",
-        "validate_text", "validate_editor", "_async_xml_health_finished"]),
+        "validate_text", "validate_editor"]),
     "find_commands": ("FindCommandsMixin", [
         "_focus_inside", "focus_find", "_find_source", "find_source_next", "find_source_previous", "find_next",
         "find_previous"]),
@@ -96,6 +97,17 @@ def test_the_classes_follow_their_methods(module, names):
     defined = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
     assert set(names) <= defined
     assert not set(names) & {node.name for node in _editor_tree().body if isinstance(node, ast.ClassDef)}
+
+
+def test_the_cross_thread_slot_stays_in_the_window():
+    """Le slot qui reçoit le résultat du contrôle fait dans un autre fil reste
+    défini dans MainWindow même, décoré par @Slot : PySide lie alors la
+    connexion à la fenêtre (voir gui/test_gui_xml_health_teardown.py)."""
+    method = next(item for item in _main_window().body
+                  if isinstance(item, ast.FunctionDef) and item.name == "_async_xml_health_finished")
+    decorators = [d.func.id for d in method.decorator_list
+                  if isinstance(d, ast.Call) and isinstance(d.func, ast.Name)]
+    assert decorators == ["Slot"]
 
 
 def test_the_constructor_calls_the_setup_steps_in_order():

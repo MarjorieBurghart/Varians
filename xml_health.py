@@ -7,7 +7,9 @@ pause de la frappe, le texte est analysé hors du fil de la fenêtre
 aussitôt (``validate_text``), en réutilisant le résultat de la même
 révision. L'état du document (bien formé, mal formé, invalide selon le
 schéma) colore les onglets (``_set_document_health``) et s'affiche dans la
-barre d'état."""
+barre d'état. Le slot qui reçoit le résultat du travailleur,
+``_async_xml_health_finished``, reste dans ``MainWindow`` même : voir le
+commentaire qui le précède."""
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
@@ -15,7 +17,7 @@ import xml.etree.ElementTree as ET
 from PySide6.QtCore import QObject, QRunnable, Signal, Slot
 from PySide6.QtWidgets import QMessageBox
 
-from app_context import call_later, tr as _t
+from app_context import tr as _t
 
 
 class XmlHealthSignals(QObject):
@@ -169,23 +171,3 @@ class XmlHealthMixin:
         self._xml_health_worker = worker
         worker.signals.finished.connect(self._async_xml_health_finished)
         self._xml_health_pool.start(worker)
-
-    @Slot(int, bool, int, int, str, object)
-    def _async_xml_health_finished(self, revision, well_formed, line, column, error, spans):
-        self._xml_health_running = False
-        self._xml_health_worker = None
-        # Le résultat ne vaut que pour le document contrôlé : un autre a pu
-        # être affiché entre-temps (les révisions sont propres à chaque document).
-        checked = self._xml_health_session
-        self._xml_health_session = None
-        same_document = checked is None or checked is self.document
-        current_revision = self.editor.document().revision()
-        if same_document and revision == current_revision:
-            self._last_xml_health_revision = revision
-            self._last_xml_health_well_formed = bool(well_formed)
-            self._apply_xml_health_result(well_formed, line, column, error, spans, False)
-        # Si le document a changé pendant un contrôle exceptionnellement long
-        # et que le timer a déjà expiré, programmer une nouvelle passe courte.
-        if (self._xml_health_pending or not same_document or revision != current_revision) and not self.validate_timer.isActive():
-            self._xml_health_pending = False
-            call_later(180, self, self.validate_editor)

@@ -124,7 +124,7 @@ from rng_completion import XmlContextCache
 from tei_formatter import format_tei_xml
 
 try:
-    from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent
+    from PySide6.QtCore import Qt, QTimer, QThreadPool, QEvent, Slot
     from PySide6.QtGui import QTextCursor, QAction, QKeySequence
     from PySide6.QtWidgets import (
         QApplication, QMainWindow, QWidget, QToolBar, QFileDialog, QMessageBox,
@@ -624,6 +624,31 @@ class MainWindow(WindowSetupMixin, SourceSelectionMixin, PivotLineIndexMixin, Xm
                 self.rng_refresh_timer.start()
         if hasattr(self, 'formatted_view'):
             self.formatted_view.source_changed()
+
+    # Slot Qt d'un signal émis dans un autre fil (XmlHealthWorker) : défini
+    # ici, dans MainWindow même, et non dans le mixin xml_health. PySide lie
+    # alors la connexion à la fenêtre et l'oublie à sa destruction ; défini
+    # dans un mixin, un résultat arrivé pendant la destruction serait livré
+    # après, sur un éditeur détruit (test_gui_xml_health_teardown).
+    @Slot(int, bool, int, int, str, object)
+    def _async_xml_health_finished(self, revision, well_formed, line, column, error, spans):
+        self._xml_health_running = False
+        self._xml_health_worker = None
+        # Le résultat ne vaut que pour le document contrôlé : un autre a pu
+        # être affiché entre-temps (les révisions sont propres à chaque document).
+        checked = self._xml_health_session
+        self._xml_health_session = None
+        same_document = checked is None or checked is self.document
+        current_revision = self.editor.document().revision()
+        if same_document and revision == current_revision:
+            self._last_xml_health_revision = revision
+            self._last_xml_health_well_formed = bool(well_formed)
+            self._apply_xml_health_result(well_formed, line, column, error, spans, False)
+        # Si le document a changé pendant un contrôle exceptionnellement long
+        # et que le timer a déjà expiré, programmer une nouvelle passe courte.
+        if (self._xml_health_pending or not same_document or revision != current_revision) and not self.validate_timer.isActive():
+            self._xml_health_pending = False
+            call_later(180, self, self.validate_editor)
 
     def closeEvent(self,event):
         if self._force_close or self.confirm_close_application():
