@@ -5,8 +5,10 @@ Depuis V0.8.6.0, le code de ``editeur_tei.py`` est réparti entre plusieurs
 modules (``app_context``, ``document_session`` et les mixins de
 ``MainWindow``) ; depuis V0.9.4.7, celui de ``formatted_view.py`` aussi
 (``preview_css``, ``preview_browser`` et les mixins de
-``FormattedEditionWidget``). Les tests qui inspectent le source ou extraient
-une méthode passent par ces fonctions plutôt que de lire un seul fichier.
+``FormattedEditionWidget``), et de nouveaux mixins de ``MainWindow``
+(``source_selection``, ``pivot_line_index``…). Les tests qui inspectent le
+source ou extraient une méthode passent par ces fonctions plutôt que de lire
+un seul fichier.
 Les méthodes d'un mixin sont rendues à la classe qui en hérite.
 """
 from __future__ import annotations
@@ -30,6 +32,8 @@ CATALOG_SIZE = 1351
 # par position, comme source.index(...), y trouvent leurs repères en premier).
 APPLICATION_MODULES = (
     "editeur_tei.py",
+    "source_selection.py",
+    "pivot_line_index.py",
     "app_context.py",
     "document_session.py",
     "formatted_view.py",
