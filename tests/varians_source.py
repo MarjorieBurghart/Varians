@@ -36,6 +36,7 @@ APPLICATION_MODULES = (
     "pivot_line_index.py",
     "xml_health.py",
     "find_commands.py",
+    "window_setup.py",
     "app_context.py",
     "document_session.py",
     "formatted_view.py",

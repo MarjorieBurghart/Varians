@@ -16,6 +16,11 @@ changement du code déplacé :
   un enregistrement ; couleur des onglets selon l'état du document ;
 - ``find_commands`` (``FindCommandsMixin``) : Ctrl+F, F3 et Maj+F3 selon
   l'endroit (fragment, aperçu, XML source), recherche dans le XML source.
+- ``window_setup`` (``WindowSetupMixin``) : les étapes du constructeur,
+  chacune un bloc du constructeur d'avant recopié tel quel (ressources des
+  témoins, éditeur et aperçu, panneaux des témoins, disposition, barre
+  d'état). ``__init__`` les appelle dans le même ordre ; aucune variable
+  locale ne passait d'un bloc à l'autre.
 
 Les modules n'importent pas ``editeur_tei`` (il peut être lancé comme
 script), sont protégés des anciennes installations gardées par Spyder
@@ -47,7 +52,13 @@ MIXINS = {
     "find_commands": ("FindCommandsMixin", [
         "_focus_inside", "focus_find", "_find_source", "find_source_next", "find_source_previous", "find_next",
         "find_previous"]),
+    "window_setup": ("WindowSetupMixin", [
+        "_load_witness_resources", "_build_document_views", "_build_witness_panels", "_build_main_layout",
+        "_build_status_bar"]),
 }
+# Étapes du constructeur, dans l'ordre où elles sont appelées.
+SETUP_STEPS = ["_load_witness_resources", "_build_document_views", "_build_witness_panels", "_build_main_layout",
+               "_build_toolbar", "_build_status_bar", "open_path"]
 # Classes de premier niveau qui suivent leurs méthodes.
 CLASSES = {"xml_health": ["XmlHealthSignals", "XmlHealthWorker"]}
 
@@ -85,6 +96,16 @@ def test_the_classes_follow_their_methods(module, names):
     defined = {node.name for node in tree.body if isinstance(node, ast.ClassDef)}
     assert set(names) <= defined
     assert not set(names) & {node.name for node in _editor_tree().body if isinstance(node, ast.ClassDef)}
+
+
+def test_the_constructor_calls_the_setup_steps_in_order():
+    init = next(item for item in _main_window().body if isinstance(item, ast.FunctionDef) and item.name == "__init__")
+    calls = [node.value.func.attr for node in init.body
+             if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+             and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name)
+             and node.value.func.value.id == "self"]
+    assert [name for name in calls if name in SETUP_STEPS] == SETUP_STEPS
+    assert init.end_lineno - init.lineno < 120
 
 
 @pytest.mark.parametrize("module, spec", MIXINS.items())
