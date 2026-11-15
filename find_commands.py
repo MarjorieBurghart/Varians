@@ -7,8 +7,6 @@ affiché, sinon le XML source (``code_editor.find_in_plain_editor``), avec
 le champ de la barre d'outils ou celui de la barre de remplacement."""
 from __future__ import annotations
 
-from PySide6.QtWidgets import QApplication
-
 from app_context import tr as _t
 from code_editor import find_in_plain_editor
 from text_search import SearchError
@@ -16,10 +14,6 @@ from text_search import SearchError
 
 class FindCommandsMixin:
     """Commandes de recherche de la fenêtre (voir le module)."""
-
-    def _focus_inside(self, widget):
-        focus = QApplication.focusWidget()
-        return bool(focus is widget or (focus is not None and widget.isAncestorOf(focus)))
 
     def focus_find(self):
         """Ctrl+F (« Recherche simple ») selon l'endroit : la barre de recherche de
